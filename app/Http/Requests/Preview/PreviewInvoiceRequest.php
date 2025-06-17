@@ -96,10 +96,10 @@ class PreviewInvoiceRequest extends Request
         }
 
         match($this->entity) {
-            'invoice' => $invitation = InvoiceInvitation::withTrashed()->where('invoice_id', $this->entity_id)->first(),
-            'quote' => $invitation = QuoteInvitation::withTrashed()->where('quote_id', $this->entity_id)->first(),
-            'credit' => $invitation = CreditInvitation::withTrashed()->where('credit_id', $this->entity_id)->first(),
-            'recurring_invoice' => $invitation = RecurringInvoiceInvitation::withTrashed()->where('recurring_invoice_id', $this->entity_id)->first(),
+            'invoice' => $invitation = InvoiceInvitation::withTrashed()->where('invoice_id', $this->entity_id)->orderBy('deleted_at','asc')->first(),
+            'quote' => $invitation = QuoteInvitation::withTrashed()->where('quote_id', $this->entity_id)->orderBy('deleted_at','asc')->first(),
+            'credit' => $invitation = CreditInvitation::withTrashed()->where('credit_id', $this->entity_id)->orderBy('deleted_at','asc')->first(),
+            'recurring_invoice' => $invitation = RecurringInvoiceInvitation::withTrashed()->where('recurring_invoice_id', $this->entity_id)->orderBy('deleted_at','asc')->first(),
             default => $invitation = false,
         };
 

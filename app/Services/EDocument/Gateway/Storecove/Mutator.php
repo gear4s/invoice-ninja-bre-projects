@@ -531,6 +531,14 @@ class Mutator implements MutatorInterface
         $this->p_invoice->AccountingCustomerParty->Party->PostalAddress->CountrySubentity = $resolved_state;
         $this->p_invoice->AccountingCustomerParty->Party->PostalAddress->CityName = $resolved_city;
 
+        $query = $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification;
+        usort($query, function($a, $b) {
+            if ($a->value === null && $b->value !== null) return -1;
+            if ($a->value !== null && $b->value === null) return 1;
+            return 0;
+        });
+        $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification = $query;
+
         return $this;
     }
 
