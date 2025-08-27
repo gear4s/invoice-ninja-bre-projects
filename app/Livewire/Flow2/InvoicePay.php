@@ -220,6 +220,8 @@ class InvoicePay extends Component
             return RequiredFields::class;
         }
 
+        return \App\Livewire\Flow2\DocuNinja::class;
+
         return ProcessPayment::class;
 
     }

@@ -16,4 +16,25 @@
         @endphp
 
     </div>
+        
+    <div id="sign"></div>
+
 </div>
+    
+    
+@assets
+<link rel="stylesheet" href="/vendor/docuninja/builder2.0/dist/builder2.0.standalone.css" />
+<script src="/vendor/docuninja/builder2.0/dist/builder.iife.js"></script>
+
+<script>
+    const token = '{{ $token }}';
+    const doc = '{{ $document }}';
+    const invitation = '{{ $invitation }}';
+    const sig = '{{ $sig }}';
+    
+    const mount = document.getElementById("sign");
+    
+    new DocuNinjaSign({ token, doc, invitation, sig }).mount(mount);
+</script>
+
+@endassets

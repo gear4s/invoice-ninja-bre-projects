@@ -60,7 +60,16 @@ export default defineConfig({
             'resources/js/clients/payments/blockonomics.js',
         ]),
         viteStaticCopy({
-            targets: [],
+            targets: [
+                {
+                    src: 'node_modules/@docuninja/builder2.0/dist/builder2.0.standalone.css',
+                    dest: 'dist/builder2.0.standalone.css',
+                },
+                {
+                    src: 'node_modules/@docuninja/builder2.0/dist/builder.iife.js',
+                    dest: 'dist/builder.iife.js',
+                },
+            ],
         }),
     ],
 });
