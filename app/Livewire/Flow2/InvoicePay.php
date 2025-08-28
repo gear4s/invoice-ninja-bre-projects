@@ -94,6 +94,8 @@ class InvoicePay extends Component
 
     public $required_fields = false;
 
+    public $docu_ninja_active = false;
+
     #[On('update.context')]
     public function handleContext(string $property, $value): self
     {
@@ -204,7 +206,10 @@ class InvoicePay extends Component
             return Terms::class;
         }
 
-        if (!$this->signature_accepted) {
+        if($this->docu_ninja_active && !$this->signature_accepted) {
+            return \App\Livewire\Flow2\DocuNinja::class;
+        }
+        elseif (!$this->signature_accepted) {
             return Signature::class;
         }
 
@@ -219,8 +224,6 @@ class InvoicePay extends Component
         if ($this->required_fields) {
             return RequiredFields::class;
         }
-
-        return \App\Livewire\Flow2\DocuNinja::class;
 
         return ProcessPayment::class;
 
@@ -245,13 +248,14 @@ class InvoicePay extends Component
         $client = $invite->contact->client;
         $settings = $client->getMergedSettings();
 
+        $this->docu_ninja_active = $invite->company->enable_modules;
+
         $this->bulkSetContext([
             'contact' => $invite->contact,
             'settings' => $settings,
             'db' => $this->db,
             'invitation_id' => $this->invitation_id,
         ]);
-
 
         $invoices = Invoice::withTrashed()
                                     ->whereIn('id', $this->transformKeys($this->invoices))
