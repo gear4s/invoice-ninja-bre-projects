@@ -248,7 +248,7 @@ class InvoicePay extends Component
         $client = $invite->contact->client;
         $settings = $client->getMergedSettings();
 
-        $this->docu_ninja_active = $invite->company->enable_modules;
+        $this->docu_ninja_active = $invite->company->enable_modules; //Is the company an Active DocuNinja User?
 
         $this->bulkSetContext([
             'contact' => $invite->contact,
