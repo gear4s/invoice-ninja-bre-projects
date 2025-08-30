@@ -674,6 +674,16 @@ class InvoiceService
 
     }
 
+    public function getDocuNinjaSignable()
+    {
+
+        if (class_exists(\ InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
+        {
+            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($this->invoice);
+        }
+        
+    }
+
     /**
      * Saves the invoice.
      * @return Invoice object

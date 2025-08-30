@@ -20,16 +20,13 @@ use Illuminate\Contracts\Database\Eloquent\Castable;
  */
 class InvoiceSync implements Castable
 {
-    public string $qb_id;
-
-    public function __construct(array $attributes = [])
-    {
-
-        $this->qb_id = $attributes['qb_id'] ?? '';
-
-    }
-
-    /**
+    
+    public function __construct(
+        public string $qb_id = '',
+        public ?string $dn_id = null,
+        public bool $dn_completed = false,
+    ){}
+     /**
      * Get the name of the caster class to use when casting from / to this cast target.
      *
      * @param  array<string, mixed>  $arguments
@@ -41,6 +38,10 @@ class InvoiceSync implements Castable
 
     public static function fromArray(array $data): self
     {
-        return new self($data);
+        return new self(
+            qb_id: $data['qb_id'] ?? '',
+            dn_id: $data['dn_id'] ?? null,
+            dn_completed: $data['dn_completed'] ?? false,
+        );
     }
 }

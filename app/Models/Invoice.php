@@ -42,6 +42,7 @@ use App\Utils\Number;
  * @property int|null $assigned_user_id
  * @property int $company_id
  * @property int $status_id
+ * @property int|null $location_id
  * @property int|null $project_id
  * @property int|null $vendor_id
  * @property int|null $recurring_id
@@ -123,6 +124,7 @@ use App\Utils\Number;
  * @property-read \App\Models\RecurringInvoice|null $recurring_invoice
  * @property-read \App\Models\Subscription|null $subscription
  * @property-read \App\Models\Task|null $task
+ * @property-read \App\Models\Location|null $location
  * @property-read int|null $tasks_count
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor

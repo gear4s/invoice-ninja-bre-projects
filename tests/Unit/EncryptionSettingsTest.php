@@ -18,6 +18,8 @@ use Tests\TestCase;
  */
 class EncryptionSettingsTest extends TestCase
 {
+    private string $settings;
+
     protected function setUp(): void
     {
         parent::setUp();
