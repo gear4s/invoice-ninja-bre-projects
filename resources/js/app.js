@@ -24,3 +24,5 @@ document.querySelectorAll('.disposable-alert').forEach((element) => {
         element.remove();
     }, 5000);
 });
+
+import '../../node_modules/@docuninja/builder2.0/dist/builder.iife';
