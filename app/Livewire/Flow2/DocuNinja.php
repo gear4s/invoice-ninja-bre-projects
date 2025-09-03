@@ -13,9 +13,14 @@
 namespace App\Livewire\Flow2;
 
 use Livewire\Component;
+use App\Libraries\MultiDB;
+use App\Models\InvoiceInvitation;
+use App\Utils\Traits\WithSecureContext;
 
 class DocuNinja extends Component
 {
+    use WithSecureContext;
+
     // Properties to store DocuNinja internal state
     public $docuNinjaCredentials = [];
     public $docuNinjaFormData = [];
@@ -23,14 +28,39 @@ class DocuNinja extends Component
     public $docuNinjaSigningStatus = 'unknown';
     public $docuNinjaInternalState = [];
     
+    private ?string $document_id = null;
+    private ?string $document_invitation_id = null;
+    private ?string $sig = null;
+
+    public function mount()
+    {
+
+        MultiDB::setDb($this->getContext()['db']);
+
+        $invitation = InvoiceInvitation::find($this->getContext()['invitation_id']);
+
+        $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
+
+        if(!$signable['success']){
+            $this->dispatch('docuninja-signature-captured');
+        }
+
+        $this->document_id = $signable['document_id'];
+        $this->document_invitation_id = $signable['document_invitation_id'];
+        $this->sig = $signable['sig'];
+
+    }
+    
     public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
     {
+
         return render('flow2.docu-ninja', [
             'token' => '',
-            'document' => '01K3SJ59KNWZX6DBM38RKTCQNJ',
-            'invitation' => '01K3SJ5T76BCSBA9Y2PQJXFFG7',
-            'sig' => 'eyJpdiI6IkxWYVVMbDZBQ21EODZhQ0E4YnlxSGc9PSIsInZhbHVlIjoiZlZvYmpkQ3BIaXhHVis3U1FuWW05M2pYYlJlcnRQL05jakxHNFl3RnZFeTAzUWM2N0xvclJjdk5oQmZxZFBQSSIsIm1hYyI6IjNmY2RlZTdjZjQyZjFlYWQ0NTI5YzI5ZDhkZTBmM2FhNjcyMmZhZGRhNjVjMjdkYmNkMmQwYjZkODU2NGNkMTciLCJ0YWciOiIifQ%3D%3D.'
+            'document' => $this->document_id,
+            'invitation' => $this->document_invitation_id,
+            'sig' => $this->sig,
         ]);
+
     }
 
     /**
