@@ -43,6 +43,9 @@ class DocuNinja extends Component
 
         if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
             $signable = [
+                'document_id' => $invitation->invoice->sync->dn_id,
+                'document_invitation_id' => $invitation->invoice->sync->dn_invitation_id,
+                'sig' => $invitation->invoice->sync->dn_sig,
                 'success' => true,
             ];
         }
@@ -73,6 +76,7 @@ class DocuNinja extends Component
             $this->dispatch('docuninja-signature-captured');
         }
 
+        // nlog($signable);
         $this->document_id = $signable['document_id'];
         $this->document_invitation_id = $signable['document_invitation_id'];
         $this->sig = $signable['sig'];
