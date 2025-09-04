@@ -121,7 +121,7 @@ class TemplateService
         $function = new \Twig\TwigFunction('img', \Closure::fromCallable(function (string $image_src, string $image_style = '') {
 
             $html = '<img src="' . $image_src . '" style="' . $image_style . '"></img>';
-
+nlog($html);
             return $html;
             // return new \Twig\Markup($html, 'UTF-8');
 
