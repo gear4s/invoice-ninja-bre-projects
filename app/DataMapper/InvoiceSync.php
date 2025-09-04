@@ -24,6 +24,8 @@ class InvoiceSync implements Castable
     public function __construct(
         public string $qb_id = '',
         public ?string $dn_id = null,
+        public ?string $dn_invitation_id = null,
+        public ?string $dn_sig = null,
         public bool $dn_completed = false,
     ){}
      /**
@@ -42,6 +44,8 @@ class InvoiceSync implements Castable
             qb_id: $data['qb_id'] ?? '',
             dn_id: $data['dn_id'] ?? null,
             dn_completed: $data['dn_completed'] ?? false,
+            dn_invitation_id: $data['dn_invitation_id'] ?? null,
+            dn_sig: $data['dn_sig'] ?? null,
         );
     }
 }

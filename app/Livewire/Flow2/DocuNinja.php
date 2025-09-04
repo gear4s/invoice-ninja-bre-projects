@@ -14,9 +14,10 @@ namespace App\Livewire\Flow2;
 
 use Livewire\Component;
 use App\Libraries\MultiDB;
+use Livewire\Attributes\Lazy;
+use App\DataMapper\InvoiceSync;
 use App\Models\InvoiceInvitation;
 use App\Utils\Traits\WithSecureContext;
-use Livewire\Attributes\Lazy;
 
 class DocuNinja extends Component
 {
@@ -41,11 +42,33 @@ class DocuNinja extends Component
         $invitation = InvoiceInvitation::find($this->getContext()['invitation_id']);
 
         if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
-            $this->dispatch('docuninja-signature-captured');
+            $signable = [
+                'success' => true,
+            ];
         }
-
-        $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
-
+        elseif(isset($invitation->invoice->sync) && 
+        isset($invitation->invoice->sync->dn_sig) &&
+        isset($invitation->invoice->sync->dn_invitation_id) &&
+        isset($invitation->invoice->sync->dn_id)){
+            $signable = [
+                'document_id' => $invitation->invoice->sync->dn_id,
+                'document_invitation_id' => $invitation->invoice->sync->dn_invitation_id,
+                'sig' => $invitation->invoice->sync->dn_sig,
+                'success' => !$invitation->invoice->sync->dn_completed,
+            ];
+        }
+        else{
+            $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
+            $sync = InvoiceSync::fromArray([
+                'dn_id' => $signable['document_id'],
+                'dn_invitation_id' => $signable['document_invitation_id'],
+                'dn_sig' => $signable['sig'],
+                'dn_completed' => false,
+            ]);
+            $invitation->invoice->sync = $sync;
+            $invitation->invoice->save();
+        }
+            
         if(!$signable['success']){
             $this->dispatch('docuninja-signature-captured');
         }
