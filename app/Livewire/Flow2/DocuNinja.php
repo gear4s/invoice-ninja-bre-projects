@@ -16,6 +16,7 @@ use Livewire\Component;
 use App\Libraries\MultiDB;
 use App\Models\InvoiceInvitation;
 use App\Utils\Traits\WithSecureContext;
+use Livewire\Attributes\Lazy;
 
 class DocuNinja extends Component
 {
@@ -39,6 +40,10 @@ class DocuNinja extends Component
 
         $invitation = InvoiceInvitation::find($this->getContext()['invitation_id']);
 
+        if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
+            $this->dispatch('docuninja-signature-captured');
+        }
+
         $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
 
         if(!$signable['success']){
@@ -49,6 +54,16 @@ class DocuNinja extends Component
         $this->document_invitation_id = $signable['document_invitation_id'];
         $this->sig = $signable['sig'];
 
+    }
+
+    public function placeholder()
+    {
+        return <<<'HTML'
+        <div>
+            <!-- Loading spinner... -->
+            <svg>...</svg>
+        </div>
+        HTML;
     }
     
     public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
