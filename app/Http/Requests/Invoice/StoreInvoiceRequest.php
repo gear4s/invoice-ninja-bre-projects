@@ -162,6 +162,10 @@ class StoreInvoiceRequest extends Request
             $input['terms'] = str_replace("\n", "", $input['terms']);
         }
 
+        if(isset($input['sync'])){
+            unset($input['sync']);
+        }
+        
         $this->replace($input);
     }
 }
