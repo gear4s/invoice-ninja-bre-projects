@@ -82,7 +82,7 @@ class DocuNinja extends Component
         $this->document_invitation_id = $signable['document_invitation_id'];
         $this->sig = $signable['sig'];
 
-        $this->company_key = $invitation->invoice->company_id;
+        $this->company_key = $invitation->company->company_key;
     }
 
     public function placeholder()
