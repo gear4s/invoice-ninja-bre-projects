@@ -37,14 +37,20 @@ class DocuNinjaLoader extends Component
 
             // Check if DocuNinja is already completed
             if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
-                $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key);
-                $signable = [
-                    'document_id' => $dn_invite['dn_id'],
-                    'document_invitation_id' => $dn_invite['dn_invitation_id'],
-                    'sig' => $dn_invite['dn_sig'],
-                    'success' => true,
-                ];
+                $this->dispatch('docuninja-signature-captured');
+                // $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key);
+                // $signable = [
+                //     'document_id' => $dn_invite['dn_id'],
+                //     'document_invitation_id' => $dn_invite['dn_invitation_id'],
+                //     'sig' => $dn_invite['dn_sig'],
+                //     'success' => true,
+                // ];
                 
+            }
+            elseif(!$invitation->can_sign){
+                $this->error = 'You are not authorized to sign this document.';
+                $this->isLoading = false;
+                return;
             }
             elseif($invitation->can_sign &&
                 isset($invitation->invoice->sync) && 

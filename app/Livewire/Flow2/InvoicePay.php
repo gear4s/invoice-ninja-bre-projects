@@ -269,7 +269,7 @@ class InvoicePay extends Component
         $client = $invite->contact->client;
         $settings = $client->getMergedSettings();
 
-        $this->docu_ninja_active = $invite->company->enable_modules; //Is the company an Active DocuNinja User?
+        $this->docu_ninja_active = $invite->company->enable_modules; //Is the company an Active DocuNinja User - or bypass completely if signed!
 
         $this->bulkSetContext([
             'contact' => $invite->contact,
@@ -298,6 +298,10 @@ class InvoicePay extends Component
         $this->signature_accepted = !$settings->require_invoice_signature;
         $this->under_over_payment = $settings->client_portal_allow_over_payment || $settings->client_portal_allow_under_payment;
         $this->required_fields = false;
+
+        if($invite->invoice->sync?->dn_completed === true){
+            $this->signature_accepted = true;
+        }
 
         $payable_invoices = $invoices->map(function ($i) {
             /** @var \App\Models\Invoice $i */

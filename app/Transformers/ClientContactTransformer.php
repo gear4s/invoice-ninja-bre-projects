@@ -49,6 +49,7 @@ class ClientContactTransformer extends EntityTransformer
             'last_login' => (int) $contact->last_login,
             'password' => empty($contact->password) ? '' : '**********',
             'link' => $contact->getLoginLink(),
+            'can_sign' => (bool) $contact->can_sign,
         ];
     }
 }

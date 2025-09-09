@@ -47,6 +47,7 @@ class VendorContactTransformer extends EntityTransformer
             'link' => $vendor->getLoginLink(),
             'last_login' => (int)$vendor->last_login,
             'password' => empty($vendor->password) ? '' : '**********',
+            'can_sign' => (bool) $vendor->can_sign,
         ];
     }
 }

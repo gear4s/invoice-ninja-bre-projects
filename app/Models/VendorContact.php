@@ -60,6 +60,7 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @property string $password
  * @property string|null $token
  * @property bool $is_locked
+ * @property bool $can_sign
  * @property string|null $contact_key
  * @property string|null $remember_token
  * @property-read \App\Models\Company $company
@@ -124,6 +125,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
         'is_primary',
         'vendor_id',
         'send_email',
+        'can_sign',
     ];
 
     public function toSearchableArray()
