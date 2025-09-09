@@ -225,7 +225,6 @@ class BaseRepository
         /* If invitations are present we need to filter existing invitations with the new ones */
         if (isset($data['invitations'])) {
 
-            $can_send = collect([]);
             $invitations = collect($data['invitations']);
 
             /* Get array of Keys which have been removed from the invitations array and soft delete each invitation */
@@ -238,10 +237,17 @@ class BaseRepository
                 }
             });
 
+            $dn_enabled = $model->company->enable_modules;
+
             foreach ($data['invitations'] as $invitation) {
                 //if no invitations are present - create one.
-                if(!$this->getInvitation($invitation, $resource)){
-
+                if($invite = $this->getInvitation($invitation, $resource)){
+                    if($dn_enabled){
+                        $invite->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
+                        $invite->saveQuietly();
+                    }
+                }
+                else{
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
@@ -265,7 +271,7 @@ class BaseRepository
                             $new_invitation->{$lcfirst_resource_id} = $model->id;
                             $new_invitation->client_contact_id = $contact->id;
                             $new_invitation->key = $this->createDbHash($model->company->db);
-                            $new_invitation->can_sign = $invitation['can_sign'] ?? false;
+                            $new_invitation->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
                             $new_invitation->saveQuietly();
                         }
 
@@ -274,12 +280,6 @@ class BaseRepository
                 
             }
 
-            if($model->company->enable_modules) {
-                $sync = $model->sync ?? new \App\DataMapper\InvoiceSync();
-                $sync->dn_contacts = $can_send->implode(',');
-                $model->sync = $sync;
-                $model->save();
-            }
         }
 
         /* If no invitations have been created, this is our fail safe to maintain state*/
