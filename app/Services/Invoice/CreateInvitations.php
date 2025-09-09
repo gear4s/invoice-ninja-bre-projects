@@ -48,6 +48,7 @@ class CreateInvitations extends AbstractService
                 $ii->key = $this->createDbHash($this->invoice->company->db);
                 $ii->invoice_id = $this->invoice->id;
                 $ii->client_contact_id = $contact->id;
+                $ii->can_sign = $contact->can_sign;
                 $ii->save();
             } elseif ($invitation && ! $contact->send_email) {
                 $invitation->delete();
@@ -77,6 +78,7 @@ class CreateInvitations extends AbstractService
             $ii->key = $this->createDbHash($this->invoice->company->db);
             $ii->invoice_id = $this->invoice->id;
             $ii->client_contact_id = $contact->id;
+            $ii->can_sign = $contact->can_sign;
             $ii->save();
         }
 
@@ -89,6 +91,7 @@ class CreateInvitations extends AbstractService
         $new_contact->client_id = $this->invoice->client_id;
         $new_contact->contact_key = Str::random(40);
         $new_contact->is_primary = true;
+        $new_contact->can_sign = false;
         $new_contact->save();
 
         return $new_contact;

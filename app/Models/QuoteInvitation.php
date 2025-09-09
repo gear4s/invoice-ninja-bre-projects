@@ -36,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
+ * @property boolean $can_sign
  * @property string|null $signature_ip
  * @property string|null $email_status
  * @property \App\Models\Company $company

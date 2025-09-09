@@ -55,6 +55,7 @@ class CreateInvitations extends AbstractService
                 $ii->key = $this->createDbHash($this->credit->company->db);
                 $ii->credit_id = $this->credit->id;
                 $ii->client_contact_id = $contact->id;
+                $ii->can_sign = $contact->can_sign;
                 $ii->save();
             } elseif (! $contact->send_email) {
                 $invitation->delete();
@@ -84,6 +85,7 @@ class CreateInvitations extends AbstractService
             $ii->key = $this->createDbHash($this->credit->company->db);
             $ii->credit_id = $this->credit->id;
             $ii->client_contact_id = $contact->id;
+            $ii->can_sign = $contact->can_sign;
             $ii->save();
         }
 
@@ -96,6 +98,7 @@ class CreateInvitations extends AbstractService
         $new_contact->client_id = $this->credit->client_id;
         $new_contact->contact_key = Str::random(40);
         $new_contact->is_primary = true;
+        $new_contact->can_sign = false;
         $new_contact->save();
     }
 }

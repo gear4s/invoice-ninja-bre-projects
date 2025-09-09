@@ -36,6 +36,7 @@ class CreateInvitations extends AbstractService
         $new_contact = VendorContactFactory::create($this->purchase_order->company_id, $this->purchase_order->user_id);
         $new_contact->vendor_id = $this->purchase_order->vendor_id;
         $new_contact->contact_key = Str::random(40);
+        $new_contact->can_sign = false;
         $new_contact->is_primary = true;
         $new_contact->save();
     }
@@ -69,6 +70,7 @@ class CreateInvitations extends AbstractService
                     $ii->key = $this->createDbHash($this->purchase_order->company->db);
                     $ii->purchase_order_id = $this->purchase_order->id;
                     $ii->vendor_contact_id = $contact->id;
+                    $ii->can_sign = $contact->can_sign;
                     $ii->save();
                 } catch (\Exception $e) {
                     nlog($e->getMessage());
@@ -101,6 +103,7 @@ class CreateInvitations extends AbstractService
             $ii->key = $this->createDbHash($this->purchase_order->company->db);
             $ii->purchase_order_id = $this->purchase_order->id;
             $ii->vendor_contact_id = $contact->id;
+            $ii->can_sign = $contact->can_sign;
             $ii->save();
         }
 

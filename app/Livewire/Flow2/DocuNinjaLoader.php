@@ -37,24 +37,23 @@ class DocuNinjaLoader extends Component
 
             // Check if DocuNinja is already completed
             if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
+                $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key);
                 $signable = [
-                    'document_id' => $invitation->invoice->sync->dn_id,
-                    'document_invitation_id' => $invitation->invoice->sync->dn_invitation_id,
-                    'sig' => $invitation->invoice->sync->dn_sig,
+                    'document_id' => $dn_invite['dn_id'],
+                    'document_invitation_id' => $dn_invite['dn_invitation_id'],
+                    'sig' => $dn_invite['dn_sig'],
                     'success' => true,
                 ];
                 
             }
-            elseif(isset($invitation->invoice->sync) && 
-                isset($invitation->invoice->sync->dn_sig) &&
-                isset($invitation->invoice->sync->dn_invitation_id) &&
-                (stripos($invitation->invoice->sync->dn_contacts, $invitation->contact->contact_key) !== false) && //  make sure the current contact matches the existing document!
-                isset($invitation->invoice->sync->dn_id)){
+            elseif($invitation->can_sign &&
+                isset($invitation->invoice->sync) && 
+                $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key)){
                 
                 $signable = [
-                    'document_id' => $invitation->invoice->sync->dn_id,
-                    'document_invitation_id' => $invitation->invoice->sync->dn_invitation_id,
-                    'sig' => $invitation->invoice->sync->dn_sig,
+                    'document_id' => $dn_invite['dn_id'],
+                    'document_invitation_id' => $dn_invite['dn_invitation_id'],
+                    'sig' => $dn_invite['dn_sig'],
                     'success' => !$invitation->invoice->sync->dn_completed,
                 ];
                 
@@ -64,13 +63,13 @@ class DocuNinjaLoader extends Component
                 
                 $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
                 
-                $sync = InvoiceSync::fromArray([
-                    'dn_id' => $signable['document_id'],
-                    'dn_invitation_id' => $signable['document_invitation_id'],
-                    'dn_sig' => $signable['sig'],
-                    'dn_completed' => false,
-                    'dn_contacts' => $invitation->contact->contact_key,
-                ]);
+                $sync = new InvoiceSync(qb_id: '', dn_completed: false);
+                $sync->addInvitation(
+                    $invitation->key,
+                    $signable['document_id'],
+                    $signable['document_invitation_id'],
+                    $signable['sig']
+                );
                 $invitation->invoice->sync = $sync;
                 $invitation->invoice->save();
                 
@@ -108,7 +107,6 @@ class DocuNinjaLoader extends Component
         $this->error = null;
         $this->isLoading = true;
         $this->isReady = false;
-        $this->loadingMessage = 'Retrying DocuNinja initialization...';
         
         $this->loadDocuNinjaData();
     }

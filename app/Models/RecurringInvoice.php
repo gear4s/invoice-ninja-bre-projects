@@ -43,6 +43,7 @@ use App\Models\Presenters\RecurringInvoicePresenter;
  * @property string|null $date
  * @property string|null $due_date
  * @property bool $is_deleted
+ * @property bool $can_sign
  * @property array $line_items
  * @property object|string|null $backup
  * @property string|null $footer

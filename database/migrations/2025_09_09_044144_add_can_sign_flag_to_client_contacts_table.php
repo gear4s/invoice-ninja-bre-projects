@@ -18,6 +18,26 @@ return new class extends Migration
         Schema::table('vendor_contacts', function (Blueprint $table) {
             $table->boolean('can_sign')->default(false);
         });
+
+        Schema::table('invoice_invitations', function (Blueprint $table) {
+            $table->boolean('can_sign')->default(false);
+        });
+
+        Schema::table('quote_invitations', function (Blueprint $table) {
+            $table->boolean('can_sign')->default(false);
+        });
+
+        Schema::table('credit_invitations', function (Blueprint $table) {
+            $table->boolean('can_sign')->default(false);
+        });
+
+        Schema::table('purchase_order_invitations', function (Blueprint $table) {
+            $table->boolean('can_sign')->default(false);
+        });
+
+        Schema::table('recurring_invoice_invitations', function (Blueprint $table) {
+            $table->boolean('can_sign')->default(false);
+        });
     }
 
     /**

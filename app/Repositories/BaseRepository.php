@@ -240,14 +240,8 @@ class BaseRepository
 
             foreach ($data['invitations'] as $invitation) {
                 //if no invitations are present - create one.
-                if($invite = $this->getInvitation($invitation, $resource)){
+                if(!$this->getInvitation($invitation, $resource)){
 
-                    if($model->company->enable_modules && isset($invitation['can_sign']) && $invitation['can_sign']) {
-                        nlog("Adding contact to can_send: " . $invite->contact->contact_key);
-                        $can_send->push($invite->contact->contact_key);
-                    }
-                }
-                else {
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
@@ -271,21 +265,16 @@ class BaseRepository
                             $new_invitation->{$lcfirst_resource_id} = $model->id;
                             $new_invitation->client_contact_id = $contact->id;
                             $new_invitation->key = $this->createDbHash($model->company->db);
+                            $new_invitation->can_sign = $invitation['can_sign'] ?? false;
                             $new_invitation->saveQuietly();
                         }
 
-                        nlog("enable_modules: " . $model->company->enable_modules);
-                        nlog("can_sign: " . $invitation['can_sign']);
-                        if($model->company->enable_modules && isset($invitation['can_sign']) && $invitation['can_sign']) {
-                            nlog("Adding contact to can_send: " . $contact->contact_key);
-                            $can_send->push($contact->contact_key);
-                        }
                     }
                 }
                 
             }
 
-            if($can_send->count() > 0) {
+            if($model->company->enable_modules) {
                 $sync = $model->sync ?? new \App\DataMapper\InvoiceSync();
                 $sync->dn_contacts = $can_send->implode(',');
                 $model->sync = $sync;
