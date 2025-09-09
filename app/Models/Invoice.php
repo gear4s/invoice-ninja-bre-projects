@@ -57,7 +57,7 @@ use App\Utils\Number;
  * @property bool $is_deleted
  * @property object|array|string $line_items
  * @property object|null $backup
- * @property object|null $sync
+ * @property InvoiceSync|null $sync
  * @property string|null $footer
  * @property string|null $public_notes
  * @property string|null $private_notes
