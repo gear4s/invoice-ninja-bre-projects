@@ -27,7 +27,7 @@ class InvoiceSync implements Castable
         public ?string $dn_invitation_id = null,
         public ?string $dn_sig = null,
         public bool $dn_completed = false,
-        public ?string $dn_contact_key = null,
+        public string $dn_contacts = '',
     ){}
      /**
      * Get the name of the caster class to use when casting from / to this cast target.
@@ -47,7 +47,7 @@ class InvoiceSync implements Castable
             dn_completed: $data['dn_completed'] ?? false,
             dn_invitation_id: $data['dn_invitation_id'] ?? null,
             dn_sig: $data['dn_sig'] ?? null,
-            dn_contact_key: $data['dn_contact_key'] ?? null,
+            dn_contacts: $data['dn_contacts'] ?? '',
         );
     }
 }

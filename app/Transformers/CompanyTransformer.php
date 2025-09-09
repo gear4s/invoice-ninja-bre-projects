@@ -226,6 +226,7 @@ class CompanyTransformer extends EntityTransformer
             'has_quickbooks_token' => $company->quickbooks ? true : false,
             'is_quickbooks_token_active' => $company->quickbooks?->accessTokenKey ?? false,
             'legal_entity_id' => $company->legal_entity_id ?? null,
+            'enable_modules' => (bool)$company->enable_modules,
         ];
     }
 

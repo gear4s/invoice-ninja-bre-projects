@@ -95,6 +95,7 @@ class InvoicePay extends Component
     public $required_fields = false;
 
     public $docu_ninja_active = false;
+    public $docu_ninja_ready = false;
 
     #[On('update.context')]
     public function handleContext(string $property, $value): self
@@ -129,6 +130,13 @@ class InvoicePay extends Component
         $this->signature_accepted = true;
 
         // @todo: Rest of events...
+    }
+
+    /** We need to have a valid docuninja payload prior to calling the DocuNinja component. */
+    #[On('docuninja-loader-ready')]
+    public function docuninjaLoaderReady()
+    {
+        $this->docu_ninja_ready = true;    
     }
 
     #[On('payable-amount')]
@@ -214,8 +222,13 @@ class InvoicePay extends Component
             return Terms::class;
         }
 
+        /** Async loading of DocuNinja component needs to be done like this. ie. need full payload prior to passing in. */
         if($this->docu_ninja_active && !$this->signature_accepted) {
-            return \App\Livewire\Flow2\DocuNinja::class;
+            if ($this->docu_ninja_ready) {
+                return \App\Livewire\Flow2\DocuNinja::class;
+            } else {
+                return \App\Livewire\Flow2\DocuNinjaLoader::class;
+            }
         }
         elseif (!$this->signature_accepted) {
             return Signature::class;

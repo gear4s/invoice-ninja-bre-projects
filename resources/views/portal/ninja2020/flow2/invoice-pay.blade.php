@@ -1,4 +1,4 @@
-@if($this->component === 'App\Livewire\Flow2\DocuNinja')
+@if($this->component === 'App\Livewire\Flow2\DocuNinjaLoader' || $this->component === 'App\Livewire\Flow2\DocuNinja')
     {{-- Full width for docuninja component --}}
     <div class="w-full">
         @if($errors->any())
@@ -15,7 +15,7 @@
             session()->forget('errors');
         @endphp
 
-        @livewire($this->component, [], key($this->componentUniqueId()))
+        @livewire($this->component, ['invitation_id' => $this->invitation_id], key($this->componentUniqueId()))
     </div>
 @else
     {{-- Two column layout for other components --}}
@@ -39,7 +39,7 @@
                 session()->forget('errors');
             @endphp
 
-            @livewire($this->component, [], key($this->componentUniqueId()))
+            @livewire($this->component, ['invitation_id' => $this->invitation_id], key($this->componentUniqueId()))
         </div>
     </div>
 @endif

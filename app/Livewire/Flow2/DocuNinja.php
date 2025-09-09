@@ -53,7 +53,7 @@ class DocuNinja extends Component
         elseif(isset($invitation->invoice->sync) && 
         isset($invitation->invoice->sync->dn_sig) &&
         isset($invitation->invoice->sync->dn_invitation_id) &&
-        ($invitation->invoice->sync->dn_contact_key === $invitation->contact->contact_key) &&
+        (stripos($invitation->invoice->sync->dn_contacts, $invitation->contact->contact_key) !== false) &&
         isset($invitation->invoice->sync->dn_id)){
             $signable = [
                 'document_id' => $invitation->invoice->sync->dn_id,
@@ -69,7 +69,7 @@ class DocuNinja extends Component
                 'dn_invitation_id' => $signable['document_invitation_id'],
                 'dn_sig' => $signable['sig'],
                 'dn_completed' => false,
-                'dn_contact_key' => $invitation->contact->contact_key,
+                'dn_contacts' => $invitation->contact->contact_key,
             ]);
             $invitation->invoice->sync = $sync;
             $invitation->invoice->save();
