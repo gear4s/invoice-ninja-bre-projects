@@ -47,6 +47,7 @@ class InvoiceSyncCast implements CastsAttributes
                 'dn_completed' => $value->dn_completed,
                 'dn_invitation_id' => $value->dn_invitation_id,
                 'dn_sig' => $value->dn_sig,
+                'dn_contact_key' => $value->dn_contact_key,
             ])
         ];
 
