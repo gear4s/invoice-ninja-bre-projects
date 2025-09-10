@@ -37,17 +37,14 @@ class DocuNinjaLoader extends Component
 
             // Check if DocuNinja is already completed
             if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
-                $this->dispatch('docuninja-signature-captured');
-                // $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key);
-                // $signable = [
-                //     'document_id' => $dn_invite['dn_id'],
-                //     'document_invitation_id' => $dn_invite['dn_invitation_id'],
-                //     'sig' => $dn_invite['dn_sig'],
-                //     'success' => true,
-                // ];
-                
+                $this->dispatch('docuninja-signature-captured'); 
+                $this->isLoading = false;
+                return;
             }
-            elseif(!$invitation->can_sign){
+            elseif(!$invitation->can_sign && $invitation->invoice->invitations()->where('can_sign', true)->count() >= 1)
+            {
+                // A special edge case exists for old invitations where the can_sign flag is not set.
+                // For this scenario - the first user to view the doc, will have can_sign set to true.
                 $this->error = 'You are not authorized to sign this document.';
                 $this->isLoading = false;
                 return;
@@ -67,11 +64,17 @@ class DocuNinjaLoader extends Component
             // Generate new DocuNinja signable data
             else{
                 
+                //Handle edge case where the can_sign flag is not set for any invites
+                if(!$invitation->can_sign){
+                    $invitation->can_sign = true;
+                    $invitation->saveQuietly();
+                }
+
                 $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
                 
                 $sync = new InvoiceSync(qb_id: '', dn_completed: false);
                 $sync->addInvitation(
-                    $invitation->key,
+                    $signable['invitation_key'],
                     $signable['document_id'],
                     $signable['document_invitation_id'],
                     $signable['sig']

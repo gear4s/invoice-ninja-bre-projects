@@ -35,7 +35,7 @@ class CreateInvitations extends AbstractService
         if ($contacts->count() == 0) {
             $this->createBlankContact();
         }
-
+        
         $this->invoice->client->contacts()->each(function ($contact) {
             $invitation = InvoiceInvitation::query()->where('company_id', $this->invoice->company_id)
                                         ->where('client_contact_id', $contact->id)
@@ -80,6 +80,16 @@ class CreateInvitations extends AbstractService
             $ii->client_contact_id = $contact->id;
             $ii->can_sign = $contact->can_sign;
             $ii->save();
+        }
+
+        if($this->invoice->invitations()->where('can_sign', true)->count() == 0){
+            
+            $ii = $this->invoice->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $this->invoice->invitations()->first();
+
+            $ii->can_sign = true;
+            $ii->saveQuietly();
         }
 
         return $this->invoice;

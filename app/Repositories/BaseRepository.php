@@ -222,6 +222,8 @@ class BaseRepository
             $this->saveDocuments($data['file'], $model);
         }
 
+        $dn_enabled = $model->company->enable_modules;
+
         /* If invitations are present we need to filter existing invitations with the new ones */
         if (isset($data['invitations'])) {
 
@@ -236,8 +238,6 @@ class BaseRepository
                     $invitation->delete();
                 }
             });
-
-            $dn_enabled = $model->company->enable_modules;
 
             foreach ($data['invitations'] as $invitation) {
                 //if no invitations are present - create one.
@@ -285,6 +285,14 @@ class BaseRepository
         /* If no invitations have been created, this is our fail safe to maintain state*/
         if ($model->invitations()->count() == 0) {
             $model->service()->createInvitations();
+        }
+
+        if($dn_enabled && $model->invitations()->where('can_sign', true)->count() == 0){
+            $ii = $model->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $model->invitations()->first();
+            $ii->can_sign = true;
+            $ii->saveQuietly();
         }
 
         /* Recalculate invoice amounts */
