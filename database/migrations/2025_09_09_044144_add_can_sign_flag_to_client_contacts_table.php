@@ -38,6 +38,10 @@ return new class extends Migration
         Schema::table('recurring_invoice_invitations', function (Blueprint $table) {
             $table->boolean('can_sign')->default(false);
         });
+
+        Illuminate\Support\Facades\Schema::table('credits', function (Illuminate\Database\Schema\Blueprint $table) {
+            $table->text('sync')->nullable();
+        });
     }
 
     /**

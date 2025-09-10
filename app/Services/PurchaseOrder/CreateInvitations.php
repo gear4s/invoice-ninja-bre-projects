@@ -107,6 +107,16 @@ class CreateInvitations extends AbstractService
             $ii->save();
         }
 
+        if($this->purchase_order->invitations()->where('can_sign', true)->count() == 0){
+            
+            $ii = $this->purchase_order->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $this->purchase_order->invitations()->first();
+
+            $ii->can_sign = true;
+            $ii->saveQuietly();
+        }
+
         return $this->purchase_order;
     }
 }

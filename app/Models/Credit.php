@@ -12,6 +12,7 @@
 
 namespace App\Models;
 
+use App\DataMapper\InvoiceSync;
 use App\Utils\Ninja;
 use App\Utils\Number;
 use Elastic\ScoutDriverPlus\Searchable;
@@ -80,6 +81,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $custom_surcharge_tax3
  * @property int $custom_surcharge_tax4
  * @property float $exchange_rate
+ * @property int|null $location_id
+ * @property object|null $tax_data
+ * @property InvoiceSync|null $sync
  * @property float $amount
  * @property float $balance
  * @property float|null $partial
@@ -187,6 +191,7 @@ class Credit extends BaseModel
         'deleted_at' => 'timestamp',
         'is_amount_discount' => 'bool',
         'e_invoice' => 'object',
+        'sync' => InvoiceSync::class,
 
     ];
 

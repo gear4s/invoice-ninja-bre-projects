@@ -89,6 +89,16 @@ class CreateInvitations extends AbstractService
             $ii->save();
         }
 
+        if($this->credit->invitations()->where('can_sign', true)->count() == 0){
+            
+            $ii = $this->credit->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $this->credit->invitations()->first();
+
+            $ii->can_sign = true;
+            $ii->saveQuietly();
+        }
+
         return $this->credit;
     }
 

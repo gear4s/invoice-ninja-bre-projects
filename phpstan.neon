@@ -21,6 +21,7 @@ parameters:
             - 'app/Http/Middleware/ThrottleRequestsWithPredis.php'
             - 'app/Utils/Traits/*'
             - 'Modules/Accounting/*'
+            - 'tests/'
     universalObjectCratesClasses:
         - App\DataMapper\Tax\RuleInterface
         - App\DataMapper\FeesAndLimits

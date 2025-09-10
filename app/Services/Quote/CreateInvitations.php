@@ -88,6 +88,16 @@ class CreateInvitations
             $ii->saveQuietly();
         }
 
+        if($this->quote->invitations()->where('can_sign', true)->count() == 0){
+            
+            $ii = $this->quote->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $this->quote->invitations()->first();
+
+            $ii->can_sign = true;
+            $ii->saveQuietly();
+        }
+
         return $this->quote->fresh();
     }
 

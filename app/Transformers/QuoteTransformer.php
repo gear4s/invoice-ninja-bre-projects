@@ -165,7 +165,7 @@ class QuoteTransformer extends EntityTransformer
             'tax_info' => $quote->tax_data ?: new \stdClass(),
             'e_invoice' => $quote->e_invoice ?: new \stdClass(),
             'location_id' => $this->encodePrimaryKey($quote->location_id),
-
+            'sync' => $quote->sync,
         ];
     }
 }

@@ -116,11 +116,11 @@ class MapSettings extends AbstractService
     private function handleCompanyGateways(string $company_gateway_ids): string
     {
         nlog($company_gateway_ids);
-        if(strlen($company_gateway_ids) == "0") {
+        if($company_gateway_ids == "0") {
             return "Payment Gateways Disabled!";
         }
         
-        if (strlen($company_gateway_ids) == "") {
+        if ($company_gateway_ids == "") {
             return "No Special Configuration.";
         }
 
