@@ -122,12 +122,6 @@ class DocuNinjaLoader extends Component
 
     public function render()
     {
-        \Log::info('DocuNinjaLoader render called', [
-            'isLoading' => $this->isLoading,
-            'isReady' => $this->isReady,
-            'error' => $this->error
-        ]);
-
         return view('portal.ninja2020.flow2.docu-ninja-loader');
     }
 }

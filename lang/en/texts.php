@@ -5592,6 +5592,22 @@ $lang = array(
     'docuninja_downgrade_info' => 'Your user limit will automatically be reduced at the end of the current billing cycle.',
     'recurring_invoice_item' => 'Recurring Invoice Item',
     'authorized_to_sign' => 'Authorized to sign',
+    'ninja_quote_notification' => 'Quote Signed Notification', 
+    'ninja_invoice_notification' => 'Invoice Signed Notification', 
+    'ninja_credit_notification' => 'Credit Signed Notification', 
+    'ninja_purchase_order_notification' => 'Purchase Order Signed Notification', 
+    'email_client_when_quote_signed_description' => 'Email client when Quote is signed',
+    'email_client_when_invoice_signed_description' => 'Email client when Invoice is signed',
+    'email_client_when_credit_signed_description' => 'Email client when Credit is signed',
+    'email_vendor_when_purchase_order_signed_description' => 'Email Vendor when Purchase Order is signed', 
+    'custom_document_completed' => 'Custom Document completed',
+    'email_client_when_custom_document_completed' => 'Email client when a Custom Document has been signed',
+    'sender' => 'Sender',
+    'activity_154' => 'Invoice :invoice for :client was signed',
+    'activity_155' => 'Quote :quote for :client was signed',
+    'activity_156' => 'Credit :credit for :client was signed',
+    'activity_157' => 'Purchase Order :purchase_order for :vendor was signed',
+    'activity_158' => 'Custom Document :document for :client was signed',
 );
 
 return $lang;

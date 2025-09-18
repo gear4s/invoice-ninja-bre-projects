@@ -281,7 +281,17 @@ class Activity extends StaticModel
     public const EMAIL_CREDIT = 149;
 
     public const ACCOUNT_DELETED = 150;
-    
+
+    public const INVOICE_DOCUMENT_SIGNED = 154;
+
+    public const QUOTE_DOCUMENT_SIGNED = 155;
+
+    public const CREDIT_DOCUMENT_SIGNED = 156;
+
+    public const PURCHASE_ORDER_DOCUMENT_SIGNED = 157;
+
+    public const CUSTOM_DOCUMENT_SIGNED = 158;
+
     protected $casts = [
         'is_system' => 'boolean',
         'updated_at' => 'timestamp',
