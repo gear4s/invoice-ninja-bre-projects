@@ -42,6 +42,8 @@ class DocuNinja extends Component
 
         $invitation = InvoiceInvitation::find($this->getContext()['invitation_id']);
 
+        $this->company_key = $invitation->company->company_key;
+
         if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
             $this->dispatch('docuninja-signature-captured');
             // $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key);
@@ -85,8 +87,6 @@ class DocuNinja extends Component
         $this->document_id = $signable['document_id'];
         $this->document_invitation_id = $signable['document_invitation_id'];
         $this->sig = $signable['sig'];
-
-        $this->company_key = $invitation->company->company_key;
     }
 
     public function placeholder()
