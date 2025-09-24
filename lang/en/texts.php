@@ -5629,6 +5629,15 @@ $lang = array(
     'new_blueprint' => 'New Blueprint',
     'user_limit_reached' => 'Need more users? Upgrade your plan!',
     'requires_approval' => 'Requires Approval',
+    'document_viewed_notification' => 'Document viewed notifications',
+    'document_created_notification' => 'Document created notifications',
+    'document_sent_notification' => 'Document sent notifications',
+    'document_signed_notification' => 'Document signed notifications',
+    'document_completed_notification' => 'Document completed notifications',
+    'document_rejected_notification' => 'Document rejected notifications',
+    'document_voided_notification' => 'Document voided notifications',
+    'document_expired_notification' => 'Document expired notifications',
+    'document_created' => 'Document created',
 );
 
 return $lang;
