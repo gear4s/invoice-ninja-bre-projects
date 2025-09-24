@@ -79,14 +79,16 @@ class DocuNinja extends Component
             $invitation->invoice->save();
         }
             
-        if(!$signable['success']){
+        if(isset($signable['success']) && !$signable['success']){
             $this->dispatch('docuninja-signature-captured');
         }
 
+        if(isset($signable) && $signable){
         // nlog($signable);
-        $this->document_id = $signable['document_id'];
-        $this->document_invitation_id = $signable['document_invitation_id'];
-        $this->sig = $signable['sig'];
+            $this->document_id = $signable['document_id'];
+            $this->document_invitation_id = $signable['document_invitation_id'];
+            $this->sig = $signable['sig'];
+        }
     }
 
     public function placeholder()
