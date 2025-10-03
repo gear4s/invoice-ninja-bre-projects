@@ -5639,6 +5639,7 @@ $lang = array(
     'document_expired_notification' => 'Document expired notifications',
     'document_created' => 'Document created',
     'edit_template' => 'Edit Template',
+    'template_loaded' => 'Template loaded',
 );
 
 return $lang;
