@@ -5640,6 +5640,7 @@ $lang = array(
     'document_created' => 'Document created',
     'edit_template' => 'Edit Template',
     'template_loaded' => 'Template loaded',
+    'select_user_or_client' => 'Select User or Client',
 );
 
 return $lang;
