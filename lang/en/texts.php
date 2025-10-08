@@ -5643,6 +5643,7 @@ $lang = array(
     'edit_template' => 'Edit Template',
     'template_loaded' => 'Template loaded',
     'select_user_or_client' => 'Select User or Client',
+    'docuninja_quota_available_but_no_users' => 'Add a user to Invoice Ninja first, then grant them access to DocuNinja here'
 );
 
 return $lang;
