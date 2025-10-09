@@ -5645,6 +5645,9 @@ $lang = array(
     'select_user_or_client' => 'Select User or Client',
     'docuninja_quota_available_but_no_users' => 'Add a user to Invoice Ninja first, then grant them access to DocuNinja here',
     'send_confirmation' => 'Send Confirmation',
+    'document_queued_for_sending' => 'Document queued for sending',
+    'document_voided' => 'Document Voided',
+
 );
 
 return $lang;
