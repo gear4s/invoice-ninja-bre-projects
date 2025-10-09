@@ -74,7 +74,7 @@ class UserController extends BaseController
     public function index(UserFilters $filters)
     {
         $users = User::filter($filters);
-
+        
         return $this->listResponse($users);
     }
 
