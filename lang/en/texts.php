@@ -5647,7 +5647,7 @@ $lang = array(
     'send_confirmation' => 'Send Confirmation',
     'document_queued_for_sending' => 'Document queued for sending',
     'document_voided' => 'Document Voided',
-
+    'view_document' => 'View Document',
 );
 
 return $lang;
