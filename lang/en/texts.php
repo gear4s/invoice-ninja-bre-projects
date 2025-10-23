@@ -5648,6 +5648,7 @@ $lang = array(
     'document_queued_for_sending' => 'Document queued for sending',
     'document_voided' => 'Document Voided',
     'view_document' => 'View Document',
+    'audit_log' => 'Audit Log',
 );
 
 return $lang;
