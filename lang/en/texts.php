@@ -5649,6 +5649,7 @@ $lang = array(
     'document_voided' => 'Document Voided',
     'view_document' => 'View Document',
     'audit_log' => 'Audit Log',
+    'make_template' => 'Make Template',
 );
 
 return $lang;
