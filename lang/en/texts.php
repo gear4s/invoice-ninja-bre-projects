@@ -5650,6 +5650,16 @@ $lang = array(
     'view_document' => 'View Document',
     'audit_log' => 'Audit Log',
     'make_template' => 'Make Template',
+    'use_template' => 'Use Template',
+    'map_signatories' => 'Map Signatories',
+    'map_signatories_instructions' => 'Assign the Signatories to the template',
+    'total_signatories' => 'Total Signatories',
+    'mapped' => 'Mapped',
+    'docuninja_splash_message' => 'Loading DocuNinja...',
+    'docuninja_contact_admin_for_access' => 'Contact your admin for access to DocuNinja.',
+    'cloned_document' => 'Document Cloned',
+    'void' => 'Void',
+    'invitation_signatory_help' => 'Documents are signed sequentially, after the first signatory has signed, the next signatory will be able to sign.',
 );
 
 return $lang;
