@@ -5660,6 +5660,20 @@ $lang = array(
     'cloned_document' => 'Document Cloned',
     'void' => 'Void',
     'invitation_signatory_help' => 'Documents are signed sequentially, after the first signatory has signed, the next signatory will be able to sign.',
+    'timeline' => 'Timeline',
+    'clone_to_template' => 'Clone to Template',
+    'cloned_document' => 'Document Cloned',
+    'add_signatories' => 'Add Signatories',
+    'voided_document' => 'Document Voided',
+    'voided' => 'Voided',
+    'archive_document_description' => 'Are you sure you want to archive this document?',
+    'restore_document_description' => 'Are you sure you want to restore this document?',
+    'delete_document_description' => 'Are you sure you want to delete this document?',
+    'document_archived' => 'Document Archived',
+    'document_restored' => 'Document Restored',
+    'document_deleted' => 'Document Deleted',
+    
+
 );
 
 return $lang;
