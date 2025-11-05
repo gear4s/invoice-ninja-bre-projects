@@ -30,7 +30,7 @@
     
     const mount = document.getElementById("sign");
     
-    new DocuNinjaSign({ document: doc, invitation, sig, endpoint: config('ninja.docuninja_api_url'), company }).mount(mount);
+    new DocuNinjaSign({ document: doc, invitation, sig, endpoint: '{{ config('ninja.docuninja_api_url') }}', company }).mount(mount);
 
     window.addEventListener('builder:sign.submit.success', function () {
         Livewire.dispatch('docuninja-signature-captured');

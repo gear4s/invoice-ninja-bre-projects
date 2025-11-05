@@ -53,8 +53,9 @@ class DocuNinjaLoader extends Component
                 throw new \Exception('Invoice invitation not found');
             }
 
+
             // Check if DocuNinja is already completed
-            if(isset($invitation->{$this->entity_type}->sync->dn_completed) && $invitation->{$this->entity_type}->sync->dn_completed){
+            if(isset($invitation->{$this->entity_type}->sync->dn_completed) && $invitation->{$this->entity_type}->sync->dn_completed === true){
                 $this->dispatch('docuninja-signature-captured'); 
                 $this->isLoading = false;
                 return;
@@ -99,7 +100,7 @@ class DocuNinjaLoader extends Component
                 );
                 $invitation->{$this->entity_type}->sync = $sync;
                 $invitation->{$this->entity_type}->save();
-                
+                 
             }
 
             // Check if signing is not successful (already completed or error)

@@ -48,7 +48,7 @@
             <input type="hidden" name="contact_email" value="{{ auth()->guard('contact')->user()->email }}">
             <input type="hidden" name="client_city" value="{{ auth()->guard('contact')->user()->client->city }}">
             <input type="hidden" name="client_postal_code" value="{{ auth()->guard('contact')->user()->client->postal_code }}">
-
+            <input type="hidden" name="docuninja_active" value="{{ $docuninja_active ? 'true' : 'false' }}">
             <div class="bg-white shadow sm:rounded-lg mb-4" translate>
                 <div class="px-4 py-5 sm:p-6">
                     <div class="sm:flex sm:items-start sm:justify-between">

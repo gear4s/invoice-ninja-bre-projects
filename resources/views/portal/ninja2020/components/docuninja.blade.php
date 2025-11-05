@@ -1,42 +1,10 @@
+@extends('portal.ninja2020.layout.app')
+@section('meta_title', ctrans('texts.sign_now'))
+
 @push('head')
 <link rel="stylesheet" href="{{ asset('build/dist/builder2.0.standalone.css/builder2.0.standalone.css') }}">
 @endpush
-<div class="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden px-4 py-5 bg-white sm:gap-4 sm:px-6">
-    <div class="p-2">
-        @if($errors->any())
-        <div class="alert alert-error">
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li class="text-sm">{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-        @endif
 
-        @php
-            session()->forget('errors');
-        @endphp
-
-    </div>
-        
-    <div id="sign"></div>
-</div>
-    
-@assets
-<script type="module">
-    const doc = '{{ $document }}';
-    const invitation = '{{ $invitation }}';
-    const sig = '{{ $sig }}';
-    const company = '{{ $company_key }}';
-    
-    const mount = document.getElementById("sign");
-    
-    new DocuNinjaSign({ document: doc, invitation, sig, endpoint: config('ninja.docuninja_api_url'), company }).mount(mount);
-
-    window.addEventListener('builder:sign.submit.success', function () {
-        // Redirect to URL after successful signature
-        window.location.href = "{{ $redirect_url ??route('client.payments.process', ['request_hash' => $request_hash]) }}";
-    });
-
-</script>
-@endassets
+@section('body')
+    @livewire('sign', ['invitation_id' => $invitation_id, 'entity_type' => $entity_type, 'db' => $db, 'request_hash' => $request_hash])
+@endsection

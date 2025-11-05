@@ -23,6 +23,7 @@
 
     <input type="hidden" name="client_city" value="{{ auth()->guard('contact')->user()->client->city }}">
     <input type="hidden" name="client_postal_code" value="{{ auth()->guard('contact')->user()->client->postal_code }}">
+    <input type="hidden" name="docuninja_active" value="{{ $docuninja_active ? 'true' : 'false' }}">
 
     <div class="container mx-auto">
         <div class="grid grid-cols-6 gap-4">

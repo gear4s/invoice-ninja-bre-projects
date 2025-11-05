@@ -81,17 +81,28 @@ class InvoiceController extends Controller
             'variables' => $variables,
             'invoices' => [$invoice->hashed_id],
             'db' => $invoice->company->db,
+            'docuninja_active' => false,
         ];
 
         if ($request->query('mode') === 'fullscreen') {
             return render('invoices.show-fullscreen', $data);
         }
+        $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
+
+        if($default_flow){
+            $docuninja_active = $invoice->company->enable_modules;
+            $signature_required = $invoice->client->getSetting('require_invoice_signature');
+            $signature_accepted = $invoice->sync?->dn_completed;
+            $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
+            $data['docuninja_active'] = (bool) $set_docuninja;
+        }
 
         if (!$invoice->isPayable()) {
+            unset($data['invitation']);
             return $this->render('invoices.show', $data);
         }
 
-        return auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default' ? $this->render('invoices.show', $data) : $this->render('invoices.show_smooth', $data);
+        return $default_flow ? $this->render('invoices.show', $data) : $this->render('invoices.show_smooth', $data);
 
     }
 
@@ -112,10 +123,6 @@ class InvoiceController extends Controller
         }
 
         $invitation = false;
-
-        if(!isset($data['entity_type'])){
-            nlog(array_merge(["showBlob"], $data));
-        }
 
         match($data['entity_type'] ?? 'invoice') {
             'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']), //@todo - sometimes this is false!!
@@ -257,10 +264,26 @@ class InvoiceController extends Controller
             'variables' => $variables,
             'invitation' => $invitation,
             'db' => $invitation->company->db,
+            'docuninja_active' => false,
         ];
 
-        // return $this->render('invoices.payment', $data);
-        return auth()->guard('contact')->user()->client->getSetting('payment_flow') === 'default' ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
+        $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
+
+        if($default_flow){
+            $docuninja_active = $invoices->first()->company->enable_modules;
+            $signature_required = $invoices->first()->client->getSetting('require_invoice_signature');
+            $signature_accepted = $invoices->reject(function ($invoice){
+                return !$invoice->sync?->dn_completed;
+            })->count() == 0;
+
+            $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
+            
+            $data['docuninja_active'] = (bool) $set_docuninja;
+
+        }
+
+        return $default_flow ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
+    
     }
 
     /**
