@@ -2,13 +2,16 @@
 
 namespace App\Livewire\Flow2;
 
-use App\DataMapper\InvoiceSync;
-use App\Models\InvoiceInvitation;
+use Livewire\Component;
 use App\Libraries\MultiDB;
 use Livewire\Attributes\On;
-use Livewire\Component;
-use App\Utils\Traits\WithSecureContext;
 use Livewire\Attributes\Lazy;
+use App\DataMapper\InvoiceSync;
+use App\Models\QuoteInvitation;
+use App\Models\CreditInvitation;
+use App\Models\InvoiceInvitation;
+use App\Models\PurchaseOrderInvitation;
+use App\Utils\Traits\WithSecureContext;
 
 class DocuNinjaLoader extends Component
 {
@@ -19,29 +22,44 @@ class DocuNinjaLoader extends Component
     public $error = null;
     public $isReady = false;
 
+    public $entity_type;
+
+    private function getInvitation()
+    {
+        return match($this->getContext()['entity_type']){
+            'invoice' => InvoiceInvitation::withTrashed()->find($this->invitation_id),
+            'quote' => QuoteInvitation::withTrashed()->find($this->invitation_id),
+            'credit' => CreditInvitation::withTrashed()->find($this->invitation_id),
+            'purchase_order' => PurchaseOrderInvitation::withTrashed()->find($this->invitation_id),
+            default => InvoiceInvitation::withTrashed()->find($this->invitation_id),
+        };
+    }
+
     public function mount()
     {
         // Set database context
         MultiDB::setDb($this->getContext()['db']);   
+        $this->entity_type = $this->getContext()['entity_type'];
+
      }
 
     public function loadDocuNinjaData()
     {
         try {
             
-            $invitation = InvoiceInvitation::find($this->invitation_id);
+            $invitation = $this->getInvitation();
             
             if (!$invitation) {
                 throw new \Exception('Invoice invitation not found');
             }
 
             // Check if DocuNinja is already completed
-            if(isset($invitation->invoice->sync->dn_completed) && $invitation->invoice->sync->dn_completed){
+            if(isset($invitation->{$this->entity_type}->sync->dn_completed) && $invitation->{$this->entity_type}->sync->dn_completed){
                 $this->dispatch('docuninja-signature-captured'); 
                 $this->isLoading = false;
                 return;
             }
-            elseif(!$invitation->can_sign && $invitation->invoice->invitations()->where('can_sign', true)->count() >= 1)
+            elseif(!$invitation->can_sign && $invitation->{$this->entity_type}->invitations()->where('can_sign', true)->count() >= 1)
             {
                 // A special edge case exists for old invitations where the can_sign flag is not set.
                 // For this scenario - the first user to view the doc, will have can_sign set to true.
@@ -50,14 +68,14 @@ class DocuNinjaLoader extends Component
                 return;
             }
             elseif($invitation->can_sign &&
-                isset($invitation->invoice->sync) && 
-                $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key)){
+                isset($invitation->{$this->entity_type}->sync) && 
+                $dn_invite = $invitation->{$this->entity_type}->sync->getInvitation($invitation->key)){
                 
                 $signable = [
                     'document_id' => $dn_invite['dn_id'],
                     'document_invitation_id' => $dn_invite['dn_invitation_id'],
                     'sig' => $dn_invite['dn_sig'],
-                    'success' => !$invitation->invoice->sync->dn_completed,
+                    'success' => !$invitation->{$this->entity_type}->sync->dn_completed,
                 ];
                 
             }
@@ -70,7 +88,7 @@ class DocuNinjaLoader extends Component
                     $invitation->saveQuietly();
                 }
 
-                $signable = $invitation->invoice->service()->getDocuNinjaSignable($invitation);
+                $signable = $invitation->{$this->entity_type}->service()->getDocuNinjaSignable($invitation);
                 
                 $sync = new InvoiceSync(qb_id: '', dn_completed: false);
                 $sync->addInvitation(
@@ -79,8 +97,8 @@ class DocuNinjaLoader extends Component
                     $signable['document_invitation_id'],
                     $signable['sig']
                 );
-                $invitation->invoice->sync = $sync;
-                $invitation->invoice->save();
+                $invitation->{$this->entity_type}->sync = $sync;
+                $invitation->{$this->entity_type}->save();
                 
             }
 
