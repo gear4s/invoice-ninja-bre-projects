@@ -156,6 +156,7 @@ class PaymentController extends Controller
                 return $this->render('components.docuninja', [
                     'invitation_id' => $invitation->id,
                     'entity_type' => 'invoice',
+                    'entity_number' => $invitation->invoice->number,
                     'db' => $invitation->company->db,
                     'request_hash' => $request_hash,
                 ]);

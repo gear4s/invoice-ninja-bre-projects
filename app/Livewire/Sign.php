@@ -78,8 +78,7 @@ class Sign extends Component
     #[On('docuninja-signature-captured')]
     public function docuNinjaSignatureCaptured()
     {
-        nlog("docuNinjaSignatureCaptured");
-        
+           
         if (!$this->docu_ninja_ready) {
             return;
         }
@@ -95,7 +94,6 @@ class Sign extends Component
     #[On('docuninja-loader-ready')]
     public function docuninjaLoaderReady()
     {
-        nlog("docuninjaLoaderReady");
         $this->docu_ninja_ready = true;    
     }
 

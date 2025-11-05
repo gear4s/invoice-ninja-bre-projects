@@ -5672,7 +5672,7 @@ $lang = array(
     'document_archived' => 'Document Archived',
     'document_restored' => 'Document Restored',
     'document_deleted' => 'Document Deleted',
-    
+    'sign_now' => 'Sign Now',
 
 );
 
