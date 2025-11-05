@@ -276,6 +276,7 @@ class InvoicePay extends Component
             'settings' => $settings,
             'db' => $this->db,
             'invitation_id' => $this->invitation_id,
+            'entity_type' => 'invoice',
         ]);
 
         $invoices = Invoice::withTrashed()
