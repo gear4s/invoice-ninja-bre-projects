@@ -230,7 +230,7 @@ class InvoicePay extends Component
                 return \App\Livewire\Flow2\DocuNinjaLoader::class;
             }
         }
-        elseif (!$this->signature_accepted) {
+        elseif (!$this->signature_accepted && !$this->docu_ninja_active) {
             return Signature::class;
         }
 

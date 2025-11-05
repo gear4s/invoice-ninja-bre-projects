@@ -1,4 +1,4 @@
-<div class="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden px-4 py-5 bg-white sm:gap-4 sm:px-6"
+<div class="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden px-4 py-5 bg-white sm:gap-4 sm:px-6 min-h-[400px]"
      wire:key="docuninja-loader" wire:init="loadDocuNinjaData">
     
      @if($error)
@@ -9,9 +9,8 @@
         </div>
     @endif
 
-    {{-- Loading State --}}
-    @if($isLoading)
-        <div class="flex flex-col items-center justify-center p-8 space-y-4">
+    @if($isLoading || (!$isReady && !$error))
+        <div class="flex flex-col items-center justify-center p-8 space-y-4 min-h-[350px]">
             {{-- Animated Spinner --}}
             <div class="relative">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -21,11 +20,12 @@
             </div>
             
             {{-- Loading Steps --}}
-            <div class="text-xs text-gray-500 space-y-1">
-                <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span class="text-lg font-medium text-gray-900">DocuNinja Loading...</span>
+            <div class="text-center space-y-2">
+                <div class="flex items-center justify-center space-x-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-lg font-medium text-gray-900">Loading DocuNinja...</span>
                 </div>
+                <p class="text-sm text-gray-500">Preparing document for signing</p>
             </div>
             
         </div>

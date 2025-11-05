@@ -82,6 +82,7 @@ class InvoiceController extends Controller
             'invoices' => [$invoice->hashed_id],
             'db' => $invoice->company->db,
             'docuninja_active' => false,
+            'requires_signature' => $invoice->client->getSetting('require_invoice_signature') && $invoice->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
         ];
 
         if ($request->query('mode') === 'fullscreen') {
@@ -95,6 +96,11 @@ class InvoiceController extends Controller
             $signature_accepted = $invoice->sync?->dn_completed;
             $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
             $data['docuninja_active'] = (bool) $set_docuninja;
+
+            // If DocuNinja is active, we don't need to show the signature field.
+            if($docuninja_active){
+                $data['requires_signature'] = false;
+            }
         }
 
         if (!$invoice->isPayable()) {
@@ -265,6 +271,8 @@ class InvoiceController extends Controller
             'invitation' => $invitation,
             'db' => $invitation->company->db,
             'docuninja_active' => false,
+            'requires_signature' => $invoices->first()->client->getSetting('require_invoice_signature') && $invoices->first()->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
+
         ];
 
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
@@ -280,6 +288,10 @@ class InvoiceController extends Controller
             
             $data['docuninja_active'] = (bool) $set_docuninja;
 
+            // If DocuNinja is active, we don't need to show the signature field.
+            if($docuninja_active){
+                $data['requires_signature'] = false;
+            }
         }
 
         return $default_flow ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
