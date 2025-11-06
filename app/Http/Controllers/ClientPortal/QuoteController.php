@@ -24,6 +24,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\Invoice\InjectSignature;
 use Illuminate\Contracts\View\Factory;
 use App\Events\Misc\InvitationWasViewed;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Http\Requests\ClientPortal\Quotes\ShowQuoteRequest;
 use App\Http\Requests\ClientPortal\Quotes\ShowQuotesRequest;
@@ -84,6 +85,12 @@ class QuoteController extends Controller
 
     public function bulk(ProcessQuotesInBulkRequest $request)
     {
+        if($request->has('request_hash')){
+            $request_hash = $request->input('request_hash');
+            $request_array = Cache::get($request_hash);
+            $request->merge($request_array);
+        }
+
         $transformed_ids = $this->transformKeys($request->quotes);
 
         if ($request->action == 'download') {
@@ -91,6 +98,33 @@ class QuoteController extends Controller
         }
 
         if ($request->action == 'approve') {
+
+            if(auth()->guard('contact')->user()->company->enable_modules){
+                $invitations = \App\Models\QuoteInvitation::with('quote')
+                                        ->whereIn('quote_id', $transformed_ids)
+                                        ->where('client_contact_id', auth()->guard('contact')->user()->id)
+                                        ->get()
+                                        ->filter(function ($invitation) {
+                                            return !$invitation->quote->sync?->dn_completed;
+                                        });
+                
+                if($invitations->count() > 0){
+                    $request_hash = \Illuminate\Support\Str::random(64);
+                    $request->merge(['entity_type' => 'invoice', 'db' => auth()->guard('contact')->user()->company->db, 'request_hash' => $request_hash]);
+
+                    Cache::put($request_hash, $request->all(), 60 * 60 * 24);
+                    $invitation = $invitations->first();
+
+                    return $this->render('components.docuninja', [
+                        'invitation_id' => $invitation->id,
+                        'entity_type' => 'quote',
+                        'entity_number' => $invitation->quote->number,
+                        'db' => $invitation->company->db,
+                        'request_hash' => $request_hash,
+                    ]);
+                }
+            }
+
             return $this->approve((array) $transformed_ids, $request->has('process'));
         }
 
@@ -232,9 +266,17 @@ class QuoteController extends Controller
 
         $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
 
+        $requires_signature = !$quotes->first()->company->enable_modules && $quotes->first()->client->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS) && $quotes->first()->client->getSetting('require_quote_signature');
+
+        nlog(!$quotes->first()->company->enable_modules);
+        nlog($quotes->first()->client->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS));
+        nlog($quotes->first()->client->getSetting('require_quote_signature'));
+        nlog($requires_signature);
+
         return $this->render('quotes.approve', [
             'quotes' => $quotes,
             'variables' => $variables,
+            'requires_signature' => $requires_signature,
         ]);
     }
 }

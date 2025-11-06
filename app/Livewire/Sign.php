@@ -105,7 +105,9 @@ class Sign extends Component
         $invitation->{$this->entity_type}->save();
 
         if($this->entity_type == 'invoice')
-        $this->redirectRoute('client.payments.process', ['request_hash' => $this->request_hash]);
+            $this->redirectRoute('client.payments.process', ['request_hash' => $this->request_hash]);
+        elseif($this->entity_type == 'quote')
+            $this->redirectRoute('client.quotes.bulk', ['request_hash' => $this->request_hash]);
        
     }
 
