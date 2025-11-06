@@ -153,7 +153,7 @@ class PurchaseOrderTransformer extends EntityTransformer
             'tax_info' => $purchase_order->tax_data ?: new \stdClass(),
             'e_invoice' => $purchase_order->e_invoice ?: new \stdClass(),
             'location_id' => $this->encodePrimaryKey($purchase_order->location_id),
-
+            'sync' => $purchase_order->sync,
         ];
     }
 }

@@ -12,16 +12,17 @@
 
 namespace App\Livewire\Flow2;
 
-use App\Libraries\MultiDB;
-use App\Models\CompanyGateway;
-use App\Models\Invoice;
+use App\Utils\Ninja;
 use App\Utils\Number;
-use App\Utils\Traits\MakesDates;
-use App\Utils\Traits\MakesHash;
-use App\Utils\Traits\WithSecureContext;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
+use App\Models\Invoice;
 use Livewire\Component;
+use App\Libraries\MultiDB;
+use Livewire\Attributes\On;
+use App\Models\CompanyGateway;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\MakesDates;
+use Livewire\Attributes\Computed;
+use App\Utils\Traits\WithSecureContext;
 
 class InvoicePay extends Component
 {
@@ -223,7 +224,7 @@ class InvoicePay extends Component
         }
 
         /** Async loading of DocuNinja component needs to be done like this. ie. need full payload prior to passing in. */
-        if($this->docu_ninja_active && !$this->signature_accepted) {
+        if($this->docu_ninja_active && !$this->signature_accepted && Ninja::isHosted()) {
             if ($this->docu_ninja_ready) {
                 return \App\Livewire\Flow2\DocuNinja::class;
             } else {

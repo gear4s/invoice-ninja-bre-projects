@@ -74,10 +74,12 @@
 
     @include('portal.ninja2020.components.entity-documents', ['entity' => $quote])
 
+    @if($docuninja_active)
     <div id="docuninja-container" class="hidden">
         @livewire('sign', ['invitation_id' => $invitation->id ?? false, 'entity_type' => 'quote', 'entity_number' => $quote->number, 'db' => $quote->company->db])
     </div>
-
+    @endif
+    
     <div id="pdf-slot-container" class="">
         @livewire('pdf-slot', ['class' => get_class($quote), 'entity_id' => $quote->id, 'invitation_id' => $invitation->id ?? false, 'db' => $quote->company->db])
     </div>
@@ -103,11 +105,11 @@
             window.history.pushState({}, "", "{{ url("client/quote/{$key}") }}");
         @endif
 
+        window.addEventListener('builder:sign.submit.success', function () {
+            Livewire.dispatch('docuninja-signature-captured');
+        });
     });
 
-    window.addEventListener('builder:sign.submit.success', function () {
-       window.location.reload();
-    });
 
     </script>
 @endpush

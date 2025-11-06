@@ -134,7 +134,6 @@ class Approve {
                         if(this.docuninjaActive){
                             this.displayDocuNinja();
                             return;
-
                         }
 
                         this.displaySignature();

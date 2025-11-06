@@ -57,7 +57,7 @@ class QuoteController extends Controller
 
         $invitation = $quote->invitations()->where('client_contact_id', auth()->guard('contact')->user()->id)->first();
         $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
-        $docuninja_active = $invitation->company->enable_modules;
+        $docuninja_active = Ninja::isHosted() && $invitation->company->enable_modules;
         $signature_accepted = $invitation->quote->sync?->dn_completed ?? false;
 
         $data = [
@@ -66,7 +66,7 @@ class QuoteController extends Controller
             'invitation' => $invitation,
             'variables' => $variables,
             'requires_signature' => !$signature_accepted && $quote->client->getSetting('require_quote_signature') && $quote->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
-            'docuninja_active' => $docuninja_active && !$signature_accepted &&$quote->client->getSetting('require_quote_signature'),
+            'docuninja_active' => $docuninja_active && !$signature_accepted && $quote->client->getSetting('require_quote_signature'),
         ];
 
         if ($invitation && auth()->guard('contact') && ! request()->has('silent') && ! $invitation->viewed_date) {

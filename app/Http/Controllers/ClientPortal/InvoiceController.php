@@ -91,7 +91,7 @@ class InvoiceController extends Controller
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
 
         if($default_flow){
-            $docuninja_active = $invoice->company->enable_modules;
+            $docuninja_active = Ninja::isHosted() && $invoice->company->enable_modules;
             $signature_required = $invoice->client->getSetting('require_invoice_signature');
             $signature_accepted = $invoice->sync?->dn_completed;
             $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
@@ -278,7 +278,7 @@ class InvoiceController extends Controller
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
 
         if($default_flow){
-            $docuninja_active = $invoices->first()->company->enable_modules;
+            $docuninja_active = Ninja::isHosted() && $invoices->first()->company->enable_modules;
             $signature_required = $invoices->first()->client->getSetting('require_invoice_signature');
             $signature_accepted = $invoices->reject(function ($invoice){
                 return !$invoice->sync?->dn_completed;

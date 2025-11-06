@@ -341,7 +341,7 @@
     "src": "resources/js/clients/payments/wepay-credit-card.js"
   },
   "resources/js/clients/purchase_orders/accept.js": {
-    "file": "assets/accept-e90eec4d.js",
+    "file": "assets/accept-dd78827a.js",
     "isEntry": true,
     "src": "resources/js/clients/purchase_orders/accept.js"
   },
