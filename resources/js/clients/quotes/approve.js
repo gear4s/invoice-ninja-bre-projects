@@ -18,8 +18,6 @@ class Approve {
         
         }
     
-    
-
     submitForm() {
         document.getElementById('approve-form').submit();
     }
@@ -30,6 +28,7 @@ class Approve {
 
             pdfContainer.classList.add('hidden');
             docuninjaContainer.classList.remove('hidden');
+
     }
 
     displaySignature() {
@@ -85,6 +84,24 @@ class Approve {
     }
 
     handle() {
+
+        const closeTermsButton = document.getElementById('close-terms-button');
+        if (closeTermsButton) {
+            closeTermsButton.addEventListener('click', () => {
+                const approveButton = document.getElementById('approve-button');
+                if (approveButton) approveButton.disabled = false;
+            });
+        }
+
+        const closeButton = document.getElementById('close-button');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                const approveButton = document.getElementById('approve-button');
+                if (approveButton) approveButton.disabled = false;
+            });
+        }
+
+
         const approveButton = document.getElementById('approve-button');
         if (!approveButton) return;
 
@@ -92,9 +109,9 @@ class Approve {
             approveButton.disabled = true;
             
             // Re-enable the approve button after 2 seconds
-            setTimeout(() => {
-                approveButton.disabled = false;
-            }, 2000);
+            // setTimeout(() => {
+            //     approveButton.disabled = false;
+            // }, 2000);
 
             if (this.shouldDisplayUserInput) {
                 this.displayInput();
@@ -115,13 +132,10 @@ class Approve {
                     if (this.shouldDisplaySignature && this.shouldDisplayTerms) {
 
                         if(this.docuninjaActive){
-                    
-                            console.log('displaying docuninja');
                             this.displayDocuNinja();
                             return;
 
                         }
-                        console.log('after returning');
 
                         this.displaySignature();
 
@@ -145,11 +159,9 @@ class Approve {
                     } else if (this.shouldDisplaySignature) {
 
                         if(this.docuninjaActive){
-                            console.log('displaying docuninja');
                             this.displayDocuNinja();
                             return;
                         }
-                        console.log('after returning');
 
                         this.displaySignature();
 
@@ -173,19 +185,15 @@ class Approve {
                                 this.submitForm();
                             });
                     } else {
-                        console.log('submitting form');
                         this.submitForm();
                     }
                 });
             } else if (this.shouldDisplaySignature && this.shouldDisplayTerms) {
 
                 if(this.docuninjaActive){
-                    console.log('displaying docuninja');
                     this.displayDocuNinja();
                     return;
                 }
-
-                console.log('after returning');
 
                 this.displaySignature();
 
@@ -209,12 +217,9 @@ class Approve {
             } else if (this.shouldDisplaySignature) {
 
                 if(this.docuninjaActive){
-                    console.log('displaying docuninja');
                     this.displayDocuNinja();
                     return;
                 }
-
-                console.log('after returning');
 
                 this.displaySignature();
 
@@ -238,7 +243,6 @@ class Approve {
                         this.submitForm();
                     });
             } else {
-                console.log('submitting for last');
                 this.submitForm();
             }
         });
