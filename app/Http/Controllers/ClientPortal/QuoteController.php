@@ -268,11 +268,6 @@ class QuoteController extends Controller
 
         $requires_signature = !$quotes->first()->company->enable_modules && $quotes->first()->client->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS) && $quotes->first()->client->getSetting('require_quote_signature');
 
-        nlog(!$quotes->first()->company->enable_modules);
-        nlog($quotes->first()->client->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS));
-        nlog($quotes->first()->client->getSetting('require_quote_signature'));
-        nlog($requires_signature);
-
         return $this->render('quotes.approve', [
             'quotes' => $quotes,
             'variables' => $variables,
