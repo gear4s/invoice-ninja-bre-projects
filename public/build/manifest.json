@@ -356,7 +356,7 @@
     "src": "resources/js/clients/quotes/action-selectors.js"
   },
   "resources/js/clients/quotes/approve.js": {
-    "file": "assets/approve-371591f6.js",
+    "file": "assets/approve-c107bf6d.js",
     "isEntry": true,
     "src": "resources/js/clients/quotes/approve.js"
   },

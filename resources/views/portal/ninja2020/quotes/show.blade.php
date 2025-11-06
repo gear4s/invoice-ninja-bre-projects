@@ -74,12 +74,15 @@
 
     @include('portal.ninja2020.components.entity-documents', ['entity' => $quote])
 
-    <div id="pdf-slot-container" class="transition-opacity duration-500 ease-in-out">
-        @livewire('pdf-slot', ['class' => get_class($quote), 'entity_id' => $quote->id, 'invitation_id' => $invitation->id ?? false, 'db' => $quote->company->db])
-    </div>
-    <div id="docuninja-container" class="hidden transition-opacity duration-500 ease-in-out">
+    <div id="docuninja-container" class="hidden">
         @livewire('sign', ['invitation_id' => $invitation->id ?? false, 'entity_type' => 'quote', 'entity_number' => $quote->number, 'db' => $quote->company->db])
     </div>
+
+    <div id="pdf-slot-container" class="">
+        @livewire('pdf-slot', ['class' => get_class($quote), 'entity_id' => $quote->id, 'invitation_id' => $invitation->id ?? false, 'db' => $quote->company->db])
+    </div>
+
+
 </div>
 @endsection
 

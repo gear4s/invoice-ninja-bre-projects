@@ -15,42 +15,24 @@ class Approve {
         this.shouldDisplayUserInput = userInput;
         this.termsAccepted = false;
         this.docuninjaActive = docuninjaActive;
-    }
+        
+        }
+    
+    
 
     submitForm() {
         document.getElementById('approve-form').submit();
     }
 
-    displaySignature() {
-
-        if(this.docuninjaActive){
+    displayDocuNinja() {
             const pdfContainer = document.getElementById('pdf-slot-container');
             const docuninjaContainer = document.getElementById('docuninja-container');
-            
-            // Start transition: fade out PDF container
-            pdfContainer.classList.add('opacity-0');
-            
-            // After fade out completes, hide PDF and show DocuNinja
-            setTimeout(() => {
-                // Hide PDF container completely
-                pdfContainer.classList.add('hidden');
-                pdfContainer.classList.remove('opacity-0');
-                
-                // Show DocuNinja container and prepare for fade in
-                docuninjaContainer.classList.remove('hidden');
-                // Force reflow to ensure hidden is removed before opacity transition
-                docuninjaContainer.offsetHeight;
-                
-                // Start with opacity-0 and fade in
-                docuninjaContainer.classList.add('opacity-0');
-                // Trigger fade in after a tiny delay to ensure transition applies
-                requestAnimationFrame(() => {
-                    docuninjaContainer.classList.remove('opacity-0');
-                });
-            }, 500); // Wait for fade out to complete (matches duration-500)
-            
-            return;
-        }
+
+            pdfContainer.classList.add('hidden');
+            docuninjaContainer.classList.remove('hidden');
+    }
+
+    displaySignature() {
 
         let displaySignatureModal = document.getElementById(
             'displaySignatureModal'
@@ -131,6 +113,16 @@ class Approve {
                     this.hideInput();
 
                     if (this.shouldDisplaySignature && this.shouldDisplayTerms) {
+
+                        if(this.docuninjaActive){
+                    
+                            console.log('displaying docuninja');
+                            this.displayDocuNinja();
+                            return;
+
+                        }
+                        console.log('after returning');
+
                         this.displaySignature();
 
                         document
@@ -151,6 +143,14 @@ class Approve {
                                 }
                             });
                     } else if (this.shouldDisplaySignature) {
+
+                        if(this.docuninjaActive){
+                            console.log('displaying docuninja');
+                            this.displayDocuNinja();
+                            return;
+                        }
+                        console.log('after returning');
+
                         this.displaySignature();
 
                         document
@@ -173,10 +173,20 @@ class Approve {
                                 this.submitForm();
                             });
                     } else {
+                        console.log('submitting form');
                         this.submitForm();
                     }
                 });
             } else if (this.shouldDisplaySignature && this.shouldDisplayTerms) {
+
+                if(this.docuninjaActive){
+                    console.log('displaying docuninja');
+                    this.displayDocuNinja();
+                    return;
+                }
+
+                console.log('after returning');
+
                 this.displaySignature();
 
                 document
@@ -197,6 +207,15 @@ class Approve {
                         }
                     });
             } else if (this.shouldDisplaySignature) {
+
+                if(this.docuninjaActive){
+                    console.log('displaying docuninja');
+                    this.displayDocuNinja();
+                    return;
+                }
+
+                console.log('after returning');
+
                 this.displaySignature();
 
                 document
@@ -219,6 +238,7 @@ class Approve {
                         this.submitForm();
                     });
             } else {
+                console.log('submitting for last');
                 this.submitForm();
             }
         });

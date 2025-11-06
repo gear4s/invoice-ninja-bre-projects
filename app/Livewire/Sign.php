@@ -104,6 +104,7 @@ class Sign extends Component
         $invitation->{$this->entity_type}->sync->dn_completed = true;
         $invitation->{$this->entity_type}->save();
 
+        if($this->entity_type == 'invoice')
         $this->redirectRoute('client.payments.process', ['request_hash' => $this->request_hash]);
        
     }
