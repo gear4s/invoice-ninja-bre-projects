@@ -31,6 +31,7 @@ class PurchaseOrderRepository extends BaseRepository
         $purchase_order->fill($data);
 
         $purchase_order->save();
+        $dn_enabled = $purchase_order->company->enable_modules;
 
         if (isset($data['invitations'])) {
             $invitations = collect($data['invitations']);
@@ -46,12 +47,18 @@ class PurchaseOrderRepository extends BaseRepository
 
             foreach ($data['invitations'] as $invitation) {
                 //if no invitations are present - create one.
-                if (! $this->getInvitation($invitation)) {
+                if($invite = $this->getInvitation($invitation, 'PurchaseOrder')){
+                    if($dn_enabled){
+                        $invite->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
+                        $invite->saveQuietly();
+                    }
+                }
+                else{
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
 
-                    //make sure we are creating an invite for a contact who belongs to the client only!
+                    //make sure we are creating an invite for a contact who belongs to the vendor only!
                     $contact = VendorContact::find($invitation['vendor_contact_id']);
 
                     if ($contact && $purchase_order->vendor_id == $contact->vendor_id) {
@@ -77,6 +84,14 @@ class PurchaseOrderRepository extends BaseRepository
         /* If no invitations have been created, this is our fail safe to maintain state*/
         if ($purchase_order->invitations()->count() == 0) {
             $purchase_order->service()->createInvitations();
+        }
+
+        if($dn_enabled && $purchase_order->invitations()->where('can_sign', true)->count() == 0){
+            $ii = $purchase_order->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $purchase_order->invitations()->first();
+            $ii->can_sign = true;
+            $ii->saveQuietly();
         }
 
         /* Recalculate invoice amounts */

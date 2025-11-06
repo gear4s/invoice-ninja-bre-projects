@@ -36,7 +36,7 @@ class CreateInvitations extends AbstractService
         $new_contact = VendorContactFactory::create($this->purchase_order->company_id, $this->purchase_order->user_id);
         $new_contact->vendor_id = $this->purchase_order->vendor_id;
         $new_contact->contact_key = Str::random(40);
-        $new_contact->can_sign = false;
+        $new_contact->can_sign = true;
         $new_contact->is_primary = true;
         $new_contact->save();
     }
