@@ -3,7 +3,8 @@
 
 @push('head')
     <meta name="show-quote-terms" content="{{ $settings->show_accept_quote_terms ? true : false }}">
-    <meta name="require-quote-signature" content="{{ $client->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS) && $settings->require_quote_signature }}">
+    <meta name="require-quote-signature" content="{{ $requires_signature }}">
+    <meta name="docuninja-active" content="{{ $docuninja_active }}">
     <meta name="accept-user-input" content="{{ $client->getSetting('accept_client_input_quote_approval') }}">
     <script src="{{ asset('vendor/signature_pad@2.3.2/signature_pad.min.js') }}"></script>
 @endpush
@@ -31,13 +32,13 @@
                         </h3>
                     </div>
 
-                                @if($quote->invoice()->exists())
-                                    <div class="mt-5 sm:mt-0 sm:ml-6 flex justify-end">
-                                        <div class="inline-flex rounded-md shadow-sm">
-                                            <a class="button button-primary bg-primary" href="/client/invoices/{{ $quote->invoice->hashed_id }}">{{ ctrans('texts.view_invoice') }}</a>
-                                        </div>
-                                    </div>
-                                @endif
+                    @if($quote->invoice()->exists())
+                        <div class="mt-5 sm:mt-0 sm:ml-6 flex justify-end">
+                            <div class="inline-flex rounded-md shadow-sm">
+                                <a class="button button-primary bg-primary" href="/client/invoices/{{ $quote->invoice->hashed_id }}">{{ ctrans('texts.view_invoice') }}</a>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -72,8 +73,14 @@
     @endif
 
     @include('portal.ninja2020.components.entity-documents', ['entity' => $quote])
-    @livewire('pdf-slot', ['class' => get_class($quote), 'entity_id' => $quote->id, 'invitation_id' => $invitation->id ?? false, 'db' => $quote->company->db])
 
+    <div id="pdf-slot-container" class="transition-opacity duration-500 ease-in-out">
+        @livewire('pdf-slot', ['class' => get_class($quote), 'entity_id' => $quote->id, 'invitation_id' => $invitation->id ?? false, 'db' => $quote->company->db])
+    </div>
+    <div id="docuninja-container" class="hidden transition-opacity duration-500 ease-in-out">
+        @livewire('sign', ['invitation_id' => $invitation->id ?? false, 'entity_type' => 'quote', 'entity_number' => $quote->number, 'db' => $quote->company->db])
+    </div>
+</div>
 @endsection
 
 @section('footer')
@@ -93,6 +100,10 @@
             window.history.pushState({}, "", "{{ url("client/quote/{$key}") }}");
         @endif
 
+    });
+
+    window.addEventListener('builder:sign.submit.success', function () {
+       window.location.reload();
     });
 
     </script>

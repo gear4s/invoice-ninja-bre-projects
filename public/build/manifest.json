@@ -12,7 +12,7 @@
     "file": "assets/wait-8f4ae121.js"
   },
   "resources/js/app.js": {
-    "file": "assets/app-ad14530f.js",
+    "file": "assets/app-a8b5f174.js",
     "imports": [
       "_index-08e160a7.js",
       "__commonjsHelpers-725317a4.js"
@@ -356,7 +356,7 @@
     "src": "resources/js/clients/quotes/action-selectors.js"
   },
   "resources/js/clients/quotes/approve.js": {
-    "file": "assets/approve-200c2aa4.js",
+    "file": "assets/approve-371591f6.js",
     "isEntry": true,
     "src": "resources/js/clients/quotes/approve.js"
   },
@@ -385,7 +385,7 @@
     "src": "resources/js/setup/setup.js"
   },
   "resources/sass/app.scss": {
-    "file": "assets/app-8133b053.css",
+    "file": "assets/app-972fd4f8.css",
     "isEntry": true,
     "src": "resources/sass/app.scss"
   }

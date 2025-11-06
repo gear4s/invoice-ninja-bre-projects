@@ -56,12 +56,16 @@ class QuoteController extends Controller
 
         $invitation = $quote->invitations()->where('client_contact_id', auth()->guard('contact')->user()->id)->first();
         $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
+        $docuninja_active = $invitation->company->enable_modules;
+        $signature_accepted = $invitation->quote->sync?->dn_completed;
 
         $data = [
             'quote' => $quote,
             'key' => $invitation ? $invitation->key : false,
             'invitation' => $invitation,
             'variables' => $variables,
+            'requires_signature' => !$docuninja_active && $quote->client->getSetting('require_quote_signature') && $quote->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
+            'docuninja_active' => $docuninja_active && !$signature_accepted &&$quote->client->getSetting('require_quote_signature'),
         ];
 
         if ($invitation && auth()->guard('contact') && ! request()->has('silent') && ! $invitation->viewed_date) {

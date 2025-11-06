@@ -9,11 +9,12 @@
  */
 
 class Approve {
-    constructor(displaySignature, displayTerms, userInput) {
+    constructor(displaySignature, displayTerms, userInput, docuninjaActive) {
         this.shouldDisplaySignature = displaySignature;
         this.shouldDisplayTerms = displayTerms;
         this.shouldDisplayUserInput = userInput;
         this.termsAccepted = false;
+        this.docuninjaActive = docuninjaActive;
     }
 
     submitForm() {
@@ -21,6 +22,36 @@ class Approve {
     }
 
     displaySignature() {
+
+        if(this.docuninjaActive){
+            const pdfContainer = document.getElementById('pdf-slot-container');
+            const docuninjaContainer = document.getElementById('docuninja-container');
+            
+            // Start transition: fade out PDF container
+            pdfContainer.classList.add('opacity-0');
+            
+            // After fade out completes, hide PDF and show DocuNinja
+            setTimeout(() => {
+                // Hide PDF container completely
+                pdfContainer.classList.add('hidden');
+                pdfContainer.classList.remove('opacity-0');
+                
+                // Show DocuNinja container and prepare for fade in
+                docuninjaContainer.classList.remove('hidden');
+                // Force reflow to ensure hidden is removed before opacity transition
+                docuninjaContainer.offsetHeight;
+                
+                // Start with opacity-0 and fade in
+                docuninjaContainer.classList.add('opacity-0');
+                // Trigger fade in after a tiny delay to ensure transition applies
+                requestAnimationFrame(() => {
+                    docuninjaContainer.classList.remove('opacity-0');
+                });
+            }, 500); // Wait for fade out to complete (matches duration-500)
+            
+            return;
+        }
+
         let displaySignatureModal = document.getElementById(
             'displaySignatureModal'
         );
@@ -201,4 +232,6 @@ const terms = document.querySelector('meta[name="show-quote-terms"]').content;
 
 const user_input = document.querySelector('meta[name="accept-user-input"]').content;
 
-new Approve(Boolean(+signature), Boolean(+terms), Boolean(+user_input)).handle();
+const docuninja_active = document.querySelector('meta[name="docuninja-active"]').content;
+
+new Approve(Boolean(+signature), Boolean(+terms), Boolean(+user_input), Boolean(+docuninja_active)).handle();
