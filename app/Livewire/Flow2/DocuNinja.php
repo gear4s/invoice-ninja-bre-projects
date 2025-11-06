@@ -65,14 +65,14 @@ class DocuNinja extends Component
         }
         elseif(isset($invitation->{$entity_type}->sync) && 
             $invitation->can_sign &&
-            $dn_invite = $invitation->invoice->sync->getInvitation($invitation->key)){
+            $dn_invite = $invitation->{$entity_type}->sync->getInvitation($invitation->key)){
              
             $signable = [
                 'invitation_key' => $invitation->key,
                 'document_id' => $dn_invite['dn_id'],
                 'document_invitation_id' => $dn_invite['dn_invitation_id'],
                 'sig' => $dn_invite['dn_sig'],
-                'success' => !$invitation->invoice->sync->dn_completed,
+                'success' => !$invitation->{$entity_type}->sync->dn_completed,
             ];
         }
         else{
