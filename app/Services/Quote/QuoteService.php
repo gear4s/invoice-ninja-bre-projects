@@ -134,7 +134,7 @@ class QuoteService
         }
 
         if ($this->quote->client->getSetting('auto_convert_quote')) {
-            $this->convert();
+            $this->convertToInvoice();
 
             $this->invoice
                  ->service()

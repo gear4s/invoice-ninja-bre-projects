@@ -5673,7 +5673,7 @@ $lang = array(
     'document_restored' => 'Document Restored',
     'document_deleted' => 'Document Deleted',
     'sign_now' => 'Sign Now',
-
+    'signed_document' => 'Signed Document',
 );
 
 return $lang;
