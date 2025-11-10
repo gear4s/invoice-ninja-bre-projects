@@ -99,7 +99,7 @@ class PurchaseOrderController extends Controller
         }
 
         $requires_signature = $purchase_order->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS) && $invitation->company->getSetting('require_purchase_order_signature');
-        $docuninja_active = Ninja::isHosted() && $invitation->company->enable_modules;
+        $docuninja_active = $invitation->company->docuninjaActive();
         $signature_accepted = $invitation->purchase_order->sync?->dn_completed ?? false;
 
         $data = [

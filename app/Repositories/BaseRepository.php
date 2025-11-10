@@ -222,7 +222,7 @@ class BaseRepository
             $this->saveDocuments($data['file'], $model);
         }
 
-        $dn_enabled = $model->company->enable_modules;
+        $dn_enabled = $model->company->docuninjaActive();
 
         /* If invitations are present we need to filter existing invitations with the new ones */
         if (isset($data['invitations'])) {

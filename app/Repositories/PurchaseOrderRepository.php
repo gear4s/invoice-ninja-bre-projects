@@ -31,7 +31,7 @@ class PurchaseOrderRepository extends BaseRepository
         $purchase_order->fill($data);
 
         $purchase_order->save();
-        $dn_enabled = $purchase_order->company->enable_modules;
+        $dn_enabled = $purchase_order->company->docuninjaActive();
 
         if (isset($data['invitations'])) {
             $invitations = collect($data['invitations']);

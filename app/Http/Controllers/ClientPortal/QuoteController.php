@@ -57,7 +57,7 @@ class QuoteController extends Controller
 
         $invitation = $quote->invitations()->where('client_contact_id', auth()->guard('contact')->user()->id)->first();
         $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
-        $docuninja_active = Ninja::isHosted() && $invitation->company->enable_modules;
+        $docuninja_active = $invitation->company->docuninjaActive();
         $signature_accepted = $invitation->quote->sync?->dn_completed ?? false;
 
         $data = [
@@ -99,7 +99,7 @@ class QuoteController extends Controller
 
         if ($request->action == 'approve') {
 
-            if(auth()->guard('contact')->user()->company->enable_modules){
+            if(auth()->guard('contact')->user()->company->docuninjaActive()){
                 $invitations = \App\Models\QuoteInvitation::with('quote')
                                         ->whereIn('quote_id', $transformed_ids)
                                         ->where('client_contact_id', auth()->guard('contact')->user()->id)
@@ -266,7 +266,7 @@ class QuoteController extends Controller
 
         $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
 
-        $requires_signature = !$quotes->first()->company->enable_modules && $quotes->first()->client->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS) && $quotes->first()->client->getSetting('require_quote_signature');
+        $requires_signature = !$quotes->first()->company->docuninjaActive() && $quotes->first()->client->getSetting('require_quote_signature');
 
         return $this->render('quotes.approve', [
             'quotes' => $quotes,
