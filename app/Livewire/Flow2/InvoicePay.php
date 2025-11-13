@@ -224,7 +224,7 @@ class InvoicePay extends Component
         }
 
         /** Async loading of DocuNinja component needs to be done like this. ie. need full payload prior to passing in. */
-        if($this->docu_ninja_active && !$this->signature_accepted && Ninja::isHosted()) {
+        if($this->docu_ninja_active && !$this->signature_accepted) {
             if ($this->docu_ninja_ready) {
                 return \App\Livewire\Flow2\DocuNinja::class;
             } else {
