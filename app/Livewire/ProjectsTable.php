@@ -40,6 +40,30 @@ class ProjectsTable extends Component
     public function render()
     {
         $query = Project::query()
+            ->select([
+                'id',
+                'user_id',
+                'assigned_user_id',
+                'company_id',
+                'client_id',
+                'name',
+                'task_rate',
+                'due_date',
+                // 'private_notes', // Excluded
+                'budgeted_hours',
+                'custom_value1',
+                'custom_value2',
+                'custom_value3',
+                'custom_value4',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'public_notes',
+                'is_deleted',
+                'number',
+                'color',
+                'current_hours',
+            ])
             ->where('company_id', $this->company_id)
             ->where('is_deleted', false)
             ->where('client_id', auth()->guard('contact')->user()->client_id)
