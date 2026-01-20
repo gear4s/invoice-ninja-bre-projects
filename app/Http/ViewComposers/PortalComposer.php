@@ -133,6 +133,7 @@ class PortalComposer
 
         if (auth()->guard('contact')->user()->client->getSetting('enable_client_portal_tasks')) {
             $data[] = ['title' => ctrans('texts.tasks'), 'url' => 'client.tasks.index', 'icon' => 'clock', 'id' => 'tasks'];
+            $data[] = ['title' => ctrans('texts.projects'), 'url' => 'client.projects.index', 'icon' => 'briefcase', 'id' => 'projects'];
         }
 
         $data[] = ['title' => ctrans('texts.statement'), 'url' => 'client.statement', 'icon' => 'activity', 'id' => 'statement'];
