@@ -29,14 +29,9 @@ class QuickbooksSyncMap
     }
 
     public function toArray(): array
-    {
-        // Ensure direction is always returned as a string value, not the enum object
-        $directionValue = $this->direction instanceof \App\Enum\SyncDirection 
-            ? $this->direction->value 
-            : (string) $this->direction;
-            
+    {            
         return [
-            'direction' => $directionValue,
+            'direction' => $this->direction->value,
         ];
     }
 }

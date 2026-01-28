@@ -32,7 +32,6 @@ class ProductSyncCast implements CastsAttributes
 
         $ps = new ProductSync();
         $ps->qb_id =  $data['qb_id'];
-
         return $ps;
     }
 
