@@ -42,6 +42,8 @@ class QuickbooksSync
 
     public QuickbooksSyncMap $expense;
 
+    public QuickbooksSyncMap $expense_category;
+
     /**
      * QuickBooks income account ID per product type.
      * Use getAccountId(int $productTypeId) or the typed properties (physical, service, etc.).
@@ -59,6 +61,7 @@ class QuickbooksSync
         $this->product = new QuickbooksSyncMap($attributes['product'] ?? []);
         $this->payment = new QuickbooksSyncMap($attributes['payment'] ?? []);
         $this->expense = new QuickbooksSyncMap($attributes['expense'] ?? []);
+        $this->expense_category = new QuickbooksSyncMap($attributes['expense_category'] ?? []);
         $this->income_account_map = new IncomeAccountMap($attributes['income_account_map'] ?? []);
 
     }
@@ -75,6 +78,7 @@ class QuickbooksSync
             'product' => $this->product->toArray(),
             'payment' => $this->payment->toArray(),
             'expense' => $this->expense->toArray(),
+            'expense_category' => $this->expense_category->toArray(),
             'income_account_map' => $this->income_account_map->toArray(),
         ];
     }
