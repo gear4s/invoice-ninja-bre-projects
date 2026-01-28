@@ -84,7 +84,7 @@ class ImportQuickbooksController extends BaseController
         
         $income_accounts = $qb->fetchIncomeAccounts();
         $company->quickbooks->settings->income_account_map = $income_accounts;
-        $company->quickbooks->settings->qb_income_account_id = $income_accounts[0]->Id ?? null;
+        $company->quickbooks->settings->qb_income_account_id = $income_accounts[0]['id'] ?? null;
         $company->quickbooks->companyName = $companyInfo->CompanyName ?? '';
         $company->save();
         

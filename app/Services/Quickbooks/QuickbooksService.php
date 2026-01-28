@@ -23,6 +23,7 @@ use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\Models\QbProduct;
 use QuickBooksOnline\API\DataService\DataService;
 use App\Services\Quickbooks\Jobs\QuickbooksImport;
+use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
 
 class QuickbooksService
 {
@@ -240,7 +241,11 @@ class QuickbooksService
             $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true";
             $accounts = $this->sdk->Query($query);
             
-            return is_array($accounts) ? $accounts : []; //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+
+            $iat = new IncomeAccountTransformer();
+            $income_accounts = $iat->transformMany($accounts ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+
+            return $income_accounts;
         } catch (\Exception $e) {
             nlog("Error fetching income accounts: {$e->getMessage()}");
             return [];
