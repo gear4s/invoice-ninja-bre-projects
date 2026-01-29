@@ -54,7 +54,7 @@ class QBBackup extends BaseImport implements ImportInterface
     public function client()
     {
         if (isset($this->qb_data['clients'])) {
-            $this->qb->client->importToNinja($this->qb_data['clients']);
+            $this->qb->client->syncToNinja($this->qb_data['clients']);
         }
     }
 
