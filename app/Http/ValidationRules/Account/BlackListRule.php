@@ -22,6 +22,36 @@ class BlackListRule implements ValidationRule
 {
     /** Bad domains +/- disposable email domains */
     private array $blacklist = [
+        "mypost.lol",
+        "mozmail.com",
+        "specialmail.online",
+        "mailbank.org",
+        "guesswho.click",
+        "autorambler.ru",
+        "twothird.org",
+        "wutcloud.com",
+        "weebox.org",
+        "bitdelivery.org",
+        "pucann.org",
+        "longbiba.org",
+        "holeass.com",
+        "2mails1box.info",
+        "myhyperspace.org",
+        "rambler.ua",
+        "cockbit.org",
+        "list.ru",
+        "rambler.ru",
+        "mail.ru",
+        "mailwarrior.info",
+        "gogomail.ink",
+        "ro.ru",
+        "gaylordmail.com",
+        "sendme.digital",
+        "desumail.com",
+        "gmx.com",
+        "email-lab.de",
+        "echat.rest",
+        "hotmail.com",        
         "usdtbeta.com",
         "asurad.com",
         "isb.nu.edu.pk",
@@ -4156,6 +4186,12 @@ class BlackListRule implements ValidationRule
             $fail('This domain is blacklisted, if you think this is in error, please email contact@invoiceninja.com');
         }
         elseif(is_array($parts) && substr($parts[1], -4) === ".sbs") {
+            $fail('This domain is blacklisted, if you think this is in error, please email contact@invoiceninja.com');
+        }
+        elseif(is_array($parts) && substr($parts[1], -3) === ".ru") {
+            $fail('This domain is blacklisted, if you think this is in error, please email contact@invoiceninja.com');
+        }
+        elseif(is_array($parts) && substr($parts[1], -4) === ".lol") {
             $fail('This domain is blacklisted, if you think this is in error, please email contact@invoiceninja.com');
         }
     }
