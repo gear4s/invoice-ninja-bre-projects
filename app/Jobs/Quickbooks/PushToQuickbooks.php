@@ -22,7 +22,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 /**
  * Unified job to push entities to QuickBooks.
  * 
@@ -45,18 +45,13 @@ class PushToQuickbooks implements ShouldQueue
      * 
      * @param string $entity_type Entity type: 'client', 'invoice', etc.
      * @param int $entity_id The ID of the entity to push
-     * @param int $company_id The company ID
+     * 
      * @param string $db The database name
-     * @param string $action Action type: 'create', 'update', 'status'
-     * @param string|null $status Optional status for status-based pushes (e.g., invoice status: 'draft', 'sent', 'paid', 'deleted')
      */
     public function __construct(
         private string $entity_type,
         private int $entity_id,
-        private int $company_id,
-        private string $db,
-        private string $action,
-        private ?string $status = null
+        private string $db
     ) {
     }
 
@@ -67,12 +62,6 @@ class PushToQuickbooks implements ShouldQueue
     {
         MultiDB::setDb($this->db);
 
-        $company = Company::find($this->company_id);
-        
-        if (!$company) {
-            return;
-        }
-
         // Resolve the entity based on type
         $entity = $this->resolveEntity($this->entity_type, $this->entity_id);
         
@@ -80,8 +69,10 @@ class PushToQuickbooks implements ShouldQueue
             return;
         }
 
+        $company = $entity->company;
+        
         // Double-check push is still enabled (settings might have changed)
-        if (!$this->shouldPush($company, $this->entity_type, $this->action, $this->status)) {
+        if (!$this->shouldPush($company, $this->entity_type)) {
             return;
         }
 
@@ -98,31 +89,28 @@ class PushToQuickbooks implements ShouldQueue
     /**
      * Resolve the entity model based on type.
      * 
-     * @param string $entity_type
      * @param int $entity_id
      * @return Client|Invoice|null
      */
-    private function resolveEntity(string $entity_type, int $entity_id): Client|Invoice|null
+    private function resolveEntity(int $entity_id): Client|Invoice|null
     {
-        return match($entity_type) {
-            'client' => Client::find($entity_id),
-            'invoice' => Invoice::find($entity_id),
+        return match($this->entity_type) {
+            'client' => Client::withTrashed()->find($entity_id),
+            'invoice' => Invoice::withTrashed()->find($entity_id),
             default => null,
         };
     }
 
     /**
      * Check if push should still occur (settings might have changed since job was queued).
-     * 
+     *
      * @param Company $company
      * @param string $entity_type
-     * @param string $action
-     * @param string|null $status
      * @return bool
      */
-    private function shouldPush(Company $company, string $entity_type, string $action, ?string $status): bool
+    private function shouldPush(Company $company, string $entity_type): bool
     {
-        return $company->shouldPushToQuickbooks($entity_type, $action, $status);
+        return $company->shouldPushToQuickbooks($entity_type);
     }
 
     /**
@@ -172,5 +160,12 @@ class PushToQuickbooks implements ShouldQueue
             \App\Models\Invoice::STATUS_PAID => 'paid',
             default => 'unknown',
         };
+    }
+
+    public function middleware(): array
+    {
+        return [
+            new WithoutOverlapping($this->entity_id),
+        ];
     }
 }

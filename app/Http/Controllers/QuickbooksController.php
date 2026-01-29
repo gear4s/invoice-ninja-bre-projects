@@ -57,13 +57,8 @@ class QuickbooksController extends BaseController
         $company = $user->company();
 
         $qb = new QuickbooksService($company);
-        $rs = $qb->sdk()->revokeAccessToken();
+        $qb->disconnect();
         
-        nlog($rs);
-        
-        $company->quickbooks = null;
-        $company->save();
-
         return response()->noContent();
     }
 }

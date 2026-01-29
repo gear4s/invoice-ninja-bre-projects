@@ -73,7 +73,7 @@ class QuickbooksService
             $this->sdk->enableLog();
             $this->sdk->setMinorVersion("75");
             $this->sdk->throwExceptionOnError(true);
-        
+       
             $this->checkToken();
         }
         
@@ -115,12 +115,22 @@ class QuickbooksService
     private function checkToken(): self
     {
 
-        if ($this->company->quickbooks->accessTokenExpiresAt == 0 || $this->company->quickbooks->accessTokenExpiresAt > time()) {
+        if (!$this->company->quickbooks || $this->company->quickbooks->accessTokenExpiresAt == 0 || $this->company->quickbooks->accessTokenExpiresAt > time()) {
             return $this;
         }
 
         if ($this->company->quickbooks->accessTokenExpiresAt && $this->company->quickbooks->accessTokenExpiresAt < time() && $this->try_refresh) {
-            $this->sdk()->refreshToken($this->company->quickbooks->refresh_token);
+
+
+            try{
+                $this->sdk()->refreshToken($this->company->quickbooks->refresh_token);
+            }
+            catch(\Throwable $e){
+                nlog("QB: failure to refresh token: " . $e->getMessage());
+                $this->disconnect();
+                return $this;
+            }
+
             $this->company = $this->company->fresh();
             $this->try_refresh = false;
             $this->init();
@@ -321,6 +331,26 @@ class QuickbooksService
     }
 
     /**
+     * Verify the current token can authenticate with QuickBooks.
+     * Performs a minimal API call; stub this in tests to avoid real API calls.
+     *
+     * @return bool True if token is valid and can authenticate
+     */
+    public function isTokenValid(): bool
+    {
+        try {
+            if (! isset($this->sdk) || ! $this->sdk) {
+                return false;
+            }
+            $this->sdk->Query('SELECT Id FROM CompanyInfo MAXRESULTS 1');
+            return true;
+        } catch (\Exception $e) {
+            nlog('Quickbooks token validation failed: '.$e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Format accounts for UI dropdown consumption.
      * 
      * @param array $accounts Raw account objects from QuickBooks API
@@ -353,4 +383,27 @@ class QuickbooksService
         return $formatted;
     }
 
+    
+    /**
+     * disconnect
+     *
+     * revokes the current token.
+     * @return self
+     */
+    public function disconnect(): self
+    {
+
+        try {
+            $this->sdk()->revokeAccessToken();
+        }
+        catch(\Throwable $e){
+            nlog("QB: failure to revoke token during disconnect:: " . $e->getMessage());
+        }
+
+        $this->company->quickbooks = null;
+        $this->company->save();
+
+        return $this;
+        
+    }
 }
