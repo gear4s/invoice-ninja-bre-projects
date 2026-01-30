@@ -5693,6 +5693,7 @@ $lang = array(
     'mollie_payment_pending' => 'Your payment is pending. Please wait for it to be processed. We will email you when it is completed.',
     'over_payment_helper' => 'Optional: you can pay more than the amount shown here. (ie tip, round up)',
     'new_resource' => 'New Resource',
+    'save_to_enable_health_check' => 'Health check will be available after saving the gateway changes.',
 );
 
 return $lang;
