@@ -431,6 +431,8 @@ class CompanyController extends BaseController
     {
         if ($request->hasFile('company_logo') || (is_array($request->input('settings')) && ! array_key_exists('company_logo', $request->input('settings')))) {
             $this->removeLogo($company);
+            $this->uploadLogo($request->file('company_logo'), $company, $company);
+            return $this->itemResponse($company->refresh());
         }
 
         $company = $this->company_repo->save($request->all(), $company);
@@ -450,7 +452,7 @@ class CompanyController extends BaseController
 
         }
 
-        $this->uploadLogo($request->file('company_logo'), $company, $company);
+        // $this->uploadLogo($request->file('company_logo'), $company, $company);
 
         if ($request->has('sync_send_time') && $request->input('sync_send_time') == 'true') {
 
