@@ -5694,6 +5694,7 @@ $lang = array(
     'over_payment_helper' => 'Optional: you can pay more than the amount shown here. (ie tip, round up)',
     'new_resource' => 'New Resource',
     'drop_your_logo_here' => 'Drop your logo here or click to browse', 
+    'save_to_enable_health_check' => 'Health check will be available after saving the gateway changes.',
 );
 
 return $lang;
