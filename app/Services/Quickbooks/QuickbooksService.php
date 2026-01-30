@@ -12,27 +12,18 @@
 
 namespace App\Services\Quickbooks;
 
-use App\Models\Client;
 use App\Models\Company;
-use App\Models\Invoice;
-use App\Models\Product;
-use App\Factory\ClientFactory;
-use App\Factory\InvoiceFactory;
-use App\Factory\ProductFactory;
 use App\DataMapper\QuickbooksSync;
-use App\Factory\ClientContactFactory;
 use App\Services\Quickbooks\Models\QbQuote;
 use App\Services\Quickbooks\Models\QbClient;
 use QuickBooksOnline\API\Core\CoreConstants;
+use App\Services\Quickbooks\Models\QbExpense;
 use App\Services\Quickbooks\Models\QbInvoice;
 use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\Models\QbProduct;
 use QuickBooksOnline\API\DataService\DataService;
 use App\Services\Quickbooks\Jobs\QuickbooksImport;
-use App\Services\Quickbooks\Transformers\ClientTransformer;
-use App\Services\Quickbooks\Transformers\InvoiceTransformer;
-use App\Services\Quickbooks\Transformers\PaymentTransformer;
-use App\Services\Quickbooks\Transformers\ProductTransformer;
+use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
 
 class QuickbooksService
 {
@@ -47,6 +38,8 @@ class QuickbooksService
     public QbPayment $payment;
 
     public QbQuote $quote;
+
+    public QbExpense $expense;
 
     public QuickbooksSync $settings;
 
@@ -80,7 +73,7 @@ class QuickbooksService
             $this->sdk->enableLog();
             $this->sdk->setMinorVersion("75");
             $this->sdk->throwExceptionOnError(true);
-        
+       
             $this->checkToken();
         }
         
@@ -94,45 +87,12 @@ class QuickbooksService
 
         $this->payment = new QbPayment($this);
 
-        $this->settings = $this->company->quickbooks->settings;
+        $this->expense = new QbExpense($this);
 
-        // $this->checkDefaultAccounts(); // disabled, because if OAuth not present, we don't have access to the accounts.
+        $this->settings = $this->company->quickbooks->settings;
 
         return $this;
     }
-
-    // private function checkDefaultAccounts(): self
-    // {
-
-    //     $accountQuery = "SELECT * FROM Account WHERE AccountType IN ('Income', 'Cost of Goods Sold')";
-
-    //     if (strlen($this->settings->default_income_account) == 0 || strlen($this->settings->default_expense_account) == 0) {
-
-    //         nlog("Checking default accounts for company {$this->company->company_key}");
-    //         $accounts = $this->sdk->Query($accountQuery);
-
-    //         $find_income_account = true;
-    //         $find_expense_account = true;
-
-    //         foreach ($accounts as $account) {
-    //             if ($account->AccountType->value == 'Income' && $find_income_account) {
-    //                 $this->settings->default_income_account = $account->Id->value;
-    //                 $find_income_account = false;
-    //             } elseif ($account->AccountType->value == 'Cost of Goods Sold' && $find_expense_account) {
-    //                 $this->settings->default_expense_account = $account->Id->value;
-    //                 $find_expense_account = false;
-    //             }
-    //         }
-
-    //         nlog($this->settings);
-
-    //         $this->company->quickbooks->settings = $this->settings;
-    //         $this->company->save();
-    //     }
-
-
-    //     return $this;
-    // }
 
     /**
      * Refresh the service after OAuth token has been updated.
@@ -155,12 +115,22 @@ class QuickbooksService
     private function checkToken(): self
     {
 
-        if ($this->company->quickbooks->accessTokenExpiresAt == 0 || $this->company->quickbooks->accessTokenExpiresAt > time()) {
+        if (!$this->company->quickbooks || $this->company->quickbooks->accessTokenExpiresAt == 0 || $this->company->quickbooks->accessTokenExpiresAt > time()) {
             return $this;
         }
 
         if ($this->company->quickbooks->accessTokenExpiresAt && $this->company->quickbooks->accessTokenExpiresAt < time() && $this->try_refresh) {
-            $this->sdk()->refreshToken($this->company->quickbooks->refresh_token);
+
+
+            try{
+                $this->sdk()->refreshToken($this->company->quickbooks->refresh_token);
+            }
+            catch(\Throwable $e){
+                nlog("QB: failure to refresh token: " . $e->getMessage());
+                $this->disconnect();
+                return $this;
+            }
+
             $this->company = $this->company->fresh();
             $this->try_refresh = false;
             $this->init();
@@ -281,7 +251,11 @@ class QuickbooksService
             $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true";
             $accounts = $this->sdk->Query($query);
             
-            return is_array($accounts) ? $accounts : [];
+
+            $iat = new IncomeAccountTransformer();
+            $income_accounts = $iat->transformMany($accounts ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+
+            return $income_accounts;
         } catch (\Exception $e) {
             nlog("Error fetching income accounts: {$e->getMessage()}");
             return [];
@@ -349,10 +323,30 @@ class QuickbooksService
             $query = "SELECT * FROM Account WHERE AccountType IN ('Expense', 'Cost of Goods Sold') AND Active = true";
             $accounts = $this->sdk->Query($query);
             
-            return is_array($accounts) ? $accounts : [];
+            return is_array($accounts) ? $accounts : []; //@phpstan-ignore-line return type is @array - but they also spec NULL 
         } catch (\Exception $e) {
             nlog("Error fetching expense accounts: {$e->getMessage()}");
             return [];
+        }
+    }
+
+    /**
+     * Verify the current token can authenticate with QuickBooks.
+     * Performs a minimal API call; stub this in tests to avoid real API calls.
+     *
+     * @return bool True if token is valid and can authenticate
+     */
+    public function isTokenValid(): bool
+    {
+        try {
+            if (! isset($this->sdk) || ! $this->sdk) {
+                return false;
+            }
+            $this->sdk->Query('SELECT Id FROM CompanyInfo MAXRESULTS 1');
+            return true;
+        } catch (\Exception $e) {
+            nlog('Quickbooks token validation failed: '.$e->getMessage());
+            return false;
         }
     }
 
@@ -389,4 +383,27 @@ class QuickbooksService
         return $formatted;
     }
 
+    
+    /**
+     * disconnect
+     *
+     * revokes the current token.
+     * @return self
+     */
+    public function disconnect(): self
+    {
+
+        try {
+            $this->sdk()->revokeAccessToken();
+        }
+        catch(\Throwable $e){
+            nlog("QB: failure to revoke token during disconnect:: " . $e->getMessage());
+        }
+
+        $this->company->quickbooks = null;
+        $this->company->save();
+
+        return $this;
+        
+    }
 }

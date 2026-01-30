@@ -30,85 +30,50 @@ class QbClient implements SyncInterface
     {
         return $this->service->sdk->FindById('Customer', $id);
     }
-
+    
+    /**
+     * Sync clients from QuickBooks to Ninja.
+     * Resolves QB Term to payment_terms when present; find/create client and contact.
+     *
+     * @param  array $records
+     * @return void
+     */
     public function syncToNinja(array $records): void
     {
-
         $transformer = new ClientTransformer($this->service->company);
 
         foreach ($records as $record) {
-
             $ninja_data = $transformer->qbToNinja($record);
 
-            if ($ninja_data[0]['terms']) {
-
-                $days =  $this->service->findEntityById('Term', $ninja_data[0]['terms']);
-
-                nlog($days);
-
+            if (! empty($ninja_data[0]['terms'])) {
+                $days = $this->service->findEntityById('Term', $ninja_data[0]['terms']);
                 if ($days) {
-                    $ninja_data[0]['settings']->payment_terms = (string)$days->DueDays;
+                    $ninja_data[0]['settings']->payment_terms = (string) $days->DueDays;
                 }
-
             }
 
-            if ($client = $this->findClient($ninja_data[0]['id'])) {
+            $client = $this->findClient($ninja_data[0]['id']);
+            if (! $client) {
+                continue;
+            }
 
-                $qbc = $this->find($ninja_data[0]['id']);
+            $client->fill($ninja_data[0]);
+            $client->service()->applyNumber()->save();
 
-                $client->fill($ninja_data[0]);
-                $client->service()->applyNumber()->save();
+            $contact = $client->contacts()->where('email', $ninja_data[1]['email'])->first();
 
-                $contact = $client->contacts()->where('email', $ninja_data[1]['email'])->first();
-
-                if (!$contact) {
-                    $contact = ClientContactFactory::create($this->service->company->id, $this->service->company->owner()->id);
-                    $contact->client_id = $client->id;
-                    $contact->send_email = true;
-                    $contact->is_primary = true;
-                    $contact->fill($ninja_data[1]);
-                    $contact->saveQuietly();
-                } elseif ($this->service->syncable('client', \App\Enum\SyncDirection::PULL)) {
-                    $contact->fill($ninja_data[1]);
-                    $contact->saveQuietly();
-                }
-
+            if (! $contact) {
+                $contact = ClientContactFactory::create($this->service->company->id, $this->service->company->owner()->id);
+                $contact->client_id = $client->id;
+                $contact->send_email = true;
+                $contact->is_primary = true;
+                $contact->fill($ninja_data[1]);
+                $contact->saveQuietly();
+            } elseif ($this->service->syncable('client', \App\Enum\SyncDirection::PULL)) {
+                $contact->fill($ninja_data[1]);
+                $contact->saveQuietly();
             }
         }
-
-    }
-
-    public function importToNinja(array $records): void
-    {
-
-        $transformer = new ClientTransformer($this->service->company);
-
-        foreach ($records as $record) {
-
-            $ninja_data = $transformer->qbToNinja($record);
-
-            if ($client = $this->findClient($ninja_data[0]['id'])) {
-
-                $client->fill($ninja_data[0]);
-                $client->service()->applyNumber()->save();
-
-                $contact = $client->contacts()->where('email', $ninja_data[1]['email'])->first();
-
-                if (!$contact) {
-                    $contact = ClientContactFactory::create($this->service->company->id, $this->service->company->owner()->id);
-                    $contact->client_id = $client->id;
-                    $contact->send_email = true;
-                    $contact->is_primary = true;
-                    $contact->fill($ninja_data[1]);
-                    $contact->saveQuietly();
-                } elseif ($this->service->syncable('client', \App\Enum\SyncDirection::PULL)) {
-                    $contact->fill($ninja_data[1]);
-                    $contact->saveQuietly();
-                }
-
-            }
-        }
-
     }
 
     public function syncToForeign(array $records): void

@@ -18,6 +18,7 @@ use App\Services\Quickbooks\QuickbooksService;
 use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
 use App\Http\Requests\Quickbooks\ConfigQuickbooksRequest;
 use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
+use App\Enum\SyncDirection;
 
 class QuickbooksController extends BaseController
 {
@@ -41,6 +42,8 @@ class QuickbooksController extends BaseController
         $quickbooks->settings->invoice->direction = $request->invoices ? SyncDirection::PUSH : SyncDirection::NONE;
         $quickbooks->settings->quote->direction = $request->quotes ? SyncDirection::PUSH : SyncDirection::NONE;
         $quickbooks->settings->payment->direction = $request->payments ? SyncDirection::PUSH : SyncDirection::NONE;
+        $quickbooks->settings->expense->direction = $request->expenses ? SyncDirection::PUSH : SyncDirection::NONE;
+        $quickbooks->settings->expense_category->direction = $request->expense_categories ? SyncDirection::PUSH : SyncDirection::NONE;
         $company->quickbooks = $quickbooks;
         $company->save();
 
@@ -54,13 +57,8 @@ class QuickbooksController extends BaseController
         $company = $user->company();
 
         $qb = new QuickbooksService($company);
-        $rs = $qb->sdk()->revokeAccessToken();
+        $qb->disconnect();
         
-        nlog($rs);
-        
-        $company->quickbooks = null;
-        $company->save();
-
         return response()->noContent();
     }
 }

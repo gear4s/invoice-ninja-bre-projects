@@ -42,11 +42,15 @@ class QuickbooksSync
 
     public QuickbooksSyncMap $expense;
 
+    public QuickbooksSyncMap $expense_category;
+
     /**
      * QuickBooks income account ID per product type.
      * Use getAccountId(int $productTypeId) or the typed properties (physical, service, etc.).
      */
-    public IncomeAccountMap $income_account_map;
+    public array $income_account_map;
+
+    public ?string $qb_income_account_id = null;
 
     public function __construct(array $attributes = [])
     {
@@ -59,8 +63,9 @@ class QuickbooksSync
         $this->product = new QuickbooksSyncMap($attributes['product'] ?? []);
         $this->payment = new QuickbooksSyncMap($attributes['payment'] ?? []);
         $this->expense = new QuickbooksSyncMap($attributes['expense'] ?? []);
-        $this->income_account_map = new IncomeAccountMap($attributes['income_account_map'] ?? []);
-
+        $this->expense_category = new QuickbooksSyncMap($attributes['expense_category'] ?? []);
+        $this->income_account_map = $attributes['income_account_map'] ?? [];
+        $this->qb_income_account_id = $attributes['qb_income_account_id'] ?? null;
     }
 
     public function toArray(): array
@@ -75,7 +80,9 @@ class QuickbooksSync
             'product' => $this->product->toArray(),
             'payment' => $this->payment->toArray(),
             'expense' => $this->expense->toArray(),
-            'income_account_map' => $this->income_account_map->toArray(),
+            'expense_category' => $this->expense_category->toArray(),
+            'income_account_map' => $this->income_account_map,
+            'qb_income_account_id' => $this->qb_income_account_id,
         ];
     }
 }

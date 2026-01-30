@@ -48,7 +48,7 @@ class StoreProductRequest extends Request
         $rules['tax_rate1'] = 'bail|sometimes|numeric';
         $rules['tax_rate2'] = 'bail|sometimes|numeric';
         $rules['tax_rate3'] = 'bail|sometimes|numeric';
-
+        $rules['income_account_id'] = 'bail|sometimes|nullable|string|max:64';
 
         return $rules;
     }

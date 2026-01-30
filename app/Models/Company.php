@@ -1072,13 +1072,11 @@ class Company extends BaseModel
      * This method is designed to be called from model observers to efficiently
      * determine if a push job should be dispatched, with zero overhead for
      * companies that don't use QuickBooks.
-     * 
+     *
      * @param string $entity Entity type: 'client', 'invoice', etc.
-     * @param string $action Action type: 'create', 'update', 'status'
-     * @param string|null $status Optional status for status-based pushes (e.g., invoice status: 'draft', 'sent', 'paid', 'deleted')
      * @return bool
      */
-    public function shouldPushToQuickbooks(string $entity, string $action, ?string $status = null): bool
+    public function shouldPushToQuickbooks(string $entity): bool
     {
         // FASTEST CHECK: Raw database column (no object instantiation, no JSON decode)
         // This is the cheapest possible check - just a null comparison

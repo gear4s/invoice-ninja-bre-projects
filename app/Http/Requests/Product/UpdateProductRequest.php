@@ -45,6 +45,7 @@ class UpdateProductRequest extends Request
         $rules['in_stock_quantity'] = 'sometimes|numeric';
         $rules['stock_notification_threshold'] = 'sometimes|numeric';
         $rules['stock_notification'] = 'sometimes|bool';
+        $rules['income_account_id'] = 'bail|sometimes|nullable|string|max:64';
 
         return $rules;
     }

@@ -62,6 +62,7 @@ class ImportQuickbooksController extends BaseController
         nlog($request->all());
 
         MultiDB::findAndSetDbByCompanyKey($request->getTokenContent()['company_key']);
+
         $company = $request->getCompany();
         
         $qb = new QuickbooksService($company);
@@ -81,7 +82,10 @@ class ImportQuickbooksController extends BaseController
 
         $companyInfo = $qb->sdk()->company();
         
-        $company->quickbooks->companyName = $companyInfo->CompanyName;
+        $income_accounts = $qb->fetchIncomeAccounts();
+        $company->quickbooks->settings->income_account_map = $income_accounts;
+        $company->quickbooks->settings->qb_income_account_id = $income_accounts[0]['id'] ?? null;
+        $company->quickbooks->companyName = $companyInfo->CompanyName ?? '';
         $company->save();
         
         nlog($companyInfo);

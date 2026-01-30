@@ -77,8 +77,12 @@ class InvoiceOverdueSummaryObject
 
         $invoice = Invoice::withTrashed()->find(reset($this->overdue_invoices)['id']);
 
+        $header_keys = array_keys($this->table_headers);
         $overdue_invoices_collection = array_map(
-            fn($row) => \Illuminate\Support\Arr::except($row, ['id', 'amount', 'due_date']),
+            fn($row) => array_merge(
+                array_fill_keys($header_keys, null),
+                array_intersect_key($row, array_flip($header_keys))
+            ),
             $this->overdue_invoices
         );
         

@@ -13,8 +13,9 @@
 namespace App\Models;
 
 use App\Utils\Number;
-use Elastic\ScoutDriverPlus\Searchable;
+use App\DataMapper\ExpenseSync;
 use Illuminate\Support\Facades\App;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -81,6 +82,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
  * @property-read \App\Models\Currency|null $invoice_currency
+ * @property \App\DataMapper\ExpenseSync|null $sync
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\ExpenseFactory factory($count = null, $state = [])
@@ -160,6 +162,7 @@ class Expense extends BaseModel
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
         'e_invoice' => 'object',
+        'sync' => ExpenseSync::class,
     ];
 
     public static array $bulk_update_columns = [

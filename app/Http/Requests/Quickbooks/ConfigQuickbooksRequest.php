@@ -43,6 +43,8 @@ class ConfigQuickbooksRequest extends FormRequest
             'products' => 'required|boolean|bail',
             'vendors' => 'required|boolean|bail',
             'clients' => 'required|boolean|bail',
+            'expenses' => 'required|boolean|bail',
+            'expense_categories' => 'required|boolean|bail',
         ];
     }
 

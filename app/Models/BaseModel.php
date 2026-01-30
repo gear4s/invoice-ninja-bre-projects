@@ -313,12 +313,12 @@ class BaseModel extends Model
             WebhookHandler::dispatch($event_id, $this->withoutRelations(), $this->company, $additional_data);
         }
 
-        // special catch here for einvoicing eventing
+        // Special catch here for einvoicing eventing
         if (in_array($event_id, [Webhook::EVENT_SENT_INVOICE, Webhook::EVENT_SENT_CREDIT]) && ($this instanceof Invoice || $this instanceof Credit) && $this->backup->guid == "") {
             if($this->client->peppolSendingEnabled()) {
                 \App\Services\EDocument\Jobs\SendEDocument::dispatch(get_class($this), $this->id, $this->company->db);
             }
-        }
+        } //Special Catch Here For Verifactu.
         elseif(in_array($event_id, [Webhook::EVENT_SENT_INVOICE]) && $this->company->verifactuEnabled()  && ($this instanceof Invoice) && $this->backup->guid == "") {
             $this->service()->sendVerifactu();
         }

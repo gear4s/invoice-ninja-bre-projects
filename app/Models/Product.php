@@ -37,6 +37,7 @@ use League\CommonMark\CommonMarkConverter;
  * @property float $price
  * @property float $quantity
  * @property string|null $tax_name1
+ * @property string|null $income_account_id
  * @property float $tax_rate1
  * @property string|null $tax_name2
  * @property float $tax_rate2
@@ -102,6 +103,7 @@ class Product extends BaseModel
         'max_quantity',
         'product_image',
         'tax_id',
+        'income_account_id',
     ];
 
     protected $casts = [

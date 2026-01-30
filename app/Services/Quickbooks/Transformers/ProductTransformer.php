@@ -36,6 +36,7 @@ class ProductTransformer extends BaseTransformer
             'cost' => data_get($data, 'PurchaseCost', 0) ?? 0,
             'price' => data_get($data, 'UnitPrice', 0) ?? 0,
             'in_stock_quantity' => data_get($data, 'QtyOnHand', 0) ?? 0,
+            'income_account_id' => data_get($data, 'IncomeAccountRef.value') ?? data_get($data, 'IncomeAccountRef') ?? null,
         ];
 
     }
