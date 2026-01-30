@@ -195,13 +195,13 @@ class PaymentFilters extends QueryFilters
     {
         $parts = explode(",", $date_range);
 
-        if(!isset($parts[1]))
+        if(!isset($parts[2]))
             return $this->builder;
         
         try {
 
-            $start_date = Carbon::parse($parts[0]);
-            $end_date = Carbon::parse($parts[1]);
+            $start_date = Carbon::parse($parts[1]);
+            $end_date = Carbon::parse($parts[2]);
 
 
             return $this->builder->whereBetween('date', [$start_date, $end_date]);
