@@ -17,13 +17,21 @@ use App\DataMapper\ClientSync;
 use App\Factory\ClientFactory;
 use App\Interfaces\SyncInterface;
 use App\Factory\ClientContactFactory;
+use App\Repositories\ClientRepository;
+use App\Repositories\ClientContactRepository;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\ClientTransformer;
 
 class QbClient implements SyncInterface
 {
+    protected ClientTransformer $client_transformer;
+
+    protected ClientRepository $client_repository;
+
     public function __construct(public QuickbooksService $service)
     {
+        $this->client_transformer = new ClientTransformer($this->service->company);
+        $this->client_repository = new ClientRepository(new ClientContactRepository());
     }
 
     public function find(string $id): mixed
@@ -78,6 +86,52 @@ class QbClient implements SyncInterface
 
     public function syncToForeign(array $records): void
     {
+        foreach ($records as $client) {
+            if (!$client instanceof Client) {
+                continue;
+            }
+
+           
+            $this->createQbClient($client);
+            
+        }
+    }
+
+    public function createQbClient(Client $client): ?string
+    {
+        try {
+            // Transform invoice to QuickBooks format
+            $qb_client_data = $this->client_transformer->ninjaToQb($client, $this->service);
+            
+            // If updating, fetch SyncToken using existing find() method
+            if (isset($client->sync->qb_id) && !empty($client->sync->qb_id)) {
+                $existing_qb_client = $this->find($client->sync->qb_id);
+                if ($existing_qb_client) {
+                    $qb_client_data['SyncToken'] = $existing_qb_client->SyncToken ?? '0';
+                }
+            }
+
+            $customer = \QuickBooksOnline\API\Facades\Customer::create($qb_client_data);
+            $resulting_customer = $this->service->sdk->Add($customer);
+    
+            $qb_id = data_get($resulting_customer, 'Id') ?? data_get($resulting_customer, 'Id.value');
+            
+            // Store QB ID in client sync
+            $sync = new \App\DataMapper\ClientSync();
+            $sync->qb_id = $qb_id;
+            $client->sync = $sync;
+            $client->saveQuietly();
+    
+            nlog("QuickBooks: Auto-created client {$client->id} in QuickBooks (QB ID: {$qb_id})");
+    
+            return $qb_id;
+
+        } catch (\Exception $e) {
+            nlog("QuickBooks: Error pushing invoice {$client->id} to QuickBooks: {$e->getMessage()}");
+            // Continue with next invoice instead of failing completely
+            return null;
+
+        }
     }
 
     public function sync(string $id, string $last_updated): void

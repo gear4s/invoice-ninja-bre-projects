@@ -106,11 +106,6 @@ class QbInvoice implements SyncInterface
                 continue;
             }
 
-            // Check if sync direction allows push
-            if (!$this->service->syncable('invoice', \App\Enum\SyncDirection::PUSH)) {
-                continue;
-            }
-
             try {
                 // Transform invoice to QuickBooks format
                 $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->service);

@@ -36,7 +36,7 @@ class InvoiceTransformer extends BaseTransformer
         
         // If client doesn't have QB ID, create it first
         if (!$client_qb_id) {
-            $client_qb_id = $this->createClientInQuickbooks($invoice->client, $qb_service);
+            $client_qb_id = $qb_service->client->createQbClient($invoice->client);
         }
 
         // Build line items
@@ -49,10 +49,20 @@ class InvoiceTransformer extends BaseTransformer
                                           ->where('product_key', $line_item->product_key)
                                           ->first();
 
-            if (!$product || !isset($product->sync->qb_id)) {
-                // If product doesn't exist in QB, we'll need to create it or use a default item
-                // For now, skip items without QB product mapping
-                continue;
+            $product_qb_id = null;
+            
+            if ($product && isset($product->sync->qb_id)) {
+                // Product already has QuickBooks ID
+                $product_qb_id = $product->sync->qb_id;
+            } else {
+                // Product doesn't exist in QuickBooks - create it on-the-fly
+                $product_qb_id = $this->createProductInQuickbooks($line_item, $qb_service);
+                
+                // If creation failed, skip this line item
+                if (!$product_qb_id) {
+                    nlog("QuickBooks: Failed to create product for line item: {$line_item->product_key}");
+                    continue;
+                }
             }
 
             $tax_code = 'TAX';
@@ -68,7 +78,7 @@ class InvoiceTransformer extends BaseTransformer
                 'DetailType' => 'SalesItemLineDetail',
                 'SalesItemLineDetail' => [
                     'ItemRef' => [
-                        'value' => $product->sync->qb_id,
+                        'value' => $product_qb_id,
                     ],
                     'Qty' => $line_item->quantity ?? 1,
                     'UnitPrice' => $line_item->cost ?? 0,
@@ -87,6 +97,13 @@ class InvoiceTransformer extends BaseTransformer
             $line_items[] = $line_payload;
 
             $line_num++;
+        }
+
+        // QuickBooks requires at least one line item
+        if (empty($line_items)) {
+            $error_msg = "QuickBooks: Invoice {$invoice->id} cannot be created - no valid line items could be processed.";
+            nlog($error_msg);
+            throw new \Exception($error_msg);
         }
 
         // Get primary contact email
@@ -137,63 +154,101 @@ class InvoiceTransformer extends BaseTransformer
     }
 
     /**
-     * Create a client in QuickBooks if it doesn't exist.
+     * Create a product/item in QuickBooks on-the-fly if it doesn't exist.
      * 
-     * @param \App\Models\Client $client
+     * @param \App\DataMapper\InvoiceItem $line_item
      * @param \App\Services\Quickbooks\QuickbooksService $qb_service
-     * @return string The QuickBooks customer ID
+     * @return string|null The QuickBooks item ID, or null if creation failed
      */
-    private function createClientInQuickbooks(\App\Models\Client $client, \App\Services\Quickbooks\QuickbooksService $qb_service): string
+    private function createProductInQuickbooks($line_item, \App\Services\Quickbooks\QuickbooksService $qb_service): ?string
     {
-        $primary_contact = $client->contacts()->orderBy('is_primary', 'desc')->first();
-        
-        $customer_data = [
-            'DisplayName' => $client->present()->name(),
-            'PrimaryEmailAddr' => [
-                'Address' => $primary_contact?->email ?? '',
-            ],
-            'PrimaryPhone' => [
-                'FreeFormNumber' => $primary_contact?->phone ?? '',
-            ],
-            'CompanyName' => $client->present()->name(),
-            'BillAddr' => [
-                'Line1' => $client->address1 ?? '',
-                'City' => $client->city ?? '',
-                'CountrySubDivisionCode' => $client->state ?? '',
-                'PostalCode' => $client->postal_code ?? '',
-                'Country' => $client->country?->iso_3166_3 ?? '',
-            ],
-            'ShipAddr' => [
-                'Line1' => $client->shipping_address1 ?? '',
-                'City' => $client->shipping_city ?? '',
-                'CountrySubDivisionCode' => $client->shipping_state ?? '',
-                'PostalCode' => $client->shipping_postal_code ?? '',
-                'Country' => $client->shipping_country?->iso_3166_3 ?? '',
-            ],
-            'GivenName' => $primary_contact?->first_name ?? '',
-            'FamilyName' => $primary_contact?->last_name ?? '',
-            'PrintOnCheckName' => $client->present()->primary_contact_name(),
-            'Notes' => $client->public_notes ?? '',
-            'BusinessNumber' => $client->id_number ?? '',
-            'Active' => $client->deleted_at ? false : true,
-            'V4IDPseudonym' => $client->client_hash ?? \Illuminate\Support\Str::random(32),
-            'WebAddr' => $client->website ?? '',
-        ];
+        try {
+            // Build item data for QuickBooks
+            $item_name = $line_item->product_key ?? $line_item->notes ?? 'Product ' . uniqid();
+            $item_description = $line_item->notes ?? '';
+            
+            // Determine item type - default to Service
+            $item_type = 'Service'; // Service items are simplest and don't require inventory tracking
+            
+            // Get an income account (required for Service items)
+            $income_account_id = $this->getIncomeAccountId($qb_service);
+            if (!$income_account_id) {
+                nlog("QuickBooks: No income account found - cannot create product/item");
+                return null;
+            }
+            
+            $item_data = [
+                'Name' => $item_name,
+                'Type' => $item_type,
+                'Active' => true,
+                'IncomeAccountRef' => [
+                    'value' => $income_account_id,
+                ],
+            ];
+            
+            if ($item_description) {
+                $item_data['Description'] = $item_description;
+            }
+            
+            // Set unit price if available
+            if (isset($line_item->cost) && $line_item->cost > 0) {
+                $item_data['UnitPrice'] = $line_item->cost;
+            }
+            
+            // Create the item in QuickBooks
+            $qb_item = \QuickBooksOnline\API\Facades\Item::create($item_data);
+            $result = $qb_service->sdk->Add($qb_item);
+            
+            $qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
+            
+            if ($qb_id) {
+                // Optionally, save the QB ID back to the product if it exists
+                $product = \App\Models\Product::where('company_id', $this->company->id)
+                                              ->where('product_key', $line_item->product_key)
+                                              ->first();
+                
+                if ($product) {
+                    $sync = new \App\DataMapper\ProductSync();
+                    $sync->qb_id = $qb_id;
+                    $product->sync = $sync;
+                    $product->saveQuietly();
+                }
+                
+                nlog("QuickBooks: Auto-created product/item '{$item_name}' in QuickBooks (QB ID: {$qb_id})");
+                return $qb_id;
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            nlog("QuickBooks: Error creating product/item in QuickBooks: {$e->getMessage()}");
+            return null;
+        }
+    }
 
-        $customer = \QuickBooksOnline\API\Facades\Customer::create($customer_data);
-        $resulting_customer = $qb_service->sdk->Add($customer);
-
-        $qb_id = data_get($resulting_customer, 'Id') ?? data_get($resulting_customer, 'Id.value');
-        
-        // Store QB ID in client sync
-        $sync = new \App\DataMapper\ClientSync();
-        $sync->qb_id = $qb_id;
-        $client->sync = $sync;
-        $client->saveQuietly();
-
-        nlog("QuickBooks: Auto-created client {$client->id} in QuickBooks (QB ID: {$qb_id})");
-
-        return $qb_id;
+    /**
+     * Get an income account ID from QuickBooks.
+     * 
+     * @param \App\Services\Quickbooks\QuickbooksService $qb_service
+     * @return string|null The income account ID, or null if not found
+     */
+    private function getIncomeAccountId(\App\Services\Quickbooks\QuickbooksService $qb_service): ?string
+    {
+        try {
+            // Query for an income account
+            $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true MAXRESULTS 1";
+            $accounts = $qb_service->sdk->Query($query);
+            
+            if (!empty($accounts) && isset($accounts[0])) {
+                $account = $accounts[0];
+                $account_id = data_get($account, 'Id') ?? data_get($account, 'Id.value');
+                return $account_id ? (string) $account_id : null;
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            nlog("QuickBooks: Error fetching income account: {$e->getMessage()}");
+            return null;
+        }
     }
 
     public function transform($qb_data)
