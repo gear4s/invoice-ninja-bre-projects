@@ -12,12 +12,9 @@
 
 namespace App\Services\Quickbooks\Transformers;
 
-use App\Models\Client;
-use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\DataMapper\InvoiceItem;
-use App\Models\TaxRate;
 
 /**
  * Class InvoiceTransformer.
