@@ -65,13 +65,10 @@ class InvoiceTransformer extends BaseTransformer
                 }
             }
 
-            $tax_code = 'TAX';
-            if (isset($line_item->tax_id)) {
-                // Check if tax exempt (similar to test pattern)
-                if (in_array($line_item->tax_id, [5, 8])) {
-                    $tax_code = 'NON';
-                }
-            }
+            // Determine if line item is taxable (for TaxCodeRef)
+            // TaxCodeRef indicates taxable status, but actual tax calculation is done at invoice level via TxnTaxDetail
+            $is_tax_exempt = isset($line_item->tax_id) && in_array($line_item->tax_id, [5, 8]);
+            $tax_code_id = $is_tax_exempt ? 'NON' : 'TAX';
 
             $line_payload = [
                 'LineNum' => $line_num,
@@ -83,7 +80,7 @@ class InvoiceTransformer extends BaseTransformer
                     'Qty' => $line_item->quantity ?? 1,
                     'UnitPrice' => $line_item->cost ?? 0,
                     'TaxCodeRef' => [
-                        'value' => $tax_code,
+                        'value' => $tax_code_id,
                     ],
                 ],
                 'Description' => $line_item->notes ?? '',
@@ -110,6 +107,16 @@ class InvoiceTransformer extends BaseTransformer
         $primary_contact = $invoice->client->contacts()->orderBy('is_primary', 'desc')->first();
         $email = $primary_contact?->email ?? $invoice->client->contacts()->first()?->email ?? '';
 
+        // Calculate invoice to get accurate tax information
+        $invoice_calc = $invoice->calc();
+        $total_taxes = $invoice_calc->getTotalTaxes();
+        $subtotal = $invoice_calc->getSubTotal();
+        $discount = $invoice_calc->getTotalDiscount();
+        $surcharges = $invoice_calc->getTotalSurcharges();
+        
+        // Calculate taxable amount (subtotal - discount + surcharges, before taxes)
+        $taxable_amount = $subtotal - $discount + $surcharges;
+        
         // Build invoice data
         $invoice_data = [
             'Line' => $line_items,
@@ -128,20 +135,50 @@ class InvoiceTransformer extends BaseTransformer
             'EmailStatus' => 'NotSet',
             'GlobalTaxCalculation' => 'TaxExcluded',
         ];
+        
+        // Add TxnTaxDetail if invoice has taxes
+        if ($total_taxes > 0 && !$invoice->client->is_tax_exempt) {
+            $tax_detail = $this->buildTxnTaxDetail($invoice, $total_taxes, $taxable_amount, $qb_service);
+            if ($tax_detail) {
+                $invoice_data['TxnTaxDetail'] = $tax_detail;
+            }
+        }
 
         // Add optional fields
-        if ($invoice->public_notes) {
-            $invoice_data['CustomerMemo'] = [
-                'value' => $invoice->public_notes,
-            ];
+        if ($invoice->public_notes || $invoice->terms) {
+            $public_notes = $invoice->public_notes ?? '';
+            $terms = $invoice->terms ?? '';
+            
+            // Clean HTML: replace <br> tags with newlines and strip all HTML tags
+            $public_notes = $this->cleanHtmlText($public_notes);
+            $terms = $this->cleanHtmlText($terms);
+            
+            // Combine public notes and terms
+            $memo_value = trim($public_notes . ($public_notes && $terms ? "\n\n" : '') . $terms);
+            
+            if ($memo_value) {
+                $invoice_data['CustomerMemo'] = [
+                    'value' => $memo_value,
+                ];
+            }
         }
 
         if ($invoice->private_notes) {
-            $invoice_data['PrivateNote'] = $invoice->private_notes;
+            $invoice_data['PrivateNote'] = $this->cleanHtmlText($invoice->private_notes);
         }
 
         if ($invoice->po_number) {
             $invoice_data['PONumber'] = $invoice->po_number;
+        }
+
+        // Add partial deposit if invoice has a partial payment amount
+        // QuickBooks uses 'Deposit' field for partial payments/deposits
+        if ($invoice->partial && $invoice->partial > 0) {
+            $invoice_data['Deposit'] = $invoice->partial;
+            
+            // Note: QuickBooks doesn't have a separate 'DepositDueDate' field
+            // The deposit due date would typically be handled via payment terms or custom fields
+            // For now, we'll set the deposit amount and the main DueDate will reflect the final payment due date
         }
 
         // If invoice already has a QB ID, include it for updates
@@ -167,11 +204,47 @@ class InvoiceTransformer extends BaseTransformer
             $item_name = $line_item->product_key ?? $line_item->notes ?? 'Product ' . uniqid();
             $item_description = $line_item->notes ?? '';
             
+            // First, check if a product with this name already exists in QuickBooks
+            // This handles the case where a duplicate name error would occur
+            try {
+                // Escape single quotes in item name for SQL query
+                $escaped_name = str_replace("'", "''", $item_name);
+                $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
+                $existing_items = $qb_service->sdk->Query($query);
+                
+                if (!empty($existing_items) && isset($existing_items[0])) {
+                    $existing_item = $existing_items[0];
+                    $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');
+                    
+                    if ($existing_id) {
+                        nlog("QuickBooks: Found existing product/item '{$item_name}' in QuickBooks (QB ID: {$existing_id})");
+                        
+                        // Save the QB ID back to the product if it exists
+                        $product = \App\Models\Product::where('company_id', $this->company->id)
+                                                      ->where('product_key', $line_item->product_key)
+                                                      ->first();
+                        
+                        if ($product && !isset($product->sync->qb_id)) {
+                            $sync = new \App\DataMapper\ProductSync();
+                            $sync->qb_id = $existing_id;
+                            $product->sync = $sync;
+                            $product->saveQuietly();
+                        }
+                        
+                        return (string) $existing_id;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Query failed, continue with creation attempt
+                nlog("QuickBooks: Could not query for existing product '{$item_name}': {$e->getMessage()}");
+            }
+            
             // Determine item type - default to Service
             $item_type = 'Service'; // Service items are simplest and don't require inventory tracking
             
             // Get an income account (required for Service items)
             $income_account_id = $this->getIncomeAccountId($qb_service);
+            
             if (!$income_account_id) {
                 nlog("QuickBooks: No income account found - cannot create product/item");
                 return null;
@@ -220,9 +293,246 @@ class InvoiceTransformer extends BaseTransformer
             
             return null;
         } catch (\Exception $e) {
-            nlog("QuickBooks: Error creating product/item in QuickBooks: {$e->getMessage()}");
+            // Check if error is due to duplicate name
+            $error_message = $e->getMessage();
+            if (stripos($error_message, 'Duplicate Name') !== false || stripos($error_message, 'already exists') !== false) {
+                // Try to find the existing product by name
+                try {
+                    $item_name = $line_item->product_key ?? $line_item->notes ?? 'Product ' . uniqid();
+                    // Escape single quotes in item name for SQL query
+                    $escaped_name = str_replace("'", "''", $item_name);
+                    $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
+                    $existing_items = $qb_service->sdk->Query($query);
+                    
+                    if (!empty($existing_items) && isset($existing_items[0])) {
+                        $existing_item = $existing_items[0];
+                        $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');
+                        
+                        if ($existing_id) {
+                            nlog("QuickBooks: Found existing product/item '{$item_name}' after duplicate error (QB ID: {$existing_id})");
+                            
+                            // Save the QB ID back to the product if it exists
+                            $product = \App\Models\Product::where('company_id', $this->company->id)
+                                                          ->where('product_key', $line_item->product_key)
+                                                          ->first();
+                            
+                            if ($product && !isset($product->sync->qb_id)) {
+                                $sync = new \App\DataMapper\ProductSync();
+                                $sync->qb_id = $existing_id;
+                                $product->sync = $sync;
+                                $product->saveQuietly();
+                            }
+                            
+                            return (string) $existing_id;
+                        }
+                    }
+                } catch (\Exception $query_e) {
+                    nlog("QuickBooks: Error querying for duplicate product '{$item_name}': {$query_e->getMessage()}");
+                }
+            }
+            
+            nlog("QuickBooks: Error creating product/item in QuickBooks: {$error_message}");
             return null;
         }
+    }
+
+    /**
+     * Build TxnTaxDetail for invoice-level tax calculation.
+     * This handles total taxes applied to the invoice.
+     * 
+     * @param \App\Models\Invoice $invoice
+     * @param float $total_taxes The total tax amount
+     * @param float $taxable_amount The taxable amount (subtotal - discount + surcharges)
+     * @param \App\Services\Quickbooks\QuickbooksService $qb_service
+     * @return array|null TxnTaxDetail array or null if no taxes
+     */
+    private function buildTxnTaxDetail(\App\Models\Invoice $invoice, float $total_taxes, float $taxable_amount, \App\Services\Quickbooks\QuickbooksService $qb_service): ?array
+    {
+        // Collect invoice-level taxes (tax_name1/rate1, tax_name2/rate2, tax_name3/rate3)
+        $tax_lines = [];
+        $calculated_total_tax = 0;
+        
+        // Process tax_name1/rate1
+        if (!empty($invoice->tax_name1) && !empty($invoice->tax_rate1) && $invoice->tax_rate1 > 0) {
+            $tax_amount = ($taxable_amount * $invoice->tax_rate1) / 100;
+            $calculated_total_tax += $tax_amount;
+            
+            $tax_rate_id = $this->findTaxRate($invoice->tax_rate1, $invoice->tax_name1, $qb_service);
+            
+            if ($tax_rate_id) {
+                $tax_lines[] = [
+                    'Amount' => round($tax_amount, 2),
+                    'DetailType' => 'TaxLineDetail',
+                    'TaxLineDetail' => [
+                        'TaxRateRef' => [
+                            'value' => $tax_rate_id,
+                        ],
+                        'PercentBased' => true,
+                        'TaxPercent' => round($invoice->tax_rate1, 2),
+                        'NetAmountTaxable' => round($taxable_amount, 2),
+                    ],
+                ];
+            }
+        }
+        
+        // Process tax_name2/rate2
+        if (!empty($invoice->tax_name2) && !empty($invoice->tax_rate2) && $invoice->tax_rate2 > 0) {
+            $tax_amount = ($taxable_amount * $invoice->tax_rate2) / 100;
+            $calculated_total_tax += $tax_amount;
+            
+            $tax_rate_id = $this->findTaxRate($invoice->tax_rate2, $invoice->tax_name2, $qb_service);
+            
+            if ($tax_rate_id) {
+                $tax_lines[] = [
+                    'Amount' => round($tax_amount, 2),
+                    'DetailType' => 'TaxLineDetail',
+                    'TaxLineDetail' => [
+                        'TaxRateRef' => [
+                            'value' => $tax_rate_id,
+                        ],
+                        'PercentBased' => true,
+                        'TaxPercent' => round($invoice->tax_rate2, 2),
+                        'NetAmountTaxable' => round($taxable_amount, 2),
+                    ],
+                ];
+            }
+        }
+        
+        // Process tax_name3/rate3
+        if (!empty($invoice->tax_name3) && !empty($invoice->tax_rate3) && $invoice->tax_rate3 > 0) {
+            $tax_amount = ($taxable_amount * $invoice->tax_rate3) / 100;
+            $calculated_total_tax += $tax_amount;
+            
+            $tax_rate_id = $this->findTaxRate($invoice->tax_rate3, $invoice->tax_name3, $qb_service);
+            
+            if ($tax_rate_id) {
+                $tax_lines[] = [
+                    'Amount' => round($tax_amount, 2),
+                    'DetailType' => 'TaxLineDetail',
+                    'TaxLineDetail' => [
+                        'TaxRateRef' => [
+                            'value' => $tax_rate_id,
+                        ],
+                        'PercentBased' => true,
+                        'TaxPercent' => round($invoice->tax_rate3, 2),
+                        'NetAmountTaxable' => round($taxable_amount, 2),
+                    ],
+                ];
+            }
+        }
+        
+        // If no tax lines, return null
+        if (empty($tax_lines)) {
+            return null;
+        }
+        
+        // Use the actual total_taxes from invoice if available, otherwise use calculated
+        $final_total_tax = $total_taxes > 0 ? round($total_taxes, 2) : round($calculated_total_tax, 2);
+        
+        return [
+            'TotalTax' => $final_total_tax,
+            'TaxLine' => $tax_lines,
+        ];
+    }
+
+    /**
+     * Find a TaxRate in QuickBooks by name or rate.
+     * TaxRates are read-only in QuickBooks and cannot be created via API.
+     * 
+     * @param float $tax_rate The tax rate percentage
+     * @param string $tax_name The tax name
+     * @param \App\Services\Quickbooks\QuickbooksService $qb_service
+     * @return string|null The QuickBooks TaxRate ID, or null if not found
+     */
+    private function findTaxRate(float $tax_rate, string $tax_name, \App\Services\Quickbooks\QuickbooksService $qb_service): ?string
+    {
+        try {
+            $rounded_rate = round($tax_rate, 2);
+            $rate_name = $tax_name ?: "Tax {$rounded_rate}%";
+            
+            // Fetch all TaxRates from QuickBooks
+            $tax_rates = $qb_service->fetchTaxRates();
+            
+            if (empty($tax_rates)) {
+                nlog("QuickBooks: No TaxRates found in QuickBooks. TaxRates must be created manually in QuickBooks.");
+                return null;
+            }
+            
+            // First, try to find by exact name match
+            foreach ($tax_rates as $tax_rate_obj) {
+                $qb_name = data_get($tax_rate_obj, 'Name');
+                if ($qb_name === $rate_name) {
+                    $tax_rate_id = data_get($tax_rate_obj, 'Id') ?? data_get($tax_rate_obj, 'Id.value');
+                    if ($tax_rate_id) {
+                        nlog("QuickBooks: Found TaxRate '{$rate_name}' in QuickBooks (QB ID: {$tax_rate_id})");
+                        return (string) $tax_rate_id;
+                    }
+                }
+            }
+            
+            // If not found by name, try to find by rate value
+            // Check TaxRateDetails for matching rate
+            foreach ($tax_rates as $tax_rate_obj) {
+                $tax_rate_details = data_get($tax_rate_obj, 'TaxRateDetails');
+                if (is_array($tax_rate_details)) {
+                    foreach ($tax_rate_details as $detail) {
+                        $rate_value = data_get($detail, 'RateValue');
+                        if ($rate_value && abs((float)$rate_value - $rounded_rate) < 0.01) {
+                            $tax_rate_id = data_get($tax_rate_obj, 'Id') ?? data_get($tax_rate_obj, 'Id.value');
+                            if ($tax_rate_id) {
+                                $qb_name = data_get($tax_rate_obj, 'Name', 'Unknown');
+                                nlog("QuickBooks: Found TaxRate by rate ({$rounded_rate}%) - '{$qb_name}' (QB ID: {$tax_rate_id})");
+                                return (string) $tax_rate_id;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If still not found, use the first available TaxRate as fallback
+            $first_tax_rate = $tax_rates[0];
+            $fallback_id = data_get($first_tax_rate, 'Id') ?? data_get($first_tax_rate, 'Id.value');
+            if ($fallback_id) {
+                $fallback_name = data_get($first_tax_rate, 'Name', 'Unknown');
+                nlog("QuickBooks: TaxRate '{$rate_name}' ({$rounded_rate}%) not found. Using fallback TaxRate '{$fallback_name}' (QB ID: {$fallback_id}). Please create matching TaxRates in QuickBooks for accurate tax tracking.");
+                return (string) $fallback_id;
+            }
+            
+            nlog("QuickBooks: Warning - TaxRate '{$rate_name}' ({$rounded_rate}%) not found and no fallback available.");
+            return null;
+        } catch (\Exception $e) {
+            $rate_name = $tax_name ?: "Tax " . round($tax_rate, 2) . "%";
+            nlog("QuickBooks: Error finding TaxRate '{$rate_name}': {$e->getMessage()}");
+            return null;
+        }
+    }
+
+
+    /**
+     * Clean HTML text by replacing <br> tags with newlines and stripping all HTML tags.
+     * 
+     * @param string $text The text to clean
+     * @return string The cleaned text
+     */
+    private function cleanHtmlText(string $text): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+        
+        // Replace <br> and <br/> tags (case insensitive) with newlines
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text);
+        
+        // Strip all remaining HTML tags
+        $text = strip_tags($text);
+        
+        // Decode HTML entities
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        // Clean up multiple consecutive newlines
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
+        
+        return trim($text);
     }
 
     /**

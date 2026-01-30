@@ -33,7 +33,15 @@ class QbClient implements SyncInterface
         $this->client_transformer = new ClientTransformer($this->service->company);
         $this->client_repository = new ClientRepository(new ClientContactRepository());
     }
-
+    
+    /**
+     * find
+     *
+     * Finds a client in QuickBooks by their ID.
+     * 
+     * @param  string $id
+     * @return mixed
+     */
     public function find(string $id): mixed
     {
         return $this->service->sdk->FindById('Customer', $id);
@@ -41,6 +49,7 @@ class QbClient implements SyncInterface
     
     /**
      * Sync clients from QuickBooks to Ninja.
+     * 
      * Resolves QB Term to payment_terms when present; find/create client and contact.
      *
      * @param  array $records
@@ -83,7 +92,15 @@ class QbClient implements SyncInterface
             }
         }
     }
-
+    
+    /**
+     * syncToForeign
+     *
+     * Accepts an array of clients and creates them in QuickBooks.
+     * 
+     * @param  array $records
+     * @return void
+     */
     public function syncToForeign(array $records): void
     {
         foreach ($records as $client) {
@@ -96,7 +113,15 @@ class QbClient implements SyncInterface
             
         }
     }
-
+    
+    /**
+     * createQbClient
+     *
+     * Creates a client in QuickBooks and returns the QB ID.
+     * 
+     * @param  Client $client
+     * @return string
+     */
     public function createQbClient(Client $client): ?string
     {
         try {

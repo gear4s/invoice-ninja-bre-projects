@@ -331,6 +331,30 @@ class QuickbooksService
     }
 
     /**
+     * Fetch all active TaxRates from QuickBooks.
+     * TaxRates are read-only in QuickBooks and cannot be created via API.
+     * 
+     * @return array Array of TaxRate objects with 'Id', 'Name', 'TaxRateDetails', etc.
+     */
+    public function fetchTaxRates(): array
+    {
+        try {
+            if (!$this->sdk) {
+                return [];
+            }
+            
+            // $query = "SELECT * FROM TaxCode WHERE Active = true";
+            $query = "SELECT * FROM TaxRate WHERE Active = true";
+            $tax_rates = $this->sdk->Query($query);
+            
+            return is_array($tax_rates) ? $tax_rates : []; //@phpstan-ignore-line return type is @array - but they also spec NULL 
+        } catch (\Exception $e) {
+            nlog("Error fetching tax rates: {$e->getMessage()}");
+            return [];
+        }
+    }
+
+    /**
      * Verify the current token can authenticate with QuickBooks.
      * Performs a minimal API call; stub this in tests to avoid real API calls.
      *
