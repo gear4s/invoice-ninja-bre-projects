@@ -83,6 +83,8 @@ class ImportQuickbooksController extends BaseController
         $companyInfo = $qb->sdk()->company();
         
         $income_accounts = $qb->fetchIncomeAccounts();
+        $tax_rates = $qb->fetchTaxRates();
+        $company->quickbooks->settings->tax_rate_map = $tax_rates;
         $company->quickbooks->settings->income_account_map = $income_accounts;
         $company->quickbooks->settings->qb_income_account_id = $income_accounts[0]['id'] ?? null;
         $company->quickbooks->companyName = $companyInfo->CompanyName ?? '';

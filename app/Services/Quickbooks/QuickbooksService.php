@@ -23,6 +23,7 @@ use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\Models\QbProduct;
 use QuickBooksOnline\API\DataService\DataService;
 use App\Services\Quickbooks\Jobs\QuickbooksImport;
+use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
 
 class QuickbooksService
@@ -347,7 +348,11 @@ class QuickbooksService
             $query = "SELECT * FROM TaxRate WHERE Active = true";
             $tax_rates = $this->sdk->Query($query);
             
-            return is_array($tax_rates) ? $tax_rates : []; //@phpstan-ignore-line return type is @array - but they also spec NULL 
+            $tax_rate_transformer = new TaxRateTransformer();
+            $tax_rates = $tax_rate_transformer->transformMany($tax_rates ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+
+            return $tax_rates;
+        
         } catch (\Exception $e) {
             nlog("Error fetching tax rates: {$e->getMessage()}");
             return [];
