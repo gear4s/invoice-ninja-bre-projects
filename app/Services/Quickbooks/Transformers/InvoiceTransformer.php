@@ -64,8 +64,22 @@ class InvoiceTransformer extends BaseTransformer
 
             // Determine if line item is taxable (for TaxCodeRef)
             // TaxCodeRef indicates taxable status, but actual tax calculation is done at invoice level via TxnTaxDetail
-            $is_tax_exempt = isset($line_item->tax_id) && in_array($line_item->tax_id, [5, 8]);
-            $tax_code_id = $is_tax_exempt ? 'NON' : 'TAX';
+            // NEVER assign a default tax - if there's no line item tax, it must be NON
+            $tax_code_id = 'NON'; // Default to non-taxable
+            
+            // Check if tax_id is set and is NOT exempt/zero rate (5 = exempt, 8 = zero rate)
+            if (isset($line_item->tax_id) && !in_array($line_item->tax_id, [5, 8])) {
+                // Only use 'TAX' if there are actual tax rates applied to this line item
+                $has_tax_rate = (
+                    (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0) ||
+                    (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0) ||
+                    (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
+                );
+                
+                if ($has_tax_rate) {
+                    $tax_code_id = 'TAX';
+                }
+            }
 
             $line_payload = [
                 'LineNum' => $line_num,
@@ -533,15 +547,32 @@ class InvoiceTransformer extends BaseTransformer
     }
 
     /**
-     * Get an income account ID from QuickBooks.
+     * Get an income account ID from stored QuickBooks settings or fallback to querying.
+     * 
+     * Priority:
+     * 1. Use company->quickbooks->settings->qb_income_account_id if set
+     * 2. Use first account from company->quickbooks->settings->income_account_map
+     * 3. Fallback to querying QuickBooks API
      * 
      * @param \App\Services\Quickbooks\QuickbooksService $qb_service
      * @return string|null The income account ID, or null if not found
      */
     private function getIncomeAccountId(\App\Services\Quickbooks\QuickbooksService $qb_service): ?string
     {
+        // First, check if default income account ID is set in settings
+        $default_account_id = $this->company->quickbooks->settings->qb_income_account_id ?? null;
+        if (!empty($default_account_id)) {
+            return (string) $default_account_id;
+        }
+        
+        // Second, check income_account_map and use the first account
+        $income_account_map = $this->company->quickbooks->settings->income_account_map ?? [];
+        if (!empty($income_account_map) && isset($income_account_map[0]['id'])) {
+            return (string) $income_account_map[0]['id'];
+        }
+        
+        // Fallback: Query QuickBooks API if no stored settings available
         try {
-            // Query for an income account
             $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true MAXRESULTS 1";
             $accounts = $qb_service->sdk->Query($query);
             
