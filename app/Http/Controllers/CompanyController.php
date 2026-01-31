@@ -777,14 +777,18 @@ class CompanyController extends BaseController
         $headers = ['Content-Disposition' => 'inline'];
 
         try {
-            $response = \Illuminate\Support\Facades\Http::get($logo);
-
-            if ($response->successful()) {
-                $logo = $response->body();
-            } else {
+            // Validate URL scheme is https only. Resolve DNS and block private/reserved IP ranges before connecting.
+            if (Ninja::isHosted() && ! $this->isLogoUrlAllowed($logo)) {
                 $logo = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
-            }
+            } else {
+                $response = \Illuminate\Support\Facades\Http::get($logo);
 
+                if ($response->successful()) {
+                    $logo = $response->body();
+                } else {
+                    $logo = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
+                }
+            }
         } catch (\Exception $e) {
 
             $logo = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
@@ -795,5 +799,47 @@ class CompanyController extends BaseController
             echo $logo;
         }, 'logo.png', $headers);
 
+    }
+
+    /**
+     * Validate logo URL: https only, and resolve DNS to block private/reserved IP ranges (SSRF protection).
+     */
+    private function isLogoUrlAllowed(string $url): bool
+    {
+        $parsed = parse_url($url);
+        if ($parsed === false || ! isset($parsed['scheme'], $parsed['host']) || strtolower($parsed['scheme']) !== 'https') {
+            return false;
+        }
+
+        $host = $parsed['host'];
+        $ips = [];
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips = [$host];
+        } else {
+            $ipv4 = gethostbynamel($host);
+            if ($ipv4 !== false && $ipv4 !== []) {
+                $ips = array_merge($ips, $ipv4);
+            }
+            $aaaa = @dns_get_record($host, DNS_AAAA);
+            if (is_array($aaaa)) {
+                foreach ($aaaa as $record) {
+                    if (isset($record['ipv6'])) {
+                        $ips[] = $record['ipv6'];
+                    }
+                }
+            }
+            if ($ips === []) {
+                return false;
+            }
+        }
+
+        foreach ($ips as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
