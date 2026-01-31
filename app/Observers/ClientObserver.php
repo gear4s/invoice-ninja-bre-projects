@@ -83,9 +83,7 @@ class ClientObserver
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'client',
                 $client->id,
-                $client->company->id,
                 $client->company->db,
-                'create'
             );
         }
     }
@@ -132,9 +130,7 @@ class ClientObserver
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'client',
                 $client->id,
-                $client->company->id,
                 $client->company->db,
-                'update'
             );
         }
     }

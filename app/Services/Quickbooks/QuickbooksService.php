@@ -23,6 +23,7 @@ use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\Models\QbProduct;
 use QuickBooksOnline\API\DataService\DataService;
 use App\Services\Quickbooks\Jobs\QuickbooksImport;
+use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
 
 class QuickbooksService
@@ -326,6 +327,34 @@ class QuickbooksService
             return is_array($accounts) ? $accounts : []; //@phpstan-ignore-line return type is @array - but they also spec NULL 
         } catch (\Exception $e) {
             nlog("Error fetching expense accounts: {$e->getMessage()}");
+            return [];
+        }
+    }
+
+    /**
+     * Fetch all active TaxRates from QuickBooks.
+     * TaxRates are read-only in QuickBooks and cannot be created via API.
+     * 
+     * @return array Array of TaxRate objects with 'Id', 'Name', 'TaxRateDetails', etc.
+     */
+    public function fetchTaxRates(): array
+    {
+        try {
+            if (!$this->sdk) {
+                return [];
+            }
+            
+            // $query = "SELECT * FROM TaxCode WHERE Active = true";
+            $query = "SELECT * FROM TaxRate WHERE Active = true";
+            $tax_rates = $this->sdk->Query($query);
+            
+            $tax_rate_transformer = new TaxRateTransformer();
+            $tax_rates = $tax_rate_transformer->transformMany($tax_rates ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+
+            return $tax_rates;
+        
+        } catch (\Exception $e) {
+            nlog("Error fetching tax rates: {$e->getMessage()}");
             return [];
         }
     }

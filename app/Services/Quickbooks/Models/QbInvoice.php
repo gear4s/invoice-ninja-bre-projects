@@ -33,12 +33,28 @@ class QbInvoice implements SyncInterface
         $this->invoice_transformer = new InvoiceTransformer($this->service->company);
         $this->invoice_repository = new InvoiceRepository();
     }
-
+    
+    /**
+     * find
+     *
+     * Finds an invoice in QuickBooks by their ID.
+     * 
+     * @param  string $id
+     * @return mixed
+     */
     public function find(string $id): mixed
     {
         return $this->service->sdk->FindById('Invoice', $id);
     }
-
+    
+    /**
+     * syncToNinja
+     *
+     * Syncs invoices from QuickBooks to Ninja.
+     * 
+     * @param  array $records
+     * @return void
+     */
     public function syncToNinja(array $records): void
     {
 
@@ -98,16 +114,19 @@ class QbInvoice implements SyncInterface
         }
 
     }
-
+    
+    /**
+     * syncToForeign
+     *
+     * Syncs invoices from Ninja to QuickBooks.
+     * 
+     * @param  array $records
+     * @return void
+     */
     public function syncToForeign(array $records): void
     {
         foreach ($records as $invoice) {
             if (!$invoice instanceof Invoice) {
-                continue;
-            }
-
-            // Check if sync direction allows push
-            if (!$this->service->syncable('invoice', \App\Enum\SyncDirection::PUSH)) {
                 continue;
             }
 
@@ -149,7 +168,16 @@ class QbInvoice implements SyncInterface
             }
         }
     }
-
+    
+    /**
+     * qbInvoiceUpdate
+     *
+     * Updates an invoice in Ninja if the balance is different.
+     * 
+     * @param  array $ninja_invoice_data
+     * @param  Invoice $invoice
+     * @return void
+     */
     private function qbInvoiceUpdate(array $ninja_invoice_data, Invoice $invoice): void
     {
         $current_ninja_invoice_balance = $invoice->balance;
@@ -165,7 +193,15 @@ class QbInvoice implements SyncInterface
             $this->invoice_repository->save($ninja_invoice_data, $invoice);
         }
     }
-
+    
+    /**
+     * findInvoice
+     *
+     * Finds an invoice in Ninja by their QuickBooks ID.
+     * @param  string $id
+     * @param  ?string $client_id
+     * @return ?Invoice
+     */
     private function findInvoice(string $id, ?string $client_id = null): ?Invoice
     {
         $search = Invoice::query()

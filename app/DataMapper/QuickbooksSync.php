@@ -50,6 +50,8 @@ class QuickbooksSync
      */
     public array $income_account_map;
 
+    public array $tax_rate_map;
+
     public ?string $qb_income_account_id = null;
 
     public function __construct(array $attributes = [])
@@ -66,6 +68,7 @@ class QuickbooksSync
         $this->expense_category = new QuickbooksSyncMap($attributes['expense_category'] ?? []);
         $this->income_account_map = $attributes['income_account_map'] ?? [];
         $this->qb_income_account_id = $attributes['qb_income_account_id'] ?? null;
+        $this->tax_rate_map = $attributes['tax_rate_map'] ?? [];
     }
 
     public function toArray(): array
@@ -83,6 +86,7 @@ class QuickbooksSync
             'expense_category' => $this->expense_category->toArray(),
             'income_account_map' => $this->income_account_map,
             'qb_income_account_id' => $this->qb_income_account_id,
+            'tax_rate_map' => $this->tax_rate_map,
         ];
     }
 }

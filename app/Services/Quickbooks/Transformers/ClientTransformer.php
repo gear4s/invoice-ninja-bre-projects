@@ -12,7 +12,9 @@
 
 namespace App\Services\Quickbooks\Transformers;
 
+use App\Models\Client;
 use App\DataMapper\ClientSettings;
+use App\Services\Quickbooks\QuickbooksService;
 
 /**
  * Class ClientTransformer.
@@ -24,9 +26,46 @@ class ClientTransformer extends BaseTransformer
         return $this->transform($qb_data);
     }
 
-    public function ninjaToQb()
+
+    public function ninjaToQb(Client $client, QuickbooksService $qb_service): array
     {
+        $primary_contact = $client->contacts()->orderBy('is_primary', 'desc')->first();
+        
+        return [
+            'DisplayName' => $client->present()->name(),
+            'PrimaryEmailAddr' => [
+                'Address' => $primary_contact?->email ?? '',
+            ],
+            'PrimaryPhone' => [
+                'FreeFormNumber' => $primary_contact?->phone ?? '',
+            ],
+            'CompanyName' => $client->present()->name(),
+            'BillAddr' => [
+                'Line1' => $client->address1 ?? '',
+                'City' => $client->city ?? '',
+                'CountrySubDivisionCode' => $client->state ?? '',
+                'PostalCode' => $client->postal_code ?? '',
+                'Country' => $client->country?->iso_3166_3 ?? '',
+            ],
+            'ShipAddr' => [
+                'Line1' => $client->shipping_address1 ?? '',
+                'City' => $client->shipping_city ?? '',
+                'CountrySubDivisionCode' => $client->shipping_state ?? '',
+                'PostalCode' => $client->shipping_postal_code ?? '',
+                'Country' => $client->shipping_country?->iso_3166_3 ?? '',
+            ],
+            'GivenName' => $primary_contact?->first_name ?? '',
+            'FamilyName' => $primary_contact?->last_name ?? '',
+            'PrintOnCheckName' => $client->present()->primary_contact_name(),
+            'Notes' => $client->public_notes ?? '',
+            'BusinessNumber' => $client->id_number ?? '',
+            'Active' => $client->deleted_at ? false : true,
+            'V4IDPseudonym' => $client->client_hash ?? \Illuminate\Support\Str::random(32),
+            'WebAddr' => $client->website ?? '',
+        ];
+
     }
+
 
     public function transform(mixed $data): array
     {

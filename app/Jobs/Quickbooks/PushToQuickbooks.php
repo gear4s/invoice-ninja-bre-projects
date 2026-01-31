@@ -63,7 +63,7 @@ class PushToQuickbooks implements ShouldQueue
         MultiDB::setDb($this->db);
 
         // Resolve the entity based on type
-        $entity = $this->resolveEntity($this->entity_type, $this->entity_id);
+        $entity = $this->resolveEntity();
         
         if (!$entity) {
             return;
@@ -89,14 +89,13 @@ class PushToQuickbooks implements ShouldQueue
     /**
      * Resolve the entity model based on type.
      * 
-     * @param int $entity_id
      * @return Client|Invoice|null
      */
-    private function resolveEntity(int $entity_id): Client|Invoice|null
+    private function resolveEntity(): Client|Invoice|null
     {
         return match($this->entity_type) {
-            'client' => Client::withTrashed()->find($entity_id),
-            'invoice' => Invoice::withTrashed()->find($entity_id),
+            'client' => Client::withTrashed()->find($this->entity_id),
+            'invoice' => Invoice::withTrashed()->find($this->entity_id),
             default => null,
         };
     }
@@ -124,8 +123,7 @@ class PushToQuickbooks implements ShouldQueue
     {
         // TODO: Implement actual push logic
         // $qbService->client->push($client, $this->action);
-        
-        nlog("QuickBooks: Pushing client {$client->id} to QuickBooks ({$this->action})");
+        $qbService->client->syncToForeign([$client]);
     }
 
     /**
@@ -141,31 +139,10 @@ class PushToQuickbooks implements ShouldQueue
         $qbService->invoice->syncToForeign([$invoice]);
     }
 
-    /**
-     * Map invoice status_id and is_deleted to status string.
-     * 
-     * @param int $statusId
-     * @param bool $isDeleted
-     * @return string
-     */
-    private function mapInvoiceStatusToString(int $statusId, bool $isDeleted): string
-    {
-        if ($isDeleted) {
-            return 'deleted';
-        }
-
-        return match($statusId) {
-            \App\Models\Invoice::STATUS_DRAFT => 'draft',
-            \App\Models\Invoice::STATUS_SENT => 'sent',
-            \App\Models\Invoice::STATUS_PAID => 'paid',
-            default => 'unknown',
-        };
-    }
-
     public function middleware(): array
     {
         return [
-            new WithoutOverlapping($this->entity_id),
+            new WithoutOverlapping("qbs-{$this->entity_type}-{$this->entity_id}-{$this->db}"),
         ];
     }
 }
