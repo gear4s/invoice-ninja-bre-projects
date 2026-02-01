@@ -79,6 +79,7 @@ use App\Policies\ExpenseCategoryPolicy;
 use App\Policies\RecurringExpensePolicy;
 use App\Policies\RecurringInvoicePolicy;
 use App\Policies\BankTransactionRulePolicy;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -137,6 +138,15 @@ class AuthServiceProvider extends ServiceProvider
             $entity = strtolower(class_basename($entity));
 
             return $user->hasPermission('view_'.$entity) || $user->isAdmin();
+        });
+
+
+        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
+            return config('app.url')
+                . route('password.reset', [
+                    'token' => $token,
+                    'email' => $notifiable->getEmailForPasswordReset(),
+                ], false);
         });
     }
 }
