@@ -126,7 +126,7 @@ class ClientObserver
         }
 
         // QuickBooks push - efficient check in observer (zero overhead if not configured)
-        if ($client->company->shouldPushToQuickbooks('client')) {
+        if ($client->company->shouldPushToQuickbooks('client') && !$client->isDirty(['paid_to_date','balance','credit_balance','payment_balance'])) {
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'client',
                 $client->id,

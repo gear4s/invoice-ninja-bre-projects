@@ -40,35 +40,25 @@ class InvoiceTransformer extends BaseTransformer
         $line_items = [];
         $line_num = 1;
 
+        $ast = $qb_service->company->quickbooks->settings->automatic_taxes;
+
         foreach ($invoice->line_items as $line_item) {
             // Get product's QuickBooks ID if it exists
-            $product = \App\Models\Product::where('company_id', $this->company->id)
-                                          ->where('product_key', $line_item->product_key)
-                                          ->first();
-
-            $product_qb_id = null;
-            
-            if ($product && isset($product->sync->qb_id)) {
-                // Product already has QuickBooks ID
-                $product_qb_id = $product->sync->qb_id;
-            } else {
-                // Product doesn't exist in QuickBooks - create it on-the-fly
-                $product_qb_id = $this->createProductInQuickbooks($line_item, $qb_service);
-                
-                // If creation failed, skip this line item
-                if (!$product_qb_id) {
-                    nlog("QuickBooks: Failed to create product for line item: {$line_item->product_key}");
-                    continue;
-                }
-            }
+            $product_qb_id = $qb_service->product->findOrCreateProduct($line_item);
 
             // Determine if line item is taxable (for TaxCodeRef)
             // TaxCodeRef indicates taxable status, but actual tax calculation is done at invoice level via TxnTaxDetail
             // NEVER assign a default tax - if there's no line item tax, it must be NON
             $tax_code_id = 'NON'; // Default to non-taxable
             
-            // Check if tax_id is set and is NOT exempt/zero rate (5 = exempt, 8 = zero rate)
-            if (isset($line_item->tax_id) && !in_array($line_item->tax_id, [5, 8])) {
+            // Check if tax_id is set and is exempt/zero rate (5 = exempt, 8 = zero rate)
+            if(isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])){
+                $tax_code_id = 'NON';
+            }
+            elseif($ast){
+                $tax_code_id = 'TAX';
+            }
+            elseif (isset($line_item->tax_id) && !in_array($line_item->tax_id, ['5', '8'])) {
                 // Only use 'TAX' if there are actual tax rates applied to this line item
                 $has_tax_rate = (
                     (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0) ||
@@ -98,10 +88,6 @@ class InvoiceTransformer extends BaseTransformer
                 'Amount' => $line_item->line_total ?? ($line_item->cost * ($line_item->quantity ?? 1)),
             ];
 
-
-            //check here if we need to inject the income account reference
-            // $line_payload['AccountRef'] = ['value' => $income_account_qb_id];
-
             $line_items[] = $line_payload;
 
             $line_num++;
@@ -128,6 +114,42 @@ class InvoiceTransformer extends BaseTransformer
         // Calculate taxable amount (subtotal - discount + surcharges, before taxes)
         $taxable_amount = $subtotal - $discount + $surcharges;
         
+        // Add discount as a line item if discount exists
+        if ($discount > 0) {
+            // QuickBooks expects positive Amount for DiscountLineDetail (it handles the negative internally)
+            $discount_amount = (float)round($discount, 2);
+            
+            // Try to get discount account ID from QuickBooks settings or fetch it
+            $discount_account_id = $this->getDiscountAccountId($qb_service);
+            
+            $discount_line = [
+                'LineNum' => $line_num,
+                'DetailType' => 'DiscountLineDetail',
+                'Amount' => $discount_amount, // Positive amount - QuickBooks handles the negative
+                'DiscountLineDetail' => [
+                    'PercentBased' => !$invoice->is_amount_discount, // true for percentage, false for amount
+                ],
+            ];
+            
+            // Add DiscountAccountRef if available (may be required by QuickBooks)
+            if ($discount_account_id) {
+                $discount_line['DiscountLineDetail']['DiscountAccountRef'] = [
+                    'value' => $discount_account_id,
+                ];
+            }
+            
+            if (!$invoice->is_amount_discount && $invoice->discount > 0) {
+                // For percentage-based discounts, set DiscountPercent
+                $discount_line['DiscountLineDetail']['DiscountPercent'] = round($invoice->discount, 2);
+            } else {
+                // For amount-based discounts, set DiscountPercent to 0.0 (as suggested)
+                $discount_line['DiscountLineDetail']['DiscountPercent'] = 0.0;
+            }
+            
+            $line_items[] = $discount_line;
+            $line_num++;
+        }
+        
         // Build invoice data
         $invoice_data = [
             'Line' => $line_items,
@@ -148,7 +170,8 @@ class InvoiceTransformer extends BaseTransformer
         ];
         
         // Add TxnTaxDetail if invoice has taxes
-        if ($total_taxes > 0 && !$invoice->client->is_tax_exempt) {
+        if(!$qb_service->company->quickbooks->settings->automatic_taxes) {
+        // if ($total_taxes > 0 && !$invoice->client->is_tax_exempt) {
             $tax_detail = $this->buildTxnTaxDetail($invoice, $total_taxes, $taxable_amount, $qb_service);
             if ($tax_detail) {
                 $invoice_data['TxnTaxDetail'] = $tax_detail;
@@ -198,154 +221,11 @@ class InvoiceTransformer extends BaseTransformer
             $invoice_data['Id'] = $invoice->sync->qb_id;
         }
 
+        nlog($invoice_data);
+        
         return $invoice_data;
     }
 
-    /**
-     * Create a product/item in QuickBooks on-the-fly if it doesn't exist.
-     * 
-     * @param \App\DataMapper\InvoiceItem $line_item
-     * @param \App\Services\Quickbooks\QuickbooksService $qb_service
-     * @return string|null The QuickBooks item ID, or null if creation failed
-     */
-    private function createProductInQuickbooks($line_item, \App\Services\Quickbooks\QuickbooksService $qb_service): ?string
-    {
-        try {
-            // Build item data for QuickBooks
-            $item_name = $line_item->product_key ?? $line_item->notes ?? 'Product ' . uniqid();
-            $item_description = $line_item->notes ?? '';
-            
-            // First, check if a product with this name already exists in QuickBooks
-            // This handles the case where a duplicate name error would occur
-            try {
-                // Escape single quotes in item name for SQL query
-                $escaped_name = str_replace("'", "''", $item_name);
-                $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
-                $existing_items = $qb_service->sdk->Query($query);
-                
-                if (!empty($existing_items) && isset($existing_items[0])) {
-                    $existing_item = $existing_items[0];
-                    $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');
-                    
-                    if ($existing_id) {
-                        nlog("QuickBooks: Found existing product/item '{$item_name}' in QuickBooks (QB ID: {$existing_id})");
-                        
-                        // Save the QB ID back to the product if it exists
-                        $product = \App\Models\Product::where('company_id', $this->company->id)
-                                                      ->where('product_key', $line_item->product_key)
-                                                      ->first();
-                        
-                        if ($product && !isset($product->sync->qb_id)) {
-                            $sync = new \App\DataMapper\ProductSync();
-                            $sync->qb_id = $existing_id;
-                            $product->sync = $sync;
-                            $product->saveQuietly();
-                        }
-                        
-                        return (string) $existing_id;
-                    }
-                }
-            } catch (\Exception $e) {
-                // Query failed, continue with creation attempt
-                nlog("QuickBooks: Could not query for existing product '{$item_name}': {$e->getMessage()}");
-            }
-            
-            // Determine item type - default to Service
-            $item_type = 'Service'; // Service items are simplest and don't require inventory tracking
-            
-            // Get an income account (required for Service items)
-            $income_account_id = $this->getIncomeAccountId($qb_service);
-            
-            if (!$income_account_id) {
-                nlog("QuickBooks: No income account found - cannot create product/item");
-                return null;
-            }
-            
-            $item_data = [
-                'Name' => $item_name,
-                'Type' => $item_type,
-                'Active' => true,
-                'IncomeAccountRef' => [
-                    'value' => $income_account_id,
-                ],
-            ];
-            
-            if ($item_description) {
-                $item_data['Description'] = $item_description;
-            }
-            
-            // Set unit price if available
-            if (isset($line_item->cost) && $line_item->cost > 0) {
-                $item_data['UnitPrice'] = $line_item->cost;
-            }
-            
-            // Create the item in QuickBooks
-            $qb_item = \QuickBooksOnline\API\Facades\Item::create($item_data);
-            $result = $qb_service->sdk->Add($qb_item);
-            
-            $qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
-            
-            if ($qb_id) {
-                // Optionally, save the QB ID back to the product if it exists
-                $product = \App\Models\Product::where('company_id', $this->company->id)
-                                              ->where('product_key', $line_item->product_key)
-                                              ->first();
-                
-                if ($product) {
-                    $sync = new \App\DataMapper\ProductSync();
-                    $sync->qb_id = $qb_id;
-                    $product->sync = $sync;
-                    $product->saveQuietly();
-                }
-                
-                nlog("QuickBooks: Auto-created product/item '{$item_name}' in QuickBooks (QB ID: {$qb_id})");
-                return $qb_id;
-            }
-            
-            return null;
-        } catch (\Exception $e) {
-            // Check if error is due to duplicate name
-            $error_message = $e->getMessage();
-            if (stripos($error_message, 'Duplicate Name') !== false || stripos($error_message, 'already exists') !== false) {
-                // Try to find the existing product by name
-                try {
-                    $item_name = $line_item->product_key ?? $line_item->notes ?? 'Product ' . uniqid();
-                    // Escape single quotes in item name for SQL query
-                    $escaped_name = str_replace("'", "''", $item_name);
-                    $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
-                    $existing_items = $qb_service->sdk->Query($query);
-                    
-                    if (!empty($existing_items) && isset($existing_items[0])) {
-                        $existing_item = $existing_items[0];
-                        $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');
-                        
-                        if ($existing_id) {
-                            nlog("QuickBooks: Found existing product/item '{$item_name}' after duplicate error (QB ID: {$existing_id})");
-                            
-                            // Save the QB ID back to the product if it exists
-                            $product = \App\Models\Product::where('company_id', $this->company->id)
-                                                          ->where('product_key', $line_item->product_key)
-                                                          ->first();
-                            
-                            if ($product && !isset($product->sync->qb_id)) {
-                                $sync = new \App\DataMapper\ProductSync();
-                                $sync->qb_id = $existing_id;
-                                $product->sync = $sync;
-                                $product->saveQuietly();
-                            }
-                            
-                            return (string) $existing_id;
-                        }
-                    }
-                } catch (\Exception $query_e) {
-                    nlog("QuickBooks: Error querying for duplicate product '{$item_name}': {$query_e->getMessage()}");
-                }
-            }
-            
-            nlog("QuickBooks: Error creating product/item in QuickBooks: {$error_message}");
-            return null;
-        }
-    }
 
     /**
      * Build TxnTaxDetail for invoice-level tax calculation.
@@ -544,6 +424,46 @@ class InvoiceTransformer extends BaseTransformer
         $text = preg_replace('/\n{3,}/', "\n\n", $text);
         
         return trim($text);
+    }
+
+    /**
+     * Get a discount account ID from QuickBooks.
+     * Looks for an account with AccountType 'Income' and name containing 'Discount'.
+     * 
+     * @param \App\Services\Quickbooks\QuickbooksService $qb_service
+     * @return string|null The discount account ID, or null if not found
+     */
+    private function getDiscountAccountId(\App\Services\Quickbooks\QuickbooksService $qb_service): ?string
+    {
+        try {
+            // Query for discount accounts (typically named "Discounts Given" or similar)
+            $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true";
+            $accounts = $qb_service->sdk->Query($query);
+            
+            if (!empty($accounts)) {
+                // Look for account with "Discount" in the name
+                foreach ($accounts as $account) {
+                    $name = is_object($account) ? ($account->Name ?? '') : ($account['Name'] ?? '');
+                    if (stripos($name, 'discount') !== false) {
+                        $id = is_object($account) ? ($account->Id ?? null) : ($account['Id'] ?? null);
+                        if ($id) {
+                            return (string) $id;
+                        }
+                    }
+                }
+                
+                // If no discount account found, use first income account as fallback
+                $first_account = $accounts[0];
+                $id = is_object($first_account) ? ($first_account->Id ?? null) : ($first_account['Id'] ?? null);
+                if ($id) {
+                    return (string) $id;
+                }
+            }
+        } catch (\Exception $e) {
+            nlog("QuickBooks: Error fetching discount account: {$e->getMessage()}");
+        }
+        
+        return null;
     }
 
     /**

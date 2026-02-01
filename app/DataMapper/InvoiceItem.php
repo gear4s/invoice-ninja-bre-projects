@@ -70,6 +70,8 @@ class InvoiceItem
 
     public $unit_code = 'C62';
 
+    public $income_account_id = '';
+
     public static $casts = [
         'net_cost' => 'float',
         'task_id' => 'string',
@@ -99,5 +101,6 @@ class InvoiceItem
         'custom_value3' => 'string',
         'custom_value4' => 'string',
         'unit_code' => 'string',
+        'income_account_id' => 'string',
     ];
 }

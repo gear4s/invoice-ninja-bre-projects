@@ -12,13 +12,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Libraries\MultiDB;
-use Illuminate\Http\Response;
+use App\Enum\SyncDirection;
 use App\Services\Quickbooks\QuickbooksService;
+use App\Http\Requests\Quickbooks\SyncTaxRatesRequest;
+use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
 use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
 use App\Http\Requests\Quickbooks\ConfigQuickbooksRequest;
-use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
-use App\Enum\SyncDirection;
 
 class QuickbooksController extends BaseController
 {
@@ -50,6 +49,34 @@ class QuickbooksController extends BaseController
         return response()->noContent();
     }
 
+    
+    /**
+     * syncTaxRates
+     * 
+     * Syncs tax rates from Quickbooks to Invoice Ninja
+     *
+     * @param  SyncTaxRatesRequest $request
+     * @return \Illuminate\Http\Response
+     */
+    public function syncTaxRates(SyncTaxRatesRequest $request)
+    {
+        $user = auth()->user();
+        $company = $user->company();
+
+        $qb = new QuickbooksService($company);
+        $qb->syncTaxRates();
+        
+        return response()->noContent();
+    }
+    
+    /**
+     * disconnect
+     * 
+     * Disconnects the Quickbooks Account From the Invoice Ninja Company
+     * 
+     * @param  DisconnectQuickbooksRequest $request
+     * @return \Illuminate\Http\Response
+     */
     public function disconnect(DisconnectQuickbooksRequest $request)
     {
         

@@ -12,6 +12,8 @@
 
 namespace App\Services\Quickbooks\Transformers;
 
+use App\Models\Product;
+
 /**
  * Class ProductTransformer.
  */
@@ -21,10 +23,21 @@ class ProductTransformer extends BaseTransformer
     {
         return $this->transform($qb_data);
     }
+    
+   
 
-    public function ninjaToQb()
+    public function qbTransform($line_item, $income_account_id): array
     {
-
+        return [
+            'Name' => strlen($line_item->product_key ?? '') > 0 ? $line_item->product_key : 'Product ' . uniqid(),
+            'Description' => $line_item->notes,
+            'PurchaseCost' => $line_item->product_cost ?? 0,
+            'UnitPrice' => $line_item->cost,
+            'Type' => $line_item->type_id == '2' || in_array($line_item->tax_id, ['5','8']) ? 'Service' : 'NonInventory',
+            'IncomeAccountRef' => [
+                'value' => strlen($line_item->income_account_id ?? '') > 0 ? $line_item->income_account_id : $income_account_id,
+            ],
+        ];
     }
 
     public function transform(mixed $data): array
@@ -40,5 +53,7 @@ class ProductTransformer extends BaseTransformer
         ];
 
     }
+
+
 
 }

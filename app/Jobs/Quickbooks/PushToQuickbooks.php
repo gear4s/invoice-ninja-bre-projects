@@ -78,12 +78,19 @@ class PushToQuickbooks implements ShouldQueue
 
         $qbService = new QuickbooksService($company);
         
-        // Dispatch to appropriate handler based on entity type
-        match($this->entity_type) {
-            'client' => $this->pushClient($qbService, $entity),
-            'invoice' => $this->pushInvoice($qbService, $entity),
-            default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
-        };
+        try {
+            // Dispatch to appropriate handler based on entity type
+            match($this->entity_type) {
+                'client' => $this->pushClient($qbService, $entity),
+                'invoice' => $this->pushInvoice($qbService, $entity),
+                default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
+            };
+        }
+        catch(\Throwable $e) {
+            nlog("Quickbooks push to Quickbooks job failed => ".$e->getMessage());
+         
+            return;
+        }
     }
 
     /**
@@ -137,6 +144,14 @@ class PushToQuickbooks implements ShouldQueue
     {
         // Use syncToForeign to push the invoice
         $qbService->invoice->syncToForeign([$invoice]);
+
+         //If there are automatic taxes, we need to pull the invoice and update the ninja invoice to include the appropriate taxes.
+         if($qbService->company->quickbooks->settings->automatic_taxes) {
+            // $invoice = $invoice->fresh();
+            // $qb_invoice = $qbService->invoice->find($invoice->sync->qb_id);
+            // $this->service->invoice->syncToForeign([$invoice]);
+        }
+
     }
 
     public function middleware(): array
@@ -144,5 +159,12 @@ class PushToQuickbooks implements ShouldQueue
         return [
             new WithoutOverlapping("qbs-{$this->entity_type}-{$this->entity_id}-{$this->db}"),
         ];
+    }
+
+    public function failed($exception)
+    {
+        nlog("Quickbooks push to Quickbooks job failed => ".$exception->getMessage());
+        config(['queue.failed.driver' => null]);
+
     }
 }
