@@ -34,7 +34,7 @@ trait ActionsInvoice
         elseif ($invoice->status_id == Invoice::STATUS_DRAFT) {
             return true;
         } 
-        elseif (in_array($invoice->status_id, [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL]) && $invoice->balance != 0) {
+        elseif (in_array($invoice->status_id, [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])) {
             return true;
         } 
 

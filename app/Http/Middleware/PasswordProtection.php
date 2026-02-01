@@ -92,14 +92,18 @@ class PasswordProtection
                 }
             } elseif (auth()->user()->oauth_provider_id == 'microsoft') {
                 try {
-                    $payload = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', request()->header('X-API-OAUTH-PASSWORD'))[1]))));
+                    $user = Socialite::driver('microsoft')->userFromToken($request->header('X-API-OAUTH-PASSWORD'));
+
+                    // $payload = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', request()->header('X-API-OAUTH-PASSWORD'))[1]))));
                 } catch (\Exception $e) {
                     nlog("Exception:: PasswordProtection::" . $e->getMessage());
                     nlog("could not decode microsoft response");
                     return response()->json(['message' => 'Could not decode the response from Microsoft'], 412);
                 }
 
-                if ($payload->preferred_username == auth()->user()->email) {
+                if ($user && $user->getEmail() === auth()->user()->email) {
+                
+                // if ($payload->preferred_username == auth()->user()->email) {
                     Cache::put(auth()->user()->hashed_id.'_'.auth()->user()->account_id.'_logged_in', Str::random(64), $timeout);
                     return $next($request);
                 }
