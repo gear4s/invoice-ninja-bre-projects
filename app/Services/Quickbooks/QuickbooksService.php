@@ -27,6 +27,7 @@ use QuickBooksOnline\API\DataService\DataService;
 use App\Services\Quickbooks\Jobs\QuickbooksImport;
 use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
+use App\Services\Quickbooks\Helpers\Helper;
 
 class QuickbooksService
 {
@@ -47,6 +48,8 @@ class QuickbooksService
     public QuickbooksSync $settings;
 
     public QbTaxRate $tax_rate;
+
+    public Helper $helper;
 
     private bool $testMode = true;
 
@@ -95,6 +98,8 @@ class QuickbooksService
         $this->expense = new QbExpense($this);
 
         $this->tax_rate = new QbTaxRate($this);
+
+        $this->helper = new Helper($this->company, $this);
 
         $this->settings = $this->company->quickbooks->settings;
 

@@ -71,7 +71,7 @@ class QbInvoice implements SyncInterface
 
         foreach ($records as $record) {
 
-            $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record);
+            $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record, $this->service);
 
             $payment_ids = $ninja_invoice_data['payment_ids'] ?? [];
 
