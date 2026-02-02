@@ -501,7 +501,8 @@ class Task extends BaseModel
 
     public function processLogsExpandedNotation()
     {
-        $locale = $this->client->locale();
+
+        $locale = $this->client ? $this->client->locale() : $this->company->locale();
 
         return
         collect(json_decode($this->time_log ?? '{}', true))->map(function ($log) use($locale){

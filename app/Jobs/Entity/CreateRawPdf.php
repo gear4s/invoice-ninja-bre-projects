@@ -146,6 +146,7 @@ class CreateRawPdf
         try {
             $pdf = $ps->boot()->getPdf();
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             nlog($e->getMessage());
             throw new FilePermissionsFailure('Unable to generate the raw PDF => '.$e->getMessage());
         }
