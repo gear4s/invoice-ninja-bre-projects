@@ -111,8 +111,6 @@ class UblEDocument extends AbstractService
 
         $vendor = $this->findOrCreateVendor($invoice);
 
-        nlog($invoice);
-        nlog(data_get($invoice, 'PaymentMeans.0', false));
         $TaxExclusiveAmount = data_get($invoice, 'LegalMonetaryTotal.TaxExclusiveAmount.amount', 0);
         $TaxInclusiveAmount = data_get($invoice, 'LegalMonetaryTotal.TaxExclusiveAmount.amount', 0);
         $ChargeTotalAmount = data_get($invoice, 'LegalMonetaryTotal.ChargeTotalAmount.amount', 0);

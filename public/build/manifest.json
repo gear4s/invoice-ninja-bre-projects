@@ -390,7 +390,7 @@
     "src": "resources/js/setup/setup.js"
   },
   "resources/sass/app.scss": {
-    "file": "assets/app-2350ca5d.css",
+    "file": "assets/app-c12eeaa7.css",
     "isEntry": true,
     "src": "resources/sass/app.scss"
   }

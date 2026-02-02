@@ -43,6 +43,8 @@ class ProjectService
                                 return [
                                         'date' => $task->calculated_start_date ?? \Carbon\Carbon::parse($task->created_at)->format('Y-m-d'),
                                         'hours_used' => $task->calcDuration(true) / 60 / 60,
+                                        'hours_invoiced' => $task->invoice_id ? $task->calcDuration(true) / 60 / 60 : 0,
+                                        'hours_uninvoiced' => $task->invoice_id ? 0 : $task->calcDuration(true) / 60 / 60,
                                     ];
                             });
 
@@ -57,6 +59,8 @@ class ProjectService
             $average_data->push([
                 'date' => $next_date->format('Y-m-d'),
                 'hours_used' => 0,
+                'hours_invoiced' => 0,
+                'hours_uninvoiced' => 0,
             ]);
 
         } while ($next_date->lt($project_due));
@@ -66,6 +70,8 @@ class ProjectService
             'project_due' => $project_due->toDateString(),
             'hours_used' => $this->project->current_hours,
             'average_data' => $average_data,
+            'hours_invoiced' => $average_data->sum('hours_invoiced'),
+            'hours_uninvoiced' => $average_data->sum('hours_uninvoiced'),
         ];
 
 
