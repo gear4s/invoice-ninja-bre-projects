@@ -37,14 +37,15 @@ class ConfigQuickbooksRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'invoices' => 'required|boolean|bail',
-            'quotes' => 'required|boolean|bail',
-            'payments' => 'required|boolean|bail',
-            'products' => 'required|boolean|bail',
-            'vendors' => 'required|boolean|bail',
-            'clients' => 'required|boolean|bail',
-            'expenses' => 'required|boolean|bail',
-            'expense_categories' => 'required|boolean|bail',
+            'invoices' => 'required|in:push,pull,bidirectional,none|bail',
+            'quotes' => 'required|in:push,pull,bidirectional,none|bail',
+            'payments' => 'required|in:push,pull,bidirectional,none|bail',
+            'products' => 'required|in:push,pull,bidirectional,none|bail',
+            'vendors' => 'required|in:push,pull,bidirectional,none|bail',
+            'clients' => 'required|in:push,pull,bidirectional,none|bail',
+            'expenses' => 'required|in:push,pull,bidirectional,none|bail',
+            'expense_categories' => 'required|in:push,pull,bidirectional,none|bail',
+            'qb_income_account_id' => 'required|string|bail',
         ];
     }
 
