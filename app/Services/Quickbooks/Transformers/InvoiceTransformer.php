@@ -178,7 +178,8 @@ class InvoiceTransformer extends BaseTransformer
             'ApplyTaxAfterDiscount' => true,
             'PrintStatus' => 'NeedToPrint',
             'EmailStatus' => 'NotSet',
-            'GlobalTaxCalculation' => 'TaxExcluded',
+            // 'GlobalTaxCalculation' => 'TaxExcluded',
+            'GlobalTaxCalculation' => $qb_service->company->quickbooks->settings->automatic_taxes ? 'TaxExcluded' : 'NotApplicable',
         ];
         
         // Add TxnTaxDetail if invoice has taxes and AST is not enabled.
@@ -252,75 +253,74 @@ class InvoiceTransformer extends BaseTransformer
         $tax_lines = [];
         $calculated_total_tax = 0;
         
-        // Process tax_name1/rate1
-        if (!empty($invoice->tax_name1) && !empty($invoice->tax_rate1) && $invoice->tax_rate1 > 0) {
-            $tax_amount = ($taxable_amount * $invoice->tax_rate1) / 100;
-            $calculated_total_tax += $tax_amount;
-            
-            $tax_rate_id = $qb_service->helper->findTaxRate($invoice->tax_rate1, $invoice->tax_name1);
-            
-            if ($tax_rate_id) {
-                $tax_lines[] = [
-                    'Amount' => round($tax_amount, 2),
-                    'DetailType' => 'TaxLineDetail',
-                    'TaxLineDetail' => [
-                        'TaxRateRef' => [
-                            'value' => $tax_rate_id,
-                        ],
-                        'PercentBased' => true,
-                        'TaxPercent' => round($invoice->tax_rate1, 2),
-                        'NetAmountTaxable' => round($taxable_amount, 2),
-                    ],
-                ];
+        $tax_rate_map = $qb_service->company->quickbooks->settings->tax_rate_map ?? [];
+              
+        foreach($invoice->calc()->getTaxMap() ?? [] as $tax)
+        {
+            $tax_components = $qb_service->helper->splitTaxName($tax['name']);
+
+            $tax_rate_id = null;
+
+            foreach($tax_rate_map as $rate_map)
+            {
+    
+                if(floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name'])
+                {
+                    $tax_rate_id = $rate_map['id'];
+                    break;
+                }
             }
+    
+
+          $tax_lines[] = [
+            'Amount' => round($tax['total'], 2),
+            'DetailType' => 'TaxLineDetail',
+            'TaxLineDetail' => [
+                'TaxRateRef' => [
+                    'value' => $tax_rate_id,
+                ],
+                'PercentBased' => false,
+                'NetAmountTaxable' => round($tax['base_amount'], 2),
+                'TaxInclusiveAmount' => 0.00,
+            ],
+          ];
+
+          $calculated_total_tax += round($tax['total'], 2);
         }
-        
-        // Process tax_name2/rate2
-        if (!empty($invoice->tax_name2) && !empty($invoice->tax_rate2) && $invoice->tax_rate2 > 0) {
-            $tax_amount = ($taxable_amount * $invoice->tax_rate2) / 100;
-            $calculated_total_tax += $tax_amount;
-            
-            $tax_rate_id = $qb_service->helper->findTaxRate($invoice->tax_rate2, $invoice->tax_name2);
-            
-            if ($tax_rate_id) {
-                $tax_lines[] = [
-                    'Amount' => round($tax_amount, 2),
-                    'DetailType' => 'TaxLineDetail',
-                    'TaxLineDetail' => [
-                        'TaxRateRef' => [
-                            'value' => $tax_rate_id,
-                        ],
-                        'PercentBased' => true,
-                        'TaxPercent' => round($invoice->tax_rate2, 2),
-                        'NetAmountTaxable' => round($taxable_amount, 2),
-                    ],
-                ];
+
+
+        foreach($invoice->calc()->getTotalTaxMap() ?? [] as $tax)
+        {
+            $tax_components = $qb_service->helper->splitTaxName($tax['name']);
+
+            $tax_rate_id = null;
+
+            foreach($tax_rate_map as $rate_map)
+            {
+    
+                if(floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name'])
+                {
+                    $tax_rate_id = $rate_map['id'];
+                    break;
+                }
             }
-        }
-        
-        // Process tax_name3/rate3
-        if (!empty($invoice->tax_name3) && !empty($invoice->tax_rate3) && $invoice->tax_rate3 > 0) {
-            $tax_amount = ($taxable_amount * $invoice->tax_rate3) / 100;
-            $calculated_total_tax += $tax_amount;
-            
-            $tax_rate_id = $qb_service->helper->findTaxRate($invoice->tax_rate3, $invoice->tax_name3);
-            
-            if ($tax_rate_id) {
-                $tax_lines[] = [
-                    'Amount' => round($tax_amount, 2),
-                    'DetailType' => 'TaxLineDetail',
-                    'TaxLineDetail' => [
-                        'TaxRateRef' => [
-                            'value' => $tax_rate_id,
-                        ],
-                        'PercentBased' => true,
-                        'TaxPercent' => round($invoice->tax_rate3, 2),
-                        'NetAmountTaxable' => round($taxable_amount, 2),
+    
+            $tax_lines[] = [
+                'Amount' => round($tax['total'], 2),
+                'DetailType' => 'TaxLineDetail',
+                'TaxLineDetail' => [
+                    'TaxRateRef' => [
+                        'value' => $tax_rate_id,
                     ],
-                ];
-            }
+                    'PercentBased' => false,
+                    'NetAmountTaxable' => round($tax['base_amount'], 2),
+                    'TaxInclusiveAmount' => 0.00,
+                ],
+            ];
+
+            $calculated_total_tax += round($tax['total'], 2);
         }
-        
+       
         // If no tax lines, return null
         if (empty($tax_lines)) {
             return null;

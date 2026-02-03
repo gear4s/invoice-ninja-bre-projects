@@ -37,65 +37,20 @@ class Helper
      */
     public function findTaxRate(float $tax_rate, string $tax_name): ?string
     {
-        try {
-            $rounded_rate = round($tax_rate, 2);
-            $rate_name = $tax_name ?: "Tax {$rounded_rate}%";
-            
-            // Fetch all TaxRates from QuickBooks
-            $tax_rates = $this->qb_service->fetchTaxRates();
-            
-            if (empty($tax_rates)) {
-                nlog("QuickBooks: No TaxRates found in QuickBooks. TaxRates must be created manually in QuickBooks.");
-                return null;
+        
+        $tax_rates = $this->company->quickbooks->settings->tax_rate_map ?? [];
+
+        $tax_rate_id = null;
+
+        foreach($tax_rates as $tax)
+        {
+            if(floatval($tax['rate']) == floatval($tax_rate) && $tax['name'] == $tax_name)
+            {
+                $tax_rate_id = $tax['id'];
             }
-            
-            // First, try to find by exact name match
-            foreach ($tax_rates as $tax_rate_obj) {
-                $qb_name = data_get($tax_rate_obj, 'Name');
-                if ($qb_name === $rate_name) {
-                    $tax_rate_id = data_get($tax_rate_obj, 'Id') ?? data_get($tax_rate_obj, 'Id.value');
-                    if ($tax_rate_id) {
-                        nlog("QuickBooks: Found TaxRate '{$rate_name}' in QuickBooks (QB ID: {$tax_rate_id})");
-                        return (string) $tax_rate_id;
-                    }
-                }
-            }
-            
-            // If not found by name, try to find by rate value
-            // Check TaxRateDetails for matching rate
-            foreach ($tax_rates as $tax_rate_obj) {
-                $tax_rate_details = data_get($tax_rate_obj, 'TaxRateDetails');
-                if (is_array($tax_rate_details)) {
-                    foreach ($tax_rate_details as $detail) {
-                        $rate_value = data_get($detail, 'RateValue');
-                        if ($rate_value && abs((float)$rate_value - $rounded_rate) < 0.01) {
-                            $tax_rate_id = data_get($tax_rate_obj, 'Id') ?? data_get($tax_rate_obj, 'Id.value');
-                            if ($tax_rate_id) {
-                                $qb_name = data_get($tax_rate_obj, 'Name', 'Unknown');
-                                nlog("QuickBooks: Found TaxRate by rate ({$rounded_rate}%) - '{$qb_name}' (QB ID: {$tax_rate_id})");
-                                return (string) $tax_rate_id;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // If still not found, use the first available TaxRate as fallback
-            $first_tax_rate = $tax_rates[0];
-            $fallback_id = data_get($first_tax_rate, 'Id') ?? data_get($first_tax_rate, 'Id.value');
-            if ($fallback_id) {
-                $fallback_name = data_get($first_tax_rate, 'Name', 'Unknown');
-                nlog("QuickBooks: TaxRate '{$rate_name}' ({$rounded_rate}%) not found. Using fallback TaxRate '{$fallback_name}' (QB ID: {$fallback_id}). Please create matching TaxRates in QuickBooks for accurate tax tracking.");
-                return (string) $fallback_id;
-            }
-            
-            nlog("QuickBooks: Warning - TaxRate '{$rate_name}' ({$rounded_rate}%) not found and no fallback available.");
-            return null;
-        } catch (\Exception $e) {
-            $rate_name = $tax_name ?: "Tax " . round($tax_rate, 2) . "%";
-            nlog("QuickBooks: Error finding TaxRate '{$rate_name}': {$e->getMessage()}");
-            return null;
         }
+
+        return $tax_rate_id;
     }
 
     /**
@@ -287,6 +242,39 @@ class Helper
         }
 
         return 0;
+    }
+
+    /**
+     * Split a tax name string into the name component and percentage component.
+     * Handles formats like "New York State 4%" -> ["New York State", "4%"]
+     * 
+     * @param string $tax_name The tax name string (e.g., "New York State 4%")
+     * @return array{name: string, percentage: string}|null Returns array with 'name' and 'percentage' keys, or null if no percentage found
+     */
+    public function splitTaxName(string $tax_name): ?array
+    {
+        if (empty($tax_name)) {
+            return null;
+        }
+        
+        // Pattern to match a number (with optional decimals) followed by a % sign
+        // Matches: "4%", "4.5%", "8.75%", etc.
+        if (preg_match('/^(.+?)\s+(\d+\.?\d*\s*%)$/', $tax_name, $matches)) {
+            return [
+                'name' => trim($matches[1]),
+                'percentage' => trim($matches[2]),
+            ];
+        }
+        
+        // If the string is just a percentage (e.g., "4%"), return empty name
+        if (preg_match('/^(\d+\.?\d*\s*%)$/', $tax_name, $matches)) {
+            return [
+                'name' => '',
+                'percentage' => str_replace('%', '', trim($matches[1])),
+            ];
+        }
+        
+        return null;
     }
 
     /**
