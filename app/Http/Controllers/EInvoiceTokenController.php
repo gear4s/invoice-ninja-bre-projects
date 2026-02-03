@@ -25,6 +25,8 @@ class EInvoiceTokenController extends BaseController
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
+        nlog("update token");
+
         $response = Http::baseUrl(config('ninja.hosted_ninja_url'))
             ->withHeaders([
                 'Content-Type' => 'application/json',
@@ -34,6 +36,7 @@ class EInvoiceTokenController extends BaseController
                 'license' => config('ninja.license_key'),
                 'account_key' => $user->account->key,
             ]);
+
 
         if ($response->successful()) {
             $user->account->update([

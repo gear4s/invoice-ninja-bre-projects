@@ -82,6 +82,33 @@ class ProjectFilters extends QueryFilters
     }
 
     /**
+     * date_range
+     *
+     * only filters on date
+     * @param  string $date_range in format column,start_date,end_date
+     * @return Builder
+     */
+    public function date_range(string $date_range = ''): Builder
+    {
+        $parts = explode(",", $date_range);
+
+        if (count($parts) != 3 || !in_array($parts[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+            return $this->builder;
+        }
+
+        try {
+
+            $start_date = \Carbon\Carbon::parse($parts[1]);
+            $end_date = \Carbon\Carbon::parse($parts[2]);
+
+
+            return $this->builder->whereBetween($parts[0], [$start_date, $end_date]);
+        } catch (\Exception $e) {
+            return $this->builder;
+        }
+
+    }
+    /**
      * Filters the query by the users company ID.
      *
      * @return Builder
