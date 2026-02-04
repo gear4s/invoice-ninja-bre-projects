@@ -55,13 +55,28 @@ class PullPeppolDocs extends Command
 
         $this->info("Pulling Peppol docs from the E-Invoice API");
 
-        $quota_count = Account::first()->e_invoice_quota;
+        $account = Account::first();
+
+        $quota_count = $account->e_invoice_quota;
 
         $this->info("E-Invoice Quota Remaining: $quota_count");
 
-        if (!isset($company->account->e_invoicing_token)) {
+        if (!isset($account->e_invoicing_token)) {
+            
             $this->info("No e-invoicing token found! You will not be able to authenticate with the E-Invoice API. Try logging out and back in again.");
-            return;
+            
+            $this->info("Updating Token...");
+
+            $response = $this->updateToken($account);
+
+            $this->info($response);
+
+            if($response != 'success'){
+
+                $this->error("Failed to update token exiting");
+                return;
+            } 
+
         }
 
         $this->info("License key in use: " . config('ninja.license_key'));
@@ -110,6 +125,30 @@ class PullPeppolDocs extends Command
 
         });
 
+    }
+
+    private function updateToken(Account $account): mixed
+    {
+        $response = Http::baseUrl(config('ninja.hosted_ninja_url'))
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])
+            ->post('/api/einvoice/tokens/rotate', data: [
+                'license' => config('ninja.license_key'),
+                'account_key' => $user->account->key,
+            ]);
+
+
+        if ($response->successful()) {
+            $account->update([
+                'e_invoicing_token' => $response->json('token'),
+            ]);
+
+            return 'success';
+        }
+
+        return $response->body();
     }
 
     /**
