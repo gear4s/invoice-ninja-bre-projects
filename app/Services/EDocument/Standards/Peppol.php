@@ -16,7 +16,9 @@ use App\Models\Credit;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\Document;
 use App\Helpers\Invoice\Taxer;
+use App\Utils\Traits\MakesHash;
 use App\DataMapper\Tax\BaseRule;
 use App\Services\AbstractService;
 use App\Helpers\Invoice\InvoiceSum;
@@ -59,7 +61,8 @@ class Peppol extends AbstractService
 {
     use Taxer;
     use NumberFormatter;
-
+    use MakesHash;
+    
     /**
      * Assumptions:
      *
@@ -67,6 +70,7 @@ class Peppol extends AbstractService
      * Exclusive Taxes
      *
      */
+    public int $max_attachment_size = 2000000;
 
     private string $override_vat_number = '';
 
@@ -281,6 +285,7 @@ class Peppol extends AbstractService
                  ->setTaxBreakdown()
                  ->setPaymentTerms()
                  ->addAttachments()
+                 ->addThirdPartyAttachments()
                  ->standardPeppolRules()
                  ->setDocumentReference();
 
@@ -558,6 +563,130 @@ class Peppol extends AbstractService
 
         return $this;
 
+    }
+    
+    /**
+     * buildAttachmentObject
+     *
+     * Attached third party documents to the invoice.
+     * 
+     * @param  Document $document
+     * @return self
+     */
+    private function addThirdPartyAttachment(Document $document): self
+    {
+
+            // Only the invoice itself to start with:
+            $filename = $document->name;
+            $file = $document->getFile();
+            $mime_code = $document->getMimeType();
+    
+            if(!$file || !in_array($mime_code, ['application/pdf', 'application/xml'])){
+                return $this;
+            }
+
+            $adr = new \InvoiceNinja\EInvoice\Models\Peppol\DocumentReferenceType\AdditionalDocumentReference();
+    
+            // Set ID
+            $id = new \InvoiceNinja\EInvoice\Models\Peppol\IdentifierType\ID();
+            $id->value = $filename;
+            $adr->ID = $id;
+    
+            // Create EmbeddedDocumentBinaryObject
+            $attachment = new \InvoiceNinja\EInvoice\Models\Peppol\AttachmentType\Attachment();
+    
+            $binary = new \InvoiceNinja\EInvoice\Models\Peppol\EmbeddedDocumentBinaryObjectType\EmbeddedDocumentBinaryObject();
+            $binary->value = base64_encode($file);
+            $binary->mimeCode = $mime_code;
+            $binary->filename = $filename;
+            $attachment->EmbeddedDocumentBinaryObject = $binary;
+    
+            $adr->Attachment = $attachment;
+    
+            $this->p_invoice->AdditionalDocumentReference[] = $adr;
+
+            return $this;
+    }
+
+    private function addThirdPartyAttachments(): self
+    {
+        if($this->company->account->hasFeature(\App\Models\Account::FEATURE_DOCUMENTS) && $this->invoice->client->getSetting('document_email_attachment') !== false) {
+        
+
+            if ($this->invoice->recurring_invoice()->exists()) {
+                $this->invoice->recurring_invoice->documents()->where('is_public', true)->cursor()->each(function ($document) {
+                    if ($document->size <= $this->max_attachment_size) {
+                        
+                        $this->addThirdPartyAttachment($document);
+
+                    }
+                });
+            }
+
+            // Storage::url
+            $this->invoice->documents()->where('is_public', true)->cursor()->each(function ($document) {
+                if ($document->size <= $this->max_attachment_size) {
+
+                    $this->addThirdPartyAttachment($document);
+
+                }
+            });
+
+            $this->invoice->company->documents()->where('is_public', true)->cursor()->each(function ($document) {
+                if ($document->size <= $this->max_attachment_size) {
+
+                   $this->addThirdPartyAttachment($document);
+                }
+            });
+
+            $line_items = $this->invoice->line_items;
+
+            foreach ($line_items as $item) {
+                $expense_ids = [];
+
+                if (property_exists($item, 'expense_id')) {
+                    $expense_ids[] = $item->expense_id;
+                }
+
+                if (count($expense_ids) > 0) {
+                    \App\Models\Expense::query()->whereIn('id', $this->transformKeys($expense_ids))
+                        ->where('invoice_documents', 1)
+                        ->cursor()
+                        ->each(function ($expense) {
+                            $expense->documents()->where('is_public', true)->cursor()->each(function ($document) {
+                                if ($document->size <= $this->max_attachment_size) {
+
+                                $this->addThirdPartyAttachment($document);
+
+                                }
+                            });
+                        });
+                }
+
+                $task_ids = [];
+
+                if (property_exists($item, 'task_id')) {
+                    $task_ids[] = $item->task_id;
+                }
+
+                if (count($task_ids) > 0 && $this->invoice->company->invoice_task_documents) {
+                    \App\Models\Task::query()->whereIn('id', $this->transformKeys($task_ids))
+                        ->cursor()
+                        ->each(function ($task) {
+                            $task->documents()->where('is_public', true)->cursor()->each(function ($document) {
+                                if ($document->size <= $this->max_attachment_size) {
+
+                                $this->addThirdPartyAttachment($document);
+
+                                }
+                            });
+                        });
+                }
+            }
+        
+        }
+
+        return $this;
     }
 
     private function addAttachments(): self

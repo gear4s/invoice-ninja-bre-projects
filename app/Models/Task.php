@@ -339,6 +339,13 @@ class Task extends BaseModel
         return round($duration);
     }
 
+    public function calcDurationForHumans()
+    {
+        $duration = $this->calcDuration();
+
+        return \Carbon\CarbonInterval::seconds($duration)->locale($this->client->locale())->cascade()->forHumans();
+    }
+
     public function translate_entity()
     {
         return ctrans('texts.task');
@@ -495,8 +502,10 @@ class Task extends BaseModel
     public function processLogsExpandedNotation()
     {
 
+        $locale = $this->client ? $this->client->locale() : $this->company->locale();
+
         return
-        collect(json_decode($this->time_log ?? '{}', true))->map(function ($log) {
+        collect(json_decode($this->time_log ?? '{}', true))->map(function ($log) use($locale){
 
             $parent_entity = $this->client ?? $this->company;
             $logged = [];
@@ -523,11 +532,18 @@ class Task extends BaseModel
             $logged['description'] =  $log[2] ?? '';
             $logged['billable'] = $log[3] ?? false;
             $logged['duration_raw'] = $duration;
-            $logged['duration'] = gmdate("H:i:s", $duration);
+            // $logged['duration'] = gmdate("H:i:s", $duration);
+
+            $logged['duration'] = \Carbon\CarbonInterval::seconds($duration)->locale($locale)->cascade()->forHumans();
 
             return $logged;
 
         })->toArray();
+    }
+
+    public function calculatedStartDate()
+    {
+        return Carbon::parse($this->calculated_start_date)->setTimeZone($this->company->timezone()->name)->format($this->client->date_format());
     }
 
     public function assignedCompanyUser()

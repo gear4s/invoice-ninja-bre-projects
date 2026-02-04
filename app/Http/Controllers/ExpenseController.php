@@ -532,7 +532,7 @@ class ExpenseController extends BaseController
         }
 
         if ($request->action == 'bulk_categorize' && $user->can('edit', $expenses->first())) {
-            $this->expense_repo->categorize($expenses, $request->category_id);
+            $this->expense_repo->categorize($expenses, $request->category_id); //@phpstan-ignore-line
             $expenses = collect([]);
         }
 

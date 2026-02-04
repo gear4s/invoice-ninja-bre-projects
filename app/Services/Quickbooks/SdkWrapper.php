@@ -64,6 +64,11 @@ class SdkWrapper
     {
         return $this->sdk->getCompanyInfo();
     }
+
+    public function getPreferences()
+    {
+        return $this->sdk->getCompanyPreferences();
+    }
     /*
     accessTokenKey
     tokenType

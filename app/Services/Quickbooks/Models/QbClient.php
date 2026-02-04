@@ -133,6 +133,13 @@ class QbClient implements SyncInterface
                 $existing_qb_client = $this->find($client->sync->qb_id);
                 if ($existing_qb_client) {
                     $qb_client_data['SyncToken'] = $existing_qb_client->SyncToken ?? '0';
+                    $qb_client_data['Id'] = $client->sync->qb_id;
+
+                    nlog("updating client {$client->id} in QuickBooks");
+                    $customer = \QuickBooksOnline\API\Facades\Customer::create($qb_client_data);
+                    $result = $this->service->sdk->Update($customer);
+
+                    return $client->sync->qb_id;
                 }
             }
 
@@ -152,7 +159,7 @@ class QbClient implements SyncInterface
             return $qb_id;
 
         } catch (\Exception $e) {
-            nlog("QuickBooks: Error pushing invoice {$client->id} to QuickBooks: {$e->getMessage()}");
+            nlog("QuickBooks: Error pushing client {$client->id} to QuickBooks: {$e->getMessage()}");
             // Continue with next invoice instead of failing completely
             return null;
 

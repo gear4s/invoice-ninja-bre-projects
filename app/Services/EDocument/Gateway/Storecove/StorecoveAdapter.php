@@ -13,30 +13,22 @@
 namespace App\Services\EDocument\Gateway\Storecove;
 
 use App\DataMapper\Tax\BaseRule;
-use App\Models\Expense;
-use App\Models\Vendor;
+use App\Services\EDocument\Standards\Peppol;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use InvoiceNinja\EInvoice\Models\Peppol\PaymentMeans;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use App\Services\EDocument\Gateway\Storecove\Storecove;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
-use App\Services\EDocument\Gateway\Storecove\Models\Invoice;
 use App\Services\EDocument\Gateway\Storecove\Models\Credit;
+use App\Services\EDocument\Gateway\Storecove\Models\Invoice;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
-use InvoiceNinja\EInvoice\Models\Peppol\Invoice as PeppolInvoice;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
-use App\Services\EDocument\Gateway\Storecove\PeppolToStorecoveNormalizer;
-use App\Services\EDocument\Gateway\Storecove\Transformers\StorecoveExpense;
-use App\Services\EDocument\Standards\Peppol;
 use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
 
@@ -161,12 +153,6 @@ class StorecoveAdapter
         if ($this->has_error) {
             return $this;
         }
-
-        // if($this->ninja_invoice instanceof \App\Models\Credit) {
-        //     $lines = $this->storecove_invoice->getCreditLines();
-        //     $this->storecove_invoice->setCreditLines([]);
-        //     $this->storecove_invoice->setInvoiceLines($lines);
-        // } 
 
         //set all taxmap countries - resolve the taxing country
         $lines = $this->storecove_invoice->getInvoiceLines();

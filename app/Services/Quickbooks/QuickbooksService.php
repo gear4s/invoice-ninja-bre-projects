@@ -13,6 +13,7 @@
 namespace App\Services\Quickbooks;
 
 use App\Models\Company;
+use App\Models\TaxRate;
 use App\DataMapper\QuickbooksSync;
 use App\Services\Quickbooks\Models\QbQuote;
 use App\Services\Quickbooks\Models\QbClient;
@@ -21,10 +22,12 @@ use App\Services\Quickbooks\Models\QbExpense;
 use App\Services\Quickbooks\Models\QbInvoice;
 use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\Models\QbProduct;
+use App\Services\Quickbooks\Models\QbTaxRate;
 use QuickBooksOnline\API\DataService\DataService;
 use App\Services\Quickbooks\Jobs\QuickbooksImport;
 use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
+use App\Services\Quickbooks\Helpers\Helper;
 
 class QuickbooksService
 {
@@ -43,6 +46,10 @@ class QuickbooksService
     public QbExpense $expense;
 
     public QuickbooksSync $settings;
+
+    public QbTaxRate $tax_rate;
+
+    public Helper $helper;
 
     private bool $testMode = true;
 
@@ -90,6 +97,10 @@ class QuickbooksService
 
         $this->expense = new QbExpense($this);
 
+        $this->tax_rate = new QbTaxRate($this);
+
+        $this->helper = new Helper($this->company, $this);
+
         $this->settings = $this->company->quickbooks->settings;
 
         return $this;
@@ -112,7 +123,14 @@ class QuickbooksService
         
         return $this;
     }
-
+    
+    /**
+     * checkToken
+     *
+     * Checks if the Quickbooks token is valid and refreshes it if it is not
+     * 
+     * @return self
+     */
     private function checkToken(): self
     {
 
@@ -144,7 +162,12 @@ class QuickbooksService
         throw new \Exception('Quickbooks token expired and could not be refreshed');
 
     }
-
+    
+    /**
+     * ninjaAccessToken
+     *
+     * @return array
+     */
     private function ninjaAccessToken(): array
     {
         return $this->company->quickbooks->accessTokenExpiresAt > 0 ? [
@@ -153,7 +176,12 @@ class QuickbooksService
             'QBORealmID' => $this->company->quickbooks->realmID,
         ] : [];
     }
-
+    
+    /**
+     * sdk
+     *
+     * @return SdkWrapper
+     */
     public function sdk(): SdkWrapper
     {
         return new SdkWrapper($this->sdk, $this->company);
@@ -168,12 +196,25 @@ class QuickbooksService
     {
         QuickbooksImport::dispatch($this->company->id, $this->company->db);
     }
-
+    
+    /**
+     * findEntityById
+     *
+     * @param  string $entity
+     * @param  string $id
+     * @return mixed
+     */
     public function findEntityById(string $entity, string $id): mixed
     {
         return $this->sdk->FindById($entity, $id);
     }
-
+    
+    /**
+     * query
+     *
+     * @param  string $query
+     * @return void
+     */
     public function query(string $query)
     {
         return $this->sdk->Query($query);
@@ -411,8 +452,42 @@ class QuickbooksService
         
         return $formatted;
     }
-
     
+    /**
+     * syncTaxRates
+     *
+     * Syncs tax rates from Quickbooks to Invoice Ninja
+     *
+     * @return void
+     */
+    public function syncTaxRates(): void
+    {
+
+        $tax_rates = $this->fetchTaxRates();
+
+        $this->company->quickbooks->settings->tax_rate_map = $tax_rates;
+        $this->company->save();
+
+        foreach($tax_rates as $tax_rate)
+        {
+            if(TaxRate::where('company_id', $this->company->id)->where('name', $tax_rate['name'])->where('rate', $tax_rate['rate'])->doesntExist())
+            {
+                $tr = new TaxRate();
+                $tr->company_id = $this->company->id;
+                $tr->user_id = $this->company->owner()->id;
+                $tr->name = $tax_rate['name'];
+                $tr->rate = $tax_rate['rate'];
+                $tr->save();
+            }
+        }
+
+    }
+
+    public function getIncomeAccountId(): ?string
+    {
+        return $this->company->quickbooks->settings->qb_income_account_id;
+    }
+
     /**
      * disconnect
      *

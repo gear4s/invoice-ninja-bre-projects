@@ -97,4 +97,62 @@ class QbProduct implements SyncInterface
         }
 
     }
+
+     /**
+     * findOrCreateProduct
+     *
+     * Finds or creates a product in quickbooks
+     * 
+     * @param  object $line_item
+     * @return string
+     */
+    public function findOrCreateProduct(object $line_item): string
+    {
+
+        $product = \App\Models\Product::where('company_id', $this->service->company->id)
+                                          ->where('product_key', $line_item->product_key)
+                                          ->first();
+
+        if ($product && isset($product->sync->qb_id)) {
+            return $product->sync->qb_id;
+        }
+
+        $item_name = strlen($line_item->product_key ?? '') > 0 ? $line_item->product_key : 'Product ' . uniqid();
+
+        $escaped_name = str_replace("'", "''", $item_name);
+        $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
+        $existing_items = $this->service->sdk->Query($query);
+        if (!empty($existing_items) && isset($existing_items[0])) {
+            $existing_item = $existing_items[0];
+            $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');
+            if ($existing_id) {
+                return $existing_id;
+            }
+        }
+
+        return $this->createQbProduct($line_item);
+        
+    }
+    
+    /**
+     * createQbProduct
+     *
+     * Creates a product in quickbooks
+     * 
+     * @param  object $line_item
+     * @return string
+     */
+    private function createQbProduct(object $line_item): string
+    {
+
+        $product_data = $this->product_transformer->qbTransform($line_item, $this->service->getIncomeAccountId());
+
+        $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
+
+        $result = $this->service->sdk->Add($qb_item);
+
+        $qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
+
+        return $qb_id;
+    }
 }

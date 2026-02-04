@@ -149,6 +149,17 @@ class Document extends BaseModel
         'tif' => 'tiff',
     ];
 
+    public function getMimeType(): string
+    {
+
+        if(isset(self::$types[$this->type])) {
+            return self::$types[$this->type]['mime'];
+        }
+
+        return 'application/octet-stream';
+        
+    }
+    
     public function getEntityType()
     {
         return self::class;

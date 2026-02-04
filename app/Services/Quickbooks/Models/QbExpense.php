@@ -126,10 +126,10 @@ class QbExpense implements SyncInterface
                     $invoice->sync = $sync;
                     $invoice->saveQuietly();
                     
-                    nlog("QuickBooks: Created invoice {$invoice->id} (QB ID: {$sync->qb_id})");
+                    nlog("QuickBooks: Created expense {$invoice->id} (QB ID: {$sync->qb_id})");
                 }
             } catch (\Exception $e) {
-                nlog("QuickBooks: Error pushing invoice {$invoice->id} to QuickBooks: {$e->getMessage()}");
+                nlog("QuickBooks: Error pushing expense {$invoice->id} to QuickBooks: {$e->getMessage()}");
                 // Continue with next invoice instead of failing completely
                 continue;
             }
