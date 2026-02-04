@@ -30,7 +30,7 @@ class BulkBankTransactionRequest extends Request
     {
         return [
             'ids' => 'required|bail|array',
-            'action' => 'in:archive,restore,delete,convert_matched,unlink'
+            'action' => 'in:archive,restore,delete,convert_matched,unlink',
         ];
     }
 }

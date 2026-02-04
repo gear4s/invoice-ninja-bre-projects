@@ -28,9 +28,7 @@ class SubscriptionCalculator
 {
     use MakesHash;
 
-    public function __construct(public Subscription $subscription)
-    {
-    }
+    public function __construct(public Subscription $subscription) {}
 
     /**
      * BuildPurchaseInvoice
@@ -71,8 +69,8 @@ class SubscriptionCalculator
 
         $bundle = $context['bundle'];
 
-        $recurring = array_merge(isset($bundle['recurring_products']) ? $bundle['recurring_products'] : [], isset($bundle['optional_recurring_products']) ? $bundle['optional_recurring_products'] : []);
-        $one_time = array_merge(isset($bundle['one_time_products']) ? $bundle['one_time_products'] : [], isset($bundle['optional_one_time_products']) ? $bundle['optional_one_time_products'] : []);
+        $recurring = array_merge($bundle['recurring_products'] ?? [], $bundle['optional_recurring_products'] ?? []);
+        $one_time = array_merge($bundle['one_time_products'] ?? [], $bundle['optional_one_time_products'] ?? []);
 
         $items = [];
 
@@ -87,7 +85,7 @@ class SubscriptionCalculator
             $line_item->quantity = (float) $item['quantity'];
             $line_item->cost = (float) $item['product']['price'];
             $line_item->notes = $item['product']['notes'];
-            $line_item->tax_id = (string)$item['product']['tax_id'] ?? '1';
+            $line_item->tax_id = (string) $item['product']['tax_id'] ?? '1';
             $items[] = $line_item;
 
         }
@@ -103,7 +101,7 @@ class SubscriptionCalculator
             $line_item->quantity = (float) $item['quantity'];
             $line_item->cost = (float) $item['product']['price'];
             $line_item->notes = $item['product']['notes'];
-            $line_item->tax_id = (string)$item['product']['tax_id'] ?? '1'; //@phpstan-ignore-line
+            $line_item->tax_id = (string) $item['product']['tax_id'] ?? '1'; //@phpstan-ignore-line
             $items[] = $line_item;
 
         }
@@ -195,9 +193,7 @@ class SubscriptionCalculator
         return $this->subscription->price;
     }
 
-    public function executeUpgradePlan()
-    {
-    }
+    public function executeUpgradePlan() {}
 
     private function getRefundInvoice(Invoice $invoice)
     {

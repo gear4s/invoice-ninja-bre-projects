@@ -152,7 +152,7 @@ class QuoteService
     public function reject($contact = null, ?string $notes = null): self
     {
 
-        if($this->quote->status_id != Quote::STATUS_SENT) {
+        if ($this->quote->status_id != Quote::STATUS_SENT) {
             return $this;
         }
 
@@ -253,12 +253,12 @@ class QuoteService
             //30-06-2023
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->invoice_filepath($invitation).$this->invoice->numberFormatter().'.pdf')) {
-                Storage::disk(config('filesystems.default'))->delete($this->quote->client->quote_filepath($invitation).$this->quote->numberFormatter().'.pdf');
+                Storage::disk(config('filesystems.default'))->delete($this->quote->client->quote_filepath($invitation) . $this->quote->numberFormatter() . '.pdf');
                 // }
 
                 // if (Ninja::isHosted() && Storage::disk('public')->exists($this->invoice->client->invoice_filepath($invitation).$this->invoice->numberFormatter().'.pdf')) {
                 if (Ninja::isHosted()) {
-                    Storage::disk('public')->delete($this->quote->client->quote_filepath($invitation).$this->quote->numberFormatter().'.pdf');
+                    Storage::disk('public')->delete($this->quote->client->quote_filepath($invitation) . $this->quote->numberFormatter() . '.pdf');
                 }
             } catch (\Exception $e) {
                 nlog($e->getMessage());
@@ -275,12 +275,12 @@ class QuoteService
         $this->quote->invitations->each(function ($invitation) {
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
-                Storage::disk(config('filesystems.default'))->delete($this->quote->client->e_document_filepath($invitation).$this->quote->getFileName("xml"));
+                Storage::disk(config('filesystems.default'))->delete($this->quote->client->e_document_filepath($invitation) . $this->quote->getFileName("xml"));
                 // }
 
                 // if (Ninja::isHosted() && Storage::disk('public')->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
                 if (Ninja::isHosted()) {
-                    Storage::disk('public')->delete($this->quote->client->e_document_filepath($invitation).$this->quote->getFileName("xml"));
+                    Storage::disk('public')->delete($this->quote->client->e_document_filepath($invitation) . $this->quote->getFileName("xml"));
                 }
             } catch (\Exception $e) {
                 nlog($e->getMessage());

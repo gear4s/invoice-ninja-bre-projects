@@ -331,7 +331,7 @@ class BaseRepository
             }
 
             /** Verifactu modified invoice check */
-            if($model->company->verifactuEnabled()) {
+            if ($model->company->verifactuEnabled()) {
                 $model->service()->modifyVerifactuWorkflow($data, $this->new_model)->save();
             }
         }

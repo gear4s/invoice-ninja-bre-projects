@@ -136,7 +136,7 @@ class ContactExport extends BaseExport
 
             }
         }
-        
+
         return $this->decorateAdvancedFields($contact->client, $entity);
     }
 

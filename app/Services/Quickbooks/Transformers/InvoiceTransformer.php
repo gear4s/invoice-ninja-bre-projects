@@ -19,15 +19,15 @@ use App\Services\Quickbooks\Helpers\Helper;
 
 /**
  * Class InvoiceTransformer.
- * 
+ *
  */
 class InvoiceTransformer extends BaseTransformer
-{    
+{
     /**
      * qbToNinja
      *
      * Transforms a QB invoice to a Invoice Ninja Invoice
-     * 
+     *
      * @param  mixed $qb_data
      * @param  \App\Services\Quickbooks\QuickbooksService|null $qb_service
      * @return array
@@ -36,12 +36,12 @@ class InvoiceTransformer extends BaseTransformer
     {
         return $this->transform($qb_data, $qb_service);
     }
-    
+
     /**
      * ninjaToQb
      *
      * Transforms a Invoice Ninja Invoice to a QB invoice
-     * 
+     *
      * @param  \App\Models\Invoice $invoice
      * @param  \App\Services\Quickbooks\QuickbooksService $qb_service
      * @return array
@@ -62,22 +62,20 @@ class InvoiceTransformer extends BaseTransformer
             $product_qb_id = $qb_service->product->findOrCreateProduct($line_item);
 
             $tax_code_id = 'NON'; // Default to non-taxable
-            
+
             // Check if tax_id is set and is exempt/zero rate (5 = exempt, 8 = zero rate)
-            if(isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])){
+            if (isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])) {
                 $tax_code_id = 'NON';
-            }
-            elseif($ast){ // Automatic taxes are enabled    
+            } elseif ($ast) { // Automatic taxes are enabled
                 $tax_code_id = 'TAX';
-            }
-            elseif (isset($line_item->tax_id) && !in_array($line_item->tax_id, ['5', '8'])) {
+            } elseif (isset($line_item->tax_id) && !in_array($line_item->tax_id, ['5', '8'])) {
                 // Only use 'TAX' if there are actual tax rates applied to this line item
                 $has_tax_rate = (
-                    (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0) ||
-                    (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0) ||
-                    (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
+                    (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0)
+                    || (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0)
+                    || (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
                 );
-                
+
                 if ($has_tax_rate) {
                     $tax_code_id = 'TAX';
                 }
@@ -122,18 +120,18 @@ class InvoiceTransformer extends BaseTransformer
         $subtotal = $invoice_calc->getSubTotal();
         $discount = $invoice_calc->getTotalDiscount();
         $surcharges = $invoice_calc->getTotalSurcharges();
-        
+
         // Calculate taxable amount (subtotal - discount + surcharges, before taxes)
         $taxable_amount = $subtotal - $discount + $surcharges;
-        
+
         // Add discount as a line item if discount exists
         if ($discount > 0) {
             // QuickBooks expects positive Amount for DiscountLineDetail (it handles the negative internally)
-            $discount_amount = (float)round($discount, 2);
-            
+            $discount_amount = (float) round($discount, 2);
+
             // Get discount account ID using helper
             $discount_account_id = $qb_service->helper->getDiscountAccountId();
-            
+
             $discount_line = [
                 'LineNum' => $line_num,
                 'DetailType' => 'DiscountLineDetail',
@@ -142,14 +140,14 @@ class InvoiceTransformer extends BaseTransformer
                     'PercentBased' => !$invoice->is_amount_discount, // true for percentage, false for amount
                 ],
             ];
-            
+
             // Add DiscountAccountRef if available (may be required by QuickBooks)
             if ($discount_account_id) {
                 $discount_line['DiscountLineDetail']['DiscountAccountRef'] = [
                     'value' => $discount_account_id,
                 ];
             }
-            
+
             if (!$invoice->is_amount_discount && $invoice->discount > 0) {
                 // For percentage-based discounts, set DiscountPercent
                 $discount_line['DiscountLineDetail']['DiscountPercent'] = round($invoice->discount, 2);
@@ -157,11 +155,11 @@ class InvoiceTransformer extends BaseTransformer
                 // For amount-based discounts, set DiscountPercent to 0.0 (as suggested)
                 $discount_line['DiscountLineDetail']['DiscountPercent'] = 0.0;
             }
-            
+
             $line_items[] = $discount_line;
             $line_num++;
         }
-        
+
         // Build invoice data
         $invoice_data = [
             'Line' => $line_items,
@@ -181,9 +179,9 @@ class InvoiceTransformer extends BaseTransformer
             // 'GlobalTaxCalculation' => 'TaxExcluded',
             'GlobalTaxCalculation' => $qb_service->company->quickbooks->settings->automatic_taxes ? 'TaxExcluded' : 'NotApplicable',
         ];
-        
+
         // Add TxnTaxDetail if invoice has taxes and AST is not enabled.
-        if(!$qb_service->company->quickbooks->settings->automatic_taxes) {
+        if (!$qb_service->company->quickbooks->settings->automatic_taxes) {
             $tax_detail = $this->buildTxnTaxDetail($invoice, $total_taxes, $taxable_amount, $qb_service);
             if ($tax_detail) {
                 $invoice_data['TxnTaxDetail'] = $tax_detail;
@@ -194,14 +192,14 @@ class InvoiceTransformer extends BaseTransformer
         if ($invoice->public_notes || $invoice->terms) {
             $public_notes = $invoice->public_notes ?? '';
             $terms = $invoice->terms ?? '';
-            
+
             // Clean HTML: replace <br> tags with newlines and strip all HTML tags
             $public_notes = $qb_service->helper->cleanHtmlText($public_notes);
             $terms = $qb_service->helper->cleanHtmlText($terms);
-            
+
             // Combine public notes and terms
             $memo_value = trim($public_notes . ($public_notes && $terms ? "\n\n" : '') . $terms);
-            
+
             if ($memo_value) {
                 $invoice_data['CustomerMemo'] = [
                     'value' => $memo_value,
@@ -221,7 +219,7 @@ class InvoiceTransformer extends BaseTransformer
         // QuickBooks uses 'Deposit' field for partial payments/deposits
         if ($invoice->partial && $invoice->partial > 0) {
             $invoice_data['Deposit'] = $invoice->partial;
-            
+
             // Note: QuickBooks doesn't have a separate 'DepositDueDate' field
         }
 
@@ -232,7 +230,7 @@ class InvoiceTransformer extends BaseTransformer
         }
 
         // nlog($invoice_data);
-        
+
         return $invoice_data;
     }
 
@@ -240,7 +238,7 @@ class InvoiceTransformer extends BaseTransformer
     /**
      * Build TxnTaxDetail for invoice-level tax calculation.
      * This handles total taxes applied to the invoice.
-     * 
+     *
      * @param \App\Models\Invoice $invoice
      * @param float $total_taxes The total tax amount
      * @param float $taxable_amount The taxable amount (subtotal - discount + surcharges)
@@ -252,62 +250,25 @@ class InvoiceTransformer extends BaseTransformer
         // Collect invoice-level taxes (tax_name1/rate1, tax_name2/rate2, tax_name3/rate3)
         $tax_lines = [];
         $calculated_total_tax = 0;
-        
+
         $tax_rate_map = $qb_service->company->quickbooks->settings->tax_rate_map ?? [];
-              
-        foreach($invoice->calc()->getTaxMap() ?? [] as $tax)
-        {
+
+        foreach ($invoice->calc()->getTaxMap() ?? [] as $tax) {
             $tax_components = $qb_service->helper->splitTaxName($tax['name']);
 
             $tax_rate_id = null;
 
-            foreach($tax_rate_map as $rate_map)
-            {
-    
-                if(floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name'])
-                {
+            foreach ($tax_rate_map as $rate_map) {
+
+                if (floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name']) {
                     $tax_rate_id = $rate_map['id'];
                     break;
                 }
             }
-    
-            if(!$tax_rate_id)
+
+            if (!$tax_rate_id) {
                 continue;
-
-          $tax_lines[] = [
-            'Amount' => round($tax['total'], 2),
-            'DetailType' => 'TaxLineDetail',
-            'TaxLineDetail' => [
-                'TaxRateRef' => [
-                    'value' => $tax_rate_id,
-                ],
-                'PercentBased' => false,
-                'NetAmountTaxable' => round($tax['base_amount'], 2),
-                'TaxInclusiveAmount' => 0.00,
-            ],
-          ];
-
-          $calculated_total_tax += round($tax['total'], 2);
-        }
-
-        foreach($invoice->calc()->getTotalTaxMap() ?? [] as $tax)
-        {
-            $tax_components = $qb_service->helper->splitTaxName($tax['name']);
-
-            $tax_rate_id = null;
-
-            foreach($tax_rate_map as $rate_map)
-            {
-    
-                if(floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name'])
-                {
-                    $tax_rate_id = $rate_map['id'];
-                    break;
-                }
             }
-    
-            if(!$tax_rate_id)
-                continue;
 
             $tax_lines[] = [
                 'Amount' => round($tax['total'], 2),
@@ -324,22 +285,55 @@ class InvoiceTransformer extends BaseTransformer
 
             $calculated_total_tax += round($tax['total'], 2);
         }
-       
+
+        foreach ($invoice->calc()->getTotalTaxMap() ?? [] as $tax) {
+            $tax_components = $qb_service->helper->splitTaxName($tax['name']);
+
+            $tax_rate_id = null;
+
+            foreach ($tax_rate_map as $rate_map) {
+
+                if (floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name']) {
+                    $tax_rate_id = $rate_map['id'];
+                    break;
+                }
+            }
+
+            if (!$tax_rate_id) {
+                continue;
+            }
+
+            $tax_lines[] = [
+                'Amount' => round($tax['total'], 2),
+                'DetailType' => 'TaxLineDetail',
+                'TaxLineDetail' => [
+                    'TaxRateRef' => [
+                        'value' => $tax_rate_id,
+                    ],
+                    'PercentBased' => false,
+                    'NetAmountTaxable' => round($tax['base_amount'], 2),
+                    'TaxInclusiveAmount' => 0.00,
+                ],
+            ];
+
+            $calculated_total_tax += round($tax['total'], 2);
+        }
+
         // If no tax lines, return null
         if (empty($tax_lines)) {
             return null;
         }
-        
+
         // Use the actual total_taxes from invoice if available, otherwise use calculated
         $final_total_tax = $total_taxes > 0 ? round($total_taxes, 2) : round($calculated_total_tax, 2);
-        
+
         return [
             'TotalTax' => $final_total_tax,
             'TaxLine' => $tax_lines,
         ];
     }
 
-    
+
     /**
      * transform
      *
@@ -350,7 +344,7 @@ class InvoiceTransformer extends BaseTransformer
     public function transform(mixed $qb_data, ?\App\Services\Quickbooks\QuickbooksService $qb_service = null): array|bool
     {
         $client_id = $this->getClientId(data_get($qb_data, 'CustomerRef', null));
-        
+
         // Use helper for business logic if available, otherwise return basic transformation
         $tax_array = $qb_service ? $qb_service->helper->calculateTotalTax($qb_data) : [0, ''];
         $custom_surcharge1 = $qb_service ? $qb_service->helper->checkIfDiscountAfterTax($qb_data) : 0;
@@ -364,7 +358,7 @@ class InvoiceTransformer extends BaseTransformer
             'public_notes' => data_get($qb_data, 'CustomerMemo', false),
             'due_date' => data_get($qb_data, 'DueDate', null),
             'po_number' => data_get($qb_data, 'PONumber', ""),
-            'partial' => (float)data_get($qb_data, 'Deposit', 0),
+            'partial' => (float) data_get($qb_data, 'Deposit', 0),
             'line_items' => $qb_service ? $qb_service->helper->getLineItems($qb_data, $tax_array) : [],
             'payment_ids' => $qb_service ? $qb_service->helper->getPayments($qb_data) : [],
             'status_id' => Invoice::STATUS_SENT,

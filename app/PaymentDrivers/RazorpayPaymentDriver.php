@@ -86,13 +86,9 @@ class RazorpayPaymentDriver extends BaseDriver
         return $this->payment_method->paymentResponse($request);
     }
 
-    public function refund(Payment $payment, $amount, $return_client_response = false)
-    {
-    }
+    public function refund(Payment $payment, $amount, $return_client_response = false) {}
 
-    public function tokenBilling(ClientGatewayToken $cgt, PaymentHash $payment_hash)
-    {
-    }
+    public function tokenBilling(ClientGatewayToken $cgt, PaymentHash $payment_hash) {}
 
     /**
      * Convert the amount to the format that Razorpay supports.

@@ -70,7 +70,7 @@ class QbExpense implements SyncInterface
                     ->whereNotNull('number')
                     ->where('number', $ninja_expense_data['number'])
                     ->exists()) {
-                    $ninja_expense_data['number'] = 'qb_'.$ninja_expense_data['number'].'_'.rand(1000, 99999);
+                    $ninja_expense_data['number'] = 'qb_' . $ninja_expense_data['number'] . '_' . rand(1000, 99999);
                 }
 
                 $expense->fill($ninja_expense_data);
@@ -100,7 +100,7 @@ class QbExpense implements SyncInterface
             try {
                 // Transform invoice to QuickBooks format
                 $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->service);
-                
+
                 // If updating, fetch SyncToken using existing find() method
                 if (isset($invoice->sync->qb_id) && !empty($invoice->sync->qb_id)) {
                     $existing_qb_invoice = $this->find($invoice->sync->qb_id);
@@ -119,13 +119,13 @@ class QbExpense implements SyncInterface
                 } else {
                     // Create new invoice
                     $result = $this->service->sdk->Add($qb_invoice);
-                    
+
                     // Store QB ID in invoice sync
                     $sync = new InvoiceSync();
                     $sync->qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
                     $invoice->sync = $sync;
                     $invoice->saveQuietly();
-                    
+
                     nlog("QuickBooks: Created expense {$invoice->id} (QB ID: {$sync->qb_id})");
                 }
             } catch (\Exception $e) {

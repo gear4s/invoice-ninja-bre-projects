@@ -62,7 +62,7 @@ class MobileLocalization extends Command
 
     private function laravelResources()
     {
-        $resources = (array)$this->getResources();
+        $resources = (array) $this->getResources();
 
         if (is_iterable($resources)) {
             foreach ($resources as $key => $val) {
@@ -117,7 +117,7 @@ class MobileLocalization extends Command
         $data = str_replace("'", '"', $data);
         $data = str_replace("\#", "'", $data);
 
-        return json_decode('{'.rtrim($data, ',').'}');
+        return json_decode('{' . rtrim($data, ',') . '}');
     }
 
     protected function getOptions()

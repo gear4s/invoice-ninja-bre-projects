@@ -47,7 +47,7 @@ class UrlSetDb
                 return response()->json(['message' => 'Invalid confirmation code'], 403);
             }
 
-            MultiDB::setDB(MultiDB::DB_PREFIX.str_pad($hashed_db[0], 2, '0', STR_PAD_LEFT));
+            MultiDB::setDB(MultiDB::DB_PREFIX . str_pad($hashed_db[0], 2, '0', STR_PAD_LEFT));
         }
 
         return $next($request);

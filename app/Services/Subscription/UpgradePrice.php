@@ -28,9 +28,7 @@ class UpgradePrice extends AbstractService
 
     public float $outstanding_credit = 0;
 
-    public function __construct(protected RecurringInvoice $recurring_invoice, public Subscription $subscription)
-    {
-    }
+    public function __construct(protected RecurringInvoice $recurring_invoice, public Subscription $subscription) {}
 
     public function run(): self
     {

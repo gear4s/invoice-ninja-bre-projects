@@ -100,7 +100,7 @@ class BankTransactionRule extends BaseModel
         '>',
         '>=',
         '<',
-        '<='
+        '<=',
     ];
 
     /* Description, Client, Vendor, Reference Number */

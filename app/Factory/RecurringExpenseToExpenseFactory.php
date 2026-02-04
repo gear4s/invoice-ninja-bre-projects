@@ -105,7 +105,7 @@ class RecurringExpenseToExpenseFactory
                 ),
                 ':MONTH' => Carbon::createFromDate(now()->year, now()->month)->translatedFormat('F'),
                 ':YEAR' => now()->year,
-                ':QUARTER' => 'Q'.now()->quarter,
+                ':QUARTER' => 'Q' . now()->quarter,
                 ':WEEK_BEFORE' => \sprintf(
                     '%s %s %s',
                     Carbon::now()->subDays(7)->translatedFormat($date_format),

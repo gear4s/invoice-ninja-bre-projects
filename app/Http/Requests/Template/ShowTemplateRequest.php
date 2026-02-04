@@ -45,7 +45,5 @@ class ShowTemplateRequest extends Request
         $this->replace($input);
     }
 
-    public function message()
-    {
-    }
+    public function message() {}
 }

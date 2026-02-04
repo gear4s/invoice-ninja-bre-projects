@@ -21,9 +21,7 @@ class HasValidPhoneNumber implements Rule
 {
     public $message;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function message()
     {

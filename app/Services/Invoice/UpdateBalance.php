@@ -17,9 +17,7 @@ use App\Services\AbstractService;
 
 class UpdateBalance extends AbstractService
 {
-    public function __construct(public Invoice $invoice, public float $balance_adjustment, public bool $is_draft)
-    {
-    }
+    public function __construct(public Invoice $invoice, public float $balance_adjustment, public bool $is_draft) {}
 
     public function run()
     {

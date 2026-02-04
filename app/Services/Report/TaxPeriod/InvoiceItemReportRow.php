@@ -24,8 +24,7 @@ class InvoiceItemReportRow
         private TaxDetail $tax_detail,
         private TaxReportStatus $status,
         private ?RegionalTaxCalculator $regional_calculator = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Get column headers
@@ -93,7 +92,7 @@ class InvoiceItemReportRow
      */
     public function buildForStatus(): array
     {
-        return match($this->status) {
+        return match ($this->status) {
             TaxReportStatus::DELTA, TaxReportStatus::ADJUSTMENT => $this->buildAdjustmentRow(),
             default => $this->build(),
         };

@@ -29,9 +29,7 @@ class HandleRestore extends AbstractService
 
     private $adjustment_amount = 0;
 
-    public function __construct(private Invoice $invoice)
-    {
-    }
+    public function __construct(private Invoice $invoice) {}
 
     public function run()
     {
@@ -151,7 +149,7 @@ class HandleRestore extends AbstractService
 
     private function windBackInvoiceNumber()
     {
-        $findme = '_'.ctrans('texts.deleted');
+        $findme = '_' . ctrans('texts.deleted');
 
         $pos = strpos($this->invoice->number, $findme);
 

@@ -26,9 +26,7 @@ class DiskCleanup implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Execute the job.

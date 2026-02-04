@@ -23,7 +23,5 @@ class QuoteWasEmailed
 {
     use SerializesModels;
 
-    public function __construct(public QuoteInvitation $invitation, public Company $company, public array $event_vars, public string $template)
-    {
-    }
+    public function __construct(public QuoteInvitation $invitation, public Company $company, public array $event_vars, public string $template) {}
 }

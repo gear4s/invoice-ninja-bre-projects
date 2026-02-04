@@ -36,7 +36,5 @@ class PaymentWasEmailed
      * @param ClientContact $contact
      * @param array $event_vars
      */
-    public function __construct(public Payment $payment, public Company $company, public ClientContact $contact, public array $event_vars)
-    {
-    }
+    public function __construct(public Payment $payment, public Company $company, public ClientContact $contact, public array $event_vars) {}
 }

@@ -34,11 +34,9 @@ use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter
 
 class StorecoveAdapter
 {
-    public function __construct(public Storecove $storecove)
-    {
-    }
+    public function __construct(public Storecove $storecove) {}
 
-    private Invoice | Credit $storecove_invoice;
+    private Invoice|Credit $storecove_invoice;
 
     private array $errors = [];
 
@@ -89,9 +87,9 @@ class StorecoveAdapter
     {
 
         $context = [
-                DateTimeNormalizer::FORMAT_KEY => 'Y-m-d',
-                AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
-            ];
+            DateTimeNormalizer::FORMAT_KEY => 'Y-m-d',
+            AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
+        ];
 
         $serializer = $this->getSerializer();
 
@@ -127,7 +125,7 @@ class StorecoveAdapter
 
             $e = new \InvoiceNinja\EInvoice\EInvoice();
             $peppolInvoice = $e->decode('Peppol', $p, 'xml');
-            
+
             $parent = $invoice instanceof \App\Models\Credit ? \App\Services\EDocument\Gateway\Storecove\Models\Credit::class : \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class;
             $peppolInvoice = $e->encode($peppolInvoice, 'json');
             $this->storecove_invoice = $serializer->deserialize($peppolInvoice, $parent, 'json', $context);
@@ -161,7 +159,7 @@ class StorecoveAdapter
             if (isset($line->taxes_duties_fees)) {
                 foreach ($line->taxes_duties_fees as &$tax) {
                     $tax->country = $this->nexus;
-                    $tax->percentage = $tax->percentage ?? 0;
+                    $tax->percentage ??= 0;
                     if (property_exists($tax, 'category')) {
                         $tax->category = $this->tranformTaxCode($tax->category);
                     }
@@ -195,7 +193,7 @@ class StorecoveAdapter
 
         foreach ($tax_subtotals as &$tax) {
             $tax->country = $this->nexus;
-            $tax->percentage = $tax->percentage ?? 0;
+            $tax->percentage ??= 0;
 
             if (property_exists($tax, 'category')) {
                 $tax->category = $this->tranformTaxCode($tax->category);
@@ -223,7 +221,7 @@ class StorecoveAdapter
 
             foreach ($taxes as &$tax) {
                 $tax->country = $this->nexus;
-                $tax->percentage = $tax->percentage ?? 0;
+                $tax->percentage ??= 0;
 
                 if (property_exists($tax, 'category')) {
                     $tax->category = $this->tranformTaxCode($tax->category);
@@ -303,8 +301,8 @@ class StorecoveAdapter
         $serializer = $this->getSerializer();
 
         $context = [
-          DateTimeNormalizer::FORMAT_KEY => 'Y-m-d',
-          AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
+            DateTimeNormalizer::FORMAT_KEY => 'Y-m-d',
+            AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
         ];
 
         $s_invoice = $serializer->encode($this->storecove_invoice, 'json', $context);
@@ -364,13 +362,13 @@ class StorecoveAdapter
         } elseif (in_array($client_country_code, $eu_countries)) {
 
             // First, determine if we're over threshold
-            $is_over_threshold = isset($this->ninja_invoice->company->tax_data->regions->EU->has_sales_above_threshold) &&
-                                $this->ninja_invoice->company->tax_data->regions->EU->has_sales_above_threshold;
+            $is_over_threshold = isset($this->ninja_invoice->company->tax_data->regions->EU->has_sales_above_threshold)
+                                && $this->ninja_invoice->company->tax_data->regions->EU->has_sales_above_threshold;
 
             // Is this B2B or B2C?
-            $is_b2c = strlen($this->ninja_invoice->client->vat_number ?? '') < 2 ||
-                    !($this->ninja_invoice->client->has_valid_vat_number ?? false) ||
-                    $this->ninja_invoice->client->classification == 'individual';
+            $is_b2c = strlen($this->ninja_invoice->client->vat_number ?? '') < 2
+                    || !($this->ninja_invoice->client->has_valid_vat_number ?? false)
+                    || $this->ninja_invoice->client->classification == 'individual';
 
 
             // B2C, under threshold, no Company VAT Registerd - must charge origin country VAT
@@ -445,7 +443,7 @@ class StorecoveAdapter
         // elseif($code == 'K' && $this->ninja_invoice->company->getSetting('classification') == 'individual')
         //     return 'reverse_charge';
 
-        return match($code) {
+        return match ($code) {
             'S' => 'standard',
             'Z' => 'zero_rated',
             'E' => 'exempt',
@@ -466,7 +464,7 @@ class StorecoveAdapter
 
     private function transformPaymentMeansCode(?string $code): string
     {
-        return match($code) {
+        return match ($code) {
             '30' => 'credit_transfer',
             '58' => 'sepa_credit_transfer',
             '31' => 'debit_transfer',

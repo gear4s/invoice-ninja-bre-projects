@@ -31,7 +31,5 @@ class ClientWasMerged
      * @param Company $company
      * @param array $event_vars
      */
-    public function __construct(public string $mergeable_client, public Client $client, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public string $mergeable_client, public Client $client, public Company $company, public array $event_vars) {}
 }

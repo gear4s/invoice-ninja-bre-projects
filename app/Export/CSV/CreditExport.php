@@ -253,7 +253,7 @@ class CreditExport extends BaseExport
 
         if (in_array('credit.subtotal', $this->input['report_keys'])) {
             $entity['credit.subtotal'] = $credit->calc()->getSubTotal();
-        }   
+        }
         return $entity;
     }
 }

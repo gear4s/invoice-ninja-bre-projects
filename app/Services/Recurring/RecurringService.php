@@ -27,9 +27,7 @@ class RecurringService
 {
     use MakesHash;
 
-    public function __construct(public RecurringInvoice | RecurringExpense | RecurringQuote $recurring_entity)
-    {
-    }
+    public function __construct(public RecurringInvoice|RecurringExpense|RecurringQuote $recurring_entity) {}
 
     //set schedules - update next_send_dates
 
@@ -98,8 +96,8 @@ class RecurringService
 
             //30-06-2023
             try {
-                Storage::disk(config('filesystems.default'))->delete($this->recurring_entity->client->recurring_invoice_filepath($invitation) . $this->recurring_entity->numberFormatter().'.pdf');
-                Storage::disk('public')->delete($this->recurring_entity->client->recurring_invoice_filepath($invitation) . $this->recurring_entity->numberFormatter().'.pdf');
+                Storage::disk(config('filesystems.default'))->delete($this->recurring_entity->client->recurring_invoice_filepath($invitation) . $this->recurring_entity->numberFormatter() . '.pdf');
+                Storage::disk('public')->delete($this->recurring_entity->client->recurring_invoice_filepath($invitation) . $this->recurring_entity->numberFormatter() . '.pdf');
                 if (Ninja::isHosted()) {
                 }
             } catch (\Exception $e) {

@@ -35,7 +35,7 @@ class DocumentFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->where('name', 'like', '%'.$filter.'%');
+        return $this->builder->where('name', 'like', '%' . $filter . '%');
 
     }
 
@@ -76,7 +76,7 @@ class DocumentFilters extends QueryFilters
         $types = explode(',', $types);
 
         foreach ($types as $type) {
-            match($type) {
+            match ($type) {
                 'private' => $this->builder->where('is_public', 0),
                 'public' => $this->builder->where('is_public', 1),
                 'pdf' => $this->builder->where('type', 'pdf'),

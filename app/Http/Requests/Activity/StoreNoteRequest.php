@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
 class StoreNoteRequest extends Request
 {
     public $error_message;
-    
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -75,7 +75,7 @@ class StoreNoteRequest extends Request
             return false;
         }
 
-        $class = "\\App\\Models\\".ucfirst(Str::camel(rtrim($this->entity, 's')));
+        $class = "\\App\\Models\\" . ucfirst(Str::camel(rtrim($this->entity, 's')));
         return $class::withTrashed()->find(is_string($this->entity_id) ? $this->decodePrimaryKey($this->entity_id) : $this->entity_id);
 
     }

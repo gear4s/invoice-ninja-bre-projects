@@ -24,9 +24,7 @@ class InvoiceFailedEmailNotification
 {
     use UserNotifies;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

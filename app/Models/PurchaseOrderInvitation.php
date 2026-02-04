@@ -153,11 +153,11 @@ class PurchaseOrderInvitation extends BaseModel
 
         switch ($this->company->portal_mode) {
             case 'subdomain':
-                return $domain.'/vendor/';
+                return $domain . '/vendor/';
             case 'iframe':
-                return $domain.'/vendor/';
+                return $domain . '/vendor/';
             case 'domain':
-                return $domain.'/vendor/';
+                return $domain . '/vendor/';
 
             default:
                 return '';
@@ -176,11 +176,11 @@ class PurchaseOrderInvitation extends BaseModel
 
         switch ($this->company->portal_mode) {
             case 'subdomain':
-                return $domain.'/vendor/'.$entity_type.'/'.$this->key;
+                return $domain . '/vendor/' . $entity_type . '/' . $this->key;
             case 'iframe':
-                return $domain.'/vendor/'.$entity_type.'/'.$this->key;
+                return $domain . '/vendor/' . $entity_type . '/' . $this->key;
             case 'domain':
-                return $domain.'/vendor/'.$entity_type.'/'.$this->key;
+                return $domain . '/vendor/' . $entity_type . '/' . $this->key;
 
             default:
                 return '';
@@ -189,14 +189,14 @@ class PurchaseOrderInvitation extends BaseModel
 
     public function getAdminLink($use_react_link = false): string
     {
-        return $use_react_link ? $this->getReactLink() : $this->getLink().'?silent=true';
+        return $use_react_link ? $this->getReactLink() : $this->getLink() . '?silent=true';
     }
 
     private function getReactLink(): string
     {
         $entity_type = Str::snake(class_basename($this->entityType()));
 
-        return config('ninja.react_url')."/#/{$entity_type}s/{$this->{$entity_type}->hashed_id}/edit";
+        return config('ninja.react_url') . "/#/{$entity_type}s/{$this->{$entity_type}->hashed_id}/edit";
     }
 
 }

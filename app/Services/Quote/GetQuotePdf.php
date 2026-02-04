@@ -19,9 +19,7 @@ use App\Services\AbstractService;
 
 class GetQuotePdf extends AbstractService
 {
-    public function __construct(public Quote $quote, public ?ClientContact $contact = null)
-    {
-    }
+    public function __construct(public Quote $quote, public ?ClientContact $contact = null) {}
 
     public function run()
     {

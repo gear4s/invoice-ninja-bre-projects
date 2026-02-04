@@ -40,9 +40,7 @@ class PrintEntityBatch implements ShouldQueue
     use SerializesModels;
     use Batchable;
 
-    public function __construct(private mixed $class, private array $entity_ids, private string $db)
-    {
-    }
+    public function __construct(private mixed $class, private array $entity_ids, private string $db) {}
 
     public function handle()
     {

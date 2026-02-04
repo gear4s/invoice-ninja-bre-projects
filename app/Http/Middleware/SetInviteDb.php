@@ -64,7 +64,7 @@ class SetInviteDb
             }
 
             if ($hashed_db && is_array($hashed_db) && ($hashed_db[0] == '01' || $hashed_db[0] == '02')) {
-                MultiDB::setDB(MultiDB::DB_PREFIX.str_pad($hashed_db[0], 2, '0', STR_PAD_LEFT));
+                MultiDB::setDB(MultiDB::DB_PREFIX . str_pad($hashed_db[0], 2, '0', STR_PAD_LEFT));
 
                 return $next($request);
             }

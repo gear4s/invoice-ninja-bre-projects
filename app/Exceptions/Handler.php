@@ -110,11 +110,11 @@ class Handler extends ExceptionHandler
                 $name = 'hosted@invoiceninja.com';
 
                 if (auth()->guard('contact') && auth()->guard('contact')->user()) { // @phpstan-ignore-line
-                    $name = 'Contact = '.auth()->guard('contact')->user()->email;
+                    $name = 'Contact = ' . auth()->guard('contact')->user()->email;
                     $key = auth()->guard('contact')->user()->company->account->key;
                 } elseif (auth()->guard('user') && auth()->guard('user')->user()) { // @phpstan-ignore-line
 
-                    $name = 'Admin = '.auth()->guard('user')->user()->email;
+                    $name = 'Admin = ' . auth()->guard('user')->user()->email;
                     $key = auth()->user()->account->key;
                 } else {
                     $key = 'Anonymous';
@@ -204,7 +204,7 @@ class Handler extends ExceptionHandler
             $dontReport = array_merge($this->selfHostDontReport, $this->internalDontReport);
         }
 
-        return is_null(Arr::first($dontReport, fn ($type) => $e instanceof $type));
+        return is_null(Arr::first($dontReport, fn($type) => $e instanceof $type));
     }
 
     /**

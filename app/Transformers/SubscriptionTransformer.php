@@ -60,7 +60,7 @@ class SubscriptionTransformer extends EntityTransformer
             'allow_plan_changes' => (bool) $subscription->allow_plan_changes,
             'refund_period' => (int) $subscription->refund_period,
             'webhook_configuration' => $subscription->webhook_configuration ?: [],
-            'purchase_page' => (string) $company->domain()."/client/subscriptions/{$subscription->hashed_id}/purchase",
+            'purchase_page' => (string) $company->domain() . "/client/subscriptions/{$subscription->hashed_id}/purchase",
             //'purchase_page' => (string)route('client.subscription.purchase', $subscription->hashed_id),
             'currency_id' => (string) $subscription->currency_id,
             'is_deleted' => (bool) $subscription->is_deleted,
@@ -69,7 +69,7 @@ class SubscriptionTransformer extends EntityTransformer
             'archived_at' => (int) $subscription->deleted_at,
             'plan_map' => '', //@deprecated 03/04/2021
             'use_inventory_management' => (bool) $subscription->use_inventory_management,
-            'optional_recurring_product_ids' => (string)$subscription->optional_recurring_product_ids,
+            'optional_recurring_product_ids' => (string) $subscription->optional_recurring_product_ids,
             'optional_product_ids' => (string) $subscription->optional_product_ids,
             'registration_required' => (bool) $subscription->registration_required,
             'steps' => $subscription->steps,

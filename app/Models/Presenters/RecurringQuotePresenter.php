@@ -22,6 +22,4 @@ namespace App\Models\Presenters;
  * Shortcuts to other presenters are here to facilitate
  * a clean UI / UX
  */
-class RecurringQuotePresenter extends InvoicePresenter
-{
-}
+class RecurringQuotePresenter extends InvoicePresenter {}

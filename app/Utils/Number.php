@@ -105,7 +105,7 @@ class Number
         }
 
         if (!$decimal && substr($value, -3, 1) != ",") {
-            $value = $value.".00";
+            $value = $value . ".00";
         }
 
         $decimal = strpos($value, '.');
@@ -118,7 +118,7 @@ class Number
         //comma first = traditional thousand separator
         $value = str_replace(',', '', $value);
 
-        return (float)$value;
+        return (float) $value;
 
 
     }
@@ -151,7 +151,7 @@ class Number
             return (float) $s;
         }
 
-        $s = str_replace('.', '', substr($s, 0, -3)).substr($s, -3);
+        $s = str_replace('.', '', substr($s, 0, -3)) . substr($s, -3);
 
         if ($multiplier) {
             $s = floatval($s) * -1;
@@ -201,7 +201,7 @@ class Number
         //comma first = traditional thousand separator
         $value = str_replace(',', '', $value);
 
-        return (float)$value;
+        return (float) $value;
 
     }
 
@@ -268,7 +268,7 @@ class Number
         } elseif ($entity->getSetting('show_currency_code') === true) {
             return "{$value} {$code}";
         } elseif ($swapSymbol) {
-            return "{$value} ".trim($symbol);
+            return "{$value} " . trim($symbol);
         } elseif ($entity->getSetting('show_currency_code') === false) {
             /* Ensures we place the negative symbol ahead of the currency symbol*/
             if ($_value < 0) {
@@ -329,7 +329,7 @@ class Number
             $precision = 0;
         }
 
-        $value = number_format((float)$v, $precision, $decimal, $thousand);//@phpstan-ignore-line
+        $value = number_format((float) $v, $precision, $decimal, $thousand);//@phpstan-ignore-line
         $symbol = $currency->symbol;
 
         if ($entity->getSetting('show_currency_code') === true && $currency->code == 'CHF') {
@@ -337,7 +337,7 @@ class Number
         } elseif ($entity->getSetting('show_currency_code') === true) {
             return "{$value} {$code}";
         } elseif ($swapSymbol) {
-            return "{$value} ".trim($symbol);
+            return "{$value} " . trim($symbol);
         } elseif ($entity->getSetting('show_currency_code') === false) {
             if ($_value < 0) {
                 $value = substr($value, 1);

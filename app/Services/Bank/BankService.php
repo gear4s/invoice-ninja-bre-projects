@@ -17,9 +17,7 @@ use App\Models\Invoice;
 
 class BankService
 {
-    public function __construct(public BankTransaction $bank_transaction)
-    {
-    }
+    public function __construct(public BankTransaction $bank_transaction) {}
 
     public function processRules()
     {

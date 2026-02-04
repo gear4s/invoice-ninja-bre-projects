@@ -146,7 +146,7 @@ class QuoteController extends Controller
             $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
             return response()->streamDownload(function () use ($file) {
                 echo $file;
-            }, $invitation->quote->numberFormatter().".pdf", ['Content-Type' => 'application/pdf']);
+            }, $invitation->quote->numberFormatter() . ".pdf", ['Content-Type' => 'application/pdf']);
         }
 
         return $this->buildZip($quote_invitations);
@@ -162,8 +162,8 @@ class QuoteController extends Controller
                 $zipFile->addFromString($invitation->quote->numberFormatter() . '.pdf', $file);
             }
 
-            $filename = date('Y-m-d').'_'.str_replace(' ', '_', trans('texts.quotes')).'.zip';
-            $filepath = sys_get_temp_dir().'/'.$filename;
+            $filename = date('Y-m-d') . '_' . str_replace(' ', '_', trans('texts.quotes')) . '.zip';
+            $filepath = sys_get_temp_dir() . '/' . $filename;
 
             $zipFile->saveAsFile($filepath) // save the archive to a file
                    ->close(); // close archive

@@ -49,9 +49,7 @@ class StorecoveExpense
 {
     use SavesDocuments;
 
-    public function __construct(private Storecove $storecove)
-    {
-    }
+    public function __construct(private Storecove $storecove) {}
 
     public function getStorecoveInvoice($storecove_json)
     {
@@ -83,7 +81,7 @@ class StorecoveExpense
                 null,
                 null,
                 $propertyInfo
-            )
+            ),
         ];
 
         $context = [
@@ -186,7 +184,7 @@ class StorecoveExpense
 
         foreach ($storecove_invoice->getTaxSubtotals() as $tdf) {
 
-            $tax_totals[] = (array)$tdf;
+            $tax_totals[] = (array) $tdf;
         }
 
         $party = $storecove_invoice->getAccountingSupplierParty()->getParty();
@@ -204,7 +202,7 @@ class StorecoveExpense
                     $id_number = $pi->getId();
                 } elseif ($ident == 'routing_id') {
                     $routing_id = $pi->getId();
-                } else{
+                } else {
                     //Sometimes some very unusual identifiers are returned, we should always skip these.
                     // ie. IBAN, etc.
                     continue;
@@ -225,7 +223,7 @@ class StorecoveExpense
                     'category' => $group->first()['category'],
                     'percentage' => $group->first()['percentage'],
                     'country' => $group->first()['country'],
-                    'total_tax_amount' => $group->sum('tax_amount')
+                    'total_tax_amount' => $group->sum('tax_amount'),
                 ];
             })->toArray();
 
@@ -288,7 +286,7 @@ class StorecoveExpense
                     'last_name' => $party->getContact()->getLastName() ?? '',
                     'email' => $party->getContact()->getEmail() ?? '',
                     'phone' => $party->getContact()->getPhone() ?? '',
-                ]
+                ],
             ],
         ];
 

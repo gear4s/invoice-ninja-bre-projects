@@ -27,7 +27,7 @@ class PaytraceCustomerFactory
                         'last_name' => '',
                         'email' => $customer->email,
                         'phone' => $customer->phone,
-                    ]
+                    ],
                 ],
                 'currency_id' => $company->settings->currency_id,
                 'address1' => $customer->billing_address->street_address,

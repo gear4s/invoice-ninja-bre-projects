@@ -34,12 +34,12 @@ class ProductFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('product_key', 'like', '%'.$filter.'%')
-                          ->orWhere('notes', 'like', '%'.$filter.'%')
-                          ->orWhere('custom_value1', 'like', '%'.$filter.'%')
-                          ->orWhere('custom_value2', 'like', '%'.$filter.'%')
-                          ->orWhere('custom_value3', 'like', '%'.$filter.'%')
-                          ->orWhere('custom_value4', 'like', '%'.$filter.'%');
+            $query->where('product_key', 'like', '%' . $filter . '%')
+                          ->orWhere('notes', 'like', '%' . $filter . '%')
+                          ->orWhere('custom_value1', 'like', '%' . $filter . '%')
+                          ->orWhere('custom_value2', 'like', '%' . $filter . '%')
+                          ->orWhere('custom_value3', 'like', '%' . $filter . '%')
+                          ->orWhere('custom_value4', 'like', '%' . $filter . '%');
         });
     }
 

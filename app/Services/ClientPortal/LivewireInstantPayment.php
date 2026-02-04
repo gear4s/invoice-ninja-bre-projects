@@ -80,9 +80,7 @@ class LivewireInstantPayment
      * @param  array $data
      * @return void
      */
-    public function __construct(public array $data)
-    {
-    }
+    public function __construct(public array $data) {}
 
     public function run()
     {

@@ -58,13 +58,13 @@ class CreateCompanyToken implements ShouldQueue
      */
     public function handle(): ?CompanyToken
     {
-        $this->custom_token_name = $this->custom_token_name ?: $this->user->first_name.' '.$this->user->last_name;
+        $this->custom_token_name = $this->custom_token_name ?: $this->user->first_name . ' ' . $this->user->last_name;
 
         $company_token = new CompanyToken();
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->user->account->id;
-        $company_token->name = $this->custom_token_name ?: $this->user->first_name.' '.$this->user->last_name;
+        $company_token->name = $this->custom_token_name ?: $this->user->first_name . ' ' . $this->user->last_name;
         $company_token->token = Str::random(64);
         $company_token->is_system = true;
 

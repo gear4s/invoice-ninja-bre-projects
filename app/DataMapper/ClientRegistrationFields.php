@@ -16,8 +16,8 @@ class ClientRegistrationFields
 {
     public static function generate()
     {
-        $data =
-        [
+        $data
+        = [
             [
                 'key' => 'first_name',
                 'required' => true,

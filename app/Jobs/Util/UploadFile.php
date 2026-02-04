@@ -110,8 +110,8 @@ class UploadFile implements ShouldQueue
         $document->disk = $this->disk;
         $document->hash = $this->file->hashName();
         $document->size = $this->file->getSize();
-        $document->width = isset($width) ? $width : null;
-        $document->height = isset($height) ? $height : null;
+        $document->width = $width ?? null;
+        $document->height = $height ?? null;
         $document->is_public = $this->is_public;
 
         // $preview_path = $this->encodePrimaryKey($this->company->id);

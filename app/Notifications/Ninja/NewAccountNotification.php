@@ -52,9 +52,7 @@ class NewAccountNotification extends Notification
      * @param  mixed  $notifiable
      *
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

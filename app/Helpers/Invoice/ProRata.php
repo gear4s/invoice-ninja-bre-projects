@@ -89,7 +89,7 @@ class ProRata
                 $item->quantity = 1;
                 $item->cost = $this->refund($item->cost * $multiplier, $start_date, now(), $recurring_invoice->frequency_id);
                 $item->product_key = ctrans('texts.refund');
-                $item->notes = ctrans('texts.refund').': '.$item->notes;
+                $item->notes = ctrans('texts.refund') . ': ' . $item->notes;
 
                 $line_items[] = $item;
             }

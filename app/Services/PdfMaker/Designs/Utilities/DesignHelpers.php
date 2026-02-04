@@ -369,7 +369,7 @@ trait DesignHelpers
             info($field);
 
             if (\Illuminate\Support\Str::startsWith($field, $type)) {
-                $custom_columns[] = '$'.$type.'.'.$field;
+                $custom_columns[] = '$' . $type . '.' . $field;
             }
         }
 

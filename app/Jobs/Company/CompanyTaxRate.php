@@ -38,9 +38,7 @@ class CompanyTaxRate implements ShouldQueue
      *
      * @param Company $company
      */
-    public function __construct(public Company $company)
-    {
-    }
+    public function __construct(public Company $company) {}
 
     public function handle()
     {

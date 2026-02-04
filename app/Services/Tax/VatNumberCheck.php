@@ -16,9 +16,7 @@ class VatNumberCheck
 {
     private array $response = [];
 
-    public function __construct(protected ?string $vat_number, protected string $country_code)
-    {
-    }
+    public function __construct(protected ?string $vat_number, protected string $country_code) {}
 
     public function run()
     {
@@ -38,7 +36,7 @@ class VatNumberCheck
             $client = new \SoapClient($wsdl);
             $params = [
                 'countryCode' => $this->country_code,
-                'vatNumber' => $this->vat_number ?? ''
+                'vatNumber' => $this->vat_number ?? '',
             ];
             $response = $client->checkVat($params);
 
@@ -47,7 +45,7 @@ class VatNumberCheck
                 $this->response = [
                     'valid' => true,
                     'name' => $response->name,
-                    'address' => $response->address
+                    'address' => $response->address,
                 ];
             } else {
                 $this->response = ['valid' => false];
@@ -72,11 +70,11 @@ class VatNumberCheck
 
     public function getName()
     {
-        return isset($this->response['name']) ? $this->response['name'] : '';
+        return $this->response['name'] ?? '';
     }
 
     public function getAddress()
     {
-        return isset($this->response['address']) ? $this->response['address'] : '';
+        return $this->response['address'] ?? '';
     }
 }

@@ -281,14 +281,13 @@ class TaskController extends BaseController
         //2025-07-31 - if the start or stop query parameter is not present, then we need to save the task
         if (!($request->query('start', false) || $request->query('stop', false))) {
             $task = $this->task_repo->save($request_data, $task);
-        }
-        else {
-            
+        } else {
+
             $task = $this->task_repo->triggeredActions($request, $task);
-        
+
             /*
             *
-            *  2025-10-30 - if the start or stop query parameter is present, 
+            *  2025-10-30 - if the start or stop query parameter is present,
             * then we need to trigger the actions and save the task
             * but we need to remove the time_log from the request data
             * because it will be updated by the triggeredActions method.
@@ -296,7 +295,7 @@ class TaskController extends BaseController
             * Handles the scenario where the description is updated and then start/stop is pressed
             */
 
-            if(isset($request_data['time_log'])) {
+            if (isset($request_data['time_log'])) {
                 unset($request_data['time_log']);
             }
 

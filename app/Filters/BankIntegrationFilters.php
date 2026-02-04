@@ -31,7 +31,7 @@ class BankIntegrationFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->where('bank_account_name', 'like', '%'.$name.'%');
+        return $this->builder->where('bank_account_name', 'like', '%' . $name . '%');
     }
 
     /**
@@ -48,7 +48,7 @@ class BankIntegrationFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('bank_account_name', 'like', '%'.$filter.'%');
+            $query->where('bank_account_name', 'like', '%' . $filter . '%');
         });
     }
 

@@ -39,7 +39,7 @@ class StoreExpenseCategoryRequest extends Request
 
         $rules = [];
 
-        $rules['name'] = 'required|unique:expense_categories,name,null,null,company_id,'.$user->companyId();
+        $rules['name'] = 'required|unique:expense_categories,name,null,null,company_id,' . $user->companyId();
 
         return $this->globalRules($rules);
     }

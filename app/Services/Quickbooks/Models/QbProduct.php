@@ -51,9 +51,7 @@ class QbProduct implements SyncInterface
 
     }
 
-    public function syncToForeign(array $records): void
-    {
-    }
+    public function syncToForeign(array $records): void {}
 
     private function findProduct(string $key): ?Product
     {
@@ -98,14 +96,14 @@ class QbProduct implements SyncInterface
 
     }
 
-     /**
-     * findOrCreateProduct
-     *
-     * Finds or creates a product in quickbooks
-     * 
-     * @param  object $line_item
-     * @return string
-     */
+    /**
+    * findOrCreateProduct
+    *
+    * Finds or creates a product in quickbooks
+    *
+    * @param  object $line_item
+    * @return string
+    */
     public function findOrCreateProduct(object $line_item): string
     {
 
@@ -131,14 +129,14 @@ class QbProduct implements SyncInterface
         }
 
         return $this->createQbProduct($line_item);
-        
+
     }
-    
+
     /**
      * createQbProduct
      *
      * Creates a product in quickbooks
-     * 
+     *
      * @param  object $line_item
      * @return string
      */

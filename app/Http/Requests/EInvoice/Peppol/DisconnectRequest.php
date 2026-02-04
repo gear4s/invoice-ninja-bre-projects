@@ -31,8 +31,8 @@ class DisconnectRequest extends FormRequest
             return true;
         }
 
-        return $user->account->isPaid() &&
-            $user->company()->legal_entity_id !== null;
+        return $user->account->isPaid()
+            && $user->company()->legal_entity_id !== null;
     }
 
     /**

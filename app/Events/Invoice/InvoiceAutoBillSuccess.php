@@ -30,7 +30,5 @@ class InvoiceAutoBillSuccess
      * @param Company $company
      * @param array $event_vars
      */
-    public function __construct(public Invoice $invoice, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public Invoice $invoice, public Company $company, public array $event_vars) {}
 }

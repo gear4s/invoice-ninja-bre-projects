@@ -384,7 +384,5 @@ class Csv extends BaseImport implements ImportInterface
 
     }
 
-    public function transform(array $data)
-    {
-    }
+    public function transform(array $data) {}
 }

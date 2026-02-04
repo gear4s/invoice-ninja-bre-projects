@@ -22,9 +22,7 @@ use App\Utils\Ninja;
 
 class UserService
 {
-    public function __construct(public User $user)
-    {
-    }
+    public function __construct(public User $user) {}
 
     public function invite(Company $company, bool $is_react = true)
     {
@@ -48,7 +46,7 @@ class UserService
 
             Ninja::registerNinjaUser($this->user);
         } catch (\Exception $e) {
-            nlog("I couldn't send the verification email ".$e->getMessage());
+            nlog("I couldn't send the verification email " . $e->getMessage());
         }
 
         return $this->user;

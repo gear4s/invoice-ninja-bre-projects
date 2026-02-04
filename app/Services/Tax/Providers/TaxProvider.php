@@ -45,7 +45,7 @@ class TaxProvider
         "SK",
         "SI",
         "ES",
-        "SE"
+        "SE",
     ];
 
     private string $provider = ZipTax::class;
@@ -58,9 +58,7 @@ class TaxProvider
 
     private array $shipping_address = [];
 
-    public function __construct(public Company $company, public ?Client $client = null)
-    {
-    }
+    public function __construct(public Company $company, public ?Client $client = null) {}
 
     /**
      * Flag if tax has been updated successfull.
@@ -186,7 +184,7 @@ class TaxProvider
     private function configureProvider(?string $provider, string $country_code): self
     {
 
-        match($country_code) {
+        match ($country_code) {
             'US' => $this->configureZipTax(),
             "AT" => $this->configureEuTax(),
             "BE" => $this->configureEuTax(),

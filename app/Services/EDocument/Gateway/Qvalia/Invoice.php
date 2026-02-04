@@ -14,9 +14,7 @@ namespace App\Services\EDocument\Gateway\Qvalia;
 
 class Invoice
 {
-    public function __construct(public Qvalia $qvalia)
-    {
-    }
+    public function __construct(public Qvalia $qvalia) {}
 
     // Methods
     /**
@@ -81,7 +79,7 @@ class Invoice
         ];
 
         $data = [
-            'Invoice' => $document
+            'Invoice' => $document,
         ];
 
         $uri = "/transaction/{$legal_entity_id}/invoices/outgoing";

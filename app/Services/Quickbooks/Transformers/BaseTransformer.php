@@ -21,9 +21,7 @@ use App\Models\Company;
  */
 class BaseTransformer
 {
-    public function __construct(public Company $company)
-    {
-    }
+    public function __construct(public Company $company) {}
 
     public function resolveCountry(?string $iso_3_code): string
     {

@@ -27,8 +27,7 @@ class InvoiceReportRow
         private TransactionEvent $event,
         private TaxSummary $tax_summary,
         private ?RegionalTaxCalculator $regional_calculator = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Get column headers
@@ -157,7 +156,7 @@ class InvoiceReportRow
      */
     public function build(): array
     {
-        return match($this->tax_summary->status) {
+        return match ($this->tax_summary->status) {
             TaxReportStatus::UPDATED => $this->buildUpdatedRow(),
             TaxReportStatus::DELTA => $this->buildDeltaRow(),
             TaxReportStatus::ADJUSTMENT => $this->buildAdjustmentRow(),

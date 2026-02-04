@@ -56,8 +56,7 @@ class RFFService
         public array $fields,
         public string $database,
         public string $company_gateway_id,
-    ) {
-    }
+    ) {}
 
     public function check(ClientContact $contact): void
     {

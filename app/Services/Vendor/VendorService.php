@@ -22,9 +22,7 @@ class VendorService
 
     private bool $completed = true;
 
-    public function __construct(public Vendor $vendor)
-    {
-    }
+    public function __construct(public Vendor $vendor) {}
 
     public function applyNumber(): self
     {

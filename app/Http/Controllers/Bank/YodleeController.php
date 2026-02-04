@@ -79,7 +79,7 @@ class YodleeController extends BaseController
         foreach ($accounts as $account) {
             if ($bi = BankIntegration::where('bank_account_id', $account['id'])->where('company_id', $company->id)->first()) {
 
-                if($bi->deleted_at){
+                if ($bi->deleted_at) {
                     continue;
                 }
 
@@ -336,7 +336,7 @@ class YodleeController extends BaseController
         $dto->current_balance = $summary['currentBalance']['amount'] ?? 0;
         $dto->account_currency = $summary['currentBalance']['currency'] ?? 0;
 
-        return (array)$dto;
+        return (array) $dto;
 
     }
 }

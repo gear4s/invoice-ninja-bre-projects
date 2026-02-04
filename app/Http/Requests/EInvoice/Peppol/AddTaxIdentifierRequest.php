@@ -79,20 +79,20 @@ class AddTaxIdentifierRequest extends FormRequest
                 }
             }],
             'vat_number' => [
-               'required',
-               'string',
-               'bail',
-               function ($attribute, $value, $fail) use ($company) {
-                   if ($this->country && isset(self::$vat_regex_patterns[$this->country])) {
-                       if (!preg_match(self::$vat_regex_patterns[$this->country], $value)) {
-                           $fail(ctrans('texts.invalid_vat_number'));
-                       }
-                   }
-                   if ($company->settings->classification == 'individual') {
-                       $fail("Individuals cannot register additional VAT numbers, only business entities");
-                   }
-               },
-            ]
+                'required',
+                'string',
+                'bail',
+                function ($attribute, $value, $fail) use ($company) {
+                    if ($this->country && isset(self::$vat_regex_patterns[$this->country])) {
+                        if (!preg_match(self::$vat_regex_patterns[$this->country], $value)) {
+                            $fail(ctrans('texts.invalid_vat_number'));
+                        }
+                    }
+                    if ($company->settings->classification == 'individual') {
+                        $fail("Individuals cannot register additional VAT numbers, only business entities");
+                    }
+                },
+            ],
         ];
     }
 

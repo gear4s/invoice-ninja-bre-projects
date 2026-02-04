@@ -36,7 +36,7 @@ class Qvalia
         "network" =>  "peppol",
         "metaScheme" =>  "iso6523-actorid-upis",
         "scheme" =>  "de:lwid",
-        "identifier" => "DE:VAT"
+        "identifier" => "DE:VAT",
     ];
 
     /** @var array $dbn_discovery */
@@ -45,7 +45,7 @@ class Qvalia
         "network" =>  "dbnalliance",
         "metaScheme" =>  "iso6523-actorid-upis",
         "scheme" =>  "gln",
-        "identifier" => "1200109963131"
+        "identifier" => "1200109963131",
     ];
 
     private ?int $legal_entity_id;

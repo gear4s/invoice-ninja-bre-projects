@@ -28,9 +28,7 @@ class ProfitAndLoss implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(protected Company $company, protected array $payload)
-    {
-    }
+    public function __construct(protected Company $company, protected array $payload) {}
 
     /**
      * Execute the job.
@@ -67,7 +65,5 @@ class ProfitAndLoss implements ShouldQueue
         $pl->build();
     }
 
-    public function failed($exception = null)
-    {
-    }
+    public function failed($exception = null) {}
 }

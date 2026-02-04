@@ -27,7 +27,7 @@ class NinjaTranslator extends Translator
      */
     public function set($key, $value, $locale = null)
     {
-        list($namespace, $group, $item) = $this->parseKey($key);
+        [$namespace, $group, $item] = $this->parseKey($key);
 
         if (null === $locale) {
             $locale = $this->locale;
@@ -46,7 +46,7 @@ class NinjaTranslator extends Translator
         }
 
         foreach ($items as $key => $value) {
-            list($namespace, $group, $item) = $this->parseKey($key);
+            [$namespace, $group, $item] = $this->parseKey($key);
 
             $this->load($namespace, $group, $locale);
 

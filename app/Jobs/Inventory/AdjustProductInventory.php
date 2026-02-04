@@ -38,9 +38,7 @@ class AdjustProductInventory implements ShouldQueue
 
     private array $notified_products = [];
 
-    public function __construct(public Company $company, public Invoice $invoice, public $old_invoice = [])
-    {
-    }
+    public function __construct(public Company $company, public Invoice $invoice, public $old_invoice = []) {}
 
     /**
      * Execute the job.

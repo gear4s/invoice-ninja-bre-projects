@@ -118,9 +118,7 @@ class RO extends BaseCountry
     ];
 
 
-    public function __construct(protected Invoice $invoice)
-    {
-    }
+    public function __construct(protected Invoice $invoice) {}
 
     public function getStateCode(?string $state_code): string
     {

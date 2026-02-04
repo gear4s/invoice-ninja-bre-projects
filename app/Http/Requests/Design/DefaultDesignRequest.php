@@ -34,8 +34,8 @@ class DefaultDesignRequest extends Request
             'entity' => 'bail|required',
             'design_id' => 'bail|required',
             'settings_level' => 'bail|sometimes|in:company,client,group_settings',
-            'client_id' => 'bail|required_if:settings_level,client|exists:clients,id,company_id,'.$user->company()->id,
-            'group_settings_id' => 'bail|required_if:settings_level,group_settings|exists:group_settings,id,company_id,'.$user->company()->id,
+            'client_id' => 'bail|required_if:settings_level,client|exists:clients,id,company_id,' . $user->company()->id,
+            'group_settings_id' => 'bail|required_if:settings_level,group_settings|exists:group_settings,id,company_id,' . $user->company()->id,
         ];
     }
 

@@ -18,7 +18,7 @@ class InvoiceDecorator extends Decorator implements DecoratorInterface
 {
     public function transform(string $key, mixed $entity): mixed
     {
-        
+
         $invoice = false;
 
         if ($entity instanceof Invoice) {

@@ -23,8 +23,8 @@ class ProductTransformer extends BaseTransformer
     {
         return $this->transform($qb_data);
     }
-    
-   
+
+
 
     public function qbTransform($line_item, $income_account_id): array
     {

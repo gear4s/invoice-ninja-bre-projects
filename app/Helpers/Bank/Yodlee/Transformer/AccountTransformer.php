@@ -103,7 +103,7 @@ class AccountTransformer implements AccountTransformerInterface
             $update_eligible = $dataset->updateEligibility ?? '';
             $next_update_scheduled = $dataset->nextUpdateScheduled ?? '';
 
-            match($dataset->additionalStatus ?? '') {
+            match ($dataset->additionalStatus ?? '') {
                 'LOGIN_IN_PROGRESS' => $status =  'Data retrieval in progress.',
                 'USER_INPUT_REQUIRED' => $status =  'Please reconnect your account, authentication required.',
                 'ACCOUNT_SUMMARY_RETRIEVED' => $status =  'Account summary retrieval in progress.',
@@ -121,7 +121,7 @@ class AccountTransformer implements AccountTransformerInterface
                 $account_status = $status;
             }
 
-            match($update_eligible) {
+            match ($update_eligible) {
                 'ALLOW_UPDATE' => $update = "Account connection stable. Next Update @ {$next_update_scheduled}",
                 'ALLOW_UPDATE_WITH_CREDENTIALS' => $update = 'Please reconnect your account with updated credentials.',
                 'DISALLOW_UPDATE' => $update = 'Update not available due to technical issues.',

@@ -33,9 +33,7 @@ class RefundPayment
 
     private string $refund_failed_message = '';
 
-    public function __construct(public Payment $payment, public array $refund_data)
-    {
-    }
+    public function __construct(public Payment $payment, public array $refund_data) {}
 
     public function run()
     {

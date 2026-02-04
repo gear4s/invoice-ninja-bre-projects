@@ -78,9 +78,7 @@ class WePayPaymentDriver extends BaseDriver
      * @param  array $data user_id + company
      * @return void
      */
-    public function setup(array $data)
-    {
-    }
+    public function setup(array $data) {}
 
     /**
      * Set the payment method

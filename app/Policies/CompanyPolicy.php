@@ -42,7 +42,7 @@ class CompanyPolicy extends EntityPolicy
     public function view(User $user, $entity): bool
     {
         return ($user->isAdmin() && $entity->id == $user->companyId())
-            || ($user->hasPermission('view_'.strtolower(class_basename($entity))) && $entity->id == $user->companyId())
+            || ($user->hasPermission('view_' . strtolower(class_basename($entity))) && $entity->id == $user->companyId())
             // || ($user->hasPermission('view_all') && $entity->id == $user->companyId())
             || $user->owns($entity)
             || $user->companyId() == $entity->id;
@@ -60,7 +60,7 @@ class CompanyPolicy extends EntityPolicy
     public function edit(User $user, $entity): bool
     {
         return ($user->isAdmin() && $entity->id == $user->companyId())
-            || ($user->hasPermission('edit_'.strtolower(class_basename($entity))) && $entity->id == $user->companyId())
+            || ($user->hasPermission('edit_' . strtolower(class_basename($entity))) && $entity->id == $user->companyId())
             // || ($user->hasPermission('edit_all') && $entity->id == $user->companyId())
             || $user->owns($entity);
     }

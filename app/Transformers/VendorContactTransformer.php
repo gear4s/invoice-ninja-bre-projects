@@ -33,7 +33,7 @@ class VendorContactTransformer extends EntityTransformer
             'id' => $this->encodePrimaryKey($vendor->id),
             'first_name' => $vendor->first_name ?: '',
             'last_name' => $vendor->last_name ?: '',
-            'send_email' => (bool)$vendor->send_email,
+            'send_email' => (bool) $vendor->send_email,
             'email' => $vendor->email ?: '',
             'created_at' => (int) $vendor->created_at,
             'updated_at' => (int) $vendor->updated_at,
@@ -45,7 +45,7 @@ class VendorContactTransformer extends EntityTransformer
             'custom_value3' => $vendor->custom_value3 ?: '',
             'custom_value4' => $vendor->custom_value4 ?: '',
             'link' => $vendor->getLoginLink(),
-            'last_login' => (int)$vendor->last_login,
+            'last_login' => (int) $vendor->last_login,
             'password' => empty($vendor->password) ? '' : '**********',
         ];
     }

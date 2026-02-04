@@ -159,7 +159,7 @@ class PaymentType extends StaticModel
 
         $cardName = strtolower(str_replace([' ', '-', '_'], '', $cardName));
 
-        if (empty($cardTypes[$cardName]) && 1 == preg_match('/^('.implode('|', array_keys($cardTypes)).')/', $cardName, $matches)) {
+        if (empty($cardTypes[$cardName]) && 1 == preg_match('/^(' . implode('|', array_keys($cardTypes)) . ')/', $cardName, $matches)) {
             // Some gateways return extra stuff after the card name
             $cardName = $matches[1];
         }
@@ -174,7 +174,7 @@ class PaymentType extends StaticModel
     public function name($id)
     {
         if (isset($this->type_names[$id])) {
-            return ctrans("texts.".$this->type_names[$id]);
+            return ctrans("texts." . $this->type_names[$id]);
         }
 
         return ctrans('texts.manual_entry');

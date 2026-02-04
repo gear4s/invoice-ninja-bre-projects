@@ -23,9 +23,7 @@ class ZipTax implements TaxProviderInterface
 
     private string $api_key = '';
 
-    public function __construct(protected array $address)
-    {
-    }
+    public function __construct(protected array $address) {}
 
     public function run()
     {

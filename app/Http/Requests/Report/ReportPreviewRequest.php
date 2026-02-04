@@ -36,9 +36,7 @@ class ReportPreviewRequest extends Request
         ];
     }
 
-    public function prepareForValidation()
-    {
-    }
+    public function prepareForValidation() {}
 
     private function checkAuthority()
     {

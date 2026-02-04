@@ -28,9 +28,7 @@ class UpdateReminders implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public Company $company)
-    {
-    }
+    public function __construct(public Company $company) {}
 
     /**
      * Execute the job.

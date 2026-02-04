@@ -37,9 +37,7 @@ class UpdateUserLastLogin implements ShouldQueue
      *
      * @return void
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.
@@ -84,7 +82,7 @@ class UpdateUserLastLogin implements ShouldQueue
 
         Cache::put($key, true, 60 * 24);
         $arr = json_encode(['ip' => $ip]);
-        $arr = ctrans('texts.new_login_detected'). " {$ip}";
+        $arr = ctrans('texts.new_login_detected') . " {$ip}";
 
         SystemLogger::dispatch(
             $arr,

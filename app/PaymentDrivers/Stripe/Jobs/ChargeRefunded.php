@@ -43,9 +43,7 @@ class ChargeRefunded implements ShouldQueue
 
     public $payment_completed = false;
 
-    public function __construct(public array $stripe_request, private string $company_key)
-    {
-    }
+    public function __construct(public array $stripe_request, private string $company_key) {}
 
     public function handle()
     {
@@ -114,7 +112,7 @@ class ChargeRefunded implements ShouldQueue
                     ->map(function ($pivot) {
                         return [
                             'invoice_id' => $pivot->paymentable_id,
-                            'amount' => $pivot->amount - $pivot->refunded
+                            'amount' => $pivot->amount - $pivot->refunded,
                         ];
                     });
 
@@ -126,7 +124,7 @@ class ChargeRefunded implements ShouldQueue
                     ->map(function ($pivot) use ($amount_refunded) {
                         return [
                             'invoice_id' => $pivot->paymentable_id,
-                            'amount' => $amount_refunded
+                            'amount' => $amount_refunded,
                         ];
                     });
 

@@ -20,9 +20,7 @@ use Illuminate\Contracts\Validation\Rule;
  */
 class CanRestoreUserRule implements Rule
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @param string $attribute

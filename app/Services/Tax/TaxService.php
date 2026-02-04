@@ -16,9 +16,7 @@ use App\Models\Client;
 
 class TaxService
 {
-    public function __construct(public Client $client)
-    {
-    }
+    public function __construct(public Client $client) {}
 
     public function validateVat(): self
     {
@@ -52,8 +50,5 @@ class TaxService
 
     }
 
-    public function initTaxProvider()
-    {
-
-    }
+    public function initTaxProvider() {}
 }

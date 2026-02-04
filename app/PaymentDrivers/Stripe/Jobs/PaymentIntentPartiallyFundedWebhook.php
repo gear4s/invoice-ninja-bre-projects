@@ -36,9 +36,7 @@ class PaymentIntentPartiallyFundedWebhook implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
 
-    public function __construct(public array $stripe_request, public string $company_key, public int $company_gateway_id)
-    {
-    }
+    public function __construct(public array $stripe_request, public string $company_key, public int $company_gateway_id) {}
 
     public function handle()
     {
@@ -73,7 +71,7 @@ class PaymentIntentPartiallyFundedWebhook implements ShouldQueue
             $company_gateway = CompanyGateway::query()->find($this->company_gateway_id);
             $stripe_driver = $company_gateway->driver()->init();
 
-            $hash = isset($transaction['metadata']['payment_hash']) ? $transaction['metadata']['payment_hash'] : false;
+            $hash = $transaction['metadata']['payment_hash'] ?? false;
 
             if (!$hash) {
                 nlog("no hash found");

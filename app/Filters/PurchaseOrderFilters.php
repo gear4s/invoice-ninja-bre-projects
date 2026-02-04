@@ -86,17 +86,17 @@ class PurchaseOrderFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('number', 'like', '%'.$filter.'%')
-                ->orWhere('number', 'like', '%'.$filter.'%')
-                ->orWhere('date', 'like', '%'.$filter.'%')
-                ->orWhere('amount', 'like', '%'.$filter.'%')
-                ->orWhere('balance', 'like', '%'.$filter.'%')
-                ->orWhere('custom_value1', 'like', '%'.$filter.'%')
-                ->orWhere('custom_value2', 'like', '%'.$filter.'%')
-                ->orWhere('custom_value3', 'like', '%'.$filter.'%')
-                ->orWhere('custom_value4', 'like', '%'.$filter.'%')
+            $query->where('number', 'like', '%' . $filter . '%')
+                ->orWhere('number', 'like', '%' . $filter . '%')
+                ->orWhere('date', 'like', '%' . $filter . '%')
+                ->orWhere('amount', 'like', '%' . $filter . '%')
+                ->orWhere('balance', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value1', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value2', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value3', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value4', 'like', '%' . $filter . '%')
                 ->orWhereHas('vendor', function ($q) use ($filter) {
-                    $q->where('name', 'like', '%'.$filter.'%');
+                    $q->where('name', 'like', '%' . $filter . '%');
                 })
                 ->orWhereRaw("
                 JSON_UNQUOTE(JSON_EXTRACT(
@@ -104,7 +104,7 @@ class PurchaseOrderFilters extends QueryFilters
                         JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].notes')), 
                         JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].product_key'))
                     ), '$[*]')
-                ) LIKE ?", ['%'.$filter.'%']);
+                ) LIKE ?", ['%' . $filter . '%']);
         });
     }
 

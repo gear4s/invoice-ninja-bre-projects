@@ -31,8 +31,8 @@ class UpdateEntityRequest extends FormRequest
             return true;
         }
 
-        return $user->account->isPaid() && $user->isAdmin() &&
-            $user->company()->legal_entity_id != null;
+        return $user->account->isPaid() && $user->isAdmin()
+            && $user->company()->legal_entity_id != null;
     }
 
     /**

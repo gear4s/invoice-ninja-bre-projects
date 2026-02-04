@@ -33,7 +33,7 @@ class WebhookFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('target_url', 'like', '%'.$filter.'%');
+            $query->where('target_url', 'like', '%' . $filter . '%');
         });
     }
 

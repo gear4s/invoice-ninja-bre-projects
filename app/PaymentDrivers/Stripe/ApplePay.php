@@ -87,7 +87,7 @@ class ApplePay
     private function registerDomain()
     {
         if (Ninja::isHosted()) {
-            $domain = isset($this->stripe_driver->company_gateway->company->portal_domain) ? $this->stripe_driver->company_gateway->company->portal_domain : $this->stripe_driver->company_gateway->company->domain();
+            $domain = $this->stripe_driver->company_gateway->company->portal_domain ?? $this->stripe_driver->company_gateway->company->domain();
 
             \Stripe\ApplePayDomain::create([
                 'domain_name' => $domain,

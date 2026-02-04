@@ -59,9 +59,7 @@ class NewAccountCreated extends Notification
      * @param  mixed  $notifiable
      *
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.
@@ -80,7 +78,7 @@ class NewAccountCreated extends Notification
     {
         $this->user->setCompany($this->company);
 
-        $user_name = $this->user->first_name.' '.$this->user->last_name;
+        $user_name = $this->user->first_name . ' ' . $this->user->last_name;
         $email = $this->user->email;
         $ip = $this->user->ip;
 

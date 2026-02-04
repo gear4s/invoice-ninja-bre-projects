@@ -92,9 +92,7 @@ class ClientContactObserver
      * @param ClientContact $clientContact
      * @return void
      */
-    public function restored(ClientContact $clientContact)
-    {
-    }
+    public function restored(ClientContact $clientContact) {}
 
     /**
      * Handle the client contact "force deleted" event.

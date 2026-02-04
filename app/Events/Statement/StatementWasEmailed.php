@@ -27,9 +27,7 @@ class StatementWasEmailed
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public Client $client, public Company $company, public string $end_date, public array $event_vars)
-    {
-    }
+    public function __construct(public Client $client, public Company $company, public string $end_date, public array $event_vars) {}
 
     // /**
     //  * Get the channels the event should broadcast on.

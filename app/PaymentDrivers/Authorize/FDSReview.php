@@ -36,9 +36,7 @@ class FDSReview implements ShouldQueue
     public $tries = 1; //number of retries
     public $deleteWhenMissingModels = true;
 
-    public function __construct(private string $transaction_reference, private PaymentHash $payment_hash, private string $db)
-    {
-    }
+    public function __construct(private string $transaction_reference, private PaymentHash $payment_hash, private string $db) {}
 
     public function handle()
     {

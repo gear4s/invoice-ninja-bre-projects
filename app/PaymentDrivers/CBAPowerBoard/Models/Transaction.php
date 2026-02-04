@@ -14,9 +14,7 @@ namespace App\PaymentDrivers\CBAPowerBoard\Models;
 
 class Threeds
 {
-    public function __construct(public ?string $token)
-    {
-    }
+    public function __construct(public ?string $token) {}
 }
 
 class Transaction

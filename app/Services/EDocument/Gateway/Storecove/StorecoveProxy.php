@@ -20,9 +20,7 @@ class StorecoveProxy
 {
     public Company $company;
 
-    public function __construct(public Storecove $storecove)
-    {
-    }
+    public function __construct(public Storecove $storecove) {}
 
     public function setCompany(Company $company): self
     {

@@ -169,7 +169,7 @@ class InvoicePay extends Component
 
         $fields = $company_gateway->driver($contact->client)->getClientRequiredFields();
 
-        $this->setContext($invite->key,'fields', $fields); // $this->context['fields'] = $fields;
+        $this->setContext($invite->key, 'fields', $fields); // $this->context['fields'] = $fields;
 
         foreach ($fields as $index => $field) {
             $_field = $this->mappings[$field['name']];
@@ -301,7 +301,7 @@ class InvoicePay extends Component
     public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
     {
         MultiDB::setDb($this->db);
-        
+
         //@phpstan-ignore-next-line
         $invite = \App\Models\InvoiceInvitation::with('contact.client', 'company')->withTrashed()->find($this->invitation_id);
 

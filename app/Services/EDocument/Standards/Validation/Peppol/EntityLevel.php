@@ -30,36 +30,36 @@ use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
 class EntityLevel implements EntityLevelInterface
 {
     private array $eu_country_codes = [
-            'AT', // Austria
-            'BE', // Belgium
-            'BG', // Bulgaria
-            'CY', // Cyprus
-            'CZ', // Czech Republic
-            'DE', // Germany
-            'DK', // Denmark
-            'EE', // Estonia
-            'ES', // Spain
-            'ES-CN', // Canary Islands
-            'ES-CE', // Ceuta
-            'ES-ML', // Melilla
-            'FI', // Finland
-            'FR', // France
-            'GR', // Greece
-            'HR', // Croatia
-            'HU', // Hungary
-            'IE', // Ireland
-            'IT', // Italy
-            'LT', // Lithuania
-            'LU', // Luxembourg
-            'LV', // Latvia
-            'MT', // Malta
-            'NL', // Netherlands
-            'PL', // Poland
-            'PT', // Portugal
-            'RO', // Romania
-            'SE', // Sweden
-            'SI', // Slovenia
-            'SK', // Slovakia
+        'AT', // Austria
+        'BE', // Belgium
+        'BG', // Bulgaria
+        'CY', // Cyprus
+        'CZ', // Czech Republic
+        'DE', // Germany
+        'DK', // Denmark
+        'EE', // Estonia
+        'ES', // Spain
+        'ES-CN', // Canary Islands
+        'ES-CE', // Ceuta
+        'ES-ML', // Melilla
+        'FI', // Finland
+        'FR', // France
+        'GR', // Greece
+        'HR', // Croatia
+        'HU', // Hungary
+        'IE', // Ireland
+        'IT', // Italy
+        'LT', // Lithuania
+        'LU', // Luxembourg
+        'LV', // Latvia
+        'MT', // Malta
+        'NL', // Netherlands
+        'PL', // Poland
+        'PT', // Portugal
+        'RO', // Romania
+        'SE', // Sweden
+        'SI', // Slovenia
+        'SK', // Slovakia
     ];
 
     private array $client_fields = [
@@ -89,9 +89,7 @@ class EntityLevel implements EntityLevelInterface
 
     private array $errors = [];
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     private function init(string $locale): self
     {
@@ -130,7 +128,7 @@ class EntityLevel implements EntityLevelInterface
         return ['passes' => true];
     }
 
-    public function checkInvoice(Invoice | Credit $invoice): array
+    public function checkInvoice(Invoice|Credit $invoice): array
     {
         $this->init($invoice->client->locale());
 
@@ -277,7 +275,7 @@ class EntityLevel implements EntityLevelInterface
         }
 
         //test legal entity id present
-        if(intval($company->legal_entity_id) == 0){
+        if (intval($company->legal_entity_id) == 0) {
             $errors[] = ['field' => "You have not registered a legal entity id as yet."];
         }
 
@@ -335,13 +333,13 @@ class EntityLevel implements EntityLevelInterface
         } elseif (in_array($client_country_code, $eu_countries)) {
 
             // First, determine if we're over threshold
-            $is_over_threshold = isset($client->company->tax_data->regions->EU->has_sales_above_threshold) &&
-                                $client->company->tax_data->regions->EU->has_sales_above_threshold;
+            $is_over_threshold = isset($client->company->tax_data->regions->EU->has_sales_above_threshold)
+                                && $client->company->tax_data->regions->EU->has_sales_above_threshold;
 
             // Is this B2B or B2C?
-            $is_b2c = strlen($client->vat_number ?? '') < 2 ||
-                    !($client->has_valid_vat_number ?? false) ||
-                    $client->classification == 'individual';
+            $is_b2c = strlen($client->vat_number ?? '') < 2
+                    || !($client->has_valid_vat_number ?? false)
+                    || $client->classification == 'individual';
 
             // B2C, under threshold, no Company VAT Registerd - must charge origin country VAT
             if ($is_b2c && !$is_over_threshold && strlen($client->company->settings->vat_number ?? '') < 2) {

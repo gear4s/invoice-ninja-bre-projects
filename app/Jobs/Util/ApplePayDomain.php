@@ -58,7 +58,7 @@ class ApplePayDomain implements ShouldQueue
             try {
                 $this->company_gateway->driver()->setApplePayDomain($domain);
             } catch (\Exception $e) {
-                nlog('failed to set Apple Domain with Stripe '.$e->getMessage());
+                nlog('failed to set Apple Domain with Stripe ' . $e->getMessage());
             }
         }
     }
@@ -71,7 +71,7 @@ class ApplePayDomain implements ShouldQueue
             if ($this->company_gateway->company->portal_mode == 'domain') {
                 $domain = $this->company_gateway->company->portal_domain;
             } else {
-                $domain = $this->company_gateway->company->subdomain.'.'.config('ninja.app_domain');
+                $domain = $this->company_gateway->company->subdomain . '.' . config('ninja.app_domain');
             }
         } else {
             $domain = config('ninja.app_url');

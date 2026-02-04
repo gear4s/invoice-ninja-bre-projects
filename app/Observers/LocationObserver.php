@@ -52,10 +52,7 @@ class LocationObserver
      * @param Location $location
      * @return void
      */
-    public function deleted(Location $location)
-    {
-
-    }
+    public function deleted(Location $location) {}
 
     /**
      * Handle the location "restored" event.
@@ -63,10 +60,7 @@ class LocationObserver
      * @param Location $location
      * @return void
      */
-    public function restored(Location $location)
-    {
-
-    }
+    public function restored(Location $location) {}
 
     /**
      * Handle the location "force deleted" event.

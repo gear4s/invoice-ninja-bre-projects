@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -20,17 +21,17 @@ class FeedbackController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if(Ninja::isHosted()){
+        if (Ninja::isHosted()) {
 
             $user = auth()->user();
             $company = $user->company();
 
             $rating = $request->input('rating', 0);
             $notes = $request->input('notes', '');
-            
+
             LightLogs::create(new FeedbackCreated($rating, $notes, $company->company_key, $company->account->key, $user->present()->name()))->batch();
         }
-        
+
         return response()->noContent();
 
     }

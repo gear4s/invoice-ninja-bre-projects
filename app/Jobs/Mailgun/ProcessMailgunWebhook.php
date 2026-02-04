@@ -60,9 +60,7 @@ class ProcessMailgunWebhook implements ShouldQueue
      * Create a new job instance.
      *
      */
-    public function __construct(private array $request)
-    {
-    }
+    public function __construct(private array $request) {}
 
     private function getSystemLog(string $message_id): ?SystemLog
     {
@@ -181,10 +179,10 @@ class ProcessMailgunWebhook implements ShouldQueue
     private function processOpen()
     {
 
-      if($this->invitation->opened_date) {
-        return;
-      }
-      
+        if ($this->invitation->opened_date) {
+            return;
+        }
+
         $this->invitation->opened_date = now();
         $this->invitation->saveQuietly();
 

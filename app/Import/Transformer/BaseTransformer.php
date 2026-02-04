@@ -100,12 +100,12 @@ class BaseTransformer
 
     public function getInvoiceTypeId($data, $field, $default = '1')
     {
-        return isset($data[$field]) && $data[$field] ? (string)$data[$field] : $default;
+        return isset($data[$field]) && $data[$field] ? (string) $data[$field] : $default;
     }
 
     public function getNumber($data, $field, $default = 0)
     {
-        return (isset($data->$field) && $data->$field) ? (int)$data->$field : $default;
+        return (isset($data->$field) && $data->$field) ? (int) $data->$field : $default;
     }
 
     public function getString($data, $field, $default = '')
@@ -143,7 +143,7 @@ class BaseTransformer
         // if(is_string($frequency)){
         //     $frequency = strtolower(trim($frequency));
         // }
-        
+
         switch ($frequency) {
             case RecurringInvoice::FREQUENCY_DAILY:
             case 'daily':
@@ -194,7 +194,7 @@ class BaseTransformer
             return -1;
         }
 
-        return (int)$remaining_cycles;
+        return (int) $remaining_cycles;
     }
 
     public function getAutoBillFlag(string $option): string
@@ -366,7 +366,7 @@ class BaseTransformer
      */
     public function getFloat($data, $field)
     {
-        
+
         if (array_key_exists($field, $data)) {
 
             if ($this->company->use_comma_as_decimal_place) {

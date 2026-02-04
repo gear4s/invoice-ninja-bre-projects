@@ -20,9 +20,7 @@ use App\Services\AbstractService;
 
 class SubscriptionStatus extends AbstractService
 {
-    public function __construct(public Subscription $subscription, protected RecurringInvoice $recurring_invoice)
-    {
-    }
+    public function __construct(public Subscription $subscription, protected RecurringInvoice $recurring_invoice) {}
 
     /** @var bool $is_trial */
     public bool $is_trial = false;
@@ -175,7 +173,7 @@ class SubscriptionStatus extends AbstractService
      */
     private function checkRefundable(): self
     {
-        if (!$this->recurring_invoice->subscription->refund_period || (int)$this->recurring_invoice->subscription->refund_period == 0) {//@phpstan-ignore-line
+        if (!$this->recurring_invoice->subscription->refund_period || (int) $this->recurring_invoice->subscription->refund_period == 0) {//@phpstan-ignore-line
             return $this->setRefundable(false);
         }
 
@@ -186,9 +184,9 @@ class SubscriptionStatus extends AbstractService
                                 ->orderBy('id', 'desc')
                                 ->first();
 
-        if ($primary_invoice &&
-        $primary_invoice->status_id == Invoice::STATUS_PAID &&
-        Carbon::parse($primary_invoice->date)->addSeconds($this->recurring_invoice->subscription->refund_period)->lte(now()->startOfDay()->addSeconds($primary_invoice->client->timezone_offset()))
+        if ($primary_invoice
+        && $primary_invoice->status_id == Invoice::STATUS_PAID
+        && Carbon::parse($primary_invoice->date)->addSeconds($this->recurring_invoice->subscription->refund_period)->lte(now()->startOfDay()->addSeconds($primary_invoice->client->timezone_offset()))
         ) {
             return $this->setRefundable(true);
         }

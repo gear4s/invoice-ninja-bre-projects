@@ -51,7 +51,7 @@ class DeletedUserActivity implements ShouldQueue
 
         $fields = new stdClass();
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->creating_user->id;
+        $user_id = $event->event_vars['user_id'] ?? $event->creating_user->id;
 
         $fields->user_id = $user_id;
         $fields->company_id = $event->company->id;

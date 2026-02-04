@@ -51,7 +51,7 @@ class StoreRecurringInvoiceRequest extends Request
         $rules['documents'] = 'bail|sometimes|array';
         $rules['documents.*'] = $this->fileValidation();
 
-        $rules['client_id'] = 'required|exists:clients,id,company_id,'.$user->company()->id;
+        $rules['client_id'] = 'required|exists:clients,id,company_id,' . $user->company()->id;
 
         $rules['invitations'] = 'sometimes|bail|array';
         $rules['invitations.*.client_contact_id'] = 'bail|required|distinct';
@@ -177,7 +177,7 @@ class StoreRecurringInvoiceRequest extends Request
         if (array_key_exists('exchange_rate', $input) && (is_null($input['exchange_rate']) || $input['exchange_rate'] == 0)) {
             $input['exchange_rate'] = 1;
         }
-        
+
         $this->replace($input);
     }
 

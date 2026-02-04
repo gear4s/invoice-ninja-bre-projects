@@ -64,9 +64,7 @@ class ProcessBrevoWebhook implements ShouldQueue
      * Create a new job instance.
      *
      */
-    public function __construct(private array $request)
-    {
-    }
+    public function __construct(private array $request) {}
 
     private function getSystemLog(string $message_id): ?SystemLog
     {

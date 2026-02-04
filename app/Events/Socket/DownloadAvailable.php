@@ -28,9 +28,7 @@ class DownloadAvailable implements ShouldBroadcast
     use SerializesModels;
     use InteractsWithSockets;
 
-    public function __construct(public string $url, public string $message, public User $user)
-    {
-    }
+    public function __construct(public string $url, public string $message, public User $user) {}
 
     public function broadcastOn()
     {

@@ -43,9 +43,7 @@ class InvoiceCheckOverdue implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Execute the job.
@@ -144,7 +142,7 @@ class InvoiceCheckOverdue implements ShouldQueue
                 });
             })
             ->cursor()
-            ->map(function ($invoice){
+            ->map(function ($invoice) {
 
                 return [
                     'id' => $invoice->id,
@@ -159,17 +157,17 @@ class InvoiceCheckOverdue implements ShouldQueue
             })
             ->toArray();
 
-            $this->sendOverdueNotifications($overdue_invoices, $company);
-            
-            // ->each(function ($invoice) {
-            //     $this->notifyOverdueInvoice($invoice);
-            // });
+        $this->sendOverdueNotifications($overdue_invoices, $company);
+
+        // ->each(function ($invoice) {
+        //     $this->notifyOverdueInvoice($invoice);
+        // });
     }
 
     private function sendOverdueNotifications(array $overdue_invoices, Company $company): void
     {
-        
-        if(empty($overdue_invoices)){
+
+        if (empty($overdue_invoices)) {
             return;
         }
 
@@ -198,17 +196,17 @@ class InvoiceCheckOverdue implements ShouldQueue
             ];
 
             /** filter down the set if the user only has notifications for their own invoices */
-            if(isset($company_user->notifications->email) && is_array($company_user->notifications->email) && in_array('invoice_late_user', $company_user->notifications->email)){
+            if (isset($company_user->notifications->email) && is_array($company_user->notifications->email) && in_array('invoice_late_user', $company_user->notifications->email)) {
 
                 $overdue_invoices_collection = collect($overdue_invoices)
                             ->filter(function ($overdue_invoice) use ($user) {
                                 $invoice = Invoice::withTrashed()->find($overdue_invoice['id']);
                                 // nlog([$invoice->user_id, $user->id, $invoice->assigned_user_id, $user->id]);
                                 return $invoice->user_id == $user->id || $invoice->assigned_user_id == $user->id;
-                        })
+                            })
                         ->toArray();
 
-                if(count($overdue_invoices_collection) === 0){
+                if (count($overdue_invoices_collection) === 0) {
                     continue;
                 }
 
@@ -217,7 +215,7 @@ class InvoiceCheckOverdue implements ShouldQueue
             }
 
             $nmo->mailable = new NinjaMailer((new InvoiceOverdueSummaryObject($overdue_invoices_collection, $table_headers, $company, $company_user->portalType()))->build());
-                
+
             /* Returns an array of notification methods */
             $methods = $this->findUserNotificationTypes(
                 $invoice->invitations()->first(),
@@ -280,4 +278,3 @@ class InvoiceCheckOverdue implements ShouldQueue
         }
     }
 }
-

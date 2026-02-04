@@ -18,9 +18,7 @@ class FilterController extends BaseController
 {
     private array $base_filters = ['archive', 'restore', 'delete'];
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Display a listing of the resource.

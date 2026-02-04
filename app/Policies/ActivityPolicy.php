@@ -15,6 +15,4 @@ namespace App\Policies;
 /**
  * Class ActivityPolicy.
  */
-class ActivityPolicy extends EntityPolicy
-{
-}
+class ActivityPolicy extends EntityPolicy {}

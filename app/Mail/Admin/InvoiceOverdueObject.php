@@ -22,9 +22,7 @@ use stdClass;
 
 class InvoiceOverdueObject
 {
-    public function __construct(public Invoice $invoice, public Company $company, public bool $use_react_url)
-    {
-    }
+    public function __construct(public Invoice $invoice, public Company $company, public bool $use_react_url) {}
 
     public function build()
     {
@@ -76,10 +74,10 @@ class InvoiceOverdueObject
         $content = ctrans(
             'texts.notification_invoice_overdue',
             [
-                    'amount' => $this->getAmount(),
-                    'client' => $this->invoice->client->present()->name(),
-                    'invoice' => $this->invoice->number,
-                ]
+                'amount' => $this->getAmount(),
+                'client' => $this->invoice->client->present()->name(),
+                'invoice' => $this->invoice->number,
+            ]
         );
 
         $data = [
@@ -99,4 +97,3 @@ class InvoiceOverdueObject
         return $data;
     }
 }
-

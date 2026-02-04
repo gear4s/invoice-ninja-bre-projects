@@ -112,7 +112,7 @@ class CheckData extends Command
         $database_connection = $this->option('database') ? $this->option('database') : 'Connected to Default DB';
         $fix_status = $this->option('fix') ? "Fixing Issues" : "Just checking issues ";
 
-        $this->logMessage(date('Y-m-d h:i:s').' Running CheckData... on ' . $database_connection . " Fix Status = {$fix_status}");
+        $this->logMessage(date('Y-m-d h:i:s') . ' Running CheckData... on ' . $database_connection . " Fix Status = {$fix_status}");
 
         if ($database = $this->option('database')) {
             config(['database.default' => $database]);
@@ -158,7 +158,7 @@ class CheckData extends Command
         if ($this->option('payment_balance')) {
             $this->updateClientPaymentBalances();
         }
-        $this->logMessage('Done: '.strtoupper($this->isValid ? Account::RESULT_SUCCESS : Account::RESULT_FAILURE));
+        $this->logMessage('Done: ' . strtoupper($this->isValid ? Account::RESULT_SUCCESS : Account::RESULT_FAILURE));
         $this->logMessage('Total execution time in seconds: ' . (microtime(true) - $time_start));
 
         $errorEmail = config('ninja.error_email');
@@ -167,18 +167,18 @@ class CheckData extends Command
             Mail::raw($this->log, function ($message) use ($errorEmail, $database) {
                 $message->to($errorEmail)
                         ->from(config('mail.from.address'), config('mail.from.name'))
-                        ->subject('Check-Data: '.strtoupper($this->isValid ? Account::RESULT_SUCCESS : Account::RESULT_FAILURE)." [{$database}]");
+                        ->subject('Check-Data: ' . strtoupper($this->isValid ? Account::RESULT_SUCCESS : Account::RESULT_FAILURE) . " [{$database}]");
             });
         } elseif (! $this->isValid) {
-            new \Exception("Check data failed!!".$this->log);
+            new \Exception("Check data failed!!" . $this->log);
         }
     }
 
     private function logMessage($str)
     {
-        $str = date('Y-m-d h:i:s').' '.$str;
+        $str = date('Y-m-d h:i:s') . ' ' . $str;
         $this->info($str);
-        $this->log .= $str."\n";
+        $this->log .= $str . "\n";
     }
 
     private function checkTaskTimeLogs()
@@ -186,25 +186,24 @@ class CheckData extends Command
         \App\Models\Task::query()->cursor()->each(function ($task) {
             $time_log = json_decode(($task->time_log ?? ''), true) ?? [];
 
-            foreach($time_log as &$log){
-                if(count($log) > 4){
+            foreach ($time_log as &$log) {
+                if (count($log) > 4) {
 
                     $this->logMessage("Task #{$task->id} has a time log with more than 4 elements");
 
-                    if($this->option('tasks') == 'true'){
-                        $log = [(int)$log[0], (int)$log[1], (string)$log[2], (bool)$log[3]];
+                    if ($this->option('tasks') == 'true') {
+                        $log = [(int) $log[0], (int) $log[1], (string) $log[2], (bool) $log[3]];
                     }
-                }
-                elseif(count($log) == 4){
-                 
-                    if($this->option('tasks') == 'true'){
-                        $log = [(int)$log[0], (int)$log[1], (string)$log[2], (bool)$log[3]];
+                } elseif (count($log) == 4) {
+
+                    if ($this->option('tasks') == 'true') {
+                        $log = [(int) $log[0], (int) $log[1], (string) $log[2], (bool) $log[3]];
                     }
                 }
             }
             unset($log); // Unset the reference variable
 
-            if($this->option('tasks') == 'true'){   
+            if ($this->option('tasks') == 'true') {
                 $task->time_log = json_encode($time_log);
                 $task->saveQuietly();
             }
@@ -269,7 +268,7 @@ class CheckData extends Command
                     ->havingRaw('count(users.id) > 1')
                     ->get(['users.oauth_user_id']);
 
-        $this->logMessage($users->count().' users with duplicate oauth ids');
+        $this->logMessage($users->count() . ' users with duplicate oauth ids');
 
         if ($users->count() > 0) {
             $this->isValid = false;
@@ -278,7 +277,7 @@ class CheckData extends Command
         if ($this->option('fix') == 'true') {
             foreach ($users as $user) {
                 $first = true;
-                $this->logMessage('checking '.$user->oauth_user_id);
+                $this->logMessage('checking ' . $user->oauth_user_id);
                 $matches = DB::table('users')
                             ->where('oauth_user_id', '=', $user->oauth_user_id)
                             ->orderBy('id')
@@ -286,11 +285,11 @@ class CheckData extends Command
 
                 foreach ($matches as $match) {
                     if ($first) {
-                        $this->logMessage('skipping '.$match->id);
+                        $this->logMessage('skipping ' . $match->id);
                         $first = false;
                         continue;
                     }
-                    $this->logMessage('updating '.$match->id);
+                    $this->logMessage('updating ' . $match->id);
 
                     DB::table('users')
                         ->where('id', '=', $match->id)
@@ -311,7 +310,7 @@ class CheckData extends Command
                         ->whereNull('contact_key')
                         ->orderBy('id')
                         ->get(['id']);
-        $this->logMessage($contacts->count().' contacts without a contact_key');
+        $this->logMessage($contacts->count() . ' contacts without a contact_key');
 
         if ($contacts->count() > 0) {
             $this->isValid = false;
@@ -342,7 +341,7 @@ class CheckData extends Command
         }
 
         $clients = $clients->get(['clients.id', 'clients.user_id', 'clients.company_id']);
-        $this->logMessage($clients->count().' clients without any contacts');
+        $this->logMessage($clients->count() . ' clients without any contacts');
 
         if ($clients->count() > 0) {
             $this->isValid = false;
@@ -369,7 +368,7 @@ class CheckData extends Command
                         ->orderBy('id')
                         ->get(['id']);
 
-        $this->logMessage($contacts->count().' contacts without a contact_key');
+        $this->logMessage($contacts->count() . ' contacts without a contact_key');
 
         if ($contacts->count() > 0) {
             $this->isValid = false;
@@ -388,7 +387,7 @@ class CheckData extends Command
 
         $vendors = Vendor::withTrashed()->doesntHave('contacts');
 
-        $this->logMessage($vendors->count().' vendors without any contacts');
+        $this->logMessage($vendors->count() . ' vendors without any contacts');
 
         if ($vendors->count() > 0) {
             $this->isValid = false;
@@ -420,7 +419,7 @@ class CheckData extends Command
                     ->havingRaw('count(invoice_invitations.id) = 0')
                     ->get(['invoices.id', 'invoices.user_id', 'invoices.company_id', 'invoices.client_id']);
 
-        $this->logMessage($invoices->count().' invoices without any invitations');
+        $this->logMessage($invoices->count() . ' invoices without any invitations');
 
         if ($invoices->count() > 0) {
             $this->isValid = false;
@@ -492,7 +491,7 @@ class CheckData extends Command
                     $contact_class = ClientContact::class;
 
                     $entity_key = \Illuminate\Support\Str::of(class_basename($entity))->snake()->append('_id')->toString();
-                    $entity_obj = get_class($entity).'Invitation';
+                    $entity_obj = get_class($entity) . 'Invitation';
 
                     if ($entity instanceof PurchaseOrder) {
                         $client_vendor_key = 'vendor_id';
@@ -549,7 +548,7 @@ class CheckData extends Command
     {
         $entity_key = "{$entity}_id";
 
-        $entity_obj = 'App\Models\\'.ucfirst(Str::camel($entity)).'Invitation';
+        $entity_obj = 'App\Models\\' . ucfirst(Str::camel($entity)) . 'Invitation';
 
         foreach ($entities as $entity) {
             $invitation = new $entity_obj();
@@ -665,12 +664,12 @@ class CheckData extends Command
             if (round($total_paid_to_date, 2) != round($_client->client_paid_to_date, 2)) {
                 $this->wrong_paid_to_dates++;
 
-                $this->logMessage($client->present()->name().' id = # '.$client->id." - Client Paid To Date = {$client->paid_to_date} != Invoice Payments = {$total_paid_to_date} - {$_client->payments_applied} + {$credits_used_for_payments[0]->credit_payment}");
+                $this->logMessage($client->present()->name() . ' id = # ' . $client->id . " - Client Paid To Date = {$client->paid_to_date} != Invoice Payments = {$total_paid_to_date} - {$_client->payments_applied} + {$credits_used_for_payments[0]->credit_payment}");
 
                 $this->isValid = false;
 
                 if ($this->option('paid_to_date')) {
-                    $this->logMessage("# {$client->id} " . $client->present()->name().' - '.$client->number." Fixing {$client->paid_to_date} to {$total_paid_to_date}");
+                    $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->paid_to_date} to {$total_paid_to_date}");
                     $client->paid_to_date = $total_paid_to_date;
                     $client->saveQuietly();
                 }
@@ -709,17 +708,17 @@ class CheckData extends Command
         $clients = $this->clientBalanceQuery();
 
         foreach ($clients as $client) {
-            $client = (array)$client;
+            $client = (array) $client;
 
             if ((string) $client['invoice_balance'] != (string) $client['client_balance']) {
                 $this->wrong_paid_to_dates++;
 
                 $client_object = Client::withTrashed()->find($client['client_id']);
 
-                $this->logMessage($client_object->present()->name().' - '.$client_object->id." - calculated client balances do not match Invoice Balances = ". $client['invoice_balance'] ." - Client Balance = ".rtrim($client['client_balance'], '0'));
+                $this->logMessage($client_object->present()->name() . ' - ' . $client_object->id . " - calculated client balances do not match Invoice Balances = " . $client['invoice_balance'] . " - Client Balance = " . rtrim($client['client_balance'], '0'));
 
                 if ($this->option('client_balance')) {
-                    $this->logMessage("# {$client_object->id} " . $client_object->present()->name().' - '.$client_object->number." Fixing {$client_object->balance} to " . $client['invoice_balance']);
+                    $this->logMessage("# {$client_object->id} " . $client_object->present()->name() . ' - ' . $client_object->number . " Fixing {$client_object->balance} to " . $client['invoice_balance']);
                     $client_object->balance = $client['invoice_balance'];
                     $client_object->saveQuietly();
                 }
@@ -764,7 +763,7 @@ class CheckData extends Command
 
 
                       if ($this->option('client_balance') && (floatval($over_payment) != floatval($client->balance))) {
-                          $this->logMessage("# {$client->id} " . $client->present()->name().' - '.$client->number." Fixing {$client->balance} to 0");
+                          $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->balance} to 0");
 
                           $client->balance = $over_payment;
                           $client->saveQuietly();
@@ -814,12 +813,12 @@ class CheckData extends Command
                 $this->wrong_balances++;
                 $ledger_balance = $ledger ? $ledger->balance : 0;
 
-                $this->logMessage("# {$client->id} " . $client->present()->name().' - '.$client->number." - Balance Failure - Invoice Balances = {$invoice_balance} Client Balance = {$client->balance} Ledger Balance = {$ledger_balance}");
+                $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " - Balance Failure - Invoice Balances = {$invoice_balance} Client Balance = {$client->balance} Ledger Balance = {$ledger_balance}");
 
                 $this->isValid = false;
 
                 if ($this->option('client_balance')) {
-                    $this->logMessage("# {$client->id} " . $client->present()->name().' - '.$client->number." Fixing {$client->balance} to {$invoice_balance}");
+                    $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->balance} to {$invoice_balance}");
                     $client->balance = $invoice_balance;
                     $client->saveQuietly();
                 }
@@ -847,13 +846,13 @@ class CheckData extends Command
 
             if ($ledger && number_format($ledger->balance, 4) != number_format($client->balance, 4)) {
                 $this->wrong_balances++;
-                $this->logMessage("# {$client->id} " . $client->present()->name().' - '.$client->number." - Balance Failure - Client Balance = {$client->balance} Ledger Balance = {$ledger->balance}");
+                $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " - Balance Failure - Client Balance = {$client->balance} Ledger Balance = {$ledger->balance}");
 
                 $this->isValid = false;
 
 
                 if ($this->option('ledger_balance')) {
-                    $this->logMessage("# {$client->id} " . $client->present()->name().' - '.$client->number." Fixing {$client->balance} to {$invoice_balance}");
+                    $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->balance} to {$invoice_balance}");
                     $client->balance = $invoice_balance;
                     $client->saveQuietly();
 
@@ -868,9 +867,7 @@ class CheckData extends Command
         $this->logMessage("{$this->wrong_balances} clients with incorrect ledger balances");
     }
 
-    private function checkLogoFiles()
-    {
-    }
+    private function checkLogoFiles() {}
 
     /**
      * @return array
@@ -930,7 +927,7 @@ class CheckData extends Command
 
                 if ($records->count()) {
                     $this->isValid = false;
-                    $this->logMessage($records->count()." {$table} records with incorrect {$entityType} company id");
+                    $this->logMessage($records->count() . " {$table} records with incorrect {$entityType} company id");
                 }
             }
         }
@@ -943,7 +940,7 @@ class CheckData extends Command
             return 'companies';
         }
 
-        return $type.'s';
+        return $type . 's';
     }
 
     public function checkAccountStatuses()
@@ -980,7 +977,7 @@ class CheckData extends Command
 
             Client::query()->withTrashed()->whereNull("settings->currency_id")->orWhereJsonContains('settings', ['currency_id' => ''])->cursor()->each(function ($client) {
                 $settings = $client->settings;
-                $settings->currency_id = (string)$client->company->settings->currency_id;
+                $settings->currency_id = (string) $client->company->settings->currency_id;
                 $client->settings = $settings;
                 $client->saveQuietly();
 
@@ -1095,7 +1092,7 @@ class CheckData extends Command
         foreach (Invoice::with(['payments'])->where('is_deleted', 0)->where('balance', '>', 0)->whereHas('payments')->where('status_id', 4)->cursor() as $invoice) {
             $this->wrong_paid_status++;
 
-            $this->logMessage("# {$invoice->id} " . ' - '.$invoice->number." - Marked as paid, but balance = {$invoice->balance}");
+            $this->logMessage("# {$invoice->id} " . ' - ' . $invoice->number . " - Marked as paid, but balance = {$invoice->balance}");
 
             if ($this->option('balance_status')) {
                 $val = $invoice->balance;
@@ -1106,7 +1103,7 @@ class CheckData extends Command
 
                 $p = $invoice->payments->first();
 
-                if ($p && (int)$p->amount == 0) {
+                if ($p && (int) $p->amount == 0) {
                     $p->amount = $val;
                     $p->applied = $val;
                     $p->saveQuietly();
@@ -1121,7 +1118,7 @@ class CheckData extends Command
             }
         }
 
-        $this->logMessage($this->wrong_paid_status." wrong invoices with bad balance state");
+        $this->logMessage($this->wrong_paid_status . " wrong invoices with bad balance state");
     }
 
     public function checkNinjaPortalUrls()
@@ -1138,7 +1135,7 @@ class CheckData extends Command
             $cc = ClientContact::on('db-ninja-01')->where('company_id', config('ninja.ninja_default_company_id'))->where('email', $cu->user->email)->first();
 
             if ($cc) {
-                $ninja_portal_url = config('ninja.ninja_client_portal')."/client/ninja/{$cc->contact_key}/{$cu->account->key}";
+                $ninja_portal_url = config('ninja.ninja_client_portal') . "/client/ninja/{$cc->contact_key}/{$cu->account->key}";
 
                 $cu->ninja_portal_url = $ninja_portal_url;
                 $cu->save();
@@ -1151,7 +1148,7 @@ class CheckData extends Command
                     $cc = $c->contacts()->first();
 
                     if ($cc) {
-                        $ninja_portal_url = config('ninja.ninja_client_portal')."/client/ninja/{$cc->contact_key}/{$cu->account->key}";
+                        $ninja_portal_url = config('ninja.ninja_client_portal') . "/client/ninja/{$cc->contact_key}/{$cu->account->key}";
 
                         $cu->ninja_portal_url = $ninja_portal_url;
                         $cu->save();

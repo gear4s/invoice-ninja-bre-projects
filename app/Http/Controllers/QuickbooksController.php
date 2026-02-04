@@ -21,19 +21,18 @@ use App\Http\Requests\Quickbooks\ConfigQuickbooksRequest;
 
 class QuickbooksController extends BaseController
 {
-
     public function sync(SyncQuickbooksRequest $request)
     {
-        
+
         return response()->noContent();
     }
 
     public function settings(ConfigQuickbooksRequest $request)
     {
-        
+
         $user = auth()->user();
         $company = $user->company();
-        
+
         $quickbooks = $company->quickbooks;
         $quickbooks->settings->client->direction = $request->clients ? SyncDirection::PUSH : SyncDirection::NONE;
         $quickbooks->settings->vendor->direction = $request->vendors ? SyncDirection::PUSH : SyncDirection::NONE;
@@ -52,10 +51,10 @@ class QuickbooksController extends BaseController
         return response()->noContent();
     }
 
-    
+
     /**
      * syncTaxRates
-     * 
+     *
      * Syncs tax rates from Quickbooks to Invoice Ninja
      *
      * @param  SyncTaxRatesRequest $request
@@ -68,27 +67,27 @@ class QuickbooksController extends BaseController
 
         $qb = new QuickbooksService($company);
         $qb->syncTaxRates();
-        
+
         return response()->noContent();
     }
-    
+
     /**
      * disconnect
-     * 
+     *
      * Disconnects the Quickbooks Account From the Invoice Ninja Company
-     * 
+     *
      * @param  DisconnectQuickbooksRequest $request
      * @return \Illuminate\Http\Response
      */
     public function disconnect(DisconnectQuickbooksRequest $request)
     {
-        
+
         $user = auth()->user();
         $company = $user->company();
 
         $qb = new QuickbooksService($company);
         $qb->disconnect();
-        
+
         return response()->noContent();
     }
 }

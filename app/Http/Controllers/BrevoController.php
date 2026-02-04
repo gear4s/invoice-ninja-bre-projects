@@ -21,9 +21,7 @@ use Illuminate\Http\Request;
  */
 class BrevoController extends BaseController
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Process Brevo Webhook.

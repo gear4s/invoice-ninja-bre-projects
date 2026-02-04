@@ -70,7 +70,7 @@ class ProjectReportRequest extends Request
         }
 
         $input['user_id'] = auth()->user()->id;
-        
+
         $this->replace($input);
     }
 

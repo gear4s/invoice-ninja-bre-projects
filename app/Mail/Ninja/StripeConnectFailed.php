@@ -26,9 +26,7 @@ class StripeConnectFailed extends Mailable
      *
      * @return void
      */
-    public function __construct(public User $user, public Company $company)
-    {
-    }
+    public function __construct(public User $user, public Company $company) {}
 
     /**
      * Get the message envelope.
@@ -82,7 +80,7 @@ class StripeConnectFailed extends Mailable
         return new Headers(
             messageId: null,
             references: [],
-            text:['' => ''],
+            text: ['' => ''],
         );
     }
 }

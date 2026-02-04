@@ -31,7 +31,7 @@ class ClientFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->where('name', 'like', '%'.$name.'%');
+        return $this->builder->where('name', 'like', '%' . $name . '%');
     }
 
     /**
@@ -135,19 +135,19 @@ class ClientFilters extends QueryFilters
         return $this->builder->where(function ($query) use ($searchTerms) {
             foreach ($searchTerms as $term) {
                 $query->where(function ($subQuery) use ($term) {
-                    $subQuery->where('name', 'like', '%'.$term.'%')
-                        ->orWhere('id_number', 'like', '%'.$term.'%')
-                        ->orWhere('number', 'like', '%'.$term.'%')
+                    $subQuery->where('name', 'like', '%' . $term . '%')
+                        ->orWhere('id_number', 'like', '%' . $term . '%')
+                        ->orWhere('number', 'like', '%' . $term . '%')
                         ->orWhereHas('contacts', function ($contactQuery) use ($term) {
-                            $contactQuery->where('first_name', 'like', '%'.$term.'%')
-                                ->orWhere('last_name', 'like', '%'.$term.'%')
-                                ->orWhere('email', 'like', '%'.$term.'%')
-                                ->orWhere('phone', 'like', '%'.$term.'%');
+                            $contactQuery->where('first_name', 'like', '%' . $term . '%')
+                                ->orWhere('last_name', 'like', '%' . $term . '%')
+                                ->orWhere('email', 'like', '%' . $term . '%')
+                                ->orWhere('phone', 'like', '%' . $term . '%');
                         })
-                        ->orWhere('custom_value1', 'like', '%'.$term.'%')
-                        ->orWhere('custom_value2', 'like', '%'.$term.'%')
-                        ->orWhere('custom_value3', 'like', '%'.$term.'%')
-                        ->orWhere('custom_value4', 'like', '%'.$term.'%');
+                        ->orWhere('custom_value1', 'like', '%' . $term . '%')
+                        ->orWhere('custom_value2', 'like', '%' . $term . '%')
+                        ->orWhere('custom_value3', 'like', '%' . $term . '%')
+                        ->orWhere('custom_value4', 'like', '%' . $term . '%');
                 });
             }
         });
@@ -173,9 +173,8 @@ class ClientFilters extends QueryFilters
             $sort_col[0] = 'name';
         }
 
-        if(is_array($sort_col) && $sort_col[0] == 'contacts'){   
-        }
-        elseif (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (is_array($sort_col) && $sort_col[0] == 'contacts') {
+        } elseif (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -188,7 +187,8 @@ class ClientFilters extends QueryFilters
         if ($sort_col[0] == 'name') {
             // Use a raw subquery in the ORDER BY instead of adding it to SELECT
             // This avoids conflicts with the Excludable trait
-            return $this->builder->orderByRaw("
+            return $this->builder->orderByRaw(
+                "
                 COALESCE(
                     NULLIF(clients.name, ''), 
                     (
@@ -202,8 +202,9 @@ class ClientFilters extends QueryFilters
             );
         }
 
-        if($sort_col[0] == 'contacts'){
-            return $this->builder->orderByRaw("
+        if ($sort_col[0] == 'contacts') {
+            return $this->builder->orderByRaw(
+                "
                 (
                     SELECT 
                         CASE 

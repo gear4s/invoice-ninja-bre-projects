@@ -71,7 +71,7 @@ class Rule extends BaseRule implements RuleInterface
             return $this->taxExempt($item);
         }
 
-        match(intval($item->tax_id)) {
+        match (intval($item->tax_id)) {
             Product::PRODUCT_TYPE_EXEMPT => $this->taxExempt($item),
             Product::PRODUCT_TYPE_DIGITAL => $this->taxDigital($item),
             Product::PRODUCT_TYPE_SERVICE => $this->taxService($item),

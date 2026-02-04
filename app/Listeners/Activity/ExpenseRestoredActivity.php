@@ -44,7 +44,7 @@ class ExpenseRestoredActivity implements ShouldQueue
 
         $fields = new stdClass();
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->expense->user_id;
+        $user_id = $event->event_vars['user_id'] ?? $event->expense->user_id;
 
         $fields->expense_id = $event->expense->id;
         $fields->user_id = $user_id;

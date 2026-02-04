@@ -56,10 +56,9 @@ class PaymentScheduleRequest extends Request
         $input['is_paused'] = false;
         $input['parameters']['auto_bill'] = (bool) isset($input['parameters']['auto_bill']) ? $input['parameters']['auto_bill'] : false;
 
-        if(isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
+        if (isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
             $input['parameters']['schedule'] = $input['parameters']['schedule'];
-        }
-        else{
+        } else {
             $input['parameters']['schedule'] = [];
         }
 
@@ -79,20 +78,18 @@ class PaymentScheduleRequest extends Request
                 $validator = \Validator::make([], []);
                 $validator->errors()->add('schedule', 'The total amount of the schedule does not match the invoice amount.');
                 throw new \Illuminate\Validation\ValidationException($validator);
-            }
-            elseif(!$first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval(100)) {
+            } elseif (!$first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval(100)) {
                 $validator = \Validator::make([], []);
                 $validator->errors()->add('schedule', 'The total percentage amount of the schedule does not match 100%.');
                 throw new \Illuminate\Validation\ValidationException($validator);
-            }
-            else{
+            } else {
                 $input['parameters']['schedule'] = $schedule_map->toArray();
             }
 
         }
 
         if (isset($input['frequency_id']) && isset($input['remaining_cycles'])) {
-            $due_date = $input['next_run'] ?? $this->invoice->due_date ?? Carbon::parse($this->invoice->date)->addDays((int)$this->invoice->client->getSetting('payment_terms'));
+            $due_date = $input['next_run'] ?? $this->invoice->due_date ?? Carbon::parse($this->invoice->date)->addDays((int) $this->invoice->client->getSetting('payment_terms'));
             $input['parameters']['schedule'] = $this->generateSchedule($input['frequency_id'], $input['remaining_cycles'], Carbon::parse($due_date));
         }
 
@@ -100,20 +97,20 @@ class PaymentScheduleRequest extends Request
 
         $input['next_run_client'] = $input['next_run'];
         $input['next_run'] = Carbon::parse($input['next_run'])->addSeconds($this->invoice->company->timezone_offset())->format('Y-m-d');
-        
+
         $this->replace($input);
     }
 
     private function generateSchedule(int $frequency_id, int $remaining_cycles, Carbon $due_date)
     {
-        
-        
+
+
         $amount = round($this->invoice->amount / $remaining_cycles, 2);
-        
+
         $delta = round($amount * $remaining_cycles, 2);
         $adjustment = 0;
-        
-        if(floatval($delta) != floatval($this->invoice->amount)) {
+
+        if (floatval($delta) != floatval($this->invoice->amount)) {
             $adjustment = round(floatval($this->invoice->amount) - floatval($delta), 2); //adjustment to make the total amount equal to the invoice amount
         }
 
@@ -121,15 +118,15 @@ class PaymentScheduleRequest extends Request
 
         for ($i = 0; $i < $remaining_cycles; $i++) {
             $schedule[] = [
-                'id' => $i+1,
+                'id' => $i + 1,
                 'date' => $i === 0 ? $due_date->format('Y-m-d') : $this->generateScheduleByFrequency($frequency_id, $due_date)->format('Y-m-d'),
                 'amount' => $amount,
                 'is_amount' => true,
             ];
         }
 
-        if($adjustment != 0) {
-            $schedule[$remaining_cycles-1]['amount'] += $adjustment;
+        if ($adjustment != 0) {
+            $schedule[$remaining_cycles - 1]['amount'] += $adjustment;
         }
 
         return $schedule;
@@ -138,7 +135,7 @@ class PaymentScheduleRequest extends Request
     private function generateScheduleByFrequency(int $frequency_id, Carbon $date)
     {
 
-        return match($frequency_id) {
+        return match ($frequency_id) {
             RecurringInvoice::FREQUENCY_DAILY => $date->startOfDay()->addDay(),
             RecurringInvoice::FREQUENCY_WEEKLY => $date->startOfDay()->addWeek(),
             RecurringInvoice::FREQUENCY_TWO_WEEKS => $date->startOfDay()->addWeeks(2),

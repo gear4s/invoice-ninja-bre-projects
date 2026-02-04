@@ -22,9 +22,7 @@ use stdClass;
 
 class PurchaseOrderAcceptedObject
 {
-    public function __construct(public PurchaseOrder $purchase_order, public Company $company, protected bool $use_react_url)
-    {
-    }
+    public function __construct(public PurchaseOrder $purchase_order, public Company $company, protected bool $use_react_url) {}
 
     public function build()
     {
@@ -77,10 +75,10 @@ class PurchaseOrderAcceptedObject
         $content = ctrans(
             'texts.notification_purchase_order_accepted',
             [
-                    'amount' => $this->getAmount(),
-                    'vendor' => $this->purchase_order->vendor->present()->name(),
-                    'purchase_order' => $this->purchase_order->number,
-                ]
+                'amount' => $this->getAmount(),
+                'vendor' => $this->purchase_order->vendor->present()->name(),
+                'purchase_order' => $this->purchase_order->number,
+            ]
         );
 
         $data = [

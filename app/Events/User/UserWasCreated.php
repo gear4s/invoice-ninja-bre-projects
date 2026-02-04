@@ -28,9 +28,7 @@ class UserWasCreated
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public User $user, public User $creating_user, public Company $company, public array $event_vars, public $is_react = true)
-    {
-    }
+    public function __construct(public User $user, public User $creating_user, public Company $company, public array $event_vars, public $is_react = true) {}
 
     /**
      * Get the channels the event should broadcast on.

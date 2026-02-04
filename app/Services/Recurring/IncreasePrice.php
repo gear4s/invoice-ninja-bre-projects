@@ -17,9 +17,7 @@ use App\Services\AbstractService;
 
 class IncreasePrice extends AbstractService
 {
-    public function __construct(public RecurringInvoice $recurring_invoice, public float $percentage)
-    {
-    }
+    public function __construct(public RecurringInvoice $recurring_invoice, public float $percentage) {}
 
     public function run()
     {

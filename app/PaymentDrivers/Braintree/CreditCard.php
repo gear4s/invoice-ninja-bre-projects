@@ -73,7 +73,7 @@ class CreditCard implements LivewireMethodInterface
                 'locality' => $this->braintree->client->city ?: '',
                 'postalCode' => $this->braintree->client->postal_code ?: '',
                 'countryCodeAlpha2' => $this->braintree->client->country ? $this->braintree->client->country->iso_3166_2 : 'US',
-            ]
+            ],
         ];
     }
 
@@ -189,7 +189,7 @@ class CreditCard implements LivewireMethodInterface
                 'locality' => $this->braintree->client->city ?: '',
                 'postalCode' => $this->braintree->client->postal_code ?: '',
                 'countryCodeAlpha2' => $this->braintree->client->country ? $this->braintree->client->country->iso_3166_2 : 'US',
-            ]
+            ],
         ];
 
         if ($this->braintree->company_gateway->getConfigField('merchantAccountId')) {

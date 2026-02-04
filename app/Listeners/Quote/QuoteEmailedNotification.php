@@ -26,9 +26,7 @@ class QuoteEmailedNotification implements ShouldQueue
 
     public $delay = 5;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

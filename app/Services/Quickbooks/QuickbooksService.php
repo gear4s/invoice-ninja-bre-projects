@@ -63,8 +63,7 @@ class QuickbooksService
     private function init(): self
     {
 
-        if(config('services.quickbooks.client_id'))
-        {
+        if (config('services.quickbooks.client_id')) {
             $config = [
                 'ClientID' => config('services.quickbooks.client_id'),
                 'ClientSecret' => config('services.quickbooks.client_secret'),
@@ -81,10 +80,10 @@ class QuickbooksService
             $this->sdk->enableLog();
             $this->sdk->setMinorVersion("75");
             $this->sdk->throwExceptionOnError(true);
-       
+
             $this->checkToken();
         }
-        
+
         $this->invoice = new QbInvoice($this);
 
         $this->quote = new QbQuote($this);
@@ -117,18 +116,18 @@ class QuickbooksService
     {
         // Reload company from database to get fresh token data
         $this->company = $this->company->fresh();
-        
+
         // Reinitialize the SDK with the updated token
         $this->init();
-        
+
         return $this;
     }
-    
+
     /**
      * checkToken
      *
      * Checks if the Quickbooks token is valid and refreshes it if it is not
-     * 
+     *
      * @return self
      */
     private function checkToken(): self
@@ -141,10 +140,9 @@ class QuickbooksService
         if ($this->company->quickbooks->accessTokenExpiresAt && $this->company->quickbooks->accessTokenExpiresAt < time() && $this->try_refresh) {
 
 
-            try{
+            try {
                 $this->sdk()->refreshToken($this->company->quickbooks->refresh_token);
-            }
-            catch(\Throwable $e){
+            } catch (\Throwable $e) {
                 nlog("QB: failure to refresh token: " . $e->getMessage());
                 $this->disconnect();
                 return $this;
@@ -157,12 +155,12 @@ class QuickbooksService
             return $this;
         }
 
-        nlog('Quickbooks token expired and could not be refreshed => ' .$this->company->company_key);
-        
+        nlog('Quickbooks token expired and could not be refreshed => ' . $this->company->company_key);
+
         throw new \Exception('Quickbooks token expired and could not be refreshed');
 
     }
-    
+
     /**
      * ninjaAccessToken
      *
@@ -176,7 +174,7 @@ class QuickbooksService
             'QBORealmID' => $this->company->quickbooks->realmID,
         ] : [];
     }
-    
+
     /**
      * sdk
      *
@@ -196,7 +194,7 @@ class QuickbooksService
     {
         QuickbooksImport::dispatch($this->company->id, $this->company->db);
     }
-    
+
     /**
      * findEntityById
      *
@@ -208,7 +206,7 @@ class QuickbooksService
     {
         return $this->sdk->FindById($entity, $id);
     }
-    
+
     /**
      * query
      *
@@ -233,54 +231,54 @@ class QuickbooksService
     }
 
 
-// [
-//     QuickBooksOnline\API\Data\IPPAccount {#7706
-//       +Id: "30",
-//       +SyncToken: "0",
-//       +MetaData: QuickBooksOnline\API\Data\IPPModificationMetaData {#7707
-//         +CreatedByRef: null,
-//         +CreateTime: "2024-05-22T14:46:30-07:00",
-//         +LastModifiedByRef: null,
-//         +LastUpdatedTime: "2024-05-22T14:46:30-07:00",
-//         +LastChangedInQB: null,
-//         +Synchronized: null,
-//       },
-//       +CustomField: null,
-//       +AttachableRef: null,
-//       +domain: null,
-//       +status: null,
-//       +sparse: null,
-//       +Name: "Uncategorized Income",
-//       +SubAccount: "false",
-//       +ParentRef: null,
-//       +Description: null,
-//       +FullyQualifiedName: "Uncategorized Income",
-//       +AccountAlias: null,
-//       +TxnLocationType: null,
-//       +Active: "true",
-//       +Classification: "Revenue",
-//       +AccountType: "Income",
-//       +AccountSubType: "ServiceFeeIncome",
-//       +AccountPurposes: null,
-//       +AcctNum: null,
-//       +AcctNumExtn: null,
-//       +BankNum: null,
-//       +OpeningBalance: null,
-//       +OpeningBalanceDate: null,
-//       +CurrentBalance: "0",
-//       +CurrentBalanceWithSubAccounts: "0",
-//       +CurrencyRef: "USD",
-//       +TaxAccount: null,
-//       +TaxCodeRef: null,
-//       +OnlineBankingEnabled: null,
-//       +FIName: null,
-//       +JournalCodeRef: null,
-//       +AccountEx: null,
-//     },
-//   ]
+    // [
+    //     QuickBooksOnline\API\Data\IPPAccount {#7706
+    //       +Id: "30",
+    //       +SyncToken: "0",
+    //       +MetaData: QuickBooksOnline\API\Data\IPPModificationMetaData {#7707
+    //         +CreatedByRef: null,
+    //         +CreateTime: "2024-05-22T14:46:30-07:00",
+    //         +LastModifiedByRef: null,
+    //         +LastUpdatedTime: "2024-05-22T14:46:30-07:00",
+    //         +LastChangedInQB: null,
+    //         +Synchronized: null,
+    //       },
+    //       +CustomField: null,
+    //       +AttachableRef: null,
+    //       +domain: null,
+    //       +status: null,
+    //       +sparse: null,
+    //       +Name: "Uncategorized Income",
+    //       +SubAccount: "false",
+    //       +ParentRef: null,
+    //       +Description: null,
+    //       +FullyQualifiedName: "Uncategorized Income",
+    //       +AccountAlias: null,
+    //       +TxnLocationType: null,
+    //       +Active: "true",
+    //       +Classification: "Revenue",
+    //       +AccountType: "Income",
+    //       +AccountSubType: "ServiceFeeIncome",
+    //       +AccountPurposes: null,
+    //       +AcctNum: null,
+    //       +AcctNumExtn: null,
+    //       +BankNum: null,
+    //       +OpeningBalance: null,
+    //       +OpeningBalanceDate: null,
+    //       +CurrentBalance: "0",
+    //       +CurrentBalanceWithSubAccounts: "0",
+    //       +CurrencyRef: "USD",
+    //       +TaxAccount: null,
+    //       +TaxCodeRef: null,
+    //       +OnlineBankingEnabled: null,
+    //       +FIName: null,
+    //       +JournalCodeRef: null,
+    //       +AccountEx: null,
+    //     },
+    //   ]
     /**
      * Fetch income accounts from QuickBooks.
-     * 
+     *
      * @return array Array of account objects with 'Id', 'Name', 'AccountType', etc.
      */
     public function fetchIncomeAccounts(): array
@@ -289,10 +287,10 @@ class QuickbooksService
             if (!$this->sdk) {
                 return [];
             }
-            
+
             $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true";
             $accounts = $this->sdk->Query($query);
-            
+
 
             $iat = new IncomeAccountTransformer();
             $income_accounts = $iat->transformMany($accounts ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
@@ -305,54 +303,54 @@ class QuickbooksService
     }
 
 
-// [
-//         QuickBooksOnline\API\Data\IPPAccount {#7709
-//       +Id: "57",
-//       +SyncToken: "0",
-//       +MetaData: QuickBooksOnline\API\Data\IPPModificationMetaData {#7698
-//         +CreatedByRef: null,
-//         +CreateTime: "2024-05-27T10:17:24-07:00",
-//         +LastModifiedByRef: null,
-//         +LastUpdatedTime: "2024-05-27T10:17:24-07:00",
-//         +LastChangedInQB: null,
-//         +Synchronized: null,
-//       },
-//       +CustomField: null,
-//       +AttachableRef: null,
-//       +domain: null,
-//       +status: null,
-//       +sparse: null,
-//       +Name: "Workers Compensation",
-//       +SubAccount: "true",
-//       +ParentRef: "11",
-//       +Description: null,
-//       +FullyQualifiedName: "Insurance:Workers Compensation",
-//       +AccountAlias: null,
-//       +TxnLocationType: null,
-//       +Active: "true",
-//       +Classification: "Expense",
-//       +AccountType: "Expense",
-//       +AccountSubType: "Insurance",
-//       +AccountPurposes: null,
-//       +AcctNum: null,
-//       +AcctNumExtn: null,
-//       +BankNum: null,
-//       +OpeningBalance: null,
-//       +OpeningBalanceDate: null,
-//       +CurrentBalance: "0",
-//       +CurrentBalanceWithSubAccounts: "0",
-//       +CurrencyRef: "USD",
-//       +TaxAccount: null,
-//       +TaxCodeRef: null,
-//       +OnlineBankingEnabled: null,
-//       +FIName: null,
-//       +JournalCodeRef: null,
-//       +AccountEx: null,
-//     },
-//   ]
+    // [
+    //         QuickBooksOnline\API\Data\IPPAccount {#7709
+    //       +Id: "57",
+    //       +SyncToken: "0",
+    //       +MetaData: QuickBooksOnline\API\Data\IPPModificationMetaData {#7698
+    //         +CreatedByRef: null,
+    //         +CreateTime: "2024-05-27T10:17:24-07:00",
+    //         +LastModifiedByRef: null,
+    //         +LastUpdatedTime: "2024-05-27T10:17:24-07:00",
+    //         +LastChangedInQB: null,
+    //         +Synchronized: null,
+    //       },
+    //       +CustomField: null,
+    //       +AttachableRef: null,
+    //       +domain: null,
+    //       +status: null,
+    //       +sparse: null,
+    //       +Name: "Workers Compensation",
+    //       +SubAccount: "true",
+    //       +ParentRef: "11",
+    //       +Description: null,
+    //       +FullyQualifiedName: "Insurance:Workers Compensation",
+    //       +AccountAlias: null,
+    //       +TxnLocationType: null,
+    //       +Active: "true",
+    //       +Classification: "Expense",
+    //       +AccountType: "Expense",
+    //       +AccountSubType: "Insurance",
+    //       +AccountPurposes: null,
+    //       +AcctNum: null,
+    //       +AcctNumExtn: null,
+    //       +BankNum: null,
+    //       +OpeningBalance: null,
+    //       +OpeningBalanceDate: null,
+    //       +CurrentBalance: "0",
+    //       +CurrentBalanceWithSubAccounts: "0",
+    //       +CurrencyRef: "USD",
+    //       +TaxAccount: null,
+    //       +TaxCodeRef: null,
+    //       +OnlineBankingEnabled: null,
+    //       +FIName: null,
+    //       +JournalCodeRef: null,
+    //       +AccountEx: null,
+    //     },
+    //   ]
     /**
      * Fetch expense accounts from QuickBooks.
-     * 
+     *
      * @return array Array of account objects with 'Id', 'Name', 'AccountType', etc.
      */
     public function fetchExpenseAccounts(): array
@@ -361,11 +359,11 @@ class QuickbooksService
             if (!$this->sdk) {
                 return [];
             }
-            
+
             $query = "SELECT * FROM Account WHERE AccountType IN ('Expense', 'Cost of Goods Sold') AND Active = true";
             $accounts = $this->sdk->Query($query);
-            
-            return is_array($accounts) ? $accounts : []; //@phpstan-ignore-line return type is @array - but they also spec NULL 
+
+            return is_array($accounts) ? $accounts : []; //@phpstan-ignore-line return type is @array - but they also spec NULL
         } catch (\Exception $e) {
             nlog("Error fetching expense accounts: {$e->getMessage()}");
             return [];
@@ -375,7 +373,7 @@ class QuickbooksService
     /**
      * Fetch all active TaxRates from QuickBooks.
      * TaxRates are read-only in QuickBooks and cannot be created via API.
-     * 
+     *
      * @return array Array of TaxRate objects with 'Id', 'Name', 'TaxRateDetails', etc.
      */
     public function fetchTaxRates(): array
@@ -384,16 +382,16 @@ class QuickbooksService
             if (!$this->sdk) {
                 return [];
             }
-            
+
             // $query = "SELECT * FROM TaxCode WHERE Active = true";
             $query = "SELECT * FROM TaxRate WHERE Active = true";
             $tax_rates = $this->sdk->Query($query);
-            
+
             $tax_rate_transformer = new TaxRateTransformer();
             $tax_rates = $tax_rate_transformer->transformMany($tax_rates ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
 
             return $tax_rates;
-        
+
         } catch (\Exception $e) {
             nlog("Error fetching tax rates: {$e->getMessage()}");
             return [];
@@ -415,30 +413,30 @@ class QuickbooksService
             $this->sdk->Query('SELECT Id FROM CompanyInfo MAXRESULTS 1');
             return true;
         } catch (\Exception $e) {
-            nlog('Quickbooks token validation failed: '.$e->getMessage());
+            nlog('Quickbooks token validation failed: ' . $e->getMessage());
             return false;
         }
     }
 
     /**
      * Format accounts for UI dropdown consumption.
-     * 
+     *
      * @param array $accounts Raw account objects from QuickBooks API
      * @return array Formatted array with 'value' (ID) and 'label' (Name) for each account
      */
     public function formatAccountsForDropdown(array $accounts): array
     {
         $formatted = [];
-        
+
         foreach ($accounts as $account) {
-            $id = is_object($account) && isset($account->Id) 
-                ? (string) $account->Id 
+            $id = is_object($account) && isset($account->Id)
+                ? (string) $account->Id
                 : (is_array($account) && isset($account['Id']) ? (string) $account['Id'] : null);
-                
+
             $name = is_object($account) && isset($account->Name)
                 ? (string) $account->Name
                 : (is_array($account) && isset($account['Name']) ? (string) $account['Name'] : '');
-            
+
             if ($id && $name) {
                 $formatted[] = [
                     'value' => $id,
@@ -449,10 +447,10 @@ class QuickbooksService
                 ];
             }
         }
-        
+
         return $formatted;
     }
-    
+
     /**
      * syncTaxRates
      *
@@ -468,10 +466,8 @@ class QuickbooksService
         $this->company->quickbooks->settings->tax_rate_map = $tax_rates;
         $this->company->save();
 
-        foreach($tax_rates as $tax_rate)
-        {
-            if(TaxRate::where('company_id', $this->company->id)->where('name', $tax_rate['name'])->where('rate', $tax_rate['rate'])->doesntExist())
-            {
+        foreach ($tax_rates as $tax_rate) {
+            if (TaxRate::where('company_id', $this->company->id)->where('name', $tax_rate['name'])->where('rate', $tax_rate['rate'])->doesntExist()) {
                 $tr = new TaxRate();
                 $tr->company_id = $this->company->id;
                 $tr->user_id = $this->company->owner()->id;
@@ -499,8 +495,7 @@ class QuickbooksService
 
         try {
             $this->sdk()->revokeAccessToken();
-        }
-        catch(\Throwable $e){
+        } catch (\Throwable $e) {
             nlog("QB: failure to revoke token during disconnect:: " . $e->getMessage());
         }
 
@@ -508,6 +503,6 @@ class QuickbooksService
         $this->company->save();
 
         return $this;
-        
+
     }
 }

@@ -321,7 +321,7 @@ class BillingPortalPurchase extends Component
             });
 
             if ($record) {
-                $data['settings']['language_id'] = (string)$record->id;
+                $data['settings']['language_id'] = (string) $record->id;
             }
         }
 
@@ -349,7 +349,7 @@ class BillingPortalPurchase extends Component
             return $this;
         }
 
-        if ((float)$this->price <= 0) {
+        if ((float) $this->price <= 0) {
 
             $this->steps['payment_required'] = false;
             $this->steps['fetched_payment_methods'] = false;
@@ -586,7 +586,7 @@ class BillingPortalPurchase extends Component
             ->first();
 
         $mailer = new NinjaMailerObject();
-        $mailer->mailable = new ContactPasswordlessLogin($this->email, $this->subscription->company, (string)route('client.subscription.purchase', $this->subscription->hashed_id) . '?coupon=' . $this->coupon);
+        $mailer->mailable = new ContactPasswordlessLogin($this->email, $this->subscription->company, (string) route('client.subscription.purchase', $this->subscription->hashed_id) . '?coupon=' . $this->coupon);
         $mailer->company = $this->subscription->company;
         $mailer->settings = $this->subscription->company->settings;
         $mailer->to_user = $contact;

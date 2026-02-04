@@ -62,7 +62,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
      */
     public function __construct(private array $request, private string $security_token)
     {
-        if(\App\Utils\Ninja::isHosted()){
+        if (\App\Utils\Ninja::isHosted()) {
             $this->onQueue('postmark');
         }
     }
@@ -449,7 +449,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
     {
 
         if ($exception) {
-            nlog("PROCESSPOSTMARKWEBHOOK:: ". $exception->getMessage());
+            nlog("PROCESSPOSTMARKWEBHOOK:: " . $exception->getMessage());
         }
 
         config(['queue.failed.driver' => null]);

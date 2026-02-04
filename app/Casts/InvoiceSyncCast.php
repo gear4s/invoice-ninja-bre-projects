@@ -31,7 +31,7 @@ class InvoiceSyncCast implements CastsAttributes
 
         $is = new InvoiceSync();
         $is->qb_id = $data['qb_id'];
-        
+
         return $is;
     }
 
@@ -46,7 +46,7 @@ class InvoiceSyncCast implements CastsAttributes
         ];
 
         return [
-            $key => json_encode($data)
+            $key => json_encode($data),
         ];
     }
 }

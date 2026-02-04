@@ -73,9 +73,9 @@ class StoreProductRequest extends Request
             $input['assigned_user_id'] = $this->decodePrimaryKey($input['assigned_user_id']);
         }
 
-        $input['tax_name1'] =  $input['tax_name1'] ?? '';
-        $input['tax_name2'] =  $input['tax_name2'] ?? '';
-        $input['tax_name3'] =  $input['tax_name3'] ?? '';
+        $input['tax_name1'] ??= '';
+        $input['tax_name2'] ??= '';
+        $input['tax_name3'] ??= '';
 
         $this->replace($input);
     }

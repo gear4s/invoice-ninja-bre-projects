@@ -258,7 +258,7 @@ class UserRepository extends BaseRepository
                });
         }
     }
-    
+
     /**
      * purge a user and all of their data across
      * all companies and accounts.
@@ -271,7 +271,7 @@ class UserRepository extends BaseRepository
     {
 
         \DB::transaction(function () use ($user, $new_owner_user) {
-            
+
             // Relations to transfer user_id to new owner
             $allRelations = [
                 'activities', 'bank_integrations', 'bank_transaction_rules',

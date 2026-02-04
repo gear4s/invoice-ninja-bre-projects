@@ -99,7 +99,7 @@ class MindeeEDocument extends AbstractService
 
             $this->saveDocuments([
                 $this->file,
-                TempFile::UploadedFileFromRaw(strval($result->document), $documentno . "_mindee_orc_result.txt", "text/plain")
+                TempFile::UploadedFileFromRaw(strval($result->document), $documentno . "_mindee_orc_result.txt", "text/plain"),
             ], $expense);
             // $expense->saveQuietly();
 

@@ -33,10 +33,10 @@ class ValidJson
     {
 
         if (
-            $request->isJson() &&
-            $request->getContent() !== '' &&
-            is_null(json_decode($request->getContent())) &&
-            json_last_error() !== JSON_ERROR_NONE
+            $request->isJson()
+            && $request->getContent() !== ''
+            && is_null(json_decode($request->getContent()))
+            && json_last_error() !== JSON_ERROR_NONE
         ) {
 
             // nlog("Malformed JSON payload.");

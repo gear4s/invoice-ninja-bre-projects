@@ -21,7 +21,7 @@ abstract class AbstractPaymentDriver
 {
     abstract public function authorizeView(array $data);
 
-    abstract public function authorizeResponse(\App\Http\Requests\Request | Request $request);
+    abstract public function authorizeResponse(\App\Http\Requests\Request|Request $request);
 
     abstract public function processPaymentView(array $data);
 

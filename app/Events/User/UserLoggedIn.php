@@ -28,9 +28,7 @@ class UserLoggedIn
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public User $user, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public User $user, public Company $company, public array $event_vars) {}
 
     /**
      * Get the channels the event should broadcast on.

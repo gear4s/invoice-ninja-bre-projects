@@ -107,7 +107,7 @@ class LoginController extends BaseController
 
     public function redirectToProviderAndCreate(string $provider)
     {
-        $redirect_url = config('services.'.$provider.'.redirect').'/create';
+        $redirect_url = config('services.' . $provider . '.redirect') . '/create';
 
         if (request()->has('code')) {
             return $this->handleProviderCallbackAndCreate($provider);

@@ -61,7 +61,7 @@ class CompanyPresenter extends EntityPresenter
             return $this->logo($settings);
         }
 
-        return "data:image/png;base64, ". base64_encode($logo);
+        return "data:image/png;base64, " . base64_encode($logo);
     }
 
     /**
@@ -79,15 +79,15 @@ class CompanyPresenter extends EntityPresenter
 
         $context_options = [
             "ssl" => [
-               "verify_peer" => false,
-               "verify_peer_name" => false,
+                "verify_peer" => false,
+                "verify_peer_name" => false,
             ],
         ];
 
         if (strlen($settings->company_logo) >= 1 && (strpos($settings->company_logo, 'http') !== false)) {
-            return "data:image/png;base64,". base64_encode(@file_get_contents($settings->company_logo, false, stream_context_create($context_options)));
+            return "data:image/png;base64," . base64_encode(@file_get_contents($settings->company_logo, false, stream_context_create($context_options)));
         } elseif (strlen($settings->company_logo) >= 1) {
-            return "data:image/png;base64,". base64_encode(@file_get_contents(url('') . $settings->company_logo, false, stream_context_create($context_options)));
+            return "data:image/png;base64," . base64_encode(@file_get_contents(url('') . $settings->company_logo, false, stream_context_create($context_options)));
         } else {
             return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
         }
@@ -98,8 +98,8 @@ class CompanyPresenter extends EntityPresenter
 
         $context_options = [
             "ssl" => [
-               "verify_peer" => false,
-               "verify_peer_name" => false,
+                "verify_peer" => false,
+                "verify_peer_name" => false,
             ],
         ];
 
@@ -134,22 +134,22 @@ class CompanyPresenter extends EntityPresenter
         }
 
         if ($address1 = $settings->address1) {
-            $str .= e($address1).'<br/>';
+            $str .= e($address1) . '<br/>';
         }
         if ($address2 = $settings->address2) {
-            $str .= e($address2).'<br/>';
+            $str .= e($address2) . '<br/>';
         }
         if ($cityState = $this->getCompanyCityState($settings)) {
-            $str .= e($cityState).'<br/>';
+            $str .= e($cityState) . '<br/>';
         }
         if ($country = Country::find($settings->country_id)) {
-            $str .= e($country->name).'<br/>';
+            $str .= e($country->name) . '<br/>';
         }
         if ($settings->phone) {
-            $str .= ctrans('texts.phone').': '.e($settings->phone).'<br/>';
+            $str .= ctrans('texts.phone') . ': ' . e($settings->phone) . '<br/>';
         }
         if ($settings->email) {
-            $str .= ctrans('texts.work_email').': '.e($settings->email).'<br/>';
+            $str .= ctrans('texts.work_email') . ': ' . e($settings->email) . '<br/>';
         }
 
         return $str;

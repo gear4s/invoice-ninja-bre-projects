@@ -38,7 +38,7 @@ class ProtectedDownloadController extends BaseController
 
         return response()->streamDownload(function () use ($hashed_path) {
             $stream = Storage::readStream($hashed_path);
-            
+
             // if($stream ===false){
             if ($stream === null) {
                 throw new SystemError('Unable to read file', 500);
@@ -51,7 +51,7 @@ class ProtectedDownloadController extends BaseController
                     break;
                 }
                 echo $chunk;
-                
+
                 // Flush output buffer to ensure data is sent immediately
                 if (ob_get_level()) {
                     ob_flush();

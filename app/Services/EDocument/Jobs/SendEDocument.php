@@ -46,9 +46,7 @@ class SendEDocument implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
 
-    public function __construct(private string $entity, private int $id, private string $db)
-    {
-    }
+    public function __construct(private string $entity, private int $id, private string $db) {}
 
     public function backoff()
     {
@@ -104,7 +102,7 @@ class SendEDocument implements ShouldQueue
         if (Ninja::isSelfHost() && ($model instanceof Invoice || $model instanceof Credit) && $model->company->peppolSendingEnabled()) {
 
             $r = Http::withHeaders([...$this->getHeaders(), 'X-EInvoice-Token' => $model->company->account->e_invoicing_token])
-                ->post(config('ninja.hosted_ninja_url')."/api/einvoice/submission", $payload);
+                ->post(config('ninja.hosted_ninja_url') . "/api/einvoice/submission", $payload);
 
             if ($r->successful()) {
 
@@ -266,6 +264,6 @@ class SendEDocument implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->entity.$this->id.$this->db))->releaseAfter(60)->expireAfter(60)];
+        return [(new WithoutOverlapping($this->entity . $this->id . $this->db))->releaseAfter(60)->expireAfter(60)];
     }
 }

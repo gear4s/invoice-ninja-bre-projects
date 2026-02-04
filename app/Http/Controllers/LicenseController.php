@@ -100,7 +100,7 @@ class LicenseController extends BaseController
                 return $this->v5ClaimLicense($license_key, $product_id);
             }
 
-            $url = config('ninja.license_url')."/claim_license?license_key={$license_key}&product_id={$product_id}&get_date=true";
+            $url = config('ninja.license_url') . "/claim_license?license_key={$license_key}&product_id={$product_id}&get_date=true";
             $data = trim(CurlUtils::get($url));
 
             if ($data == Account::RESULT_FAILURE) {

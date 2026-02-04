@@ -65,9 +65,7 @@ class ClientContactResetPassword extends Notification
      * @param  mixed  $notifiable
      *
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Set a callback that should be used when building the notification mail message.

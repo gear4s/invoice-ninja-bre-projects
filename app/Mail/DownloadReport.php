@@ -28,9 +28,7 @@ class DownloadReport extends Mailable
      *
      * @return void
      */
-    public function __construct(protected Company $company, protected array $files)
-    {
-    }
+    public function __construct(protected Company $company, protected array $files) {}
 
     /**
      * Build the message.

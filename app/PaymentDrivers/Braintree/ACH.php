@@ -95,7 +95,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
                     $this->braintree->payment_hash = PaymentHash::where('hash', $request->payment_hash)->firstOrFail();
 
                     $data = [
-                        'invoices' => collect($this->braintree->payment_hash->data->invoices)->map(fn ($invoice) => $invoice->invoice_id)->toArray(),
+                        'invoices' => collect($this->braintree->payment_hash->data->invoices)->map(fn($invoice) => $invoice->invoice_id)->toArray(),
                         'action' => 'payment',
                     ];
 
@@ -113,7 +113,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
                 return $this->braintree->processInternallyFailedPayment($this->braintree, $e);
             }
         }
-        
+
         if ($result instanceof \Braintree\Result\Error && $result->message) {
             session()->flash('ach_error', $result->message);
             return back()->withInput();

@@ -23,9 +23,7 @@ class ClientAccountNotFound extends Notification
      * @return void
      */
 
-    public function __construct(protected string $account_key, protected string $email)
-    {
-    }
+    public function __construct(protected string $account_key, protected string $email) {}
 
     /**
      * Get the notification's delivery channels.
@@ -44,9 +42,7 @@ class ClientAccountNotFound extends Notification
      * @param  mixed  $notifiable
      *
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

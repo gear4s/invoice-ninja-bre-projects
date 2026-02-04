@@ -26,9 +26,7 @@ class InvoiceOverdueSummaryObject
 {
     use MakesDates;
 
-    public function __construct(public array $overdue_invoices, public array $table_headers, public Company $company, public bool $use_react_url)
-    {
-    }
+    public function __construct(public array $overdue_invoices, public array $table_headers, public Company $company, public bool $use_react_url) {}
 
     public function build()
     {
@@ -67,7 +65,7 @@ class InvoiceOverdueSummaryObject
             ctrans(
                 'texts.notification_invoice_overdue_summary_subject',
                 [
-                    'date' => $date
+                    'date' => $date,
                 ]
             );
     }
@@ -85,7 +83,7 @@ class InvoiceOverdueSummaryObject
             ),
             $this->overdue_invoices
         );
-        
+
         $data = [
             'title' => $this->getSubject(),
             'content' => ctrans('texts.notification_invoice_overdue_summary'),
@@ -104,4 +102,3 @@ class InvoiceOverdueSummaryObject
         return $data;
     }
 }
-

@@ -66,9 +66,10 @@ class InvoiceRepository extends BaseRepository
     public function delete($invoice): ?Invoice
     {
 
-        if(!$invoice)
+        if (!$invoice) {
             return null;
-        
+        }
+
         $invoice = \DB::transaction(function () use ($invoice) {
             return \App\Models\Invoice::withTrashed()->lockForUpdate()->find($invoice->id);
         });
@@ -117,11 +118,7 @@ class InvoiceRepository extends BaseRepository
         return $invoice;
     }
 
-    public function reverse()
-    {
-    }
+    public function reverse() {}
 
-    public function cancel()
-    {
-    }
+    public function cancel() {}
 }

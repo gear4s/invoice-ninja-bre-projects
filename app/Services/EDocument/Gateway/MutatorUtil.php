@@ -27,9 +27,7 @@ class MutatorUtil
     /**
      * MutatorUtil constructor.
      */
-    public function __construct(public MutatorInterface $mutator)
-    {
-    }
+    public function __construct(public MutatorInterface $mutator) {}
 
     /**
      * setPaymentMeans

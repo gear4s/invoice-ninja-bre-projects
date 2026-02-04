@@ -130,7 +130,7 @@ class BaseModel extends Model
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        $query->where($this->getTable().'.company_id', '=', $user->company()->id);
+        $query->where($this->getTable() . '.company_id', '=', $user->company()->id);
 
         return $query;
     }
@@ -220,13 +220,13 @@ class BaseModel extends Model
      */
     public function getFileName($extension = 'pdf')
     {
-        return $this->numberFormatter().'.'.$extension;
+        return $this->numberFormatter() . '.' . $extension;
     }
 
     public function getDeliveryNoteName($extension = 'pdf')
     {
 
-        $number =  ctrans("texts.delivery_note"). "_" . $this->numberFormatter().'.'.$extension;
+        $number =  ctrans("texts.delivery_note") . "_" . $this->numberFormatter() . '.' . $extension;
 
         $formatted_number =  mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $number);
 
@@ -244,7 +244,7 @@ class BaseModel extends Model
     */
     public function getEFileName($extension = 'pdf')
     {
-        return ctrans("texts.e_invoice"). "_" . $this->numberFormatter().'.'.$extension;
+        return ctrans("texts.e_invoice") . "_" . $this->numberFormatter() . '.' . $extension;
     }
 
     // public function numberFormatter()
@@ -315,11 +315,11 @@ class BaseModel extends Model
 
         // Special catch here for einvoicing eventing
         if (in_array($event_id, [Webhook::EVENT_SENT_INVOICE, Webhook::EVENT_SENT_CREDIT]) && ($this instanceof Invoice || $this instanceof Credit) && $this->backup->guid == "") {
-            if($this->client->peppolSendingEnabled()) {
+            if ($this->client->peppolSendingEnabled()) {
                 \App\Services\EDocument\Jobs\SendEDocument::dispatch(get_class($this), $this->id, $this->company->db);
             }
         } //Special Catch Here For Verifactu.
-        elseif(in_array($event_id, [Webhook::EVENT_SENT_INVOICE]) && $this->company->verifactuEnabled()  && ($this instanceof Invoice) && $this->backup->guid == "") {
+        elseif (in_array($event_id, [Webhook::EVENT_SENT_INVOICE]) && $this->company->verifactuEnabled()  && ($this instanceof Invoice) && $this->backup->guid == "") {
             $this->service()->sendVerifactu();
         }
 
@@ -370,7 +370,7 @@ class BaseModel extends Model
             throw new \Exception('Hard fail, could not create an invitation.');
         }
 
-        return "data:application/pdf;base64,".base64_encode((new CreateRawPdf($invitation))->handle());
+        return "data:application/pdf;base64," . base64_encode((new CreateRawPdf($invitation))->handle());
 
     }
 

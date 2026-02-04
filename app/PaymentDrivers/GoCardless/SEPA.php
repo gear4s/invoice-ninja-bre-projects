@@ -141,7 +141,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
                 $this->go_cardless->payment_hash = PaymentHash::where('hash', $request->payment_hash)->firstOrFail();
 
                 $data = [
-                    'invoices' => collect($this->go_cardless->payment_hash->data->invoices)->map(fn ($invoice) => $invoice->invoice_id)->toArray(),
+                    'invoices' => collect($this->go_cardless->payment_hash->data->invoices)->map(fn($invoice) => $invoice->invoice_id)->toArray(),
                     'action' => 'payment',
                 ];
 

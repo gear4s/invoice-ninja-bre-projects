@@ -32,7 +32,7 @@ class GroupSettingFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->where('name', 'like', '%'.$name.'%');
+        return $this->builder->where('name', 'like', '%' . $name . '%');
     }
 
     /**
@@ -48,7 +48,7 @@ class GroupSettingFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('name', 'like', '%'.$filter.'%');
+            $query->where('name', 'like', '%' . $filter . '%');
         });
     }
 

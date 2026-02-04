@@ -87,9 +87,9 @@ class PreviewPurchaseOrderController extends BaseController
      */
     public function show(ShowPreviewRequest $request)
     {
-        if ($request->input('entity', false) &&
-            $request->input('entity_id', false) != '-1' &&
-            $request->has('body')) {
+        if ($request->input('entity', false)
+            && $request->input('entity_id', false) != '-1'
+            && $request->has('body')) {
 
             $design_object = json_decode(json_encode($request->input('design')), true);
 
@@ -113,7 +113,7 @@ class PreviewPurchaseOrderController extends BaseController
             $ps = new PdfService($invitation, 'product', [
                 'client' => $entity_obj->client ?? false,
                 'vendor' => $entity_obj->vendor ?? false,
-                $request->input('entity')."s" => [$entity_obj],
+                $request->input('entity') . "s" => [$entity_obj],
             ]);
 
             $ps->boot()
@@ -187,7 +187,7 @@ class PreviewPurchaseOrderController extends BaseController
             'Content-Disposition' => 'inline',
             'Content-Type' => 'application/pdf',
             'Cache-Control:' => 'no-cache',
-            'Server-Timing' => (string)(microtime(true) - $start)
+            'Server-Timing' => (string) (microtime(true) - $start),
         ]);
 
 

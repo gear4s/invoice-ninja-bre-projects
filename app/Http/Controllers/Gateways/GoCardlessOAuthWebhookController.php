@@ -23,8 +23,7 @@ class GoCardlessOAuthWebhookController extends Controller
 {
     public function __construct(
         protected CompanyRepository $company_repository,
-    ) {
-    }
+    ) {}
 
     public function __invoke(WebhookRequest $request)
     {

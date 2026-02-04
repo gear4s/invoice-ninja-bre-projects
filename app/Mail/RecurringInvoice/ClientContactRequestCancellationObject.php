@@ -22,9 +22,7 @@ class ClientContactRequestCancellationObject
 {
     public Company $company;
 
-    public function __construct(public RecurringInvoice $recurring_invoice, public ClientContact $client_contact, private bool $gateway_refund_attempted)
-    {
-    }
+    public function __construct(public RecurringInvoice $recurring_invoice, public ClientContact $client_contact, private bool $gateway_refund_attempted) {}
 
     public function build()
     {

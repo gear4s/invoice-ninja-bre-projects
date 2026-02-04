@@ -39,7 +39,7 @@ trait MakesHash
     public function createDbHash($db): string
     {
         if (config('ninja.db.multi_db_enabled')) {
-            return  $this->getDbCode($db).'-'.Str::random(config('ninja.key_length'));
+            return  $this->getDbCode($db) . '-' . Str::random(config('ninja.key_length'));
         }
 
         return Str::random(config('ninja.key_length'));

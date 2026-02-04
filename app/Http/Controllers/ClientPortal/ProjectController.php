@@ -34,7 +34,7 @@ class ProjectController extends Controller
 
     /**
      * Display a specific project with its tasks
-     * 
+     *
      * @param  ShowProjectRequest  $request
      * @param  Project  $project
      * @return \Illuminate\View\View
@@ -42,7 +42,7 @@ class ProjectController extends Controller
     public function show(ShowProjectRequest $request, Project $project)
     {
         $show_all_tasks_client_portal = auth()->guard('contact')->user()->client->getSetting('show_all_tasks_client_portal');
-        
+
         // Load tasks with conditional filtering
         $project->loadCount(['tasks' => function ($query) {
             $query->where('is_deleted', false);

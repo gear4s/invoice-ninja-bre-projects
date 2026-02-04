@@ -31,7 +31,7 @@ class BankTransactionRuleFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->where('name', 'like', '%'.$name.'%');
+        return $this->builder->where('name', 'like', '%' . $name . '%');
     }
 
     /**
@@ -48,7 +48,7 @@ class BankTransactionRuleFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('bank_transaction_rules.name', 'like', '%'.$filter.'%');
+            $query->where('bank_transaction_rules.name', 'like', '%' . $filter . '%');
         });
     }
 

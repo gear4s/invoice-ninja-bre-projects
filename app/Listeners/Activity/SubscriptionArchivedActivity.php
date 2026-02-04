@@ -46,7 +46,7 @@ class SubscriptionArchivedActivity implements ShouldQueue
 
         $fields = new stdClass();
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->subscription->user_id;
+        $user_id = $event->event_vars['user_id'] ?? $event->subscription->user_id;
 
         $fields->subscription_id = $subscription->id;
         $fields->user_id = $user_id;

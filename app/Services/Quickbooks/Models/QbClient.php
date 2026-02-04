@@ -33,12 +33,12 @@ class QbClient implements SyncInterface
         $this->client_transformer = new ClientTransformer($this->service->company);
         $this->client_repository = new ClientRepository(new ClientContactRepository());
     }
-    
+
     /**
      * find
      *
      * Finds a client in QuickBooks by their ID.
-     * 
+     *
      * @param  string $id
      * @return mixed
      */
@@ -46,10 +46,10 @@ class QbClient implements SyncInterface
     {
         return $this->service->sdk->FindById('Customer', $id);
     }
-    
+
     /**
      * Sync clients from QuickBooks to Ninja.
-     * 
+     *
      * Resolves QB Term to payment_terms when present; find/create client and contact.
      *
      * @param  array $records
@@ -92,12 +92,12 @@ class QbClient implements SyncInterface
             }
         }
     }
-    
+
     /**
      * syncToForeign
      *
      * Accepts an array of clients and creates them in QuickBooks.
-     * 
+     *
      * @param  array $records
      * @return void
      */
@@ -108,17 +108,17 @@ class QbClient implements SyncInterface
                 continue;
             }
 
-           
+
             $this->createQbClient($client);
-            
+
         }
     }
-    
+
     /**
      * createQbClient
      *
      * Creates a client in QuickBooks and returns the QB ID.
-     * 
+     *
      * @param  Client $client
      * @return string
      */
@@ -127,7 +127,7 @@ class QbClient implements SyncInterface
         try {
             // Transform invoice to QuickBooks format
             $qb_client_data = $this->client_transformer->ninjaToQb($client, $this->service);
-            
+
             // If updating, fetch SyncToken using existing find() method
             if (isset($client->sync->qb_id) && !empty($client->sync->qb_id)) {
                 $existing_qb_client = $this->find($client->sync->qb_id);
@@ -145,17 +145,17 @@ class QbClient implements SyncInterface
 
             $customer = \QuickBooksOnline\API\Facades\Customer::create($qb_client_data);
             $resulting_customer = $this->service->sdk->Add($customer);
-    
+
             $qb_id = data_get($resulting_customer, 'Id') ?? data_get($resulting_customer, 'Id.value');
-            
+
             // Store QB ID in client sync
             $sync = new \App\DataMapper\ClientSync();
             $sync->qb_id = $qb_id;
             $client->sync = $sync;
             $client->saveQuietly();
-    
+
             nlog("QuickBooks: Auto-created client {$client->id} in QuickBooks (QB ID: {$qb_id})");
-    
+
             return $qb_id;
 
         } catch (\Exception $e) {
@@ -166,10 +166,7 @@ class QbClient implements SyncInterface
         }
     }
 
-    public function sync(string $id, string $last_updated): void
-    {
-
-    }
+    public function sync(string $id, string $last_updated): void {}
 
     private function findClient(string $key): ?Client
     {

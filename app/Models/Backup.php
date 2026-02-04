@@ -64,15 +64,15 @@ class Backup extends BaseModel
      *
      * @return void
      */
-    public function storeRemotely(?string $html, Client | Vendor $client_or_vendor)
+    public function storeRemotely(?string $html, Client|Vendor $client_or_vendor)
     {
         if (empty($html)) {
             return;
         }
 
-        $path = $client_or_vendor->backup_path().'/';
-        $filename = now()->format('Y_m_d').'_'.md5(time()).'.html'; //@phpstan-ignore-line
-        $file_path = $path.$filename;
+        $path = $client_or_vendor->backup_path() . '/';
+        $filename = now()->format('Y_m_d') . '_' . md5(time()) . '.html'; //@phpstan-ignore-line
+        $file_path = $path . $filename;
 
         $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
 
@@ -122,7 +122,7 @@ class Backup extends BaseModel
      */
     public function deleteFile()
     {
-        nlog('deleting => '.$this->filename);
+        nlog('deleting => ' . $this->filename);
 
         if (!$this->filename) {
             return;
@@ -133,7 +133,7 @@ class Backup extends BaseModel
         try {
             Storage::disk($disk)->delete($this->filename);
         } catch (\Exception $e) {
-            nlog('BACKUPEXCEPTION deleting backup file with error '.$e->getMessage());
+            nlog('BACKUPEXCEPTION deleting backup file with error ' . $e->getMessage());
         }
     }
 }

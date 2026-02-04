@@ -637,7 +637,7 @@ class CompanyGatewayController extends BaseController
     public function clone(CloneCompanyGatewayRequest $request, CompanyGateway $company_gateway)
     {
         $new_company_gateway = $company_gateway->replicate();
-        $new_company_gateway->label .= ' ('.ctrans('texts.clone').') ' . now()->format('Y-m-d H:i:s');
+        $new_company_gateway->label .= ' (' . ctrans('texts.clone') . ') ' . now()->format('Y-m-d H:i:s');
         $new_company_gateway->save();
         return $this->itemResponse($new_company_gateway);
     }

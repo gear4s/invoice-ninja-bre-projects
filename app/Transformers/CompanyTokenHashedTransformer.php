@@ -44,7 +44,7 @@ class CompanyTokenHashedTransformer extends EntityTransformer
         return [
             'id' => $this->encodePrimaryKey($company_token->id),
             'user_id' => $this->encodePrimaryKey($company_token->user_id),
-            'token' => substr($company_token->token, 0, 10).'xxxxxxxxxxx',
+            'token' => substr($company_token->token, 0, 10) . 'xxxxxxxxxxx',
             'name' => $company_token->name ?: '',
             'is_system' => (bool) $company_token->is_system,
             'updated_at' => (int) $company_token->updated_at,

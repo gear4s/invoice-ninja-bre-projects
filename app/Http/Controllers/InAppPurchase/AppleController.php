@@ -20,9 +20,7 @@ use Illuminate\Http\Request;
  */
 class AppleController extends BaseController
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Process Apple Purchase Confirmation Webhook.
@@ -95,7 +93,5 @@ class AppleController extends BaseController
      *       ),
      *     )
      */
-    public function process_webhook(Request $request)
-    {
-    }
+    public function process_webhook(Request $request) {}
 }

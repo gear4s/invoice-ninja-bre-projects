@@ -28,25 +28,23 @@ class UploadAvatar implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(protected mixed $file, protected string $directory)
-    {
-    }
+    public function __construct(protected mixed $file, protected string $directory) {}
     public function handle(): ?string
     {
 
         $url = null;
 
         try {
-            $tmp_file = sha1(time()).'.png'; //@phpstan-ignore-line
+            $tmp_file = sha1(time()) . '.png'; //@phpstan-ignore-line
 
             $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
 
             $im = imagecreatefromstring(file_get_contents($this->file));
             imagealphablending($im, false);
             imagesavealpha($im, true);
-            $file_png = imagepng($im, sys_get_temp_dir().'/'.$tmp_file);
+            $file_png = imagepng($im, sys_get_temp_dir() . '/' . $tmp_file);
 
-            $path = Storage::disk($disk)->putFile($this->directory, new File(sys_get_temp_dir().'/'.$tmp_file));
+            $path = Storage::disk($disk)->putFile($this->directory, new File(sys_get_temp_dir() . '/' . $tmp_file));
 
             $url = Storage::disk($disk)->url($path);
         } catch (\Exception $e) {

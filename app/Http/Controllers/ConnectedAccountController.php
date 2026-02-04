@@ -119,7 +119,7 @@ class ConnectedAccountController extends BaseController
                 'email' => $email,
                 'oauth_user_id' => $user->getId(),
                 'oauth_provider_id' => 'microsoft',
-                'email_verified_at' => now()
+                'email_verified_at' => now(),
             ];
 
 

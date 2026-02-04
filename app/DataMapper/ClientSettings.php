@@ -90,7 +90,7 @@ class ClientSettings extends BaseSettings
         }
 
         if (is_array($client_settings)) {
-            $client_settings = (object)$client_settings;
+            $client_settings = (object) $client_settings;
         }
 
         foreach ($company_settings as $key => $value) {

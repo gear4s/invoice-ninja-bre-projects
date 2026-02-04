@@ -44,7 +44,7 @@ class StatementEmailedActivity implements ShouldQueue
 
         $fields = new stdClass();
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->client->id;
+        $user_id = $event->event_vars['user_id'] ?? $event->client->id;
 
         $fields->user_id = $user_id;
         $fields->client_id = $event->client->id;

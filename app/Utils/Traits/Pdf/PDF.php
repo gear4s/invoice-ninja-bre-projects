@@ -22,13 +22,13 @@ class PDF extends FPDI
     public function Footer()
     {
         $this->SetFont(
-            config('ninja.pdf_page_numbering_font_name'), 
-            config('ninja.pdf_page_numbering_font_style'), 
+            config('ninja.pdf_page_numbering_font_name'),
+            config('ninja.pdf_page_numbering_font_style'),
             config('ninja.pdf_page_numbering_font_size')
         );
         $this->SetTextColor(
-            config('ninja.pdf_page_numbering_font_color_red'), 
-            config('ninja.pdf_page_numbering_font_color_green'), 
+            config('ninja.pdf_page_numbering_font_color_red'),
+            config('ninja.pdf_page_numbering_font_color_green'),
             config('ninja.pdf_page_numbering_font_color_blue')
         );
 
@@ -41,13 +41,13 @@ class PDF extends FPDI
 
         // Set Y position
         $this->SetY(config('ninja.pdf_page_numbering_y_alignment'));
-        
+
         // Calculate X position with offset
         $base_x = config('ninja.pdf_page_numbering_x_alignment');
-        
+
         // Set X position based on alignment
         if ($this->text_alignment == 'L') {
-            $this->SetX($base_x+5);
+            $this->SetX($base_x + 5);
             $cell_width = $this->GetPageWidth();
             $this->Cell($cell_width, 5, $trans, 0, 0, 'L');
         } elseif ($this->text_alignment == 'R') {

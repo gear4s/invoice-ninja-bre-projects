@@ -39,9 +39,7 @@ class UpdateUserLoginFailed implements ShouldQueue
      *
      * @return void
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.
@@ -54,12 +52,13 @@ class UpdateUserLoginFailed implements ShouldQueue
 
         $user = MultiDB::hasUser(['email' => $event->email]);
 
-        if(!$user)
+        if (!$user) {
             return;
+        }
 
-        $user->increment('failed_logins',1);
+        $user->increment('failed_logins', 1);
 
-        if($user->failed_logins > 3) {
+        if ($user->failed_logins > 3) {
             $content = [
                 "Multiple Logins failed for user: {$user->email}",
                 "IP address: {$event->ip}",

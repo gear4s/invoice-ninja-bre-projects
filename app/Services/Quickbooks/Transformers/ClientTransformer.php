@@ -20,7 +20,7 @@ use App\Services\Quickbooks\QuickbooksService;
  * Class ClientTransformer.
  */
 class ClientTransformer extends BaseTransformer
-{    
+{
     /**
      * qbToNinja
      *
@@ -32,12 +32,12 @@ class ClientTransformer extends BaseTransformer
         return $this->transform($qb_data);
     }
 
-    
+
     /**
      * ninjaToQb
-     * 
+     *
      * Transforms a Invoice Ninja Client to a QuickBooks Client
-     * 
+     *
      * @param  \App\Models\Client $client
      * @param  \App\Services\Quickbooks\QuickbooksService $qb_service
      * @return array
@@ -45,7 +45,7 @@ class ClientTransformer extends BaseTransformer
     public function ninjaToQb(Client $client, QuickbooksService $qb_service): array
     {
         $primary_contact = $client->contacts()->orderBy('is_primary', 'desc')->first();
-        
+
         return [
             'DisplayName' => $client->present()->name(),
             'PrimaryEmailAddr' => [
@@ -81,12 +81,12 @@ class ClientTransformer extends BaseTransformer
 
     }
 
-    
+
     /**
      * transform
      *
      * Transforms a QuickBooks Client to a Invoice Ninja Client
-     * 
+     *
      * @param  mixed $data
      * @return array
      */

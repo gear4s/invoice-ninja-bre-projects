@@ -41,7 +41,7 @@ class BulkCompanyGatewayRequest extends Request
 
         return [
             'ids' => ['required','bail','array',Rule::exists('company_gateways', 'id')->where('company_id', $user->company()->id)],
-            'action' => 'required|bail|in:archive,restore,delete'
+            'action' => 'required|bail|in:archive,restore,delete',
         ];
     }
 

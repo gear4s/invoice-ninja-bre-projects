@@ -244,7 +244,7 @@ class Webhook extends BaseModel
         self::EVENT_SENT_INVOICE,
         self::EVENT_SENT_QUOTE,
         self::EVENT_SENT_CREDIT,
-        self::EVENT_SENT_PURCHASE_ORDER
+        self::EVENT_SENT_PURCHASE_ORDER,
 
     ];
 

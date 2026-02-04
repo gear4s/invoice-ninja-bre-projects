@@ -80,7 +80,7 @@ class Country extends StaticModel
      */
     public function getName(): string
     {
-        return trans('texts.country_'.$this->name);
+        return trans('texts.country_' . $this->name);
     }
     public function getID(): string
     {

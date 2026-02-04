@@ -51,7 +51,7 @@ class PaymentCreatedActivity implements ShouldQueue
             $invoice_id = $payment->invoices()->first()->id;
         }
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->payment->user_id;
+        $user_id = $event->event_vars['user_id'] ?? $event->payment->user_id;
 
         $fields = new stdClass();
 

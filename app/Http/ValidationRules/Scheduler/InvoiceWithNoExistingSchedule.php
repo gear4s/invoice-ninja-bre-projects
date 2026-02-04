@@ -36,8 +36,8 @@ class InvoiceWithNoExistingSchedule implements Rule
         return Scheduler::where('company_id', $user->company()->id)
                             ->where('template', 'payment_schedule')
                             ->where('parameters->invoice_id', $value)
-                            ->count() == 0;        
-        
+                            ->count() == 0;
+
     }
 
     /**

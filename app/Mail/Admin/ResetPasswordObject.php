@@ -19,9 +19,7 @@ use Illuminate\Support\Facades\App;
 
 class ResetPasswordObject
 {
-    public function __construct(private string $token, protected User $user, protected Company $company, protected bool $is_react)
-    {
-    }
+    public function __construct(private string $token, protected User $user, protected Company $company, protected bool $is_react) {}
 
     public function build()
     {

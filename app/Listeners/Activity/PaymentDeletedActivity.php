@@ -44,7 +44,7 @@ class PaymentDeletedActivity implements ShouldQueue
 
         $payment = $event->payment;
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->payment->user_id;
+        $user_id = $event->event_vars['user_id'] ?? $event->payment->user_id;
 
         $invoices = $payment->invoices;
 

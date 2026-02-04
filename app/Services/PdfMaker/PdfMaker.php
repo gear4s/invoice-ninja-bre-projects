@@ -126,11 +126,11 @@ class PdfMaker
 
 
         $elements = [
-                    'product-table', 'task-table', 'delivery-note-table',
-                    'statement-invoice-table', 'statement-payment-table', 'statement-aging-table-totals',
-                    'statement-invoice-table-totals', 'statement-payment-table-totals', 'statement-aging-table',
-                    'client-details', 'vendor-details', 'swiss-qr', 'shipping-details', 'statement-credit-table', 'statement-credit-table-totals',
-                ];
+            'product-table', 'task-table', 'delivery-note-table',
+            'statement-invoice-table', 'statement-payment-table', 'statement-aging-table-totals',
+            'statement-invoice-table-totals', 'statement-payment-table-totals', 'statement-aging-table',
+            'client-details', 'vendor-details', 'swiss-qr', 'shipping-details', 'statement-credit-table', 'statement-credit-table-totals',
+        ];
 
         foreach ($elements as $element) {
 

@@ -39,9 +39,7 @@ class Google
         return $this->client;
     }
 
-    public function checkAccessToken()
-    {
-    }
+    public function checkAccessToken() {}
 
     public function refreshToken($user)
     {

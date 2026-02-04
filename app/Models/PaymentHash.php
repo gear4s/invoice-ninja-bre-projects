@@ -69,7 +69,7 @@ class PaymentHash extends Model
      */
     public function credits_total()
     {
-        return isset($this->data->credits) ? $this->data->credits : 0;
+        return $this->data->credits ?? 0;
     }
 
     public function payment(): \Illuminate\Database\Eloquent\Relations\BelongsTo

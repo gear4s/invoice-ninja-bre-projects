@@ -137,7 +137,7 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('view-list', function ($user, $entity) {
             $entity = strtolower(class_basename($entity));
 
-            return $user->hasPermission('view_'.$entity) || $user->isAdmin();
+            return $user->hasPermission('view_' . $entity) || $user->isAdmin();
         });
 
 

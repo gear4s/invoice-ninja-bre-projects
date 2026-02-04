@@ -29,7 +29,7 @@ class GenericSearchRequest extends Request
     public function rules()
     {
         $rules = [
-            'search' => 'bail|sometimes|string'
+            'search' => 'bail|sometimes|string',
         ];
 
         return $rules;

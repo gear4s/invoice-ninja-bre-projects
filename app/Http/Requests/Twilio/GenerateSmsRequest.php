@@ -41,15 +41,14 @@ class GenerateSmsRequest extends Request
         $key = "phone_verification_code_{$user->id}_{$user->account_id}";
         $count = \Illuminate\Support\Facades\Cache::get($key);
 
-        if($count && $count > 1) {
+        if ($count && $count > 1) {
 
             \Illuminate\Support\Facades\Cache::put($key, $count + 1, 300);
             $validator->after(function ($validator) {
                 $validator->errors()->add('phone', 'You requested a verification code recently. Please retry again in a few minutes.');
             });
-            
-        }
-        else{
+
+        } else {
             \Illuminate\Support\Facades\Cache::put($key, 1, 300);
         }
 

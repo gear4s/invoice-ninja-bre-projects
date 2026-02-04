@@ -23,9 +23,7 @@ class AttachableUser implements Rule
 {
     public $message;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @param string $attribute

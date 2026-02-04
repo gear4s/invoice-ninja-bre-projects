@@ -41,10 +41,10 @@ class MatchBankTransactionRequest extends Request
             'transactions.*.invoice_ids' => 'nullable|string|sometimes',
         ];
 
-        $rules['transactions.*.ninja_category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,'.$user->company()->id.',is_deleted,0';
-        $rules['transactions.*.vendor_id'] = 'bail|nullable|sometimes|exists:vendors,id,company_id,'.$user->company()->id.',is_deleted,0';
-        $rules['transactions.*.id'] = 'bail|required|exists:bank_transactions,id,company_id,'.$user->company()->id.',is_deleted,0';
-        $rules['transactions.*.payment_id'] = 'bail|sometimes|nullable|exists:payments,id,company_id,'.$user->company()->id.',is_deleted,0';
+        $rules['transactions.*.ninja_category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,' . $user->company()->id . ',is_deleted,0';
+        $rules['transactions.*.vendor_id'] = 'bail|nullable|sometimes|exists:vendors,id,company_id,' . $user->company()->id . ',is_deleted,0';
+        $rules['transactions.*.id'] = 'bail|required|exists:bank_transactions,id,company_id,' . $user->company()->id . ',is_deleted,0';
+        $rules['transactions.*.payment_id'] = 'bail|sometimes|nullable|exists:payments,id,company_id,' . $user->company()->id . ',is_deleted,0';
 
         return $rules;
     }

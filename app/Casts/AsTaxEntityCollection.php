@@ -25,7 +25,7 @@ class AsTaxEntityCollection implements CastsAttributes
 
         $items = json_decode($value, true);
 
-        return array_map(fn ($item) => new TaxEntity($item), $items);
+        return array_map(fn($item) => new TaxEntity($item), $items);
     }
 
     public function set($model, string $key, $value, array $attributes)
@@ -38,6 +38,6 @@ class AsTaxEntityCollection implements CastsAttributes
             $value = [$value];
         }
 
-        return json_encode(array_map(fn ($entity) => get_object_vars($entity), $value));
+        return json_encode(array_map(fn($entity) => get_object_vars($entity), $value));
     }
 }

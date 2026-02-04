@@ -64,7 +64,7 @@ class InvoiceObserver
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $invoice, $invoice->company, 'client')->delay(0);
         }
-                
+
         if ($invoice->company->quickbooks && $invoice->company->shouldPushToQuickbooks('invoice') && $invoice->status_id != Invoice::STATUS_DRAFT) {
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'invoice',

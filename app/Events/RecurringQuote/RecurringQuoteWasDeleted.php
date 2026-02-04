@@ -23,7 +23,5 @@ class RecurringQuoteWasDeleted
 {
     use SerializesModels;
 
-    public function __construct(public RecurringQuote $recurring_quote, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public RecurringQuote $recurring_quote, public Company $company, public array $event_vars) {}
 }

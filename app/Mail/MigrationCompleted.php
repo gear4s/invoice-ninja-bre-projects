@@ -26,9 +26,7 @@ class MigrationCompleted extends Mailable
      *
      * @return void
      */
-    public function __construct(public int $company_id, public string $db, public string $check_data = '')
-    {
-    }
+    public function __construct(public int $company_id, public string $db, public string $check_data = '') {}
 
     /**
      * Build the message.

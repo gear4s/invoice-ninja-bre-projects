@@ -36,9 +36,7 @@ class ClientLedgerBalanceUpdate implements ShouldQueue
 
     private ?CompanyLedger $next_balance_record;
 
-    public function __construct(public Company $company, public Client $client)
-    {
-    }
+    public function __construct(public Company $company, public Client $client) {}
 
     /**
      * Execute the job.

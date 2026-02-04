@@ -39,7 +39,7 @@ class TransactionEventMetadataCast implements CastsAttributes
         }
 
         return [
-            $key => json_encode($value->toArray())
+            $key => json_encode($value->toArray()),
         ];
     }
 }

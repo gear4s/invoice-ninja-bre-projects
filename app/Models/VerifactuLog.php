@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -35,7 +36,7 @@ use App\Models\Invoice;
 class VerifactuLog extends Model
 {
     public $timestamps = true;
-    
+
     protected $casts = [
         'date' => 'date',
         'response' => 'object',

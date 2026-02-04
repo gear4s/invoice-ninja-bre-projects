@@ -23,9 +23,7 @@ class CreditRepository extends BaseRepository
 {
     use MakesHash;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Saves the client and its contacts.
@@ -58,7 +56,7 @@ class CreditRepository extends BaseRepository
 
     public function restore($credit)
     {
-        
+
         if (! $credit->trashed()) {
             return;
         }

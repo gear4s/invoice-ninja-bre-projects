@@ -44,7 +44,7 @@ class StoreTaskStatusRequest extends Request
     {
         $rules = [];
 
-        $rules['name'] = 'required|unique:task_statuses,name,null,null,company_id,'.auth()->user()->companyId();
+        $rules['name'] = 'required|unique:task_statuses,name,null,null,company_id,' . auth()->user()->companyId();
 
         return $rules;
     }

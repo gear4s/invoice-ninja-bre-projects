@@ -25,9 +25,7 @@ use App\Events\Invoice\InvoiceWasEmailed;
 
 class SendEmail extends AbstractService
 {
-    public function __construct(protected Invoice $invoice, protected $reminder_template = null, protected ?ClientContact $contact = null)
-    {
-    }
+    public function __construct(protected Invoice $invoice, protected $reminder_template = null, protected ?ClientContact $contact = null) {}
 
     /**
      * Builds the correct template to send.

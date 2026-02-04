@@ -87,7 +87,7 @@ class SystemHealth
             'jobs_pending' => 0, // TODO for backwards compatibility, remove once Flutter AP is updated
             'trailing_slash' => (bool) self::checkUrlState(),
             'file_permissions' => (string) ($check_file_system ? self::checkFileSystem() : ''),
-            'exchange_rate_api_not_configured' => (bool)self::checkCurrencySanity(),
+            'exchange_rate_api_not_configured' => (bool) self::checkCurrencySanity(),
             'api_version' => (string) config('ninja.app_version'),
             'is_docker' => (bool) config('ninja.is_docker'),
             'pending_migrations' => (bool) ($check_file_system ? self::checkPendingMigrations() : false),
@@ -348,7 +348,7 @@ class SystemHealth
 
     private static function checkEnvWritable()
     {
-        return is_writable(base_path().'/.env');
+        return is_writable(base_path() . '/.env');
     }
 
     public static function lastError()

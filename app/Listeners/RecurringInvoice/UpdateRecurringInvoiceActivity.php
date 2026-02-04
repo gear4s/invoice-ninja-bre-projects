@@ -43,7 +43,7 @@ class UpdateRecurringInvoiceActivity implements ShouldQueue
         MultiDB::setDB($event->company->db);
 
         $fields = new stdClass();
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->recurring_invoice->user_id;
+        $user_id = $event->event_vars['user_id'] ?? $event->recurring_invoice->user_id;
 
         $fields->user_id = $user_id;
         $fields->client_id = $event->recurring_invoice->client_id;

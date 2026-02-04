@@ -14,9 +14,7 @@ namespace App\Export\Decorators;
 
 class Decorator implements DecoratorInterface
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function transform(string $key, mixed $entity): mixed
     {

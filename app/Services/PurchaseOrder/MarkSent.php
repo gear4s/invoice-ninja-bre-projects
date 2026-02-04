@@ -18,9 +18,7 @@ use App\Models\PurchaseOrder;
 
 class MarkSent
 {
-    public function __construct(public Vendor $vendor, public PurchaseOrder $purchase_order)
-    {
-    }
+    public function __construct(public Vendor $vendor, public PurchaseOrder $purchase_order) {}
 
     public function run()
     {

@@ -22,9 +22,7 @@ use stdClass;
 
 class QuoteRejectedObject
 {
-    public function __construct(public Quote $quote, public Company $company, public bool $use_react_url, public string $notes)
-    {
-    }
+    public function __construct(public Quote $quote, public Company $company, public bool $use_react_url, public string $notes) {}
 
     public function build()
     {
@@ -76,11 +74,11 @@ class QuoteRejectedObject
         $content = ctrans(
             'texts.notification_quote_rejected',
             [
-                    'amount' => $this->getAmount(),
-                    'client' => $this->quote->client->present()->name(),
-                    'quote' => $this->quote->number,
-                    'notes' => $this->notes,
-                ]
+                'amount' => $this->getAmount(),
+                'client' => $this->quote->client->present()->name(),
+                'quote' => $this->quote->number,
+                'notes' => $this->notes,
+            ]
         );
 
         $data = [
