@@ -151,6 +151,7 @@ class PaymentRepository extends BaseRepository
                     $paymentable->paymentable_id = $invoice->id;
                     $paymentable->paymentable_type = 'invoices';
                     $paymentable->amount = $paid_invoice['amount'];
+                    $paymentable->created_at = $is_existing_payment ? now()->setTimezone($payment->company->timezone) : $payment->date ?? now()->setTimezone($payment->company->timezone) ; //@phpstan-ignore-line
                     $paymentable->save();
 
                     $invoice = $invoice->service()
@@ -181,6 +182,7 @@ class PaymentRepository extends BaseRepository
                     $paymentable->paymentable_id = $credit->id;
                     $paymentable->paymentable_type = Credit::class;
                     $paymentable->amount = $paid_credit['amount'];
+                    $paymentable->created_at = $is_existing_payment ? now()->setTimezone($payment->company->timezone) : $payment->date ?? now()->setTimezone($payment->company->timezone) ; //@phpstan-ignore-line
                     $paymentable->save();
 
                     $credit = $credit->service()->markSent()->save();
