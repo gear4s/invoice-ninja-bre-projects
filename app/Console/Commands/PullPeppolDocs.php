@@ -59,6 +59,12 @@ class PullPeppolDocs extends Command
         $quota_count = Account::first()->e_invoice_quota;
 
         $this->info("E-Invoice Quota Remaining: $quota_count");
+
+        if(!isset($company->account->e_invoicing_token)){
+            $this->info("No e-invoicing token found! You will not be able to authenticate with the E-Invoice API. Try logging out and back in again.");
+            return;
+        }
+        
         $this->info("License key in use: ".config('ninja.license_key'));
 
         Account::query()
