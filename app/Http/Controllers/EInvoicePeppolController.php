@@ -266,10 +266,9 @@ class EInvoicePeppolController extends BaseController
 
     public function retrySend(RetrySendRequest $request)
     {
-        if(auth()->user()->company()->verifactuEnabled()) {
+        if (auth()->user()->company()->verifactuEnabled()) {
             SendToAeat::dispatch($request->entity_id, auth()->user()->company(), 'create');
-        }
-        else {
+        } else {
             SendEDocument::dispatch($request->entity, $request->entity_id, auth()->user()->company()->db);
         }
 

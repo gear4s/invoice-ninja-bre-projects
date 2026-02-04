@@ -134,17 +134,17 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     public function toSearchableArray()
     {
         return [
-            'id' => $this->company->db.":".$this->id,
+            'id' => $this->company->db . ":" . $this->id,
             'name' => $this->present()->search_display(),
             'hashed_id' => $this->hashed_id,
-            'email' => (string)$this->email,
-            'first_name' => (string)$this->first_name,
-            'last_name' => (string)$this->last_name,
-            'phone' => (string)$this->phone,
-            'custom_value1' => (string)$this->custom_value1,
-            'custom_value2' => (string)$this->custom_value2,
-            'custom_value3' => (string)$this->custom_value3,
-            'custom_value4' => (string)$this->custom_value4,
+            'email' => (string) $this->email,
+            'first_name' => (string) $this->first_name,
+            'last_name' => (string) $this->last_name,
+            'phone' => (string) $this->phone,
+            'custom_value1' => (string) $this->custom_value1,
+            'custom_value2' => (string) $this->custom_value2,
+            'custom_value3' => (string) $this->custom_value3,
+            'custom_value4' => (string) $this->custom_value4,
             'company_key' => $this->company->company_key,
             'vendor_id' => $this->vendor->hashed_id,
         ];
@@ -152,7 +152,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
 
     public function getScoutKey()
     {
-        return $this->company->db.":".$this->id;
+        return $this->company->db . ":" . $this->id;
     }
 
     public function avatar()
@@ -167,7 +167,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     public function setAvatarAttribute($value)
     {
         if (! filter_var($value, FILTER_VALIDATE_URL) && $value) {
-            $this->attributes['avatar'] = url('/').$value;
+            $this->attributes['avatar'] = url('/') . $value;
         } else {
             $this->attributes['avatar'] = $value;
         }
@@ -225,7 +225,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
             return $languages->first(function ($item) use ($language_id) {
                 return $item->id == $language_id;
             })->locale ?? 'en';
-            
+
         });
 
     }
@@ -252,9 +252,9 @@ class VendorContact extends Authenticatable implements HasLocalePreference
 
     public function getLoginLink()
     {
-        $domain = isset($this->company->portal_domain) ? $this->company->portal_domain : $this->company->domain();
+        $domain = $this->company->portal_domain ?? $this->company->domain();
 
-        return $domain.'/vendor/key_login/'.$this->contact_key;
+        return $domain . '/vendor/key_login/' . $this->contact_key;
     }
 
     public function getAdminLink($use_react_link = false): string
@@ -264,7 +264,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
 
     private function getReactLink(): string
     {
-        return config('ninja.react_url')."/#/vendors/{$this->vendor->hashed_id}";
+        return config('ninja.react_url') . "/#/vendors/{$this->vendor->hashed_id}";
     }
 
 }

@@ -72,11 +72,11 @@ class EmailObject
 
     public ?int $invitation_id = null;
 
-    public InvoiceInvitation | QuoteInvitation | CreditInvitation | PurchaseOrderInvitation | null $invitation;
+    public InvoiceInvitation|QuoteInvitation|CreditInvitation|PurchaseOrderInvitation|null $invitation;
 
     public ?int $entity_id = null;
 
-    public Invoice | Quote | Credit | PurchaseOrder | Payment | null $entity;
+    public Invoice|Quote|Credit|PurchaseOrder|Payment|null $entity;
 
     public ?int $client_id = null;
 
@@ -92,7 +92,7 @@ class EmailObject
 
     public ?int $client_contact_id = null;
 
-    public ClientContact | VendorContact | null  $contact;
+    public ClientContact|VendorContact|null  $contact;
 
     public ?int $vendor_contact_id = null;
 

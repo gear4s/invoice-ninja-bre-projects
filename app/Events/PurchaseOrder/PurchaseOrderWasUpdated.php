@@ -23,7 +23,5 @@ class PurchaseOrderWasUpdated
 {
     use SerializesModels;
 
-    public function __construct(public PurchaseOrder $purchase_order, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public PurchaseOrder $purchase_order, public Company $company, public array $event_vars) {}
 }

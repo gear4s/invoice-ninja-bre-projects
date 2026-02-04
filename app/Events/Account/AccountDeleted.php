@@ -35,9 +35,7 @@ class AccountDeleted
      * @param $company
      * @param $event_vars
      */
-    public function __construct(public string $account_key, public string $email, public string $ip)
-    {
-    }
+    public function __construct(public string $account_key, public string $email, public string $ip) {}
 
     // /**
     //  * Get the channels the event should broadcast on.

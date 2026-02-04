@@ -512,7 +512,7 @@ class WebhookController extends BaseController
             default => $includes = ''
         };
 
-        $class = 'App\Models\\'.ucfirst(Str::camel($request->entity));
+        $class = 'App\Models\\' . ucfirst(Str::camel($request->entity));
 
         $entity = $class::query()->withTrashed()->where('id', $this->decodePrimaryKey($request->entity_id))->company()->first();
 

@@ -56,7 +56,7 @@ class BulkProjectRequest extends Request
             }],
             'template' => 'sometimes|string',
             'template_id' => 'sometimes|string',
-            'send_email' => 'sometimes|bool'
+            'send_email' => 'sometimes|bool',
         ];
 
     }

@@ -41,9 +41,7 @@ class CreateEDocument implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
 
-    public function __construct(private object $document, private bool $returnObject = false)
-    {
-    }
+    public function __construct(private object $document, private bool $returnObject = false) {}
 
     /**
      * Execute the job.

@@ -17,9 +17,7 @@ use Illuminate\Support\Carbon;
 
 class ProjectService
 {
-    public function __construct(public Project $project)
-    {
-    }
+    public function __construct(public Project $project) {}
 
     public function timelineData()
     {
@@ -41,11 +39,11 @@ class ProjectService
                             ->map(function ($task) {
 
                                 return [
-                                        'date' => $task->calculated_start_date ?? \Carbon\Carbon::parse($task->created_at)->format('Y-m-d'),
-                                        'hours_used' => $task->calcDuration(true) / 60 / 60,
-                                        'hours_invoiced' => $task->invoice_id ? $task->calcDuration(true) / 60 / 60 : 0,
-                                        'hours_uninvoiced' => $task->invoice_id ? 0 : $task->calcDuration(true) / 60 / 60,
-                                    ];
+                                    'date' => $task->calculated_start_date ?? \Carbon\Carbon::parse($task->created_at)->format('Y-m-d'),
+                                    'hours_used' => $task->calcDuration(true) / 60 / 60,
+                                    'hours_invoiced' => $task->invoice_id ? $task->calcDuration(true) / 60 / 60 : 0,
+                                    'hours_uninvoiced' => $task->invoice_id ? 0 : $task->calcDuration(true) / 60 / 60,
+                                ];
                             });
 
         $last_task = $task_query->latest()->first();

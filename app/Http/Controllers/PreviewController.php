@@ -69,9 +69,9 @@ class PreviewController extends BaseController
         $entity_obj->fill($request->all());
 
         if (!$entity_obj->id || $request->entity == 'recurring_invoice') {
-            $entity_obj->design_id = $entity_obj->design_id ?: intval($this->decodePrimaryKey($settings->{$entity_prop."_design_id"}));
-            $entity_obj->footer = empty($entity_obj->footer) ? $settings->{$entity_prop."_footer"} : $entity_obj->footer;
-            $entity_obj->terms = empty($entity_obj->terms) ? $settings->{$entity_prop."_terms"} : $entity_obj->terms;
+            $entity_obj->design_id = $entity_obj->design_id ?: intval($this->decodePrimaryKey($settings->{$entity_prop . "_design_id"}));
+            $entity_obj->footer = empty($entity_obj->footer) ? $settings->{$entity_prop . "_footer"} : $entity_obj->footer;
+            $entity_obj->terms = empty($entity_obj->terms) ? $settings->{$entity_prop . "_terms"} : $entity_obj->terms;
             $entity_obj->public_notes = empty($entity_obj->public_notes) ? $request->getClient()->public_notes : $entity_obj->public_notes;
 
             $entity_obj->custom_surcharge_tax1 = $client->company->custom_surcharge_taxes1;
@@ -96,14 +96,14 @@ class PreviewController extends BaseController
         }
 
         /** Return PDF */
-        
+
         return response()->stream(function () use ($pdf) {
             echo $pdf;
         }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="preview.pdf"',
             'Cache-Control' => 'no-cache',
-            'Server-Timing' => (string)(microtime(true) - $start),
+            'Server-Timing' => (string) (microtime(true) - $start),
         ]);
 
         //@2025-06-25 - streamDownload forces attachment, which is not what we want. ->stream() is better.
@@ -163,8 +163,8 @@ class PreviewController extends BaseController
             return $this->template();
         }
 
-        if ($request->input('entity', false) &&
-            $request->input('entity_id', false) != '-1') {
+        if ($request->input('entity', false)
+            && $request->input('entity_id', false) != '-1') {
 
             $design_object = json_decode(json_encode($request->input('design')));
 
@@ -201,7 +201,7 @@ class PreviewController extends BaseController
             $ps = new PdfService($invitation, 'product', [
                 'client' => $entity_obj->client ?? false,
                 'vendor' => $entity_obj->vendor ?? false,
-                $request->input('entity')."s" => [$entity_obj],
+                $request->input('entity') . "s" => [$entity_obj],
             ]);
 
             $ps->boot()

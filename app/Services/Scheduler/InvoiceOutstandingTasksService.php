@@ -29,9 +29,7 @@ class InvoiceOutstandingTasksService
     use MakesHash;
     use MakesDates;
 
-    public function __construct(public Scheduler $scheduler)
-    {
-    }
+    public function __construct(public Scheduler $scheduler) {}
 
     public function run()
     {
@@ -82,12 +80,12 @@ class InvoiceOutstandingTasksService
                         ->map(function (Task $task, $key) {
 
                             if ($key == 0 && $task->company->invoice_task_project) {
-                                $body = '<div class="project-header">'.$task->project->name.'</div>' .$task->project?->public_notes ?? ''; //@phpstan-ignore-line
-                                $body .= '<div class="task-time-details">'.$task->description().'</div>';
+                                $body = '<div class="project-header">' . $task->project->name . '</div>' . $task->project?->public_notes ?? ''; //@phpstan-ignore-line
+                                $body .= '<div class="task-time-details">' . $task->description() . '</div>';
                             } elseif (!$task->company->invoice_task_hours && !$task->company->invoice_task_timelog && !$task->company->invoice_task_datelog && !$task->company->invoice_task_item_description) {
                                 $body = $task->description ?? '';
                             } else {
-                                $body = '<div class="task-time-details">'.$task->description().'</div>';
+                                $body = '<div class="task-time-details">' . $task->description() . '</div>';
                             }
 
                             $item = new InvoiceItem();
@@ -151,7 +149,7 @@ class InvoiceOutstandingTasksService
                     ->pluck('start_date')
                     ->first()
                     ?: Carbon::now()->format('Y-m-d'),
-                Carbon::now()->format('Y-m-d')
+                Carbon::now()->format('Y-m-d'),
             ],
             EmailStatement::CUSTOM_RANGE => [$this->scheduler->parameters['start_date'], $this->scheduler->parameters['end_date']],
             default => [now()->startOfDay()->firstOfMonth()->format('Y-m-d'), now()->startOfDay()->lastOfMonth()->format('Y-m-d')],

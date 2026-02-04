@@ -68,9 +68,7 @@ class QuickbooksImport implements ShouldQueue
 
     private Company $company;
 
-    public function __construct(public int $company_id, public string $db)
-    {
-    }
+    public function __construct(public int $company_id, public string $db) {}
 
     /**
      * Execute the job.
@@ -107,7 +105,7 @@ class QuickbooksImport implements ShouldQueue
      */
     private function processEntitySync(string $entity, $records): void
     {
-        match($entity) {
+        match ($entity) {
             'client' => $this->qbs->client->syncToNinja($records),
             'product' => $this->qbs->product->syncToNinja($records),
             'invoice' => $this->qbs->invoice->syncToNinja($records),
@@ -239,7 +237,7 @@ class QuickbooksImport implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("QuickbooksSync failed => ".$exception->getMessage());
+        nlog("QuickbooksSync failed => " . $exception->getMessage());
         config(['queue.failed.driver' => null]);
 
     }

@@ -28,9 +28,7 @@ class UserLoginFailed
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public string $email, public string $ip)
-    {
-    }
+    public function __construct(public string $email, public string $ip) {}
 
     /**
      * Get the channels the event should broadcast on.

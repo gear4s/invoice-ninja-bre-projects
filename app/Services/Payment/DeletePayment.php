@@ -33,9 +33,7 @@ class DeletePayment
      * @param Payment $payment
      * @return void
      */
-    public function __construct(public Payment $payment, private bool $update_client_paid_to_date)
-    {
-    }
+    public function __construct(public Payment $payment, private bool $update_client_paid_to_date) {}
 
     /**
      * @return Payment

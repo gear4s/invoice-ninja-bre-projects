@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class WebCronController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Store a newly created resource in storage.

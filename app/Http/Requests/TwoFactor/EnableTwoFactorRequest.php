@@ -35,7 +35,5 @@ class EnableTwoFactorRequest extends Request
         ];
     }
 
-    public function prepareForValidation()
-    {
-    }
+    public function prepareForValidation() {}
 }

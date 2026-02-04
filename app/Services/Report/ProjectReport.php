@@ -41,9 +41,7 @@ class ProjectReport extends BaseExport
             'projects',
         ]
     */
-    public function __construct(public Company $company, public array $input)
-    {
-    }
+    public function __construct(public Company $company, public array $input) {}
 
     public function run()
     {

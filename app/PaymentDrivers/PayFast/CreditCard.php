@@ -196,7 +196,7 @@ class CreditCard implements LivewireMethodInterface
     public function paymentResponse(Request $request)
     {
 
-        if($request->token){
+        if ($request->token) {
             return $this->processTokenPayment($request->token, $request->payment_hash);
         }
 
@@ -297,7 +297,7 @@ class CreditCard implements LivewireMethodInterface
             'm_payment_id' => $data['payment_hash'],
             'amount' => $data['amount_with_fee'],
             'item_name' => 'purchase',
-            'item_description' => ctrans('texts.invoices').': '.collect($data['invoices'])->pluck('invoice_number'),
+            'item_description' => ctrans('texts.invoices') . ': ' . collect($data['invoices'])->pluck('invoice_number'),
             'passphrase' => $this->payfast->company_gateway->getConfigField('passphrase'),
         ];
 

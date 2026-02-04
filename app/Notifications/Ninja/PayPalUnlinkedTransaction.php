@@ -25,9 +25,7 @@ class PayPalUnlinkedTransaction extends Notification
      * @return void
      */
 
-    public function __construct(private string $order_id, private string $transaction_reference)
-    {
-    }
+    public function __construct(private string $order_id, private string $transaction_reference) {}
 
     /**
      * Get the notification's delivery channels.
@@ -46,9 +44,7 @@ class PayPalUnlinkedTransaction extends Notification
      * @param  mixed  $notifiable
      *
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

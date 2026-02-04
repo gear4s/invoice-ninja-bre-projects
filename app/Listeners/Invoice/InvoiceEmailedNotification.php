@@ -26,9 +26,7 @@ class InvoiceEmailedNotification implements ShouldQueue
 
     public $delay = 10;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

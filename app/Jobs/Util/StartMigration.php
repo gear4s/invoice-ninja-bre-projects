@@ -135,7 +135,7 @@ class StartMigration implements ShouldQueue
             App::forgetInstance('translator');
             $t = app('translator');
             $t->replace(Ninja::transformTranslations($this->company->settings));
-        } catch (ClientHostedMigrationException | NonExistingMigrationFile | ProcessingMigrationArchiveFailed | ResourceNotAvailableForMigration | MigrationValidatorFailed | ResourceDependencyMissing | \Exception $e) {
+        } catch (ClientHostedMigrationException|NonExistingMigrationFile|ProcessingMigrationArchiveFailed|ResourceNotAvailableForMigration|MigrationValidatorFailed|ResourceDependencyMissing|\Exception $e) {
             $this->company->update_products = $update_product_flag;
             $this->company->save();
 

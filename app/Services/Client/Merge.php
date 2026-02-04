@@ -102,7 +102,7 @@ class Merge extends AbstractService
         $company_ledger = CompanyLedgerFactory::create($this->client->company_id, $this->client->user_id);
         $company_ledger->client_id = $this->client->id;
         $company_ledger->adjustment = $adjustment;
-        $company_ledger->notes = 'Balance update after merging '.$this->mergable_client->present()->name();
+        $company_ledger->notes = 'Balance update after merging ' . $this->mergable_client->present()->name();
         $company_ledger->balance = $balance + $adjustment;
         $company_ledger->activity_id = Activity::UPDATE_CLIENT;
         $company_ledger->save();

@@ -15,6 +15,4 @@ namespace App\Models\Presenters;
 /**
  * Class CreditPresenter.
  */
-class CreditPresenter extends EntityPresenter
-{
-}
+class CreditPresenter extends EntityPresenter {}

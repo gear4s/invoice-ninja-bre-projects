@@ -32,7 +32,7 @@ class UpdateCompanyUserPreferencesRequest extends Request
     public function rules()
     {
         return [
-            'react_settings' => 'required'
+            'react_settings' => 'required',
         ];
     }
 }

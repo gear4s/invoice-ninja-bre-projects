@@ -36,9 +36,7 @@ class TaskScheduler implements ShouldQueue
      *
      * @return void
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Execute the job.
@@ -64,7 +62,7 @@ class TaskScheduler implements ShouldQueue
                         //@var \App\Models\Schedule $scheduler
                         $scheduler->service()->runTask();
                     } catch (\Throwable $e) {
-                        
+
                         nlog("Exception:: TaskScheduler:: Doing job :: {$scheduler->id} :: {$scheduler->name}" . $e->getMessage());
 
                         if (app()->bound('sentry')) {

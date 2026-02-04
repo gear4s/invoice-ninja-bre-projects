@@ -231,14 +231,14 @@ class Gateway extends StaticModel
                 return [
                     GatewayType::CRYPTO => ['refund' => true, 'token_billing' => false, 'webhooks' => ['confirmed', 'paid_out', 'failed', 'fulfilled']],
                 ]; //BTCPay
-	    case 63:
-		return [
+            case 63:
+                return [
                     GatewayType::BANK_TRANSFER => [
                         'refund' => false,
                         'token_billing' => true,
                         'webhooks' => [],
-                        ],
-                    GatewayType::ACSS => ['refund' => false, 'token_billing' => true, 'webhooks' => []]
+                    ],
+                    GatewayType::ACSS => ['refund' => false, 'token_billing' => true, 'webhooks' => []],
                 ]; // Rotessa
             case 64: //b67581d804dbad1743b61c57285142ad - powerboard
                 return [

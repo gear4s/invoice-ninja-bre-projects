@@ -30,9 +30,7 @@ class QuoteTransformer extends BaseTransformer
         return $this->transform($qb_data);
     }
 
-    public function ninjaToQb()
-    {
-    }
+    public function ninjaToQb() {}
 
     public function transform($qb_data)
     {
@@ -71,7 +69,7 @@ class QuoteTransformer extends BaseTransformer
                     $this->company->save();
                 }
 
-                return (float)data_get($line, 'Amount', 0) * -1;
+                return (float) data_get($line, 'Amount', 0) * -1;
             }
         }
 
@@ -109,12 +107,12 @@ class QuoteTransformer extends BaseTransformer
 
             $tr = \App\Models\TaxRate::firstOrNew(
                 [
-                'company_id' => $this->company->id,
-                'rate' => $formattedTaxRate,
+                    'company_id' => $this->company->id,
+                    'rate' => $formattedTaxRate,
                 ],
                 [
-                'name' => "Sales Tax [{$formattedTaxRate}]",
-                'rate' => $formattedTaxRate,
+                    'name' => "Sales Tax [{$formattedTaxRate}]",
+                    'rate' => $formattedTaxRate,
                 ]
             );
             $tr->company_id = $this->company->id;
@@ -161,22 +159,22 @@ class QuoteTransformer extends BaseTransformer
         if (!empty($qb_items) && !isset($qb_items[0])) {
 
             //handle weird statement charges
-            $tax_rate = (float)data_get($qb_data, 'TxnTaxDetail.TaxLine.TaxLineDetail.TaxPercent', 0);
+            $tax_rate = (float) data_get($qb_data, 'TxnTaxDetail.TaxLine.TaxLineDetail.TaxPercent', 0);
             $tax_name = $tax_rate > 0 ? "Sales Tax [{$tax_rate}]" : '';
 
             $item = new InvoiceItem();
             $item->product_key = '';
             $item->notes = 'Recurring Charge';
             $item->quantity = 1;
-            $item->cost = (float)data_get($qb_items, 'Amount', 0);
+            $item->cost = (float) data_get($qb_items, 'Amount', 0);
             $item->discount = 0;
             $item->is_amount_discount = false;
             $item->type_id = '1';
             $item->tax_id = '1';
-            $item->tax_rate1 = (float)$tax_rate;
+            $item->tax_rate1 = (float) $tax_rate;
             $item->tax_name1 = $tax_name;
 
-            $items[] = (object)$item;
+            $items[] = (object) $item;
 
             return $items;
         }
@@ -189,16 +187,16 @@ class QuoteTransformer extends BaseTransformer
                 $item = new InvoiceItem();
                 $item->product_key = data_get($qb_item, 'SalesItemLineDetail.ItemRef.name', '');
                 $item->notes = data_get($qb_item, 'Description', '');
-                $item->quantity = (float)(data_get($qb_item, 'SalesItemLineDetail.Qty') ?? 1);
-                $item->cost = (float)(data_get($qb_item, 'SalesItemLineDetail.UnitPrice') ?? data_get($qb_item, 'SalesItemLineDetail.MarkupInfo.Value', 0));
-                $item->discount = (float)data_get($item, 'DiscountRate', data_get($qb_item, 'DiscountAmount', 0));
+                $item->quantity = (float) (data_get($qb_item, 'SalesItemLineDetail.Qty') ?? 1);
+                $item->cost = (float) (data_get($qb_item, 'SalesItemLineDetail.UnitPrice') ?? data_get($qb_item, 'SalesItemLineDetail.MarkupInfo.Value', 0));
+                $item->discount = (float) data_get($item, 'DiscountRate', data_get($qb_item, 'DiscountAmount', 0));
                 $item->is_amount_discount = data_get($qb_item, 'DiscountAmount', 0) > 0 ? true : false;
                 $item->type_id = stripos(data_get($qb_item, 'ItemAccountRef.name') ?? '', 'Service') !== false ? '2' : '1';
                 $item->tax_id = $taxCodeRef == 'NON' ? Product::PRODUCT_TYPE_EXEMPT : $item->type_id;
-                $item->tax_rate1 = (float)$taxCodeRef == 'NON' ? 0 : $tax_array[0];
+                $item->tax_rate1 = (float) $taxCodeRef == 'NON' ? 0 : $tax_array[0];
                 $item->tax_name1 = $taxCodeRef == 'NON' ? '' : $tax_array[1];
 
-                $items[] = (object)$item;
+                $items[] = (object) $item;
             }
 
             if (data_get($qb_item, 'DetailType') == 'DiscountLineDetail' && $include_discount == 'true') {
@@ -207,16 +205,16 @@ class QuoteTransformer extends BaseTransformer
                 $item->product_key = ctrans('texts.discount');
                 $item->notes = ctrans('texts.discount');
                 $item->quantity = 1;
-                $item->cost = (float)data_get($qb_item, 'Amount', 0) * -1;
+                $item->cost = (float) data_get($qb_item, 'Amount', 0) * -1;
                 $item->discount = 0;
                 $item->is_amount_discount = true;
 
-                $item->tax_rate1 = (float)$include_discount == 'true' ? $tax_array[0] : 0;
+                $item->tax_rate1 = (float) $include_discount == 'true' ? $tax_array[0] : 0;
                 $item->tax_name1 = $include_discount == 'true' ? $tax_array[1] : '';
 
                 $item->type_id = '1';
                 $item->tax_id = Product::PRODUCT_TYPE_PHYSICAL;
-                $items[] = (object)$item;
+                $items[] = (object) $item;
 
             }
         }

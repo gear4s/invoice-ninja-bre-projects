@@ -28,21 +28,13 @@ class CreditCard
         $this->driver_class = $driver_class;
     }
 
-    public function authorizeView($data)
-    {
-    }
+    public function authorizeView($data) {}
 
-    public function authorizeRequest($request)
-    {
-    }
+    public function authorizeRequest($request) {}
 
-    public function paymentView($data)
-    {
-    }
+    public function paymentView($data) {}
 
-    public function processPaymentResponse($request)
-    {
-    }
+    public function processPaymentResponse($request) {}
 
     /* This method is stubbed ready to go - you just need to harvest the equivalent 'transaction_reference' */
     private function processSuccessfulPayment($response)

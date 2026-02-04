@@ -23,9 +23,7 @@ class PdfMerge
      * @param  array $files
      * @return void
      */
-    public function __construct(private array $files)
-    {
-    }
+    public function __construct(private array $files) {}
 
     public function run()
     {

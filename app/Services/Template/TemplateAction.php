@@ -72,8 +72,7 @@ class TemplateAction implements ShouldQueue
         private string $db,
         private string $hash,
         private bool $send_email = false
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the job.
@@ -93,7 +92,7 @@ class TemplateAction implements ShouldQueue
 
         $template_service = new \App\Services\Template\TemplateService($template);
 
-        match($this->entity) {
+        match ($this->entity) {
             Invoice::class => $resource->with('payments', 'client'),
             Quote::class => $resource->with('client'),
             Task::class => $resource->with('client'),

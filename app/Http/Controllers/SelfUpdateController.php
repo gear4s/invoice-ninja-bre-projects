@@ -41,9 +41,7 @@ class SelfUpdateController extends BaseController
         'public/index.html',
     ];
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function update()
     {
@@ -160,7 +158,7 @@ class SelfUpdateController extends BaseController
         $directoryIterator = new \RecursiveDirectoryIterator(base_path('bootstrap/cache'), \RecursiveDirectoryIterator::SKIP_DOTS);
 
         foreach (new \RecursiveIteratorIterator($directoryIterator) as $file) {
-            unlink(base_path('bootstrap/cache/').$file->getFileName());
+            unlink(base_path('bootstrap/cache/') . $file->getFileName());
             $file = null;
         }
 

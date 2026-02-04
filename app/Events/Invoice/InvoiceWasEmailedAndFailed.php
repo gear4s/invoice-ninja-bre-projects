@@ -22,7 +22,5 @@ class InvoiceWasEmailedAndFailed
 {
     use SerializesModels;
 
-    public function __construct(public mixed $invitation, public Company $company, public string $message, public string $template, public array $event_vars)
-    {
-    }
+    public function __construct(public mixed $invitation, public Company $company, public string $message, public string $template, public array $event_vars) {}
 }

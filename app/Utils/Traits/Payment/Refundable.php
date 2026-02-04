@@ -121,7 +121,7 @@ trait Refundable
             $credit_line_item->line_total = $invoice['amount'];
             $credit_line_item->date = $data['date'];
 
-            $ledger_string .= $credit_line_item->notes.' ';
+            $ledger_string .= $credit_line_item->notes . ' ';
 
             $line_items[] = $credit_line_item;
         }

@@ -32,7 +32,7 @@ final class CAProvinces
         'SK' => 'Saskatchewan',
         'NT' => 'Northwest Territories',
         'NU' => 'Nunavut',
-        'YT' => 'Yukon'
+        'YT' => 'Yukon',
     ];
 
     /**

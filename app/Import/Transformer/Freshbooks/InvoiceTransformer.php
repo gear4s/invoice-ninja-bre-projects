@@ -45,8 +45,8 @@ class InvoiceTransformer extends BaseTransformer
             'number'      => $this->getString($invoice_data, 'Invoice #'),
             'date'        => isset($invoice_data['Date Issued']) ? $this->parseDate($invoice_data['Date Issued']) : null,
             'amount'      => 0,
-            'status_id'   => $invoiceStatusMap[$status =
-                    strtolower($this->getString($invoice_data, 'Invoice Status'))] ?? Invoice::STATUS_SENT,
+            'status_id'   => $invoiceStatusMap[$status
+                    = strtolower($this->getString($invoice_data, 'Invoice Status'))] ?? Invoice::STATUS_SENT,
             // 'viewed'      => $status === 'viewed',
         ];
 

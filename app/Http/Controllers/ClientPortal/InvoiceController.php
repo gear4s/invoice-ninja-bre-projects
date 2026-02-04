@@ -113,11 +113,11 @@ class InvoiceController extends Controller
 
         $invitation = false;
 
-        if(!isset($data['entity_type'])){
+        if (!isset($data['entity_type'])) {
             nlog(array_merge(["showBlob"], $data));
         }
 
-        match($data['entity_type'] ?? 'invoice') {
+        match ($data['entity_type'] ?? 'invoice') {
             'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']), //@todo - sometimes this is false!!
             'quote' => $invitation = QuoteInvitation::withTrashed()->find($data['invitation_id']),
             'credit' => $invitation = CreditInvitation::withTrashed()->find($data['invitation_id']),
@@ -313,8 +313,8 @@ class InvoiceController extends Controller
             }
 
 
-            $filename = date('Y-m-d').'_'.str_replace(' ', '_', trans('texts.invoices')).'.zip';
-            $filepath = sys_get_temp_dir().'/'.$filename;
+            $filename = date('Y-m-d') . '_' . str_replace(' ', '_', trans('texts.invoices')) . '.zip';
+            $filepath = sys_get_temp_dir() . '/' . $filename;
 
             $zipFile->saveAsFile($filepath) // save the archive to a file
                    ->close(); // close archive

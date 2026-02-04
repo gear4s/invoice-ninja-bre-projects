@@ -35,7 +35,7 @@ class AuthorizeTransactions
         $this->authorize->init();
 
         // Set the transaction's refId
-        $refId = 'ref'.time();
+        $refId = 'ref' . time();
 
         $request = new GetTransactionDetailsRequest();
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
@@ -47,13 +47,13 @@ class AuthorizeTransactions
 
         // if (($response != null) && ($response->getMessages()->getResultCode() == 'Ok')) {
         if ($response != null && $response->getMessages() != null) {
-            nlog('SUCCESS: Transaction Status:'.$response->getTransaction()->getTransactionStatus());
-            nlog('                Auth Amount:'.$response->getTransaction()->getAuthAmount());
-            nlog('                   Trans ID:'.$response->getTransaction()->getTransId());
+            nlog('SUCCESS: Transaction Status:' . $response->getTransaction()->getTransactionStatus());
+            nlog('                Auth Amount:' . $response->getTransaction()->getAuthAmount());
+            nlog('                   Trans ID:' . $response->getTransaction()->getTransId());
         } else {
             nlog("ERROR :  Invalid response\n");
             $errorMessages = $response->getMessages()->getMessage();
-            nlog('Response : '.$errorMessages[0]->getCode().'  '.$errorMessages[0]->getText());
+            nlog('Response : ' . $errorMessages[0]->getCode() . '  ' . $errorMessages[0]->getText());
         }
 
         return $response;

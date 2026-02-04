@@ -30,7 +30,7 @@ enum TaxReportStatus: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UPDATED => 'payable',
             self::DELTA => 'payable',
             self::ADJUSTMENT => 'adjustment',

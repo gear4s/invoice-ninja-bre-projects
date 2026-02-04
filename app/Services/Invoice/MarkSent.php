@@ -21,9 +21,7 @@ use App\Utils\Ninja;
 
 class MarkSent extends AbstractService
 {
-    public function __construct(public Client $client, public Invoice $invoice)
-    {
-    }
+    public function __construct(public Client $client, public Invoice $invoice) {}
 
     public function run($fire_webhook = false)
     {

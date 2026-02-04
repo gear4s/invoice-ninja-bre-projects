@@ -18,9 +18,7 @@ use App\Services\AbstractService;
 
 class ApplyPayment extends AbstractService
 {
-    public function __construct(private Invoice $invoice, private Payment $payment, private float $payment_amount)
-    {
-    }
+    public function __construct(private Invoice $invoice, private Payment $payment, private float $payment_amount) {}
 
     /* Apply payment to a single invoice */
     public function run()

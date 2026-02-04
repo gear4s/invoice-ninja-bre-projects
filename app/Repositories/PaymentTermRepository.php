@@ -15,6 +15,4 @@ namespace App\Repositories;
 /**
  * Class for payment term repository.
  */
-class PaymentTermRepository extends BaseRepository
-{
-}
+class PaymentTermRepository extends BaseRepository {}

@@ -33,9 +33,7 @@ class PreviewReport implements ShouldQueue
     /**
      * Create a new job instance
      */
-    public function __construct(protected Company $company, protected array $request, private string $report_class, protected string $hash)
-    {
-    }
+    public function __construct(protected Company $company, protected array $request, private string $report_class, protected string $hash) {}
 
     public function handle()
     {
@@ -46,13 +44,11 @@ class PreviewReport implements ShouldQueue
 
         if (isset($this->request['output']) && $this->request['output'] == 'json') {
             $report = $export->returnJson();
-        } 
-        elseif(!empty($this->request['template_id'])){
+        } elseif (!empty($this->request['template_id'])) {
             $builder = $export->init();
             $report = $export->exportTemplate($builder, $this->request['template_id']);
             $report = base64_encode($report);
-        }
-        else {
+        } else {
             $report = base64_encode($export->run());
         }
 
@@ -64,7 +60,7 @@ class PreviewReport implements ShouldQueue
      */
     public function failed(?\Throwable $exception)
     {
-        if($exception) {
+        if ($exception) {
             nlog("EXCEPTION:: PreviewReport:: could not preview report for " . $exception->getMessage());
         }
     }

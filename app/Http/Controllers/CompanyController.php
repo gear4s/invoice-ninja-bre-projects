@@ -555,19 +555,18 @@ class CompanyController extends BaseController
 
             try {
 
-                if(Ninja::isHosted()){
-                    try{
+                if (Ninja::isHosted()) {
+                    try {
                         Storage::disk('s3')->deleteDirectory($company->company_key);
+                    } catch (\Throwable $th) {
                     }
-                    catch(\Throwable $th){}
 
-                    try{
+                    try {
                         Storage::disk('backup')->deleteDirectory($company->company_key);
+                    } catch (\Throwable $th) {
                     }
-                    catch(\Throwable $th){}
-                    
-                }
-                else {
+
+                } else {
                     Storage::disk(config('filesystems.default'))->deleteDirectory($company->company_key);
                 }
 
@@ -578,7 +577,7 @@ class CompanyController extends BaseController
 
             if (Ninja::isHosted()) {
                 \Modules\Admin\Jobs\Account\NinjaDeletedAccount::dispatch($account_key, $request->all(), auth()->user()->email);
-                
+
                 $ip = $request->ip();
                 $email = auth()->user()->email;
                 nlog("AccountDeleted:: {$account_key} - {$email} - {$ip}");

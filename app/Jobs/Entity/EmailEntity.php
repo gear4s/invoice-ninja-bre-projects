@@ -157,7 +157,7 @@ class EmailEntity implements ShouldQueue
     /* Builds the email builder object */
     private function resolveEmailBuilder()
     {
-        $class = 'App\Mail\Engine\\'.ucfirst(Str::camel($this->entity_string)).'EmailEngine';
+        $class = 'App\Mail\Engine\\' . ucfirst(Str::camel($this->entity_string)) . 'EmailEngine';
 
         return (new $class($this->invitation, $this->reminder_template, $this->template_data))->build();
     }

@@ -35,9 +35,7 @@ class VerifyPhone implements ShouldQueue
      *
      * @param User $user
      */
-    public function __construct(private User $user)
-    {
-    }
+    public function __construct(private User $user) {}
 
     /**
      * Execute the job.

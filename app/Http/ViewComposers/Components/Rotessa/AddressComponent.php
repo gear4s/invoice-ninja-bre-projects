@@ -28,11 +28,11 @@ class AddressComponent extends Component
         'city',
         'postal_code',
         'province_code',
-        'country'
+        'country',
     ];
 
     private $defaults = [
-        'country' => 'US'
+        'country' => 'US',
     ];
 
     public function __construct(public array $address)

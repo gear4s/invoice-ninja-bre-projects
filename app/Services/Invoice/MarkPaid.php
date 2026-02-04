@@ -29,9 +29,7 @@ class MarkPaid extends AbstractService
 
     private $payable_balance;
 
-    public function __construct(private Invoice $invoice, private ?string $reference)
-    {
-    }
+    public function __construct(private Invoice $invoice, private ?string $reference) {}
 
     public function run()
     {

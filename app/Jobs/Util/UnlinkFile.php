@@ -26,9 +26,7 @@ class UnlinkFile implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(protected string $disk = '', protected ?string $file_path = '')
-    {
-    }
+    public function __construct(protected string $disk = '', protected ?string $file_path = '') {}
 
     /**
      * Execute the job.

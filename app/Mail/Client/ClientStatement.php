@@ -24,9 +24,7 @@ class ClientStatement extends Mailable
      *
      * @return void
      */
-    public function __construct(public array $data)
-    {
-    }
+    public function __construct(public array $data) {}
 
     /**
      * Get the message envelope.
@@ -78,8 +76,8 @@ class ClientStatement extends Mailable
         $array_of_attachments = [];
 
         foreach ($this->data['attachments'] as $attachment) {
-            $array_of_attachments[] =
-                    Attachment::fromData(fn () => base64_decode($attachment['file']), $attachment['name'])
+            $array_of_attachments[]
+                    = Attachment::fromData(fn() => base64_decode($attachment['file']), $attachment['name'])
                               ->withMime('application/pdf');
         }
 

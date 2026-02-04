@@ -24,9 +24,7 @@ class CreateInvitations extends AbstractService
 {
     use MakesHash;
 
-    public function __construct(private Invoice $invoice)
-    {
-    }
+    public function __construct(private Invoice $invoice) {}
 
     public function run()
     {

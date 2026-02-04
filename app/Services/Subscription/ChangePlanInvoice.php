@@ -28,11 +28,9 @@ class ChangePlanInvoice extends AbstractService
 {
     protected \App\Services\Subscription\SubscriptionStatus $status;
 
-    public function __construct(protected RecurringInvoice $recurring_invoice, public Subscription $target, public string $hash)
-    {
-    }
+    public function __construct(protected RecurringInvoice $recurring_invoice, public Subscription $target, public string $hash) {}
 
-    public function run(): Invoice | Credit
+    public function run(): Invoice|Credit
     {
 
         $this->status = $this->recurring_invoice
@@ -103,7 +101,7 @@ class ChangePlanInvoice extends AbstractService
         $invoice_item = new InvoiceItem();
         $invoice_item->type_id = '1';
         $invoice_item->product_key = ctrans('texts.refund');
-        $invoice_item->notes = ctrans('texts.refund'). " #{$this->status->refundable_invoice->number}";
+        $invoice_item->notes = ctrans('texts.refund') . " #{$this->status->refundable_invoice->number}";
         $invoice_item->quantity = 1;
         $invoice_item->cost = $refund;
 

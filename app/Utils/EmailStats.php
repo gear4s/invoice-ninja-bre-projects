@@ -29,7 +29,7 @@ class EmailStats
      */
     public static function inc($company_key)
     {
-        Cache::increment("email_quota".self::EMAIL.$company_key);
+        Cache::increment("email_quota" . self::EMAIL . $company_key);
     }
 
     /**
@@ -40,7 +40,7 @@ class EmailStats
      */
     public static function count($company_key)
     {
-        return Cache::get(self::EMAIL.$company_key);
+        return Cache::get(self::EMAIL . $company_key);
     }
 
     /**
@@ -51,7 +51,7 @@ class EmailStats
      */
     public static function clear($company_key)
     {
-        Cache::forget(self::EMAIL.$company_key);
+        Cache::forget(self::EMAIL . $company_key);
     }
 
     /**

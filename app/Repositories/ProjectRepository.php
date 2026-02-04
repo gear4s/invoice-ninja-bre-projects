@@ -21,7 +21,7 @@ use App\Models\Project;
  * Class for project repository.
  */
 class ProjectRepository extends BaseRepository
-{    
+{
     /**
      * Invoices a collection of projects into a single invoice.
      *
@@ -35,7 +35,7 @@ class ProjectRepository extends BaseRepository
         $invoice = InvoiceFactory::create($_project->company_id, $_project->user_id);
         $invoice->client_id = $_project->client_id;
 
-        if(count($projects) == 1) {
+        if (count($projects) == 1) {
             $invoice->project_id = $_project->id;
         }
         // $invoice->project_id = $project->id;
@@ -52,12 +52,12 @@ class ProjectRepository extends BaseRepository
 
                         if (!$task->isRunning() && $task->calcDuration(true) > 0) {
                             if ($key == 0 && $task->company->invoice_task_project) {
-                                $body = '<div class="project-header">'.$task->project->name.'</div>' .$task->project?->public_notes ?? ''; //@phpstan-ignore-line
-                                $body .= '<div class="task-time-details">'.$task->description().'</div>';
+                                $body = '<div class="project-header">' . $task->project->name . '</div>' . $task->project?->public_notes ?? ''; //@phpstan-ignore-line
+                                $body .= '<div class="task-time-details">' . $task->description() . '</div>';
                             } elseif (!$task->company->invoice_task_hours && !$task->company->invoice_task_timelog && !$task->company->invoice_task_datelog && !$task->company->invoice_task_item_description) {
                                 $body = $task->description ?? '';
                             } else {
-                                $body = '<div class="task-time-details">'.$task->description().'</div>';
+                                $body = '<div class="task-time-details">' . $task->description() . '</div>';
                             }
 
                             $item = new InvoiceItem();

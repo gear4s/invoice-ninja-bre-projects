@@ -50,7 +50,5 @@ class EntityTransformer extends TransformerAbstract
         return $this->defaultIncludes;
     }
 
-    protected function getDefaults($entity)
-    {
-    }
+    protected function getDefaults($entity) {}
 }

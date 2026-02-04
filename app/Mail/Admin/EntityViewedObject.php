@@ -101,10 +101,10 @@ class EntityViewedObject
         $content = ctrans(
             "texts.notification_{$this->entity_type}_viewed",
             [
-                    'amount' => $this->getAmount(),
-                    'client' => $this->contact->present()->name(),
-                    'invoice' => $this->entity->number,
-                ]
+                'amount' => $this->getAmount(),
+                'client' => $this->contact->present()->name(),
+                'invoice' => $this->entity->number,
+            ]
         );
 
         $data = [

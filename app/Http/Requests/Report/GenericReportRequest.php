@@ -48,10 +48,10 @@ class GenericReportRequest extends Request
 
     public function withValidator(\Illuminate\Validation\Validator $validator)
     {
-        
+
         $validator->after(function ($validator) {
 
-            if(!empty($this->template_id) && Design::where('id', $this->decodePrimaryKey($this->template_id))->where('is_template',true)->company()->doesntExist()) {
+            if (!empty($this->template_id) && Design::where('id', $this->decodePrimaryKey($this->template_id))->where('is_template', true)->company()->doesntExist()) {
                 $validator->errors()->add('template_id', 'Invalid Template ID Selected');
             }
 

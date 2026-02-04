@@ -14,7 +14,6 @@ namespace App\DataMapper\Schedule;
 
 class InvoiceOutstandingTasks
 {
-    
     /**
      * Defines the template name
      *

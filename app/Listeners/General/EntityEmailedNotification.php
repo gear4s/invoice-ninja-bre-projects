@@ -32,13 +32,11 @@ class EntityEmailedNotification implements ShouldQueue
 
     private $entity_string;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     private function resolveEntityString($invitation): self
     {
-        $this->entity_string = match(get_class($invitation)) {
+        $this->entity_string = match (get_class($invitation)) {
             InvoiceInvitation::class => 'invoice',
             CreditInvitation::class => 'credit',
             QuoteInvitation::class => 'quote',

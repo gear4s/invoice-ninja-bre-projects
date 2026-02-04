@@ -58,7 +58,7 @@ class RetrySendRequest extends Request
 
         if (isset($input['entity']) && in_array($input['entity'], ['invoice','quote','credit','purchase_order'])) {
             $this->entity_plural = Str::plural($input['entity']);
-            $input['entity'] = "App\Models\\".ucfirst(Str::camel($input['entity']));
+            $input['entity'] = "App\Models\\" . ucfirst(Str::camel($input['entity']));
         }
 
         $this->replace($input);

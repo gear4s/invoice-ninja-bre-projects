@@ -47,7 +47,7 @@ class StorePurchaseOrderRequest extends Request
 
         $rules = [];
 
-        $rules['vendor_id'] = 'bail|required|exists:vendors,id,company_id,'.$user->company()->id.',is_deleted,0';
+        $rules['vendor_id'] = 'bail|required|exists:vendors,id,company_id,' . $user->company()->id . ',is_deleted,0';
 
         $rules['number'] = ['nullable', Rule::unique('purchase_orders')->where('company_id', $user->company()->id)];
 
@@ -85,7 +85,7 @@ class StorePurchaseOrderRequest extends Request
         $input['amount'] = 0;
         $input['balance'] = 0;
         $input['total_taxes'] = 0;
-        
+
         if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }

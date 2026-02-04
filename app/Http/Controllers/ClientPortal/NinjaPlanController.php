@@ -88,7 +88,7 @@ class NinjaPlanController extends Controller
 
     public function trial_confirmation(Request $request)
     {
-        $trial_started = "Trial Started @ ".now()->format('Y-m-d H:i:s');
+        $trial_started = "Trial Started @ " . now()->format('Y-m-d H:i:s');
 
         auth()->guard('contact')->user()->fill($request->only(['first_name','last_name']))->save();
 

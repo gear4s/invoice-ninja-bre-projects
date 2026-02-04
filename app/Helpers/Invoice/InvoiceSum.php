@@ -31,7 +31,7 @@ class InvoiceSum
     use Discounter;
     use NumberFormatter;
 
-    protected RecurringInvoice | Invoice | Quote | Credit | PurchaseOrder | RecurringQuote $invoice;
+    protected RecurringInvoice|Invoice|Quote|Credit|PurchaseOrder|RecurringQuote $invoice;
 
     public $tax_map;
 
@@ -53,7 +53,7 @@ class InvoiceSum
 
     private $precision;
 
-    private Client | Vendor $client;
+    private Client|Vendor $client;
 
     public InvoiceItemSum $invoice_items;
 
@@ -148,8 +148,8 @@ class InvoiceSum
 
             $this->total_taxes += $tax;
             $this->total_tax_map[] = [
-                'name' => $this->invoice->tax_name1.' '.Number::formatValueNoTrailingZeroes(floatval($this->invoice->tax_rate1), $this->client).'%', 
-                'total' => $tax, 
+                'name' => $this->invoice->tax_name1 . ' ' . Number::formatValueNoTrailingZeroes(floatval($this->invoice->tax_rate1), $this->client) . '%',
+                'total' => $tax,
                 'tax_rate' => $this->invoice->tax_rate1,
                 'base_amount' => $this->total,
             ];
@@ -162,8 +162,8 @@ class InvoiceSum
 
             $this->total_taxes += $tax;
             $this->total_tax_map[] = [
-                'name' => $this->invoice->tax_name2.' '.Number::formatValueNoTrailingZeroes(floatval($this->invoice->tax_rate2), $this->client).'%', 
-                'total' => $tax, 
+                'name' => $this->invoice->tax_name2 . ' ' . Number::formatValueNoTrailingZeroes(floatval($this->invoice->tax_rate2), $this->client) . '%',
+                'total' => $tax,
                 'tax_rate' => $this->invoice->tax_rate2,
                 'base_amount' => $this->total,
             ];
@@ -175,8 +175,8 @@ class InvoiceSum
 
             $this->total_taxes += $tax;
             $this->total_tax_map[] = [
-                'name' => $this->invoice->tax_name3.' '.Number::formatValueNoTrailingZeroes(floatval($this->invoice->tax_rate3), $this->client).'%', 
-                'total' => $tax, 
+                'name' => $this->invoice->tax_name3 . ' ' . Number::formatValueNoTrailingZeroes(floatval($this->invoice->tax_rate3), $this->client) . '%',
+                'total' => $tax,
                 'tax_rate' => $this->invoice->tax_rate3,
                 'base_amount' => $this->total,
             ];

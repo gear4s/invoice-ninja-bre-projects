@@ -46,7 +46,7 @@ class PurchaseOrderExpense
         $expense->public_notes = '';
 
         foreach ($line_items as $line_item) {
-            $expense->public_notes .= $line_item->quantity . " x " . $line_item->product_key. " [ " .$line_item->notes . " ]\n";
+            $expense->public_notes .= $line_item->quantity . " x " . $line_item->product_key . " [ " . $line_item->notes . " ]\n";
         }
 
         $tax_map = $this->purchase_order->calc()->getTaxMap();

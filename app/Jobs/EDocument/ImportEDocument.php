@@ -33,10 +33,7 @@ class ImportEDocument implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(private readonly string $file_content, private string $file_name, private string $file_mime_type, private Company $company)
-    {
-
-    }
+    public function __construct(private readonly string $file_content, private string $file_name, private string $file_mime_type, private Company $company) {}
 
     /**
      * Execute the job.
@@ -54,7 +51,7 @@ class ImportEDocument implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->company->company_key."_expense_import_".$this->file_name))->releaseAfter(60)];
+        return [(new WithoutOverlapping($this->company->company_key . "_expense_import_" . $this->file_name))->releaseAfter(60)];
     }
 
     public function failed($exception = null)

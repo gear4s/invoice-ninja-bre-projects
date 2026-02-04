@@ -38,7 +38,5 @@ class DocumentRepository extends BaseRepository
         // $document->restore();
     }
 
-    public function archive($document)
-    {
-    }
+    public function archive($document) {}
 }

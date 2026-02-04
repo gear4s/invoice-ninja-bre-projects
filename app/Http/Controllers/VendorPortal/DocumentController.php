@@ -107,8 +107,8 @@ class DocumentController extends Controller
                 $zipFile->addFile(TempFile::path($document->filePath()), $document->name);
             }
 
-            $filename = now().'-documents.zip';
-            $filepath = sys_get_temp_dir().'/'.$filename;
+            $filename = now() . '-documents.zip';
+            $filepath = sys_get_temp_dir() . '/' . $filename;
 
             $zipFile->saveAsFile($filepath) // save the archive to a file
                    ->close(); // close archive

@@ -208,7 +208,7 @@ class Helpers
                 ),
                 ':MONTH' => Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F'),
                 ':YEAR' => $currentDateTime->year,
-                ':QUARTER' => 'Q'.$currentDateTime->quarter,
+                ':QUARTER' => 'Q' . $currentDateTime->quarter,
                 ':WEEK_BEFORE' => \sprintf(
                     '%s %s %s',
                     $currentDateTime->copy()->subDays(7)->translatedFormat($entity->date_format()),
@@ -280,7 +280,7 @@ class Helpers
 
                 $_value = explode($_operation, $right); // [MONTHYEAR, 4]
 
-                $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->addMonths((int)$_value[1])->translatedFormat('F Y'); //@phpstan-ignore-line
+                $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->addMonths((int) $_value[1])->translatedFormat('F Y'); //@phpstan-ignore-line
             }
 
             $replacement = sprintf('%s to %s', $_left, $_right);
@@ -374,7 +374,7 @@ class Helpers
                         $quarters_to_add = $output - $currentDateTime->quarter;
                         $final_date = $currentDateTime->copy();
                         if ($quarters_to_add != 0) {
-                            $final_date = $quarters_to_add > 0 
+                            $final_date = $quarters_to_add > 0
                                 ? $final_date->addQuarters($quarters_to_add)
                                 : $final_date->subQuarters(abs($quarters_to_add));
                         }

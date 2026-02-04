@@ -22,9 +22,7 @@ class PurchaseOrderRepository extends BaseRepository
 {
     use MakesHash;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function save(array $data, PurchaseOrder $purchase_order): ?PurchaseOrder
     {

@@ -216,7 +216,7 @@ class PaymentController extends BaseController
         event('eloquent.created: App\Models\Payment', $payment);
 
         Atomic::del($request->lock_key);
-        
+
         return $this->itemResponse($payment);
     }
 

@@ -103,14 +103,14 @@ class SquareCustomerFactory
 
         return
             collect([
-                'name' => $customer->getCompanyName() ?? ($customer->getGivenName() ?? '' ." " . $customer->getFamilyName() ?? ''),
+                'name' => $customer->getCompanyName() ?? ($customer->getGivenName() ?? '' . " " . $customer->getFamilyName() ?? ''),
                 'contacts' => [
                     [
                         'first_name' => $customer->getGivenName(),
                         'last_name' => $customer->getFamilyName(),
                         'email' => $customer->getEmailAddress(),
                         'phone' => $customer->getPhoneNumber(),
-                    ]
+                    ],
                 ],
                 'currency_id' => $company->settings->currency_id,
                 'address1' => $address->getAddressLine1(),

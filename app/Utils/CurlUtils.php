@@ -45,7 +45,7 @@ class CurlUtils
         $response = curl_exec($curl);
 
         if ($error = curl_error($curl)) {
-            Log::error('CURL Error #'.curl_errno($curl).': '.$error);
+            Log::error('CURL Error #' . curl_errno($curl) . ': ' . $error);
         }
 
         curl_close($curl);

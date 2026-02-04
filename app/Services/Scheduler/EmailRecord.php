@@ -21,9 +21,7 @@ class EmailRecord
 {
     use MakesHash;
 
-    public function __construct(public Scheduler $scheduler)
-    {
-    }
+    public function __construct(public Scheduler $scheduler) {}
 
     public function run()
     {

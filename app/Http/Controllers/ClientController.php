@@ -112,9 +112,9 @@ class ClientController extends BaseController
      */
     public function show(ShowClientRequest $request, Client $client)
     {
-        
-        if(auth()->user()->hasExcludedPermissions($this->client_excludable_permissions, $this->client_excludable_overrides)){
-            foreach($this->client_exclusion_fields as $field){
+
+        if (auth()->user()->hasExcludedPermissions($this->client_excludable_permissions, $this->client_excludable_overrides)) {
+            foreach ($this->client_exclusion_fields as $field) {
                 $client->{$field} = null;
             }
         }
@@ -132,7 +132,7 @@ class ClientController extends BaseController
      */
     public function edit(EditClientRequest $request, Client $client)
     {
-                
+
         if (auth()->user()->hasExcludedPermissions($this->client_excludable_permissions, $this->client_excludable_overrides)) {
             foreach ($this->client_exclusion_fields as $field) {
                 $client->{$field} = null;
@@ -405,8 +405,8 @@ class ClientController extends BaseController
         $user = auth()->user();
 
         if (stripos($bounce_id, '-') !== false) {
-            $log =
-                SystemLog::query()
+            $log
+                = SystemLog::query()
                 ->where('company_id', $user->company()->id)
                 ->where('type_id', SystemLog::TYPE_WEBHOOK_RESPONSE)
                 ->where('category_id', SystemLog::CATEGORY_MAIL)
@@ -454,7 +454,7 @@ class ClientController extends BaseController
         try {
 
             /** @var ?\Postmark\Models\DynamicResponseModel $response */
-            $response = $postmark->activateBounce((int)$bounce_id);
+            $response = $postmark->activateBounce((int) $bounce_id);
 
             if ($response && $response?->Message == 'OK' && !$response->Bounce->Inactive && $response->Bounce->Email) { // @phpstan-ignore-line
 
@@ -487,13 +487,13 @@ class ClientController extends BaseController
             ->orWhereHasMorph('documentable', [Client::class], function ($query) use ($client) {
                 $query->where('id', $client->id);
             })
-            ->when(strlen($request->input('filter','')) > 1, function ($query) use ($request) {
-                $query->where('name', 'like', '%'.$request->input('filter','').'%');
+            ->when(strlen($request->input('filter', '')) > 1, function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->input('filter', '') . '%');
             })
-            ->when(strlen($request->input('sort','')) > 1, function ($query) use ($request) {
-             
-                $sort_col = explode('|', $request->input('sort',''));
-             
+            ->when(strlen($request->input('sort', '')) > 1, function ($query) use ($request) {
+
+                $sort_col = explode('|', $request->input('sort', ''));
+
                 if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($query->getModel()->getTable()))) {
                     return $query;
                 }
@@ -509,6 +509,6 @@ class ClientController extends BaseController
 
     public function showSettings(ShowClientRequest $request, Client $client)
     {
-        return response()->json($client->service()->showSettingsMap(), 200); 
+        return response()->json($client->service()->showSettingsMap(), 200);
     }
 }

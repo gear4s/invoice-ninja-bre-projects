@@ -37,22 +37,16 @@ class CompanyUserController extends BaseController
      *
      * @return void
      */
-    public function index()
-    {
-    }
+    public function index() {}
 
     /**
      * Show the form for creating a new resource.
      *
      * @return void
      */
-    public function create()
-    {
-    }
+    public function create() {}
 
-    public function store()
-    {
-    }
+    public function store() {}
 
     /**
      * Display the specified resource.

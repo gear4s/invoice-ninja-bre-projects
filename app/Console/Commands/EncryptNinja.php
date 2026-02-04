@@ -68,7 +68,7 @@ class EncryptNinja extends Command
         foreach ($this->files as $file) {
             $contents = Storage::disk('base')->get($file);
             $encrypted = encrypt($contents);
-            Storage::disk('base')->put($file.".enc", $encrypted);
+            Storage::disk('base')->put($file . ".enc", $encrypted);
         }
     }
 

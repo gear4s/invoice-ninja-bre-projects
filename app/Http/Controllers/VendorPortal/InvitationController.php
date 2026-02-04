@@ -75,10 +75,10 @@ class InvitationController extends Controller
             event(new InvitationWasViewed($invitation->purchase_order, $invitation, $invitation->company, Ninja::eventVars()));
             event(new PurchaseOrderWasViewed($invitation, $invitation->company, Ninja::eventVars()));
         } else {
-            return redirect()->route('vendor.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->purchase_order_id), 'silent' => session()->get('is_silent')]);
+            return redirect()->route('vendor.' . $entity . '.show', [$entity => $this->encodePrimaryKey($invitation->purchase_order_id), 'silent' => session()->get('is_silent')]);
         }
 
-        return redirect()->route('vendor.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->purchase_order_id)]);
+        return redirect()->route('vendor.' . $entity . '.show', [$entity => $this->encodePrimaryKey($invitation->purchase_order_id)]);
     }
 
     public function download(string $invitation_key)
@@ -94,7 +94,7 @@ class InvitationController extends Controller
 
         App::setLocale($invitation->contact->preferredLocale());
 
-        $file_name = $invitation->purchase_order->numberFormatter().'.pdf';
+        $file_name = $invitation->purchase_order->numberFormatter() . '.pdf';
 
         $file = $invitation->purchase_order->service()->getPurchaseOrderPdf();
 

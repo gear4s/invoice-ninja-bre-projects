@@ -55,7 +55,7 @@ class ClientMergedActivity implements ShouldQueue
         $fields->company_id = $client->company_id;
         $fields->activity_type_id = Activity::MERGE_CLIENT;
         $fields->notes = $event->mergeable_client;
-        
+
         $this->activity_repo->save($fields, $client, $event->event_vars);
     }
 }

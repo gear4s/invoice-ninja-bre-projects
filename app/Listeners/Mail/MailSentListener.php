@@ -31,9 +31,7 @@ class MailSentListener
      *
      * @return void
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.
@@ -54,7 +52,7 @@ class MailSentListener
                 return;
             }
 
-            if($message->getHeaders()->get('x-message-id')) {
+            if ($message->getHeaders()->get('x-message-id')) {
                 $message_id = $message->getHeaders()->get('x-message-id')->getValue();
             }
 

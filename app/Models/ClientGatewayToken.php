@@ -104,7 +104,7 @@ class ClientGatewayToken extends BaseModel
     {
         $meta = $this->meta;
 
-        if($meta && isset($meta->brand) && isset($meta->last4)) {
+        if ($meta && isset($meta->brand) && isset($meta->last4)) {
             return $meta->brand . ' **** ' . $meta->last4;
         }
 

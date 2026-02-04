@@ -47,14 +47,14 @@ class GoogleLiapWebhook extends GenericStructuredMetric
      * @var string
      */
     public $html = '';
-    
+
     /**
      * JSON data
      *
      * @var array
      */
     public $json = [];
-    
+
     /**
      * Initialize with either HTML or JSON content
      *
@@ -66,10 +66,10 @@ class GoogleLiapWebhook extends GenericStructuredMetric
         if ($html !== null) {
             $this->html = $html;
         }
-        
+
         if ($json !== null) {
             $this->json = $json;
         }
-        
+
     }
 }

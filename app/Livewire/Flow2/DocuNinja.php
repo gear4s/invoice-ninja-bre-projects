@@ -16,10 +16,7 @@ use Livewire\Component;
 
 class DocuNinja extends Component
 {
-    public function mount()
-    {
-
-    }
+    public function mount() {}
 
     public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
     {

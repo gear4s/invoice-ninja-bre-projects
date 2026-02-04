@@ -24,7 +24,7 @@ trait MakesTemplateData
         $values = $this->getFakerData();
 
         foreach ($values as $key => $value) {
-            $data[$key.'_label'] = $value['label'];
+            $data[$key . '_label'] = $value['label'];
         }
 
         return $data;

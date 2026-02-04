@@ -40,9 +40,7 @@ class CheckVat implements ShouldQueue
      * @param Client $client
      * @param Company $company
      */
-    public function __construct(public Client $client, protected Company $company)
-    {
-    }
+    public function __construct(public Client $client, protected Company $company) {}
 
     /**
      * Execute the job.

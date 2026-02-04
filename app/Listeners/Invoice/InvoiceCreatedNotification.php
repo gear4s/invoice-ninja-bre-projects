@@ -27,9 +27,7 @@ class InvoiceCreatedNotification implements ShouldQueue
 
     public $delay = 6;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

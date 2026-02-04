@@ -35,8 +35,5 @@ class DisconnectUserMailerRequest extends Request
         return $rules;
     }
 
-    public function prepareForValidation()
-    {
-
-    }
+    public function prepareForValidation() {}
 }

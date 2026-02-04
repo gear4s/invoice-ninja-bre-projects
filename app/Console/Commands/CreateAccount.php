@@ -55,7 +55,7 @@ class CreateAccount extends Command
      */
     public function handle()
     {
-        $this->info(date('r').' Create Single Account...');
+        $this->info(date('r') . ' Create Single Account...');
 
         $this->createAccount();
     }

@@ -17,9 +17,7 @@ use Illuminate\Notifications\Notification;
 
 class GenericNinjaAdminNotification extends Notification
 {
-    public function __construct(protected array $message_array)
-    {
-    }
+    public function __construct(protected array $message_array) {}
 
     /**
      * Get the notification's delivery channels.
@@ -37,9 +35,7 @@ class GenericNinjaAdminNotification extends Notification
      *
      * @param  mixed  $notifiable
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

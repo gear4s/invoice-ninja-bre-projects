@@ -40,11 +40,11 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
 
             $r = new EInvoice();
 
-            if (data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.IssueDate') === null ||
-                data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.IssueDate') === '') {
-                    unset($value['CreditNote']['BillingReference'][0]['InvoiceDocumentReference']['IssueDate']);
-                }
-            
+            if (data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.IssueDate') === null
+                || data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.IssueDate') === '') {
+                unset($value['CreditNote']['BillingReference'][0]['InvoiceDocumentReference']['IssueDate']);
+            }
+
             $errors = $r->validateRequest($value['CreditNote'], CreditLevel::class);
 
             foreach ($errors as $key => $msg) {
@@ -56,9 +56,9 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
 
             }
 
-            if (data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.ID') === null ||
-                data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.ID') === '') {
-                
+            if (data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.ID') === null
+                || data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.ID') === '') {
+
                 $this->validator->errors()->add(
                     "e_invoice.BillingReference.0.InvoiceDocumentReference.ID",
                     "Invoice Reference/Number is required"
@@ -74,7 +74,7 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
                 );
 
             }
-            
+
 
         }
 
@@ -84,11 +84,11 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
     {
         // Strict format validation: must be exactly Y-m-d
         $date = \DateTime::createFromFormat('Y-m-d', $date_string);
-        
+
         if ($date === false) {
             return false;
         }
-        
+
         // Ensure the formatted date matches the input (catches overflow)
         return $date->format('Y-m-d') === $date_string;
     }

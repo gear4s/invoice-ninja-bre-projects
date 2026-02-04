@@ -670,15 +670,15 @@ class Company extends BaseModel
 
     public function country()
     {
-        return once(function () {   
+        return once(function () {
 
             /** @var \Illuminate\Support\Collection<\App\Models\Country> */
             $countries = app('countries');
             $country_id = $this->getSetting('country_id');
 
             return $countries->first(function ($item) use ($country_id) {
-                    return $item->id == $country_id;
-                });
+                return $item->id == $country_id;
+            });
 
         });
     }
@@ -1004,11 +1004,11 @@ class Company extends BaseModel
         return once(function () {
             /** @var \Illuminate\Support\Collection<\App\Models\DateFormat> */
             $date_formats = app('date_formats');
-                $date_format = $this->getSetting('date_format_id');
+            $date_format = $this->getSetting('date_format_id');
 
-                return $date_formats->first(function ($item) use ($date_format) {
-                    return $item->id == $date_format;
-                })->format;
+            return $date_formats->first(function ($item) use ($date_format) {
+                return $item->id == $date_format;
+            })->format;
         });
     }
 
@@ -1048,10 +1048,10 @@ class Company extends BaseModel
     {
         return !$this->account->is_flagged && $this->account->e_invoice_quota > 0 && isset($this->legal_entity_id) && isset($this->tax_data->acts_as_sender) && $this->tax_data->acts_as_sender;
     }
-    
+
     /**
      * verifactuEnabled
-     * 
+     *
      * Returns a flag if the current company is using verifactu as the e-invoice provider
      *
      * @return bool
@@ -1065,10 +1065,10 @@ class Company extends BaseModel
 
     /**
      * Check if QuickBooks push should be triggered for an entity/action.
-     * 
+     *
      * Uses efficient checks to avoid overhead for companies not using QuickBooks.
      * Uses once() to cache the result for the request lifecycle.
-     * 
+     *
      * This method is designed to be called from model observers to efficiently
      * determine if a push job should be dispatched, with zero overhead for
      * companies that don't use QuickBooks.
@@ -1084,7 +1084,7 @@ class Company extends BaseModel
         if (is_null($this->getRawOriginal('quickbooks'))) {
             return false;
         }
-        
+
         // Cache the detailed check for this request lifecycle
         // This prevents re-checking if called multiple times in the same request
         return once(function () use ($entity) {
@@ -1092,15 +1092,15 @@ class Company extends BaseModel
             if (!$this->quickbooks->isConfigured()) {
                 return false;
             }
-            
+
             // Verify entity exists in settings
             if (!isset($this->quickbooks->settings->{$entity})) {
                 return false;
             }
-            
+
             $entitySettings = $this->quickbooks->settings->{$entity};
             $direction = $entitySettings->direction->value;
-            
+
             // Check if sync direction allows push
             return $direction === 'push' || $direction === 'bidirectional';
         });

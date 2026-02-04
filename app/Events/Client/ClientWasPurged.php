@@ -31,7 +31,5 @@ class ClientWasPurged
      * @param Company $company
      * @param array $event_vars
      */
-    public function __construct(public string $purged_client, public User $user, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public string $purged_client, public User $user, public Company $company, public array $event_vars) {}
 }

@@ -124,7 +124,7 @@ trait PdfMakerUtilities
     {
         foreach ($children as $child) {
             $contains_html = false;
-            $child['content'] = $child['content'] ?? '';
+            $child['content'] ??= '';
 
             if (isset($this->data['process_markdown']) && $this->data['process_markdown'] && $this->isMarkdown($child['content']) && $child['element'] !== 'script') {
                 $child['content'] = str_replace('<br>', "\r", $child['content']);

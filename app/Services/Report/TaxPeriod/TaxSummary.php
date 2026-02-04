@@ -31,8 +31,7 @@ class TaxSummary
         public float $taxable_amount,
         public float $tax_amount,
         public TaxReportStatus $status,
-    ) {
-    }
+    ) {}
 
     /**
      * Create from transaction event metadata

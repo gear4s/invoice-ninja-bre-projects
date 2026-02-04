@@ -25,9 +25,7 @@ use Illuminate\Http\Request;
  */
 class PostMarkController extends BaseController
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Process Postmark Webhook.

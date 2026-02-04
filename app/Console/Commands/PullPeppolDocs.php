@@ -22,9 +22,8 @@ use App\Services\EDocument\Gateway\Storecove\Storecove;
 
 class PullPeppolDocs extends Command
 {
-
     use SavesDocuments;
-    
+
     /**
      * The name and signature of the console command.
      *
@@ -60,12 +59,12 @@ class PullPeppolDocs extends Command
 
         $this->info("E-Invoice Quota Remaining: $quota_count");
 
-        if(!isset($company->account->e_invoicing_token)){
+        if (!isset($company->account->e_invoicing_token)) {
             $this->info("No e-invoicing token found! You will not be able to authenticate with the E-Invoice API. Try logging out and back in again.");
             return;
         }
-        
-        $this->info("License key in use: ".config('ninja.license_key'));
+
+        $this->info("License key in use: " . config('ninja.license_key'));
 
         Account::query()
         ->with('companies')
@@ -84,7 +83,7 @@ class PullPeppolDocs extends Command
             ->each(function ($company) {
 
                 $this->info("Pulling Peppol docs for company: {$company->present()->name()}");
-                
+
                 $response = \Illuminate\Support\Facades\Http::baseUrl(config('ninja.hosted_ninja_url'))
                     ->withHeaders([
                         'Content-Type' => 'application/json',
@@ -130,64 +129,64 @@ class PullPeppolDocs extends Command
 
         $this->info("{$doc_count} documents found.");
 
-        if($doc_count > 0) {
+        if ($doc_count > 0) {
             $this->info('Processing documents...');
-            
-        foreach ($received_documents as $document) {
-            
-            $storecove_invoice = $storecove->expense->getStorecoveInvoice(json_encode($document['document']['invoice']));
-            $expense = $storecove->expense->createExpense($storecove_invoice, $company);
 
-            $file_name = $document['guid'];
+            foreach ($received_documents as $document) {
 
-            if (strlen($document['html'] ?? '') > 5) {
+                $storecove_invoice = $storecove->expense->getStorecoveInvoice(json_encode($document['document']['invoice']));
+                $expense = $storecove->expense->createExpense($storecove_invoice, $company);
 
-                $upload_document = TempFile::UploadedFileFromRaw($document['html'], "{$file_name}.html", 'text/html');
-                $this->saveDocument($upload_document, $expense, true);
-                $upload_document = null;
+                $file_name = $document['guid'];
+
+                if (strlen($document['html'] ?? '') > 5) {
+
+                    $upload_document = TempFile::UploadedFileFromRaw($document['html'], "{$file_name}.html", 'text/html');
+                    $this->saveDocument($upload_document, $expense, true);
+                    $upload_document = null;
+                }
+
+                if (strlen($document['original_base64_xml'] ?? '') > 5) {
+
+                    $upload_document = TempFile::UploadedFileFromBase64($document['original_base64_xml'], "{$file_name}.xml", 'application/xml');
+                    $this->saveDocument($upload_document, $expense, true);
+                    $upload_document = null;
+                }
+
+                foreach ($document['document']['invoice']['attachments'] as $attachment) {
+
+                    $upload_document = TempFile::UploadedFileFromBase64($attachment['document'], $attachment['filename'], $attachment['mime_type']);
+                    $this->saveDocument($upload_document, $expense, true);
+                    $upload_document = null;
+
+                }
+
+                $this->info("Document {$file_name} processed.");
+
             }
 
-            if (strlen($document['original_base64_xml'] ?? '') > 5) {
+            $this->info("Finished processing documents, flushing upstream...");
 
-                $upload_document = TempFile::UploadedFileFromBase64($document['original_base64_xml'], "{$file_name}.xml", 'application/xml');
-                $this->saveDocument($upload_document, $expense, true);
-                $upload_document = null;
+            $response = \Illuminate\Support\Facades\Http::baseUrl(config('ninja.hosted_ninja_url'))
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'X-EInvoice-Token' => $company->account->e_invoicing_token,
+                ])
+                ->post('/api/einvoice/peppol/documents/flush', data: [
+                    'license_key' => config('ninja.license_key'),
+                    'account_key' => $company->account->key,
+                    'company_key' => $company->company_key,
+                    'legal_entity_id' => $company->legal_entity_id,
+                    'hash'  => $hash,
+                ]);
+
+            if ($response->successful()) {
             }
 
-            foreach ($document['document']['invoice']['attachments'] as $attachment) {
-
-                $upload_document = TempFile::UploadedFileFromBase64($attachment['document'], $attachment['filename'], $attachment['mime_type']);
-                $this->saveDocument($upload_document, $expense, true);
-                $upload_document = null;
-
-            }
-
-            $this->info("Document {$file_name} processed.");
-
+            $this->info("Finished flushing upstream.");
+            $this->info("Finished task!");
         }
-
-        $this->info("Finished processing documents, flushing upstream...");
-
-        $response = \Illuminate\Support\Facades\Http::baseUrl(config('ninja.hosted_ninja_url'))
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-                'X-EInvoice-Token' => $company->account->e_invoicing_token,
-            ])
-            ->post('/api/einvoice/peppol/documents/flush', data: [
-                'license_key' => config('ninja.license_key'),
-                'account_key' => $company->account->key,
-                'company_key' => $company->company_key,
-                'legal_entity_id' => $company->legal_entity_id,
-                'hash'  => $hash
-            ]);
-
-        if ($response->successful()) {
-        }
-
-        $this->info("Finished flushing upstream.");
-        $this->info("Finished task!");
     }
-}
-    
+
 }

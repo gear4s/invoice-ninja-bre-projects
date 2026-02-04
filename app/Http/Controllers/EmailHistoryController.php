@@ -22,9 +22,7 @@ class EmailHistoryController extends BaseController
 {
     use MakesHash;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function clientHistory(ClientEmailHistoryRequest $request, Client $client)
     {

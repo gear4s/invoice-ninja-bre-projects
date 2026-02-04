@@ -35,7 +35,7 @@ class StoreWebhookRequest extends Request
         return [
             'target_url' => 'bail|required|url',
             'event_id' => 'bail|required',
-            'rest_method' => 'required|in:post,put'
+            'rest_method' => 'required|in:post,put',
         ];
     }
 

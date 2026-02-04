@@ -26,9 +26,7 @@ use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
 
 class Parse
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function encode($object_type, $document)
     {

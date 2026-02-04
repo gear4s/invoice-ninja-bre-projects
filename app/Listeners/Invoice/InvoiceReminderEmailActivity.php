@@ -45,9 +45,9 @@ class InvoiceReminderEmailActivity implements ShouldQueue
 
         $fields = new stdClass();
 
-        $user_id = isset($event->event_vars['user_id']) ? $event->event_vars['user_id'] : $event->invitation->invoice->user_id;
+        $user_id = $event->event_vars['user_id'] ?? $event->invitation->invoice->user_id;
 
-        $reminder = match($event->template) {
+        $reminder = match ($event->template) {
             'reminder1' => 63,
             'reminder2' => 64,
             'reminder3' => 65,

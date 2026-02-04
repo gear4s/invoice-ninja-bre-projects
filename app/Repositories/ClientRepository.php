@@ -156,7 +156,7 @@ class ClientRepository extends BaseRepository
 
         $event_vars = \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
         $event_vars['client_hash'] = $purged_client_hash;
-        
+
         event(new \App\Events\Client\ClientWasPurged($purged_client, $user, $company, $event_vars));
 
         nlog("Purging client id => {$client->id} => {$client->number}");
@@ -192,7 +192,7 @@ class ClientRepository extends BaseRepository
     private function purgeClientDocuments($client)
     {
         // Get all entity IDs that belong to this client
-        $data =[
+        $data = [
             'invoices' => $client->invoices()->pluck('id')->toArray(),
             'App\Models\Quote' => $client->quotes()->pluck('id')->toArray(),
             'App\Models\Payment' => $client->payments()->pluck('id')->toArray(),
@@ -206,7 +206,7 @@ class ClientRepository extends BaseRepository
         ];
 
         PurgeClientDocuments::dispatch($data, $client->company);
-        
+
     }
 
 

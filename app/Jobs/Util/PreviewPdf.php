@@ -36,9 +36,7 @@ class PreviewPdf implements ShouldQueue
      * @param $design_string
      * @param Company $company
      */
-    public function __construct(public string $design_string, public Company $company)
-    {
-    }
+    public function __construct(public string $design_string, public Company $company) {}
 
     public function handle()
     {

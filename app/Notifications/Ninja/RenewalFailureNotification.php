@@ -23,9 +23,7 @@ class RenewalFailureNotification extends Notification
      * @return void
      */
 
-    public function __construct(protected ?string $notification_message)
-    {
-    }
+    public function __construct(protected ?string $notification_message) {}
 
     /**
      * Get the notification's delivery channels.
@@ -44,9 +42,7 @@ class RenewalFailureNotification extends Notification
      * @param  mixed  $notifiable
      *
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

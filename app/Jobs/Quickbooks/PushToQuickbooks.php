@@ -23,9 +23,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+
 /**
  * Unified job to push entities to QuickBooks.
- * 
+ *
  * This job handles pushing different entity types (clients, invoices, etc.) to QuickBooks.
  * It is dispatched from model observers when:
  * - QuickBooks is configured
@@ -34,26 +35,28 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
  */
 class PushToQuickbooks implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $tries = 3;
-    
+
     public $deleteWhenMissingModels = true;
 
     /**
      * Create a new job instance.
-     * 
+     *
      * @param string $entity_type Entity type: 'client', 'invoice', etc.
      * @param int $entity_id The ID of the entity to push
-     * 
+     *
      * @param string $db The database name
      */
     public function __construct(
         private string $entity_type,
         private int $entity_id,
         private string $db
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the job.
@@ -64,43 +67,42 @@ class PushToQuickbooks implements ShouldQueue
 
         // Resolve the entity based on type
         $entity = $this->resolveEntity();
-        
+
         if (!$entity) {
             return;
         }
 
         $company = $entity->company;
-        
+
         // Double-check push is still enabled (settings might have changed)
         if (!$this->shouldPush($company, $this->entity_type)) {
             return;
         }
 
         $qbService = new QuickbooksService($company);
-        
+
         try {
             // Dispatch to appropriate handler based on entity type
-            match($this->entity_type) {
+            match ($this->entity_type) {
                 'client' => $this->pushClient($qbService, $entity),
                 'invoice' => $this->pushInvoice($qbService, $entity),
                 default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
             };
-        }
-        catch(\Throwable $e) {
-            nlog("Quickbooks push to Quickbooks job failed => ".$e->getMessage());
-         
+        } catch (\Throwable $e) {
+            nlog("Quickbooks push to Quickbooks job failed => " . $e->getMessage());
+
             return;
         }
     }
 
     /**
      * Resolve the entity model based on type.
-     * 
+     *
      * @return Client|Invoice|null
      */
     private function resolveEntity(): Client|Invoice|null
     {
-        return match($this->entity_type) {
+        return match ($this->entity_type) {
             'client' => Client::withTrashed()->find($this->entity_id),
             'invoice' => Invoice::withTrashed()->find($this->entity_id),
             default => null,
@@ -121,7 +123,7 @@ class PushToQuickbooks implements ShouldQueue
 
     /**
      * Push a client to QuickBooks.
-     * 
+     *
      * @param QuickbooksService $qbService
      * @param Client $client
      * @return void
@@ -135,7 +137,7 @@ class PushToQuickbooks implements ShouldQueue
 
     /**
      * Push an invoice to QuickBooks.
-     * 
+     *
      * @param QuickbooksService $qbService
      * @param Invoice $invoice
      * @return void
@@ -145,8 +147,8 @@ class PushToQuickbooks implements ShouldQueue
         // Use syncToForeign to push the invoice
         $qbService->invoice->syncToForeign([$invoice]);
 
-         //If there are automatic taxes, we need to pull the invoice and update the ninja invoice to include the appropriate taxes.
-         if($qbService->company->quickbooks->settings->automatic_taxes) {
+        //If there are automatic taxes, we need to pull the invoice and update the ninja invoice to include the appropriate taxes.
+        if ($qbService->company->quickbooks->settings->automatic_taxes) {
             // $invoice = $invoice->fresh();
             // $qb_invoice = $qbService->invoice->find($invoice->sync->qb_id);
             // $this->service->invoice->syncToForeign([$invoice]);
@@ -163,7 +165,7 @@ class PushToQuickbooks implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("Quickbooks push to Quickbooks job failed => ".$exception->getMessage());
+        nlog("Quickbooks push to Quickbooks job failed => " . $exception->getMessage());
         config(['queue.failed.driver' => null]);
 
     }

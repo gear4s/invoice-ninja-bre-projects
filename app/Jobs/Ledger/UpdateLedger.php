@@ -33,9 +33,7 @@ class UpdateLedger implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
 
-    public function __construct(private int $company_ledger_id, private float $start_amount, private string $company_key, private string $db)
-    {
-    }
+    public function __construct(private int $company_ledger_id, private float $start_amount, private string $company_key, private string $db) {}
 
     /**
      * Execute the job.
@@ -45,7 +43,7 @@ class UpdateLedger implements ShouldQueue
      */
     public function handle(): void
     {
-        nlog("Updating company ledger for client ". $this->company_ledger_id);
+        nlog("Updating company ledger for client " . $this->company_ledger_id);
 
         MultiDB::setDb($this->db);
 

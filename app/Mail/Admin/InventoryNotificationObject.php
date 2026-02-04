@@ -20,9 +20,7 @@ use stdClass;
 
 class InventoryNotificationObject
 {
-    public function __construct(protected Product $product, public string $notification_level, protected bool $use_react_url)
-    {
-    }
+    public function __construct(protected Product $product, public string $notification_level, protected bool $use_react_url) {}
 
     public function build()
     {
@@ -54,7 +52,7 @@ class InventoryNotificationObject
         return
             ctrans(
                 'texts.inventory_notification_subject',
-                ['product' => $this->product->product_key.': '.$this->product->notes]
+                ['product' => $this->product->product_key . ': ' . $this->product->notes]
             );
     }
 
@@ -63,8 +61,8 @@ class InventoryNotificationObject
         $content = ctrans(
             'texts.inventory_notification_body',
             ['amount' => $this->getAmount(),
-                    'product' => $this->product->product_key.': '.$this->product->notes,
-                ]
+                'product' => $this->product->product_key . ': ' . $this->product->notes,
+            ]
         );
 
         $data = [

@@ -80,9 +80,9 @@ trait AppSetup
         $words_count = count(explode(' ', trim($value)));
 
         if (is_null($position)) {
-            $words_count > 1 ? $env[] = "{$property}=".'"'.$value.'"'."\n" : $env[] = "{$property}=".$value."\n";
+            $words_count > 1 ? $env[] = "{$property}=" . '"' . $value . '"' . "\n" : $env[] = "{$property}=" . $value . "\n";
         } else {
-            $env[$position] = "{$property}=".'"'.$value.'"'."\n"; // If value of variable is more than one word, surround with quotes.
+            $env[$position] = "{$property}=" . '"' . $value . '"' . "\n"; // If value of variable is more than one word, surround with quotes.
         }
 
         try {

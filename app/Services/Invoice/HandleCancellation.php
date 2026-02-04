@@ -26,9 +26,7 @@ class HandleCancellation extends AbstractService
     use GeneratesCounter;
     use MakesHash;
 
-    public function __construct(private Invoice $invoice, private ?string $reason = null)
-    {
-    }
+    public function __construct(private Invoice $invoice, private ?string $reason = null) {}
 
     public function run()
     {

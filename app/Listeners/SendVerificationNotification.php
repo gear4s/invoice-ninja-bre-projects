@@ -49,7 +49,7 @@ class SendVerificationNotification implements ShouldQueue
     public function handle($event)
     {
         MultiDB::setDB($event->company->db);
-        
+
         $event->user->service()->invite($event->company, $event->is_react);
 
         if (Carbon::parse($event->company->created_at)->lt(now()->subDay())) {

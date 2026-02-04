@@ -63,7 +63,7 @@ class ValidRefundableInvoices implements Rule
         } else {
             return true;
         }
-        
+
         foreach ($invoices as $invoice) {
             if (! $invoice->isRefundable()) {
                 $this->error_msg = ctrans('texts.invoice_cannot_be_refunded', ['invoice' => $invoice->hashed_id]);

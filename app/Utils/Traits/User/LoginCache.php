@@ -27,6 +27,6 @@ trait LoginCache
             $timeout = $timeout / 1000;
         }
 
-        Cache::put($user->hashed_id.'_'.$user->account_id.'_logged_in', Str::random(64), $timeout);
+        Cache::put($user->hashed_id . '_' . $user->account_id . '_logged_in', Str::random(64), $timeout);
     }
 }

@@ -144,7 +144,7 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
             'payment_method' => $gateway_response->payment_method,
             'payment_type' => PaymentType::parseCardType(strtolower($payment_method->card->brand)),
             'amount' => $this->stripe->convertFromStripeAmount($gateway_response->amount, $this->stripe->client->currency()->precision, $this->stripe->client->currency()),
-            'transaction_reference' => isset($payment_intent->latest_charge) ? $payment_intent->latest_charge : $payment_intent->charges->data[0]->id,
+            'transaction_reference' => $payment_intent->latest_charge ?? $payment_intent->charges->data[0]->id,
             'gateway_type_id' => GatewayType::APPLE_PAY,
         ];
 
@@ -232,7 +232,7 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
             if ($this->stripe->company_gateway->company->portal_mode == 'domain') {
                 $domain = $this->stripe->company_gateway->company->portal_domain;
             } else {
-                $domain = $this->stripe->company_gateway->company->subdomain.'.'.config('ninja.app_domain');
+                $domain = $this->stripe->company_gateway->company->subdomain . '.' . config('ninja.app_domain');
             }
         } else {
             $domain = config('ninja.app_url');

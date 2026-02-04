@@ -23,9 +23,7 @@ class ClientBillingFlag extends Notification
      * @return void
      */
 
-    public function __construct(protected string $account_key, protected string $messasge)
-    {
-    }
+    public function __construct(protected string $account_key, protected string $messasge) {}
 
     /**
      * Get the notification's delivery channels.
@@ -43,9 +41,7 @@ class ClientBillingFlag extends Notification
      *
      * @param  mixed  $notifiable
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

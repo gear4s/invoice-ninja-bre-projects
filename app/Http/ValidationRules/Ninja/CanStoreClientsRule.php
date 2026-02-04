@@ -25,9 +25,7 @@ class CanStoreClientsRule implements Rule
      */
     public Company $company;
 
-    public function __construct(public int $company_id)
-    {
-    }
+    public function __construct(public int $company_id) {}
 
     /**
      * @param string $attribute

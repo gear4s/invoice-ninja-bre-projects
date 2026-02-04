@@ -91,7 +91,7 @@ class BankTransaction extends BaseModel
         'amount',
         'participant',
         'participant_name',
-        'currency_code'
+        'currency_code',
     ];
 
 

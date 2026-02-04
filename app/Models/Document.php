@@ -152,14 +152,14 @@ class Document extends BaseModel
     public function getMimeType(): string
     {
 
-        if(isset(self::$types[$this->type])) {
+        if (isset(self::$types[$this->type])) {
             return self::$types[$this->type]['mime'];
         }
 
         return 'application/octet-stream';
-        
+
     }
-    
+
     public function getEntityType()
     {
         return self::class;
@@ -193,7 +193,7 @@ class Document extends BaseModel
     public function generateRoute($absolute = false)
     {
         try {
-            return route('api.documents.show', ['document' => $this->hashed_id]).'/download';
+            return route('api.documents.show', ['document' => $this->hashed_id]) . '/download';
         } catch (\Exception $e) {
             nlog("Exception:: Document::" . $e->getMessage());
             return '';
@@ -230,7 +230,7 @@ class Document extends BaseModel
         $entity_id = $this->encodePrimaryKey($this->documentable_id);
         $link = '';
 
-        match($this->documentable_type) {
+        match ($this->documentable_type) {
             'App\Models\Vendor' => $link = "/vendors/{$entity_id}",
             'App\Models\Project' => $link = "/projects/{$entity_id}",
             'invoices' => $link = "/invoices/{$entity_id}/edit",

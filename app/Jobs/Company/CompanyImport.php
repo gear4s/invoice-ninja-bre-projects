@@ -233,7 +233,7 @@ class CompanyImport implements ShouldQueue
         'client_portal_terms',
         'portal_custom_footer',
         'portal_custom_css',
-        'portal_custom_head'
+        'portal_custom_head',
     ];
 
     private array $version_keys = [
@@ -248,12 +248,12 @@ class CompanyImport implements ShouldQueue
             ],
             Design::class => [
                 'is_template',
-            ]
+            ],
         ],
         '5.8.51' => [
             CompanyGateway::class => [
                 'always_show_required_fields',
-            ]
+            ],
         ],
         '5.8.57' => [
             Company::class => [
@@ -280,7 +280,7 @@ class CompanyImport implements ShouldQueue
                 'einvoice',
                 'e_invoice',
             ],
-        ]
+        ],
     ];
 
     /**
@@ -304,7 +304,7 @@ class CompanyImport implements ShouldQueue
     {
         set_time_limit(0);
 
-        $json = JsonMachine::fromFile($this->file_path, '/'.$key, new ExtJsonDecoder());
+        $json = JsonMachine::fromFile($this->file_path, '/' . $key, new ExtJsonDecoder());
 
         try {
             $iterator_array = iterator_to_array($json);
@@ -319,7 +319,7 @@ class CompanyImport implements ShouldQueue
 
         return $json;
 
-        }
+    }
 
     public function handle()
     {
@@ -363,7 +363,7 @@ class CompanyImport implements ShouldQueue
                      ->postImportCleanup();
 
                 $data = [
-                    'errors'  => []
+                    'errors'  => [],
                 ];
 
                 $_company = Company::query()->find($this->company->id);
@@ -479,7 +479,7 @@ class CompanyImport implements ShouldQueue
 
         $zip = new ZipArchive();
         $res = $zip->open($path);
-        $file_path = sys_get_temp_dir().'/'.sha1(microtime());
+        $file_path = sys_get_temp_dir() . '/' . sha1(microtime());
 
         if ($res === true) {
             echo "ok";
@@ -524,7 +524,7 @@ class CompanyImport implements ShouldQueue
 
         $company_users = $this->company->users;
 
-        nlog("Backup user count = ".count($backup_users));
+        nlog("Backup user count = " . count($backup_users));
 
         if (count($backup_users) > 1) {
         }
@@ -574,7 +574,7 @@ class CompanyImport implements ShouldQueue
     {
         //check the file version and perform any necessary adjustments to the file in order to proceed - needed when we change schema
 
-        $data = (object)$this->getObject('app_version', true);
+        $data = (object) $this->getObject('app_version', true);
 
         $this->import_version = $data->app_version;
 
@@ -589,7 +589,7 @@ class CompanyImport implements ShouldQueue
 
     private function importSettings()
     {
-        $co = (object)$this->getObject("company", true);
+        $co = (object) $this->getObject("company", true);
 
         $settings = $co->settings;
         $settings->invoice_number_counter = 1;
@@ -644,7 +644,7 @@ class CompanyImport implements ShouldQueue
     private function importCompany()
     {
 
-        $tmp_company = (object)$this->getObject("company", true);
+        $tmp_company = (object) $this->getObject("company", true);
         $this->old_company_key = $tmp_company->company_key;
         $tmp_company->company_key = $this->createHash();
         $tmp_company->db = config('database.default');
@@ -768,7 +768,7 @@ class CompanyImport implements ShouldQueue
                 ['vendors' => 'vendor_id'],
                 ['expense_categories' => 'ninja_category_id'],
                 // ['expense_categories' => 'category_id'],
-                ['bank_integrations' => 'bank_integration_id']
+                ['bank_integrations' => 'bank_integration_id'],
             ],
             'bank_transactions',
             null
@@ -816,10 +816,10 @@ class CompanyImport implements ShouldQueue
     private function import_tax_rates()
     {
         // foreach($this->backup_file->tax_rates as $obj)
-        foreach ((object)$this->getObject("tax_rates") as $obj) {
+        foreach ((object) $this->getObject("tax_rates") as $obj) {
             $user_id = $this->transformId('users', $obj->user_id);
 
-            $obj_array = (array)$obj;
+            $obj_array = (array) $obj;
             unset($obj_array['user_id']);
             unset($obj_array['company_id']);
             unset($obj_array['hashed_id']);
@@ -921,7 +921,7 @@ class CompanyImport implements ShouldQueue
     private function import_locations()
     {
         $this->ids['locations'] = [];
-        
+
         $this->genericImport(
             Location::class,
             ['user_id', 'company_id', 'id', 'hashed_id', 'client_id', 'vendor_id'],
@@ -1354,14 +1354,14 @@ class CompanyImport implements ShouldQueue
 
     private function import_documents()
     {
-        foreach ((object)$this->getObject("documents") as $document) {
+        foreach ((object) $this->getObject("documents") as $document) {
 
             if (!$this->transformDocumentId($document->documentable_id, $document->documentable_type)) {
                 continue;
             }
 
             /** @var string $storage_url */
-            $storage_url = (object)$this->getObject('storage_url', true);
+            $storage_url = (object) $this->getObject('storage_url', true);
 
             nlog("{$this->root_file_path}documents/{$document->url}");
 
@@ -1454,19 +1454,19 @@ class CompanyImport implements ShouldQueue
         User::unguard();
 
         //foreach ($this->backup_file->users as $user)
-        foreach ((object)$this->getObject("users") as $user) {
+        foreach ((object) $this->getObject("users") as $user) {
 
-            if($userX = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
-            
-                if($userX->account_id != $this->account->id) {
+            if ($userX = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
+
+                if ($userX->account_id != $this->account->id) {
                     throw new ImportCompanyFailed("{$userX->email} is already in the system attached to a different account");
                 }
-                
+
             }
 
             MultiDB::setDb($this->company->db);
 
-            $user_array = (array)$user;
+            $user_array = (array) $user;
             unset($user_array['laravel_through_key']); //@phpstan-ignore-line
             unset($user_array['hashed_id']); //@phpstan-ignore-line
             unset($user_array['id']); //@phpstan-ignore-line
@@ -1492,10 +1492,10 @@ class CompanyImport implements ShouldQueue
         CompanyUser::unguard();
 
         // foreach($this->backup_file->company_users as $cu)
-        foreach ((object)$this->getObject("company_users") as $cu) {
+        foreach ((object) $this->getObject("company_users") as $cu) {
             $user_id = $this->transformId('users', $cu->user_id);
 
-            $cu_array = (array)$cu;
+            $cu_array = (array) $cu;
             unset($cu_array['id']);
             unset($cu_array['company_id']);
             unset($cu_array['user_id']);
@@ -1554,20 +1554,20 @@ class CompanyImport implements ShouldQueue
     private function paymentablesImport()
     {
         // foreach($this->backup_file->payments as $payment)
-        foreach ((object)$this->getObject("payments") as $payment) {
+        foreach ((object) $this->getObject("payments") as $payment) {
 
 
             foreach ($payment->paymentables as $paymentable_obj) {
 
 
-try {
-    $ppid = $this->transformId('payments', $paymentable_obj->payment_id);
+                try {
+                    $ppid = $this->transformId('payments', $paymentable_obj->payment_id);
 
-} catch (\Exception $e) {
-    // nlog($e->getMessage());
-    nlog($paymentable_obj);
-    continue;
-}
+                } catch (\Exception $e) {
+                    // nlog($e->getMessage());
+                    nlog($paymentable_obj);
+                    continue;
+                }
 
 
                 $paymentable = new Paymentable();
@@ -1639,9 +1639,9 @@ try {
     {
         $class::unguard();
 
-        foreach ((object)$this->getObject($object_property) as $obj) {
+        foreach ((object) $this->getObject($object_property) as $obj) {
             /* Remove unwanted keys*/
-            $obj_array = (array)$obj;
+            $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
             }
@@ -1688,12 +1688,12 @@ try {
                         $key = $activity_invitation_key;
                     }
 
-                    if($class == 'App\Models\Activity'){
+                    if ($class == 'App\Models\Activity') {
 
-                        if(isset($this->ids[$key][$obj->{$value}])) 
+                        if (isset($this->ids[$key][$obj->{$value}])) {
                             $obj_array["{$value}"] = $this->ids[$key][$obj->{$value}];
-                    }
-                    else {
+                        }
+                    } else {
                         $obj_array["{$value}"] = $this->transformId($key, $obj->{$value});
                     }
 
@@ -1718,15 +1718,15 @@ try {
 
                 if (isset($parameters->clients)) {
 
-                    $parameters->clients =
-                    collect($parameters->clients)->map(function ($client_hash) {
+                    $parameters->clients
+                    = collect($parameters->clients)->map(function ($client_hash) {
                         return $this->encodePrimaryKey($this->transformId('clients', $client_hash));
                     })->toArray();
 
                 }
 
                 if (isset($parameters->entity_id)) {
-                    $parameters->entity_id = $this->encodePrimaryKey($this->transformId($parameters->entity."s", $parameters->entity_id));
+                    $parameters->entity_id = $this->encodePrimaryKey($this->transformId($parameters->entity . "s", $parameters->entity_id));
                 }
 
                 $obj_array['parameters'] = $parameters;
@@ -1751,13 +1751,13 @@ try {
         $class::unguard();
 
         //foreach($this->backup_file->{$object_property} as $obj)
-        foreach ((object)$this->getObject($object_property) as $obj) {
+        foreach ((object) $this->getObject($object_property) as $obj) {
             if (is_null($obj)) {
                 continue;
             }
 
             /* Remove unwanted keys*/
-            $obj_array = (array)$obj;
+            $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
             }
@@ -1813,9 +1813,9 @@ try {
         $class::unguard();
         $x = 0;
 
-        foreach ((object)$this->getObject($object_property) as $obj) {
+        foreach ((object) $this->getObject($object_property) as $obj) {
             /* Remove unwanted keys*/
-            $obj_array = (array)$obj;
+            $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
             }
@@ -1824,7 +1824,7 @@ try {
             foreach ($transforms as $transform) {
                 foreach ($transform as $key => $value) {
 
-                    if(property_exists($obj, $value)) {
+                    if (property_exists($obj, $value)) {
                         $obj_array["{$value}"] = $this->transformId($key, $obj->{$value});
                     }
                 }
@@ -1840,7 +1840,7 @@ try {
                     unset($obj_array['company']);
                 }
 
-                $obj_array['webhook_configuration'] = (array)$obj_array['webhook_configuration'];
+                $obj_array['webhook_configuration'] = (array) $obj_array['webhook_configuration'];
                 $obj_array['recurring_product_ids'] = '';
                 $obj_array['product_ids'] = '';
             }
@@ -1999,11 +1999,11 @@ try {
     private function transformId(string $resource, ?string $old): ?int
     {
 
-        if (empty($old) || in_array($old,  ['WjnegYbwZ1'])) {
+        if (empty($old) || in_array($old, ['WjnegYbwZ1'])) {
             return null;
         }
 
-        if($resource == 'tasks' && in_array($old,  ['WjnegnldwZ','kQBeX5layK','MVyb895dvA','OpnelpJeKB'])) {
+        if ($resource == 'tasks' && in_array($old, ['WjnegnldwZ','kQBeX5layK','MVyb895dvA','OpnelpJeKB'])) {
             return null;
         }
 
@@ -2026,9 +2026,10 @@ try {
             if ($resource == 'users') {
                 return $this->company_owner->id;
             }
-            
-            if($resource == 'locations')
+
+            if ($resource == 'locations') {
                 return null;
+            }
 
             if ($this->import_notifications_enabled) {
                 $this->sendImportMail("The Import failed due to missing data in the import file. Key {$old} not found in {$resource}.");

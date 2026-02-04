@@ -27,9 +27,7 @@ class ChartService
     use ChartQueries;
     use ChartCalculations;
 
-    public function __construct(public Company $company, private User $user, private bool $is_admin, private bool $include_drafts = false)
-    {
-    }
+    public function __construct(public Company $company, private User $user, private bool $is_admin, private bool $include_drafts = false) {}
 
     /**
      * Returns an array of currencies that have
@@ -234,7 +232,7 @@ class ChartService
     {
         $results = 0;
 
-        match($data['field']) {
+        match ($data['field']) {
             'active_invoices' => $results = $this->getActiveInvoices($data),
             'outstanding_invoices' => $results = $this->getOutstandingInvoices($data),
             'completed_payments' => $results = $this->getCompletedPayments($data),

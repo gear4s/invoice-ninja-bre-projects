@@ -222,11 +222,11 @@ class DemoMode extends Command
             'company_id' => $company->id,
         ]);
 
-        $this->info('Creating '.$this->count.' clients');
+        $this->info('Creating ' . $this->count . ' clients');
 
         for ($x = 0; $x < $this->count; $x++) {
             $z = $x + 1;
-            $this->info('Creating client # '.$z);
+            $this->info('Creating client # ' . $z);
 
             $this->createClient($company, $user, $u2->id);
         }
@@ -234,7 +234,7 @@ class DemoMode extends Command
         for ($x = 0; $x < $this->count; $x++) {
             $client = $company->clients->random();
 
-            $this->info('creating entities for client #'.$client->id);
+            $this->info('creating entities for client #' . $client->id);
             $this->createInvoice($client, $u2->id);
 
             $this->createRecurringInvoice($client, $u2->id);

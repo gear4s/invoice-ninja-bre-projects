@@ -65,13 +65,13 @@ class GmailTransport extends AbstractTransport
 
             foreach ($bccs->getAddresses() as $address) {
 
-                $bcc_list .= $address->getAddress() .',';
+                $bcc_list .= $address->getAddress() . ',';
             }
 
             $bcc_list = rtrim($bcc_list, ",") . "\r\n";
         }
 
-        $body->setRaw($this->base64_encode($bcc_list.$message->toString()));
+        $body->setRaw($this->base64_encode($bcc_list . $message->toString()));
 
         $service->users_messages->send('me', $body, []);
 

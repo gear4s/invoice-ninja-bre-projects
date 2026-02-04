@@ -24,9 +24,7 @@ class HandleReversal extends AbstractService
 {
     use GeneratesCounter;
 
-    public function __construct(private Invoice $invoice)
-    {
-    }
+    public function __construct(private Invoice $invoice) {}
 
     public function run()
     {
@@ -64,7 +62,7 @@ class HandleReversal extends AbstractService
         });
 
         /* Generate a credit for the $total_paid amount */
-        $notes = 'Credit for reversal of '.$this->invoice->number;
+        $notes = 'Credit for reversal of ' . $this->invoice->number;
 
         /* Set invoice balance to 0 */
         if ($this->invoice->balance != 0) {

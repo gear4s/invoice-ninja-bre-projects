@@ -39,9 +39,7 @@ class ClientService
 
     private bool $completed = true;
 
-    public function __construct(private Client $client)
-    {
-    }
+    public function __construct(private Client $client) {}
 
     public function calculateBalance(?Invoice $invoice = null)
     {

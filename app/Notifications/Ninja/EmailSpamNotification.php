@@ -23,9 +23,7 @@ class EmailSpamNotification extends Notification
      *
      * @return void
      */
-    public function __construct(protected Company $company)
-    {
-    }
+    public function __construct(protected Company $company) {}
 
     /**
      * Get the notification's delivery channels.
@@ -43,9 +41,7 @@ class EmailSpamNotification extends Notification
      *
      * @param  mixed  $notifiable
      */
-    public function toMail($notifiable)
-    {
-    }
+    public function toMail($notifiable) {}
 
     /**
      * Get the array representation of the notification.

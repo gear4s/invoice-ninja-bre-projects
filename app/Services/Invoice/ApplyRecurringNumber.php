@@ -24,9 +24,7 @@ class ApplyRecurringNumber extends AbstractService
 
     private bool $completed = true;
 
-    public function __construct(private Client $client, private Invoice $invoice)
-    {
-    }
+    public function __construct(private Client $client, private Invoice $invoice) {}
 
     public function run()
     {

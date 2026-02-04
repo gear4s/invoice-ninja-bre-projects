@@ -177,8 +177,8 @@ class SubscriptionRepository extends BaseRepository
         })->map(function ($item) {
             $line_item = new InvoiceItem();
             $line_item->product_key = $item->product_key;
-            $line_item->quantity = (float)$item->qty;
-            $line_item->cost = (float)$item->unit_cost;
+            $line_item->quantity = (float) $item->qty;
+            $line_item->cost = (float) $item->unit_cost;
             $line_item->notes = $item->description;
 
             return $line_item;
@@ -214,7 +214,7 @@ class SubscriptionRepository extends BaseRepository
 
     public function assign_invoice(Subscription $subscription, $request)
     {
-        $class = "\\App\\Models\\".ucfirst(Str::camel($request->entity));
+        $class = "\\App\\Models\\" . ucfirst(Str::camel($request->entity));
 
         $entity = $class::withTrashed()->find($request->entity_id);
 

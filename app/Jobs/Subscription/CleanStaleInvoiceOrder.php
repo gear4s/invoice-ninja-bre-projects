@@ -32,9 +32,7 @@ class CleanStaleInvoiceOrder implements ShouldQueue
      * Create a new job instance.
      *
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @param InvoiceRepository $repo
@@ -77,20 +75,20 @@ class CleanStaleInvoiceOrder implements ShouldQueue
                    ->whereJsonContains('line_items', ['type_id' => '3'])
                    ->cursor()
                    ->each(function ($invoice) {
-   
+
                        $items = $invoice->line_items;
-   
+
                        foreach ($items as $key => $value) {
-   
-                           if($value->type_id == "3" && isset($value->unit_code) && $ph = \App\Models\PaymentHash::where('hash', $value->unit_code)->first()) {
-                           
-                               if($ph->payment_id && in_array($ph->payment->status_id, [\App\Models\Payment::STATUS_COMPLETED, \App\Models\Payment::STATUS_PENDING])){
-                                   $items[$key]->type_id = "4";    
+
+                           if ($value->type_id == "3" && isset($value->unit_code) && $ph = \App\Models\PaymentHash::where('hash', $value->unit_code)->first()) {
+
+                               if ($ph->payment_id && in_array($ph->payment->status_id, [\App\Models\Payment::STATUS_COMPLETED, \App\Models\Payment::STATUS_PENDING])) {
+                                   $items[$key]->type_id = "4";
                                }
-                           }                            
-   
+                           }
+
                        }
-   
+
                        $invoice->line_items = array_values($items);
                        $invoice = $invoice->calc()->getInvoice();
                        $invoice->service()->removeUnpaidGatewayFees();
@@ -138,12 +136,12 @@ class CleanStaleInvoiceOrder implements ShouldQueue
 
                     foreach ($items as $key => $value) {
 
-                        if($value->type_id == "3" && isset($value->unit_code) && $ph = \App\Models\PaymentHash::where('hash', $value->unit_code)->first()) {
-                        
-                            if($ph->payment_id && in_array($ph->payment->status_id, [\App\Models\Payment::STATUS_COMPLETED, \App\Models\Payment::STATUS_PENDING])){
-                                $items[$key]->type_id = "4";    
+                        if ($value->type_id == "3" && isset($value->unit_code) && $ph = \App\Models\PaymentHash::where('hash', $value->unit_code)->first()) {
+
+                            if ($ph->payment_id && in_array($ph->payment->status_id, [\App\Models\Payment::STATUS_COMPLETED, \App\Models\Payment::STATUS_PENDING])) {
+                                $items[$key]->type_id = "4";
                             }
-                        }                            
+                        }
 
                     }
 
@@ -157,7 +155,5 @@ class CleanStaleInvoiceOrder implements ShouldQueue
         }
     }
 
-    public function failed($exception = null)
-    {
-    }
+    public function failed($exception = null) {}
 }

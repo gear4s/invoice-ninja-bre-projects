@@ -21,9 +21,7 @@ use Carbon\Carbon;
 
 class MarkSent
 {
-    public function __construct(private Client $client, private Quote $quote)
-    {
-    }
+    public function __construct(private Client $client, private Quote $quote) {}
 
     public function run($first_event = false)
     {
@@ -36,7 +34,7 @@ class MarkSent
 
         if ($this->quote->due_date != '' || $this->client->getSetting('valid_until') == '') {
         } else {
-            $this->quote->due_date = Carbon::parse($this->quote->date)->addDays((int)$this->client->getSetting('valid_until'));
+            $this->quote->due_date = Carbon::parse($this->quote->date)->addDays((int) $this->client->getSetting('valid_until'));
         }
 
         $this->quote

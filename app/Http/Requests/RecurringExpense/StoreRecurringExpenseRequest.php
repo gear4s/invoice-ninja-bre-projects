@@ -47,10 +47,10 @@ class StoreRecurringExpenseRequest extends Request
         }
 
         if (! empty($this->client_id)) {
-            $rules['client_id'] = 'bail|sometimes|exists:clients,id,company_id,'.$user->company()->id;
+            $rules['client_id'] = 'bail|sometimes|exists:clients,id,company_id,' . $user->company()->id;
         }
 
-        $rules['category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,'.$user->company()->id.',is_deleted,0';
+        $rules['category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,' . $user->company()->id . ',is_deleted,0';
         $rules['frequency_id'] = 'required|integer|digits_between:1,12';
         $rules['tax_amount1'] = 'numeric';
         $rules['tax_amount2'] = 'numeric';

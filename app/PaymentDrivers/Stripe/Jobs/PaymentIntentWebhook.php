@@ -159,7 +159,7 @@ class PaymentIntentWebhook implements ShouldQueue
             $payment->save();
         }
 
-        $hash = isset($charge['metadata']['payment_hash']) ? $charge['metadata']['payment_hash'] : false;
+        $hash = $charge['metadata']['payment_hash'] ?? false;
 
         if (!$hash) {
             return;
@@ -178,7 +178,7 @@ class PaymentIntentWebhook implements ShouldQueue
             'transaction_reference' => $charge['id'],
             'customer' => $charge['customer'],
             'payment_method' => $charge['payment_method'],
-            'card_details' => isset($charge['payment_method_details']['card']['brand']) ? $charge['payment_method_details']['card']['brand'] : PaymentType::CREDIT_CARD_OTHER
+            'card_details' => $charge['payment_method_details']['card']['brand'] ?? PaymentType::CREDIT_CARD_OTHER,
         ];
 
         SystemLogger::dispatch(

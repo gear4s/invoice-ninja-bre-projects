@@ -22,9 +22,7 @@ use stdClass;
 
 class QuoteExpiredObject
 {
-    public function __construct(public Quote $quote, public Company $company, public bool $use_react_url)
-    {
-    }
+    public function __construct(public Quote $quote, public Company $company, public bool $use_react_url) {}
 
     public function build()
     {
@@ -76,10 +74,10 @@ class QuoteExpiredObject
         $content = ctrans(
             'texts.notification_quote_expired',
             [
-                    'amount' => $this->getAmount(),
-                    'client' => $this->quote->client->present()->name(),
-                    'invoice' => $this->quote->number,
-                ]
+                'amount' => $this->getAmount(),
+                'client' => $this->quote->client->present()->name(),
+                'invoice' => $this->quote->number,
+            ]
         );
 
         $data = [

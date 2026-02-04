@@ -53,11 +53,11 @@ trait MakesInvoiceHtml
      */
     public function getTemplate(string $template = 'plain')
     {
-        return File::get(resource_path('views/email/template/'.$template.'.blade.php'));
+        return File::get(resource_path('views/email/template/' . $template . '.blade.php'));
     }
 
     public function getTemplatePath(string $template = 'plain')
     {
-        return 'email.template.'.$template;
+        return 'email.template.' . $template;
     }
 }

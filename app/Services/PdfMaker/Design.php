@@ -365,7 +365,7 @@ class Design extends BaseDesign
             return [
                 ['element' => 'tr', 'properties' => ['data-ref' => 'statement-label'], 'elements' => [
                     ['element' => 'th', 'properties' => [], 'content' => ""],
-                    ['element' => 'th', 'properties' => [], 'content' => '<h2>'.ctrans('texts.statement').'</h2>'],
+                    ['element' => 'th', 'properties' => [], 'content' => '<h2>' . ctrans('texts.statement') . '</h2>'],
                 ]],
                 ['element' => 'tr', 'properties' => [], 'elements' => [
                     ['element' => 'th', 'properties' => [], 'content' => ctrans('texts.statement_date')],
@@ -934,7 +934,7 @@ class Design extends BaseDesign
 
                 for ($i = 0; $i < count($product_customs); $i++) {
                     if ($product_customs[$i]) {
-                        $element['elements'][] = ['element' => 'td', 'content' => $row['delivery_note.delivery_note' . ($i + 1)], 'properties' => ['data-ref' => 'delivery_note_table.product' . ($i + 1) . '-td', 'visi' => $this->visibilityCheck($column_visibility, 'product'.($i + 1))]];
+                        $element['elements'][] = ['element' => 'td', 'content' => $row['delivery_note.delivery_note' . ($i + 1)], 'properties' => ['data-ref' => 'delivery_note_table.product' . ($i + 1) . '-td', 'visi' => $this->visibilityCheck($column_visibility, 'product' . ($i + 1))]];
                     }
                 }
 
@@ -989,9 +989,9 @@ class Design extends BaseDesign
             $element = ['element' => 'tr', 'elements' => []];
 
             if (
-                array_key_exists($type, $this->context) &&
-                !empty($this->context[$type]) &&
-                !is_null($this->context[$type])
+                array_key_exists($type, $this->context)
+                && !empty($this->context[$type])
+                && !is_null($this->context[$type])
             ) {
                 $document = new DOMDocument();
                 $document->loadHTML($this->context[$type], LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -1101,8 +1101,8 @@ class Design extends BaseDesign
 
         // Filter items by type_id
         $filtered_items = collect($items)->filter(function ($item) use ($type_id) {
-            return (!isset($item->type_id) || $item->type_id == $type_id) ||
-                ($type_id == '1' && ($item->type_id == '4' || $item->type_id == '5' || $item->type_id == '6'));
+            return (!isset($item->type_id) || $item->type_id == $type_id)
+                || ($type_id == '1' && ($item->type_id == '4' || $item->type_id == '5' || $item->type_id == '6'));
         });
 
         // Transform the items first
@@ -1158,7 +1158,7 @@ class Design extends BaseDesign
         $elements = [
             ['element' => 'div', 'properties' => ['style' => 'display: flex; flex-direction: column;'], 'elements' => [
                 ['element' => 'div', 'properties' => ['data-ref' => 'total_table-public_notes', 'style' => 'text-align: left;'], 'elements' => [
-                    ['element' => 'span', 'content' => strtr(str_replace(["labels", "values"], ["",""], $_variables['values']['$entity.public_notes']), $_variables)]
+                    ['element' => 'span', 'content' => strtr(str_replace(["labels", "values"], ["",""], $_variables['values']['$entity.public_notes']), $_variables)],
                 ]],
                 ['element' => 'div', 'content' => '', 'properties' => ['style' => 'text-align: left; display: flex; flex-direction: column; page-break-inside: auto;'], 'elements' => [
                     ['element' => 'span', 'content' => '$entity.terms_label: ', 'properties' => ['data-ref' => 'total_table-terms-label', 'style' => "font-weight: bold; text-align: left; margin-top: 1rem; {$show_terms_label}"]],
@@ -1203,9 +1203,9 @@ class Design extends BaseDesign
             $variable = sprintf('%s%s', '$', $property);
 
             if (
-                !is_null($this->entity->{$property}) &&
-                !empty($this->entity->{$property}) &&
-                $this->entity->{$property} != 0
+                !is_null($this->entity->{$property})
+                && !empty($this->entity->{$property})
+                && $this->entity->{$property} != 0
             ) {
                 continue;
             }

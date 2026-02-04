@@ -58,7 +58,7 @@ class ClientStatementController extends BaseController
         if ($pdf) {
             return response()->streamDownload(function () use ($pdf) {
                 echo $pdf;
-            }, ctrans('texts.statement').'.pdf', ['Content-Type' => 'application/pdf']);
+            }, ctrans('texts.statement') . '.pdf', ['Content-Type' => 'application/pdf']);
         }
 
         return response()->json(['message' => ctrans('texts.error_title')], 500);

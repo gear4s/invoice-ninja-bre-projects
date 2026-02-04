@@ -42,9 +42,7 @@ class ProcessBankRules extends AbstractService
     /**
      * @param \App\Models\BankTransaction $bank_transaction
      */
-    public function __construct(public BankTransaction $bank_transaction)
-    {
-    }
+    public function __construct(public BankTransaction $bank_transaction) {}
 
     public function run()
     {

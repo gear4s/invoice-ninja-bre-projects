@@ -18,7 +18,7 @@ class TaxRateTransformer
 {
     /**
      * Transform a single QuickBooks Tax Rate (IPPTaxRate or array) to a simple map.
-     * 
+     *
      *
      * @param  object|array  $tax_rate  Raw Tax Rate from QuickBooks API (e.g. IPPTaxRate)
      * @return array{id: string, name: string, rate: float}
@@ -27,12 +27,12 @@ class TaxRateTransformer
     {
         // Extract QuickBooks TaxRate ID
         $qb_id = (string) (data_get($tax_rate, 'Id.value') ?? data_get($tax_rate, 'Id') ?? '');
-        
+
         // Extract TaxRate name
         $name = (string) (data_get($tax_rate, 'Name') ?? '');
-        
+
         $rate = 0.0;
-        
+
         // First, try to get RateValue directly from the TaxRate object
         $rate_value = data_get($tax_rate, 'RateValue');
         if ($rate_value !== null && $rate_value !== '') {
@@ -40,7 +40,7 @@ class TaxRateTransformer
         } else {
             // If not found directly, try TaxRateDetails array
             $tax_rate_details = data_get($tax_rate, 'TaxRateDetails');
-            
+
             if (is_array($tax_rate_details) && !empty($tax_rate_details)) {
                 // Get the first TaxRateDetail's RateValue
                 $rate_value = data_get($tax_rate_details[0], 'RateValue');
@@ -55,7 +55,7 @@ class TaxRateTransformer
                 }
             }
         }
-        
+
         return [
             'id' => $qb_id,
             'name' => $name,

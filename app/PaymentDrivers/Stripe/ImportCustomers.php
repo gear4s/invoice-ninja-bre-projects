@@ -213,7 +213,7 @@ class ImportCustomers
                 $cgt = ClientGatewayToken::query()->where('gateway_customer_reference', $searchResults->data[0]->id)->where('company_id', $this->stripe->company_gateway->company->id)->exists();
 
                 if (! $cgt) {
-                    nlog('customer '.$searchResults->data[0]->id.' does not exist.');
+                    nlog('customer ' . $searchResults->data[0]->id . ' does not exist.');
 
                     $this->update_payment_methods->updateMethods($searchResults->data[0], $client); //@phpstan-ignore-line
                 }

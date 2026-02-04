@@ -21,9 +21,7 @@ class UpdateVendorContactLastLogin
      *
      * @return void
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

@@ -33,7 +33,7 @@ class TemplatePreviewController extends BaseController
     public function __invoke(ReportPreviewRequest $request, ?string $hash)
     {
 
-        $report = Storage::disk(config('filesystems.default'))->exists($this->path_prefix.$hash.$this->path_suffix);
+        $report = Storage::disk(config('filesystems.default'))->exists($this->path_prefix . $hash . $this->path_suffix);
 
         if (!$report) {
             return response()->json(['message' => 'Still working.....'], 409);
@@ -43,8 +43,8 @@ class TemplatePreviewController extends BaseController
 
         return response()->streamDownload(function () use ($hash) {
 
-            echo Storage::get($this->path_prefix.$hash.$this->path_suffix);
-            Storage::delete($this->path_prefix.$hash.$this->path_suffix);
+            echo Storage::get($this->path_prefix . $hash . $this->path_suffix);
+            Storage::delete($this->path_prefix . $hash . $this->path_suffix);
 
         }, 'template.pdf', ['Content-Type' => 'application/pdf']);
 

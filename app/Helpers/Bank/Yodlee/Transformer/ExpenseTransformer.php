@@ -73,6 +73,4 @@ namespace App\Helpers\Bank\Yodlee\Transformer;
 "status": "POSTED"
  */
 
-class ExpenseTransformer
-{
-}
+class ExpenseTransformer {}

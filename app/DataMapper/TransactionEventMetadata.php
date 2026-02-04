@@ -25,8 +25,8 @@ class TransactionEventMetadata implements Castable
 
     public function __construct(array $attributes = [])
     {
-        $this->tax_report = isset($attributes['tax_report']) 
-            ? new TaxReport($attributes['tax_report']) 
+        $this->tax_report = isset($attributes['tax_report'])
+            ? new TaxReport($attributes['tax_report'])
             : new TaxReport([]);
     }
 

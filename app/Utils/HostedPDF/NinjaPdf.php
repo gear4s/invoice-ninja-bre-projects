@@ -23,7 +23,7 @@ class NinjaPdf
         $client = new \GuzzleHttp\Client(['headers' => [
             'X-Ninja-Token' => 'test_token_for_now',
             'X-URL' => config('ninja.app_url'),
-            ],
+        ],
         ]);
 
         $response = $client->post($this->url, [

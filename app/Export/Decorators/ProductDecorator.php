@@ -52,7 +52,7 @@ class ProductDecorator implements DecoratorInterface
 
         $category = ctrans('texts.physical_goods');
 
-        match($product->tax_id) {
+        match ($product->tax_id) {
             1 => $category =  ctrans('texts.physical_goods'),
             2 => $category = ctrans('texts.services'),
             3 => $category =  ctrans('texts.digital_products'),

@@ -24,9 +24,7 @@ class UserLoggedIn extends Mailable
      *
      * @return void
      */
-    public function __construct(public User $user, public Company $company, public string $ip)
-    {
-    }
+    public function __construct(public User $user, public Company $company, public string $ip) {}
 
     /**
      * Build the message.

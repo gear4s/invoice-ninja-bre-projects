@@ -21,7 +21,7 @@ use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 class QbTaxRate implements SyncInterface
 {
     protected TaxRateTransformer $tax_rate_transformer;
-    
+
     public function __construct(public QuickbooksService $service)
     {
         $this->tax_rate_transformer = new TaxRateTransformer();
@@ -36,7 +36,7 @@ class QbTaxRate implements SyncInterface
     {
         // Merge tax_rate_map based on "id" key - update existing entries and add new ones
         $existing_map = $this->service->company->quickbooks->settings->tax_rate_map ?? [];
-        
+
         // Transform new records and merge with existing, keyed by "id"
         $merged_map = collect($existing_map)
             ->keyBy('id')
@@ -47,29 +47,26 @@ class QbTaxRate implements SyncInterface
             )
             ->values()
             ->toArray();
-        
+
         $this->service->company->quickbooks->settings->tax_rate_map = $merged_map;
-        
+
         foreach ($records as $record) {
             $ninja_data = $this->tax_rate_transformer->transform($record);
 
-            if(TaxRate::where('company_id', $this->service->company->id)
+            if (TaxRate::where('company_id', $this->service->company->id)
                 ->where('name', $ninja_data['name'])
                 ->where('rate', $ninja_data['rate'])
-                ->doesntExist()){
+                ->doesntExist()) {
 
-                    $tr = TaxRateFactory::create($this->service->company->id, $this->service->company->owner()->id);
-                    $tr->name = $ninja_data['name'];
-                    $tr->rate = $ninja_data['rate'];
-                    $tr->save();
+                $tr = TaxRateFactory::create($this->service->company->id, $this->service->company->owner()->id);
+                $tr->name = $ninja_data['name'];
+                $tr->rate = $ninja_data['rate'];
+                $tr->save();
 
-                }
+            }
 
         }
     }
 
-    public function syncToForeign(array $records): void
-    {
-
-    }
+    public function syncToForeign(array $records): void {}
 }

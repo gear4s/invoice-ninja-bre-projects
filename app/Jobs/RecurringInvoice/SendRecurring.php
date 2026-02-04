@@ -49,9 +49,7 @@ class SendRecurring implements ShouldQueue
      * @param RecurringInvoice $recurring_invoice
      * @param string $db
      */
-    public function __construct(public RecurringInvoice $recurring_invoice, public string $db = 'db-ninja-01')
-    {
-    }
+    public function __construct(public RecurringInvoice $recurring_invoice, public string $db = 'db-ninja-01') {}
 
     /**
      * Execute the job.
@@ -71,7 +69,7 @@ class SendRecurring implements ShouldQueue
         $date = now()->setTimezone($this->recurring_invoice->client->timezone()->name)->format('Y-m-d');
         $invoice->date = $date;
 
-        nlog("Recurring Invoice Date Set on Invoice = {$invoice->date} - ". now()->format('Y-m-d'));
+        nlog("Recurring Invoice Date Set on Invoice = {$invoice->date} - " . now()->format('Y-m-d'));
 
         $invoice->due_date = $this->recurring_invoice->calculateDueDate($date);
         $invoice->recurring_id = $this->recurring_invoice->id;

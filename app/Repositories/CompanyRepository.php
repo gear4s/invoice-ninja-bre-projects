@@ -21,9 +21,7 @@ use App\Repositories\BaseRepository;
  */
 class CompanyRepository extends BaseRepository
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Saves the client and its contacts.

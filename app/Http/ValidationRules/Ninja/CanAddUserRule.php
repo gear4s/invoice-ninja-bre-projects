@@ -21,9 +21,7 @@ use Illuminate\Contracts\Validation\Rule;
  */
 class CanAddUserRule implements Rule
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @param string $attribute

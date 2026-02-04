@@ -69,8 +69,8 @@ class ExpenseTransformer extends BaseTransformer
         //             'value' => $vendor->number,
         //         ];
         //     }
-        // } 
-        
+        // }
+
         if ($expense->client_id) {
             $client = $expense->client;
             if ($client && isset($client->sync->qb_id) && $client->sync->qb_id !== '') {
@@ -130,12 +130,12 @@ class ExpenseTransformer extends BaseTransformer
         }
 
     }
-    
+
     /**
      * getCategoryId
      *
      * Gets the category ID based on the QB ID or creates a new category!
-     * 
+     *
      * @param  mixed $data
      * @return int
      */
@@ -145,26 +145,26 @@ class ExpenseTransformer extends BaseTransformer
         $name = data_get($data, 'AccountRef.name', '');
         $qb_id = data_get($data, 'AccountRef.Id', false);
 
-        if($qb_id) {
+        if ($qb_id) {
             $category = ExpenseCategory::withTrashed()
                                     ->where('company_id', $this->company->id)
                                     ->where('sync->qb_id', $qb_id)
                                     ->first();
 
-            if($category) {
+            if ($category) {
                 return $category->id;
             }
         }
-    
+
         $category = ExpenseCategoryFactory::create($this->company->id, $this->company->owner()->id);
         $category->name = $name;
-    
+
         $sync = new ExpenseSync();
         $sync->qb_id = $qb_id;
-    
+
         $category->sync = $sync;
         $category->save();
-    
+
         return $category->id;
     }
 

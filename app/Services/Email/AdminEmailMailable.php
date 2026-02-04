@@ -27,9 +27,7 @@ class AdminEmailMailable extends Mailable
      *
      * @return void
      */
-    public function __construct(public EmailObject $email_object)
-    {
-    }
+    public function __construct(public EmailObject $email_object) {}
 
     /**
      * Get the message envelope.
@@ -89,7 +87,7 @@ class AdminEmailMailable extends Mailable
             $mime = $mime ?: 'application/octet-stream';
             finfo_close($finfo);
 
-            return Attachment::fromData(fn () => base64_decode($file['file']), $file['name'])->withMime($mime);
+            return Attachment::fromData(fn() => base64_decode($file['file']), $file['name'])->withMime($mime);
         });
 
         return $attachments->toArray();

@@ -37,9 +37,7 @@ class TaskAssigned implements ShouldQueue
      * Create a new job instance.
      *
      */
-    public function __construct(private Task $task, private string $db)
-    {
-    }
+    public function __construct(private Task $task, private string $db) {}
 
     public function handle(): void
     {
@@ -65,7 +63,5 @@ class TaskAssigned implements ShouldQueue
 
     }
 
-    public function failed($exception = null)
-    {
-    }
+    public function failed($exception = null) {}
 }

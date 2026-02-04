@@ -58,7 +58,7 @@ class ContactRegisterController extends Controller
             'register_company' => $company,
             'account' => $company->account,
             'submitsForm' => false,
-            'show_turnstile' => $show_turnstile
+            'show_turnstile' => $show_turnstile,
         ];
 
         return render('auth.register', $data);

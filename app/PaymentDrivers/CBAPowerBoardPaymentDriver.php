@@ -150,14 +150,9 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
         return true;
     }
 
-    public function refund(Payment $payment, $amount, $return_client_response = false)
-    {
+    public function refund(Payment $payment, $amount, $return_client_response = false) {}
 
-    }
-
-    public function processWebhookRequest($request)
-    {
-    }
+    public function processWebhookRequest($request) {}
 
     public function getClientRequiredFields(): array
     {
@@ -186,9 +181,7 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
 
     }
 
-    public function importCustomers()
-    {
-    }
+    public function importCustomers() {}
 
     public function auth(): string
     {
@@ -206,7 +199,7 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
         $this->init();
 
         $r = Http::withHeaders($this->getHeaders($headers))
-                   ->{$verb}($this->api_endpoint.$uri, $payload);
+                   ->{$verb}($this->api_endpoint . $uri, $payload);
 
         nlog($r->body());
 
@@ -217,9 +210,9 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
     {
         return array_merge(
             [
-            'x-user-secret-key' => $this->company_gateway->getConfigField('secretKey'),
-            'Content-Type' => 'application/json',
-        ],
+                'x-user-secret-key' => $this->company_gateway->getConfigField('secretKey'),
+                'Content-Type' => 'application/json',
+            ],
             $headers
         );
     }

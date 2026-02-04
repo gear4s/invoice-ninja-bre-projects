@@ -36,7 +36,7 @@ class StoreTaxRateRequest extends Request
         $user = auth()->user();
 
         return [
-            'name' => 'required|unique:tax_rates,name,null,null,company_id,'.$user->companyId().',deleted_at,NULL',
+            'name' => 'required|unique:tax_rates,name,null,null,company_id,' . $user->companyId() . ',deleted_at,NULL',
             'rate' => 'required|numeric',
         ];
     }

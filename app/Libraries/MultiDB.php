@@ -336,7 +336,7 @@ class MultiDB
                 'user.account',
                 'company',
                 'account',
-                'cu'
+                'cu',
             ])->where('token', $token)->first()) {
 
                 self::setDB($db);

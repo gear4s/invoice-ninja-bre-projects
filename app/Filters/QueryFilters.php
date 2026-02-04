@@ -210,7 +210,7 @@ abstract class QueryFilters
 
         try {
             if (is_numeric($value)) {
-                $created_at = Carbon::createFromTimestamp((int)$value);
+                $created_at = Carbon::createFromTimestamp((int) $value);
             } else {
                 $created_at = Carbon::parse($value);
             }
@@ -229,7 +229,7 @@ abstract class QueryFilters
 
         try {
             if (is_numeric($value)) {
-                $created_at = Carbon::createFromTimestamp((int)$value);
+                $created_at = Carbon::createFromTimestamp((int) $value);
             } else {
                 $created_at = Carbon::parse($value);
             }

@@ -29,7 +29,7 @@ class UpdateDesignRequest extends Request
         'purchase_order',
         'project',
         'task',
-        'expense'
+        'expense',
     ];
 
     /**
@@ -49,7 +49,7 @@ class UpdateDesignRequest extends Request
     {
         return [
             'is_template' => 'sometimes|boolean',
-            'entities' => 'sometimes|string|nullable'
+            'entities' => 'sometimes|string|nullable',
         ];
     }
 

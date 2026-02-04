@@ -28,9 +28,7 @@ class RefetchEntity implements ShouldBroadcast
     use SerializesModels;
     use InteractsWithSockets;
 
-    public function __construct(public string $entity, public ?string $entity_id, public User $user)
-    {
-    }
+    public function __construct(public string $entity, public ?string $entity_id, public User $user) {}
 
     public function broadcastOn()
     {

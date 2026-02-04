@@ -46,7 +46,7 @@ class PaymentSyncCast implements CastsAttributes
         return [
             $key => json_encode([
                 'qb_id' => $value->qb_id,
-            ])
+            ]),
         ];
     }
 }

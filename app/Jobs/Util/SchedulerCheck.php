@@ -29,9 +29,7 @@ class SchedulerCheck implements ShouldQueue
 
     public $tries = 1;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Execute the job.

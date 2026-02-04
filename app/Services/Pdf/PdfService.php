@@ -34,7 +34,7 @@ class PdfService
     use PdfMaker;
     use PageNumbering;
 
-    public InvoiceInvitation | QuoteInvitation | CreditInvitation | RecurringInvoiceInvitation | PurchaseOrderInvitation $invitation;
+    public InvoiceInvitation|QuoteInvitation|CreditInvitation|RecurringInvoiceInvitation|PurchaseOrderInvitation $invitation;
 
     public Company $company;
 
@@ -144,9 +144,9 @@ class PdfService
 
         $this->config = (new PdfConfiguration($this))->init();
 
-        $this->html_variables = ($this->invitation instanceof \App\Models\PurchaseOrderInvitation) ?
-                                    (new VendorHtmlEngine($this->invitation))->generateLabelsAndValues() :
-                                    (new HtmlEngine($this->invitation))->generateLabelsAndValues();
+        $this->html_variables = ($this->invitation instanceof \App\Models\PurchaseOrderInvitation)
+                                    ? (new VendorHtmlEngine($this->invitation))->generateLabelsAndValues()
+                                    : (new HtmlEngine($this->invitation))->generateLabelsAndValues();
 
         $this->designer = (new PdfDesigner($this))->build();
 
@@ -166,7 +166,7 @@ class PdfService
             $pdf = (new Phantom())->convertHtmlToPdf($html);
         } elseif (config('ninja.invoiceninja_hosted_pdf_generation') || config('ninja.pdf_generator') == 'hosted_ninja') {
             $pdf = (new NinjaPdf())->build($html);
-       } elseif (config('ninja.pdf_generator') == 'gotenberg') {
+        } elseif (config('ninja.pdf_generator') == 'gotenberg') {
             $pdf = (new GotenbergPdf())->convertHtmlToPdf($html);
         } else {
             $pdf = $this->makePdf(null, null, $html);

@@ -64,9 +64,7 @@ class VendorContactObserver
      * @param VendorContact $vendorContact
      * @return void
      */
-    public function restored(VendorContact $vendorContact)
-    {
-    }
+    public function restored(VendorContact $vendorContact) {}
 
     /**
      * Handle the vendor contact "force deleted" event.

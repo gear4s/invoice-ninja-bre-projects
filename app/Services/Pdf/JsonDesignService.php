@@ -185,23 +185,23 @@ class JsonDesignService
         }
 
         return <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice</title>
-    <style>
-        {$pageCSS}
-    </style>
-</head>
-<body>
-    <div class="invoice-container">
-        {$blockContainers}
-    </div>
-</body>
-</html>
-HTML;
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Invoice</title>
+                <style>
+                    {$pageCSS}
+                </style>
+            </head>
+            <body>
+                <div class="invoice-container">
+                    {$blockContainers}
+                </div>
+            </body>
+            </html>
+            HTML;
     }
 
     /**
@@ -221,53 +221,53 @@ HTML;
         $backgroundColor = $pageSettings['backgroundColor'] ?? '#ffffff';
 
         return <<<CSS
-        @page {
-            size: {$pageSize};
-            margin: {$pageMargins};
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: {$fontFamily};
-            font-size: {$fontSize};
-            color: {$textColor};
-            line-height: {$lineHeight};
-            background-color: {$backgroundColor};
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .invoice-container {
-            width: 794px;
-            background: {$backgroundColor};
-            margin: 0 auto;
-            padding: 30px;
-        }
-        .flex-row {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .flex-col {
-            box-sizing: border-box;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        @media print {
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            .invoice-container {
-                margin: 0;
-            }
-        }
-CSS;
+                    @page {
+                        size: {$pageSize};
+                        margin: {$pageMargins};
+                    }
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    body {
+                        font-family: {$fontFamily};
+                        font-size: {$fontSize};
+                        color: {$textColor};
+                        line-height: {$lineHeight};
+                        background-color: {$backgroundColor};
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .invoice-container {
+                        width: 794px;
+                        background: {$backgroundColor};
+                        margin: 0 auto;
+                        padding: 30px;
+                    }
+                    .flex-row {
+                        display: flex;
+                        flex-wrap: nowrap;
+                        gap: 10px;
+                        margin-bottom: 10px;
+                    }
+                    .flex-col {
+                        box-sizing: border-box;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+                    @media print {
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .invoice-container {
+                            margin: 0;
+                        }
+                    }
+            CSS;
     }
 
     /**

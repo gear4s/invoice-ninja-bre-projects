@@ -19,7 +19,7 @@ class PaymentTypeTransformer extends EntityTransformer
     public function transform(Payment $payment)
     {
         return [
-            'name' => $payment->translatedType()
+            'name' => $payment->translatedType(),
         ];
     }
 }

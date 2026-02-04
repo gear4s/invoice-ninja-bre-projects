@@ -18,9 +18,7 @@ use App\Services\AbstractService;
 
 class GetCreditPdf extends AbstractService
 {
-    public function __construct(public CreditInvitation $invitation)
-    {
-    }
+    public function __construct(public CreditInvitation $invitation) {}
 
     public function run()
     {

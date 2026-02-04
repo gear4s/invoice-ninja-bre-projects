@@ -46,7 +46,7 @@ class InvoiceMigrationRepository extends BaseRepository
 
         $state = [];
         $resource = explode('\\', $class->name)[2]; /** This will extract 'Invoice' from App\Models\Invoice */
-        $lcfirst_resource_id = lcfirst($resource).'_id';
+        $lcfirst_resource_id = lcfirst($resource) . '_id';
 
         if ($class->name == Invoice::class || $class->name == Quote::class || $class->name == RecurringInvoice::class) {
             $state['starting_amount'] = $model->amount;

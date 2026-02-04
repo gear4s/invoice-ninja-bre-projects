@@ -85,7 +85,7 @@ class ImportMigrations extends Command
                 $user = $this->getUser();
                 $company = $this->getUser()->companies()->first();
 
-                $this->info('Started processing: '.$file->getBasename().' at '.now());
+                $this->info('Started processing: ' . $file->getBasename() . ' at ' . now());
 
                 $zip = new ZipArchive();
                 $archive = $zip->open($file->getRealPath());
@@ -104,7 +104,7 @@ class ImportMigrations extends Command
 
                     Import::dispatch($import_file, $this->getUser()->companies()->first(), $this->getUser());
 
-                } catch (NonExistingMigrationFile | ProcessingMigrationArchiveFailed | ResourceNotAvailableForMigration | MigrationValidatorFailed | ResourceDependencyMissing $e) {
+                } catch (NonExistingMigrationFile|ProcessingMigrationArchiveFailed|ResourceNotAvailableForMigration|MigrationValidatorFailed|ResourceDependencyMissing $e) {
                     \Mail::to($user)->send(new MigrationFailed($e, $company));
 
                     if (app()->environment() !== 'production') {
@@ -122,7 +122,7 @@ class ImportMigrations extends Command
 
         $user = User::factory()->create([
             'account_id' => $account->id,
-            'email' => Str::random(10).'@example.com',
+            'email' => Str::random(10) . '@example.com',
             'confirmation_code' => $this->createDbHash($company->db),
         ]);
 

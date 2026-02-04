@@ -35,9 +35,7 @@ class CopyDocs implements ShouldQueue
     /**
      *
      */
-    public function __construct(private \Illuminate\Support\Collection $document_ids, private $entity, private string $db)
-    {
-    }
+    public function __construct(private \Illuminate\Support\Collection $document_ids, private $entity, private string $db) {}
 
     /**
      * Execute the job.

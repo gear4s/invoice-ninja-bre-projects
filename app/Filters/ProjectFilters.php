@@ -33,12 +33,12 @@ class ProjectFilters extends QueryFilters
         }
 
         return  $this->builder->where(function ($query) use ($filter) {
-            $query->where('name', 'like', '%'.$filter.'%')
+            $query->where('name', 'like', '%' . $filter . '%')
                   ->orWhereHas('client', function ($q) use ($filter) {
-                      $q->where('name', 'like', '%'.$filter.'%');
+                      $q->where('name', 'like', '%' . $filter . '%');
                   })
-                  ->orWhere('public_notes', 'like', '%'.$filter.'%')
-                  ->orWhere('private_notes', 'like', '%'.$filter.'%');
+                  ->orWhere('public_notes', 'like', '%' . $filter . '%')
+                  ->orWhere('private_notes', 'like', '%' . $filter . '%');
         });
     }
 
@@ -68,7 +68,7 @@ class ProjectFilters extends QueryFilters
         $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
 
         if ($sort_col[0] == 'client_id') {
-            return $this->builder->orderByRaw('ISNULL(client_id), client_id '. $dir)
+            return $this->builder->orderByRaw('ISNULL(client_id), client_id ' . $dir)
                     ->orderBy(\App\Models\Client::select('name')
                     ->whereColumn('clients.id', 'projects.client_id'), $dir);
         }

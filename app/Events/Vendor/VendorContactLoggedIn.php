@@ -32,9 +32,7 @@ class VendorContactLoggedIn
      * Create a new event instance.
      *
      */
-    public function __construct(public VendorContact $contact, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public VendorContact $contact, public Company $company, public array $event_vars) {}
 
     /**
      * Get the channels the event should broadcast on.

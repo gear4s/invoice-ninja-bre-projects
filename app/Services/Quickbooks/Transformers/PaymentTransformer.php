@@ -30,9 +30,7 @@ class PaymentTransformer extends BaseTransformer
         return $this->transform($qb_data);
     }
 
-    public function ninjaToQb()
-    {
-    }
+    public function ninjaToQb() {}
 
     public function transform(mixed $qb_data)
     {
@@ -195,7 +193,7 @@ class PaymentTransformer extends BaseTransformer
 
         return [[
             'amount' => (float) $this->getString($data, 'Line.Amount'),
-            'invoice_id' => $invoice_id
+            'invoice_id' => $invoice_id,
         ]];
     }
 

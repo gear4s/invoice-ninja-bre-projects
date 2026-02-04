@@ -104,17 +104,17 @@ class UpdateClientRequest extends Request
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            
+
             $user = auth()->user();
             $company = $user->company();
 
-            if(isset($this->settings['lock_invoices']) && $company->verifactuEnabled() && $this->settings['lock_invoices'] != 'when_sent'){
+            if (isset($this->settings['lock_invoices']) && $company->verifactuEnabled() && $this->settings['lock_invoices'] != 'when_sent') {
                 $validator->errors()->add('settings.lock_invoices', 'Locked Invoices Cannot Be Disabled');
             }
-            
+
         });
     }
-    
+
     public function messages()
     {
         return [
@@ -137,7 +137,7 @@ class UpdateClientRequest extends Request
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
-        
+
         if (isset($input['documents'])) {
             unset($input['documents']);
         }

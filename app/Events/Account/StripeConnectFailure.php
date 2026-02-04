@@ -26,9 +26,7 @@ class StripeConnectFailure
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public Company $company, public string $db)
-    {
-    }
+    public function __construct(public Company $company, public string $db) {}
 
     public function broadcastOn()
     {

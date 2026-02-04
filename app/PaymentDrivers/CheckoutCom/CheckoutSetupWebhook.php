@@ -44,9 +44,7 @@ class CheckoutSetupWebhook implements ShouldQueue
 
     public CheckoutComPaymentDriver $checkout;
 
-    public function __construct(private string $company_key, private int $company_gateway_id)
-    {
-    }
+    public function __construct(private string $company_key, private int $company_gateway_id) {}
 
     public function handle()
     {

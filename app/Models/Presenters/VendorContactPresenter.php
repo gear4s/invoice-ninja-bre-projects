@@ -22,7 +22,7 @@ class VendorContactPresenter extends EntityPresenter
      */
     public function name()
     {
-        $contact_name = $this->entity->first_name.' '.$this->entity->last_name;
+        $contact_name = $this->entity->first_name . ' ' . $this->entity->last_name;
 
         if (strlen($contact_name) > 1) {
             return $contact_name;
@@ -43,6 +43,6 @@ class VendorContactPresenter extends EntityPresenter
 
     public function search_display()
     {
-        return strlen($this->entity->email ?? '') > 2 ? $this->name().' <'.$this->entity->email.'>' : $this->name();
+        return strlen($this->entity->email ?? '') > 2 ? $this->name() . ' <' . $this->entity->email . '>' : $this->name();
     }
 }

@@ -87,11 +87,7 @@ class UpdateCreditRequest extends Request
         return $rules;
     }
 
-    public function withValidator($validator)
-    {
-
-
-    }
+    public function withValidator($validator) {}
 
     public function prepareForValidation()
     {
@@ -99,7 +95,7 @@ class UpdateCreditRequest extends Request
 
         nlog($input);
         $input = $this->decodePrimaryKeys($input);
-       
+
         if (isset($input['documents'])) {
             unset($input['documents']);
         }

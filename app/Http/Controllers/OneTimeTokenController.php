@@ -78,7 +78,7 @@ class OneTimeTokenController extends BaseController
             $data['institution_id'] = $request->institution_id;
         }
 
-        if($request->provider_id) {
+        if ($request->provider_id) {
             $data['provider_id'] = $request->provider_id;
         }
 

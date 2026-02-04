@@ -55,7 +55,7 @@ class SubscriptionController extends Controller
     {
         return $this->render('subscriptions.show', [
             'invoice' => $recurring_invoice->load('invoices', 'subscription'),
-            'subscription' => $recurring_invoice->subscription
+            'subscription' => $recurring_invoice->subscription,
         ]);
     }
 }

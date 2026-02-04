@@ -214,7 +214,7 @@ class Quote extends BaseModel
     public const STATUS_CONVERTED = 4;
 
     public const STATUS_REJECTED = 5;
-    
+
     public const STATUS_EXPIRED = -1;
 
     public function toSearchableArray()
@@ -223,27 +223,27 @@ class Quote extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => $this->company->db.":".$this->id,
-            'name' => ctrans('texts.quote') . " " . ($this->number ?? '') . " | " . $this->client->present()->name() .  ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
+            'id' => $this->company->db . ":" . $this->id,
+            'name' => ctrans('texts.quote') . " " . ($this->number ?? '') . " | " . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
-            'number' => (string)$this->number,
-            'is_deleted' => (bool)$this->is_deleted,
+            'number' => (string) $this->number,
+            'is_deleted' => (bool) $this->is_deleted,
             'amount' => (float) $this->amount,
             'balance' => (float) $this->balance,
             'due_date' => $this->due_date,
             'date' => $this->date,
-            'custom_value1' => (string)$this->custom_value1,
-            'custom_value2' => (string)$this->custom_value2,
-            'custom_value3' => (string)$this->custom_value3,
-            'custom_value4' => (string)$this->custom_value4,
+            'custom_value1' => (string) $this->custom_value1,
+            'custom_value2' => (string) $this->custom_value2,
+            'custom_value3' => (string) $this->custom_value3,
+            'custom_value4' => (string) $this->custom_value4,
             'company_key' => $this->company->company_key,
-            'po_number' => (string)$this->po_number,
+            'po_number' => (string) $this->po_number,
         ];
     }
 
     public function getScoutKey()
     {
-        return $this->company->db.":".$this->id;
+        return $this->company->db . ":" . $this->id;
     }
 
     public function getEntityType()
@@ -336,7 +336,7 @@ class Quote extends BaseModel
      *
      * @return InvoiceSumInclusive | InvoiceSum The quote calculator object getters
      */
-    public function calc(): InvoiceSumInclusive | InvoiceSum
+    public function calc(): InvoiceSumInclusive|InvoiceSum
     {
         $quote_calc = null;
 
@@ -375,19 +375,19 @@ class Quote extends BaseModel
     {
         switch ($status) {
             case self::STATUS_DRAFT:
-                return '<h5><span class="badge badge-light">'.ctrans('texts.draft').'</span></h5>';
+                return '<h5><span class="badge badge-light">' . ctrans('texts.draft') . '</span></h5>';
             case self::STATUS_SENT:
-                return '<h5><span class="badge badge-primary">'.ctrans('texts.pending').'</span></h5>';
+                return '<h5><span class="badge badge-primary">' . ctrans('texts.pending') . '</span></h5>';
             case self::STATUS_APPROVED:
-                return '<h5><span class="badge badge-success">'.ctrans('texts.approved').'</span></h5>';
+                return '<h5><span class="badge badge-success">' . ctrans('texts.approved') . '</span></h5>';
             case self::STATUS_EXPIRED:
-                return '<h5><span class="badge badge-danger">'.ctrans('texts.expired').'</span></h5>';
+                return '<h5><span class="badge badge-danger">' . ctrans('texts.expired') . '</span></h5>';
             case self::STATUS_CONVERTED:
-                return '<h5><span class="badge badge-light">'.ctrans('texts.converted').'</span></h5>';
+                return '<h5><span class="badge badge-light">' . ctrans('texts.converted') . '</span></h5>';
             case self::STATUS_REJECTED:
-                return '<h5><span class="badge badge-danger">'.ctrans('texts.rejected').'</span></h5>';
+                return '<h5><span class="badge badge-danger">' . ctrans('texts.rejected') . '</span></h5>';
             default:
-                return '<h5><span class="badge badge-light">'.ctrans('texts.draft').'</span></h5>';
+                return '<h5><span class="badge badge-light">' . ctrans('texts.draft') . '</span></h5>';
         }
     }
 

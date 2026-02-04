@@ -79,7 +79,7 @@ trait MakesDates
      */
     public function formatDatetime($date, string $format): string
     {
-        return Carbon::createFromTimestamp((int) ($date ?? 0))->format($format.' g:i a');
+        return Carbon::createFromTimestamp((int) ($date ?? 0))->format($format . ' g:i a');
     }
 
     /**
@@ -90,7 +90,7 @@ trait MakesDates
      */
     public function formatDateTimestamp($timestamp, string $format): string
     {
-        return Carbon::createFromTimestamp((int)$timestamp)->format($format);
+        return Carbon::createFromTimestamp((int) $timestamp)->format($format);
     }
 
     private function convertToDateObject($date)

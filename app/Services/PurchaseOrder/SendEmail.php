@@ -28,9 +28,7 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
 
 class SendEmail extends AbstractService
 {
-    public function __construct(protected PurchaseOrder $purchase_order, protected ?string $reminder_template = null, protected ?VendorContact $contact = null)
-    {
-    }
+    public function __construct(protected PurchaseOrder $purchase_order, protected ?string $reminder_template = null, protected ?VendorContact $contact = null) {}
 
     /**
      * Builds the correct template to send.

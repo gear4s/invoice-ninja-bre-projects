@@ -55,8 +55,8 @@ class ValidateEInvoiceRequest extends Request
             'entity_id' => ['required','bail', Rule::exists($this->entity, 'id')
                                                                 ->when($this->entity != 'companies', function ($q) use ($user) {
                                                                     $q->where('company_id', $user->company()->id);
-                                                                })
-                                                            ],
+                                                                }),
+            ],
         ];
     }
 
@@ -95,24 +95,24 @@ class ValidateEInvoiceRequest extends Request
         return $class::withTrashed()->find(is_string($this->entity_id) ? $this->decodePrimaryKey($this->entity_id) : $this->entity_id);
 
     }
-    
+
     /**
      * getValidatorClass
-     * 
+     *
      * Return the validator class based on the EInvoicing Standard
-     * 
+     *
      * @return \App\Services\EDocument\Standards\Validation\EntityLevelInterface
      */
     public function getValidatorClass()
     {
         $user = auth()->user();
 
-        if($user->company()->settings->e_invoice_type == 'VERIFACTU') {
+        if ($user->company()->settings->e_invoice_type == 'VERIFACTU') {
             return new \App\Services\EDocument\Standards\Validation\Verifactu\EntityLevel();
         }
 
         // if($user->company()->settings->e_invoice_type == 'PEPPOL') {
-            return new \App\Services\EDocument\Standards\Validation\Peppol\EntityLevel();
+        return new \App\Services\EDocument\Standards\Validation\Peppol\EntityLevel();
         // }
 
     }

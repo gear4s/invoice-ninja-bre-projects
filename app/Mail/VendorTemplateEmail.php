@@ -69,7 +69,7 @@ class VendorTemplateEmail extends Mailable
 
     public function build()
     {
-        $template_name = 'email.template.'.$this->build_email->getTemplate();
+        $template_name = 'email.template.' . $this->build_email->getTemplate();
 
         if (in_array($this->build_email->getTemplate(), ['light', 'dark'])) {
             $template_name = 'email.template.client';
@@ -80,7 +80,7 @@ class VendorTemplateEmail extends Mailable
         }
 
         if ($this->build_email->getTemplate() == 'custom') {
-            $this->build_email->setBody(str_replace('$body', $this->build_email->getBody().$this->buildLinksForCustomDesign(), $this->company->getSetting('email_style_custom')));
+            $this->build_email->setBody(str_replace('$body', $this->build_email->getBody() . $this->buildLinksForCustomDesign(), $this->company->getSetting('email_style_custom')));
         }
 
         $settings = $this->company->settings;

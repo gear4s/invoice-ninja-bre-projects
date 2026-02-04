@@ -28,9 +28,7 @@ class MailgunController extends BaseController
 {
     use SavesDocuments;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Process Mailgun Webhook.

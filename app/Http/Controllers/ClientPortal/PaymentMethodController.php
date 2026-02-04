@@ -173,10 +173,10 @@ class PaymentMethodController extends Controller
         /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
         $client_contact = auth()->guard('contact')->user();
 
-        if ((string)request()->query('method') === (string)GatewayType::CREDIT_CARD) {
+        if ((string) request()->query('method') === (string) GatewayType::CREDIT_CARD) {
             return $client_contact->client->getCreditCardGateway();
         }
-        if ((string)request()->query('method') === (string)GatewayType::BACS) {
+        if ((string) request()->query('method') === (string) GatewayType::BACS) {
             return $client_contact->client->getBACSGateway();
         }
 

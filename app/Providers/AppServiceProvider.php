@@ -102,7 +102,7 @@ class AppServiceProvider extends ServiceProvider
             // @phpstan-ignore /** @phpstan-ignore-next-line **/
             Mailer::setSymfonyTransport(app('mail.manager')->createSymfonyTransport([
                 'transport' => 'postmark',
-                'token' => $postmark_key
+                'token' => $postmark_key,
             ]));
 
             return $this;
@@ -121,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
             return $this;
         });
 
-        
+
         Mail::extend('brevo', function () {
             return (new BrevoTransportFactory())->create(
                 new Dsn(
@@ -154,11 +154,11 @@ class AppServiceProvider extends ServiceProvider
                 'secret' => $secret,
                 'region' => $region,
             ];
-            
+
             if ($topic_arn) {
                 $config['configuration_set'] = $topic_arn;
             }
-            
+
             // @phpstan-ignore /** @phpstan-ignore-next-line **/
             Mailer::setSymfonyTransport(app('mail.manager')->createSymfonyTransport($config));
 
@@ -172,8 +172,5 @@ class AppServiceProvider extends ServiceProvider
 
     }
 
-    public function register(): void
-    {
-        
-    }
+    public function register(): void {}
 }

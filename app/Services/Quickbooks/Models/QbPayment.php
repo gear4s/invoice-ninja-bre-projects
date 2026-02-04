@@ -24,9 +24,7 @@ use App\Services\Quickbooks\Transformers\PaymentTransformer;
 
 class QbPayment implements SyncInterface
 {
-    public function __construct(public QuickbooksService $service)
-    {
-    }
+    public function __construct(public QuickbooksService $service) {}
 
     public function find(string $id): mixed
     {
@@ -60,8 +58,5 @@ class QbPayment implements SyncInterface
         }
     }
 
-    public function syncToForeign(array $records): void
-    {
-
-    }
+    public function syncToForeign(array $records): void {}
 }

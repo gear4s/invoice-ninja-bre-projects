@@ -15,6 +15,4 @@ namespace App\Policies;
 /**
  * Class CompanyTokenPolicy.
  */
-class CompanyTokenPolicy extends EntityPolicy
-{
-}
+class CompanyTokenPolicy extends EntityPolicy {}

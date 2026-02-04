@@ -25,9 +25,7 @@ class CreditEmailedNotification implements ShouldQueue
 {
     use UserNotifies;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

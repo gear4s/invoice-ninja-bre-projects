@@ -258,15 +258,12 @@ class StaticServiceProvider extends ServiceProvider
                 'partial_payment' => [
                     'subject' => EmailTemplateDefaults::emailPaymentPartialSubject(),
                     'body' => EmailTemplateDefaults::emailPaymentPartialTemplate(),
-                ]
+                ],
             ];
 
         });
 
     }
 
-    public function boot()
-    {
-
-    }
+    public function boot() {}
 }

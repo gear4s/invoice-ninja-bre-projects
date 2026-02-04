@@ -145,9 +145,7 @@ class RoEInvoice extends AbstractService
         'RO-VS'  => 'Agriculture',
     ];
 
-    public function __construct(public Invoice $invoice)
-    {
-    }
+    public function __construct(public Invoice $invoice) {}
 
     private function resolveSubEntityCode(string $city)
     {
@@ -511,7 +509,7 @@ class RoEInvoice extends AbstractService
     {
         $code = $tax_id;
 
-        match($tax_id) {
+        match ($tax_id) {
             Product::PRODUCT_TYPE_REVERSE_TAX => $code = 'AE', // VAT_REVERSE_CHARGE =
             Product::PRODUCT_TYPE_EXEMPT => $code = 'E', // EXEMPT_FROM_TAX =
             Product::PRODUCT_TYPE_PHYSICAL => $code = 'S', // STANDARD_RATE =

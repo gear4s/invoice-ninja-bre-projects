@@ -41,14 +41,14 @@ class ContactComponent extends Component
         'home_phone',
         'phone',
         'custom_identifier',
-        'customer_type' ,
-        'id'
+        'customer_type',
+        'id',
     ];
 
     private $defaults = [
         'customer_type' => "Business",
         'custom_identifier' => null,
-        'customer_id' => null
+        'customer_id' => null,
     ];
 
     public function render()

@@ -151,7 +151,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
         $data['raw_value'] = $data['total']['amount_with_fee'];
         $data['customer_email'] = $this->checkout->client->present()->email();
         $data['cardholder_name'] = auth()->guard('contact')->user()->present()->name() ?? '';
-        
+
         return $data;
     }
 

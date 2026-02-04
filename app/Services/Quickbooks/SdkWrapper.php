@@ -171,7 +171,7 @@ class SdkWrapper
 
     public function totalRecords(string $entity): int
     {
-        return (int)$this->sdk->Query("select count(*) from $entity");
+        return (int) $this->sdk->Query("select count(*) from $entity");
     }
 
     private function queryData(string $query, int $start = 1, $limit = 1000): array

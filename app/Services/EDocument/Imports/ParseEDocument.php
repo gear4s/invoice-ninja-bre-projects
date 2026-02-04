@@ -25,10 +25,7 @@ class ParseEDocument extends AbstractService
     /**
      * @throws Exception
      */
-    public function __construct(private UploadedFile $file, private Company $company)
-    {
-
-    }
+    public function __construct(private UploadedFile $file, private Company $company) {}
 
     /**
      * Execute the service.

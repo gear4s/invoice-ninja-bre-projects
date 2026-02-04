@@ -73,7 +73,7 @@ class QbQuote implements SyncInterface
                     ->whereNotNull('number')
                     ->where('number', $ninja_quote_data['number'])
                     ->exists()) {
-                    $ninja_quote_data['number'] = 'qb_'.$ninja_quote_data['number'].'_'.rand(1000, 99999);
+                    $ninja_quote_data['number'] = 'qb_' . $ninja_quote_data['number'] . '_' . rand(1000, 99999);
                 }
 
                 $quote->fill($ninja_quote_data);
@@ -91,10 +91,7 @@ class QbQuote implements SyncInterface
 
     }
 
-    public function syncToForeign(array $records): void
-    {
-
-    }
+    public function syncToForeign(array $records): void {}
 
     private function qbQuoteUpdate(array $ninja_quote_data, Quote $quote): void
     {
@@ -121,7 +118,7 @@ class QbQuote implements SyncInterface
 
         if ($search->count() == 0) {
             $quote = QuoteFactory::create($this->service->company->id, $this->service->company->owner()->id);
-            $quote->client_id = (int)$client_id;
+            $quote->client_id = (int) $client_id;
 
             $sync = new QuoteSync();
             $sync->qb_id = $id;

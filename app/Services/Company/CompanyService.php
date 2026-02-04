@@ -18,9 +18,7 @@ use App\Models\User;
 
 class CompanyService
 {
-    public function __construct(public Company $company)
-    {
-    }
+    public function __construct(public Company $company) {}
 
     public function localizeCompany(User $user)
     {

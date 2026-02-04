@@ -138,7 +138,7 @@ class ProductSalesExport extends BaseExport
 
         if ($product_keys) {
             $product_keys = explode(",", $product_keys);
-            
+
             $product_keys = array_map(function ($product) {
                 return trim($product, "'");
             }, $product_keys);
@@ -217,7 +217,7 @@ class ProductSalesExport extends BaseExport
 
     private function buildRow($invoice, $invoice_item): array
     {
-        $transformed_entity = (array)$invoice_item;
+        $transformed_entity = (array) $invoice_item;
         $transformed_entity['price'] = ($invoice_item->product_cost ?? 1) * ($invoice->exchange_rate ?? 1) ;
 
         $entity = [];

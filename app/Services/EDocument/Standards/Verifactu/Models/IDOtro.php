@@ -38,10 +38,7 @@ class IDOtro extends BaseXmlModel
      * @param  string $id Identifier value, e.g., passport number, tax ID, or placeholder
      * @return void
      */
-    public function __construct(private string $codigoPais = 'ES', private string $idType = '06', private string $id = 'NO_DISPONIBLE')
-    {
-
-    }
+    public function __construct(private string $codigoPais = 'ES', private string $idType = '06', private string $id = 'NO_DISPONIBLE') {}
 
     public function getNombreRazon(): string
     {

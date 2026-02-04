@@ -38,9 +38,7 @@ class VendorExpenseNotify implements ShouldQueue
 
     public $tries = 1;
 
-    public function __construct(private Expense $expense, private string $db)
-    {
-    }
+    public function __construct(private Expense $expense, private string $db) {}
 
     public function handle()
     {

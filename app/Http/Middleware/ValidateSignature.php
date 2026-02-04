@@ -23,7 +23,7 @@ class ValidateSignature
      * @var array<int, string>
      */
     protected $ignore = [
-        'q'
+        'q',
     ];
 
     /**

@@ -27,9 +27,7 @@ class TriggeredActions extends AbstractService
 
     private bool $updated = false;
 
-    public function __construct(private Invoice $invoice, private Request $request)
-    {
-    }
+    public function __construct(private Invoice $invoice, private Request $request) {}
 
     public function run()
     {

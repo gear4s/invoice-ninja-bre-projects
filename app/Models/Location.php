@@ -78,7 +78,7 @@ class Location extends BaseModel
         'is_shipping_location',
         'client_id',
         'vendor_id',
-       ];
+    ];
 
     protected $casts = [
         'tax_data' => 'object',

@@ -162,7 +162,7 @@ class Charge
         $data = [
             'gateway_type_id' => $cgt->gateway_type_id,
             'payment_type' => $this->transformPaymentTypeToConstant($payment_method_type),
-            'transaction_reference' => isset($response->latest_charge) ? $response->latest_charge : $response->charges->data[0]->id,
+            'transaction_reference' => $response->latest_charge ?? $response->charges->data[0]->id,
             'amount' => $amount,
         ];
 

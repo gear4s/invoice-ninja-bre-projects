@@ -17,8 +17,6 @@ use App\Services\EDocument\Standards\Peppol;
 
 class BaseCountry
 {
-    public function __construct(protected Invoice $invoice)
-    {
-    }
+    public function __construct(protected Invoice $invoice) {}
 
 }

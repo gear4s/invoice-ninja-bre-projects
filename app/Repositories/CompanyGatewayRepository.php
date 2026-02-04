@@ -22,17 +22,15 @@ use App\Repositories\BaseRepository;
  */
 class CompanyGatewayRepository extends BaseRepository
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function archive($company_gateway): CompanyGateway
     {
-        
+
         parent::archive($company_gateway);
-        
+
         $this->removeGatewayFromCompanyGatewayIds($company_gateway);
-        
+
         return $company_gateway;
     }
 
@@ -58,7 +56,7 @@ class CompanyGatewayRepository extends BaseRepository
     {
         $company_gateway_ids = $company_gateway->company->getSetting('company_gateway_ids');
 
-        if(strlen($company_gateway_ids ?? '') > 2){
+        if (strlen($company_gateway_ids ?? '') > 2) {
             $transformed_ids = collect($this->transformKeys(explode(',', $company_gateway_ids)))
                                 ->push($company_gateway->hashed_id)
                                 ->implode(",");
@@ -76,9 +74,9 @@ class CompanyGatewayRepository extends BaseRepository
     {
         $company_gateway_ids = $company_gateway->company->getSetting('company_gateway_ids');
 
-        if(strpos($company_gateway_ids, $company_gateway->hashed_id) !== false){
+        if (strpos($company_gateway_ids, $company_gateway->hashed_id) !== false) {
             $transformed_ids = collect($this->transformKeys(explode(',', $company_gateway_ids)))
-                                ->filter(function ($id) use ($company_gateway){
+                                ->filter(function ($id) use ($company_gateway) {
                                     return $id !== $company_gateway->hashed_id;
                                 })
                                 ->implode(",");

@@ -16,9 +16,7 @@ use App\Libraries\MultiDB;
 
 class SubdomainController extends BaseController
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Return if a subdomain is available.

@@ -45,13 +45,13 @@ class Office365MailTransport extends AbstractTransport
 
             /** @phpstan-ignore-next-line **/
             foreach ($bccs->getAddresses() as $address) {
-                $bcc_list .= 'Bcc: "'.$address->getAddress().'" <'.$address->getAddress().'>\r\n';
+                $bcc_list .= 'Bcc: "' . $address->getAddress() . '" <' . $address->getAddress() . '>\r\n';
             }
         }
 
         try {
-            $graphMessage = $graph->createRequest('POST', '/users/'.$symfony_message->getFrom()[0]->getAddress().'/sendmail')
-                ->attachBody(base64_encode($bcc_list.$message->toString()))
+            $graphMessage = $graph->createRequest('POST', '/users/' . $symfony_message->getFrom()[0]->getAddress() . '/sendmail')
+                ->attachBody(base64_encode($bcc_list . $message->toString()))
                 ->addHeaders(['Content-Type' => 'text/plain'])
                 ->setReturnType(\Microsoft\Graph\Model\Message::class)
                 ->execute();
@@ -60,8 +60,8 @@ class Office365MailTransport extends AbstractTransport
             sleep(rand(5, 10));
 
             try {
-                $graphMessage = $graph->createRequest('POST', '/users/'.$symfony_message->getFrom()[0]->getAddress().'/sendmail')
-                    ->attachBody(base64_encode($bcc_list.$message->toString()))
+                $graphMessage = $graph->createRequest('POST', '/users/' . $symfony_message->getFrom()[0]->getAddress() . '/sendmail')
+                    ->attachBody(base64_encode($bcc_list . $message->toString()))
                     ->addHeaders(['Content-Type' => 'text/plain'])
                     ->setReturnType(\Microsoft\Graph\Model\Message::class)
                     ->execute();

@@ -47,6 +47,6 @@ class ValidCompanyGatewayFeesAndLimitsRule implements Rule
      */
     public function message()
     {
-        return $this->return_data[0].' is not a valid '.$this->return_data[1];
+        return $this->return_data[0] . ' is not a valid ' . $this->return_data[1];
     }
 }

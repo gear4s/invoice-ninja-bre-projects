@@ -22,9 +22,7 @@ class SchedulerService
     use MakesHash;
     use MakesDates;
 
-    public function __construct(public Scheduler $scheduler)
-    {
-    }
+    public function __construct(public Scheduler $scheduler) {}
 
     /**
      * Called from the TaskScheduler Cron

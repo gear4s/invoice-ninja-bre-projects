@@ -48,7 +48,7 @@ class StripeWebhook implements ShouldQueue
         'payment_intent.payment_failed',
         'mandate.updated',
         'checkout.session.completed',
-        'payment_method.automatically_updated'
+        'payment_method.automatically_updated',
     ];
 
     public function __construct(string $company_key, int $company_gateway_id)
@@ -92,7 +92,7 @@ class StripeWebhook implements ShouldQueue
     public function failed($exception = null)
     {
         nlog("StripeWebhook failed: " . $exception->getMessage());
-        
+
         config(['queue.failed.driver' => null]);
 
     }

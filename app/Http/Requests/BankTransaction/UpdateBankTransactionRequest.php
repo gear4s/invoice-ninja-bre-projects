@@ -42,12 +42,12 @@ class UpdateBankTransactionRequest extends Request
         }
 
         if (isset($this->vendor_id)) {
-            $rules['vendor_id'] = 'bail|required|exists:vendors,id,company_id,'.auth()->user()->company()->id.',is_deleted,0';
+            $rules['vendor_id'] = 'bail|required|exists:vendors,id,company_id,' . auth()->user()->company()->id . ',is_deleted,0';
         }
 
         $rules['amount'] = ['sometimes', 'bail', 'nullable', 'numeric', 'max:99999999999999'];
 
-        $rules['bank_integration_id'] = 'bail|required|exists:bank_integrations,id,company_id,'.auth()->user()->company()->id.',is_deleted,0';
+        $rules['bank_integration_id'] = 'bail|required|exists:bank_integrations,id,company_id,' . auth()->user()->company()->id . ',is_deleted,0';
 
 
         return $rules;

@@ -102,8 +102,6 @@ class PaymentMeans implements PaymentMeansInterface
         'ZZZ' => 'Mutually defined',
     ];
 
-    public function run()
-    {
-    }
+    public function run() {}
 
 }

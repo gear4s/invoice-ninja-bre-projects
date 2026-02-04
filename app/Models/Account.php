@@ -510,7 +510,7 @@ class Account extends BaseModel
         }
 
         if ($this->email_quota) {
-            return (int)$this->email_quota;
+            return (int) $this->email_quota;
         }
 
         if (Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 1) {
