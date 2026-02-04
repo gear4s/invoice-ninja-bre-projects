@@ -5770,6 +5770,10 @@ $lang = array(
     'tour_toolbox_description' => 'On the right is the toolbox. Use it to add fields and elements for signatories to interact with. The signature field is already selected. Click to continue.',
     'tour_document_canvas' => 'This is your document canvas. Place and position fields for your signatories here.',
     'tour_save_document' => 'When you’re finished, click here to save your document.',
+    'create_signature' => 'Create Signature',
+    'signature_name' => 'Signature Name',
+    'close_tab' => 'Close Tab',
+    'sign' => 'Sign',
 );
 
 return $lang;
