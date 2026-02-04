@@ -37,15 +37,49 @@ class ConfigQuickbooksRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'invoices' => 'required|in:push,pull,bidirectional,none|bail',
-            'quotes' => 'required|in:push,pull,bidirectional,none|bail',
-            'payments' => 'required|in:push,pull,bidirectional,none|bail',
-            'products' => 'required|in:push,pull,bidirectional,none|bail',
-            'vendors' => 'required|in:push,pull,bidirectional,none|bail',
-            'clients' => 'required|in:push,pull,bidirectional,none|bail',
-            'expenses' => 'required|in:push,pull,bidirectional,none|bail',
-            'expense_categories' => 'required|in:push,pull,bidirectional,none|bail',
-            'qb_income_account_id' => 'required|string|bail',
+            'invoice' => 'required|in:push,pull,bidirectional,none|bail',
+            'quote' => 'required|in:push,pull,bidirectional,none|bail',
+            'payment' => 'required|in:push,pull,bidirectional,none|bail',
+            'product' => 'required|in:push,pull,bidirectional,none|bail',
+            'vendor' => 'required|in:push,pull,bidirectional,none|bail',
+            'client' => 'required|in:push,pull,bidirectional,none|bail',
+            'expense' => 'required|in:push,pull,bidirectional,none|bail',
+            'expense_category' => 'required|in:push,pull,bidirectional,none|bail',
+            'qb_income_account_id' => [
+                'required',
+                'string',
+                'bail',
+                function ($attribute, $value, $fail) {
+                    /** @var \App\Models\User $user */
+                    $user = auth()->user();
+                    $company = $user->company();
+                    
+                    if (!$company || !$company->quickbooks || !$company->quickbooks->settings) {
+                        $fail('QuickBooks settings not found.');
+                        return;
+                    }
+                    
+                    $income_account_map = $company->quickbooks->settings->income_account_map ?? [];
+                    
+                    if (empty($income_account_map)) {
+                        $fail('No income accounts are available. Please sync income accounts first.');
+                        return;
+                    }
+                    
+                    // Check if the value exists in any entry of the income_account_map under the 'id' key
+                    $exists = false;
+                    foreach ($income_account_map as $account) {
+                        if (isset($account['id']) && (string)$account['id'] === (string)$value) {
+                            $exists = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!$exists) {
+                        $fail('The selected income account ID does not exist in the available income accounts.');
+                    }
+                },
+            ],
         ];
     }
 

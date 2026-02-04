@@ -136,7 +136,7 @@ class StoreTaskRequest extends Request
             $this->files->set('file', [$this->file('file')]);
         }
 
-        if(isset($input['time_log']) &&is_string($input['time_log'])) {
+        if(isset($input['time_log']) && is_string($input['time_log'])) {
             $input['time_log'] = json_decode($input['time_log'], true);
         }
 
@@ -148,6 +148,11 @@ class StoreTaskRequest extends Request
                 
                 if (is_string($time_log)) {
                     continue; //catch if it isn't even a proper time log
+                }
+
+                // Ensure $time_log is an array before accessing indices
+                if (!is_array($time_log)) {
+                    continue;
                 }
 
                 $time_log[0] = intval($time_log[0] ?? 0);

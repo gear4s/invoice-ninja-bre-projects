@@ -271,6 +271,8 @@ class InvoiceTransformer extends BaseTransformer
                 }
             }
     
+            if(!$tax_rate_id)
+                continue;
 
           $tax_lines[] = [
             'Amount' => round($tax['total'], 2),
@@ -288,7 +290,6 @@ class InvoiceTransformer extends BaseTransformer
           $calculated_total_tax += round($tax['total'], 2);
         }
 
-
         foreach($invoice->calc()->getTotalTaxMap() ?? [] as $tax)
         {
             $tax_components = $qb_service->helper->splitTaxName($tax['name']);
@@ -305,6 +306,9 @@ class InvoiceTransformer extends BaseTransformer
                 }
             }
     
+            if(!$tax_rate_id)
+                continue;
+
             $tax_lines[] = [
                 'Amount' => round($tax['total'], 2),
                 'DetailType' => 'TaxLineDetail',
