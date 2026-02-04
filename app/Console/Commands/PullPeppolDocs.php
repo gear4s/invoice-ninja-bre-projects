@@ -61,17 +61,19 @@ class PullPeppolDocs extends Command
 
         $this->info("E-Invoice Quota Remaining: $quota_count");
 
+        $this->info("E-Invoice Token: " . $account->e_invoicing_token);
+
         if (!isset($account->e_invoicing_token)) {
-            
+
             $this->info("No e-invoicing token found! You will not be able to authenticate with the E-Invoice API. Try logging out and back in again.");
             
             $this->info("Updating Token...");
 
-            $response = $this->updateToken($account);
+            $response_array = $this->updateToken($account);
 
-            $this->info($response);
+            $this->info($response[1]);
 
-            if($response != 'success'){
+            if($response_array[0] != 200){
 
                 $this->error("Failed to update token exiting");
                 return;
@@ -116,6 +118,8 @@ class PullPeppolDocs extends Command
 
                     $hash = $response->header('X-CONFIRMATION-HASH');
 
+                    $this->info($response->body() );
+                    
                     $this->handleSuccess($response->json(), $company, $hash);
                 } else {
                     nlog($response->body());
@@ -127,28 +131,30 @@ class PullPeppolDocs extends Command
 
     }
 
-    private function updateToken(Account $account): mixed
+    private function updateToken(Account $account): array
     {
-        $response = Http::baseUrl(config('ninja.hosted_ninja_url'))
+        $response = \Illuminate\Support\Facades\Http::baseUrl(config('ninja.hosted_ninja_url'))
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])
             ->post('/api/einvoice/tokens/rotate', data: [
                 'license' => config('ninja.license_key'),
-                'account_key' => $user->account->key,
+                'account_key' => $account->key,
             ]);
 
 
         if ($response->successful()) {
+            
             $account->update([
                 'e_invoicing_token' => $response->json('token'),
             ]);
 
-            return 'success';
+            return [200, $response->json('token')];
+            // return 'success';
         }
 
-        return $response->body();
+        return [422, $response->body()];
     }
 
     /**
