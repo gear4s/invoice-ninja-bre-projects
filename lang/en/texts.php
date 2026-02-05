@@ -5898,6 +5898,7 @@ $lang = array(
     'voided_payment' => 'Payment Voided',
     'welcome_to_docuninja' => 'Welcome to DocuNinja',
     'yodlee' => 'Yodlee',
+    'location_name' => 'Location Name',
 );
 
 return $lang;
