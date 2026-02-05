@@ -5774,6 +5774,7 @@ $lang = array(
     'signature_name' => 'Signature Name',
     'close_tab' => 'Close Tab',
     'sign' => 'Sign',
+    'location_name' => 'Location Name',
 );
 
 return $lang;
