@@ -97,7 +97,8 @@ class UpdateClientRequest extends Request
             }
         }];
 
-
+        $rules['settings.currency_id'] = 'required|exists:currencies,id';
+        
         return $rules;
     }
 
