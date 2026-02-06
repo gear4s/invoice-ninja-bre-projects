@@ -42,6 +42,12 @@ class ProductTransformer extends BaseTransformer
 
     public function transform(mixed $data): array
     {
+        $tax_id = data_get($data, 'Taxable', '1') == 'true' ? '1' : '5';
+
+        if($tax_id == '1' && data_get($data, 'Type') == 'Service') {
+            $tax_id = '2';
+        } 
+
         return [
             'id' => data_get($data, 'Id', null),
             'product_key' => data_get($data, 'Name', data_get($data, 'FullyQualifiedName', '')),
@@ -50,10 +56,10 @@ class ProductTransformer extends BaseTransformer
             'price' => data_get($data, 'UnitPrice', 0) ?? 0,
             'in_stock_quantity' => data_get($data, 'QtyOnHand', 0) ?? 0,
             'income_account_id' => data_get($data, 'IncomeAccountRef.value') ?? data_get($data, 'IncomeAccountRef') ?? null,
+            'type_id' => data_get($data, 'Type') == 'Service' ? '2' : '1',
+            'tax_id' => $tax_id,
         ];
 
     }
-
-
 
 }

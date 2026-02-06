@@ -505,4 +505,51 @@ class QuickbooksService
         return $this;
 
     }
+    
+    /**
+     * companySync
+     *
+     * Syncs the company information from Quickbooks to Invoice Ninja
+     *
+     * @return self
+     */
+    public function companySync(): self
+    {
+
+        $companyInfo = $this->sdk()->company();
+
+        $income_accounts = $this->fetchIncomeAccounts();
+        $tax_rates = $this->fetchTaxRates();
+        $company_preferences = $this->sdk()->getPreferences();
+        $automatic_taxes = data_get($company_preferences, 'TaxPrefs.PartnerTaxEnabled', false);
+
+        $default_income_account = strlen($this->company->quickbooks->settings->qb_income_account_id ?? '') >= 1 ? $this->company->quickbooks->settings->qb_income_account_id : ($income_accounts[0]['id'] ?? null);
+        
+        $this->company->quickbooks->settings->tax_rate_map = $tax_rates;
+        $this->company->quickbooks->settings->income_account_map = $income_accounts;
+        $this->company->quickbooks->settings->qb_income_account_id = $default_income_account;
+        $this->company->quickbooks->companyName = $companyInfo->CompanyName ?? '';
+        $this->company->quickbooks->settings->automatic_taxes = $automatic_taxes;
+        $this->company->save();
+
+        // Get all Invoice Ninja tax rates for this company and archived them
+        // TaxRate::where('company_id', $this->company->id)
+        //         ->cursor()
+        //         ->each(function ($tax) {
+        //             $tax->delete();
+        //         });
+
+        // Iterate through the Quickbooks tax rates and create new Invoice Ninja tax rates
+        foreach ($tax_rates as $tax_rate) {
+            $tr = new TaxRate();
+            $tr->company_id = $this->company->id;
+            $tr->user_id = $this->company->owner()->id;
+            $tr->name = $tax_rate['name'];
+            $tr->rate = $tax_rate['rate'];
+            $tr->save();
+        }
+
+        return $this;
+
+    }
 }

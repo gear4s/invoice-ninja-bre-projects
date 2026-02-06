@@ -13,15 +13,33 @@
 namespace App\Http\Controllers;
 
 use App\Services\Quickbooks\QuickbooksService;
+use App\Services\Quickbooks\Jobs\QuickbooksImport;
 use App\Http\Requests\Quickbooks\SyncTaxRatesRequest;
-use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
 use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
+use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
 
 class QuickbooksController extends BaseController
 {
     public function sync(SyncQuickbooksRequest $request)
     {
 
+        $user = auth()->user();
+        $company = $user->company();
+
+        $syncable = [];
+
+        if($request->client) {
+            $syncable[] = 'Customer';
+        }
+        if($request->product) {
+            $syncable[] = 'Item';
+        }
+        if($request->invoice) {
+            $syncable[] = 'Invoice';
+        }
+
+        QuickbooksImport::dispatch($company->id, $company->db, $syncable);
+        
         return response()->noContent();
     }
 

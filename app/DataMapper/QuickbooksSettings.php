@@ -83,22 +83,24 @@ class QuickbooksSettings implements Castable
     public function with(array $changes): self
     {
 
-       $settings = [
-            'settings' => [
-                'client' => [
-                    'direction' => $changes['client']['direction'] ?? $this->settings->client->direction->value,
-                ],
-                'invoice' => [
-                    'direction' => $changes['invoice']['direction'] ?? $this->settings->invoice->direction->value,
-                ],
-                'product' => [
-                    'direction' => $changes['product']['direction'] ?? $this->settings->product->direction->value,
-                ],
-                'qb_income_account_id' => $changes['qb_income_account_id'] ?? $this->settings->qb_income_account_id,
+        $settings = $this->settings->toArray();
+
+        $new_settings = [
+            'client' => [
+                'direction' => $changes['client']['direction'] ?? $this->settings->client->direction->value,
             ],
+            'invoice' => [
+                'direction' => $changes['invoice']['direction'] ?? $this->settings->invoice->direction->value,
+            ],
+            'product' => [
+                'direction' => $changes['product']['direction'] ?? $this->settings->product->direction->value,
+            ],
+            'qb_income_account_id' => $changes['qb_income_account_id'] ?? $this->settings->qb_income_account_id,
         ];
 
-        return new self(array_merge($this->toArray(), $settings));
+        $final_settings['settings'] = array_merge($settings, $new_settings);
+        
+        return new self(array_merge($this->toArray(), $final_settings));
     }
 
     /**

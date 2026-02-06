@@ -37,12 +37,12 @@ class SyncQuickbooksRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'clients' => 'required_with:invoices,quotes,payments|in:email,name,always_create',
-            'products' => 'sometimes|in:product_key,always_create',
-            'invoices' => 'sometimes|in:number,always_create',
-            'quotes' => 'sometimes|in:number,always_create',
-            'payments' => 'sometimes|in:always_create',
-            'vendors' => 'sometimes|in:email,name,always_create',
+            'client' => 'required|boolean',
+            'product' => 'required|boolean',
+            'invoice' => 'required|boolean',
+            // 'quotes' => 'sometimes|in:number,always_create',
+            // 'payments' => 'sometimes|in:always_create',
+            // 'vendors' => 'sometimes|in:email,name,always_create',
         ];
     }
 
