@@ -1419,6 +1419,7 @@ class PdfBuilder
             '$purchase_order.due_date' => 'due_date',
             '$purchase_order.balance_due' => 'balance_due',
             '$credit.valid_until' => 'due_date',
+            '$credit.total' => 'amount',
         ];
 
         try {
