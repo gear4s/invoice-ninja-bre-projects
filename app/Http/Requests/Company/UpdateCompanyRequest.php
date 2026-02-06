@@ -290,45 +290,4 @@ class UpdateCompanyRequest extends Request
 
         return rtrim($url, '/');
     }
-
-    /**
-     * Filter and curate QuickBooks settings to only allow updatable fields.
-     *
-     * This method ensures that only safe, user-configurable fields can be updated,
-     * while protecting OAuth tokens and system-managed fields.
-     *
-     * @param  array $quickbooks
-     * @return array
-     */
-    private function filterUpdatableQuickbooksFields(array $quickbooks): array
-    {
-        $filtered = [];
-
-        // Only allow top-level fields that are in the updatable list
-        foreach ($this->updatable_quickbooks_fields as $field) {
-            if (array_key_exists($field, $quickbooks)) {
-                $filtered[$field] = $quickbooks[$field];
-            }
-        }
-
-        // If settings are being updated, filter nested settings fields
-        if (isset($filtered['settings']) && is_array($filtered['settings'])) {
-            $filtered_settings = [];
-
-            foreach ($this->updatable_quickbooks_settings_fields as $settings_field) {
-                if (array_key_exists($settings_field, $filtered['settings'])) {
-                    $filtered_settings[$settings_field] = $filtered['settings'][$settings_field];
-                }
-            }
-
-            $filtered['settings'] = $filtered_settings;
-        }
-
-        // Explicitly remove any protected fields that might have been included
-        foreach ($this->protected_quickbooks_fields as $protected_field) {
-            unset($filtered[$protected_field]);
-        }
-
-        return $filtered;
-    }
 }

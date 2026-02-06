@@ -12,7 +12,6 @@
 
 namespace App\Repositories;
 
-use App\Utils\Ninja;
 use App\Models\Company;
 use App\Repositories\BaseRepository;
 
@@ -55,6 +54,10 @@ class CompanyRepository extends BaseRepository
             $company->e_invoice = $data['e_invoice'];
         }
 
+        if (isset($data['quickbooks']) && array_key_exists('settings', $data['quickbooks'])) {
+            $company->quickbooks = $company->quickbooks->with($data['quickbooks']['settings']);
+        }
+
         $company->save();
 
         return $company;
@@ -73,44 +76,5 @@ class CompanyRepository extends BaseRepository
         }
 
         return $fields;
-    }
-
-    /**
-     * Update QuickBooks settings by merging updatable fields with existing settings.
-     *
-     * This method safely merges only the allowed fields from the input
-     * with the existing QuickBooks settings, preserving OAuth tokens and
-     * other protected fields.
-     *
-     * @param  Company $company
-     * @param  array $quickbooks_data
-     * @return void
-     */
-    private function updateQuickbooksSettings(Company $company, array $quickbooks_data): void
-    {
-        $existing = $company->quickbooks ?? new QuickbooksSettings();
-
-        // Update top-level fields
-        if (isset($quickbooks_data['companyName'])) {
-            $existing->companyName = $quickbooks_data['companyName'];
-        }
-
-        // Update nested settings if provided
-        if (isset($quickbooks_data['settings']) && is_array($quickbooks_data['settings'])) {
-            foreach ($quickbooks_data['settings'] as $key => $value) {
-                // Handle sync map objects (client, vendor, invoice, etc.)
-                if (in_array($key, ['client', 'vendor', 'invoice', 'sales', 'quote', 'purchase_order', 'product', 'payment', 'expense', 'expense_category'])) {
-                    if (isset($value['direction'])) {
-                        $existing->settings->{$key}->direction = SyncDirection::from($value['direction']);
-                    }
-                }
-                // Handle scalar settings fields
-                elseif (property_exists($existing->settings, $key)) {
-                    $existing->settings->{$key} = $value;
-                }
-            }
-        }
-
-        $company->quickbooks = $existing;
     }
 }

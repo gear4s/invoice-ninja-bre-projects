@@ -71,6 +71,35 @@ class QuickbooksSettings implements Castable
             'settings' => $this->settings->toArray(),
         ];
     }
+    
+    /**
+     * 
+     * Patches our settings object with the 
+     * selected changes we authorize.
+     *
+     * @param  array $changes
+     * @return self
+     */
+    public function with(array $changes): self
+    {
+
+       $settings = [
+            'settings' => [
+                'client' => [
+                    'direction' => $changes['client']['direction'] ?? $this->settings->client->direction->value,
+                ],
+                'invoice' => [
+                    'direction' => $changes['invoice']['direction'] ?? $this->settings->invoice->direction->value,
+                ],
+                'product' => [
+                    'direction' => $changes['product']['direction'] ?? $this->settings->product->direction->value,
+                ],
+                'qb_income_account_id' => $changes['qb_income_account_id'] ?? $this->settings->qb_income_account_id,
+            ],
+        ];
+
+        return new self(array_merge($this->toArray(), $settings));
+    }
 
     /**
      * Check if this QuickbooksSettings instance represents actual data or is just a default empty object.
