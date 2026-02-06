@@ -69,6 +69,7 @@ class SubscriptionRepository extends BaseRepository
 
         $invoice = InvoiceFactory::create($subscription->company_id, $subscription->user_id);
         $invoice->client_id = $client->id;
+        $invoice->uses_inclusive_taxes = $client->getSetting('inclusive_taxes');
 
         $invoice->save();
 

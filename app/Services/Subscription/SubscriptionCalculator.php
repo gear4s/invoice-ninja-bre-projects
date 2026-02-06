@@ -49,6 +49,7 @@ class SubscriptionCalculator
         $invoice->is_proforma = true;
         $invoice->number = "####" . ctrans('texts.subscription') . "_" . now()->format('Y-m-d') . "_" . rand(0, 100000);
         $invoice->line_items = $this->buildItems($context);
+        $invoice->uses_inclusive_taxes = $this->subscription->company->getSetting('inclusive_taxes');
 
         if (isset($context['valid_coupon']) && $context['valid_coupon']) {
             $invoice->discount = $this->subscription->promo_discount;
