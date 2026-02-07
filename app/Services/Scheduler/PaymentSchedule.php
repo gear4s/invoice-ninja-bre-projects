@@ -25,6 +25,12 @@ class PaymentSchedule
 
     public function run()
     {
+        //Handle if the invoice_id has been deleted
+        if(!isset($this->scheduler->parameters['invoice_id'])) {
+            $this->scheduler->forceDelete();
+            return;
+        }
+
         $invoice = Invoice::find($this->decodePrimaryKey($this->scheduler->parameters['invoice_id']));
 
         // Needs to be draft, partial or sent AND not deleted
