@@ -5904,7 +5904,9 @@ $lang = array(
     'e_invoice_received_notification_help' => 'Send an email when an e-invoice has been received',
     'location_field' => 'Location Field',
     'access_key' => 'Access Key',
-
+    'payment_type_FPX' => 'FPX',
+    'payment_type_Stripe Bank Transfer' => 'Stripe Bank Transfer',
+    
 );
 
 return $lang;

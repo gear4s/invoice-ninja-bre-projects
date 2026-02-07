@@ -69,11 +69,6 @@ class QuickbooksImport implements ShouldQueue
 
         foreach ($this->entities as $key => $entity) {
 
-            if (!$this->qbs->syncable($key, \App\Enum\SyncDirection::PULL)) {
-                nlog('skipping ' . $key);
-                continue;
-            }
-
             $records = $this->qbs->sdk()->fetchRecords($entity);
 
             $this->processEntitySync($key, $records);

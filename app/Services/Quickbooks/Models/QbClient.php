@@ -60,7 +60,7 @@ class QbClient implements SyncInterface
         $transformer = new ClientTransformer($this->service->company);
 
         foreach ($records as $record) {
-            $ninja_data = $transformer->qbToNinja($record);
+            $ninja_data = $transformer->qbToNinja($record, $this->service);
 
             if (! empty($ninja_data[0]['terms'])) {
                 $days = $this->service->findEntityById('Term', $ninja_data[0]['terms']);

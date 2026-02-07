@@ -47,8 +47,6 @@ class ReportExportController extends BaseController
 
         }
 
-        nlog(" IS NOT");
-
         // Check if the content starts with PDF signature (%PDF-)
         $isPdf = str_starts_with(trim($report), '%PDF-');
 

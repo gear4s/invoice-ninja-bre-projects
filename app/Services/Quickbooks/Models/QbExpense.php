@@ -58,7 +58,7 @@ class QbExpense implements SyncInterface
 
         foreach ($records as $record) {
 
-            $ninja_expense_data = $this->expense_transformer->qbToNinja($record);
+            $ninja_expense_data = $this->expense_transformer->qbToNinja($record, $this->service);
 
             if ($expense = $this->findExpense($ninja_expense_data['id'])) {
 
@@ -195,7 +195,7 @@ class QbExpense implements SyncInterface
             if (!$expense->id) {
                 $this->syncNinjaExpense($qb_record);
             } elseif (Carbon::parse($last_updated)->gt(Carbon::parse($expense->updated_at)) || $qb_record->SyncToken == '0') {
-                $ninja_expense_data = $this->expense_transformer->qbToNinja($qb_record);
+                $ninja_expense_data = $this->expense_transformer->qbToNinja($qb_record, $this->service);
 
                 $this->expense_repository->save($ninja_expense_data, $expense);
 
@@ -213,7 +213,7 @@ class QbExpense implements SyncInterface
     public function syncNinjaInvoice($record): void
     {
 
-        $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record);
+        $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record, $this->service);
 
         $payment_ids = $ninja_invoice_data['payment_ids'] ?? [];
 
@@ -242,7 +242,7 @@ class QbExpense implements SyncInterface
 
                 $payment_transformer = new PaymentTransformer($this->service->company);
 
-                $transformed = $payment_transformer->qbToNinja($payment);
+                $transformed = $payment_transformer->qbToNinja($payment, $this->service);
 
                 $ninja_payment = $payment_transformer->buildPayment($payment);
                 $ninja_payment->service()->applyNumber()->save();

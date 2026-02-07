@@ -41,7 +41,7 @@ class QbProduct implements SyncInterface
 
         foreach ($records as $record) {
 
-            $ninja_data = $this->product_transformer->qbToNinja($record);
+            $ninja_data = $this->product_transformer->qbToNinja($record, $this->service);
 
             if ($product = $this->findProduct($ninja_data['id'])) {
                 $product->fill($ninja_data);
@@ -85,7 +85,7 @@ class QbProduct implements SyncInterface
         if ($this->service->syncable('product', \App\Enum\SyncDirection::PULL) && $ninja_record = $this->findProduct($id)) {
 
             if (Carbon::parse($last_updated) > Carbon::parse($ninja_record->updated_at)) {
-                $ninja_data = $this->product_transformer->qbToNinja($qb_record);
+                $ninja_data = $this->product_transformer->qbToNinja($qb_record, $this->service);
 
                 $ninja_record->fill($ninja_data);
                 $ninja_record->save();
@@ -120,6 +120,11 @@ class QbProduct implements SyncInterface
         $escaped_name = str_replace("'", "''", $item_name);
         $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
         $existing_items = $this->service->sdk->Query($query);
+
+        // QB SDK can return a single object or an array; normalize to array
+        if (!empty($existing_items) && !is_array($existing_items)) {
+            $existing_items = [$existing_items];
+        }
         if (!empty($existing_items) && isset($existing_items[0])) {
             $existing_item = $existing_items[0];
             $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');

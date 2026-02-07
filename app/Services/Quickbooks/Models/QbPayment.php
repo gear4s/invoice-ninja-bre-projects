@@ -38,7 +38,7 @@ class QbPayment implements SyncInterface
 
             $payment_transformer = new PaymentTransformer($this->service->company);
 
-            $transformed = $payment_transformer->qbToNinja($payment);
+            $transformed = $payment_transformer->qbToNinja($payment, $this->service);
 
             $ninja_payment = $payment_transformer->buildPayment($payment);
             $ninja_payment->service()->applyNumber()->save();
@@ -54,7 +54,7 @@ class QbPayment implements SyncInterface
         $transformer = new PaymentTransformer($this->service->company);
 
         foreach ($records as $record) {
-            $ninja_data = $transformer->qbToNinja($record);
+            $ninja_data = $transformer->qbToNinja($record, $this->service);
         }
     }
 
