@@ -100,21 +100,52 @@ class ClientTransformer extends BaseTransformer
             'email' =>  data_get($data, 'PrimaryEmailAddr.Address', null),
         ];
 
+        // Get billing address fields
+        $bill_addr = data_get($data, 'BillAddr', []);
+        $bill_address1 = data_get($bill_addr, 'Line1', '');
+        $bill_address2 = data_get($bill_addr, 'Line2', '');
+        $bill_city = data_get($bill_addr, 'City', '');
+        $bill_state = data_get($bill_addr, 'CountrySubDivisionCode', '');
+        $bill_postal_code = data_get($bill_addr, 'PostalCode', '');
+        $bill_country = data_get($bill_addr, 'Country', data_get($bill_addr, 'CountryCode', null));
+
+        // Get shipping address fields
+        // If ShipAddr is NULL, QuickBooks indicates "same as billing" - copy billing address to shipping
+        $ship_addr = data_get($data, 'ShipAddr');
+        
+        if ($ship_addr === null) {
+            // ShipAddr is NULL, so shipping address is same as billing address
+            $ship_address1 = $bill_address1;
+            $ship_address2 = $bill_address2;
+            $ship_city = $bill_city;
+            $ship_state = $bill_state;
+            $ship_postal_code = $bill_postal_code;
+            $ship_country = $bill_country;
+        } else {
+            // ShipAddr exists, extract the shipping address fields
+            $ship_address1 = data_get($ship_addr, 'Line1', '');
+            $ship_address2 = data_get($ship_addr, 'Line2', '');
+            $ship_city = data_get($ship_addr, 'City', '');
+            $ship_state = data_get($ship_addr, 'CountrySubDivisionCode', '');
+            $ship_postal_code = data_get($ship_addr, 'PostalCode', '');
+            $ship_country = data_get($ship_addr, 'Country', data_get($ship_addr, 'CountryCode', null));
+        }
+
         $client = [
             'id' => data_get($data, 'Id', null),
             'name' => data_get($data, 'CompanyName', ''),
-            'address1' => data_get($data, 'BillAddr.Line1', ''),
-            'address2' => data_get($data, 'BillAddr.Line2', ''),
-            'city' => data_get($data, 'BillAddr.City', ''),
-            'country_id' => $this->resolveCountry(data_get($data, 'BillAddr.Country', null) ?? data_get($data, 'BillAddr.CountryCode', '')),
-            'state' => data_get($data, 'BillAddr.CountrySubDivisionCode', ''),
-            'postal_code' =>  data_get($data, 'BillAddr.PostalCode', ''),
-            'shipping_address1' => data_get($data, 'ShipAddr.Line1', ''),
-            'shipping_address2' => data_get($data, 'ShipAddr.Line2', ''),
-            'shipping_city' => data_get($data, 'ShipAddr.City', ''),
-            'shipping_country_id' => $this->resolveCountry(data_get($data, 'ShipAddr.Country', null) ?? data_get($data, 'ShipAddr.CountryCode', '')),
-            'shipping_state' => data_get($data, 'ShipAddr.CountrySubDivisionCode', ''),
-            'shipping_postal_code' =>  data_get($data, 'BillAddr.PostalCode', ''),
+            'address1' => $bill_address1,
+            'address2' => $bill_address2,
+            'city' => $bill_city,
+            'country_id' => $this->resolveCountry($bill_country),
+            'state' => $bill_state,
+            'postal_code' => $bill_postal_code,
+            'shipping_address1' => $ship_address1,
+            'shipping_address2' => $ship_address2,
+            'shipping_city' => $ship_city,
+            'shipping_country_id' => $this->resolveCountry($ship_country),
+            'shipping_state' => $ship_state,
+            'shipping_postal_code' => $ship_postal_code,
             'client_hash' => data_get($data, 'V4IDPseudonym', \Illuminate\Support\Str::random(32)),
             'vat_number' => data_get($data, 'PrimaryTaxIdentifier', ''),
             'id_number' => data_get($data, 'BusinessNumber', ''),
