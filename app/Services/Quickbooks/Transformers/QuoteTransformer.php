@@ -89,8 +89,13 @@ class QuoteTransformer extends BaseTransformer
 
         $taxLines = data_get($qb_data, 'TxnTaxDetail.TaxLine', []) ?? [];
 
-        if (!empty($taxLines) && !isset($taxLines[0])) {
-            $taxLines = [$taxLines];
+        // QB can return a single object or an array; normalize to array
+        if (!empty($taxLines)) {
+            if (!is_array($taxLines)) {
+                $taxLines = [$taxLines];
+            } elseif (!isset($taxLines[0])) {
+                $taxLines = [$taxLines];
+            }
         }
 
         $totalTaxRate = 0;
@@ -155,6 +160,15 @@ class QuoteTransformer extends BaseTransformer
         $include_discount = data_get($qb_data, 'ApplyTaxAfterDiscount', 'true');
 
         $items = [];
+
+        // QB can return a single object or an array; normalize to array
+        if (!empty($qb_items)) {
+            if (!is_array($qb_items)) {
+                $qb_items = [$qb_items];
+            } elseif (!isset($qb_items[0])) {
+                $qb_items = [$qb_items];
+            }
+        }
 
         if (!empty($qb_items) && !isset($qb_items[0])) {
 

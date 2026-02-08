@@ -85,15 +85,16 @@ class StaticServiceProvider extends ServiceProvider
         /** @return \Illuminate\Support\Collection<PaymentType> */
         app()->singleton('payment_types', function ($app) {
 
-            if ($resource = Cache::get('payment_types')) {
-                return $resource;
-            }
+            return \App\Models\PaymentType::getDefaultPaymentTypes();
+            // if ($resource = Cache::get('payment_types')) {
+            //     return $resource;
+            // }
 
-            $resource = PaymentType::query()->orderBy('id')->get();
+            // $resource = PaymentType::query()->orderBy('id')->get();
 
-            Cache::forever('payment_types', $resource);
+            // Cache::forever('payment_types', $resource);
 
-            return $resource;
+            // return $resource;
 
         });
 

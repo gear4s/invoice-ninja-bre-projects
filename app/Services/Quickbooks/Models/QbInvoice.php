@@ -220,9 +220,13 @@ class QbInvoice implements SyncInterface
             $total_tax = (float) data_get($txn_tax_detail, 'TotalTax', 0);
             $tax_lines = data_get($txn_tax_detail, 'TaxLine', []);
 
-            // Normalize tax_lines to array if single item
-            if (!empty($tax_lines) && !isset($tax_lines[0])) {
-                $tax_lines = [$tax_lines];
+            // QB can return a single object or an array; normalize to array
+            if (!empty($tax_lines)) {
+                if (!is_array($tax_lines)) {
+                    $tax_lines = [$tax_lines];
+                } elseif (!isset($tax_lines[0])) {
+                    $tax_lines = [$tax_lines];
+                }
             }
 
             if (empty($tax_lines) || $total_tax <= 0) {
@@ -233,8 +237,12 @@ class QbInvoice implements SyncInterface
 
             // Get QuickBooks line items to check for line-item level taxes
             $qb_line_items = data_get($qb_response, 'Line', []);
-            if (!empty($qb_line_items) && !isset($qb_line_items[0])) {
-                $qb_line_items = [$qb_line_items];
+            if (!empty($qb_line_items)) {
+                if (!is_array($qb_line_items)) {
+                    $qb_line_items = [$qb_line_items];
+                } elseif (!isset($qb_line_items[0])) {
+                    $qb_line_items = [$qb_line_items];
+                }
             }
 
             // Determine if taxes are line-item level or invoice-level
@@ -382,9 +390,13 @@ class QbInvoice implements SyncInterface
      */
     private function assignTaxesToLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id): void
     {
-        // Normalize tax_details to array if single item
-        if (!empty($tax_details) && !isset($tax_details[0])) {
-            $tax_details = [$tax_details];
+        // QB can pass a single object or an array; normalize to array
+        if (!empty($tax_details)) {
+            if (!is_array($tax_details)) {
+                $tax_details = [$tax_details];
+            } elseif (!isset($tax_details[0])) {
+                $tax_details = [$tax_details];
+            }
         }
 
         // If more than 3 taxes, aggregate into a single tax rate
@@ -796,7 +808,7 @@ class QbInvoice implements SyncInterface
             if (!$invoice->id) {
                 $this->syncNinjaInvoice($qb_record);
             } elseif (Carbon::parse($last_updated)->gt(Carbon::parse($invoice->updated_at)) || $qb_record->SyncToken == '0') {
-                $ninja_invoice_data = $this->invoice_transformer->qbToNinja($qb_record);
+                $ninja_invoice_data = $this->invoice_transformer->qbToNinja($qb_record, $this->service);
 
                 $this->invoice_repository->save($ninja_invoice_data, $invoice);
 
@@ -814,7 +826,7 @@ class QbInvoice implements SyncInterface
     public function syncNinjaInvoice($record): void
     {
 
-        $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record);
+        $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record, $this->service);
 
         $payment_ids = $ninja_invoice_data['payment_ids'] ?? [];
 
@@ -843,7 +855,7 @@ class QbInvoice implements SyncInterface
 
                 $payment_transformer = new PaymentTransformer($this->service->company);
 
-                $transformed = $payment_transformer->qbToNinja($payment);
+                $transformed = $payment_transformer->qbToNinja($payment, $this->service);
 
                 $ninja_payment = $payment_transformer->buildPayment($payment);
                 $ninja_payment->service()->applyNumber()->save();

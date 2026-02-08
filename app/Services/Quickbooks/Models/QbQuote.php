@@ -55,7 +55,7 @@ class QbQuote implements SyncInterface
 
         foreach ($records as $record) {
 
-            $ninja_quote_data = $this->quote_transformer->qbToNinja($record);
+            $ninja_quote_data = $this->quote_transformer->qbToNinja($record, $this->service);
 
             $client_id = $ninja_quote_data['client_id'] ?? null;
 
@@ -154,7 +154,7 @@ class QbQuote implements SyncInterface
             if (!$quote->id) {
                 $this->syncNinjaQuote($qb_record);
             } elseif (Carbon::parse($last_updated)->gt(Carbon::parse($quote->updated_at)) || $qb_record->SyncToken == '0') {
-                $ninja_quote_data = $this->quote_transformer->qbToNinja($qb_record);
+                $ninja_quote_data = $this->quote_transformer->qbToNinja($qb_record, $this->service);
 
                 $this->quote_repository->save($ninja_quote_data, $quote);
 
@@ -172,7 +172,7 @@ class QbQuote implements SyncInterface
     public function syncNinjaQuote($record): void
     {
 
-        $ninja_quote_data = $this->quote_transformer->qbToNinja($record);
+        $ninja_quote_data = $this->quote_transformer->qbToNinja($record, $this->service);
 
         $payment_ids = $ninja_quote_data['payment_ids'] ?? [];
 
@@ -201,7 +201,7 @@ class QbQuote implements SyncInterface
 
                 $payment_transformer = new PaymentTransformer($this->service->company);
 
-                $transformed = $payment_transformer->qbToNinja($payment);
+                $transformed = $payment_transformer->qbToNinja($payment, $this->service);
 
                 $ninja_payment = $payment_transformer->buildPayment($payment);
                 $ninja_payment->service()->applyNumber()->save();
