@@ -215,6 +215,5 @@ class QbClient implements SyncInterface
 
         return null;
 
-
     }
 }

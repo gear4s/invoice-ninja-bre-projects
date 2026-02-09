@@ -276,6 +276,10 @@ class SettingsData
 
     public string $email_template_reminder_endless = ''; //@implemented
 
+    public string $email_template_payment_failed = ''; //@implemented
+
+    public string $email_subject_payment_failed = ''; //@implemented
+
     public string $email_signature = ''; //@implemented
 
     public bool $enable_email_markup = true; //@TODO -
