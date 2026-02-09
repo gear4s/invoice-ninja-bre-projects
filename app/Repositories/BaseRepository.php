@@ -360,7 +360,7 @@ class BaseRepository
 
         if ($model instanceof Quote) {
             if (!$model->design_id) {
-                $model->design_id = intval($this->decodePrimaryKey($client->getSetting('quote_design_id')));
+                $model->design_id = intval($this->decodePrimaryKey($model->client->getSetting('quote_design_id')));
             }
 
             $model = $model->calc()->getQuote();
@@ -374,7 +374,7 @@ class BaseRepository
 
         if ($model instanceof RecurringInvoice) {
             if (!$model->design_id) {
-                $model->design_id = intval($this->decodePrimaryKey($client->getSetting('invoice_design_id')));
+                $model->design_id = intval($this->decodePrimaryKey($model->client->getSetting('invoice_design_id')));
             }
 
             $model = $model->calc()->getRecurringInvoice();
