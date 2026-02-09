@@ -103,7 +103,10 @@ class QuickbooksDataComparisonTest extends TestCase
         $company = Company::where('quickbooks->settings->automatic_taxes', true)->first();
 
         // Check if token is expired before attempting to create service
-        if (!$company || $this->isTokenExpired($company)) {
+        if (!$company) {
+            $this->markTestSkipped("Company with automatic taxes is not found");
+        }
+        elseif ($this->isTokenExpired($company)) {
             $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
         }
         
@@ -303,11 +306,14 @@ class QuickbooksDataComparisonTest extends TestCase
         $invoice_number = 'qb-2026-AST-0001';
 
         $company = Company::where('quickbooks->settings->automatic_taxes', true)->first();
+        if (!$company) {
+            $this->markTestSkipped("Company with automatic taxes is not found");
+        }
+        // Check if token is expired before attempting to create service
+        elseif ($this->isTokenExpired($company)) {
+            $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
+        }
         
-                // Check if token is expired before attempting to create service
-                if ($this->isTokenExpired($company)) {
-                    $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
-                }
 
         $qb_service = new QuickbooksService($company);
            

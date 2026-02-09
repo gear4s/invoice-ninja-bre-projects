@@ -5458,9 +5458,9 @@ $lang = array(
     'use_system_fonts' => 'استخدم خطوط النظام',
     'use_system_fonts_help' => 'استبدال الخطوط القياسية بتلك الموجودة في متصفح الويب',
     'active_tasks' => 'المهام النشطة',
-    'of_budget' => 'of Budget',
-    'invoiced_hours' => 'Invoiced Hours',
-    'less' => 'Less',
+    'of_budget' => 'الميزانية',
+    'invoiced_hours' => 'الساعات المفوترة',
+    'less' => 'أقل',
     'enable_notifications' => 'تمكين الإشعارات',
     'enable_public_notifications' => 'تمكين الإشعارات العامة',
     'enable_public_notifications_help' => 'تمكين الإشعارات في الوقت الفعلي من Invoice Ninja.',
@@ -5751,6 +5751,10 @@ $lang = array(
     'tour_toolbox_description' => 'على اليمين توجد مجموعة الأدوات. استخدمها اضافة الحقول والعناصر التي يمكن للموقعين التفاعل معها. حقل التوقيع محدد بالفعل. انقر للمتابعة.',
     'tour_document_canvas' => 'هذه هي صفحة المستند الخاصة بك. ضع حقول التوقيعات هنا وحدد مواقعها.',
     'tour_save_document' => 'عند الانتهاء، انقر هنا لحفظ المستند.',
+    'create_signature' => 'إنشاء توقيع',
+    'signature_name' => 'اسم التوقيع',
+    'close_tab' => 'إغلاق علامة التبويب',
+    'sign' => 'لافتة',
 );
 
 return $lang;

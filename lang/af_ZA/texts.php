@@ -5477,9 +5477,9 @@ $lang = array(
     'use_system_fonts' => 'Use System Fonts',
     'use_system_fonts_help' => 'Override the standard fonts with those from the web browser',
     'active_tasks' => 'Active Tasks',
-    'of_budget' => 'of Budget',
-    'invoiced_hours' => 'Invoiced Hours',
-    'less' => 'Less',
+    'of_budget' => 'van Begroting',
+    'invoiced_hours' => 'Gefaktureerde ure',
+    'less' => 'Minder',
     'enable_notifications' => 'Enable Notifications',
     'enable_public_notifications' => 'Enable Public Notifications',
     'enable_public_notifications_help' => 'Enable real-time notifications from Invoice Ninja.',
@@ -5770,6 +5770,10 @@ $lang = array(
     'tour_toolbox_description' => 'Aan die regterkant is die gereedskapskis. Gebruik dit om velde en elemente by te voeg waarmee ondertekenaars kan interaksie hê. Die handtekeningveld is reeds gekies. Klik om voort te gaan.',
     'tour_document_canvas' => 'Dit is jou dokument se doek. Plaas en posisioneer velde vir jou ondertekenaars hier.',
     'tour_save_document' => 'Wanneer jy klaar is, klik hier om jou dokument te stoor.',
+    'create_signature' => 'Skep Handtekening',
+    'signature_name' => 'Handtekening Naam',
+    'close_tab' => 'Maak oortjie toe',
+    'sign' => 'Teken',
 );
 
 return $lang;

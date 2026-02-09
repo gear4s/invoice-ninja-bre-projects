@@ -5477,9 +5477,9 @@ $lang = array(
     'use_system_fonts' => 'Utilitzeu tipus de lletra del sistema',
     'use_system_fonts_help' => 'Substituïu els tipus de lletra estàndard amb els del navegador web',
     'active_tasks' => 'Tasques actives',
-    'of_budget' => 'of Budget',
-    'invoiced_hours' => 'Invoiced Hours',
-    'less' => 'Less',
+    'of_budget' => 'de Pressupost',
+    'invoiced_hours' => 'Hores facturades',
+    'less' => 'Menys',
     'enable_notifications' => 'Activa les notificacions',
     'enable_public_notifications' => 'Activa les notificacions públiques',
     'enable_public_notifications_help' => 'Activa les notificacions en temps real de Invoice Ninja.',
@@ -5770,6 +5770,10 @@ $lang = array(
     'tour_toolbox_description' => 'A la dreta hi ha la caixa d&#39;eines. Feu-la servir per afegir camps i elements perquè els signants hi interactuïn. El camp de signatura ja està seleccionat. Feu clic per continuar.',
     'tour_document_canvas' => 'Aquest és el teu llenç de document. Col·loca i posiciona els camps per als teus signants aquí.',
     'tour_save_document' => 'Quan hàgiu acabat, feu clic aquí per desar el document.',
+    'create_signature' => 'Crea una signatura',
+    'signature_name' => 'Nom de la signatura',
+    'close_tab' => 'Tanca la pestanya',
+    'sign' => 'Signa',
 );
 
 return $lang;

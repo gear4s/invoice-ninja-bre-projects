@@ -5478,9 +5478,9 @@ $lang = array(
     'use_system_fonts' => 'Използвайте системни шрифтове',
     'use_system_fonts_help' => 'Заменете стандартните шрифтове с тези от уеб браузъра',
     'active_tasks' => 'Активни Задачи',
-    'of_budget' => 'of Budget',
-    'invoiced_hours' => 'Invoiced Hours',
-    'less' => 'Less',
+    'of_budget' => 'на бюджета',
+    'invoiced_hours' => 'Фактурирани часове',
+    'less' => 'По-малко',
     'enable_notifications' => 'Активиране на известията',
     'enable_public_notifications' => 'Активирайте публичните известия',
     'enable_public_notifications_help' => 'Активирайте известията в реално време от Фактура Ninja.',
@@ -5771,6 +5771,10 @@ $lang = array(
     'tour_toolbox_description' => 'Вдясно е кутията с инструменти. Използвайте я до Добавете полета и елементи за подписалите, с до взаимодействате. Полето за подпис вече е избрано. Кликнете до продължите.',
     'tour_document_canvas' => 'Това е вашето платно за документа. Поставете и позиционирайте полетата за вашите подписали тук.',
     'tour_save_document' => 'Когато сте готови, щракнете тук до Запази документа си.',
+    'create_signature' => 'Създай Signature',
+    'signature_name' => 'Име на подписа',
+    'close_tab' => 'Затвори раздела',
+    'sign' => 'Знак',
 );
 
 return $lang;
