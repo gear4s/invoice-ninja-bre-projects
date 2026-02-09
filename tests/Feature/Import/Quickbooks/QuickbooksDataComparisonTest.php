@@ -469,11 +469,12 @@ class QuickbooksDataComparisonTest extends TestCase
             
             $client = Client::whereNotNull('sync->qb_id')->first();
             
-            $company = $client->company;
-
-            if (!$company) {
+            if (!$client) {
                 $this->markTestSkipped("Company not found");
             }
+            $company = $client->company;
+
+            
                     // Check if token is expired before attempting to create service
             if ($this->isTokenExpired($company)) {
                 $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
