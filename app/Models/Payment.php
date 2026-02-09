@@ -203,7 +203,7 @@ class Payment extends BaseModel
 
     public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(ClientContact::class);
+        return $this->belongsTo(ClientContact::class)->withTrashed();
     }
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo

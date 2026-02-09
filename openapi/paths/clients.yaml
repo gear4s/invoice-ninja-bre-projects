@@ -827,7 +827,7 @@
                     type: string
                     format: binary
                     description: The file contents
-                  example: "@/path/to/document.pdf"
+                  example: ["@/path/to/document.pdf"]
       responses:
         200:
           description: 'Returns the client object'
@@ -1114,7 +1114,7 @@
           schema:
             type: string
             format: string
-          example: 123243
+          example: "123243"
       responses:
         200:
           description: 'Success'
