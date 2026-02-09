@@ -67,7 +67,14 @@ class QuickbooksService
     {
         $this->init();
     }
-
+    
+    /**
+     * init
+     *
+     * Initializes the Quickbooks service by configuring the SDK and checking the token.
+     * 
+     * @return self
+     */
     private function init(): self
     {
 
@@ -210,6 +217,8 @@ class QuickbooksService
     /**
      * sdk
      *
+     * Wrapper class for fluent type accessors
+     * 
      * @return SdkWrapper
      */
     public function sdk(): SdkWrapper
@@ -218,7 +227,7 @@ class QuickbooksService
     }
 
     /**
-     *
+     * Performs an initial sync of select entities from Quickbooks to Invoice Ninja.
      *
      * @return void
      */
@@ -230,6 +239,8 @@ class QuickbooksService
     /**
      * findEntityById
      *
+     * Returns a Quickbooks entity by ID.
+     * 
      * @param  string $entity
      * @param  string $id
      * @return mixed
@@ -242,10 +253,12 @@ class QuickbooksService
     /**
      * query
      *
+     * Returns an array (or null) of Quickbooks entities.
+     * 
      * @param  string $query
-     * @return void
+     * @return mixed
      */
-    public function query(string $query)
+    public function query(string $query): mixed
     {
         return $this->sdk->Query($query);
     }
@@ -456,18 +469,22 @@ class QuickbooksService
 
     /**
      * Load tax codes into memory cache.
-     * Called once during initial sync. Tax codes are never persisted.
+     * 
+     * Called once during initial sync. 
+     * Tax codes are never persisted.
      *
+     * Tax codes allow us to reference exact Tax Rates for a given Tax Code.
+     * 
      * @return self
      */
     public function loadTaxCodes(): self
     {
         if ($this->tax_codes_cache !== null) {
-            // Already loaded
             return $this;
         }
 
         $tax_codes = $this->fetchTaxCodes();
+
         $this->tax_codes_cache = [];
 
         // Convert tax codes to array format and index by ID for easy lookup
@@ -583,7 +600,14 @@ class QuickbooksService
         }
 
     }
-
+    
+    /**
+     * getIncomeAccountId
+     *
+     * Returns the default income account ID from the Quickbooks settings.
+     * 
+     * @return string
+     */
     public function getIncomeAccountId(): ?string
     {
         return $this->company->quickbooks->settings->qb_income_account_id;
@@ -592,7 +616,8 @@ class QuickbooksService
     /**
      * disconnect
      *
-     * revokes the current token.
+     * Revokes the current token.
+     * 
      * @return self
      */
     public function disconnect(): self
@@ -637,21 +662,8 @@ class QuickbooksService
         $this->company->quickbooks->settings->automatic_taxes = $automatic_taxes;
         $this->company->save();
 
-        // Get all Invoice Ninja tax rates for this company and archived them
-        // TaxRate::where('company_id', $this->company->id)
-        //         ->cursor()
-        //         ->each(function ($tax) {
-        //             $tax->delete();
-        //         });
-
         // Iterate through the Quickbooks tax rates and create new Invoice Ninja tax rates
         foreach ($tax_rates as $tax_rate) {
-            // $tr = new TaxRate();
-            // $tr->company_id = $this->company->id;
-            // $tr->user_id = $this->company->owner()->id;
-            // $tr->name = $tax_rate['name'];
-            // $tr->rate = $tax_rate['rate'];
-            // $tr->save();
         
             $tr = TaxRate::firstOrNew(
                 ['name' => $tax_rate['name'], 'company_id' => $this->company->id, 'rate' => $tax_rate['rate']],

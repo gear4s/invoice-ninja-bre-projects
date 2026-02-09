@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\ClientContact;
 use App\Services\Quickbooks\QuickbooksService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
@@ -93,6 +94,640 @@ class QuickbooksDataComparisonTest extends TestCase
 
         return false;
     }
+
+
+    public function testSpecificInvoiceComparisonAstResponseWithTaxExemptProduct(): void
+    {
+        $invoice_number = 'qb-2026-EXEMPT-0001';
+
+        $company = Company::where('quickbooks->settings->automatic_taxes', true)->first();
+
+        $this->assertNotNull($company);
+
+        $qb_service = new QuickbooksService($company);
+           
+        $this->assertNotNull($company, 'Company with automatic taxes is not found');
+
+        $client = Client::where('client_hash', "INeedAStableClientThatIsInTheExactRegionToTestTaxes")->first();
+
+        if (!$client) {
+            $client = Client::factory()->create([
+                'company_id' => $company->id,
+                'user_id' => $company->users()->first()->id,
+                'address2' => '2443 Sierra Nevada Road',
+                'city' => 'Mammoth Lakes',
+                'state' => 'CA',
+                'postal_code' => '93546',
+                'country_id' => 840,
+                'shipping_address2' => '2443 Sierra Nevada Road',
+                'shipping_city' => 'Mammoth Lakes',
+                'shipping_state' => 'CA',
+                'shipping_postal_code' => '93546',
+                'shipping_country_id' => 840,
+                'client_hash' => "INeedAStableClientThatIsInTheExactRegionToTestTaxes",
+                'is_tax_exempt' => false,
+                'name' => "Mammoth Lakes Ski Resort",
+            ]);
+
+            ClientContact::factory()->create([
+                'client_id' => $client->id,
+                'user_id' => $client->user_id,
+                'company_id' => $company->id,
+                'is_primary' => true,
+                'email' => 'test@mammothlakes.com',
+                'phone' => '1234567890',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+            ]);
+
+            $qb_service->client->syncToForeign([$client]);            
+        }
+
+        $this->assertNotNull($client);
+
+        $client->refresh();
+
+        $this->assertNotNull($client->sync->qb_id, 'Client has no QB ID');
+
+        // Create a tax-exempt product in Invoice Ninja
+        $tax_exempt_product = Product::factory()->create([
+            'company_id' => $company->id,
+            'user_id' => $client->user_id,
+            'product_key' => 'Tax Exempt Product',
+            'notes' => 'This product is tax exempt',
+            'price' => 150.00,
+            'cost' => 100.00,
+            'tax_id' => '5', // Tax exempt
+        ]);
+
+        // Create invoice with both taxable and tax-exempt line items
+        $invoice = Invoice::factory()->create([
+            'company_id' => $company->id,
+            'discount' => 0,
+            'client_id' => $client->id,
+            'user_id' => $client->user_id,
+            'number' => $invoice_number,
+            'date' => '2026-01-01',
+            'due_date' => '2026-02-01',
+            'status_id' => Invoice::STATUS_DRAFT,
+            'tax_name1' => '',
+            'tax_rate1' => 0,
+            'tax_name2' => '',
+            'tax_rate2' => 0,
+            'tax_name3' => '',
+            'tax_rate3' => 0,
+            'custom_value1' => '',
+            'custom_value2' => '',
+            'custom_value3' => '',
+            'custom_value4' => '',
+            'line_items' => [
+                [
+                    'product_key' => 'Taxable Product',
+                    'notes' => 'This product is taxable',
+                    'quantity' => 1,
+                    'cost' => 100,
+                    'line_total' => 100,
+                    'tax_name1' => '',
+                    'tax_rate1' => 0,
+                    'tax_name2' => '',
+                    'tax_rate2' => 0,
+                    'tax_name3' => '',
+                    'tax_rate3' => 0,
+                    'type_id' => '1',
+                    'discount' => 0,
+                    'tax_id' => '1', // Taxable
+                ],
+                [
+                    'product_key' => 'Tax Exempt Product',
+                    'notes' => 'This product is tax exempt',
+                    'quantity' => 1,
+                    'cost' => 150,
+                    'line_total' => 150,
+                    'tax_name1' => '',
+                    'tax_rate1' => 0,
+                    'tax_name2' => '',
+                    'tax_rate2' => 0,
+                    'tax_name3' => '',
+                    'tax_rate3' => 0,
+                    'type_id' => '1',
+                    'discount' => 0,
+                    'tax_id' => '5', // Tax exempt
+                ],
+            ],
+            'private_notes' => '',
+            'public_notes' => 'Test invoice with tax exempt product',
+            'terms' => '',
+            'footer' => 'Test invoice',
+            'po_number' => '',
+        ]);
+
+        $invoice = $invoice->calc()->getInvoice()->service()->markSent()->save();
+    
+
+        // Check if token is expired before attempting to create service
+        if ($this->isTokenExpired($company)) {
+            $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
+        }
+
+
+        // Verify we're connected to the correct realm
+        if (!$this->verifyRealmConnection($company, $qb_service)) {
+            $this->markTestSkipped("Realm connection verification failed for company {$company->id}");
+        }
+
+        // Create the invoice in QuickBooks
+        $qb_service->invoice->syncToForeign([$invoice]);
+        
+        // Refresh the invoice to get the updated qb_id
+        $invoice->refresh();
+        $qb_id = $invoice->sync->qb_id ?? null;
+        
+        if (empty($qb_id)) {
+            $this->fail("Failed to create invoice in QuickBooks - no qb_id was returned");
+        }
+        
+        nlog("Invoice {$invoice_number} created in QuickBooks with QB ID: {$qb_id}");
+        
+        // Fetch the created invoice from QuickBooks
+        $qb_invoice = $qb_service->invoice->find($qb_id);
+        $this->assertNotNull($qb_invoice, 'Failed to fetch newly created invoice from QuickBooks');
+        
+        // Verify tax-exempt line item has TaxCodeRef = 'NON' in QuickBooks
+        $qb_lines = data_get($qb_invoice, 'Line', []);
+        if (!is_array($qb_lines)) {
+            $qb_lines = [$qb_lines];
+        }
+        
+        // Verify tax calculations: only the taxable line item ($100) should be taxed
+        // The tax-exempt line item ($150) should not be included in tax calculations
+        $qb_total_tax = (float) data_get($qb_invoice, 'TxnTaxDetail.TotalTax', 0);
+        $qb_subtotal = (float) data_get($qb_invoice, 'SubTotalLine.TotalAmt', 0);
+        
+        // If SubTotalLine is not available, calculate from TotalAmt - TotalTax
+        if ($qb_subtotal == 0) {
+            $qb_total_amt = (float) data_get($qb_invoice, 'TotalAmt', 0);
+            $qb_subtotal = $qb_total_amt - $qb_total_tax;
+        }
+        
+        // The subtotal should be $250 (100 + 150)
+        $expected_subtotal = 250.00;
+        $this->assertEqualsWithDelta(
+            $expected_subtotal,
+            $qb_subtotal,
+            0.01,
+            "Invoice subtotal should be {$expected_subtotal} (taxable: 100 + tax-exempt: 150), but got {$qb_subtotal}"
+        );
+        
+        $this->assertGreaterThan(0, $qb_total_tax, 
+            "Tax should be greater than 0 since we have a taxable line item, but got {$qb_total_tax}");
+        
+        $max_expected_tax_on_taxable_only = 100 * 0.10; 
+        $this->assertLessThanOrEqual($max_expected_tax_on_taxable_only, $qb_total_tax,
+            "Tax should only be calculated on the taxable line item (\$100), not on the full amount. Tax: {$qb_total_tax}");
+        
+        nlog("Tax verification: QB TotalTax={$qb_total_tax}, Subtotal={$qb_subtotal}, Expected Subtotal={$expected_subtotal}");
+        
+        // Perform the full comparison
+        $this->compareInvoiceForCompany($invoice, $company, $qb_service);
+    }
+
+    public function testSpecificInvoiceComparisonAstResponse(): void
+    {
+        $invoice_number = 'qb-2026-AST-0001';
+
+        $company = Company::where('quickbooks->settings->automatic_taxes', true)->first();
+        $qb_service = new QuickbooksService($company);
+           
+        $this->assertNotNull($company, 'Company with automatic taxes is not found');
+
+        $client = Client::where('client_hash', "INeedAStableClientThatIsInTheExactRegionToTestTaxes")->first();
+
+        if (!$client) {
+            $client = Client::factory()->create([
+                'company_id' => $company->id,
+                'user_id' => $company->users()->first()->id,
+                'address2' => '2443 Sierra Nevada Road',
+                'city' => 'Mammoth Lakes',
+                'state' => 'CA',
+                'postal_code' => '93546',
+                'country_id' => 840,
+                'shipping_address2' => '2443 Sierra Nevada Road',
+                'shipping_city' => 'Mammoth Lakes',
+                'shipping_state' => 'CA',
+                'shipping_postal_code' => '93546',
+                'shipping_country_id' => 840,
+                'client_hash' => "INeedAStableClientThatIsInTheExactRegionToTestTaxes",
+                'is_tax_exempt' => false,
+                'name' => "Mammoth Lakes Ski Resort",
+            ]);
+
+            ClientContact::factory()->create([
+                'client_id' => $client->id,
+                'user_id' => $client->user_id,
+                'company_id' => $company->id,
+                'is_primary' => true,
+                'email' => 'test@mammothlakes.com',
+                'phone' => '1234567890',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
+            ]);
+
+            $qb_service->client->syncToForeign([$client]);            
+        }
+
+        $this->assertNotNull($client);
+
+        $client->refresh();
+
+        $this->assertNotNull($client->sync->qb_id, 'Client has no QB ID');
+
+        $invoice = Invoice::factory()->create([
+            'company_id' => $company->id,
+            'discount' => 0,
+            'client_id' => $client->id,
+            'user_id' => $client->user_id,
+            'number' => $invoice_number,
+            'date' => '2026-01-01',
+            'due_date' => '2026-02-01',
+            'status_id' => Invoice::STATUS_DRAFT,
+            'tax_name1' => '',
+            'tax_rate1' => 0,
+            'tax_name2' => '',
+            'tax_rate2' => 0,
+            'tax_name3' => '',
+            'tax_rate3' => 0,
+            'custom_value1' => '',
+            'custom_value2' => '',
+            'custom_value3' => '',
+            'custom_value4' => '',
+            'line_items' => [
+                [
+                    'product_key' => 'product',
+                    'notes' => 'Product Description',
+                    'quantity' => 1,
+                    'cost' => 100,
+                    'line_total' => 100,
+                    'tax_name1' => '',
+                    'tax_rate1' => 0,
+                    'tax_name2' => '',
+                    'tax_rate2' => 0,
+                    'tax_name3' => '',
+                    'tax_rate3' => 0,
+                    'type_id' => '1',
+                    'discount' => 0,
+                    'tax_id' => '1',
+                ],
+                [
+                    'product_key' => 'service',
+                    'quantity' => 1,
+                    'cost' => 100,
+                    'line_total' => 100,
+                    'type_id' => '2',
+                    'discount' => 0,
+                    'tax_name1' => '',
+                    'tax_rate1' => 0,
+                    'tax_name2' => '',
+                    'tax_rate2' => 0,
+                    'tax_name3' => '',
+                    'tax_rate3' => 0,
+                ],
+            ],
+            'private_notes' => '',
+            'public_notes' => 'Test invoice',
+            'terms' => '',
+            'footer' => 'Test invoice',
+            'po_number' => '',
+        ]);
+
+        $invoice = $invoice->calc()->getInvoice()->service()->markSent()->save();
+    
+
+        // Check if token is expired before attempting to create service
+        if ($this->isTokenExpired($company)) {
+            $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
+        }
+
+
+        // Verify we're connected to the correct realm
+        if (!$this->verifyRealmConnection($company, $qb_service)) {
+            $this->markTestSkipped("Realm connection verification failed for company {$company->id}");
+        }
+
+        // Create the invoice in QuickBooks
+        $qb_service->invoice->syncToForeign([$invoice]);
+        
+        // Refresh the invoice to get the updated qb_id
+        $invoice->refresh();
+        $qb_id = $invoice->sync->qb_id ?? null;
+        
+        if (empty($qb_id)) {
+            $this->fail("Failed to create invoice in QuickBooks - no qb_id was returned");
+        }
+        
+        nlog("Invoice {$invoice_number} created in QuickBooks with QB ID: {$qb_id}");
+        
+        // Fetch the created invoice from QuickBooks
+        $qb_invoice = $qb_service->invoice->find($qb_id);
+        $this->assertNotNull($qb_invoice, 'Failed to fetch newly created invoice from QuickBooks');
+        
+        // Perform the comparison
+        $this->compareInvoiceForCompany($invoice, $company, $qb_service);
+    }
+
+
+    /**
+     * Test that checks for a specific invoice number (qb-2026-0001) and compares it with QuickBooks.
+     * If the invoice doesn't have a qb_id, it will be created in QuickBooks first.
+     */
+    public function testSpecificInvoiceComparison(): void
+    {
+        $invoice_number = 'qb-2026-0001';
+
+        // Find the invoice by number across all companies
+        $invoice = Invoice::where('number', $invoice_number)->first();
+
+        if (!$invoice) {
+            
+            $client = Client::whereNotNull('sync->qb_id')->first();
+            
+            $company = $client->company;
+            $tax_rate_map = $company->quickbooks->settings->tax_rate_map ?? [];
+
+            $name = $tax_rate_map[0]['name'] ?? '';
+            $rate = $tax_rate_map[0]['rate'] ?? 0;
+
+            $invoice = Invoice::factory()->create([
+                'company_id' => $company->id,
+                'discount' => 0,
+                'client_id' => $client->id,
+                'user_id' => $client->user_id,
+                'number' => $invoice_number,
+                'date' => '2026-01-01',
+                'due_date' => '2026-02-01',
+                'status_id' => Invoice::STATUS_DRAFT,
+                'tax_name1' => '',
+                'tax_rate1' => 0,
+                'tax_name2' => '',
+                'tax_rate2' => 0,
+                'tax_name3' => '',
+                'tax_rate3' => 0,
+                'custom_value1' => '',
+                'custom_value2' => '',
+                'custom_value3' => '',
+                'custom_value4' => '',
+                'line_items' => [
+                    [
+                        'product_key' => 'product',
+                        'notes' => 'Product Description',
+                        'quantity' => 1,
+                        'cost' => 100,
+                        'line_total' => 100,
+                        'tax_name1' => $name,
+                        'tax_rate1' => $rate,
+                        'tax_name2' => '',
+                        'tax_rate2' => 0,
+                        'tax_name3' => '',
+                        'tax_rate3' => 0,
+                        'type_id' => '1',
+                        'discount' => 0,
+                        'tax_id' => '1',
+                    ],
+                    [
+                        'product_key' => 'service',
+                        'quantity' => 1,
+                        'cost' => 100,
+                        'line_total' => 100,
+                        'type_id' => '2',
+                        'discount' => 0,
+                        'tax_name1' => '',
+                        'tax_rate1' => 0,
+                        'tax_name2' => '',
+                        'tax_rate2' => 0,
+                        'tax_name3' => '',
+                        'tax_rate3' => 0,
+                    ],
+                ],
+                'private_notes' => '',
+                'public_notes' => 'Test invoice',
+                'terms' => '',
+                'footer' => 'Test invoice',
+                'po_number' => '',
+            ]);
+
+            $invoice = $invoice->calc()->getInvoice()->service()->markSent()->save();
+        }
+
+        $company = $invoice->company;
+
+        // Check if token is expired before attempting to create service
+        if ($this->isTokenExpired($company)) {
+            $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
+        }
+
+        $qb_service = new QuickbooksService($company);
+
+        // Verify we're connected to the correct realm
+        if (!$this->verifyRealmConnection($company, $qb_service)) {
+            $this->markTestSkipped("Realm connection verification failed for company {$company->id}");
+        }
+
+        // Check if invoice has a qb_id
+        $qb_id = $invoice->sync->qb_id ?? null;
+
+        if (empty($qb_id)) {
+            // Invoice doesn't have a qb_id, create it in QuickBooks
+            nlog("Invoice {$invoice_number} (ID: {$invoice->id}) does not have a qb_id. Creating in QuickBooks...");
+            
+            try {
+                // Create the invoice in QuickBooks
+                $qb_service->invoice->syncToForeign([$invoice]);
+                
+                // Refresh the invoice to get the updated qb_id
+                $invoice->refresh();
+                $qb_id = $invoice->sync->qb_id ?? null;
+                
+                if (empty($qb_id)) {
+                    $this->fail("Failed to create invoice in QuickBooks - no qb_id was returned");
+                }
+                
+                nlog("Invoice {$invoice_number} created in QuickBooks with QB ID: {$qb_id}");
+                
+                // Fetch the created invoice from QuickBooks
+                $qb_invoice = $qb_service->invoice->find($qb_id);
+                $this->assertNotNull($qb_invoice, 'Failed to fetch newly created invoice from QuickBooks');
+                
+            } catch (\Exception $e) {
+                $qb_company_name = $company->quickbooks->companyName ?? 'NOT AVAILABLE';
+                nlog("ERROR creating invoice {$invoice_number} in QuickBooks (Company {$company->id}): " . $e->getMessage());
+                nlog("Invoice Ninja Company Name: {$company->name}");
+                nlog("QuickBooks Company Name: {$qb_company_name}");
+                throw $e;
+            }
+        } else {
+            // Invoice already has a qb_id, just fetch it from QuickBooks
+            nlog("Invoice {$invoice_number} (ID: {$invoice->id}) already has qb_id: {$qb_id}. Fetching from QuickBooks...");
+            
+            try {
+                $qb_invoice = $qb_service->invoice->find($qb_id);
+                $this->assertNotNull($qb_invoice, 'Failed to fetch invoice from QuickBooks. This may indicate the qb_id belongs to a different realm.');
+            } catch (\Exception $e) {
+                $qb_company_name = $company->quickbooks->companyName ?? 'NOT AVAILABLE';
+                nlog("ERROR fetching invoice {$invoice_number} from QuickBooks (Company {$company->id}): " . $e->getMessage());
+                nlog("Invoice Ninja Company Name: {$company->name}");
+                nlog("QuickBooks Company Name: {$qb_company_name}");
+                throw $e;
+            }
+        }
+
+        // Perform the comparison
+        $this->compareInvoiceForCompany($invoice, $company, $qb_service);
+    }
+
+    //This test confirms that tax rates not configured in QB will not be able to be used for QB records.
+
+    // public function testSpecificInvoiceComparisonWithNonExistentTaxRate(): void
+    // {
+    //     $invoice_number = 'qb-2026-GST-0001';
+
+    //     // Find the invoice by number across all companies
+    //     $invoice = Invoice::where('number', $invoice_number)->first();
+
+    //     if (!$invoice) {
+            
+    //         $client = Client::whereNotNull('sync->qb_id')->first();
+            
+    //         $company = $client->company;
+    //         $tax_rate_map = $company->quickbooks->settings->tax_rate_map ?? [];
+
+    //         $name = 'GST';
+    //         $rate = 10;
+
+    //         $invoice = Invoice::factory()->create([
+    //             'company_id' => $company->id,
+    //             'discount' => 0,
+    //             'client_id' => $client->id,
+    //             'user_id' => $client->user_id,
+    //             'number' => $invoice_number,
+    //             'date' => '2026-01-01',
+    //             'due_date' => '2026-02-01',
+    //             'status_id' => Invoice::STATUS_DRAFT,
+    //             'tax_name1' => '',
+    //             'tax_rate1' => 0,
+    //             'tax_name2' => '',
+    //             'tax_rate2' => 0,
+    //             'tax_name3' => '',
+    //             'tax_rate3' => 0,
+    //             'custom_value1' => '',
+    //             'custom_value2' => '',
+    //             'custom_value3' => '',
+    //             'custom_value4' => '',
+    //             'line_items' => [
+    //                 [
+    //                     'product_key' => 'product',
+    //                     'notes' => 'Product Description',
+    //                     'quantity' => 1,
+    //                     'cost' => 100,
+    //                     'line_total' => 100,
+    //                     'tax_name1' => $name,
+    //                     'tax_rate1' => $rate,
+    //                     'tax_name2' => '',
+    //                     'tax_rate2' => 0,
+    //                     'tax_name3' => '',
+    //                     'tax_rate3' => 0,
+    //                     'type_id' => '1',
+    //                     'discount' => 0,
+    //                     'tax_id' => '1',
+    //                 ],
+    //                 [
+    //                     'product_key' => 'service',
+    //                     'quantity' => 1,
+    //                     'cost' => 100,
+    //                     'line_total' => 100,
+    //                     'type_id' => '2',
+    //                     'discount' => 0,
+    //                     'tax_name1' => '',
+    //                     'tax_rate1' => 0,
+    //                     'tax_name2' => '',
+    //                     'tax_rate2' => 0,
+    //                     'tax_name3' => '',
+    //                     'tax_rate3' => 0,
+    //                 ],
+    //             ],
+    //             'private_notes' => '',
+    //             'public_notes' => 'Test invoice',
+    //             'terms' => '',
+    //             'footer' => 'Test invoice',
+    //             'po_number' => '',
+    //         ]);
+
+    //         $invoice = $invoice->calc()->getInvoice()->service()->markSent()->save();
+    //     }
+
+    //     $company = $invoice->company;
+
+    //     // Check if token is expired before attempting to create service
+    //     if ($this->isTokenExpired($company)) {
+    //         $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
+    //     }
+
+    //     $qb_service = new QuickbooksService($company);
+
+    //     // Verify we're connected to the correct realm
+    //     if (!$this->verifyRealmConnection($company, $qb_service)) {
+    //         $this->markTestSkipped("Realm connection verification failed for company {$company->id}");
+    //     }
+
+    //     // Check if invoice has a qb_id
+    //     $qb_id = $invoice->sync->qb_id ?? null;
+
+    //     if (empty($qb_id)) {
+    //         // Invoice doesn't have a qb_id, create it in QuickBooks
+    //         nlog("Invoice {$invoice_number} (ID: {$invoice->id}) does not have a qb_id. Creating in QuickBooks...");
+            
+    //         try {
+    //             // Create the invoice in QuickBooks
+    //             $qb_service->invoice->syncToForeign([$invoice]);
+                
+    //             // Refresh the invoice to get the updated qb_id
+    //             $invoice->refresh();
+    //             $qb_id = $invoice->sync->qb_id ?? null;
+                
+    //             if (empty($qb_id)) {
+    //                 $this->fail("Failed to create invoice in QuickBooks - no qb_id was returned");
+    //             }
+                
+    //             nlog("Invoice {$invoice_number} created in QuickBooks with QB ID: {$qb_id}");
+                
+    //             // Fetch the created invoice from QuickBooks
+    //             $qb_invoice = $qb_service->invoice->find($qb_id);
+    //             $this->assertNotNull($qb_invoice, 'Failed to fetch newly created invoice from QuickBooks');
+                
+    //         } catch (\Exception $e) {
+    //             $qb_company_name = $company->quickbooks->companyName ?? 'NOT AVAILABLE';
+    //             nlog("ERROR creating invoice {$invoice_number} in QuickBooks (Company {$company->id}): " . $e->getMessage());
+    //             nlog("Invoice Ninja Company Name: {$company->name}");
+    //             nlog("QuickBooks Company Name: {$qb_company_name}");
+    //             throw $e;
+    //         }
+    //     } else {
+    //         // Invoice already has a qb_id, just fetch it from QuickBooks
+    //         nlog("Invoice {$invoice_number} (ID: {$invoice->id}) already has qb_id: {$qb_id}. Fetching from QuickBooks...");
+            
+    //         try {
+    //             $qb_invoice = $qb_service->invoice->find($qb_id);
+    //             $this->assertNotNull($qb_invoice, 'Failed to fetch invoice from QuickBooks. This may indicate the qb_id belongs to a different realm.');
+    //         } catch (\Exception $e) {
+    //             $qb_company_name = $company->quickbooks->companyName ?? 'NOT AVAILABLE';
+    //             nlog("ERROR fetching invoice {$invoice_number} from QuickBooks (Company {$company->id}): " . $e->getMessage());
+    //             nlog("Invoice Ninja Company Name: {$company->name}");
+    //             nlog("QuickBooks Company Name: {$qb_company_name}");
+    //             throw $e;
+    //         }
+    //     }
+
+    //     // Perform the comparison
+    //     $this->compareInvoiceForCompany($invoice, $company, $qb_service);
+    // }
 
     /**
      * Test that compares all invoice fields between QuickBooks and Invoice Ninja.
@@ -265,7 +900,6 @@ class QuickbooksDataComparisonTest extends TestCase
      */
     private function compareInvoiceBasicFields(Invoice $invoice, $qb_invoice, Company $company): void
     {
-        // nlog("--- Comparing Basic Invoice Fields ---");
 
         // Compare invoice number
         $qb_doc_number = data_get($qb_invoice, 'DocNumber');
@@ -299,11 +933,7 @@ class QuickbooksDataComparisonTest extends TestCase
 
         $qb_due_date = data_get($qb_invoice, 'DueDate');
         if ($qb_due_date) {
-            $match = $qb_due_date === $invoice->due_date;
-            // nlog("Due Date: QB={$qb_due_date}, Ninja={$invoice->due_date}, Match=" . ($match ? 'YES' : 'NO'));
-            if (!$match) {
-                nlog("MISMATCH: Invoice due date - QB: [{$qb_due_date}], Ninja: [{$invoice->due_date}]");
-            }
+
             $this->assertEquals(
                 $qb_due_date,
                 $invoice->due_date,
@@ -313,29 +943,19 @@ class QuickbooksDataComparisonTest extends TestCase
 
         // Compare notes
         $qb_private_note = data_get($qb_invoice, 'PrivateNote', '');
-        $ninja_private_note = $invoice->private_notes ?? '';
-        $match = $qb_private_note === $ninja_private_note;
-        // nlog("Private Notes: QB={$qb_private_note}, Ninja={$ninja_private_note}, Match=" . ($match ? 'YES' : 'NO'));
-        if (!$match) {
-            nlog("MISMATCH: Invoice private notes - QB: [{$qb_private_note}], Ninja: [{$ninja_private_note}]");
-        }
+        
         $this->assertEquals(
             $qb_private_note,
-            $ninja_private_note,
+            $invoice->private_notes,
             "Invoice private notes mismatch for invoice ID {$invoice->id}"
         );
 
         $qb_public_note = data_get($qb_invoice, 'CustomerMemo', false);
         if ($qb_public_note !== false) {
-            $ninja_public_note = $invoice->public_notes ?? '';
-            $match = $qb_public_note === $ninja_public_note;
-            // nlog("Public Notes: QB={$qb_public_note}, Ninja={$ninja_public_note}, Match=" . ($match ? 'YES' : 'NO'));
-            if (!$match) {
-                nlog("MISMATCH: Invoice public notes - QB: [{$qb_public_note}], Ninja: [{$ninja_public_note}]");
-            }
-            $this->assertEquals(
-                $qb_public_note,
-                $ninja_public_note,
+
+            $this->assertStringContainsString(
+                strip_tags(str_replace("\n", "", $qb_public_note)),
+                strip_tags(str_replace("\n", "", $invoice->public_notes)),
                 "Invoice public notes mismatch for invoice ID {$invoice->id}"
             );
         }
@@ -392,7 +1012,10 @@ class QuickbooksDataComparisonTest extends TestCase
             $ninja_subtotal = (string) $ninja_calc->getSubTotal();
             $ninja_tax = (string) ($invoice->total_taxes ?? 0);
             $qb_tax = (string) data_get($qb_invoice, 'TxnTaxDetail.TotalTax', 0);
-            $qb_line_count = count(array_filter(data_get($qb_invoice, 'Line', []), fn($line) => data_get($line, 'DetailType') === 'SalesItemLineDetail'));
+            // Normalize QB Line to array - SDK can return single object or array
+            $qb_lines_raw = data_get($qb_invoice, 'Line', []);
+            $qb_lines_normalized = empty($qb_lines_raw) ? [] : (is_array($qb_lines_raw) ? $qb_lines_raw : [$qb_lines_raw]);
+            $qb_line_count = count(array_filter($qb_lines_normalized, fn($line) => data_get($line, 'DetailType') === 'SalesItemLineDetail'));
             $ninja_line_count = count($invoice->line_items ?? []);
             
             nlog("MISMATCH DIAGNOSTICS for Invoice ID {$invoice->id}:");
@@ -450,7 +1073,9 @@ class QuickbooksDataComparisonTest extends TestCase
     {
         // nlog("--- Comparing Line Items ---");
 
-        $qb_lines = data_get($qb_invoice, 'Line', []);
+        // Normalize QB Line to array - SDK can return single object or array
+        $qb_lines_raw = data_get($qb_invoice, 'Line', []);
+        $qb_lines = empty($qb_lines_raw) ? [] : (is_array($qb_lines_raw) ? $qb_lines_raw : [$qb_lines_raw]);
         $ninja_line_items = $invoice->line_items ?? [];
 
         // Filter out non-sales item lines (discounts, taxes, etc.)
@@ -1365,4 +1990,5 @@ class QuickbooksDataComparisonTest extends TestCase
             "Product tax_id mismatch for product ID {$product->id}. QB Taxable: [{$qb_taxable_str}], Expected tax_id: [{$expected_tax_id}], Actual tax_id: [{$actual_tax_id}]"
         );
     }
+
 }

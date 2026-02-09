@@ -164,9 +164,6 @@ class QbInvoice implements SyncInterface
                     nlog("QuickBooks: Created invoice {$invoice->id} (QB ID: {$sync->qb_id})");
                 }
 
-                nlog("Qb Invoice Result: ");
-                nlog($result);
-
                 // Process QuickBooks AST response: extract tax details, create missing tax rates, and sync totals
                 // Only process if we have a valid result with an ID and automatic taxes are enabled
                 $qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
@@ -235,7 +232,7 @@ class QbInvoice implements SyncInterface
                 return;
             }
 
-            // Get QuickBooks line items to check for line-item level taxes
+            // Get QuickBooks line items - ALWAYS use line-item level tax processing
             $qb_line_items = data_get($qb_response, 'Line', []);
             if (!empty($qb_line_items)) {
                 if (!is_array($qb_line_items)) {
@@ -245,16 +242,18 @@ class QbInvoice implements SyncInterface
                 }
             }
 
-            // Determine if taxes are line-item level or invoice-level
-            // Check if line items have individual tax rates
-            $has_line_item_taxes = $this->hasLineItemTaxes($qb_line_items);
-
-            if ($has_line_item_taxes) {
-                // Process line-item level taxes
+            // ALWAYS process taxes at line-item level to correctly handle tax-exempt products
+            // Invoice-level taxes are NEVER set - only line-item taxes are used
+            if (!empty($qb_line_items)) {
                 $this->processLineItemTaxes($qb_line_items, $invoice, $tax_lines);
             } else {
-                // Process invoice-level taxes
-                $this->processInvoiceLevelTaxes($tax_lines, $invoice);
+                // Fallback: if no line items, clear invoice taxes (shouldn't happen in practice)
+                $invoice->tax_name1 = '';
+                $invoice->tax_rate1 = 0;
+                $invoice->tax_name2 = '';
+                $invoice->tax_rate2 = 0;
+                $invoice->tax_name3 = '';
+                $invoice->tax_rate3 = 0;
             }
 
             // Recalculate invoice to ensure totals match QuickBooks
@@ -269,34 +268,6 @@ class QbInvoice implements SyncInterface
         } catch (\Exception $e) {
             nlog("QuickBooks: Error processing tax response for invoice {$invoice->id}: {$e->getMessage()}");
         }
-    }
-
-    /**
-     * Check if line items have individual tax rates.
-     *
-     * @param array $qb_line_items QuickBooks line items
-     * @return bool
-     */
-    private function hasLineItemTaxes(array $qb_line_items): bool
-    {
-        foreach ($qb_line_items as $line_item) {
-            // Check if line item has TaxLineDetail (individual tax)
-            if (data_get($line_item, 'TaxLineDetail')) {
-                return true;
-            }
-
-            // Check if SalesItemLineDetail has tax information
-            $sales_detail = data_get($line_item, 'SalesItemLineDetail');
-            if ($sales_detail && data_get($sales_detail, 'TaxCodeRef') && data_get($sales_detail, 'TaxCodeRef') !== 'NON') {
-                // If TaxCodeRef exists and is not NON, check if there's a specific tax rate
-                // In AST, TaxCodeRef is usually just 'TAX' or 'NON', but we check for line-item specific rates
-                if (data_get($sales_detail, 'TaxRateRef') || data_get($sales_detail, 'TaxPercent')) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -357,12 +328,12 @@ class QbInvoice implements SyncInterface
 
             if ($line_tax_detail) {
                 // Line item has its own tax detail - process it
-                $this->assignTaxesToLineItem($line_item, [$line_tax_detail], $tax_rate_map_by_id);
+                $this->assignTaxesToLineItem($line_item, [$line_tax_detail], $tax_rate_map_by_id, $invoice);
                 $line_items_modified = true;
             } elseif (!empty($tax_lines)) {
                 // Apply invoice-level taxes to this taxable line item
                 // In US tax scenarios, all taxable line items typically get the same set of taxes
-                $this->assignTaxesToLineItem($line_item, $tax_lines, $tax_rate_map_by_id);
+                $this->assignTaxesToLineItem($line_item, $tax_lines, $tax_rate_map_by_id, $invoice);
                 $line_items_modified = true;
             }
 
@@ -374,21 +345,28 @@ class QbInvoice implements SyncInterface
             $invoice->line_items = $line_items;
         }
 
-        // Also process invoice-level taxes if they exist (for total taxes)
-        if (!empty($tax_lines)) {
-            $this->processInvoiceLevelTaxes($tax_lines, $invoice);
-        }
+        // Clear invoice-level taxes - we ONLY use line-item level taxes
+        // This ensures tax-exempt products are correctly excluded and calculations are accurate
+        $invoice->tax_name1 = '';
+        $invoice->tax_rate1 = 0;
+        $invoice->tax_name2 = '';
+        $invoice->tax_rate2 = 0;
+        $invoice->tax_name3 = '';
+        $invoice->tax_rate3 = 0;
     }
 
     /**
-     * Assign taxes to a line item (supports up to 3 taxes, or aggregates if more).
+     * Assign taxes to a line item.
+     *
+     * When using QuickBooks AST, all tax details are aggregated into a single tax name and rate.
      *
      * @param object $line_item Invoice Ninja line item
      * @param array $tax_details Array of tax detail objects
      * @param array $tax_rate_map_by_id Tax rate map keyed by ID
+     * @param Invoice|null $invoice Invoice for getting client state
      * @return void
      */
-    private function assignTaxesToLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id): void
+    private function assignTaxesToLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id, ?Invoice $invoice = null): void
     {
         // QB can pass a single object or an array; normalize to array
         if (!empty($tax_details)) {
@@ -399,56 +377,9 @@ class QbInvoice implements SyncInterface
             }
         }
 
-        // If more than 3 taxes, aggregate into a single tax rate
-        if (count($tax_details) > 3) {
-            $this->aggregateTaxesForLineItem($line_item, $tax_details, $tax_rate_map_by_id);
-            return;
-        }
-
-        // Process up to 3 tax details
-        $tax_index = 1;
-        foreach (array_slice($tax_details, 0, 3) as $tax_detail) {
-            // Handle both TaxLineDetail structure and direct tax detail
-            $tax_line_detail = data_get($tax_detail, 'TaxLineDetail') ?? $tax_detail;
-
-            $tax_rate_ref_id = data_get($tax_line_detail, 'TaxRateRef.value')
-                             ?? data_get($tax_line_detail, 'TaxRateRef');
-            $tax_percent = (float) data_get($tax_line_detail, 'TaxPercent', 0);
-
-            if (!$tax_rate_ref_id || $tax_percent <= 0) {
-                continue;
-            }
-
-            $tax_rate_data = $this->getOrFetchTaxRate($tax_rate_ref_id, $tax_rate_map_by_id);
-            $tax_name = $tax_rate_data['name'] ?? "Tax {$tax_percent}%";
-            $tax_rate = $tax_percent > 0 ? $tax_percent : ($tax_rate_data['rate'] ?? 0);
-
-            $this->createTaxRateIfNeeded($tax_name, $tax_rate);
-
-            // Assign to line item
-            if ($tax_index === 1) {
-                $line_item->tax_name1 = $tax_name;
-                $line_item->tax_rate1 = $tax_rate;
-            } elseif ($tax_index === 2) {
-                $line_item->tax_name2 = $tax_name;
-                $line_item->tax_rate2 = $tax_rate;
-            } elseif ($tax_index === 3) {
-                $line_item->tax_name3 = $tax_name;
-                $line_item->tax_rate3 = $tax_rate;
-            }
-
-            $tax_index++;
-        }
-
-        // Clear any remaining tax fields if we have fewer than 3 taxes
-        if ($tax_index <= 2) {
-            $line_item->tax_name2 = '';
-            $line_item->tax_rate2 = 0;
-        }
-        if ($tax_index <= 3) {
-            $line_item->tax_name3 = '';
-            $line_item->tax_rate3 = 0;
-        }
+        // When using QuickBooks AST, always aggregate all tax details into a single tax name and rate
+        // This method is only called when AST is enabled, so we always aggregate
+        $this->aggregateTaxesForLineItem($line_item, $tax_details, $tax_rate_map_by_id, $invoice);
     }
 
     /**
@@ -456,221 +387,98 @@ class QbInvoice implements SyncInterface
      *
      * @param object $line_item Invoice Ninja line item
      * @param array $tax_details Array of tax detail objects
-     * @param array $tax_rate_map_by_id Tax rate map keyed by ID
+     * @param array $tax_rate_map_by_id Tax rate map keyed by ID (unused, kept for compatibility)
+     * @param Invoice|null $invoice Invoice for getting client state
      * @return void
      */
-    private function aggregateTaxesForLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id): void
+    private function aggregateTaxesForLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id, ?Invoice $invoice = null): void
+    {
+        $aggregated_rate = $this->calculateAggregatedTaxRate($tax_details, true);
+        $tax_name = $this->formatTaxName($aggregated_rate, $invoice);
+        
+        $this->createTaxRateIfNeeded($tax_name, $aggregated_rate);
+        $this->assignTaxToEntity($line_item, $tax_name, $aggregated_rate);
+    }
+
+    /**
+     * Calculate aggregated tax rate from tax items.
+     *
+     * @param array $tax_items Array of tax items (can be tax lines or tax details)
+     * @param bool $handle_nested Whether to handle nested TaxLineDetail structure
+     * @return float Aggregated tax rate percentage
+     */
+    private function calculateAggregatedTaxRate(array $tax_items, bool $handle_nested = false): float
     {
         $total_tax_percent = 0;
         $total_tax_amount = 0;
-        $tax_names = [];
 
-        foreach ($tax_details as $tax_detail) {
+        foreach ($tax_items as $tax_item) {
             // Handle both TaxLineDetail structure and direct tax detail
-            $tax_line_detail = data_get($tax_detail, 'TaxLineDetail') ?? $tax_detail;
+            $tax_line_detail = $handle_nested 
+                ? (data_get($tax_item, 'TaxLineDetail') ?? $tax_item)
+                : data_get($tax_item, 'TaxLineDetail');
 
             $tax_percent = (float) data_get($tax_line_detail, 'TaxPercent', 0);
-            $tax_amount = (float) data_get($tax_detail, 'Amount', 0);
-            $tax_rate_ref_id = data_get($tax_line_detail, 'TaxRateRef.value')
-                             ?? data_get($tax_line_detail, 'TaxRateRef');
+            $tax_amount = (float) data_get($tax_item, 'Amount', 0);
 
             if ($tax_percent > 0) {
                 $total_tax_percent += $tax_percent;
                 $total_tax_amount += $tax_amount;
-
-                if ($tax_rate_ref_id) {
-                    $tax_rate_data = $this->getOrFetchTaxRate($tax_rate_ref_id, $tax_rate_map_by_id);
-                    if (!empty($tax_rate_data['name'])) {
-                        $tax_names[] = $tax_rate_data['name'];
-                    }
-                }
             }
         }
-
-        // Create aggregated tax name
-        $tax_name = !empty($tax_names)
-            ? 'Aggregated Tax (' . implode(', ', array_unique($tax_names)) . ')'
-            : "Aggregated Tax ({$total_tax_percent}%)";
 
         // Use total tax percent or calculate from amount if percent not available
         $aggregated_rate = $total_tax_percent > 0 ? $total_tax_percent : 0;
 
         // If we can't get rate from percent, calculate from taxable amount
         if ($aggregated_rate == 0 && $total_tax_amount > 0) {
-            $net_amount_taxable = (float) data_get($tax_details[0], 'TaxLineDetail.NetAmountTaxable', 0);
-            if ($net_amount_taxable > 0) {
-                $aggregated_rate = ($total_tax_amount / $net_amount_taxable) * 100;
-            }
-        }
-
-        $this->createTaxRateIfNeeded($tax_name, $aggregated_rate);
-
-        // Assign aggregated tax to first tax slot
-        $line_item->tax_name1 = $tax_name;
-        $line_item->tax_rate1 = round($aggregated_rate, 2);
-        $line_item->tax_name2 = '';
-        $line_item->tax_rate2 = 0;
-        $line_item->tax_name3 = '';
-        $line_item->tax_rate3 = 0;
-    }
-
-    /**
-     * Process invoice-level taxes.
-     *
-     * @param array $tax_lines Tax lines from TxnTaxDetail
-     * @param Invoice $invoice Invoice Ninja invoice
-     * @return void
-     */
-    private function processInvoiceLevelTaxes(array $tax_lines, Invoice $invoice): void
-    {
-        // Get tax_rate_map to find TaxRate details by ID
-        $tax_rate_map = $this->service->company->quickbooks->settings->tax_rate_map ?? [];
-        $tax_rate_map_by_id = collect($tax_rate_map)->keyBy('id')->toArray();
-
-        // If more than 3 taxes, aggregate into a single tax rate
-        if (count($tax_lines) > 3) {
-            $this->aggregateTaxes($tax_lines, $invoice, $tax_rate_map_by_id);
-            return;
-        }
-
-        // Process up to 3 tax lines (Invoice Ninja supports tax_name1/rate1, tax_name2/rate2, tax_name3/rate3)
-        $tax_index = 1;
-        foreach (array_slice($tax_lines, 0, 3) as $tax_line) {
-            $tax_rate_ref_id = data_get($tax_line, 'TaxLineDetail.TaxRateRef.value')
-                             ?? data_get($tax_line, 'TaxLineDetail.TaxRateRef');
-
-            if (!$tax_rate_ref_id) {
-                continue;
-            }
-
-            $tax_rate_data = $this->getOrFetchTaxRate($tax_rate_ref_id, $tax_rate_map_by_id);
-
-            // Get tax percent from response (more accurate than from map)
-            $tax_percent = (float) data_get($tax_line, 'TaxLineDetail.TaxPercent', 0);
-
-            // Use tax rate data from map if available, otherwise use percent from response
-            $tax_name = $tax_rate_data['name'] ?? "Tax {$tax_percent}%";
-            $tax_rate = $tax_percent > 0 ? $tax_percent : ($tax_rate_data['rate'] ?? 0);
-
-            $this->createTaxRateIfNeeded($tax_name, $tax_rate);
-
-            // Assign to invoice
-            if ($tax_index === 1) {
-                $invoice->tax_name1 = $tax_name;
-                $invoice->tax_rate1 = $tax_rate;
-            } elseif ($tax_index === 2) {
-                $invoice->tax_name2 = $tax_name;
-                $invoice->tax_rate2 = $tax_rate;
-            } elseif ($tax_index === 3) {
-                $invoice->tax_name3 = $tax_name;
-                $invoice->tax_rate3 = $tax_rate;
-            }
-
-            $tax_index++;
-        }
-
-        // Clear any remaining tax fields if we have fewer than 3 taxes
-        if ($tax_index <= 2) {
-            $invoice->tax_name2 = '';
-            $invoice->tax_rate2 = 0;
-        }
-        if ($tax_index <= 3) {
-            $invoice->tax_name3 = '';
-            $invoice->tax_rate3 = 0;
-        }
-    }
-
-    /**
-     * Aggregate multiple taxes into a single tax rate.
-     *
-     * @param array $tax_lines Tax lines from TxnTaxDetail
-     * @param Invoice $invoice Invoice Ninja invoice
-     * @param array $tax_rate_map_by_id Tax rate map keyed by ID
-     * @return void
-     */
-    private function aggregateTaxes(array $tax_lines, Invoice $invoice, array $tax_rate_map_by_id): void
-    {
-        $total_tax_percent = 0;
-        $total_tax_amount = 0;
-        $tax_names = [];
-
-        foreach ($tax_lines as $tax_line) {
-            $tax_percent = (float) data_get($tax_line, 'TaxLineDetail.TaxPercent', 0);
-            $tax_amount = (float) data_get($tax_line, 'Amount', 0);
-            $tax_rate_ref_id = data_get($tax_line, 'TaxLineDetail.TaxRateRef.value')
-                             ?? data_get($tax_line, 'TaxLineDetail.TaxRateRef');
-
-            if ($tax_percent > 0) {
-                $total_tax_percent += $tax_percent;
-                $total_tax_amount += $tax_amount;
-
-                if ($tax_rate_ref_id) {
-                    $tax_rate_data = $this->getOrFetchTaxRate($tax_rate_ref_id, $tax_rate_map_by_id);
-                    if ($tax_rate_data['name']) {
-                        $tax_names[] = $tax_rate_data['name'];
-                    }
+            $first_item = $tax_items[0] ?? null;
+            if ($first_item) {
+                $net_amount_taxable = (float) data_get($first_item, 'TaxLineDetail.NetAmountTaxable', 0);
+                if ($net_amount_taxable > 0) {
+                    $aggregated_rate = ($total_tax_amount / $net_amount_taxable) * 100;
                 }
             }
         }
 
-        // Create aggregated tax name
-        $tax_name = !empty($tax_names)
-            ? 'Aggregated Tax (' . implode(', ', array_unique($tax_names)) . ')'
-            : "Aggregated Tax ({$total_tax_percent}%)";
-
-        // Use total tax percent or calculate from amount if percent not available
-        $aggregated_rate = $total_tax_percent > 0 ? $total_tax_percent : 0;
-
-        // If we can't get rate from percent, calculate from taxable amount
-        if ($aggregated_rate == 0 && $total_tax_amount > 0) {
-            $net_amount_taxable = (float) data_get($tax_lines[0], 'TaxLineDetail.NetAmountTaxable', 0);
-            if ($net_amount_taxable > 0) {
-                $aggregated_rate = ($total_tax_amount / $net_amount_taxable) * 100;
-            }
-        }
-
-        $this->createTaxRateIfNeeded($tax_name, $aggregated_rate);
-
-        // Assign aggregated tax to first tax slot
-        $invoice->tax_name1 = $tax_name;
-        $invoice->tax_rate1 = round($aggregated_rate, 2);
-        $invoice->tax_name2 = '';
-        $invoice->tax_rate2 = 0;
-        $invoice->tax_name3 = '';
-        $invoice->tax_rate3 = 0;
+        return $aggregated_rate;
     }
 
     /**
-     * Get or fetch tax rate data.
+     * Format tax name in "STATE RATE%" format.
      *
-     * @param string $tax_rate_ref_id QuickBooks TaxRate ID
-     * @param array $tax_rate_map_by_id Tax rate map keyed by ID
-     * @return array Tax rate data
+     * @param float $rate Tax rate percentage
+     * @param Invoice|null $invoice Invoice for getting client state
+     * @return string Formatted tax name
      */
-    private function getOrFetchTaxRate(string $tax_rate_ref_id, array $tax_rate_map_by_id): array
+    private function formatTaxName(float $rate, ?Invoice $invoice = null): string
     {
-        $tax_rate_data = $tax_rate_map_by_id[$tax_rate_ref_id] ?? null;
-
-        if (!$tax_rate_data) {
-            // Fetch TaxRate from QuickBooks if not in map
-            try {
-                $qb_tax_rate = $this->service->tax_rate->find($tax_rate_ref_id);
-                if ($qb_tax_rate) {
-                    $tax_rate_transformer = new \App\Services\Quickbooks\Transformers\TaxRateTransformer();
-                    $tax_rate_data = $tax_rate_transformer->transform($qb_tax_rate);
-
-                    // Add to tax_rate_map for future use
-                    $tax_rate_map = $this->service->company->quickbooks->settings->tax_rate_map ?? [];
-                    $tax_rate_map[] = $tax_rate_data;
-                    $this->service->company->quickbooks->settings->tax_rate_map = $tax_rate_map;
-                    $this->service->company->save();
-                }
-            } catch (\Exception $e) {
-                nlog("QuickBooks: Error fetching TaxRate {$tax_rate_ref_id}: {$e->getMessage()}");
-            }
+        $state = '';
+        if ($invoice && $invoice->client) {
+            $state = trim($invoice->client->state ?? '');
         }
 
-        return $tax_rate_data ?? [];
+        return !empty($state) 
+            ? "{$state} {$rate}%"
+            : "{$rate}%";
+    }
+
+    /**
+     * Assign aggregated tax to an entity (invoice or line item).
+     *
+     * @param object|Invoice $entity Invoice or line item object
+     * @param string $tax_name Tax name
+     * @param float $tax_rate Tax rate percentage
+     * @return void
+     */
+    private function assignTaxToEntity($entity, string $tax_name, float $tax_rate): void
+    {
+        $entity->tax_name1 = $tax_name;
+        $entity->tax_rate1 = round($tax_rate, 2);
+        $entity->tax_name2 = '';
+        $entity->tax_rate2 = 0;
+        $entity->tax_name3 = '';
+        $entity->tax_rate3 = 0;
     }
 
     /**
@@ -694,6 +502,13 @@ class QbInvoice implements SyncInterface
             ]
         );
 
+        // Explicitly set all attributes before saving to ensure they're marked as dirty
+        // This ensures all attributes are included in the INSERT statement
+        // Pattern matches Helper.php and QuickbooksService.php implementations
+        $ninja_tax_rate->company_id = $this->service->company->id;
+        $ninja_tax_rate->name = $tax_name;
+        $ninja_tax_rate->rate = $tax_rate;
+        
         if (!$ninja_tax_rate->exists) {
             $ninja_tax_rate->user_id = $this->service->company->owner()->id;
             $ninja_tax_rate->save();

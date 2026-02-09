@@ -76,9 +76,17 @@ class QuickbooksController extends BaseController
         $user = auth()->user();
         $company = $user->company();
 
-        $qb = new QuickbooksService($company);
-        $qb->disconnect();
+        try{
+            $qb = new QuickbooksService($company);
+            $qb->disconnect();
+        }
+        catch(\Throwable $e){
+            /** Regardless of what happens, we should always set the quickbooks object to null */
+            $company->quickbooks = null;
+            $company->save();
 
+        }
+        
         return response()->noContent();
     }
 }

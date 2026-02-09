@@ -27,7 +27,7 @@ class ClientTransformer extends BaseTransformer
      * @param  mixed $qb_data
      * @return array
      */
-    public function qbToNinja(mixed $qb_data)
+    public function qbToNinja(mixed $qb_data, QuickbooksService $qb_service)
     {
         return $this->transform($qb_data);
     }
