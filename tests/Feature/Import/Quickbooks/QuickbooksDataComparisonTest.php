@@ -40,9 +40,9 @@ class QuickbooksDataComparisonTest extends TestCase
     /**
      * Check if the company's QuickBooks token is expired and cannot be refreshed.
      */
-    private function isTokenExpired(Company $company): bool
+    private function isTokenExpired(?Company $company): bool
     {
-        if (!$company->quickbooks || $company->quickbooks->accessTokenExpiresAt == 0) {
+        if (!$company || !$company->quickbooks || $company->quickbooks->accessTokenExpiresAt == 0) {
             return false; // No token configured, let it fail during service creation
         }
 
@@ -103,7 +103,7 @@ class QuickbooksDataComparisonTest extends TestCase
         $company = Company::where('quickbooks->settings->automatic_taxes', true)->first();
 
         // Check if token is expired before attempting to create service
-        if ($this->isTokenExpired($company)) {
+        if (!$company || $this->isTokenExpired($company)) {
             $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
         }
         
