@@ -102,12 +102,14 @@ class QuickbooksDataComparisonTest extends TestCase
 
         $company = Company::where('quickbooks->settings->automatic_taxes', true)->first();
 
-        $this->assertNotNull($company);
-
         // Check if token is expired before attempting to create service
         if ($this->isTokenExpired($company)) {
             $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
         }
+        
+
+        $this->assertNotNull($company);
+
         
         $qb_service = new QuickbooksService($company);
            
