@@ -136,6 +136,12 @@ class EInvoicePullDocs implements ShouldQueue
 
         foreach ($received_documents as $document) {
             nlog($document);
+
+            if(!isset($document['document']['invoice'])) {
+                nlog("No invoice found in document!!");
+                continue;
+            }
+
             $storecove_invoice = $storecove->expense->getStorecoveInvoice(json_encode($document['document']['invoice']));
             $expense = $storecove->expense->createExpense($storecove_invoice, $company);
 

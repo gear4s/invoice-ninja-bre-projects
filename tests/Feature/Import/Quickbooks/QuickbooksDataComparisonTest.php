@@ -471,6 +471,9 @@ class QuickbooksDataComparisonTest extends TestCase
             
             $company = $client->company;
 
+            if (!$company) {
+                $this->markTestSkipped("Company not found");
+            }
                     // Check if token is expired before attempting to create service
             if ($this->isTokenExpired($company)) {
                 $this->markTestSkipped("QuickBooks token is expired and cannot be refreshed for company {$company->id}");
