@@ -56,7 +56,7 @@ class StoreRecurringInvoiceRequest extends Request
         $rules['invitations'] = 'sometimes|bail|array';
         $rules['invitations.*.client_contact_id'] = 'bail|required|distinct';
 
-        $rules['frequency_id'] = 'required|integer|digits_between:1,12';
+        $rules['frequency_id'] = 'required|integer|between:1,12';
 
         $rules['project_id'] = ['bail', 'sometimes', new ValidProjectForClient($this->all())];
 
