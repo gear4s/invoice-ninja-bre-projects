@@ -31,18 +31,15 @@ namespace App\Services\Pdf;
  */
 class JsonDesignService
 {
-    private PdfService $pdfService;
-    private array $jsonDesign;
+    
     private JsonToSectionsAdapter $adapter;
 
     /**
      * @param PdfService $pdfService
      * @param array $jsonDesign Complete JSON design with blocks and pageSettings
      */
-    public function __construct(PdfService $pdfService, array $jsonDesign)
+    public function __construct(private PdfService $pdfService, private array $jsonDesign)
     {
-        $this->pdfService = $pdfService;
-        $this->jsonDesign = $jsonDesign;
         $this->adapter = new JsonToSectionsAdapter($jsonDesign, $pdfService);
     }
 

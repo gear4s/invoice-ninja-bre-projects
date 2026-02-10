@@ -123,7 +123,6 @@ class TemplateService
             $html = '<img src="' . $image_src . '" style="' . $image_style . '"></img>';
 
             return $html;
-            // return new \Twig\Markup($html, 'UTF-8');
 
         }));
 
