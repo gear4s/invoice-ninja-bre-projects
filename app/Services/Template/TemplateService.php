@@ -258,6 +258,12 @@ class TemplateService
 
         $this->entity = $this->company->invoices()->first() ?? $this->company->quotes()->first() ?? (new \App\Services\Pdf\PdfMock(['entity_type' => 'invoice'], $this->company))->initEntity();
 
+        $invite = $this->company->invoice_invitations()->first() ?? $this->company->quote_invitations()->first() ?? $this->company->credit_invitations()->first() ?? null;
+
+        if($invite){
+
+        }
+
         $this->data = $tm->engines;
 
         $this->variables = $tm->variables[0];

@@ -205,6 +205,28 @@ class PdfBuilder
         // This matches the exact behavior of mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8')
         return mb_encode_numericentity($html, [0x80, 0x10FFFF, 0, 0xFFFF], 'UTF-8');
     }
+    
+    /**
+     * transformHtmlVariables
+     *
+     * Transform the html variables into a format compatible for use with Twig Templates.
+     * 
+     * @return array
+     */
+    private function transformHtmlVariables(): array
+    {
+        $result = [];
+
+        $values = $this->service->html_variables['values'] ?? [];
+        foreach ($values as $key => $value) {
+            
+            $cleanKey = ltrim($key, '$');
+            $clientKey = "entity.{$cleanKey}";
+            \Illuminate\Support\Arr::set($result, $clientKey, $value);
+        }
+    
+        return $result;
+    }
 
     /**
      * parseTwigElements
@@ -217,8 +239,6 @@ class PdfBuilder
     {
 
         $replacements = [];
-        // $contents = $this->document->getElementsByTagName('ninja');
-
 
         $contents = [];
         $nodeList = $this->document->getElementsByTagName('ninja');
@@ -230,6 +250,10 @@ class PdfBuilder
         $template_service = new TemplateService();
         $template_service->setCompany($this->service->company);
         $data = $template_service->processData($this->service->options)->getData();
+        
+        //2026-02-11 - merge the html variables into the data array so they are available to the template in entity.key format.
+        $data = array_merge($data, $this->transformHtmlVariables());
+        $template_service->setData($data);
 
         $twig = $template_service->twig;
 

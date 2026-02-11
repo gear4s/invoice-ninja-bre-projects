@@ -14,8 +14,6 @@ namespace App\Utils;
 
 use Exception;
 use App\Models\Account;
-use App\Models\Country;
-use App\Models\GatewayType;
 use App\Utils\Traits\AppSetup;
 use App\Models\QuoteInvitation;
 use App\Utils\Traits\MakesHash;
@@ -24,7 +22,6 @@ use App\Utils\Traits\MakesDates;
 use App\Models\InvoiceInvitation;
 use App\Helpers\Epc\EpcQrGenerator;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
 use App\Utils\Traits\DesignCalculator;
 use App\Helpers\SwissQr\SwissQrGenerator;
 use App\Models\RecurringInvoiceInvitation;
@@ -1022,21 +1019,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
 
         return $data;
     }
-
-    public function makeValuesNoPrefix(): array
-    {
-        $data = [];
-
-        $values = $this->buildEntityDataArray();
-
-        foreach ($values as $key => $value) {
-            $data[str_replace(["$","."], ["_","_"], $key)] = $value['value'];
-        }
-
-        return $data;
-    }
-
-
+    
     public function generateLabelsAndValues()
     {
         $data = [];
