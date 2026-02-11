@@ -318,7 +318,7 @@ class BaseRepository
                 event('eloquent.updated: App\Models\Invoice', $model);
             }
 
-            if ($qb_model_changes && $model->company->account->isPaid() && $model->company->quickbooks && $model->company->shouldPushToQuickbooks('invoice')) {
+            if ($qb_model_changes && $model->company->quickbooks && $model->company->shouldPushToQuickbooks('invoice')) {
     
                 if($model->company->quickbooks->settings->automatic_taxes){
     
@@ -330,11 +330,14 @@ class BaseRepository
                     }
                 }
                 elseif($model->status_id != Invoice::STATUS_DRAFT){
-                    \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
-                        'invoice',
-                        $model->id,
-                        $model->company->db
-                    );
+                   
+                    \App\Services\Quickbooks\QuickbooksBatchCollector::collect('invoice', $model->id, $model->company->db, $model->company->id);
+
+                    // \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+                    //     'invoice',
+                    //     $model->id,
+                    //     $model->company->db
+                    // );
                 }
     
             }

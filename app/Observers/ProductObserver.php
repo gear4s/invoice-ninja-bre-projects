@@ -36,7 +36,7 @@ class ProductObserver
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_PRODUCT, $product, $product->company)->delay(0);
         }
 
-        if ($product->company->quickbooks && $product->company->account->isPaid() &&$product->company->shouldPushToQuickbooks('product')) {
+        if ($product->company->quickbooks && $product->company->shouldPushToQuickbooks('product')) {
                         
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'product',

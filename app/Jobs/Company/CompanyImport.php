@@ -226,6 +226,9 @@ class CompanyImport implements ShouldQueue
         "report_include_drafts",
         "client_registration_fields",
         "convert_rate_to_client",
+        "legal_entity_id",
+        "e_invoice",
+        "quickbooks",
     ];
 
     private array $protected_input = [
