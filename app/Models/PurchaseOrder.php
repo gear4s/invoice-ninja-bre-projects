@@ -14,10 +14,11 @@ namespace App\Models;
 
 use App\Utils\Ninja;
 use App\Utils\Number;
-use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Support\Carbon;
+use App\DataMapper\InvoiceSync;
 use App\Helpers\Invoice\InvoiceSum;
 use Illuminate\Support\Facades\App;
+use Elastic\ScoutDriverPlus\Searchable;
 use App\Helpers\Invoice\InvoiceSumInclusive;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Services\PurchaseOrder\PurchaseOrderService;
@@ -107,10 +108,16 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
  * @property \App\Models\User $user
  * @property \App\Models\Vendor $vendor
  * @property \App\Models\PurchaseOrderInvitation $invitation
+<<<<<<< HEAD
  * @property \App\Models\Currency|null $currency
  * @property \App\Models\Location|null $location
  * @property object|null $tax_data
  * @property object|null $e_invoice
+=======
+ * @property int|null $location_id
+ * @property object|null $tax_data
+ * @property \App\DataMapper\InvoiceSync|null $sync
+>>>>>>> docuninja
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder exclude($columns)
  * @method static \Database\Factories\PurchaseOrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder filter(\App\Filters\QueryFilters $filters)
@@ -215,6 +222,7 @@ class PurchaseOrder extends BaseModel
         'deleted_at' => 'timestamp',
         'is_amount_discount' => 'bool',
         'e_invoice' => 'object',
+        'sync' => InvoiceSync::class,
     ];
 
     public const STATUS_DRAFT = 1;

@@ -81,17 +81,34 @@ class InvoiceController extends Controller
             'variables' => $variables,
             'invoices' => [$invoice->hashed_id],
             'db' => $invoice->company->db,
+            'docuninja_active' => false,
+            'requires_signature' => $invoice->client->getSetting('require_invoice_signature') && $invoice->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
         ];
 
         if ($request->query('mode') === 'fullscreen') {
             return render('invoices.show-fullscreen', $data);
         }
+        $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
+
+        if($default_flow){
+            $docuninja_active = $invoice->company->docuninjaActive();
+            $signature_required = $invoice->client->getSetting('require_invoice_signature');
+            $signature_accepted = $invoice->sync?->dn_completed;
+            $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
+            $data['docuninja_active'] = (bool) $set_docuninja;
+
+            // If DocuNinja is active, we don't need to show the signature field.
+            if($docuninja_active){
+                $data['requires_signature'] = false;
+            }
+        }
 
         if (!$invoice->isPayable()) {
+            unset($data['invitation']);
             return $this->render('invoices.show', $data);
         }
 
-        return auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default' ? $this->render('invoices.show', $data) : $this->render('invoices.show_smooth', $data);
+        return $default_flow ? $this->render('invoices.show', $data) : $this->render('invoices.show_smooth', $data);
 
     }
 
@@ -117,7 +134,7 @@ class InvoiceController extends Controller
             nlog(array_merge(["showBlob"], $data));
         }
 
-        match ($data['entity_type'] ?? 'invoice') {
+        match($data['entity_type'] ?? 'invoice') {
             'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']), //@todo - sometimes this is false!!
             'quote' => $invitation = QuoteInvitation::withTrashed()->find($data['invitation_id']),
             'credit' => $invitation = CreditInvitation::withTrashed()->find($data['invitation_id']),
@@ -257,10 +274,32 @@ class InvoiceController extends Controller
             'variables' => $variables,
             'invitation' => $invitation,
             'db' => $invitation->company->db,
+            'docuninja_active' => false,
+            'requires_signature' => $invoices->first()->client->getSetting('require_invoice_signature') && $invoices->first()->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
+
         ];
 
-        // return $this->render('invoices.payment', $data);
-        return auth()->guard('contact')->user()->client->getSetting('payment_flow') === 'default' ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
+        $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
+
+        if($default_flow){
+            $docuninja_active = $invoices->first()->company->docuninjaActive();
+            $signature_required = $invoices->first()->client->getSetting('require_invoice_signature');
+            $signature_accepted = $invoices->reject(function ($invoice){
+                return !$invoice->sync?->dn_completed;
+            })->count() == 0;
+
+            $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
+            
+            $data['docuninja_active'] = (bool) $set_docuninja;
+
+            // If DocuNinja is active, we don't need to show the signature field.
+            if($docuninja_active){
+                $data['requires_signature'] = false;
+            }
+        }
+
+        return $default_flow ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
+    
     }
 
     /**

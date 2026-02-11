@@ -17,6 +17,7 @@ use App\Utils\Number;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Utils\Traits\WithSecureContext;
+use Livewire\Attributes\Lazy;
 
 class InvoiceSummary extends Component
 {

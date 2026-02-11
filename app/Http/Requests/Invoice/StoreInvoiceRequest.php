@@ -168,6 +168,10 @@ class StoreInvoiceRequest extends Request
 
         $input['lock_key'] = $key;
 
+        if(isset($input['sync'])){
+            unset($input['sync']);
+        }
+        
         $this->replace($input);
     }
 }

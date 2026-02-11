@@ -112,6 +112,7 @@ class MapSettings extends AbstractService
 
     private function handleCompanyGateways(?string $company_gateway_ids): string
     {
+<<<<<<< HEAD
         if (!$company_gateway_ids) {
             return "No Special Configuration.";
         }
@@ -120,6 +121,13 @@ class MapSettings extends AbstractService
             return "Payment Gateways Disabled!";
         }
 
+=======
+        nlog($company_gateway_ids);
+        if($company_gateway_ids == "0") {
+            return "Payment Gateways Disabled!";
+        }
+        
+>>>>>>> docuninja
         if ($company_gateway_ids == "") {
             return "No Special Configuration.";
         }

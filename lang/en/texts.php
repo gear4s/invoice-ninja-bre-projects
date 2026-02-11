@@ -5516,7 +5516,7 @@ $lang = array(
     'edit_location' => 'Edit Location',
     'downgrade' => 'Downgrade',
     'downgrade_to_free' => 'Downgrade to Free Plan',
-    'downgrade_to_free_description' => 'Downgrade to the free plan, note this will remove all paid features from your account.',
+    'downgrade_to_free_description' => 'This will remove all paid features from your account.',
     'delete_location' => 'Delete Location',
     'delete_location_confirmation' => 'This will remove the location from the clients record.',
     'add_card_reminder' => 'You can add a card again at any time.',
@@ -5587,6 +5587,7 @@ $lang = array(
     'docuninja_change_users' => 'New DocuNinja user limit',
     'docuninja_disable_warning' => 'This will remove all access to your DocuNinja account.',
     'docuninja_downgrade_info' => 'Your user limit will automatically be reduced at the end of the current billing cycle.',
+    'docuninja_grant_access_help' => 'Grant Invoice Ninja Users Access to DocuNinja',
     'recurring_invoice_item' => 'Recurring Invoice Item',
     'disable_recurring_payment_notification' => 'Disable Recurring Payment Notification',
     'disable_recurring_payment_notification_help' => 'Successful recurring invoice payment notifications will not be sent.',
@@ -5718,6 +5719,11 @@ $lang = array(
     'new_signatory' => 'New Signatory',
     'signatory' => 'Signatory',
     'invoice_ninja_template_description' => 'Customize the location of signatures on Invoice Ninja documents like Invoices, Quotes etc',
+    'activity_159' => 'Invoice :invoice for :client was signed',
+    'activity_160' => 'Quote :quote for :client was signed',
+    'activity_161' => 'Credit :credit for :client was signed',
+    'activity_162' => 'Purchase Order :purchase_order for :vendor was signed',
+    'activity_163' => 'Custom Document :document for :client was signed',
     'create_your_own' => 'Create your own',
     'create_your_own_description' => 'Create your own template using your own PDF document to upload',
     'new_template_description' => 'Select one of our prebuilt templates to get started, ie NDA, Sales agreement, etc',
@@ -5736,6 +5742,10 @@ $lang = array(
     'document_voided_notification' => 'Document voided notifications',
     'document_expired_notification' => 'Document expired notifications',
     'document_created' => 'Document created',
+<<<<<<< HEAD
+=======
+    'edit_template' => 'Edit Template',
+>>>>>>> docuninja
     'template_loaded' => 'Template loaded',
     'select_user_or_client' => 'Select User or Client',
     'docuninja_quota_available_but_no_users' => 'Add a user to Invoice Ninja first, then grant them access to DocuNinja here',
@@ -5743,6 +5753,10 @@ $lang = array(
     'document_queued_for_sending' => 'Document queued for sending',
     'document_voided' => 'Document Voided',
     'view_document' => 'View Document',
+<<<<<<< HEAD
+=======
+    'audit_log' => 'Audit Log',
+>>>>>>> docuninja
     'make_template' => 'Make Template',
     'use_template' => 'Use Template',
     'map_signatories' => 'Map Signatories',
@@ -5751,9 +5765,19 @@ $lang = array(
     'mapped' => 'Mapped',
     'docuninja_splash_message' => 'Loading DocuNinja...',
     'docuninja_contact_admin_for_access' => 'Contact your admin for access to DocuNinja.',
+<<<<<<< HEAD
     'void' => 'Void',
     'invitation_signatory_help' => 'Documents are signed sequentially, after the first signatory has signed, the next signatory will be able to sign.',
     'timeline' => 'Timeline',
+=======
+    'cloned_document' => 'Document Cloned',
+    'void' => 'Void',
+    'invitation_signatory_help' => 'Documents are signed sequentially, after the first signatory has signed, the next signatory will be able to sign.',
+    'timeline' => 'Timeline',
+    'clone_to_template' => 'Clone to Template',
+    'cloned_document' => 'Document Cloned',
+    'add_signatories' => 'Add Signatories',
+>>>>>>> docuninja
     'voided_document' => 'Document Voided',
     'voided' => 'Voided',
     'archive_document_description' => 'Are you sure you want to archive this document?',
@@ -5764,6 +5788,7 @@ $lang = array(
     'document_deleted' => 'Document Deleted',
     'sign_now' => 'Sign Now',
     'signed_document' => 'Signed Document',
+<<<<<<< HEAD
     'tour_document_upload' => 'To begin signing, upload your document here. Drag and drop your files into this area.',
     'tour_signatory_selector' => 'This is the signatory selector. Use it to manage the signatories for your document. Select a signatory to continue.',
     'tour_continue_select_signatory' => 'Continue by selecting a signatory.',
@@ -5907,6 +5932,8 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bank Transfer',
     
+=======
+>>>>>>> docuninja
 );
 
 return $lang;

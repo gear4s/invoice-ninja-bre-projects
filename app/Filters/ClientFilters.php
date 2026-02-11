@@ -173,8 +173,9 @@ class ClientFilters extends QueryFilters
             $sort_col[0] = 'name';
         }
 
-        if (is_array($sort_col) && $sort_col[0] == 'contacts') {
-        } elseif (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if(is_array($sort_col) && $sort_col[0] == 'contacts'){   
+        }
+        elseif (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -187,8 +188,12 @@ class ClientFilters extends QueryFilters
         if ($sort_col[0] == 'name') {
             // Use a raw subquery in the ORDER BY instead of adding it to SELECT
             // This avoids conflicts with the Excludable trait
+<<<<<<< HEAD
             return $this->builder->orderByRaw(
                 "
+=======
+            return $this->builder->orderByRaw("
+>>>>>>> docuninja
                 COALESCE(
                     NULLIF(clients.name, ''), 
                     (
@@ -202,9 +207,14 @@ class ClientFilters extends QueryFilters
             );
         }
 
+<<<<<<< HEAD
         if ($sort_col[0] == 'contacts') {
             return $this->builder->orderByRaw(
                 "
+=======
+        if($sort_col[0] == 'contacts'){
+            return $this->builder->orderByRaw("
+>>>>>>> docuninja
                 (
                     SELECT 
                         CASE 

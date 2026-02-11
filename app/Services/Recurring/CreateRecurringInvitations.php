@@ -55,6 +55,7 @@ class CreateRecurringInvitations extends AbstractService
                     $ii->key = $this->createDbHash($this->entity->company->db);
                     $ii->{$this->entity_id_name} = $this->entity->id;
                     $ii->client_contact_id = $contact->id;
+                    $ii->can_sign = $contact->can_sign;
                     $ii->save();
                 } elseif ($invitation && ! $contact->send_email) {
                     $invitation->delete();
@@ -72,6 +73,7 @@ class CreateRecurringInvitations extends AbstractService
 
             if ($invitation) {
                 $invitation->restore();
+                $invitation->save();
             }
         }
 

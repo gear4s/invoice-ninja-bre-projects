@@ -64,6 +64,7 @@ use App\Mail\ClientContact\ClientContactResetPasswordObject;
  * @property string|null $token
  * @property bool $is_locked
  * @property bool $send_email
+ * @property bool $can_sign
  * @property string|null $contact_key
  * @property string|null $remember_token
  * @property int|null $created_at
@@ -151,6 +152,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         'email',
         'is_primary',
         'send_email',
+        'can_sign',
     ];
 
     /**

@@ -268,4 +268,5 @@ return [
     'disable_purify_html' => env('DISABLE_PURIFY_HTML', false),
     'zugferd_version_two' => env('ZUGFERD_VERSION_TWO', true),
     'chart_service_url' => env('CHART_SERVICE_URL', false),
+    'docuninja_api_url' => env('DOCUNINJA_API_URL', false),
 ];

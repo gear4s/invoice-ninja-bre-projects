@@ -222,8 +222,11 @@ class BaseRepository
             $this->saveDocuments($data['file'], $model);
         }
 
+        $dn_enabled = $model->company->docuninjaActive();
+
         /* If invitations are present we need to filter existing invitations with the new ones */
         if (isset($data['invitations'])) {
+
             $invitations = collect($data['invitations']);
 
             /* Get array of Keys which have been removed from the invitations array and soft delete each invitation */
@@ -238,7 +241,13 @@ class BaseRepository
 
             foreach ($data['invitations'] as $invitation) {
                 //if no invitations are present - create one.
-                if (!$this->getInvitation($invitation, $resource)) {
+                if($invite = $this->getInvitation($invitation, $resource)){
+                    if($dn_enabled){
+                        $invite->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
+                        $invite->saveQuietly();
+                    }
+                }
+                else{
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
@@ -262,16 +271,28 @@ class BaseRepository
                             $new_invitation->{$lcfirst_resource_id} = $model->id;
                             $new_invitation->client_contact_id = $contact->id;
                             $new_invitation->key = $this->createDbHash($model->company->db);
+                            $new_invitation->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
                             $new_invitation->saveQuietly();
                         }
+
                     }
                 }
+                
             }
+
         }
 
         /* If no invitations have been created, this is our fail safe to maintain state*/
         if ($model->invitations()->count() == 0) {
             $model->service()->createInvitations();
+        }
+
+        if($dn_enabled && $model->invitations()->where('can_sign', true)->count() == 0){
+            $ii = $model->invitations()->whereHas('contact', function ($q){
+                $q->where('is_primary', true);
+            })->first() ?? $model->invitations()->first();
+            $ii->can_sign = true;
+            $ii->saveQuietly();
         }
 
         /* Recalculate invoice amounts */

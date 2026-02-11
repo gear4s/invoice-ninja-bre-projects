@@ -187,6 +187,7 @@ class InvoiceTransformer extends EntityTransformer
             'e_invoice' => $invoice->e_invoice ?: new \stdClass(),
             'backup' => $invoice->backup,
             'location_id' => $this->encodePrimaryKey($invoice->location_id),
+            'sync' => $invoice->sync,
         ];
 
         if (request()->has('reminder_schedule') && request()->query('reminder_schedule') == 'true') {

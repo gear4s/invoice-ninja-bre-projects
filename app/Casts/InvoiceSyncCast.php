@@ -24,15 +24,12 @@ class InvoiceSyncCast implements CastsAttributes
         }
 
         $data = json_decode($value, true);
-
-        if (!is_array($data)) {
-            return null;
+   
+        if (!is_array($data) || empty($data)) {
+            return null; // Return null if decoded data is not an array or is empty
         }
 
-        $is = new InvoiceSync();
-        $is->qb_id = $data['qb_id'];
-
-        return $is;
+        return InvoiceSync::fromArray($data);
     }
 
     public function set($model, string $key, $value, array $attributes)
@@ -41,8 +38,12 @@ class InvoiceSyncCast implements CastsAttributes
             return [$key => null];
         }
 
-        $data = [
-            'qb_id' => $value->qb_id,
+        return [
+            $key => json_encode([
+                'qb_id' => $value->qb_id,
+                'invitations' => $value->invitations,
+                'dn_completed' => $value->dn_completed,
+            ])
         ];
 
         return [

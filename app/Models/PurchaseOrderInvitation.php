@@ -38,6 +38,7 @@ use Illuminate\Support\Str;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
+ * @property boolean $can_sign
  * @property string|null $email_status
  * @property \App\Models\Company $company
  * @property \App\Models\VendorContact $contact

@@ -133,7 +133,7 @@ class PrePaymentController extends Controller
             'remaining_cycles' => $request->remaining_cycles,
             'is_recurring' => $request->is_recurring == 'on' ? true : false,
             'variables' => $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_invoice_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false,
-
+            'docuninja_active' => false,
         ];
 
         return $this->render('invoices.payment', $data);

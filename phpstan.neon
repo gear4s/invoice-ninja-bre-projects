@@ -21,8 +21,12 @@ parameters:
             - 'app/Http/Middleware/ThrottleRequestsWithPredis.php'
             - 'app/Utils/Traits/*'
             - 'Modules/Accounting/*'
+<<<<<<< HEAD
             - 'tests/*'
             - '~/.cursor/*'
+=======
+            - 'tests/'
+>>>>>>> docuninja
     universalObjectCratesClasses:
         - App\DataMapper\Tax\RuleInterface
         - App\DataMapper\FeesAndLimits
