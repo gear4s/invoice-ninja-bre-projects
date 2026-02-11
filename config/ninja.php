@@ -253,7 +253,7 @@ return [
         'private_key' => env('NINJA_PRIVATE_KEY', false),
     ],
     'upload_extensions' => env('ADDITIONAL_UPLOAD_EXTENSIONS', ''),
-    'storecove_api_key' => env('STORECOVE_API_KEY', false), 
+    'storecove_api_key' => env('STORECOVE_API_KEY', false),
     'storecove_email_catchall' => env('STORECOVE_CATCHALL_EMAIL',false),
     'pdf_page_numbering_x_alignment' => env('PDF_PAGE_NUMBER_X', 0),
     'pdf_page_numbering_y_alignment' => env('PDF_PAGE_NUMBER_Y', -6),

@@ -52,7 +52,7 @@ class StoreRecurringQuoteRequest extends Request
 
         $rules['invitations.*.client_contact_id'] = 'distinct';
 
-        $rules['frequency_id'] = 'required|integer|digits_between:1,12';
+        $rules['frequency_id'] = 'required|integer|between:1,12';
         $rules['number'] = ['bail', 'nullable', \Illuminate\Validation\Rule::unique('recurring_quotes')->where('company_id', $user->company()->id)];
 
         return $rules;
