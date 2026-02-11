@@ -197,11 +197,30 @@ class QbProduct implements SyncInterface
      *
      * Creates a product in quickbooks
      *
-     * @param  object $line_item
+     * @param  object|Product $line_item
      * @return string
      */
-    private function createQbProduct(object $line_item): string
+    private function createQbProduct(object $line_item): ?string
     {
+
+        /** @var ?Product $product */
+        $product = null;
+
+        if ($line_item instanceof Product) {
+            
+            $product = $line_item;
+
+            $item = new \App\DataMapper\InvoiceItem();
+            $item->product_key = $line_item->product_key;
+            $item->notes = $line_item->notes;
+            $item->quantity = 1;
+            $item->cost = $line_item->price;
+            $item->line_total = $line_item->price;
+            $item->type_id = $line_item->tax_id == Product::PRODUCT_TYPE_SERVICE ? '2' : '1';
+
+            $line_item = $item;
+
+        }
 
         $product_data = $this->product_transformer->qbTransform($line_item, $this->service->getIncomeAccountId());
 
@@ -213,6 +232,8 @@ class QbProduct implements SyncInterface
 
                 $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
                 $result = $this->service->sdk->Update($qb_item);
+
+                return $product->sync->qb_id;
             }
         }
 
@@ -221,6 +242,17 @@ class QbProduct implements SyncInterface
         $result = $this->service->sdk->Add($qb_item);
 
         $qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
+
+        $product = \App\Models\Product::where('company_id', $this->service->company->id)
+        ->where('product_key', $line_item->product_key)
+        ->first();
+
+        if ($product) {
+            $sync = new ProductSync();
+            $sync->qb_id = $qb_id;
+            $product->sync = $sync;
+            $product->save();
+        }
 
         return $qb_id;
     }

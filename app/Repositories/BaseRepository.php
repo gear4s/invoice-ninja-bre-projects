@@ -319,9 +319,9 @@ class BaseRepository
             }
 
             if ($qb_model_changes && $model->company->account->isPaid() && $model->company->quickbooks && $model->company->shouldPushToQuickbooks('invoice')) {
-    nlog("base repository push to quickbooks");
+    
                 if($model->company->quickbooks->settings->automatic_taxes){
-                    nlog("Automatic taxes are enabled and the invoice was changed");
+    
                     try{
                         (new \App\Jobs\Quickbooks\PushToQuickbooks('invoice', $model->id, $model->company->db))->handle();
                     }

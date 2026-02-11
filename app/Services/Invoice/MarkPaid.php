@@ -38,31 +38,6 @@ class MarkPaid extends AbstractService
             return $this->invoice;
         }
 
-        if ($this->invoice->status_id == Invoice::STATUS_DRAFT) {
-
-            /*Set status*/
-            $this->invoice->status_id = Invoice::STATUS_SENT;
-            $this->invoice->balance = $this->invoice->amount;
-
-            /*Update ledger*/
-            $this->invoice
-                ->ledger()
-                ->updateInvoiceBalance($this->invoice->amount, "Invoice {$this->invoice->number} marked as sent.");
-
-            /* Perform additional actions on invoice */
-            $this->invoice
-                ->service()
-                ->applyNumber()
-                ->setDueDate()
-                ->setReminder()
-                ->save();
-
-            $this->invoice->markInvitationsSent();
-
-            event(new \App\Events\Invoice\InvoiceWasUpdated($this->invoice, $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
-
-        }
-
         $already_paid = false;
 
         \DB::connection(config('database.default'))->transaction(function () use (&$already_paid) {
@@ -71,6 +46,32 @@ class MarkPaid extends AbstractService
             if ($this->invoice->status_id == Invoice::STATUS_PAID) {
                 $already_paid = true;
                 return;
+            }
+
+            if ($this->invoice->status_id == Invoice::STATUS_DRAFT) {
+
+                /*Set status*/
+                $this->invoice->status_id = Invoice::STATUS_SENT;
+                $this->invoice->balance = $this->invoice->amount;
+
+                /*Update ledger*/
+                $this->invoice
+                    ->ledger()
+                    ->updateInvoiceBalance($this->invoice->amount, "Invoice {$this->invoice->number} marked as sent.");
+
+                $this->invoice->client->service()->updateBalance($this->invoice->amount);
+                /* Perform additional actions on invoice */
+                $this->invoice
+                    ->service()
+                    ->applyNumber()
+                    ->setDueDate()
+                    ->setReminder()
+                    ->save();
+
+                $this->invoice->markInvitationsSent();
+
+                event(new \App\Events\Invoice\InvoiceWasUpdated($this->invoice, $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
+
             }
 
             if ($this->invoice) {
@@ -91,8 +92,6 @@ class MarkPaid extends AbstractService
         if ($already_paid) {
             return $this->invoice;
         }
-
-        $this->invoice->client->service()->updateBalance($this->invoice->amount);
 
         /* Create Payment */
         $payment = PaymentFactory::create($this->invoice->company_id, $this->invoice->user_id);
