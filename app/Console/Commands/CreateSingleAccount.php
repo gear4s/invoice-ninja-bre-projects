@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -423,6 +423,18 @@ class CreateSingleAccount extends Command
             'quantity' => 1,
         ]);
 
+        
+        $p1a = Product::factory()->create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'product_key' => 'pro_plan_annual',
+            'notes' => 'The Pro Plan Annual',
+            'cost' => 120,
+            'price' => 120,
+            'quantity' => 1,
+        ]);
+
+
         $p2 = Product::factory()->create([
             'user_id' => $user->id,
             'company_id' => $company->id,
@@ -557,6 +569,18 @@ class CreateSingleAccount extends Command
             $sub->save();
 
         }
+       
+
+        $sub = SubscriptionFactory::create($company->id, $user->id);
+        $sub->id = 66;
+        $sub->name = " PRO Pro Plan Annual";
+        $sub->group_id = $gs->id;
+        $sub->recurring_product_ids = "{$p1a->hashed_id}";
+        $sub->webhook_configuration = $webhook_config;
+        $sub->allow_plan_changes = true;
+        $sub->frequency_id = RecurringInvoice::FREQUENCY_ANNUALLY;
+        $sub->save();
+
 
         $_sub = $sub->replicate();
         $_sub->id = 41;

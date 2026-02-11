@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -674,6 +674,17 @@ class InvoiceService
 
         return $this;
 
+    }
+
+    public function getDocuNinjaSignable(?\App\Models\InvoiceInvitation $invite = null)
+    {
+
+        if (class_exists(\InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
+        {
+            $invite = $invite ?: $this->invoice->invitations->first();
+            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($invite);
+        }
+        
     }
 
     /**

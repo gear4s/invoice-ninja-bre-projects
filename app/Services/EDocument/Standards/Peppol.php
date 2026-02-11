@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -247,7 +247,7 @@ class Peppol extends AbstractService
 
             $this->p_invoice->IssueDate = new \DateTime($this->invoice->date);
 
-            if ($this->invoice->due_date) {
+            if ($this->invoice->due_date && !$this->isCreditNote) {
                 $this->p_invoice->DueDate = new \DateTime($this->invoice->due_date);
             }
 

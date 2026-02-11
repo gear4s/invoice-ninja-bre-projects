@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -135,7 +135,7 @@ class QuoteService
         }
 
         if ($this->quote->client->getSetting('auto_convert_quote')) {
-            $this->convert();
+            $this->convertToInvoice();
 
             $this->invoice
                  ->service()
@@ -330,6 +330,17 @@ class QuoteService
         }
 
         return $this;
+    }
+
+    public function getDocuNinjaSignable(?\App\Models\QuoteInvitation $invite = null)
+    {
+
+        if (class_exists(\InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
+        {
+            $invite = $invite ?: $this->quote->invitations->first();
+            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($invite);
+        }
+        
     }
 
     /**

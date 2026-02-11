@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -76,6 +76,44 @@ class EntityLevel implements EntityLevelInterface
         // 'state',
         'postal_code',
         'country_id',
+    ];
+
+    /**
+     * VAT number validation regex patterns for EU countries.
+     * Patterns validate format only - they do not verify checksums or actual validity.
+     * Patterns allow optional country prefix (e.g., "AT" or "ATU12345678").
+     */
+    private array $vat_number_regex = [
+        'AT' => '/^(AT)?U\d{9}$/i', // Austria: U + 9 digits
+        'BE' => '/^(BE)?0\d{9}$/i', // Belgium: 0 + 9 digits
+        'BG' => '/^(BG)?\d{9,10}$/i', // Bulgaria: 9-10 digits
+        'CY' => '/^(CY)?\d{8}[A-Z]$/i', // Cyprus: 8 digits + 1 letter
+        'CZ' => '/^(CZ)?\d{8,10}$/i', // Czech Republic: 8-10 digits
+        'DE' => '/^(DE)?\d{9}$/i', // Germany: 9 digits
+        'DK' => '/^(DK)?\d{8}$/i', // Denmark: 8 digits
+        'EE' => '/^(EE)?\d{9}$/i', // Estonia: 9 digits
+        'ES' => '/^(ES)?[A-Z0-9]\d{7}[A-Z0-9]$/i', // Spain: 1 alphanumeric + 7 digits + 1 alphanumeric
+        'ES-CN' => '/^(ES)?[A-Z0-9]\d{7}[A-Z0-9]$/i', // Canary Islands: Same as Spain
+        'ES-CE' => '/^(ES)?[A-Z0-9]\d{7}[A-Z0-9]$/i', // Ceuta: Same as Spain
+        'ES-ML' => '/^(ES)?[A-Z0-9]\d{7}[A-Z0-9]$/i', // Melilla: Same as Spain
+        'FI' => '/^(FI)?\d{8}$/i', // Finland: 8 digits
+        'FR' => '/^(FR)?[A-HJ-NP-Z0-9]{2}\d{9}$/i', // France: 2 alphanumeric (excluding I, O, Q) + 9 digits
+        'GR' => '/^(GR|EL)?\d{9}$/i', // Greece: 9 digits (can use GR or EL prefix)
+        'HR' => '/^(HR)?\d{11}$/i', // Croatia: 11 digits
+        'HU' => '/^(HU)?\d{8}$/i', // Hungary: 8 digits
+        'IE' => '/^(IE)?\d[A-Z0-9\+\*]\d{5}[A-Z]{1,2}$/i', // Ireland: 1 digit + 1 alphanumeric + 5 digits + 1-2 letters
+        'IT' => '/^(IT)?\d{11}$/i', // Italy: 11 digits
+        'LT' => '/^(LT)?(\d{9}|\d{12})$/i', // Lithuania: 9 or 12 digits
+        'LU' => '/^(LU)?\d{8}$/i', // Luxembourg: 8 digits
+        'LV' => '/^(LV)?\d{11}$/i', // Latvia: 11 digits
+        'MT' => '/^(MT)?\d{8}$/i', // Malta: 8 digits
+        'NL' => '/^(NL)?\d{9}B\d{2}$/i', // Netherlands: 9 digits + B + 2 digits
+        'PL' => '/^(PL)?\d{10}$/i', // Poland: 10 digits
+        'PT' => '/^(PT)?\d{9}$/i', // Portugal: 9 digits
+        'RO' => '/^(RO)?\d{2,10}$/i', // Romania: 2-10 digits
+        'SE' => '/^(SE)?\d{12}$/i', // Sweden: 12 digits
+        'SI' => '/^(SI)?\d{8}$/i', // Slovenia: 8 digits
+        'SK' => '/^(SK)?\d{10}$/i', // Slovakia: 10 digits
     ];
 
     private array $company_fields = [
@@ -212,9 +250,15 @@ class EntityLevel implements EntityLevelInterface
         }
 
         //If not an individual, you MUST have a VAT number if you are in the EU
-        if (!in_array($client->classification, ['government', 'individual']) && in_array($client->country->iso_3166_2, $this->eu_country_codes) && !$this->validString($client->vat_number)) {
-            $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+        if (!in_array($client->classification, ['government', 'individual']) && in_array($client->country->iso_3166_2, $this->eu_country_codes)) {
+            if (!$this->validString($client->vat_number)) {
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+            } elseif (isset($this->vat_number_regex[$client->country->iso_3166_2]) && !preg_match($this->vat_number_regex[$client->country->iso_3166_2], str_replace([" ",".","-"], "", $client->vat_number))) {
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.invalid_vat_number")];
+            }
         }
+
+
 
         //Primary contact email is present.
         if ($client->present()->email() == 'No Email Set') {

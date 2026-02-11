@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -70,6 +70,38 @@ class QuickbooksSettings implements Castable
             'companyName' => $this->companyName,
             'settings' => $this->settings->toArray(),
         ];
+    }
+    
+    /**
+     * 
+     * Patches our settings object with the 
+     * selected changes we authorize.
+     *
+     * @param  array $changes
+     * @return self
+     */
+    public function with(array $changes): self
+    {
+
+        $settings = $this->settings->toArray();
+
+        $new_settings = [
+            'client' => [
+                'direction' => $changes['client']['direction'] ?? $this->settings->client->direction->value,
+            ],
+            'invoice' => [
+                'direction' => $changes['invoice']['direction'] ?? $this->settings->invoice->direction->value,
+            ],
+            'product' => [
+                'direction' => $changes['product']['direction'] ?? $this->settings->product->direction->value,
+            ],
+            'qb_income_account_id' => $changes['qb_income_account_id'] ?? $this->settings->qb_income_account_id,
+            'automatic_taxes' => $changes['automatic_taxes'] ?? $this->settings->automatic_taxes,
+        ];
+
+        $final_settings['settings'] = array_merge($settings, $new_settings);
+        
+        return new self(array_merge($this->toArray(), $final_settings));
     }
 
     /**

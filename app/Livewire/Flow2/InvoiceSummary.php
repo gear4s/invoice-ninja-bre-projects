@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -17,6 +17,7 @@ use App\Utils\Number;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Utils\Traits\WithSecureContext;
+use Livewire\Attributes\Lazy;
 
 class InvoiceSummary extends Component
 {

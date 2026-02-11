@@ -17,8 +17,8 @@ return [
     'require_https' => env('REQUIRE_HTTPS', true),
     'app_url' => rtrim(env('APP_URL', ''), '/'),
     'app_domain' => env('APP_DOMAIN', 'invoicing.co'),
-    'app_version' => env('APP_VERSION', '5.12.55'),
-    'app_tag' => env('APP_TAG', '5.12.55'),
+    'app_version' => env('APP_VERSION', '5.12.56'),
+    'app_tag' => env('APP_TAG', '5.12.56'),
     'minimum_client_version' => '5.0.16',
     'terms_version' => '1.0.1',
     'api_secret' => env('API_SECRET', false),
@@ -268,5 +268,5 @@ return [
     'disable_purify_html' => env('DISABLE_PURIFY_HTML', false),
     'zugferd_version_two' => env('ZUGFERD_VERSION_TWO', true),
     'chart_service_url' => env('CHART_SERVICE_URL', false),
-    'docuninja_api_url' => env('DOCUNINJA_API_URL', null),
+    'docuninja_api_url' => env('DOCUNINJA_API_URL', false),
 ];

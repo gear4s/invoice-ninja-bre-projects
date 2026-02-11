@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -59,7 +59,7 @@ class SendEDocument implements ShouldQueue
 
         nlog("trying");
 
-        $model = $this->entity::withTrashed()->find($this->id);
+        $model = $this->entity::withTrashed()->firstOrFail($this->id);
 
         if (isset($model->backup->guid) && is_string($model->backup->guid) && strlen($model->backup->guid) > 3) {
             nlog("already sent!");

@@ -5475,6 +5475,9 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'use_system_fonts' => 'Utiliser les polices de caractères du système',
     'use_system_fonts_help' => 'Remplacer les polices standard par celles du navigateur web',
     'active_tasks' => 'Tâches actives',
+    'of_budget' => 'du budget',
+    'invoiced_hours' => 'Heures facturées',
+    'less' => 'Moins',
     'enable_notifications' => 'Activer les notifications',
     'enable_public_notifications' => 'Activer les notifications publiques',
     'enable_public_notifications_help' => 'Activer les notifications en temps réel de Invoice Ninja.',
@@ -5766,6 +5769,10 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'tour_toolbox_description' => 'À droite se trouve la boîte à outils. Utilisez-la pour ajouter des champs et des éléments avec lesquels les signataires pourront interagir. Le champ de signature est déjà sélectionné. Cliquez pour continuer.',
     'tour_document_canvas' => 'Voici l\'espace de travail de votre document. Placez et positionnez ici les champs destinés à vos signataires.',
     'tour_save_document' => 'Une fois terminé, cliquez ici pour enregistrer votre document.',
+    'create_signature' => 'Créer une signature',
+    'signature_name' => 'Nom de la signature',
+    'close_tab' => 'Fermer l\'onglet',
+    'sign' => 'Signer',
 );
 
 return $lang;

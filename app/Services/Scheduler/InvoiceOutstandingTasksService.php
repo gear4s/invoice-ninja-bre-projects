@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -79,13 +79,19 @@ class InvoiceOutstandingTasksService
                         })
                         ->map(function (Task $task, $key) {
 
+                            $body = '';
+
                             if ($key == 0 && $task->company->invoice_task_project) {
-                                $body = '<div class="project-header">' . $task->project->name . '</div>' . $task->project?->public_notes ?? ''; //@phpstan-ignore-line
+                            
+                                if($task->project) {
+                                    $body .= '<div class="project-header">' . $task->project->name . '</div>' . $task->project?->public_notes ?? ''; //@phpstan-ignore-line
+                                }
+                                
                                 $body .= '<div class="task-time-details">' . $task->description() . '</div>';
                             } elseif (!$task->company->invoice_task_hours && !$task->company->invoice_task_timelog && !$task->company->invoice_task_datelog && !$task->company->invoice_task_item_description) {
-                                $body = $task->description ?? '';
+                                $body .= $task->description ?? '';
                             } else {
-                                $body = '<div class="task-time-details">' . $task->description() . '</div>';
+                                $body .= '<div class="task-time-details">' . $task->description() . '</div>';
                             }
 
                             $item = new InvoiceItem();

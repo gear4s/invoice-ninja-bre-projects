@@ -5477,6 +5477,9 @@ $lang = array(
     'use_system_fonts' => 'Sử dụng Phông chữ Hệ thống',
     'use_system_fonts_help' => 'Ghi đè phông chữ chuẩn bằng phông chữ từ trình duyệt web',
     'active_tasks' => 'Nhiệm vụ đang hoạt động',
+    'of_budget' => 'Ngân sách',
+    'invoiced_hours' => 'Giờ đã lập hóa đơn',
+    'less' => 'Ít hơn',
     'enable_notifications' => 'Bật thông báo',
     'enable_public_notifications' => 'Bật thông báo công khai',
     'enable_public_notifications_help' => 'Bật thông báo thời gian thực từ Invoice Ninja.',
@@ -5767,6 +5770,10 @@ $lang = array(
     'tour_toolbox_description' => 'Bên phải là hộp công cụ. Sử dụng nó đến Thêm và phần tử cho người ký đến tác với. Trường chữ ký đã được chọn. Nhấp đến tiếp tục.',
     'tour_document_canvas' => 'Đây là khung soạn thảo tài liệu của bạn. Hãy đặt và định vị các trường thông tin người ký tên tại đây.',
     'tour_save_document' => 'Khi bạn hoàn thành, đến nhấp vào đây Lưu tài liệu của bạn.',
+    'create_signature' => 'Tạo chữ ký',
+    'signature_name' => 'Tên chữ ký',
+    'close_tab' => 'Đóng tab',
+    'sign' => 'Dấu hiệu',
 );
 
 return $lang;

@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -59,7 +59,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $first_month_of_year
  * @property string $portal_mode
  * @property string|null $portal_domain
- * @property int $enable_modules
+ * @property bool $enable_modules //alias for DocuNinja is active
  * @property object $custom_fields
  * @property \App\DataMapper\CompanySettings|\stdClass $settings
  * @property string $slack_webhook_url
@@ -1081,7 +1081,7 @@ class Company extends BaseModel
         // FASTEST CHECK: Raw database column (no object instantiation, no JSON decode)
         // This is the cheapest possible check - just a null comparison
         // For companies without QuickBooks, this returns immediately with ~0.001ms overhead
-        if (is_null($this->getRawOriginal('quickbooks'))) {
+        if (is_null($this->getRawOriginal('quickbooks')) || !$this->company->account->isPaid()) {
             return false;
         }
 
@@ -1104,5 +1104,11 @@ class Company extends BaseModel
             // Check if sync direction allows push
             return $direction === 'push' || $direction === 'bidirectional';
         });
+    }
+    
+    public function docuninjaActive(): bool
+    {
+        return $this->enable_modules && $this->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS);
+        // return $this->enable_modules && Ninja::isHosted();
     }
 }

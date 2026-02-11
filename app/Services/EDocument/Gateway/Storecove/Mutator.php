@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -531,6 +531,14 @@ class Mutator implements MutatorInterface
 
         $this->p_invoice->AccountingCustomerParty->Party->PostalAddress->CountrySubentity = $resolved_state;
         $this->p_invoice->AccountingCustomerParty->Party->PostalAddress->CityName = $resolved_city;
+
+        $query = $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification;
+        usort($query, function($a, $b) {
+            if ($a->value === null && $b->value !== null) return -1;
+            if ($a->value !== null && $b->value === null) return 1;
+            return 0;
+        });
+        $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification = $query;
 
         return $this;
     }

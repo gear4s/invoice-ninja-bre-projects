@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -226,6 +226,9 @@ class CompanyImport implements ShouldQueue
         "report_include_drafts",
         "client_registration_fields",
         "convert_rate_to_client",
+        "legal_entity_id",
+        "e_invoice",
+        "quickbooks",
     ];
 
     private array $protected_input = [

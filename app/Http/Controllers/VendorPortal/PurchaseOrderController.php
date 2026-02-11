@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -98,6 +98,10 @@ class PurchaseOrderController extends Controller
             event(new PurchaseOrderWasViewed($invitation, $invitation->company, Ninja::eventVars()));
         }
 
+        $requires_signature = $purchase_order->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS) && $invitation->company->getSetting('require_purchase_order_signature');
+        $docuninja_active = $invitation->company->docuninjaActive();
+        $signature_accepted = $invitation->purchase_order->sync?->dn_completed ?? false;
+
         $data = [
             'purchase_order' => $purchase_order,
             '_key' => $invitation ? $invitation->key : false,
@@ -106,12 +110,14 @@ class PurchaseOrderController extends Controller
             'company' => $purchase_order->company,
             'invitation' => $invitation,
             'variables' => false,
-
+            'requires_signature' => !$signature_accepted && $requires_signature,
+            'docuninja_active' => $docuninja_active && !$signature_accepted && $requires_signature,
         ];
 
         if ($request->query('mode') === 'fullscreen') {
             return render('purchase_orders.show-fullscreen', $data);
         }
+
 
         return $this->render('purchase_orders.show', $data);
     }

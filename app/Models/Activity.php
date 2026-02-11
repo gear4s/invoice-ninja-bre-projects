@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -297,6 +297,16 @@ class Activity extends StaticModel
     public const VERIFACTU_CANCELLATION_SENT_FAILURE = 157;
 
     public const QUOTE_REJECTED = 158;
+
+    public const INVOICE_DOCUMENT_SIGNED = 159;
+
+    public const QUOTE_DOCUMENT_SIGNED = 160;
+
+    public const CREDIT_DOCUMENT_SIGNED = 161;
+
+    public const PURCHASE_ORDER_DOCUMENT_SIGNED = 162;
+
+    public const CUSTOM_DOCUMENT_SIGNED = 163;
 
     protected $casts = [
         'is_system' => 'boolean',

@@ -5,52 +5,43 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Enum\SyncDirection;
 use App\Services\Quickbooks\QuickbooksService;
+use App\Services\Quickbooks\Jobs\QuickbooksImport;
 use App\Http\Requests\Quickbooks\SyncTaxRatesRequest;
-use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
 use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
-use App\Http\Requests\Quickbooks\ConfigQuickbooksRequest;
+use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
 
 class QuickbooksController extends BaseController
 {
     public function sync(SyncQuickbooksRequest $request)
     {
 
-        return response()->noContent();
-    }
-
-    public function settings(ConfigQuickbooksRequest $request)
-    {
-
         $user = auth()->user();
         $company = $user->company();
 
-        $quickbooks = $company->quickbooks;
-        $quickbooks->settings->client->direction = $request->clients ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->vendor->direction = $request->vendors ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->invoice->direction = $request->invoices ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->sales->direction = $request->sales ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->quote->direction = $request->quotes ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->purchase_order->direction = $request->purchase_orders ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->product->direction = $request->products ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->payment->direction = $request->payments ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->expense->direction = $request->expenses ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->expense_category->direction = $request->expense_categories ? SyncDirection::PUSH : SyncDirection::NONE;
-        $quickbooks->settings->qb_income_account_id = $request->qb_income_account_id;
-        $company->quickbooks = $quickbooks;
-        $company->save();
+        $syncable = [];
 
+        if($request->client) {
+            $syncable[] = 'Customer';
+        }
+        if($request->product) {
+            $syncable[] = 'Item';
+        }
+        if($request->invoice) {
+            $syncable[] = 'Invoice';
+        }
+
+        QuickbooksImport::dispatch($company->id, $company->db, $syncable);
+        
         return response()->noContent();
     }
-
 
     /**
      * syncTaxRates
@@ -85,9 +76,17 @@ class QuickbooksController extends BaseController
         $user = auth()->user();
         $company = $user->company();
 
-        $qb = new QuickbooksService($company);
-        $qb->disconnect();
+        try{
+            $qb = new QuickbooksService($company);
+            $qb->disconnect();
+        }
+        catch(\Throwable $e){
+            /** Regardless of what happens, we should always set the quickbooks object to null */
+            $company->quickbooks = null;
+            $company->save();
 
+        }
+        
         return response()->noContent();
     }
 }

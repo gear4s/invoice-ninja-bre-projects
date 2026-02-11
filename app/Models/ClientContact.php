@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -64,6 +64,7 @@ use App\Mail\ClientContact\ClientContactResetPasswordObject;
  * @property string|null $token
  * @property bool $is_locked
  * @property bool $send_email
+ * @property bool $can_sign
  * @property string|null $contact_key
  * @property string|null $remember_token
  * @property int|null $created_at
@@ -151,6 +152,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         'email',
         'is_primary',
         'send_email',
+        'can_sign',
     ];
 
     /**

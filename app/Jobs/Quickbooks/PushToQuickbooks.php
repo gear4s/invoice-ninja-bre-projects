@@ -5,24 +5,27 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Quickbooks;
 
-use App\Libraries\MultiDB;
 use App\Models\Client;
-use App\Models\Invoice;
 use App\Models\Company;
-use App\Services\Quickbooks\QuickbooksService;
+use App\Models\Invoice;
+use App\Models\Product;
+use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Services\Quickbooks\QuickbooksService;
+use App\Services\Quickbooks\QuickbooksRateLimiter;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use QuickBooksOnline\API\Exception\ServiceException;
 
 /**
  * Unified job to push entities to QuickBooks.
@@ -86,6 +89,7 @@ class PushToQuickbooks implements ShouldQueue
             match ($this->entity_type) {
                 'client' => $this->pushClient($qbService, $entity),
                 'invoice' => $this->pushInvoice($qbService, $entity),
+                'product' => $this->pushProduct($qbService, $entity),
                 default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
             };
         } catch (\Throwable $e) {
@@ -130,10 +134,23 @@ class PushToQuickbooks implements ShouldQueue
      */
     private function pushClient(QuickbooksService $qbService, Client $client): void
     {
-        // TODO: Implement actual push logic
-        // $qbService->client->push($client, $this->action);
+        
         $qbService->client->syncToForeign([$client]);
     }
+
+    /**
+     * Push a product to QuickBooks.
+     *
+     * @param QuickbooksService $qbService
+     * @param Product $product
+     * @return void
+     */
+    private function pushProduct(QuickbooksService $qbService, Product $product): void
+    {
+        
+        $qbService->product->syncToForeign([$product]);
+    }
+
 
     /**
      * Push an invoice to QuickBooks.
@@ -144,16 +161,7 @@ class PushToQuickbooks implements ShouldQueue
      */
     private function pushInvoice(QuickbooksService $qbService, Invoice $invoice): void
     {
-        // Use syncToForeign to push the invoice
         $qbService->invoice->syncToForeign([$invoice]);
-
-        //If there are automatic taxes, we need to pull the invoice and update the ninja invoice to include the appropriate taxes.
-        if ($qbService->company->quickbooks->settings->automatic_taxes) {
-            // $invoice = $invoice->fresh();
-            // $qb_invoice = $qbService->invoice->find($invoice->sync->qb_id);
-            // $this->service->invoice->syncToForeign([$invoice]);
-        }
-
     }
 
     public function middleware(): array

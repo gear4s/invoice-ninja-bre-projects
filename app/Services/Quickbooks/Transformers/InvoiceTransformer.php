@@ -176,7 +176,6 @@ class InvoiceTransformer extends BaseTransformer
             'ApplyTaxAfterDiscount' => true,
             'PrintStatus' => 'NeedToPrint',
             'EmailStatus' => 'NotSet',
-            // 'GlobalTaxCalculation' => 'TaxExcluded',
             'GlobalTaxCalculation' => $qb_service->company->quickbooks->settings->automatic_taxes ? 'TaxExcluded' : 'NotApplicable',
         ];
 
@@ -215,21 +214,15 @@ class InvoiceTransformer extends BaseTransformer
             $invoice_data['PONumber'] = $invoice->po_number;
         }
 
-        // Add partial deposit if invoice has a partial payment amount
         // QuickBooks uses 'Deposit' field for partial payments/deposits
         if ($invoice->partial && $invoice->partial > 0) {
             $invoice_data['Deposit'] = $invoice->partial;
-
-            // Note: QuickBooks doesn't have a separate 'DepositDueDate' field
         }
 
         // If invoice already has a QB ID, include it for updates
-        // Note: SyncToken will be fetched in QbInvoice::syncToForeign using the existing find() method
         if (isset($invoice->sync->qb_id) && !empty($invoice->sync->qb_id)) {
             $invoice_data['Id'] = $invoice->sync->qb_id;
         }
-
-        // nlog($invoice_data);
 
         return $invoice_data;
     }

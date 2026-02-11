@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -30,18 +30,34 @@ class QbProduct implements SyncInterface
         $this->product_transformer = new ProductTransformer($service->company);
 
     }
-
+    
+    /**
+     * find
+     *
+     * Finds a product in QuickBooks by their ID.
+     *
+     * @param  string $id
+     * @return mixed
+     */
     public function find(string $id): mixed
     {
         return $this->service->sdk->FindById('Item', $id);
     }
-
+    
+    /**
+     * syncToNinja
+     *
+     * Syncs products from QuickBooks to Ninja.
+     *
+     * @param  array $records
+     * @return void
+     */
     public function syncToNinja(array $records): void
     {
 
         foreach ($records as $record) {
 
-            $ninja_data = $this->product_transformer->qbToNinja($record);
+            $ninja_data = $this->product_transformer->qbToNinja($record, $this->service);
 
             if ($product = $this->findProduct($ninja_data['id'])) {
                 $product->fill($ninja_data);
@@ -50,9 +66,37 @@ class QbProduct implements SyncInterface
         }
 
     }
+    
+    /**
+     * syncToForeign
+     *
+     * Syncs products from Ninja to QuickBooks.
+     *
+     * @param  array $records
+     * @return void
+     */
+    public function syncToForeign(array $records): void 
+    {
 
-    public function syncToForeign(array $records): void {}
+        foreach ($records as $product) {
+            if (!$product instanceof Product) {
+                continue;
+            }
 
+            $this->createQbProduct($product);
+
+        }
+    }
+
+        
+    /**
+     * findProduct
+     *
+     * Finds a product in Ninja by their ID.
+     *
+     * @param  string $key
+     * @return Product
+     */
     private function findProduct(string $key): ?Product
     {
         $search = Product::query()
@@ -77,7 +121,16 @@ class QbProduct implements SyncInterface
         return null;
 
     }
-
+    
+    /**
+     * sync
+     *
+     * Syncs a product from QuickBooks to Ninja.
+     *
+     * @param  string $id
+     * @param  string $last_updated
+     * @return void
+     */
     public function sync(string $id, string $last_updated): void
     {
         $qb_record = $this->find($id);
@@ -85,7 +138,7 @@ class QbProduct implements SyncInterface
         if ($this->service->syncable('product', \App\Enum\SyncDirection::PULL) && $ninja_record = $this->findProduct($id)) {
 
             if (Carbon::parse($last_updated) > Carbon::parse($ninja_record->updated_at)) {
-                $ninja_data = $this->product_transformer->qbToNinja($qb_record);
+                $ninja_data = $this->product_transformer->qbToNinja($qb_record, $this->service);
 
                 $ninja_record->fill($ninja_data);
                 $ninja_record->save();
@@ -119,7 +172,14 @@ class QbProduct implements SyncInterface
 
         $escaped_name = str_replace("'", "''", $item_name);
         $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
+
+        /** @var object|array|null $existing_items */
         $existing_items = $this->service->sdk->Query($query);
+
+        // QB SDK can return a single object or an array; normalize to array
+        if (!empty($existing_items) && !is_array($existing_items)) {
+            $existing_items = [$existing_items];
+        }
         if (!empty($existing_items) && isset($existing_items[0])) {
             $existing_item = $existing_items[0];
             $existing_id = data_get($existing_item, 'Id') ?? data_get($existing_item, 'Id.value');
@@ -137,19 +197,62 @@ class QbProduct implements SyncInterface
      *
      * Creates a product in quickbooks
      *
-     * @param  object $line_item
+     * @param  object|Product $line_item
      * @return string
      */
-    private function createQbProduct(object $line_item): string
+    private function createQbProduct(object $line_item): ?string
     {
 
+        /** @var ?Product $product */
+        $product = null;
+
+        if ($line_item instanceof Product) {
+            
+            $product = $line_item;
+
+            $item = new \App\DataMapper\InvoiceItem();
+            $item->product_key = $line_item->product_key;
+            $item->notes = $line_item->notes;
+            $item->quantity = 1;
+            $item->cost = $line_item->price;
+            $item->line_total = $line_item->price;
+            $item->type_id = $line_item->tax_id == Product::PRODUCT_TYPE_SERVICE ? '2' : '1';
+
+            $line_item = $item;
+
+        }
+
         $product_data = $this->product_transformer->qbTransform($line_item, $this->service->getIncomeAccountId());
+
+        if (isset($product->sync->qb_id) && !empty($product->sync->qb_id)) {
+            $existing_qb_product = $this->find($product->sync->qb_id);
+            if ($existing_qb_product) {
+                $product_data['SyncToken'] = $existing_qb_product->SyncToken ?? '0';
+                $product_data['Id'] = $product->sync->qb_id;
+
+                $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
+                $result = $this->service->sdk->Update($qb_item);
+
+                return $product->sync->qb_id;
+            }
+        }
 
         $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
 
         $result = $this->service->sdk->Add($qb_item);
 
         $qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
+
+        $product = \App\Models\Product::where('company_id', $this->service->company->id)
+        ->where('product_key', $line_item->product_key)
+        ->first();
+
+        if ($product) {
+            $sync = new ProductSync();
+            $sync->qb_id = $qb_id;
+            $product->sync = $sync;
+            $product->save();
+        }
 
         return $qb_id;
     }

@@ -62,8 +62,13 @@ class PaymentTransformer extends BaseTransformer
 
         $lines = data_get($qb_data, 'Line', []) ?? [];
 
-        if (!empty($lines) && !isset($lines[0])) {
-            $lines = [$lines];
+        // QB can return a single object or an array; normalize to array
+        if (!empty($lines)) {
+            if (!is_array($lines)) {
+                $lines = [$lines];
+            } elseif (!isset($lines[0])) {
+                $lines = [$lines];
+            }
         }
 
         foreach ($lines as $item) {
@@ -138,6 +143,17 @@ class PaymentTransformer extends BaseTransformer
         $credit_line = null;
 
         $credit_array = data_get($qb_data, 'Line', []);
+
+        // QB can return a single object or an array; normalize to array
+        if (!empty($credit_array)) {
+            if (!is_array($credit_array)) {
+                $credit_array = [$credit_array];
+            } elseif (!isset($credit_array[0])) {
+                $credit_array = [$credit_array];
+            }
+        } else {
+            $credit_array = [];
+        }
 
         foreach ($credit_array as $item) {
 

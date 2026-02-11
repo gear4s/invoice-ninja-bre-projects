@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -60,7 +60,7 @@ class QbClient implements SyncInterface
         $transformer = new ClientTransformer($this->service->company);
 
         foreach ($records as $record) {
-            $ninja_data = $transformer->qbToNinja($record);
+            $ninja_data = $transformer->qbToNinja($record, $this->service);
 
             if (! empty($ninja_data[0]['terms'])) {
                 $days = $this->service->findEntityById('Term', $ninja_data[0]['terms']);
@@ -108,12 +108,16 @@ class QbClient implements SyncInterface
                 continue;
             }
 
-
             $this->createQbClient($client);
 
         }
     }
 
+    private function findClientIdByName(?string $name): mixed
+    {
+        return $this->service->sdk->Query("SELECT Id FROM Customer WHERE DisplayName = '{$name}'",1,1);
+    }
+    
     /**
      * createQbClient
      *
@@ -140,6 +144,27 @@ class QbClient implements SyncInterface
                     $result = $this->service->sdk->Update($customer);
 
                     return $client->sync->qb_id;
+                }
+            }
+            else {
+                $customers = $this->findClientIdByName($client->present()->name());
+                if ($customers) {
+                    // QB SDK can return a single object or an array; normalize to array
+                    if (!is_array($customers)) {
+                        $customers = [$customers];
+                    }
+                    
+                    if (isset($customers[0])) {
+                        $customer = $customers[0];
+                        $qb_id = data_get($customer, 'Id') ?? data_get($customer, 'Id.value');
+
+                        $sync = new \App\DataMapper\ClientSync();
+                        $sync->qb_id = $qb_id;
+                        $client->sync = $sync;
+                        $client->saveQuietly();
+                        
+                        return $qb_id;
+                    }
                 }
             }
 
@@ -190,7 +215,6 @@ class QbClient implements SyncInterface
         }
 
         return null;
-
 
     }
 }

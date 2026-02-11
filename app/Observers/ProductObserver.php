@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -35,6 +35,16 @@ class ProductObserver
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_PRODUCT, $product, $product->company)->delay(0);
         }
+
+        if ($product->company->quickbooks && $product->company->shouldPushToQuickbooks('product')) {
+                        
+            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+                'product',
+                $product->id,
+                $product->company->db
+            );
+        
+        }
     }
 
     /**
@@ -63,6 +73,9 @@ class ProductObserver
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $product, $product->company)->delay(0);
         }
+
+
+        nlog("product updated observer");
     }
 
     /**

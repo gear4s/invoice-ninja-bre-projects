@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -118,6 +118,10 @@ class Helper
             $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true MAXRESULTS 1";
             $accounts = $this->qb_service->sdk->Query($query);
 
+            // QB SDK can return a single object or an array; normalize to array
+            if (!empty($accounts) && !is_array($accounts)) {
+                $accounts = [$accounts];
+            }
             if (!empty($accounts) && isset($accounts[0])) {
                 $account = $accounts[0];
                 $account_id = data_get($account, 'Id') ?? data_get($account, 'Id.value');
@@ -178,8 +182,13 @@ class Helper
 
         $taxLines = data_get($qb_data, 'TxnTaxDetail.TaxLine', []) ?? [];
 
-        if (!empty($taxLines) && !isset($taxLines[0])) {
-            $taxLines = [$taxLines];
+        // QB can return a single IPPLine object or an array of lines; normalize to array
+        if (!empty($taxLines)) {
+            if (!is_array($taxLines)) {
+                $taxLines = [$taxLines];
+            } elseif (!isset($taxLines[0])) {
+                $taxLines = [$taxLines];
+            }
         }
 
         $totalTaxRate = 0;
@@ -283,10 +292,19 @@ class Helper
     public function getPayments(mixed $qb_data): array
     {
         $payments = [];
-        $qb_payments = data_get($qb_data, 'LinkedTxn', false) ?? [];
+        $qb_payments = data_get($qb_data, 'LinkedTxn', []);
 
-        if (!empty($qb_payments) && !isset($qb_payments[0])) {
-            $qb_payments = [$qb_payments];
+        if ($qb_payments === false || $qb_payments === null) {
+            $qb_payments = [];
+        }
+
+        // QB can return a single object or an array; normalize to array
+        if (!empty($qb_payments)) {
+            if (!is_array($qb_payments)) {
+                $qb_payments = [$qb_payments];
+            } elseif (!isset($qb_payments[0])) {
+                $qb_payments = [$qb_payments];
+            }
         }
 
         foreach ($qb_payments as $payment) {
@@ -306,9 +324,19 @@ class Helper
      */
     public function getLineItems(mixed $qb_data, array $tax_array): array
     {
+
         $qb_items = data_get($qb_data, 'Line', []);
         $include_discount = data_get($qb_data, 'ApplyTaxAfterDiscount', 'true');
         $items = [];
+
+        // QB can return a single IPPLine object or an array; normalize to array
+        if (!empty($qb_items)) {
+            if (!is_array($qb_items)) {
+                $qb_items = [$qb_items];
+            } elseif (!isset($qb_items[0])) {
+                $qb_items = [$qb_items];
+            }
+        }
 
         if (!empty($qb_items) && !isset($qb_items[0])) {
             $tax_rate = (float) data_get($qb_data, 'TxnTaxDetail.TaxLine.TaxLineDetail.TaxPercent', 0);
@@ -362,6 +390,8 @@ class Helper
                 $items[] = (object) $item;
             }
         }
+
+
         return $items;
     }
 }

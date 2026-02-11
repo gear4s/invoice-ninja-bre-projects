@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -14,10 +14,11 @@ namespace App\Models;
 
 use App\Utils\Ninja;
 use App\Utils\Number;
-use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Support\Carbon;
+use App\DataMapper\InvoiceSync;
 use App\Helpers\Invoice\InvoiceSum;
 use Illuminate\Support\Facades\App;
+use Elastic\ScoutDriverPlus\Searchable;
 use App\Helpers\Invoice\InvoiceSumInclusive;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Services\PurchaseOrder\PurchaseOrderService;
@@ -111,6 +112,8 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
  * @property \App\Models\Location|null $location
  * @property object|null $tax_data
  * @property object|null $e_invoice
+ * @property int|null $location_id
+ * @property \App\DataMapper\InvoiceSync|null $sync
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder exclude($columns)
  * @method static \Database\Factories\PurchaseOrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder filter(\App\Filters\QueryFilters $filters)
@@ -215,6 +218,7 @@ class PurchaseOrder extends BaseModel
         'deleted_at' => 'timestamp',
         'is_amount_discount' => 'bool',
         'e_invoice' => 'object',
+        'sync' => InvoiceSync::class,
     ];
 
     public const STATUS_DRAFT = 1;
