@@ -45,34 +45,34 @@ class BatchPushToQuickbooksTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function it_validates_all_entities_belong_to_same_company()
+    
+    public function test_it_validates_all_entities_belong_to_same_company()
     {
         // This test validates job logic, not actual database operations
         // Skipped to avoid database dependencies
         $this->markTestSkipped('Test requires database refactoring to use mocks');
     }
 
-    /** @test */
-    public function it_validates_entities_match_job_company_id()
+    
+    public function test_it_validates_entities_match_job_company_id()
     {
         $this->markTestSkipped('Test requires database refactoring to use mocks');
     }
 
-    /** @test */
-    public function it_skips_processing_when_push_disabled()
+    
+    public function test_it_skips_processing_when_push_disabled()
     {
         $this->markTestSkipped('Test requires database refactoring to use mocks');
     }
 
-    /** @test */
-    public function it_handles_missing_entities_gracefully()
+    
+    public function test_it_handles_missing_entities_gracefully()
     {
         $this->markTestSkipped('Test requires database refactoring to use mocks');
     }
 
-    /** @test */
-    public function it_processes_entities_with_correct_database_context()
+    
+    public function test_it_processes_entities_with_correct_database_context()
     {
         $job = new BatchPushToQuickbooks(
             'client',
@@ -88,8 +88,8 @@ class BatchPushToQuickbooksTest extends TestCase
         $this->assertEquals(100, $job->company_id);
     }
 
-    /** @test */
-    public function it_uses_correct_queue()
+    
+    public function test_it_uses_correct_queue()
     {
         $job = new BatchPushToQuickbooks(
             'client',
@@ -102,8 +102,8 @@ class BatchPushToQuickbooksTest extends TestCase
         $this->assertEquals('quickbooks', $job->queue);
     }
 
-    /** @test */
-    public function it_has_correct_retry_configuration()
+    
+    public function test_it_has_correct_retry_configuration()
     {
         $job = new BatchPushToQuickbooks(
             'client',
@@ -116,8 +116,8 @@ class BatchPushToQuickbooksTest extends TestCase
         $this->assertEquals([30, 60, 120], $job->backoff);
     }
 
-    /** @test */
-    public function middleware_prevents_overlapping_for_same_batch()
+    
+    public function test_middleware_prevents_overlapping_for_same_batch()
     {
         $job = new BatchPushToQuickbooks(
             'client',

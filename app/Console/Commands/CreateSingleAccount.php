@@ -569,10 +569,7 @@ class CreateSingleAccount extends Command
             $sub->save();
 
         }
-
-<<<<<<< HEAD
-=======
-        
+       
 
         $sub = SubscriptionFactory::create($company->id, $user->id);
         $sub->id = 66;
@@ -585,7 +582,6 @@ class CreateSingleAccount extends Command
         $sub->save();
 
 
->>>>>>> docuninja
         $_sub = $sub->replicate();
         $_sub->id = 41;
         $_sub->name = "Enterprise Plan 3-5 Users";

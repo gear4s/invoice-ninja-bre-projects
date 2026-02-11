@@ -188,12 +188,9 @@ class ClientFilters extends QueryFilters
         if ($sort_col[0] == 'name') {
             // Use a raw subquery in the ORDER BY instead of adding it to SELECT
             // This avoids conflicts with the Excludable trait
-<<<<<<< HEAD
+            
             return $this->builder->orderByRaw(
                 "
-=======
-            return $this->builder->orderByRaw("
->>>>>>> docuninja
                 COALESCE(
                     NULLIF(clients.name, ''), 
                     (
@@ -207,14 +204,9 @@ class ClientFilters extends QueryFilters
             );
         }
 
-<<<<<<< HEAD
-        if ($sort_col[0] == 'contacts') {
-            return $this->builder->orderByRaw(
-                "
-=======
+
         if($sort_col[0] == 'contacts'){
             return $this->builder->orderByRaw("
->>>>>>> docuninja
                 (
                     SELECT 
                         CASE 

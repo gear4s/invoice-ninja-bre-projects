@@ -36,8 +36,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
-    public function it_dispatches_immediately_when_force_immediate_is_true()
+    
+    public function test_it_dispatches_immediately_when_force_immediate_is_true()
     {
         QuickbooksBatchCollector::collect(
             'client',
@@ -54,8 +54,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         Queue::assertNotPushed(FlushQuickbooksBatch::class);
     }
 
-    /** @test */
-    public function it_dispatches_immediately_when_priority_is_immediate()
+    
+    public function test_it_dispatches_immediately_when_priority_is_immediate()
     {
         QuickbooksBatchCollector::collect(
             'client',
@@ -69,8 +69,7 @@ class QuickbooksBatchCollectorTest extends TestCase
         Queue::assertPushed(PushToQuickbooks::class, 1);
     }
 
-    /** @test */
-    public function it_collects_entities_in_batch()
+    public function test_it_collects_entities_in_batch()
     {
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100);
         QuickbooksBatchCollector::collect('client', 2, 'db1', 100);
@@ -84,8 +83,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         Queue::assertNotPushed(BatchPushToQuickbooks::class);
     }
 
-    /** @test */
-    public function it_schedules_dispatch_when_min_batch_size_reached()
+    
+    public function test_it_schedules_dispatch_when_min_batch_size_reached()
     {
         // Add 5 entities (MIN_BATCH_SIZE)
         for ($i = 1; $i <= 5; $i++) {
@@ -98,8 +97,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         });
     }
 
-    /** @test */
-    public function it_dispatches_immediately_when_max_batch_size_reached()
+    
+    public function test_it_dispatches_immediately_when_max_batch_size_reached()
     {
         // Add 50 entities (MAX_BATCH_SIZE)
         for ($i = 1; $i <= 50; $i++) {
@@ -114,8 +113,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(0, $batchSize);
     }
 
-    /** @test */
-    public function it_deduplicates_entities_by_id()
+    
+    public function test_it_deduplicates_entities_by_id()
     {
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100);
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100); // Duplicate
@@ -126,8 +125,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(2, $batchSize); // Only 2 unique entities
     }
 
-    /** @test */
-    public function it_isolates_batches_by_database()
+    
+    public function test_it_isolates_batches_by_database()
     {
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100);
         QuickbooksBatchCollector::collect('client', 2, 'db2', 100); // Different DB
@@ -139,8 +138,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(1, $batchSize2);
     }
 
-    /** @test */
-    public function it_isolates_batches_by_company()
+    
+    public function test_it_isolates_batches_by_company()
     {
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100);
         QuickbooksBatchCollector::collect('client', 2, 'db1', 200); // Different company
@@ -152,8 +151,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(1, $batchSize2);
     }
 
-    /** @test */
-    public function it_isolates_batches_by_entity_type()
+    
+    public function test_it_isolates_batches_by_entity_type()
     {
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100);
         QuickbooksBatchCollector::collect('invoice', 10, 'db1', 100); // Different entity
@@ -165,8 +164,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(1, $batchSizeInvoices);
     }
 
-    /** @test */
-    public function it_isolates_batches_by_priority()
+    
+    public function test_it_isolates_batches_by_priority()
     {
         QuickbooksBatchCollector::collect('client', 1, 'db1', 100, QuickbooksBatchCollector::PRIORITY_NORMAL);
         QuickbooksBatchCollector::collect('client', 2, 'db1', 100, QuickbooksBatchCollector::PRIORITY_LOW);
@@ -178,8 +177,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(1, $batchSizeLow);
     }
 
-    /** @test */
-    public function it_handles_multi_tenant_isolation_correctly()
+    
+    public function test_it_handles_multi_tenant_isolation_correctly()
     {
         // Same company ID but different databases (different tenants)
         QuickbooksBatchCollector::collect('client', 1, 'tenant1', 100);
@@ -205,8 +204,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         $this->assertEquals(1, QuickbooksBatchCollector::getBatchSize('client', 'tenant2', 100));
     }
 
-    /** @test */
-    public function dispatch_batch_clears_cache()
+    
+    public function test_dispatch_batch_clears_cache()
     {
         // Collect some entities
         for ($i = 1; $i <= 10; $i++) {
@@ -225,8 +224,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         Queue::assertPushed(BatchPushToQuickbooks::class);
     }
 
-    /** @test */
-    public function it_does_not_schedule_duplicate_flushes()
+    
+    public function test_it_does_not_schedule_duplicate_flushes()
     {
         // Add 5 entities to trigger scheduling
         for ($i = 1; $i <= 5; $i++) {
@@ -242,8 +241,8 @@ class QuickbooksBatchCollectorTest extends TestCase
         Queue::assertPushed(FlushQuickbooksBatch::class, 1);
     }
 
-    /** @test */
-    public function it_dispatches_with_correct_parameters()
+    
+    public function test_it_dispatches_with_correct_parameters()
     {
         // Collect 50 entities to trigger immediate dispatch
         for ($i = 1; $i <= 50; $i++) {

@@ -5691,9 +5691,7 @@ $lang = array(
     'audit_log' => 'Audit Log',
     'clone_to_template' => 'Clone to Template',
     'clone_document_description' => 'Clone to a new document',
-    'cloned_document' => 'Document Cloned',
     'add_signatories' => 'Add Signatories',
-    'docuninja_grant_access_help' => 'Grant Invoice Ninja Users Access to DocuNinja',
     'authorized_to_sign' => 'Authorized to sign',
     'ninja_quote_notification' => 'Quote Signed Notification',
     'ninja_invoice_notification' => 'Invoice Signed Notification',
@@ -5742,10 +5740,6 @@ $lang = array(
     'document_voided_notification' => 'Document voided notifications',
     'document_expired_notification' => 'Document expired notifications',
     'document_created' => 'Document created',
-<<<<<<< HEAD
-=======
-    'edit_template' => 'Edit Template',
->>>>>>> docuninja
     'template_loaded' => 'Template loaded',
     'select_user_or_client' => 'Select User or Client',
     'docuninja_quota_available_but_no_users' => 'Add a user to Invoice Ninja first, then grant them access to DocuNinja here',
@@ -5753,10 +5747,6 @@ $lang = array(
     'document_queued_for_sending' => 'Document queued for sending',
     'document_voided' => 'Document Voided',
     'view_document' => 'View Document',
-<<<<<<< HEAD
-=======
-    'audit_log' => 'Audit Log',
->>>>>>> docuninja
     'make_template' => 'Make Template',
     'use_template' => 'Use Template',
     'map_signatories' => 'Map Signatories',
@@ -5765,19 +5755,10 @@ $lang = array(
     'mapped' => 'Mapped',
     'docuninja_splash_message' => 'Loading DocuNinja...',
     'docuninja_contact_admin_for_access' => 'Contact your admin for access to DocuNinja.',
-<<<<<<< HEAD
     'void' => 'Void',
     'invitation_signatory_help' => 'Documents are signed sequentially, after the first signatory has signed, the next signatory will be able to sign.',
     'timeline' => 'Timeline',
-=======
     'cloned_document' => 'Document Cloned',
-    'void' => 'Void',
-    'invitation_signatory_help' => 'Documents are signed sequentially, after the first signatory has signed, the next signatory will be able to sign.',
-    'timeline' => 'Timeline',
-    'clone_to_template' => 'Clone to Template',
-    'cloned_document' => 'Document Cloned',
-    'add_signatories' => 'Add Signatories',
->>>>>>> docuninja
     'voided_document' => 'Document Voided',
     'voided' => 'Voided',
     'archive_document_description' => 'Are you sure you want to archive this document?',
@@ -5788,7 +5769,6 @@ $lang = array(
     'document_deleted' => 'Document Deleted',
     'sign_now' => 'Sign Now',
     'signed_document' => 'Signed Document',
-<<<<<<< HEAD
     'tour_document_upload' => 'To begin signing, upload your document here. Drag and drop your files into this area.',
     'tour_signatory_selector' => 'This is the signatory selector. Use it to manage the signatories for your document. Select a signatory to continue.',
     'tour_continue_select_signatory' => 'Continue by selecting a signatory.',
@@ -5884,7 +5864,6 @@ $lang = array(
     'remove_invitations' => 'Remove invitations',
     'removing' => 'Removing',
     'requirements' => 'Requirements',
-    'required' => 'Required',
     'restore_subscription' => 'Restore subscription',
     'sales_above_threshold' => 'Sales above threshold',
     'save_to_add_locations' => 'Save to add locations',
@@ -5932,8 +5911,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bank Transfer',
     
-=======
->>>>>>> docuninja
 );
 
 return $lang;

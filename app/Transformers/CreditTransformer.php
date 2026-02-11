@@ -148,12 +148,8 @@ class CreditTransformer extends EntityTransformer
             'tax_info' => $credit->tax_data ?: new \stdClass(),
             'e_invoice' => $credit->e_invoice ?: new \stdClass(),
             'location_id' => $this->encodePrimaryKey($credit->location_id),
-<<<<<<< HEAD
             'backup' => $credit->backup,
-=======
             'sync' => $credit->sync,
-
->>>>>>> docuninja
         ];
     }
 }

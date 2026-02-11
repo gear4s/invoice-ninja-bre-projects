@@ -12,11 +12,8 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
 use App\DataMapper\InvoiceBackup;
-=======
 use App\DataMapper\InvoiceSync;
->>>>>>> docuninja
 use App\Utils\Ninja;
 use App\Utils\Number;
 use Elastic\ScoutDriverPlus\Searchable;

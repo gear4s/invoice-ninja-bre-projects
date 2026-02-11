@@ -60,13 +60,8 @@ use App\Utils\Number;
  * @property string|null $due_date
  * @property bool $is_deleted
  * @property object|array|string $line_items
-<<<<<<< HEAD
  * @property InvoiceBackup $backup
- * @property object|null $sync
-=======
- * @property object|null $backup
  * @property InvoiceSync|null $sync
->>>>>>> docuninja
  * @property string|null $footer
  * @property string|null $public_notes
  * @property string|null $private_notes

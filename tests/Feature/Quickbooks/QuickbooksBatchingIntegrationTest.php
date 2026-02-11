@@ -72,8 +72,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
-    public function complete_flow_batches_entities_from_same_realm()
+    
+    public function test_complete_flow_batches_entities_from_same_realm()
     {
         // Simulate 10 client updates from same company
         for ($i = 1; $i <= 10; $i++) {
@@ -99,8 +99,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         Queue::assertPushed(\App\Jobs\Quickbooks\FlushQuickbooksBatch::class);
     }
 
-    /** @test */
-    public function it_separates_batches_by_realm()
+    
+    public function test_it_separates_batches_by_realm()
     {
         // Add clients from company 1
         for ($i = 1; $i <= 10; $i++) {
@@ -130,8 +130,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(10, $batch2Size);
     }
 
-    /** @test */
-    public function immediate_priority_bypasses_batching()
+    
+    public function test_immediate_priority_bypasses_batching()
     {
         QuickbooksBatchCollector::collect(
             'invoice',
@@ -149,8 +149,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         Queue::assertNotPushed(BatchPushToQuickbooks::class);
     }
 
-    /** @test */
-    public function max_batch_size_triggers_immediate_dispatch()
+    
+    public function test_max_batch_size_triggers_immediate_dispatch()
     {
         // Add 50 clients (MAX_BATCH_SIZE)
         for ($i = 1; $i <= 50; $i++) {
@@ -177,8 +177,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(0, $batchSize);
     }
 
-    /** @test */
-    public function it_handles_mixed_entity_types_separately()
+    
+    public function test_it_handles_mixed_entity_types_separately()
     {
         // Add clients
         for ($i = 1; $i <= 5; $i++) {
@@ -198,8 +198,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(5, $invoiceBatchSize);
     }
 
-    /** @test */
-    public function it_handles_mixed_priorities_separately()
+    
+    public function test_it_handles_mixed_priorities_separately()
     {
         // Add normal priority clients
         for ($i = 1; $i <= 5; $i++) {
@@ -242,8 +242,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(5, $lowBatchSize);
     }
 
-    /** @test */
-    public function multi_tenant_scenario_with_same_company_ids()
+    
+    public function test_multi_tenant_scenario_with_same_company_ids()
     {
         // Simulate multi-tenant: same company ID in different databases
         $db1 = 'tenant1';
@@ -275,8 +275,8 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(10, QuickbooksBatchCollector::getBatchSize('client', $db2, $companyId));
     }
 
-    /** @test */
-    public function deduplication_works_across_multiple_collects()
+    
+    public function test_deduplication_works_across_multiple_collects()
     {
         // Add same client multiple times
         QuickbooksBatchCollector::collect('client', 1, $this->company1->db, $this->company1->id);

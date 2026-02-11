@@ -223,15 +223,10 @@ class CompanyTransformer extends EntityTransformer
             'smtp_local_domain' => (string) $company->smtp_local_domain ?? '',
             'smtp_verify_peer' => (bool) $company->smtp_verify_peer,
             'e_invoice' => $company->e_invoice ?: new \stdClass(),
-<<<<<<< HEAD
             'legal_entity_id' =>  $company->legal_entity_id ? (int) $company->legal_entity_id : null,
             'quickbooks' => $company->getRawOriginal('quickbooks') ? $company->quickbooks->toArray() : null,
-=======
-            'has_quickbooks_token' => $company->quickbooks ? true : false,
-            'is_quickbooks_token_active' => $company->quickbooks?->accessTokenKey ?? false,
             'legal_entity_id' => $company->legal_entity_id ?? null,
             'enable_modules' => (bool)$company->enable_modules,
->>>>>>> docuninja
         ];
 
         return $data;

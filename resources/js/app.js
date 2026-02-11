@@ -25,4 +25,15 @@ document.querySelectorAll('.disposable-alert').forEach((element) => {
     }, 5000);
 });
 
-import '../../node_modules/@docuninja/builder2.0/dist/builder.iife';
+/**
+ * Conditionally load DocuNinja builder if available
+ */
+(async () => {
+    try {
+        const modulePath = '../../node_modules/@docuninja/builder2.0/dist/builder.iife';
+        await import(/* @vite-ignore */ modulePath);
+        console.log('DocuNinja loaded');
+    } catch (e) {
+        console.log('DocuNinja not available, skipping...');
+    }
+})();

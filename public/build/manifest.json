@@ -12,11 +12,7 @@
     "file": "assets/wait-8f4ae121.js"
   },
   "resources/js/app.js": {
-<<<<<<< HEAD
-    "file": "assets/app-73d3ce3f.js",
-=======
-    "file": "assets/app-d3749580.js",
->>>>>>> docuninja
+    "file": "assets/app-83112d30.js",
     "imports": [
       "_index-08e160a7.js",
       "__commonjsHelpers-725317a4.js"
@@ -394,11 +390,7 @@
     "src": "resources/js/setup/setup.js"
   },
   "resources/sass/app.scss": {
-<<<<<<< HEAD
-    "file": "assets/app-c12eeaa7.css",
-=======
-    "file": "assets/app-972fd4f8.css",
->>>>>>> docuninja
+    "file": "assets/app-00f88bed.css",
     "isEntry": true,
     "src": "resources/sass/app.scss"
   }

@@ -306,9 +306,6 @@ class DocuNinja extends Component
         $stopPropagation();
     }
 }
-<<<<<<< HEAD
-=======
 
 
 
->>>>>>> docuninja

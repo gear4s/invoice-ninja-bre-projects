@@ -131,7 +131,7 @@ class InvoiceController extends Controller
         $invitation = false;
 
         if (!isset($data['entity_type'])) {
-            nlog(array_merge(["showBlob"], $data));
+            nlog(array_merge(["showBlob"], $data ?? []));
         }
 
         match($data['entity_type'] ?? 'invoice') {

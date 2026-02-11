@@ -1049,7 +1049,6 @@ class Company extends BaseModel
         return !$this->account->is_flagged && $this->account->e_invoice_quota > 0 && isset($this->legal_entity_id) && isset($this->tax_data->acts_as_sender) && $this->tax_data->acts_as_sender;
     }
 
-<<<<<<< HEAD
     /**
      * verifactuEnabled
      *
@@ -1105,11 +1104,11 @@ class Company extends BaseModel
             // Check if sync direction allows push
             return $direction === 'push' || $direction === 'bidirectional';
         });
-=======
+    }
+    
     public function docuninjaActive(): bool
     {
         return $this->enable_modules && $this->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS);
         // return $this->enable_modules && Ninja::isHosted();
->>>>>>> docuninja
     }
 }
