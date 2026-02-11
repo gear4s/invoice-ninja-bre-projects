@@ -277,6 +277,9 @@ class BaseRepository
         /* Recalculate invoice amounts */
         $model = $model->calc()->getInvoice();
 
+        /* Check if the model has been changed in a way that is relevant to Quickbooks */
+        $qb_model_changes = $model->wasChanged(['amount', 'line_items', 'total_taxes']);
+
         /* We use this to compare to our starting amount */
         $state['finished_amount'] = $model->balance;
 
@@ -313,6 +316,27 @@ class BaseRepository
                 event('eloquent.created: App\Models\Invoice', $model);
             } else {
                 event('eloquent.updated: App\Models\Invoice', $model);
+            }
+
+            if ($qb_model_changes && $model->company->account->isPaid() && $model->company->quickbooks && $model->company->shouldPushToQuickbooks('invoice')) {
+    nlog("base repository push to quickbooks");
+                if($model->company->quickbooks->settings->automatic_taxes){
+                    nlog("Automatic taxes are enabled and the invoice was changed");
+                    try{
+                        (new \App\Jobs\Quickbooks\PushToQuickbooks('invoice', $model->id, $model->company->db))->handle();
+                    }
+                    catch(\Throwable $e){
+                        nlog("Quickbooks push to Quickbooks job failed => " . $e->getMessage());
+                    }
+                }
+                elseif($model->status_id != Invoice::STATUS_DRAFT){
+                    \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+                        'invoice',
+                        $model->id,
+                        $model->company->db
+                    );
+                }
+    
             }
 
             /** If the client does not have tax_data - then populate this now */

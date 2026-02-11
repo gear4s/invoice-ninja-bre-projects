@@ -30,12 +30,28 @@ class QbProduct implements SyncInterface
         $this->product_transformer = new ProductTransformer($service->company);
 
     }
-
+    
+    /**
+     * find
+     *
+     * Finds a product in QuickBooks by their ID.
+     *
+     * @param  string $id
+     * @return mixed
+     */
     public function find(string $id): mixed
     {
         return $this->service->sdk->FindById('Item', $id);
     }
-
+    
+    /**
+     * syncToNinja
+     *
+     * Syncs products from QuickBooks to Ninja.
+     *
+     * @param  array $records
+     * @return void
+     */
     public function syncToNinja(array $records): void
     {
 
@@ -50,9 +66,37 @@ class QbProduct implements SyncInterface
         }
 
     }
+    
+    /**
+     * syncToForeign
+     *
+     * Syncs products from Ninja to QuickBooks.
+     *
+     * @param  array $records
+     * @return void
+     */
+    public function syncToForeign(array $records): void 
+    {
 
-    public function syncToForeign(array $records): void {}
+        foreach ($records as $product) {
+            if (!$product instanceof Product) {
+                continue;
+            }
 
+            $this->createQbProduct($product);
+
+        }
+    }
+
+        
+    /**
+     * findProduct
+     *
+     * Finds a product in Ninja by their ID.
+     *
+     * @param  string $key
+     * @return Product
+     */
     private function findProduct(string $key): ?Product
     {
         $search = Product::query()
@@ -77,7 +121,16 @@ class QbProduct implements SyncInterface
         return null;
 
     }
-
+    
+    /**
+     * sync
+     *
+     * Syncs a product from QuickBooks to Ninja.
+     *
+     * @param  string $id
+     * @param  string $last_updated
+     * @return void
+     */
     public function sync(string $id, string $last_updated): void
     {
         $qb_record = $this->find($id);
@@ -119,6 +172,8 @@ class QbProduct implements SyncInterface
 
         $escaped_name = str_replace("'", "''", $item_name);
         $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
+
+        /** @var object|array|null $existing_items */
         $existing_items = $this->service->sdk->Query($query);
 
         // QB SDK can return a single object or an array; normalize to array
@@ -149,6 +204,17 @@ class QbProduct implements SyncInterface
     {
 
         $product_data = $this->product_transformer->qbTransform($line_item, $this->service->getIncomeAccountId());
+
+        if (isset($product->sync->qb_id) && !empty($product->sync->qb_id)) {
+            $existing_qb_product = $this->find($product->sync->qb_id);
+            if ($existing_qb_product) {
+                $product_data['SyncToken'] = $existing_qb_product->SyncToken ?? '0';
+                $product_data['Id'] = $product->sync->qb_id;
+
+                $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
+                $result = $this->service->sdk->Update($qb_item);
+            }
+        }
 
         $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
 

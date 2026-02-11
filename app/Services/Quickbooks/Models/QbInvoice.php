@@ -459,7 +459,7 @@ class QbInvoice implements SyncInterface
         }
 
         return !empty($state) 
-            ? "{$state} {$rate}%"
+            ? "{$state}"
             : "{$rate}%";
     }
 

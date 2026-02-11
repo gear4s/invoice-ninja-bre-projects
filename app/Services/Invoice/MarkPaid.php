@@ -39,7 +39,6 @@ class MarkPaid extends AbstractService
         }
 
         if ($this->invoice->status_id == Invoice::STATUS_DRAFT) {
-            // $this->invoice = $this->invoice->service()->markSent()->save();
 
             /*Set status*/
             $this->invoice->status_id = Invoice::STATUS_SENT;
@@ -50,7 +49,6 @@ class MarkPaid extends AbstractService
                 ->ledger()
                 ->updateInvoiceBalance($this->invoice->amount, "Invoice {$this->invoice->number} marked as sent.");
 
-            $this->invoice->client->service()->updateBalance($this->invoice->amount);
             /* Perform additional actions on invoice */
             $this->invoice
                 ->service()
@@ -93,6 +91,8 @@ class MarkPaid extends AbstractService
         if ($already_paid) {
             return $this->invoice;
         }
+
+        $this->invoice->client->service()->updateBalance($this->invoice->amount);
 
         /* Create Payment */
         $payment = PaymentFactory::create($this->invoice->company_id, $this->invoice->user_id);

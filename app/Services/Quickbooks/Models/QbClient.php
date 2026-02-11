@@ -117,6 +117,7 @@ class QbClient implements SyncInterface
     {
         return $this->service->sdk->Query("SELECT Id FROM Customer WHERE DisplayName = '{$name}'",1,1);
     }
+    
     /**
      * createQbClient
      *

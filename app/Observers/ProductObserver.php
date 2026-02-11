@@ -35,6 +35,16 @@ class ProductObserver
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_PRODUCT, $product, $product->company)->delay(0);
         }
+
+        if ($product->company->quickbooks && $product->company->account->isPaid() &&$product->company->shouldPushToQuickbooks('product')) {
+                        
+            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+                'product',
+                $product->id,
+                $product->company->db
+            );
+        
+        }
     }
 
     /**
@@ -63,6 +73,9 @@ class ProductObserver
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $product, $product->company)->delay(0);
         }
+
+
+        nlog("product updated observer");
     }
 
     /**

@@ -12,6 +12,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\Quickbooks\PushToQuickbooks;
 use App\Jobs\Util\WebhookHandler;
 use App\Models\Invoice;
 use App\Models\Webhook;
@@ -19,6 +20,16 @@ use App\Models\Webhook;
 class InvoiceObserver
 {
     public $afterCommit = true;
+
+    /**
+     * Handle the invoice "updating" event (before save).
+     *
+     * @param Invoice $invoice
+     * @return void
+     */
+    public function updating(Invoice $invoice)
+    {       
+    }
 
     /**
      * Handle the client "created" event.
@@ -35,7 +46,7 @@ class InvoiceObserver
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_INVOICE, $invoice, $invoice->company, 'client')->delay(0);
         }
-
+        
     }
 
     /**
@@ -65,13 +76,6 @@ class InvoiceObserver
             WebhookHandler::dispatch($event, $invoice, $invoice->company, 'client')->delay(0);
         }
 
-        if ($invoice->company->quickbooks && $invoice->company->shouldPushToQuickbooks('invoice') && $invoice->status_id != Invoice::STATUS_DRAFT) {
-            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
-                'invoice',
-                $invoice->id,
-                $invoice->company->db
-            );
-        }
     }
 
     /**
