@@ -134,7 +134,10 @@ class EInvoicePullDocs implements ShouldQueue
 
         $mail_payload = [];
 
+        $this->einvoice_received_count = count($received_documents);
+
         foreach ($received_documents as $document) {
+        
             nlog($document);
 
             if(!isset($document['document']['invoice'])) {
