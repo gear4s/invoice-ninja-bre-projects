@@ -5722,6 +5722,7 @@ $lang = array(
     'activity_161' => 'Credit :credit for :client was signed',
     'activity_162' => 'Purchase Order :purchase_order for :vendor was signed',
     'activity_163' => 'Custom Document :document for :client was signed',
+    'activity_164' => 'QuickBooks sync failed. :notes',
     'create_your_own' => 'Create your own',
     'create_your_own_description' => 'Create your own template using your own PDF document to upload',
     'new_template_description' => 'Select one of our prebuilt templates to get started, ie NDA, Sales agreement, etc',

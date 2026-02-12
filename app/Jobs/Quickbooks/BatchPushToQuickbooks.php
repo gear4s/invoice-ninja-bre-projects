@@ -13,6 +13,7 @@
 namespace App\Jobs\Quickbooks;
 
 use App\Libraries\MultiDB;
+use App\Models\Activity;
 use App\Models\Company;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\QuickbooksRateLimiter;
@@ -207,6 +208,7 @@ class BatchPushToQuickbooks implements ShouldQueue
 
             } catch (\Throwable $e) {
                 nlog("QB Batch: Failed to push {$this->entity_type} {$entity->id}: " . $e->getMessage());
+                $this->logActivityFailure($entity, $this->extractReadableError($e->getMessage()));
                 $failureCount++;
 
             } finally {
@@ -274,8 +276,9 @@ class BatchPushToQuickbooks implements ShouldQueue
         // Handle authentication errors
         if ($statusCode === 401) {
             nlog("QB Batch: Authentication failed, may need token refresh");
-            // Token refresh is handled in QuickbooksService::checkToken()
         }
+
+        $this->logActivityFailure($entity, $this->extractReadableError($errorMessage));
     }
 
     /**
@@ -308,6 +311,71 @@ class BatchPushToQuickbooks implements ShouldQueue
             $attempt == 2 => 120,   // Second retry: 2 minutes
             default => 300,         // Third+ retry: 5 minutes
         };
+    }
+
+    /**
+     * Extract a human-readable error from the SDK's raw exception message.
+     *
+     * The SDK formats messages as:
+     * "Request is not made successful. Response Code:[400] with body: [<XML>]."
+     *
+     * The XML body contains <Message> and <Detail> elements we can extract.
+     */
+    private function extractReadableError(string $rawMessage): string
+    {
+        // Try to extract the XML body from the SDK message
+        if (preg_match('/with body:\s*\[(.+)\]/s', $rawMessage, $matches)) {
+            $body = trim($matches[1]);
+
+            try {
+                $xml = @simplexml_load_string($body);
+                if ($xml !== false && isset($xml->Fault->Error)) {
+                    $error = $xml->Fault->Error;
+                    $message = (string) ($error->Message ?? '');
+                    $detail = (string) ($error->Detail ?? '');
+
+                    if ($message && $detail) {
+                        return "{$message} - {$detail}";
+                    }
+
+                    return $message ?: $detail;
+                }
+            } catch (\Throwable $e) {
+                // XML parsing failed, fall through to truncation
+            }
+        }
+
+        // Fallback: return a cleaned/truncated version of the raw message
+        $cleaned = str_replace('Request is not made successful. ', '', $rawMessage);
+
+        return mb_substr($cleaned, 0, 500);
+    }
+
+    /**
+     * Log a QuickBooks push failure as an Activity record visible to the user.
+     */
+    private function logActivityFailure($entity, string $errorMessage): void
+    {
+        try {
+            $activity = new Activity();
+            $activity->user_id = $entity->user_id ?? null;
+            $activity->company_id = $entity->company_id;
+            $activity->account_id = $entity->company->account_id;
+            $activity->activity_type_id = Activity::QUICKBOOKS_PUSH_FAILURE;
+            $activity->is_system = true;
+            $activity->notes = str_replace('"', '', $errorMessage);
+
+            match ($this->entity_type) {
+                'client' => $activity->client_id = $entity->id,
+                'invoice' => $activity->invoice_id = $entity->id,
+                'payment' => $activity->payment_id = $entity->id,
+                default => null,
+            };
+
+            $activity->save();
+        } catch (\Throwable $e) {
+            nlog("QB Batch: Failed to log activity for {$this->entity_type} {$entity->id}: " . $e->getMessage());
+        }
     }
 
     /**
