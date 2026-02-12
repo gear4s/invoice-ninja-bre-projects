@@ -88,7 +88,7 @@ class InvoiceController extends Controller
         if ($request->query('mode') === 'fullscreen') {
             return render('invoices.show-fullscreen', $data);
         }
-        
+
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
 
         if($default_flow){
@@ -274,6 +274,7 @@ class InvoiceController extends Controller
             'total' =>  $total,
             'variables' => $variables,
             'invitation' => $invitation,
+            '_key' => $invitation ? $invitation->key : false,
             'db' => $invitation->company->db,
             'docuninja_active' => false,
             'requires_signature' => $invoices->first()->client->getSetting('require_invoice_signature') && $invoices->first()->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),

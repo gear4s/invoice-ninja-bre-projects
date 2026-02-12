@@ -159,6 +159,7 @@ class PaymentController extends Controller
                     'entity_number' => $invitation->invoice->number,
                     'db' => $invitation->company->db,
                     'request_hash' => $request_hash,
+                    '_key' => $invitation->key,
                 ]);
 
             }

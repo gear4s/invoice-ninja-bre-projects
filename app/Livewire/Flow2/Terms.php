@@ -21,7 +21,9 @@ class Terms extends Component
     use WithSecureContext;
 
     public $variables;
+    
     public $_key;
+
     public function mount()
     {
         $this->variables = $this->getContext($this->_key)['variables'];

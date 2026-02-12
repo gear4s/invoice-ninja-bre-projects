@@ -120,6 +120,7 @@ class DocuNinja extends Component
             'invitation' => $this->document_invitation_id,
             'sig' => $this->sig,
             'company_key' => $this->company_key,
+            '_key' => $this->_key,
         ]);
     }
 

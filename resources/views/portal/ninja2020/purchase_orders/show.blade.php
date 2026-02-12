@@ -41,7 +41,7 @@
 
     @if($docuninja_active)
     <div id="docuninja-container" class="hidden">
-        @livewire('sign', ['invitation_id' => $invitation->id ?? false, 'entity_type' => 'purchase_order', 'entity_number' => $purchase_order->number, 'db' => $purchase_order->company->db])
+        @livewire('sign', ['invitation_id' => $invitation->id ?? false, 'entity_type' => 'purchase_order', 'entity_number' => $purchase_order->number, 'db' => $purchase_order->company->db, '_key' => $_key, 'request_hash' => $request_hash])
     </div>
     @endif
 

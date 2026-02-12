@@ -121,6 +121,7 @@ class QuoteController extends Controller
                         'entity_number' => $invitation->quote->number,
                         'db' => $invitation->company->db,
                         'request_hash' => $request_hash,
+                        '_key' => $invitation->key,
                     ]);
                 }
             }
