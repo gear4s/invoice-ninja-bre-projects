@@ -88,6 +88,7 @@ class InvoiceController extends Controller
         if ($request->query('mode') === 'fullscreen') {
             return render('invoices.show-fullscreen', $data);
         }
+        
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
 
         if($default_flow){
