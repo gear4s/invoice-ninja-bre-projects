@@ -308,6 +308,10 @@ class Activity extends StaticModel
 
     public const CUSTOM_DOCUMENT_SIGNED = 163;
 
+    public const QUICKBOOKS_PUSH_FAILURE = 164;
+
+    public const QUICKBOOKS_PUSH_SUCCESS = 165;
+
     protected $casts = [
         'is_system' => 'boolean',
         'updated_at' => 'timestamp',

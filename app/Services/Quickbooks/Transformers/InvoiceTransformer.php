@@ -56,29 +56,36 @@ class InvoiceTransformer extends BaseTransformer
         $line_num = 1;
 
         $ast = $qb_service->company->quickbooks->settings->automatic_taxes;
+        $taxable_code = $qb_service->company->quickbooks->settings->default_taxable_code ?? 'TAX';
+        $exempt_code = $qb_service->company->quickbooks->settings->default_exempt_code ?? 'NON';
+        $tax_rate_map = $qb_service->company->quickbooks->settings->tax_rate_map ?? [];
+
+        // Determine region from stored QB company country (set by companySync)
+        $qb_country = $qb_service->company->quickbooks->settings->country ?? 'US';
+        $is_us = ($qb_country === 'US');
+
+        // Non-US regions (CA/AU/UK) require TaxCodeRef on EVERY line item using numeric tax code IDs.
+        // US companies MUST use only "TAX" or "NON" as TaxCodeRef values.
+        if (!$is_us && $exempt_code === 'NON') {
+            nlog("QB Warning: exempt TaxCode not resolved for non-US company {$qb_service->company->id} (country={$qb_country}), falling back to taxable code '{$taxable_code}' — run companySync to fix");
+            $exempt_code = $taxable_code;
+        }
 
         foreach ($invoice->line_items as $line_item) {
             // Get product's QuickBooks ID (business logic handled by QbProduct)
             $product_qb_id = $qb_service->product->findOrCreateProduct($line_item);
 
-            $tax_code_id = 'NON'; // Default to non-taxable
-
-            // Check if tax_id is set and is exempt/zero rate (5 = exempt, 8 = zero rate)
+            // Determine TaxCodeRef from line-item taxes only (never invoice-level taxes for QB sync)
             if (isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])) {
-                $tax_code_id = 'NON';
-            } elseif ($ast) { // Automatic taxes are enabled
-                $tax_code_id = 'TAX';
-            } elseif (isset($line_item->tax_id) && !in_array($line_item->tax_id, ['5', '8'])) {
-                // Only use 'TAX' if there are actual tax rates applied to this line item
-                $has_tax_rate = (
-                    (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0)
-                    || (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0)
-                    || (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
-                );
-
-                if ($has_tax_rate) {
-                    $tax_code_id = 'TAX';
-                }
+                $tax_code_id = $exempt_code;
+            } elseif ($ast) {
+                $tax_code_id = $taxable_code;
+            } elseif ($is_us) {
+                // US companies: TaxCodeRef MUST be "TAX" or "NON" — never numeric IDs
+                $tax_code_id = $this->resolveLineTaxCodeUS($line_item, $taxable_code, $exempt_code);
+            } else {
+                // Non-US companies (CA/AU/UK): resolve to numeric TaxCode ID from tax_rate_map
+                $tax_code_id = $this->resolveLineTaxCode($line_item, $tax_rate_map, $taxable_code, $exempt_code);
             }
 
             $line_payload = [
@@ -176,11 +183,12 @@ class InvoiceTransformer extends BaseTransformer
             'ApplyTaxAfterDiscount' => true,
             'PrintStatus' => 'NeedToPrint',
             'EmailStatus' => 'NotSet',
-            'GlobalTaxCalculation' => $qb_service->company->quickbooks->settings->automatic_taxes ? 'TaxExcluded' : 'NotApplicable',
+            'GlobalTaxCalculation' => ($ast || !$is_us) ? 'TaxExcluded' : 'NotApplicable',
         ];
 
-        // Add TxnTaxDetail if invoice has taxes and AST is not enabled.
-        if (!$qb_service->company->quickbooks->settings->automatic_taxes) {
+        // Only send TxnTaxDetail for US companies without AST.
+        // Non-US companies use resolved TaxCodeRef per line item — QB calculates taxes from those.
+        if (!$ast && $is_us) {
             $tax_detail = $this->buildTxnTaxDetail($invoice, $total_taxes, $taxable_amount, $qb_service);
             if ($tax_detail) {
                 $invoice_data['TxnTaxDetail'] = $tax_detail;
@@ -229,6 +237,62 @@ class InvoiceTransformer extends BaseTransformer
 
 
     /**
+     * Resolve the TaxCodeRef for a single line item by matching its tax name/rate
+     * to the tax_rate_map (which includes tax_code_id from SalesTaxRateList).
+     *
+     * @param  object $line_item The invoice line item
+     * @param  array $tax_rate_map The tax rate map with tax_code_id entries
+     * @param  string $taxable_code Default taxable TaxCode ID
+     * @param  string $exempt_code Default exempt TaxCode ID
+     * @return string The resolved TaxCode ID
+     */
+    private function resolveLineTaxCode(object $line_item, array $tax_rate_map, string $taxable_code, string $exempt_code): string
+    {
+        $has_line_tax = (
+            (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0)
+            || (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0)
+            || (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
+        );
+
+        if (!$has_line_tax) {
+            return $exempt_code;
+        }
+
+        foreach (['tax_name1' => 'tax_rate1', 'tax_name2' => 'tax_rate2', 'tax_name3' => 'tax_rate3'] as $name_key => $rate_key) {
+            $rate = floatval($line_item->$rate_key ?? 0);
+            if ($rate <= 0) {
+                continue;
+            }
+
+            $name = trim((string) ($line_item->$name_key ?? ''));
+            $tax_code_id = $this->findTaxCodeIdByRate($tax_rate_map, $rate, $name);
+
+            if ($tax_code_id) {
+                return $tax_code_id;
+            }
+        }
+
+        return $taxable_code;
+    }
+
+    /**
+     * Resolve the TaxCodeRef for a US company line item.
+     *
+     * US QuickBooks companies ONLY accept "TAX" or "NON" as line-level TaxCodeRef values.
+     * Checks whether the line item has any non-zero tax rates and returns the appropriate code.
+     */
+    private function resolveLineTaxCodeUS(object $line_item, string $taxable_code, string $exempt_code): string
+    {
+        $has_line_tax = (
+            (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0)
+            || (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0)
+            || (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
+        );
+
+        return $has_line_tax ? $taxable_code : $exempt_code;
+    }
+
+    /**
      * Build TxnTaxDetail for invoice-level tax calculation.
      * This handles total taxes applied to the invoice.
      *
@@ -240,7 +304,8 @@ class InvoiceTransformer extends BaseTransformer
      */
     private function buildTxnTaxDetail(\App\Models\Invoice $invoice, float $total_taxes, float $taxable_amount, \App\Services\Quickbooks\QuickbooksService $qb_service): ?array
     {
-        // Collect invoice-level taxes (tax_name1/rate1, tax_name2/rate2, tax_name3/rate3)
+        // Build TxnTaxDetail from LINE-ITEM taxes only (getTaxMap).
+        // Invoice-level taxes (getTotalTaxMap) are never used for QB sync.
         $tax_lines = [];
         $calculated_total_tax = 0;
 
@@ -248,49 +313,7 @@ class InvoiceTransformer extends BaseTransformer
 
         foreach ($invoice->calc()->getTaxMap() ?? [] as $tax) {
             $tax_components = $qb_service->helper->splitTaxName($tax['name']);
-
-            $tax_rate_id = null;
-
-            foreach ($tax_rate_map as $rate_map) {
-
-                if (floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name']) {
-                    $tax_rate_id = $rate_map['id'];
-                    break;
-                }
-            }
-
-            if (!$tax_rate_id) {
-                continue;
-            }
-
-            $tax_lines[] = [
-                'Amount' => round($tax['total'], 2),
-                'DetailType' => 'TaxLineDetail',
-                'TaxLineDetail' => [
-                    'TaxRateRef' => [
-                        'value' => $tax_rate_id,
-                    ],
-                    'PercentBased' => false,
-                    'NetAmountTaxable' => round($tax['base_amount'], 2),
-                    'TaxInclusiveAmount' => 0.00,
-                ],
-            ];
-
-            $calculated_total_tax += round($tax['total'], 2);
-        }
-
-        foreach ($invoice->calc()->getTotalTaxMap() ?? [] as $tax) {
-            $tax_components = $qb_service->helper->splitTaxName($tax['name']);
-
-            $tax_rate_id = null;
-
-            foreach ($tax_rate_map as $rate_map) {
-
-                if (floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name']) {
-                    $tax_rate_id = $rate_map['id'];
-                    break;
-                }
-            }
+            $tax_rate_id = $this->findTaxRateIdByRateAndName($tax_rate_map, floatval($tax_components['percentage']), $tax_components['name']);
 
             if (!$tax_rate_id) {
                 continue;
@@ -326,6 +349,43 @@ class InvoiceTransformer extends BaseTransformer
         ];
     }
 
+
+    /**
+     * Find a TaxCode ID from the tax rate map by matching rate and name.
+     * Uses fuzzy name matching (stripos) with a rate-only fallback.
+     */
+    private function findTaxCodeIdByRate(array $tax_rate_map, float $rate, string $name): ?string
+    {
+        $rate_only_match = null;
+
+        foreach ($tax_rate_map as $entry) {
+            if (empty($entry['tax_code_id']) || floatval($entry['rate']) != $rate) {
+                continue;
+            }
+
+            if ($name === '' || stripos($name, $entry['name']) !== false || stripos($entry['name'], $name) !== false) {
+                return $entry['tax_code_id'];
+            }
+
+            $rate_only_match ??= $entry['tax_code_id'];
+        }
+
+        return $rate_only_match;
+    }
+
+    /**
+     * Find a TaxRate ID from the tax rate map by exact rate and name match.
+     */
+    private function findTaxRateIdByRateAndName(array $tax_rate_map, float $rate, string $name): ?string
+    {
+        foreach ($tax_rate_map as $entry) {
+            if (floatval($entry['rate']) == $rate && $entry['name'] == $name) {
+                return $entry['id'];
+            }
+        }
+
+        return null;
+    }
 
     /**
      * transform

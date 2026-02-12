@@ -55,6 +55,9 @@ class QuickbooksService
 
     private bool $try_refresh = true;
 
+    /** Company IDs currently importing from QB — skip pushing them back. */
+    public static array $importing = [];
+
     /**
      * In-memory cache of tax codes, indexed by ID.
      * Fetched once during initial sync and never persisted.
@@ -655,11 +658,99 @@ class QuickbooksService
 
         $default_income_account = strlen($this->company->quickbooks->settings->qb_income_account_id ?? '') >= 1 ? $this->company->quickbooks->settings->qb_income_account_id : ($income_accounts[0]['id'] ?? null);
         
-        $this->company->quickbooks->settings->tax_rate_map = $tax_rates;
         $this->company->quickbooks->settings->income_account_map = $income_accounts;
         $this->company->quickbooks->settings->qb_income_account_id = $default_income_account;
         $this->company->quickbooks->companyName = $companyInfo->CompanyName ?? '';
         $this->company->quickbooks->settings->automatic_taxes = $automatic_taxes;
+
+        // Extract QB company country for region-aware tax code handling
+        $qb_country = $this->extractCompanyCountry($companyInfo);
+        $this->company->quickbooks->settings->country = $qb_country;
+
+        // Resolve TaxCode IDs for multi-region support (US uses 'TAX'/'NON', CA/AU/UK use numeric IDs)
+        // Build TaxRate→TaxCode map so each line item can resolve the correct TaxCodeRef
+        $tax_codes = $this->fetchTaxCodes();
+        $default_taxable_code = null;
+        $default_exempt_code = null;
+        $tax_rate_to_tax_code = []; // TaxRate ID → TaxCode ID (sales only)
+
+        foreach ($tax_codes as $tax_code) {
+            $tax_code_array = is_object($tax_code) ? json_decode(json_encode($tax_code), true) : $tax_code;
+
+            // Extract Id — IPPid serializes to {"value": "1"} or plain string
+            $raw_id = data_get($tax_code_array, 'Id');
+            $tc_id = is_array($raw_id) ? (string) ($raw_id['value'] ?? '') : (string) ($raw_id ?? '');
+            if ($tc_id === '') {
+                continue;
+            }
+
+            $name = (string) data_get($tax_code_array, 'Name', '');
+            $taxable = data_get($tax_code_array, 'Taxable');
+            $is_taxable = $taxable === true || $taxable === 'true' || $taxable === 1 || $taxable === '1';
+
+            nlog("QB TaxCode: id={$tc_id} name={$name} taxable=" . var_export($taxable, true));
+
+            // Resolve exempt code (first non-taxable TaxCode)
+            if (!$is_taxable && $default_exempt_code === null) {
+                $default_exempt_code = $tc_id;
+            }
+
+            // Extract SalesTaxRateList → map each TaxRate ID to this TaxCode ID
+            $sales_rate_list = data_get($tax_code_array, 'SalesTaxRateList.TaxRateDetail', []);
+            if (!is_array($sales_rate_list) || (!isset($sales_rate_list[0]) && !empty($sales_rate_list))) {
+                $sales_rate_list = [$sales_rate_list]; // single entry
+            }
+
+            foreach ($sales_rate_list as $rate_detail) {
+                $rate_ref = data_get($rate_detail, 'TaxRateRef');
+                $tr_id = is_array($rate_ref) ? (string) ($rate_ref['value'] ?? '') : (string) ($rate_ref ?? '');
+                if ($tr_id !== '' && !isset($tax_rate_to_tax_code[$tr_id])) {
+                    $tax_rate_to_tax_code[$tr_id] = $tc_id;
+                    nlog("QB TaxRate→TaxCode: rate_id={$tr_id} → tax_code_id={$tc_id} ({$name})");
+                }
+            }
+        }
+
+        // Fallback exempt code by common names
+        if ($default_exempt_code === null && !empty($tax_codes)) {
+            $exempt_names = ['e', 'exempt', 'non', 'tax exempt', 'z', 'zero', 'zero-rated', 'free', 'out of scope'];
+            foreach ($tax_codes as $tax_code) {
+                $tax_code_array = is_object($tax_code) ? json_decode(json_encode($tax_code), true) : $tax_code;
+                $raw_id = data_get($tax_code_array, 'Id');
+                $tc_id = is_array($raw_id) ? (string) ($raw_id['value'] ?? '') : (string) ($raw_id ?? '');
+                $name = strtolower(trim((string) data_get($tax_code_array, 'Name', '')));
+                if ($tc_id !== '' && in_array($name, $exempt_names, true)) {
+                    $default_exempt_code = $tc_id;
+                    nlog("QB TaxCode: resolved exempt code by name: id={$tc_id} name={$name}");
+                    break;
+                }
+            }
+        }
+
+        // Augment tax_rate_map entries with their resolved TaxCode ID
+        foreach ($tax_rates as &$rate_entry) {
+            $tr_id = (string) ($rate_entry['id'] ?? '');
+            $rate_entry['tax_code_id'] = $tax_rate_to_tax_code[$tr_id] ?? null;
+        }
+        unset($rate_entry);
+
+        // Derive default taxable code: pick the TaxCode with the highest non-zero sales rate
+        if (!empty($tax_rate_to_tax_code)) {
+            $best_rate = 0;
+            foreach ($tax_rates as $rate_entry) {
+                if (($rate_entry['tax_code_id'] ?? null) && floatval($rate_entry['rate']) > $best_rate) {
+                    $best_rate = floatval($rate_entry['rate']);
+                    $default_taxable_code = $rate_entry['tax_code_id'];
+                }
+            }
+        }
+
+        nlog("QB TaxCode resolution: taxable={$default_taxable_code} exempt={$default_exempt_code} rate_map_count=" . count($tax_rate_to_tax_code));
+
+        $this->company->quickbooks->settings->tax_rate_map = $tax_rates;
+        $this->company->quickbooks->settings->default_taxable_code = $default_taxable_code;
+        $this->company->quickbooks->settings->default_exempt_code = $default_exempt_code;
+
         $this->company->save();
 
         // Iterate through the Quickbooks tax rates and create new Invoice Ninja tax rates
@@ -678,5 +769,46 @@ class QuickbooksService
 
         return $this;
 
+    }
+
+    /**
+     * Extract the country code from QuickBooks CompanyInfo.
+     *
+     * Checks CompanyAddr.Country, LegalAddr.Country, and root-level Country.
+     * Returns a normalized 2-letter ISO code (e.g. "US", "CA", "AU", "GB").
+     * Falls back to "US" if no country can be determined.
+     */
+    private function extractCompanyCountry(mixed $companyInfo): string
+    {
+        $country_raw = data_get($companyInfo, 'CompanyAddr.Country')
+            ?? data_get($companyInfo, 'CompanyAddr.CountryCode')
+            ?? data_get($companyInfo, 'LegalAddr.Country')
+            ?? data_get($companyInfo, 'LegalAddr.CountryCode')
+            ?? data_get($companyInfo, 'Country')
+            ?? '';
+
+        $country_raw = trim((string) $country_raw);
+
+        if ($country_raw === '') {
+            nlog("QB companySync: No country found in CompanyInfo, defaulting to 'US'");
+            return 'US';
+        }
+
+        $normalized = strtoupper($country_raw);
+        $country_map = [
+            'US' => 'US', 'USA' => 'US', 'UNITED STATES' => 'US', 'UNITED STATES OF AMERICA' => 'US',
+            'CA' => 'CA', 'CAN' => 'CA', 'CANADA' => 'CA',
+            'AU' => 'AU', 'AUS' => 'AU', 'AUSTRALIA' => 'AU',
+            'GB' => 'GB', 'GBR' => 'GB', 'UNITED KINGDOM' => 'GB', 'UK' => 'GB',
+            'IN' => 'IN', 'IND' => 'IN', 'INDIA' => 'IN',
+            'FR' => 'FR', 'FRA' => 'FR', 'FRANCE' => 'FR',
+            'DE' => 'DE', 'DEU' => 'DE', 'GERMANY' => 'DE',
+        ];
+
+        $result = $country_map[$normalized] ?? $normalized;
+
+        nlog("QB companySync: Resolved company country '{$country_raw}' to '{$result}'");
+
+        return $result;
     }
 }

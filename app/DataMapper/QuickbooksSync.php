@@ -56,6 +56,12 @@ class QuickbooksSync
 
     public bool $automatic_taxes = false;
 
+    public ?string $default_taxable_code = null;
+
+    public ?string $default_exempt_code = null;
+
+    public ?string $country = null;
+
     public function __construct(array $attributes = [])
     {
         $this->client = new QuickbooksSyncMap($attributes['client'] ?? []);
@@ -72,6 +78,9 @@ class QuickbooksSync
         $this->qb_income_account_id = $attributes['qb_income_account_id'] ?? null;
         $this->tax_rate_map = $attributes['tax_rate_map'] ?? [];
         $this->automatic_taxes = $attributes['automatic_taxes'] ?? false; //requires us to syncronously push the invoice to QB, and return fully formed Invoice with taxes included.
+        $this->default_taxable_code = $attributes['default_taxable_code'] ?? null;
+        $this->default_exempt_code = $attributes['default_exempt_code'] ?? null;
+        $this->country = $attributes['country'] ?? null;
     }
 
     public function toArray(): array
@@ -91,6 +100,9 @@ class QuickbooksSync
             'qb_income_account_id' => $this->qb_income_account_id,
             'tax_rate_map' => $this->tax_rate_map,
             'automatic_taxes' => $this->automatic_taxes,
+            'default_taxable_code' => $this->default_taxable_code,
+            'default_exempt_code' => $this->default_exempt_code,
+            'country' => $this->country,
         ];
     }
 }

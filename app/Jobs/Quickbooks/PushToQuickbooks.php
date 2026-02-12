@@ -12,6 +12,7 @@
 
 namespace App\Jobs\Quickbooks;
 
+use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
@@ -92,8 +93,12 @@ class PushToQuickbooks implements ShouldQueue
                 'product' => $this->pushProduct($qbService, $entity),
                 default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
             };
+
+            $entity->refresh();
+            $this->logActivitySuccess($entity);
         } catch (\Throwable $e) {
             nlog("Quickbooks push to Quickbooks job failed => " . $e->getMessage());
+            $this->logActivityFailure($entity, $this->extractReadableError($e->getMessage()));
 
             return;
         }
@@ -162,6 +167,84 @@ class PushToQuickbooks implements ShouldQueue
     private function pushInvoice(QuickbooksService $qbService, Invoice $invoice): void
     {
         $qbService->invoice->syncToForeign([$invoice]);
+    }
+
+    private function extractReadableError(string $rawMessage): string
+    {
+        if (preg_match('/with body:\s*\[(.+)\]/s', $rawMessage, $matches)) {
+            $body = trim($matches[1]);
+
+            try {
+                $xml = @simplexml_load_string($body);
+                if ($xml !== false && isset($xml->Fault->Error)) {
+                    $error = $xml->Fault->Error;
+                    $message = (string) ($error->Message ?? '');
+                    $detail = (string) ($error->Detail ?? '');
+
+                    if ($message && $detail) {
+                        return "{$message} - {$detail}";
+                    }
+
+                    return $message ?: $detail;
+                }
+            } catch (\Throwable $e) {
+                // XML parsing failed, fall through
+            }
+        }
+
+        $cleaned = str_replace('Request is not made successful. ', '', $rawMessage);
+
+        return mb_substr($cleaned, 0, 500);
+    }
+
+    private function logActivitySuccess($entity): void
+    {
+        try {
+            $qb_id = $entity->sync->qb_id ?? null;
+            $number = $entity->number ?? ($entity->present()->name() ?? $entity->id);
+            $notes = "{$this->entity_type} #{$number} synced to QuickBooks (QB ID: {$qb_id})";
+
+            $activity = new Activity();
+            $activity->user_id = $entity->user_id ?? null;
+            $activity->company_id = $entity->company_id;
+            $activity->account_id = $entity->company->account_id;
+            $activity->activity_type_id = Activity::QUICKBOOKS_PUSH_SUCCESS;
+            $activity->is_system = true;
+            $activity->notes = $notes;
+
+            match ($this->entity_type) {
+                'client' => $activity->client_id = $entity->id,
+                'invoice' => $activity->invoice_id = $entity->id,
+                default => null,
+            };
+
+            $activity->save();
+        } catch (\Throwable $e) {
+            nlog("QuickBooks: Failed to log success activity for {$this->entity_type} {$this->entity_id}: " . $e->getMessage());
+        }
+    }
+
+    private function logActivityFailure($entity, string $errorMessage): void
+    {
+        try {
+            $activity = new Activity();
+            $activity->user_id = $entity->user_id ?? null;
+            $activity->company_id = $entity->company_id;
+            $activity->account_id = $entity->company->account_id;
+            $activity->activity_type_id = Activity::QUICKBOOKS_PUSH_FAILURE;
+            $activity->is_system = true;
+            $activity->notes = str_replace('"', '', $errorMessage);
+
+            match ($this->entity_type) {
+                'client' => $activity->client_id = $entity->id,
+                'invoice' => $activity->invoice_id = $entity->id,
+                default => null,
+            };
+
+            $activity->save();
+        } catch (\Throwable $e) {
+            nlog("QuickBooks: Failed to log activity for {$this->entity_type} {$this->entity_id}: " . $e->getMessage());
+        }
     }
 
     public function middleware(): array

@@ -185,9 +185,7 @@ class QbClient implements SyncInterface
 
         } catch (\Exception $e) {
             nlog("QuickBooks: Error pushing client {$client->id} to QuickBooks: {$e->getMessage()}");
-            // Continue with next invoice instead of failing completely
-            return null;
-
+            throw $e;
         }
     }
 

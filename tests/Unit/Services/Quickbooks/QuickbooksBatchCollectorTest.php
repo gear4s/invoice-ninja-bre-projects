@@ -13,7 +13,6 @@ use App\Services\Quickbooks\QuickbooksBatchCollector;
 /**
  * Tests for QuickBooks batch collector
  *
- * @covers \App\Services\Quickbooks\QuickbooksBatchCollector
  */
 class QuickbooksBatchCollectorTest extends TestCase
 {
