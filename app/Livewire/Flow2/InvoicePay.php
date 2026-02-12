@@ -12,7 +12,6 @@
 
 namespace App\Livewire\Flow2;
 
-use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Models\Invoice;
 use Livewire\Component;

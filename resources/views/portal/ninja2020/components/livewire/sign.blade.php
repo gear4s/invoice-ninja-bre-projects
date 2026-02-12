@@ -13,7 +13,7 @@
         session()->forget('errors');
     @endphp
 
-    @livewire($this->component, ['invitation_id' => $this->invitation_id, 'entity_type' => $entity_type, 'db' => $db, 'request_hash' => $request_hash], key($this->componentUniqueId()))
+    @livewire($this->component, ['invitation_id' => $this->invitation_id, '_key' => $_key], key($this->componentUniqueId()))
 
 </div>
 

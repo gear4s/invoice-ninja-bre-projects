@@ -119,6 +119,6 @@ class Sign extends Component
 
     public function render()
     {
-        return render('components.livewire.sign');
+        return render('components.livewire.sign', ['_key' => $this->_key]);
     }
 }

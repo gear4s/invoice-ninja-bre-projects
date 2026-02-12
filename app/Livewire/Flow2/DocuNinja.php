@@ -14,12 +14,6 @@ namespace App\Livewire\Flow2;
 
 use Livewire\Component;
 use App\Libraries\MultiDB;
-use Livewire\Attributes\Lazy;
-use App\DataMapper\InvoiceSync;
-use App\Models\QuoteInvitation;
-use App\Models\CreditInvitation;
-use App\Models\InvoiceInvitation;
-use App\Models\PurchaseOrderInvitation;
 use App\Utils\Traits\WithSecureContext;
 
 class DocuNinja extends Component
@@ -40,65 +34,19 @@ class DocuNinja extends Component
     private ?string $sig = null;
     private ?string $company_key = null;
 
-    private function getInvitation()
-    {
-        return match($this->getContext($this->_key)['entity_type']){
-            'invoice' => InvoiceInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
-            'quote' => QuoteInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
-            'credit' => CreditInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
-            'purchase_order' => PurchaseOrderInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
-            default => InvoiceInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
-        };
-    }
-
     public function mount()
     {
-
         MultiDB::setDb($this->getContext($this->_key)['db']);
 
-        $invitation = $this->getInvitation();
+        $signable = $this->getContext($this->_key)['docuninja_signable'] ?? null;
 
-        $entity_type = $this->getContext($this->_key)['entity_type'];
-
-        $this->company_key = $invitation->company->company_key;
-
-        if(isset($invitation->{$entity_type}->sync->dn_completed) && $invitation->{$entity_type}->sync->dn_completed){
-            $this->dispatch('docuninja-signature-captured');
-        }
-        elseif(isset($invitation->{$entity_type}->sync) && 
-            $invitation->can_sign &&
-            $dn_invite = $invitation->{$entity_type}->sync->getInvitation($invitation->key)){
-             
-            $signable = [
-                'invitation_key' => $invitation->key,
-                'document_id' => $dn_invite['dn_id'],
-                'document_invitation_id' => $dn_invite['dn_invitation_id'],
-                'sig' => $dn_invite['dn_sig'],
-                'success' => !$invitation->{$entity_type}->sync->dn_completed,
-            ];
-        }
-        else{
-            $signable = $invitation->{$entity_type}->service()->getDocuNinjaSignable($invitation);
-            $sync = new InvoiceSync(qb_id: '', dn_completed: false);
-            $sync->addInvitation(
-                $signable['invitation_key'],
-                $signable['document_id'],
-                $signable['document_invitation_id'],
-                $signable['sig']
-            );
-            $invitation->{$entity_type}->sync = $sync;
-            $invitation->{$entity_type}->save();
-        }
-            
-        if(isset($signable['success']) && !$signable['success']){
-            $this->dispatch('docuninja-signature-captured');
-        }
-
-        if(isset($signable) && $signable){
-        // nlog($signable);
+        if ($signable) {
             $this->document_id = $signable['document_id'];
             $this->document_invitation_id = $signable['document_invitation_id'];
             $this->sig = $signable['sig'];
+            $this->company_key = $signable['company_key'];
+        } else {
+            $this->dispatch('docuninja-signature-captured');
         }
     }
 
