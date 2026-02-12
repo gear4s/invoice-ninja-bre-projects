@@ -61,18 +61,25 @@ class QuickbooksImport implements ShouldQueue
         $this->qbs = new QuickbooksService($this->company);
         $this->settings =  $this->company->quickbooks->settings;
 
+        QuickbooksService::$importing[$this->company_id] = true;
 
-        if(count($this->syncable) > 0) {            
-            /** @var mixed $this- */
-            return $this->performInitialSync();
-        }
+        try {
 
-        foreach ($this->entities as $key => $entity) {
+            if(count($this->syncable) > 0) {
+                /** @var mixed $this- */
+                return $this->performInitialSync();
+            }
 
-            $records = $this->qbs->sdk()->fetchRecords($entity);
+            foreach ($this->entities as $key => $entity) {
 
-            $this->processEntitySync($key, $records);
+                $records = $this->qbs->sdk()->fetchRecords($entity);
 
+                $this->processEntitySync($entity, $records);
+
+            }
+
+        } finally {
+            unset(QuickbooksService::$importing[$this->company_id]);
         }
 
     }

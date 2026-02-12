@@ -21,7 +21,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use QuickBooksOnline\API\Exception\ServiceException;
 
 /**
@@ -43,7 +42,11 @@ class BatchPushToQuickbooks implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $tries = 3;
+    /** Allow many release() cycles without burning attempts. */
+    public $tries = 10;
+
+    /** Only 3 actual exceptions cause permanent failure. */
+    public $maxExceptions = 3;
 
     public $deleteWhenMissingModels = true;
 
@@ -75,6 +78,8 @@ class BatchPushToQuickbooks implements ShouldQueue
      */
     public function handle(): void
     {
+        nlog("QB Batch: Attempt {$this->attempts()}/{$this->tries} for {$this->entity_type} [" . implode(',', $this->entity_ids) . "] company {$this->company_id}");
+
         MultiDB::setDb($this->db);
 
         $company = Company::find($this->company_id);
@@ -249,17 +254,15 @@ class BatchPushToQuickbooks implements ShouldQueue
      */
     private function handleServiceException(ServiceException $e, $entity, QuickbooksRateLimiter $rateLimiter): void
     {
-        $statusCode = $e->getHttpStatusCode();
-        $errorCode = $e->getIntuitErrorCode();
-        $errorMessage = $e->getIntuitErrorMessage();
+        $statusCode = $e->getCode();
+        $errorMessage = $e->getMessage();
 
         nlog("QB Batch: ServiceException for {$this->entity_type} {$entity->id}", [
             'status_code' => $statusCode,
-            'error_code' => $errorCode,
             'error_message' => $errorMessage,
         ]);
 
-        // Handle rate limiting (429 or error code 003001)
+        // Handle rate limiting (429 or throttle messages)
         if ($this->isRateLimitException($e)) {
             $backoffSeconds = $this->calculateBackoff();
             $rateLimiter->enterBackoff($backoffSeconds);
@@ -269,7 +272,7 @@ class BatchPushToQuickbooks implements ShouldQueue
         }
 
         // Handle authentication errors
-        if ($statusCode === 401 || $errorCode === '003200') {
+        if ($statusCode === 401) {
             nlog("QB Batch: Authentication failed, may need token refresh");
             // Token refresh is handled in QuickbooksService::checkToken()
         }
@@ -283,12 +286,10 @@ class BatchPushToQuickbooks implements ShouldQueue
      */
     private function isRateLimitException(ServiceException $e): bool
     {
-        $statusCode = $e->getHttpStatusCode();
-        $errorCode = $e->getIntuitErrorCode();
-        $errorMessage = $e->getIntuitErrorMessage();
+        $statusCode = $e->getCode();
+        $errorMessage = $e->getMessage();
 
         return $statusCode === 429
-            || $errorCode === '003001'
             || str_contains(strtolower($errorMessage), 'throttle')
             || str_contains(strtolower($errorMessage), 'rate limit');
     }
@@ -332,10 +333,7 @@ class BatchPushToQuickbooks implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [
-            // Prevent duplicate batch processing
-            new WithoutOverlapping("qb-batch-{$this->entity_type}-{$this->company_id}"),
-        ];
+        return [];
     }
 
     /**
@@ -348,9 +346,11 @@ class BatchPushToQuickbooks implements ShouldQueue
     {
         nlog("QB Batch: Job failed permanently", [
             'entity_type' => $this->entity_type,
-            'entity_count' => count($this->entity_ids),
+            'entity_ids' => $this->entity_ids,
             'company_id' => $this->company_id,
+            'attempts' => $this->attempts(),
             'exception' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
         ]);
 
         config(['queue.failed.driver' => null]);

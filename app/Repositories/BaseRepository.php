@@ -339,7 +339,8 @@ class BaseRepository
                 event('eloquent.updated: App\Models\Invoice', $model);
             }
 
-            if ($qb_model_changes && $model->company->quickbooks && $model->company->shouldPushToQuickbooks('invoice')) {
+            /** Quickbooks Sync Logic */
+            if ($qb_model_changes && $model->company->quickbooks && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$model->company_id]) && $model->company->shouldPushToQuickbooks('invoice')) {
     
                 nlog("base repo changes detected => status: " . $model->status_id);
 
@@ -353,14 +354,7 @@ class BaseRepository
                     }
                 }
                 elseif($model->status_id != Invoice::STATUS_DRAFT){
-                    nlog("batch sync");
                     \App\Services\Quickbooks\QuickbooksBatchCollector::collect('invoice', $model->id, $model->company->db, $model->company_id);
-
-                    // \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
-                    //     'invoice',
-                    //     $model->id,
-                    //     $model->company->db
-                    // );
                 }
     
             }

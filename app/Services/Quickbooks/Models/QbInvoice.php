@@ -147,15 +147,16 @@ class QbInvoice implements SyncInterface
 
                 $result = false;
 
+                nlog("QuickBooks: Pushing invoice {$invoice->id} payload", ['data' => $qb_invoice_data]);
+
                 if (isset($invoice->sync->qb_id) && !empty($invoice->sync->qb_id)) {
-                    // Update existing invoice
                     $result = $this->service->sdk->Update($qb_invoice);
-                    nlog("QuickBooks: Updated invoice {$invoice->id} (QB ID: {$invoice->sync->qb_id})");
+                    nlog("QuickBooks: Updated invoice {$invoice->id} (QB ID: {$invoice->sync->qb_id})", [
+                        'result_id' => data_get($result, 'Id'),
+                    ]);
                 } else {
-                    // Create new invoice
                     $result = $this->service->sdk->Add($qb_invoice);
 
-                    // Store QB ID in invoice sync
                     $sync = new InvoiceSync();
                     $sync->qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
                     $invoice->sync = $sync;
@@ -172,9 +173,10 @@ class QbInvoice implements SyncInterface
                 }
 
             } catch (\Exception $e) {
-                nlog("QuickBooks: Error pushing invoice {$invoice->id} to QuickBooks: {$e->getMessage()}");
-                // Continue with next invoice instead of failing completely
-                continue;
+                nlog("QuickBooks: Error pushing invoice {$invoice->id} to QuickBooks: {$e->getMessage()}", [
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                throw $e;
             }
         }
     }
