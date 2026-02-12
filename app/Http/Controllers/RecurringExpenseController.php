@@ -36,7 +36,6 @@ use Illuminate\Http\Response;
 
 /**
  * Class RecurringExpenseController.
- * @covers App\Http\Controllers\RecurringExpenseController
  */
 class RecurringExpenseController extends BaseController
 {

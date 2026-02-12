@@ -34,7 +34,6 @@ use Illuminate\Http\Response;
 
 /**
  * Class ClientGatewayTokenController.
- * @covers App\Http\Controllers\ClientGatewayTokenController
  */
 class ClientGatewayTokenController extends BaseController
 {

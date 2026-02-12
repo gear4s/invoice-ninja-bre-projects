@@ -58,7 +58,6 @@ use App\Transformers\DocumentTransformer;
 
 /**
  * Class ClientController.
- * @covers App\Http\Controllers\ClientController
  */
 class ClientController extends BaseController
 {

@@ -9,7 +9,6 @@ use App\Services\Quickbooks\QuickbooksRateLimiter;
 /**
  * Tests for QuickBooks API rate limiter
  *
- * @covers \App\Services\Quickbooks\QuickbooksRateLimiter
  */
 class QuickbooksRateLimiterTest extends TestCase
 {

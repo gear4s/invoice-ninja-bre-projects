@@ -40,7 +40,6 @@ use App\Http\Requests\Expense\DestroyExpenseRequest;
 
 /**
  * Class ExpenseController.
- * @covers App\Http\Controllers\ExpenseController
  */
 class ExpenseController extends BaseController
 {

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Feature tests for BatchPushToQuickbooks job
  *
- * @covers \App\Jobs\Quickbooks\BatchPushToQuickbooks
  */
 class BatchPushToQuickbooksTest extends TestCase
 {
