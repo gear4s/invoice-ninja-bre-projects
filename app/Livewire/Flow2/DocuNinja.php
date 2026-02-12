@@ -32,7 +32,9 @@ class DocuNinja extends Component
     public $docuNinjaSignatureData = [];
     public $docuNinjaSigningStatus = 'unknown';
     public $docuNinjaInternalState = [];
-    
+
+    public $_key;
+
     private ?string $document_id = null;
     private ?string $document_invitation_id = null;
     private ?string $sig = null;
@@ -40,23 +42,23 @@ class DocuNinja extends Component
 
     private function getInvitation()
     {
-        return match($this->getContext()['entity_type']){
-            'invoice' => InvoiceInvitation::withTrashed()->find($this->getContext()['invitation_id']),
-            'quote' => QuoteInvitation::withTrashed()->find($this->getContext()['invitation_id']),
-            'credit' => CreditInvitation::withTrashed()->find($this->getContext()['invitation_id']),
-            'purchase_order' => PurchaseOrderInvitation::withTrashed()->find($this->getContext()['invitation_id']),
-            default => InvoiceInvitation::withTrashed()->find($this->getContext()['invitation_id']),
+        return match($this->getContext($this->_key)['entity_type']){
+            'invoice' => InvoiceInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
+            'quote' => QuoteInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
+            'credit' => CreditInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
+            'purchase_order' => PurchaseOrderInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
+            default => InvoiceInvitation::withTrashed()->find($this->getContext($this->_key)['invitation_id']),
         };
     }
 
     public function mount()
     {
 
-        MultiDB::setDb($this->getContext()['db']);
+        MultiDB::setDb($this->getContext($this->_key)['db']);
 
         $invitation = $this->getInvitation();
 
-        $entity_type = $this->getContext()['entity_type'];
+        $entity_type = $this->getContext($this->_key)['entity_type'];
 
         $this->company_key = $invitation->company->company_key;
 

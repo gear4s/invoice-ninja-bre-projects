@@ -24,9 +24,11 @@ class DocuNinjaLoader extends Component
 
     public $entity_type;
 
+    public $_key;
+
     private function getInvitation()
     {
-        return match($this->getContext()['entity_type']){
+        return match($this->getContext($this->_key)['entity_type']){
             'invoice' => InvoiceInvitation::withTrashed()->find($this->invitation_id),
             'quote' => QuoteInvitation::withTrashed()->find($this->invitation_id),
             'credit' => CreditInvitation::withTrashed()->find($this->invitation_id),
@@ -38,8 +40,8 @@ class DocuNinjaLoader extends Component
     public function mount()
     {
         // Set database context
-        MultiDB::setDb($this->getContext()['db']);   
-        $this->entity_type = $this->getContext()['entity_type'];
+        MultiDB::setDb($this->getContext($this->_key)['db']);
+        $this->entity_type = $this->getContext($this->_key)['entity_type'];
 
      }
 
