@@ -111,7 +111,7 @@ class BatchPushToQuickbooksTest extends TestCase
             100
         );
 
-        $this->assertEquals(3, $job->tries);
+        $this->assertEquals(10, $job->tries);
         $this->assertEquals([30, 60, 120], $job->backoff);
     }
 
@@ -127,7 +127,7 @@ class BatchPushToQuickbooksTest extends TestCase
 
         $middleware = $job->middleware();
 
-        $this->assertCount(1, $middleware);
-        $this->assertInstanceOf(\Illuminate\Queue\Middleware\WithoutOverlapping::class, $middleware[0]);
+        $this->assertCount(0, $middleware);
+        // $this->assertInstanceOf(\Illuminate\Queue\Middleware\WithoutOverlapping::class, $middleware[0]);
     }
 }

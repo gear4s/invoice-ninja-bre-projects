@@ -5911,7 +5911,7 @@ $lang = array(
     'access_key' => 'Access Key',
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bank Transfer',
-    
+    'activity_164' => 'QuickBooks sync failed. :notes',
 );
 
 return $lang;
