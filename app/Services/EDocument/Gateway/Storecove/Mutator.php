@@ -643,6 +643,7 @@ class Mutator implements MutatorInterface
         }
 
         $code = $this->getClientRoutingCode();
+
         $identifier = false;
 
         if ($this->invoice->client->country->iso_3166_2 == 'FR') {
@@ -662,14 +663,26 @@ class Mutator implements MutatorInterface
         $identifier = str_ireplace(["FR", "BE"], "", $identifier);
         $identifier = preg_replace("/[^a-zA-Z0-9]/", "", $identifier);
 
-        //Check the recipient is on the network, and perhaps, adjust the identifier accordingly
-        // if(!$this->storecove->exists($identifier, $code) && $this->invoice->client->country->iso_3166_2 == "BE"){
 
-        //     nlog("identifier not found, adjusting for BE");
-        //     $code = "BE:VAT";
-        //     $identifier = "BE".$identifier;
+        //Check the recipient is on the network, and can be delivered the correct document.
+        if($this->invoice->client->country->iso_3166_2 == "BE"){
 
-        // }
+            if ($this->storecove->discovery($identifier, 'BE:EN')) {
+                    $this->setStorecoveMeta($this->buildRouting([
+                        ["scheme" => 'BE:EN', "id" => $identifier],
+                    ]));
+
+                    return $this;
+            }
+            elseif($this->storecove->discovery("BE".$identifier, 'BE:VAT')) {
+                $this->setStorecoveMeta($this->buildRouting([
+                    ["scheme" => 'BE:VAT', "id" => "BE".$identifier],
+                ]));
+
+                return $this;
+            }
+
+        }
 
 
         $this->setStorecoveMeta($this->buildRouting([
