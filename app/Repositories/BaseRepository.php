@@ -299,7 +299,7 @@ class BaseRepository
         $model = $model->calc()->getInvoice();
 
         /* Check if the model has been changed in a way that is relevant to Quickbooks */
-        $qb_model_changes = $model->wasChanged(['amount', 'line_items', 'total_taxes']);
+        $qb_model_changes = $model->wasChanged(['amount', 'line_items', 'total_taxes', 'status_id']);
 
         /* We use this to compare to our starting amount */
         $state['finished_amount'] = $model->balance;
@@ -341,8 +341,10 @@ class BaseRepository
 
             if ($qb_model_changes && $model->company->quickbooks && $model->company->shouldPushToQuickbooks('invoice')) {
     
+                nlog("base repo changes detected");
+
                 if($model->company->quickbooks->settings->automatic_taxes){
-    
+    nlog("immediate sync");
                     try{
                         (new \App\Jobs\Quickbooks\PushToQuickbooks('invoice', $model->id, $model->company->db))->handle();
                     }
@@ -351,8 +353,8 @@ class BaseRepository
                     }
                 }
                 elseif($model->status_id != Invoice::STATUS_DRAFT){
-                   
-                    \App\Services\Quickbooks\QuickbooksBatchCollector::collect('invoice', $model->id, $model->company->db, $model->company->id);
+                    nlog("batch sync");
+                    \App\Services\Quickbooks\QuickbooksBatchCollector::collect('invoice', $model->id, $model->company->db, $model->company_id);
 
                     // \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                     //     'invoice',

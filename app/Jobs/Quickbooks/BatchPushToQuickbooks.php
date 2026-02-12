@@ -67,7 +67,7 @@ class BatchPushToQuickbooks implements ShouldQueue
         public int $company_id
     ) {
         // Set queue to dedicated QB queue
-        $this->onQueue('quickbooks');
+        // $this->onQueue('quickbooks');
     }
 
     /**

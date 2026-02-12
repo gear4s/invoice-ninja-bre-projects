@@ -46,7 +46,7 @@ class FlushQuickbooksBatch implements ShouldQueue
         private int $companyId,
         private string $priority = QuickbooksBatchCollector::PRIORITY_NORMAL
     ) {
-        $this->onQueue('quickbooks');
+        // $this->onQueue('quickbooks');
     }
 
     /**

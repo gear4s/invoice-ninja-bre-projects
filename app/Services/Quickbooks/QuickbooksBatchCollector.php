@@ -29,17 +29,17 @@ use App\Jobs\Quickbooks\BatchPushToQuickbooks;
 class QuickbooksBatchCollector
 {
     /**
-     * Batch size thresholds
+     * Dispatch immediately if batch reaches this size (don't wait for timer)
      */
     private const MAX_BATCH_SIZE = 50;
-    private const MIN_BATCH_SIZE = 5;
 
     /**
-     * Time windows for collecting entities (seconds) by priority
+     * Time windows for collecting entities (seconds) by priority.
+     * After this window a FlushQuickbooksBatch job fires and pushes
+     * whatever has accumulated — even a single entity.
      */
-    private const COLLECTION_WINDOW_IMMEDIATE = 2;   // High priority: 2 seconds max
-    private const COLLECTION_WINDOW_NORMAL = 10;     // Normal priority: 10 seconds max
-    private const COLLECTION_WINDOW_LOW = 30;        // Low priority: 30 seconds max
+    private const COLLECTION_WINDOW_NORMAL = 10;
+    private const COLLECTION_WINDOW_LOW = 30;
 
     /**
      * Priority levels
@@ -76,6 +76,8 @@ class QuickbooksBatchCollector
         string $priority = self::PRIORITY_NORMAL,
         bool $forceImmediate = false
     ): void {
+        nlog("QB Batch: Collecting {$entityType} {$entityId} for company {$companyId} with priority {$priority}");
+        
         // Force immediate dispatch for high-priority operations
         if ($forceImmediate || $priority === self::PRIORITY_IMMEDIATE) {
             nlog("QB Batch: Immediate dispatch for {$entityType} {$entityId}");
@@ -95,21 +97,18 @@ class QuickbooksBatchCollector
             'priority' => $priority,
         ];
 
-        // Get collection window based on priority
         $collectionWindow = self::getCollectionWindow($priority);
 
-        // Store batch with expiry
-        Cache::put($key, $batch, now()->addSeconds($collectionWindow));
+        // Store batch — TTL must outlive the flush job delay so data is
+        // still in cache when FlushQuickbooksBatch runs.
+        Cache::put($key, $batch, now()->addSeconds($collectionWindow + 30));
 
-        // Check if we should dispatch now
         if (count($batch) >= self::MAX_BATCH_SIZE) {
+            // Batch is full, dispatch right now
             self::dispatchBatch($entityType, $db, $companyId, $priority);
-        } elseif (count($batch) >= self::MIN_BATCH_SIZE) {
-            // Schedule dispatch if not already scheduled
+        } else {
+            // Schedule a delayed flush (idempotent — won't double-schedule)
             self::scheduleDispatch($entityType, $db, $companyId, $priority, $collectionWindow);
-        } elseif ($priority === self::PRIORITY_IMMEDIATE && count($batch) >= 1) {
-            // For immediate priority, dispatch even small batches quickly
-            self::scheduleDispatch($entityType, $db, $companyId, $priority, 2);
         }
     }
 
@@ -186,7 +185,6 @@ class QuickbooksBatchCollector
     private static function getCollectionWindow(string $priority): int
     {
         return match ($priority) {
-            self::PRIORITY_IMMEDIATE => self::COLLECTION_WINDOW_IMMEDIATE,
             self::PRIORITY_LOW => self::COLLECTION_WINDOW_LOW,
             default => self::COLLECTION_WINDOW_NORMAL,
         };

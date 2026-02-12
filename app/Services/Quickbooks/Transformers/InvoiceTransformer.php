@@ -61,15 +61,13 @@ class InvoiceTransformer extends BaseTransformer
             // Get product's QuickBooks ID (business logic handled by QbProduct)
             $product_qb_id = $qb_service->product->findOrCreateProduct($line_item);
 
-            $tax_code_id = 'NON'; // Default to non-taxable
+            $tax_code_id = 'NON';
 
-            // Check if tax_id is set and is exempt/zero rate (5 = exempt, 8 = zero rate)
             if (isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])) {
                 $tax_code_id = 'NON';
-            } elseif ($ast) { // Automatic taxes are enabled
+            } elseif ($ast) {
                 $tax_code_id = 'TAX';
-            } elseif (isset($line_item->tax_id) && !in_array($line_item->tax_id, ['5', '8'])) {
-                // Only use 'TAX' if there are actual tax rates applied to this line item
+            } else {
                 $has_tax_rate = (
                     (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0)
                     || (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0)

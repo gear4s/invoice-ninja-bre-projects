@@ -126,7 +126,11 @@ class StorecoveAdapter
             $e = new \InvoiceNinja\EInvoice\EInvoice();
             $peppolInvoice = $e->decode('Peppol', $p, 'xml');
 
-            $parent = $invoice instanceof \App\Models\Credit ? \App\Services\EDocument\Gateway\Storecove\Models\Credit::class : \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class;
+            // $parent = $invoice instanceof \App\Models\Credit ? \App\Services\EDocument\Gateway\Storecove\Models\Credit::class : \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class;
+            $parent = ($invoice instanceof \App\Models\Credit || $peppolInvoice instanceof \InvoiceNinja\EInvoice\Models\Peppol\CreditNote)
+    ? \App\Services\EDocument\Gateway\Storecove\Models\Credit::class 
+    : \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class;
+
             $peppolInvoice = $e->encode($peppolInvoice, 'json');
             $this->storecove_invoice = $serializer->deserialize($peppolInvoice, $parent, 'json', $context);
 
