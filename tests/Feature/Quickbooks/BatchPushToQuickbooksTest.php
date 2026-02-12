@@ -98,8 +98,8 @@ class BatchPushToQuickbooksTest extends TestCase
             100
         );
 
-        // Verify job is on quickbooks queue
-        $this->assertEquals('quickbooks', $job->queue);
+        // Verify job uses the default queue (no dedicated queue)
+        $this->assertNull($job->queue);
     }
 
     

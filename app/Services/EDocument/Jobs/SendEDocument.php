@@ -57,19 +57,18 @@ class SendEDocument implements ShouldQueue
     {
         MultiDB::setDB($this->db);
 
-        nlog("trying");
+        nlog("trying to send {$this->entity} {$this->id} on {$this->db}");
 
         $model = $this->entity::withTrashed()->find($this->id);
 
         if(!$model){
-
             nlog("model not found");
-            return;
+            return; // Model not found.
         }
-        
+
         if (isset($model->backup->guid) && is_string($model->backup->guid) && strlen($model->backup->guid) > 3) {
             nlog("already sent!");
-            return;
+            return; //Do not double send.
         }
 
         if ($model->company->account->is_flagged) {
