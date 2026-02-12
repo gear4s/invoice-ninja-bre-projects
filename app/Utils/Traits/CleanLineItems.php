@@ -92,19 +92,19 @@ trait CleanLineItems
             if (isset($item['notes']) && is_string($item['notes'])) {
                 $item['notes'] = str_replace(["</sc","onerror","prompt(","alert(",], "<-", $item['notes']);
             }
-            if (isset($item['product_key']) && is_string($item['notes'])) {
+            if (isset($item['product_key']) && is_string($item['product_key'])) {
                 $item['product_key'] = str_replace(["</sc","onerror","prompt(","alert(",], "<-", $item['product_key']);
             }
-            if (isset($item['custom_value1']) && is_string($item['notes'])) {
+            if (isset($item['custom_value1']) && is_string($item['custom_value1'])) {
                 $item['custom_value1'] = str_replace(["</sc","onerror","prompt(","alert(",], "<-", $item['custom_value1']);
             }
-            if (isset($item['custom_value2']) && is_string($item['notes'])) {
+            if (isset($item['custom_value2']) && is_string($item['custom_value2'])) {
                 $item['custom_value2'] = str_replace(["</sc","onerror","prompt(","alert(",], "<-", $item['custom_value2']);
             }
-            if (isset($item['custom_value3']) && is_string($item['notes'])) {
+            if (isset($item['custom_value3']) && is_string($item['custom_value3'])) {
                 $item['custom_value3'] = str_replace(["</sc","onerror","prompt(","alert(",], "<-", $item['custom_value3']);
             }
-            if (isset($item['custom_value4']) && is_string($item['notes'])) {
+            if (isset($item['custom_value4']) && is_string($item['custom_value4'])) {
                 $item['custom_value4'] = str_replace(["</sc","onerror","prompt(","alert(",], "<-", $item['custom_value4']);
             }
 
