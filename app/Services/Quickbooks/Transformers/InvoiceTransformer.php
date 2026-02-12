@@ -60,12 +60,14 @@ class InvoiceTransformer extends BaseTransformer
         $exempt_code = $qb_service->company->quickbooks->settings->default_exempt_code ?? 'NON';
         $tax_rate_map = $qb_service->company->quickbooks->settings->tax_rate_map ?? [];
 
-        // Non-US regions (CA/AU/UK) require TaxCodeRef on EVERY line item.
-        // If exempt code wasn't resolved, fall back to taxable code (safe for $0 lines;
-        // for non-zero exempt lines, user must re-run companySync to resolve the exempt code).
-        $is_non_us = $taxable_code !== 'TAX';
-        if ($is_non_us && $exempt_code === 'NON') {
-            nlog("QB Warning: exempt TaxCode not resolved for company {$qb_service->company->id}, falling back to taxable code '{$taxable_code}' — run companySync to fix");
+        // Determine region from stored QB company country (set by companySync)
+        $qb_country = $qb_service->company->quickbooks->settings->country ?? 'US';
+        $is_us = ($qb_country === 'US');
+
+        // Non-US regions (CA/AU/UK) require TaxCodeRef on EVERY line item using numeric tax code IDs.
+        // US companies MUST use only "TAX" or "NON" as TaxCodeRef values.
+        if (!$is_us && $exempt_code === 'NON') {
+            nlog("QB Warning: exempt TaxCode not resolved for non-US company {$qb_service->company->id} (country={$qb_country}), falling back to taxable code '{$taxable_code}' — run companySync to fix");
             $exempt_code = $taxable_code;
         }
 
@@ -78,8 +80,11 @@ class InvoiceTransformer extends BaseTransformer
                 $tax_code_id = $exempt_code;
             } elseif ($ast) {
                 $tax_code_id = $taxable_code;
+            } elseif ($is_us) {
+                // US companies: TaxCodeRef MUST be "TAX" or "NON" — never numeric IDs
+                $tax_code_id = $this->resolveLineTaxCodeUS($line_item, $taxable_code, $exempt_code);
             } else {
-                // Resolve TaxCodeRef per line item by matching tax name/rate to tax_rate_map
+                // Non-US companies (CA/AU/UK): resolve to numeric TaxCode ID from tax_rate_map
                 $tax_code_id = $this->resolveLineTaxCode($line_item, $tax_rate_map, $taxable_code, $exempt_code);
             }
 
@@ -178,12 +183,12 @@ class InvoiceTransformer extends BaseTransformer
             'ApplyTaxAfterDiscount' => true,
             'PrintStatus' => 'NeedToPrint',
             'EmailStatus' => 'NotSet',
-            'GlobalTaxCalculation' => ($ast || $taxable_code !== 'TAX') ? 'TaxExcluded' : 'NotApplicable',
+            'GlobalTaxCalculation' => ($ast || !$is_us) ? 'TaxExcluded' : 'NotApplicable',
         ];
 
-        // Only send TxnTaxDetail for US companies (using default TAX/NON codes) without AST.
+        // Only send TxnTaxDetail for US companies without AST.
         // Non-US companies use resolved TaxCodeRef per line item — QB calculates taxes from those.
-        if (!$ast && $taxable_code === 'TAX') {
+        if (!$ast && $is_us) {
             $tax_detail = $this->buildTxnTaxDetail($invoice, $total_taxes, $taxable_amount, $qb_service);
             if ($tax_detail) {
                 $invoice_data['TxnTaxDetail'] = $tax_detail;
@@ -253,7 +258,6 @@ class InvoiceTransformer extends BaseTransformer
             return $exempt_code;
         }
 
-        // Try to find a specific TaxCode by matching the line item's tax name/rate to the map
         foreach (['tax_name1' => 'tax_rate1', 'tax_name2' => 'tax_rate2', 'tax_name3' => 'tax_rate3'] as $name_key => $rate_key) {
             $rate = floatval($line_item->$rate_key ?? 0);
             if ($rate <= 0) {
@@ -261,35 +265,31 @@ class InvoiceTransformer extends BaseTransformer
             }
 
             $name = trim((string) ($line_item->$name_key ?? ''));
+            $tax_code_id = $this->findTaxCodeIdByRate($tax_rate_map, $rate, $name);
 
-            // Search tax_rate_map for a matching entry with a tax_code_id
-            foreach ($tax_rate_map as $map_entry) {
-                if (!isset($map_entry['tax_code_id']) || empty($map_entry['tax_code_id'])) {
-                    continue;
-                }
-
-                // Match by rate; also match by name if both are available
-                if (floatval($map_entry['rate']) == $rate) {
-                    // If the line tax name contains the map entry name, it's a match
-                    if ($name === '' || stripos($name, $map_entry['name']) !== false || stripos($map_entry['name'], $name) !== false) {
-                        return $map_entry['tax_code_id'];
-                    }
-                }
-            }
-
-            // Rate match only (ignore name) as fallback
-            foreach ($tax_rate_map as $map_entry) {
-                if (!isset($map_entry['tax_code_id']) || empty($map_entry['tax_code_id'])) {
-                    continue;
-                }
-                if (floatval($map_entry['rate']) == $rate) {
-                    return $map_entry['tax_code_id'];
-                }
+            if ($tax_code_id) {
+                return $tax_code_id;
             }
         }
 
-        // Fallback to default taxable code
         return $taxable_code;
+    }
+
+    /**
+     * Resolve the TaxCodeRef for a US company line item.
+     *
+     * US QuickBooks companies ONLY accept "TAX" or "NON" as line-level TaxCodeRef values.
+     * Checks whether the line item has any non-zero tax rates and returns the appropriate code.
+     */
+    private function resolveLineTaxCodeUS(object $line_item, string $taxable_code, string $exempt_code): string
+    {
+        $has_line_tax = (
+            (isset($line_item->tax_rate1) && $line_item->tax_rate1 > 0)
+            || (isset($line_item->tax_rate2) && $line_item->tax_rate2 > 0)
+            || (isset($line_item->tax_rate3) && $line_item->tax_rate3 > 0)
+        );
+
+        return $has_line_tax ? $taxable_code : $exempt_code;
     }
 
     /**
@@ -313,16 +313,7 @@ class InvoiceTransformer extends BaseTransformer
 
         foreach ($invoice->calc()->getTaxMap() ?? [] as $tax) {
             $tax_components = $qb_service->helper->splitTaxName($tax['name']);
-
-            $tax_rate_id = null;
-
-            foreach ($tax_rate_map as $rate_map) {
-
-                if (floatval($rate_map['rate']) == floatval($tax_components['percentage']) && $rate_map['name'] == $tax_components['name']) {
-                    $tax_rate_id = $rate_map['id'];
-                    break;
-                }
-            }
+            $tax_rate_id = $this->findTaxRateIdByRateAndName($tax_rate_map, floatval($tax_components['percentage']), $tax_components['name']);
 
             if (!$tax_rate_id) {
                 continue;
@@ -358,6 +349,43 @@ class InvoiceTransformer extends BaseTransformer
         ];
     }
 
+
+    /**
+     * Find a TaxCode ID from the tax rate map by matching rate and name.
+     * Uses fuzzy name matching (stripos) with a rate-only fallback.
+     */
+    private function findTaxCodeIdByRate(array $tax_rate_map, float $rate, string $name): ?string
+    {
+        $rate_only_match = null;
+
+        foreach ($tax_rate_map as $entry) {
+            if (empty($entry['tax_code_id']) || floatval($entry['rate']) != $rate) {
+                continue;
+            }
+
+            if ($name === '' || stripos($name, $entry['name']) !== false || stripos($entry['name'], $name) !== false) {
+                return $entry['tax_code_id'];
+            }
+
+            $rate_only_match ??= $entry['tax_code_id'];
+        }
+
+        return $rate_only_match;
+    }
+
+    /**
+     * Find a TaxRate ID from the tax rate map by exact rate and name match.
+     */
+    private function findTaxRateIdByRateAndName(array $tax_rate_map, float $rate, string $name): ?string
+    {
+        foreach ($tax_rate_map as $entry) {
+            if (floatval($entry['rate']) == $rate && $entry['name'] == $name) {
+                return $entry['id'];
+            }
+        }
+
+        return null;
+    }
 
     /**
      * transform

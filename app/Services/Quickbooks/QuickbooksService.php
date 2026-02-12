@@ -663,6 +663,10 @@ class QuickbooksService
         $this->company->quickbooks->companyName = $companyInfo->CompanyName ?? '';
         $this->company->quickbooks->settings->automatic_taxes = $automatic_taxes;
 
+        // Extract QB company country for region-aware tax code handling
+        $qb_country = $this->extractCompanyCountry($companyInfo);
+        $this->company->quickbooks->settings->country = $qb_country;
+
         // Resolve TaxCode IDs for multi-region support (US uses 'TAX'/'NON', CA/AU/UK use numeric IDs)
         // Build TaxRate→TaxCode map so each line item can resolve the correct TaxCodeRef
         $tax_codes = $this->fetchTaxCodes();
@@ -765,5 +769,46 @@ class QuickbooksService
 
         return $this;
 
+    }
+
+    /**
+     * Extract the country code from QuickBooks CompanyInfo.
+     *
+     * Checks CompanyAddr.Country, LegalAddr.Country, and root-level Country.
+     * Returns a normalized 2-letter ISO code (e.g. "US", "CA", "AU", "GB").
+     * Falls back to "US" if no country can be determined.
+     */
+    private function extractCompanyCountry(mixed $companyInfo): string
+    {
+        $country_raw = data_get($companyInfo, 'CompanyAddr.Country')
+            ?? data_get($companyInfo, 'CompanyAddr.CountryCode')
+            ?? data_get($companyInfo, 'LegalAddr.Country')
+            ?? data_get($companyInfo, 'LegalAddr.CountryCode')
+            ?? data_get($companyInfo, 'Country')
+            ?? '';
+
+        $country_raw = trim((string) $country_raw);
+
+        if ($country_raw === '') {
+            nlog("QB companySync: No country found in CompanyInfo, defaulting to 'US'");
+            return 'US';
+        }
+
+        $normalized = strtoupper($country_raw);
+        $country_map = [
+            'US' => 'US', 'USA' => 'US', 'UNITED STATES' => 'US', 'UNITED STATES OF AMERICA' => 'US',
+            'CA' => 'CA', 'CAN' => 'CA', 'CANADA' => 'CA',
+            'AU' => 'AU', 'AUS' => 'AU', 'AUSTRALIA' => 'AU',
+            'GB' => 'GB', 'GBR' => 'GB', 'UNITED KINGDOM' => 'GB', 'UK' => 'GB',
+            'IN' => 'IN', 'IND' => 'IN', 'INDIA' => 'IN',
+            'FR' => 'FR', 'FRA' => 'FR', 'FRANCE' => 'FR',
+            'DE' => 'DE', 'DEU' => 'DE', 'GERMANY' => 'DE',
+        ];
+
+        $result = $country_map[$normalized] ?? $normalized;
+
+        nlog("QB companySync: Resolved company country '{$country_raw}' to '{$result}'");
+
+        return $result;
     }
 }

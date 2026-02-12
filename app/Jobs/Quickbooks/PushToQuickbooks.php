@@ -93,6 +93,9 @@ class PushToQuickbooks implements ShouldQueue
                 'product' => $this->pushProduct($qbService, $entity),
                 default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
             };
+
+            $entity->refresh();
+            $this->logActivitySuccess($entity);
         } catch (\Throwable $e) {
             nlog("Quickbooks push to Quickbooks job failed => " . $e->getMessage());
             $this->logActivityFailure($entity, $this->extractReadableError($e->getMessage()));
@@ -192,6 +195,33 @@ class PushToQuickbooks implements ShouldQueue
         $cleaned = str_replace('Request is not made successful. ', '', $rawMessage);
 
         return mb_substr($cleaned, 0, 500);
+    }
+
+    private function logActivitySuccess($entity): void
+    {
+        try {
+            $qb_id = $entity->sync->qb_id ?? null;
+            $number = $entity->number ?? ($entity->present()->name() ?? $entity->id);
+            $notes = "{$this->entity_type} #{$number} synced to QuickBooks (QB ID: {$qb_id})";
+
+            $activity = new Activity();
+            $activity->user_id = $entity->user_id ?? null;
+            $activity->company_id = $entity->company_id;
+            $activity->account_id = $entity->company->account_id;
+            $activity->activity_type_id = Activity::QUICKBOOKS_PUSH_SUCCESS;
+            $activity->is_system = true;
+            $activity->notes = $notes;
+
+            match ($this->entity_type) {
+                'client' => $activity->client_id = $entity->id,
+                'invoice' => $activity->invoice_id = $entity->id,
+                default => null,
+            };
+
+            $activity->save();
+        } catch (\Throwable $e) {
+            nlog("QuickBooks: Failed to log success activity for {$this->entity_type} {$this->entity_id}: " . $e->getMessage());
+        }
     }
 
     private function logActivityFailure($entity, string $errorMessage): void
