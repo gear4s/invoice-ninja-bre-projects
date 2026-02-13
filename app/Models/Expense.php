@@ -283,7 +283,7 @@ class Expense extends BaseModel
 
     public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->withTrashed();
     }
 
     public function transaction(): \Illuminate\Database\Eloquent\Relations\BelongsTo
