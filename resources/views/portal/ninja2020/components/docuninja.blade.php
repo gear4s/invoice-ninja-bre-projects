@@ -2,7 +2,7 @@
 @section('meta_title', ctrans('texts.sign_now') . ' - ' . ctrans("texts.{$entity_type}") . ' - ' . $entity_number)
 
 @push('head')
-<link rel="stylesheet" href="{{ asset('build/dist/builder2.0.standalone.css/builder2.0.standalone.css') }}">
+<link rel="stylesheet" href="{{ asset('build/dist/builder2.0.standalone.css') }}">
 @endpush
 
 @section('body')

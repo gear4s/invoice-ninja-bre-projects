@@ -1,24 +1,6 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
-
-// Check if DocuNinja builder is available
-const docuNinjaPath = resolve(__dirname, 'node_modules/@docuninja/builder2.0/dist/builder.iife.js');
-const hasDocuNinja = existsSync(docuNinjaPath);
-
-// Conditionally add DocuNinja static copy targets
-const staticCopyTargets = hasDocuNinja ? [
-    {
-        src: 'node_modules/@docuninja/builder2.0/dist/builder2.0.standalone.css',
-        dest: 'dist/builder2.0.standalone.css',
-    },
-    {
-        src: 'node_modules/@docuninja/builder2.0/dist/builder.iife.js',
-        dest: 'dist/builder.iife.js',
-    },
-] : [];
 
 export default defineConfig({
     plugins: [
@@ -78,10 +60,17 @@ export default defineConfig({
             'resources/js/clients/payments/powerboard-credit-card.js',
             'resources/js/clients/payments/blockonomics.js',
         ]),
-        ...(staticCopyTargets.length > 0 ? [
-            viteStaticCopy({
-                targets: staticCopyTargets,
-            })
-        ] : []),
+        viteStaticCopy({
+            targets: [
+                {
+                    src: 'node_modules/@docuninja/builder2.0/dist/builder2.0.standalone.css',
+                    dest: 'dist',
+                },
+                {
+                    src: 'node_modules/@docuninja/builder2.0/dist/builder.iife.js',
+                    dest: 'dist',
+                },
+            ],
+        }),
     ],
 });
