@@ -22,7 +22,6 @@ use App\Models\CreditInvitation;
 use App\Utils\Traits\MakesDates;
 use App\Models\InvoiceInvitation;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
 use App\Utils\Traits\DesignCalculator;
 use App\Models\PurchaseOrderInvitation;
 use App\Models\RecurringInvoiceInvitation;
@@ -456,6 +455,8 @@ class VendorHtmlEngine
 
         $data['$shipping'] = ['value' => '', 'label' => ctrans('texts.ship_to')];
         $data['$ship_to'] = &$data['$shipping'];
+
+        $data['$verifactu_qr_code'] = ['value' => '', 'label' => ''];
 
         if ($this->entity->client()->exists()) {
 

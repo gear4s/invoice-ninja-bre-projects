@@ -12,7 +12,6 @@
 
 namespace App\Livewire\Flow2;
 
-use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Models\Invoice;
 use Livewire\Component;
@@ -272,7 +271,7 @@ class InvoicePay extends Component
 
         $this->docu_ninja_active = $invite->company->docuninjaActive(); //Is the company an Active DocuNinja User - or bypass completely if signed!
 
-        $this->bulkSetContext([
+        $this->bulkSetContext($invite->key, [
             'contact' => $invite->contact,
             'settings' => $settings,
             'db' => $this->db,

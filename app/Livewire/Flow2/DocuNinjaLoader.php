@@ -4,8 +4,6 @@ namespace App\Livewire\Flow2;
 
 use Livewire\Component;
 use App\Libraries\MultiDB;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Lazy;
 use App\DataMapper\InvoiceSync;
 use App\Models\QuoteInvitation;
 use App\Models\CreditInvitation;
@@ -24,9 +22,11 @@ class DocuNinjaLoader extends Component
 
     public $entity_type;
 
+    public $_key;
+
     private function getInvitation()
     {
-        return match($this->getContext()['entity_type']){
+        return match($this->getContext($this->_key)['entity_type']){
             'invoice' => InvoiceInvitation::withTrashed()->find($this->invitation_id),
             'quote' => QuoteInvitation::withTrashed()->find($this->invitation_id),
             'credit' => CreditInvitation::withTrashed()->find($this->invitation_id),
@@ -38,8 +38,8 @@ class DocuNinjaLoader extends Component
     public function mount()
     {
         // Set database context
-        MultiDB::setDb($this->getContext()['db']);   
-        $this->entity_type = $this->getContext()['entity_type'];
+        MultiDB::setDb($this->getContext($this->_key)['db']);
+        $this->entity_type = $this->getContext($this->_key)['entity_type'];
 
      }
 
@@ -104,23 +104,25 @@ class DocuNinjaLoader extends Component
             }
 
             // Check if signing is not successful (already completed or error)
-            if(!$signable['success']){
+            if(isset($signable['success']) && !$signable['success']){
                 $this->dispatch('docuninja-signature-captured');
                 return;
             }
-            
-            // Mark as ready and dispatch event to parent
-            $this->isReady = true;
-            $this->isLoading = false;
-            
-            // Dispatch event to InvoicePay to switch to DocuNinja component
-            $this->dispatch('docuninja-loader-ready', [
-                'invitation_id' => $this->invitation_id,
+
+            // Store signable data in context for DocuNinja to read
+            $this->setContext($this->_key, 'docuninja_signable', [
                 'document_id' => $signable['document_id'],
                 'document_invitation_id' => $signable['document_invitation_id'],
                 'sig' => $signable['sig'],
-                'company_key' => $invitation->company->company_key
+                'company_key' => $invitation->company->company_key,
             ]);
+
+            // Mark as ready and dispatch event to parent
+            $this->isReady = true;
+            $this->isLoading = false;
+
+            // Dispatch event to InvoicePay/Sign to switch to DocuNinja component
+            $this->dispatch('docuninja-loader-ready');
 
         } catch (\Exception $e) {
                       

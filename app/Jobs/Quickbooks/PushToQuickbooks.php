@@ -24,9 +24,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Services\Quickbooks\QuickbooksService;
-use App\Services\Quickbooks\QuickbooksRateLimiter;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use QuickBooksOnline\API\Exception\ServiceException;
 
 /**
  * Unified job to push entities to QuickBooks.
@@ -109,11 +107,12 @@ class PushToQuickbooks implements ShouldQueue
      *
      * @return Client|Invoice|null
      */
-    private function resolveEntity(): Client|Invoice|null
+    private function resolveEntity(): Client|Invoice|Product|null
     {
         return match ($this->entity_type) {
             'client' => Client::withTrashed()->find($this->entity_id),
             'invoice' => Invoice::withTrashed()->find($this->entity_id),
+            'product' => Product::withTrashed()->find($this->entity_id),
             default => null,
         };
     }

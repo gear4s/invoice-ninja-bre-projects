@@ -5,13 +5,11 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Libraries\MultiDB;
 use Livewire\Attributes\On;
-use App\DataMapper\InvoiceSync;
 use App\Models\QuoteInvitation;
 use App\Models\CreditInvitation;
 use App\Livewire\Flow2\DocuNinja;
 use App\Models\InvoiceInvitation;
 use Livewire\Attributes\Computed;
-use Illuminate\Support\Facades\Cache;
 use App\Livewire\Flow2\DocuNinjaLoader;
 use App\Models\PurchaseOrderInvitation;
 use App\Utils\Traits\WithSecureContext;
@@ -31,11 +29,13 @@ class Sign extends Component
     
     public $initializing = true;
 
+    public $_key;
+
     public function mount()
     {
         MultiDB::setDb($this->db);
 
-        $this->bulkSetContext([
+        $this->bulkSetContext($this->_key, [
             'entity_type' => $this->entity_type,
             'db' => $this->db,
             'invitation_id' => $this->invitation_id,
@@ -119,6 +119,6 @@ class Sign extends Component
 
     public function render()
     {
-        return render('components.livewire.sign');
+        return render('components.livewire.sign', ['_key' => $this->_key]);
     }
 }

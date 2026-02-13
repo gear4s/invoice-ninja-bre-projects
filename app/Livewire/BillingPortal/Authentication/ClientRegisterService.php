@@ -73,7 +73,7 @@ class ClientRegisterService
 
         if (isset($data['currency_id'])) {
             $settings = $client->settings;
-            $settings->currency_id = $data['currency_id'] ?? $this->company->settings->currency_id;
+            $settings->currency_id = $data['currency_id'] ?? $this->company->settings->currency_id; //@phpstan-ignore-line
             $client->settings = $settings;
         }
 

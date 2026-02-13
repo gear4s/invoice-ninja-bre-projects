@@ -12,7 +12,7 @@
 
 namespace App\Models;
 
-use App\DataMapper\InvoiceSync;
+use App\DataMapper\QuoteSync;
 use App\Utils\Ninja;
 use App\Utils\Number;
 use Elastic\ScoutDriverPlus\Searchable;
@@ -58,7 +58,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $is_deleted
  * @property array|null $line_items
  * @property object|null $backup
- * @property InvoiceSync|null $sync
+ * @property QuoteSync|null $sync
  * @property string|null $footer
  * @property string|null $public_notes
  * @property string|null $private_notes
@@ -203,7 +203,7 @@ class Quote extends BaseModel
         'is_deleted' => 'boolean',
         'is_amount_discount' => 'bool',
         'e_invoice' => 'object',
-        'sync' => InvoiceSync::class,
+        'sync' => QuoteSync::class,
 
     ];
 

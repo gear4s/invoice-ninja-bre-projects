@@ -74,7 +74,7 @@ class CompanyTransformer extends BaseTransformer
      * Prefer CompanyAddr, then LegalAddr, then CustomerCommunicationAddr.
      *
      * @param  mixed  $data
-     * @return object|array|null
+     * @return object|array
      */
     private function pickAddress(mixed $data)
     {

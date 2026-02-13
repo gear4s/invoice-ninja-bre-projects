@@ -5722,6 +5722,8 @@ $lang = array(
     'activity_161' => 'Tín dụng :credit cho :client đã được ký',
     'activity_162' => 'Đơn đặt hàng :purchase_order cho :vendor đã được ký.',
     'activity_163' => 'Tài liệu Phong tục : tài liệu cho :client đã được ký',
+    'activity_164' => 'Đồng bộ QuickBooks thất bại. :notes',
+    'activity_165' => 'Đồng bộ QuickBooks thành công. :notes',
     'create_your_own' => 'Tạo của riêng bạn',
     'create_your_own_description' => 'Tạo mẫu của riêng bạn bằng tài liệu PDF của riêng bạn đến lên',
     'new_template_description' => 'Chọn một trong các mẫu có sẵn của chúng tôi đến bắt đầu, ví dụ: Thỏa thuận bảo mật thông tin (NDA), Hợp đồng bán hàng, v.v.',
@@ -5910,7 +5912,7 @@ $lang = array(
     'access_key' => 'Khóa truy cập',
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Chuyển khoản Ngân hàng Stripe',
-    
+    'activity_164' => 'Đồng bộ QuickBooks thất bại. :notes',
 );
 
 return $lang;

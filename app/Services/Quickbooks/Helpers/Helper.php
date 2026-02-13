@@ -119,7 +119,7 @@ class Helper
             $accounts = $this->qb_service->sdk->Query($query);
 
             // QB SDK can return a single object or an array; normalize to array
-            if (!empty($accounts) && !is_array($accounts)) {
+            if (!empty($accounts) && !is_array($accounts)) { // @phpstan-ignore-line
                 $accounts = [$accounts];
             }
             if (!empty($accounts) && isset($accounts[0])) {

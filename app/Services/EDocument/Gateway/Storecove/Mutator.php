@@ -534,8 +534,8 @@ class Mutator implements MutatorInterface
 
         $query = $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification;
         usort($query, function($a, $b) {
-            if ($a->value === null && $b->value !== null) return -1;
-            if ($a->value !== null && $b->value === null) return 1;
+            if ($a->value === null && $b->value !== null) return -1; //@phpstan-ignore-line
+            if ($a->value !== null && $b->value === null) return 1; //@phpstan-ignore-line
             return 0;
         });
         $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification = $query;

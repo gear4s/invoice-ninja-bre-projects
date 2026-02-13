@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $viewed_date
  * @property string|null $opened_date
  * @property string|null $email_status
+ * @property bool $can_sign
  * @property \App\Models\Company $company
  * @property \App\Models\ClientContact $contact
  * @property string $hashed_id

@@ -94,8 +94,8 @@ class UserFilters extends QueryFilters
         $user = auth()->user();
 
         if($user->isOwner() && request()->input('showAccountUsers', false) == 'true'){
-            nlog("returning early");
-            return $this->builder->whereHas('company_users', function ($q) use ($user) {
+            
+            return $this->builder->whereHas('company_users', function ($q) {
                 $q->where('is_owner', false);
             });
         }

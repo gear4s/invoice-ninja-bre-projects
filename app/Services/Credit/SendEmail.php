@@ -50,7 +50,7 @@ class SendEmail
 
             if (! $invitation->contact->trashed() && $invitation->contact->email && !$invitation->contact->is_locked) {
                 \App\Services\Email\Email::dispatch($mo, $invitation->company);
-                $this->credit->entityEmailEvent($invitation, 'credit', 'credit');
+                $this->credit->entityEmailEvent($invitation, 'credit');
             }
         });
 

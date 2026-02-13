@@ -131,7 +131,7 @@ class PaymentController extends Controller
     public function process(Request $request)
     {
 
-        if(in_array($request->input('docuninja_active', false), [true, 'true', 1, '1'])){
+        if(in_array($request->input('docuninja_active', false), [true, 'true', 1, '1'], true)){
         
             $request_hash = \Illuminate\Support\Str::random(64);
             $payable_invoices = array_column($request->input('payable_invoices'), 'invoice_id');
@@ -159,6 +159,7 @@ class PaymentController extends Controller
                     'entity_number' => $invitation->invoice->number,
                     'db' => $invitation->company->db,
                     'request_hash' => $request_hash,
+                    '_key' => $invitation->key,
                 ]);
 
             }

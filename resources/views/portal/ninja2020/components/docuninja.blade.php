@@ -6,5 +6,5 @@
 @endpush
 
 @section('body')
-    @livewire('sign', ['invitation_id' => $invitation_id, 'entity_type' => $entity_type, 'db' => $db, 'request_hash' => $request_hash, 'entity_number' => $entity_number])
+    @livewire('sign', ['_key' => $_key, 'invitation_id' => $invitation_id, 'entity_type' => $entity_type, 'db' => $db, 'request_hash' => $request_hash, 'entity_number' => $entity_number])
 @endsection
