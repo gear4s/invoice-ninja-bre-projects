@@ -15,7 +15,7 @@ namespace App\Repositories;
 use App\DataMapper\InvoiceItem;
 use App\Factory\InvoiceFactory;
 use App\Models\Product;
-use App\Models\Project;
+use App\Models\Invoice;
 
 /**
  * Class for project repository.
@@ -26,12 +26,13 @@ class ProjectRepository extends BaseRepository
      * Invoices a collection of projects into a single invoice.
      *
      * @param  mixed $projects
-     * @return App\Models\Invoice
+     * @return Invoice $invoice
      */
     public function invoice(mixed $projects)
     {
         $_project = $projects->first();
 
+        /** @var Invoice $invoice */
         $invoice = InvoiceFactory::create($_project->company_id, $_project->user_id);
         $invoice->client_id = $_project->client_id;
 

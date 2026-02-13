@@ -45,9 +45,5 @@ class InvoiceSyncCast implements CastsAttributes
                 'dn_completed' => $value->dn_completed,
             ])
         ];
-
-        return [
-            $key => json_encode($data),
-        ];
     }
 }

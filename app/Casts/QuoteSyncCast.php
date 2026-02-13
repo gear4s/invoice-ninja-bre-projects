@@ -19,25 +19,21 @@ class QuoteSyncCast implements CastsAttributes
 {
     public function get($model, string $key, $value, array $attributes)
     {
-
         if (is_null($value)) {
             return null; // Return null if the value is null
         }
 
         $data = json_decode($value, true);
-
-        if (!is_array($data)) {
-            return null;
+   
+        if (!is_array($data) || empty($data)) {
+            return null; // Return null if decoded data is not an array or is empty
         }
 
-        $is = new QuoteSync($data);
-
-        return $is;
+        return QuoteSync::fromArray($data);
     }
 
     public function set($model, string $key, $value, array $attributes)
     {
-
         if (is_null($value)) {
             return [$key => null];
         }
@@ -45,8 +41,9 @@ class QuoteSyncCast implements CastsAttributes
         return [
             $key => json_encode([
                 'qb_id' => $value->qb_id,
-            ]),
+                'invitations' => $value->invitations,
+                'dn_completed' => $value->dn_completed,
+            ])
         ];
-
     }
 }

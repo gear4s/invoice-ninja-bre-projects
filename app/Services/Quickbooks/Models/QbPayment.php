@@ -12,14 +12,8 @@
 
 namespace App\Services\Quickbooks\Models;
 
-use App\Models\Client;
-use App\Models\Invoice;
-use App\DataMapper\ClientSync;
-use App\Factory\ClientFactory;
 use App\Interfaces\SyncInterface;
-use App\Factory\ClientContactFactory;
 use App\Services\Quickbooks\QuickbooksService;
-use App\Services\Quickbooks\Transformers\ClientTransformer;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
 
 class QbPayment implements SyncInterface
@@ -38,7 +32,7 @@ class QbPayment implements SyncInterface
 
             $payment_transformer = new PaymentTransformer($this->service->company);
 
-            $transformed = $payment_transformer->qbToNinja($payment, $this->service);
+            $transformed = $payment_transformer->qbToNinja($payment);
 
             $ninja_payment = $payment_transformer->buildPayment($payment);
             $ninja_payment->service()->applyNumber()->save();
@@ -54,7 +48,7 @@ class QbPayment implements SyncInterface
         $transformer = new PaymentTransformer($this->service->company);
 
         foreach ($records as $record) {
-            $ninja_data = $transformer->qbToNinja($record, $this->service);
+            $ninja_data = $transformer->qbToNinja($record);
         }
     }
 

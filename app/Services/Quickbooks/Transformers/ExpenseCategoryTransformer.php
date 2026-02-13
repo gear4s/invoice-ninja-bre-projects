@@ -40,7 +40,7 @@ class ExpenseCategoryTransformer
      * Transform an array of QuickBooks expense account objects.
      *
      * @param  array  $accounts  Array of IPPAccount (or array) from QuickBooks API
-     * @return array<int, array{id: string, name: string, fully_qualified_name: string, parent_ref: string}>
+     * @return array
      */
     public function transformMany(array $accounts): array
     {

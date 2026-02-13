@@ -14,16 +14,12 @@ namespace App\Services\Quickbooks\Models;
 
 use Carbon\Carbon;
 use App\Models\Expense;
-use App\Models\Invoice;
 use App\DataMapper\ExpenseSync;
-use App\DataMapper\InvoiceSync;
 use App\Factory\ExpenseFactory;
-use App\Factory\InvoiceFactory;
 use App\Interfaces\SyncInterface;
 use App\Repositories\ExpenseRepository;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\ExpenseTransformer;
-use App\Services\Quickbooks\Transformers\PaymentTransformer;
 
 class QbExpense implements SyncInterface
 {
@@ -58,7 +54,7 @@ class QbExpense implements SyncInterface
 
         foreach ($records as $record) {
 
-            $ninja_expense_data = $this->expense_transformer->qbToNinja($record, $this->service);
+            $ninja_expense_data = $this->expense_transformer->qbToNinja($record);
 
             if ($expense = $this->findExpense($ninja_expense_data['id'])) {
 
@@ -87,69 +83,54 @@ class QbExpense implements SyncInterface
 
     public function syncToForeign(array $records): void
     {
-        foreach ($records as $invoice) {
-            if (!$invoice instanceof Invoice) {
+        foreach ($records as $expense) {
+            if (!$expense instanceof Expense) {
                 continue;
             }
 
             // Check if sync direction allows push
-            if (!$this->service->syncable('invoice', \App\Enum\SyncDirection::PUSH)) {
+            if (!$this->service->syncable('expense', \App\Enum\SyncDirection::PUSH)) {
                 continue;
             }
 
             try {
-                // Transform invoice to QuickBooks format
-                $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->service);
+                // Transform expense to QuickBooks format
+                $qb_expense_data = $this->expense_transformer->ninjaToQb($expense);
 
                 // If updating, fetch SyncToken using existing find() method
-                if (isset($invoice->sync->qb_id) && !empty($invoice->sync->qb_id)) {
-                    $existing_qb_invoice = $this->find($invoice->sync->qb_id);
-                    if ($existing_qb_invoice) {
-                        $qb_invoice_data['SyncToken'] = $existing_qb_invoice->SyncToken ?? '0';
+                if (isset($expense->sync->qb_id) && !empty($expense->sync->qb_id)) {
+                    $existing_qb_expense = $this->find($expense->sync->qb_id);
+                    if ($existing_qb_expense) {
+                        $qb_expense_data['SyncToken'] = $existing_qb_expense->SyncToken ?? '0';
                     }
                 }
 
-                // Create or update invoice in QuickBooks
-                $qb_invoice = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+                // Create or update expense in QuickBooks
+                $qb_expense = \QuickBooksOnline\API\Facades\Purchase::create($qb_expense_data);
 
-                if (isset($invoice->sync->qb_id) && !empty($invoice->sync->qb_id)) {
-                    // Update existing invoice
-                    $result = $this->service->sdk->Update($qb_invoice);
-                    nlog("QuickBooks: Updated invoice {$invoice->id} (QB ID: {$invoice->sync->qb_id})");
+                if (isset($expense->sync->qb_id) && !empty($expense->sync->qb_id)) {
+                    // Update existing expense
+                    $result = $this->service->sdk->Update($qb_expense);
+                    nlog("QuickBooks: Updated expense {$expense->id} (QB ID: {$expense->sync->qb_id})");
                 } else {
-                    // Create new invoice
-                    $result = $this->service->sdk->Add($qb_invoice);
+                    // Create new expense
+                    $result = $this->service->sdk->Add($qb_expense);
 
-                    // Store QB ID in invoice sync
-                    $sync = new InvoiceSync();
+                    // Store QB ID in expense sync
+                    $sync = new ExpenseSync();
                     $sync->qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
-                    $invoice->sync = $sync;
-                    $invoice->saveQuietly();
+                    $expense->sync = $sync;
+                    $expense->saveQuietly();
 
-                    nlog("QuickBooks: Created expense {$invoice->id} (QB ID: {$sync->qb_id})");
+                    nlog("QuickBooks: Created expense {$expense->id} (QB ID: {$sync->qb_id})");
                 }
             } catch (\Exception $e) {
-                nlog("QuickBooks: Error pushing expense {$invoice->id} to QuickBooks: {$e->getMessage()}");
+                nlog("QuickBooks: Error pushing expense {$expense->id} to QuickBooks: {$e->getMessage()}");
                 // Continue with next invoice instead of failing completely
                 continue;
             }
         }
     }
-
-    // private function qbInvoiceUpdate(array $ninja_invoice_data, Invoice $invoice): void
-    // {
-    //     $current_ninja_invoice_balance = $invoice->balance;
-    //     $qb_invoice_balance = $ninja_invoice_data['balance'];
-
-    //     if (floatval($current_ninja_invoice_balance) == floatval($qb_invoice_balance)) {
-    //         nlog('Invoice balance is the same, skipping update of line items');
-    //         unset($ninja_invoice_data['line_items']);
-    //         $invoice->fill($ninja_invoice_data);
-    //         $invoice->saveQuietly();
-    //     } else {
-    //         $this->expense_repository->save($ninja_expense_data, $expense);
-    //     }
-    // }
 
     private function findExpense(string $id): ?Expense
     {
@@ -195,76 +176,13 @@ class QbExpense implements SyncInterface
             if (!$expense->id) {
                 $this->syncNinjaExpense($qb_record);
             } elseif (Carbon::parse($last_updated)->gt(Carbon::parse($expense->updated_at)) || $qb_record->SyncToken == '0') {
-                $ninja_expense_data = $this->expense_transformer->qbToNinja($qb_record, $this->service);
+                $ninja_expense_data = $this->expense_transformer->qbToNinja($qb_record);
 
                 $this->expense_repository->save($ninja_expense_data, $expense);
 
             }
 
         }
-    }
-
-    /**
-     * syncNinjaInvoice
-     *
-     * @param  $record
-     * @return void
-     */
-    public function syncNinjaInvoice($record): void
-    {
-
-        $ninja_invoice_data = $this->invoice_transformer->qbToNinja($record, $this->service);
-
-        $payment_ids = $ninja_invoice_data['payment_ids'] ?? [];
-
-        $client_id = $ninja_invoice_data['client_id'] ?? null;
-
-        if (is_null($client_id)) {
-            return;
-        }
-
-        unset($ninja_invoice_data['payment_ids']);
-
-        if ($invoice = $this->findInvoice($ninja_invoice_data['id'], $ninja_invoice_data['client_id'])) {
-
-            if ($invoice->id) {
-                $this->qbInvoiceUpdate($ninja_invoice_data, $invoice);
-            }
-            //new invoice scaffold
-            $invoice->fill($ninja_invoice_data);
-            $invoice->saveQuietly();
-
-            $invoice = $invoice->calc()->getInvoice()->service()->markSent()->applyNumber()->createInvitations()->save();
-
-            foreach ($payment_ids as $payment_id) {
-
-                $payment = $this->service->sdk->FindById('Payment', $payment_id);
-
-                $payment_transformer = new PaymentTransformer($this->service->company);
-
-                $transformed = $payment_transformer->qbToNinja($payment, $this->service);
-
-                $ninja_payment = $payment_transformer->buildPayment($payment);
-                $ninja_payment->service()->applyNumber()->save();
-
-                $paymentable = new \App\Models\Paymentable();
-                $paymentable->payment_id = $ninja_payment->id;
-                $paymentable->paymentable_id = $invoice->id;
-                $paymentable->paymentable_type = 'invoices';
-                $paymentable->amount = $transformed['applied'] + $ninja_payment->credits->sum('amount');
-                $paymentable->created_at = $ninja_payment->date; //@phpstan-ignore-line
-                $paymentable->save();
-
-                $invoice->service()->applyPayment($ninja_payment, $paymentable->amount);
-
-            }
-
-            if ($record instanceof \QuickBooksOnline\API\Data\IPPSalesReceipt) {
-                $invoice->service()->markPaid()->save();
-            }
-
-        }
-
     }
 
     /**

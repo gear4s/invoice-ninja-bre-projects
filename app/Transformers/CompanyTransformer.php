@@ -12,10 +12,8 @@
 
 namespace App\Transformers;
 
-use stdClass;
 use App\Models\Task;
 use App\Models\User;
-use App\Utils\Ninja;
 use App\Models\Quote;
 use App\Models\Client;
 use App\Models\Credit;
@@ -120,7 +118,7 @@ class CompanyTransformer extends EntityTransformer
      */
     public function transform(Company $company)
     {
-        $std = new stdClass();
+        $std = new \stdClass();
 
         return [
             'id' => (string) $this->encodePrimaryKey($company->id),
@@ -229,7 +227,6 @@ class CompanyTransformer extends EntityTransformer
             'enable_modules' => (bool)$company->enable_modules,
         ];
 
-        return $data;
     }
 
     private function isLarge(Company $company): bool

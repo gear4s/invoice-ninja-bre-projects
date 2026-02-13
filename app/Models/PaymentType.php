@@ -144,7 +144,7 @@ class PaymentType extends StaticModel
      * Default payment types in the shape expected for seeding/API: id, name, gateway_type_id.
      * Returns a Collection of stdClass objects with id, name, gateway_type_id.
      *
-     * @return Collection<int, object{id: int, name: string, gateway_type_id: int|null}>
+     * @return Collection
      */
     public static function getDefaultPaymentTypes(): Collection
     {

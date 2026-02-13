@@ -672,7 +672,7 @@ class QbInvoice implements SyncInterface
 
                 $payment_transformer = new PaymentTransformer($this->service->company);
 
-                $transformed = $payment_transformer->qbToNinja($payment, $this->service);
+                $transformed = $payment_transformer->qbToNinja($payment);
 
                 $ninja_payment = $payment_transformer->buildPayment($payment);
                 $ninja_payment->service()->applyNumber()->save();

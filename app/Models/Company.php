@@ -58,7 +58,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $first_month_of_year
  * @property string $portal_mode
  * @property string|null $portal_domain
- * @property bool $enable_modules //alias for DocuNinja is active
+ * @property bool $enable_modules //alias for DocuNinja is active / available
  * @property object $custom_fields
  * @property \App\DataMapper\CompanySettings|\stdClass $settings
  * @property string $slack_webhook_url
