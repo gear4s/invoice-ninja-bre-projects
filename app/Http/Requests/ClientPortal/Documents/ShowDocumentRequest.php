@@ -12,6 +12,7 @@
 
 namespace App\Http\Requests\ClientPortal\Documents;
 
+use App\Models\Company;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,7 +28,7 @@ class ShowDocumentRequest extends FormRequest
     public function authorize()
     {
         return auth()->guard('contact')->user()->client_id == $this->document->documentable_id
-            || $this->document->company_id == auth()->guard('contact')->user()->company_id;
+            || ($this->document->is_public && $this->document->documentable_type == Company::class && $this->document->company_id == auth()->guard('contact')->user()->company_id);
     }
 
     /**
