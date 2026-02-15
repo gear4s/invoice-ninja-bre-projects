@@ -88,7 +88,7 @@
 
     @if($docuninja_active)
     <div id="docuninja-container" class="hidden">
-        @livewire('sign', ['invitation_id' => $invitation->id ?? false, 'entity_type' => 'quote', 'entity_number' => $quote->number, 'db' => $quote->company->db])
+        @livewire('sign', ['_key' => $_key, 'invitation_id' => $invitation->id ?? false, 'entity_type' => 'quote', 'entity_number' => $quote->number, 'db' => $quote->company->db])
     </div>
     @endif
     

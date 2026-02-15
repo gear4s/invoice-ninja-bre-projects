@@ -12,39 +12,42 @@
 
 namespace App\Services\Template;
 
-use App\Models\Task;
-use App\Models\User;
-use App\Models\Quote;
-use App\Utils\Number;
-use Twig\Error\Error;
 use App\Models\Client;
+use App\Models\Company;
 use App\Models\Credit;
 use App\Models\Design;
-use App\Models\Vendor;
-use App\Models\Company;
+use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Project;
-use App\Utils\HtmlEngine;
-use Twig\Error\LoaderError;
-use Twig\Error\SyntaxError;
-use Twig\Error\RuntimeError;
 use App\Models\PurchaseOrder;
-use App\Utils\Traits\MakesHash;
-use App\Utils\VendorHtmlEngine;
-use Twig\Sandbox\SecurityError;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Services\Pdf\Purify;
+use App\Services\Template\TemplateMock;
+use App\Utils\HostedPDF\NinjaPdf;
+use App\Utils\HtmlEngine;
+use App\Utils\Number;
 use App\Utils\PaymentHtmlEngine;
 use App\Utils\Traits\MakesDates;
-use App\Utils\HostedPDF\NinjaPdf;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Pdf\PdfMaker;
+use App\Utils\VendorHtmlEngine;
 use Illuminate\Support\Facades\App;
-use Twig\Extra\Intl\IntlExtension;
 use League\CommonMark\CommonMarkConverter;
-use Twig\Extra\Markdown\MarkdownExtension;
+use Twig\Error\Error;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
+use Twig\Extra\Intl\IntlExtension;
 use Twig\Extra\Markdown\DefaultMarkdown;
+use Twig\Extra\Markdown\MarkdownExtension;
 use Twig\Extra\Markdown\MarkdownRuntime;
 use Twig\RuntimeLoader\RuntimeLoaderInterface;
+use Twig\Sandbox\SecurityError;
 
 class TemplateService
 {
@@ -1138,7 +1141,7 @@ class TemplateService
                 'client' => $this->getClient($expense),
                 'vendor' => $this->getVendor($expense),
                 'project' => ($expense->project && !$nested) ? $this->transformProject($expense->project, true) : [],
-                'invoice' => $expense->invoice ? $this->processInvoice([$expense->invoice]) : [],
+                'invoice' => $expense->invoice ? $this->processInvoices([$expense->invoice]) : [],
             ];
         })->toArray();
     }

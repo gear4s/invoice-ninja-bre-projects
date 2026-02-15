@@ -27,12 +27,12 @@ class Helper
     ) {}
 
     /**
-     * Find a TaxRate in QuickBooks by name or rate.
+     * Find a Tax Rate in QuickBooks by name or rate.
      * TaxRates are read-only in QuickBooks and cannot be created via API.
      *
      * @param float $tax_rate The tax rate percentage
      * @param string $tax_name The tax name
-     * @return string|null The QuickBooks TaxRate ID, or null if not found
+     * @return string|null The QuickBooks Tax Rate ID, or null if not found
      */
     public function findTaxRate(float $tax_rate, string $tax_name): ?string
     {
@@ -163,8 +163,8 @@ class Helper
     }
 
     /**
-     * Calculate total tax from QuickBooks data and create TaxRate if needed.
-     * This is business logic that creates/updates TaxRate models.
+     * Calculate total tax from QuickBooks data and create Tax Rate if needed.
+     * This is business logic that creates/updates Tax Rate models.
      *
      * @param mixed $qb_data QuickBooks invoice data
      * @return array [tax_rate, tax_name]

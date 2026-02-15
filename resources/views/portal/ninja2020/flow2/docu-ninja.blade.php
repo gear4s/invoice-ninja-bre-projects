@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="{{ asset('build/dist/builder2.0.standalone.css/builder2.0.standalone.css') }}">
+<link rel="stylesheet" href="{{ asset('build/dist/builder2.0.standalone.css') }}">
 
 <div class="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden px-4 py-5 bg-white sm:gap-4 sm:px-6">
     <div class="p-2">
@@ -22,18 +22,26 @@
 </div>
     
 @assets
-<script type="module">
+<script src="{{ asset('build/dist/builder.iife.js') }}"></script>
+@endassets
+
+@script
+<script>
     const doc = '{{ $document }}';
     const invitation = '{{ $invitation }}';
     const sig = '{{ $sig }}';
     const company = '{{ $company_key }}';
-    
+
     const mount = document.getElementById("sign");
-    
+
     new DocuNinjaSign({ document: doc, invitation, sig, endpoint: '{{ config('ninja.docuninja_api_url') }}', company }).mount(mount);
 
+    console.log('DocuNinjaSign mounted');
+    console.log('Document:', doc);
+    console.log('{{ config('ninja.docuninja_api_url') }}');
+    
     window.addEventListener('builder:sign.submit.success', function () {
         Livewire.dispatch('docuninja-signature-captured');
     });
 </script>
-@endassets
+@endscript
