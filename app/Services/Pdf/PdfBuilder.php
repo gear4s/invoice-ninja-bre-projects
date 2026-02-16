@@ -2204,40 +2204,14 @@ class PdfBuilder
      */
     public function updateVariables(): self
     {
-
         $html = strtr($this->getCompiledHTML(), $this->service->html_variables['labels']);
         $html = strtr($html, $this->service->html_variables['values']);
 
         @$this->document->loadHTML($this->convertHtmlToEntities($html));
-        // @$this->document->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
-
-        //new block
-        // $html = htmlspecialchars_decode($html, ENT_QUOTES | ENT_HTML5);
-        // $html = str_ireplace(['<br>','<?xml encoding="UTF-8">'], ['<br/>',''], $html);
-        // @$this->document->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-
-        //continues
         $this->document->saveHTML();
 
         return $this;
     }
-
-    // public function updateVariable(string $element, string $variable, string $value)
-    // {
-    //     $element = $this->document->getElementById($element);
-
-    //     $original = $element->nodeValue;
-
-    //     $element->nodeValue = '';
-
-    //     $replaced = strtr($original, [$variable => $value]);
-
-    //     $element->appendChild(
-    //         $this->document->createTextNode($replaced)
-    //     );
-
-    //     return $element;
-    // }
 
     public function getEmptyElements(): self
     {

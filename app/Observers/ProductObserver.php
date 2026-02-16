@@ -36,14 +36,20 @@ class ProductObserver
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_PRODUCT, $product, $product->company)->delay(0);
         }
 
-        if ($product->company->quickbooks && $product->company->shouldPushToQuickbooks('product')) {
-                        
+        // Only push to QuickBooks if:
+        // 1. QuickBooks is connected
+        // 2. Product sync is enabled
+        // 3. We're NOT currently importing from QuickBooks (prevent circular sync)
+        if ($product->company->quickbooks
+            && $product->company->shouldPushToQuickbooks('product')
+            && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$product->company_id])) {
+
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'product',
                 $product->id,
                 $product->company->db
             );
-        
+
         }
     }
 

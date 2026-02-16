@@ -56,6 +56,12 @@ class QbProduct implements SyncInterface
     {
 
         foreach ($records as $record) {
+            // Double-check: Skip Category and Group items
+            $item_type = data_get($record, 'Type');
+            if ($item_type === 'Category' || $item_type === 'Group') {
+                nlog("Skipping Category/Group item during sync: " . data_get($record, 'Name') . " (Type: {$item_type})");
+                continue;
+            }
 
             $ninja_data = $this->product_transformer->qbToNinja($record, $this->service);
 
@@ -171,7 +177,9 @@ class QbProduct implements SyncInterface
         $item_name = strlen($line_item->product_key ?? '') > 0 ? $line_item->product_key : 'Product ' . uniqid();
 
         $escaped_name = str_replace("'", "''", $item_name);
-        $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true MAXRESULTS 1";
+        // Only match items that can be used as line items (exclude Category/Group types)
+        // QB doesn't support != operator, so we use IN with valid types
+        $query = "SELECT * FROM Item WHERE Name = '{$escaped_name}' AND Active = true AND Type IN ('Service', 'NonInventory', 'Inventory') MAXRESULTS 1";
 
         /** @var object|array|null $existing_items */
         $existing_items = $this->service->sdk->Query($query);
@@ -207,7 +215,7 @@ class QbProduct implements SyncInterface
         $product = null;
 
         if ($line_item instanceof Product) {
-            
+
             $product = $line_item;
 
             $item = new \App\DataMapper\InvoiceItem();
@@ -227,13 +235,23 @@ class QbProduct implements SyncInterface
         if (isset($product->sync->qb_id) && !empty($product->sync->qb_id)) {
             $existing_qb_product = $this->find($product->sync->qb_id);
             if ($existing_qb_product) {
-                $product_data['SyncToken'] = $existing_qb_product->SyncToken ?? '0';
-                $product_data['Id'] = $product->sync->qb_id;
+                // Safety check: Don't try to update Category or Group items
+                $existing_type = data_get($existing_qb_product, 'Type');
+                if ($existing_type === 'Category' || $existing_type === 'Group') {
+                    nlog("WARNING: Attempted to update Category/Group item in QB. Product: {$product->product_key}, QB ID: {$product->sync->qb_id}, Type: {$existing_type}. Clearing sync to allow new item creation.");
+                    // Clear the QB sync so it creates a new item instead
+                    $product->sync->qb_id = null;
+                    $product->save();
+                    // Fall through to create new item
+                } else {
+                    $product_data['SyncToken'] = $existing_qb_product->SyncToken ?? '0';
+                    $product_data['Id'] = $product->sync->qb_id;
 
-                $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
-                $result = $this->service->sdk->Update($qb_item);
+                    $qb_item = \QuickBooksOnline\API\Facades\Item::create($product_data);
+                    $result = $this->service->sdk->Update($qb_item);
 
-                return $product->sync->qb_id;
+                    return $product->sync->qb_id;
+                }
             }
         }
 

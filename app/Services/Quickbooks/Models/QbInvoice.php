@@ -100,10 +100,12 @@ class QbInvoice implements SyncInterface
                 $invoice->saveQuietly();
 
 
-                $invoice = $invoice->calc()->getInvoice()->service()->markSent()->applyNumber()->createInvitations()->save();
+                // During QB import, use saveQuietly() to prevent circular sync back to QuickBooks
+                $invoice = $invoice->calc()->getInvoice()->service()->markSent()->applyNumber()->createInvitations()->saveQuietly();
 
                 if ($record instanceof \QuickBooksOnline\API\Data\IPPSalesReceipt) {
-                    $invoice->service()->markPaid()->save();
+                    // During QB import, use saveQuietly() to prevent circular sync back to QuickBooks
+                    $invoice->service()->markPaid()->saveQuietly();
                 }
 
             }
@@ -664,7 +666,8 @@ class QbInvoice implements SyncInterface
             $invoice->fill($ninja_invoice_data);
             $invoice->saveQuietly();
 
-            $invoice = $invoice->calc()->getInvoice()->service()->markSent()->applyNumber()->createInvitations()->save();
+            // During QB import, use saveQuietly() to prevent circular sync back to QuickBooks
+            $invoice = $invoice->calc()->getInvoice()->service()->markSent()->applyNumber()->createInvitations()->saveQuietly();
 
             foreach ($payment_ids as $payment_id) {
 
