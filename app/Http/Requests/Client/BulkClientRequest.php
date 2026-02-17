@@ -36,7 +36,7 @@ class BulkClientRequest extends Request
         $user = auth()->user();
 
         return [
-            'action' => 'required|string|in:archive,restore,delete,template,assign_group,bulk_update',
+            'action' => 'required|string|in:archive,restore,delete,template,assign_group,bulk_update,clone',
             'ids' => ['required','bail','array',Rule::exists('clients', 'id')->where('company_id', $user->company()->id)],
             'template' => 'sometimes|string',
             'template_id' => 'sometimes|string|required_if:action,template',
