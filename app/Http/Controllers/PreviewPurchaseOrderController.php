@@ -13,31 +13,17 @@
 namespace App\Http\Controllers;
 
 use App\Utils\Ninja;
-use App\Models\Client;
-use App\Models\Vendor;
-use App\Libraries\MultiDB;
-use App\Jobs\Util\PreviewPdf;
 use App\Models\PurchaseOrder;
-use App\Models\VendorContact;
 use App\Services\Pdf\PdfMock;
 use App\Utils\Traits\MakesHash;
-use App\Utils\VendorHtmlEngine;
 use App\Services\Pdf\PdfService;
-use App\Utils\PhantomJS\Phantom;
-use App\Services\PdfMaker\Design;
-use App\Utils\HostedPDF\NinjaPdf;
-use Illuminate\Support\Facades\DB;
-use App\Services\PdfMaker\PdfMaker;
 use Illuminate\Support\Facades\App;
-use App\Factory\PurchaseOrderFactory;
 use App\Utils\Traits\MakesInvoiceHtml;
 use Turbo124\Beacon\Facades\LightLogs;
 use App\Models\PurchaseOrderInvitation;
 use App\Utils\Traits\Pdf\PageNumbering;
-use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
 use App\DataMapper\Analytics\LivePreview;
-use App\Repositories\PurchaseOrderRepository;
 use App\Http\Requests\Preview\ShowPreviewRequest;
 use App\Http\Requests\Preview\PreviewPurchaseOrderRequest;
 

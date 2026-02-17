@@ -216,6 +216,20 @@ class Purify
         return implode('; ', $safe_declarations);
     }
 
+    /**
+     * Sanitize CSS inside <style> blocks to remove rules targeting the whitelabel logo.
+     */
+    private static function sanitizeStyleBlockContent(string $css): string
+    {
+        // Strip comments first to prevent obfuscation
+        $css = preg_replace('/\/\*.*?\*\//s', '', $css);
+
+        // Remove any CSS rule whose selector references the whitelabel logo
+        $css = preg_replace('/[^{}]*invoiceninja[\-_]whitelabel[^{}]*\{[^}]*\}/i', '', $css);
+
+        return $css;
+    }
+
     private static array $dangerous_svg_elements = [
         'script',
         'handler',
@@ -278,6 +292,12 @@ class Purify
                     if ($node->parentNode) {
                         $node->parentNode->removeChild($node);
                     }
+                    return;
+                }
+
+                // Sanitize <style> block content to protect whitelabel logo
+                if (strtolower($node->tagName) === 'style') {
+                    $node->textContent = self::sanitizeStyleBlockContent($node->textContent);
                     return;
                 }
 
