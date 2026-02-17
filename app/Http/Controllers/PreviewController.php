@@ -13,23 +13,12 @@
 namespace App\Http\Controllers;
 
 use App\Utils\Ninja;
-use App\Models\Client;
-use App\Models\Invoice;
-use App\Utils\HtmlEngine;
 use Illuminate\Support\Str;
 use Twig\Error\SyntaxError;
-use App\Jobs\Util\PreviewPdf;
-use App\Models\ClientContact;
 use App\Services\Pdf\PdfMock;
 use App\Utils\Traits\MakesHash;
-use App\Utils\VendorHtmlEngine;
 use App\Services\Pdf\PdfService;
-use App\Utils\PhantomJS\Phantom;
 use App\Models\InvoiceInvitation;
-use App\Services\PdfMaker\Design;
-use App\Utils\HostedPDF\NinjaPdf;
-use Illuminate\Support\Facades\DB;
-use App\Services\PdfMaker\PdfMaker;
 use Illuminate\Support\Facades\App;
 use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\MakesInvoiceHtml;
