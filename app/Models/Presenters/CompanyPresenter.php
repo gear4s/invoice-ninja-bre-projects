@@ -76,21 +76,24 @@ class CompanyPresenter extends EntityPresenter
         if (config('ninja.is_docker') || config('ninja.local_download')) {
             return $this->logoDocker($settings);
         }
+        
+        $basename = basename($settings->company_logo);
+        $disk = \App\Utils\Ninja::isHosted() ? 'backup' : config('filesystems.default');
 
-        $context_options = [
-            "ssl" => [
-                "verify_peer" => false,
-                "verify_peer_name" => false,
-            ],
-        ];
-
-        if (strlen($settings->company_logo) >= 1 && (strpos($settings->company_logo, 'http') !== false)) {
-            return "data:image/png;base64," . base64_encode(@file_get_contents($settings->company_logo, false, stream_context_create($context_options)));
-        } elseif (strlen($settings->company_logo) >= 1) {
-            return "data:image/png;base64," . base64_encode(@file_get_contents(url('') . $settings->company_logo, false, stream_context_create($context_options)));
-        } else {
+        try{
+            $logo = Storage::disk($disk)->get($this->company_key . '/' . $basename);
+            return "data:image/png;base64," . base64_encode($logo);
+        }catch(\Throwable $e){
+            //fall through
+        }
+      
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($settings->company_logo);
+            return $response->successful() ? "data:image/png;base64," . base64_encode($response->body()) : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+        } catch (\Throwable $e) {
             return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
         }
+
     }
 
     public function logoFile($settings)

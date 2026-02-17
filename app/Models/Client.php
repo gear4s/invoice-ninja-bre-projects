@@ -118,7 +118,7 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @method static \Illuminate\Database\Eloquent\Builder|Client without()
  * @method static \Illuminate\Database\Eloquent\Builder|Client find()
  * @method static \Illuminate\Database\Eloquent\Builder|Client select()
- * @property string $payment_balance
+ * @property float|null $payment_balance
  * @property mixed $tax_data
  * @property bool $is_tax_exempt
  * @property bool $has_valid_vat_number

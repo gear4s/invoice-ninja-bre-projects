@@ -78,8 +78,11 @@ class ClientObserver
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_CLIENT, $client, $client->company)->delay(0);
         }
 
-        // QuickBooks push - efficient check in observer (zero overhead if not configured)
-        if ($client->company->shouldPushToQuickbooks('client')) {
+        // Only push to QuickBooks if:
+        // 1. QuickBooks is connected and client sync is enabled
+        // 2. We're NOT currently importing from QuickBooks (prevent circular sync)
+        if ($client->company->shouldPushToQuickbooks('client')
+            && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$client->company_id])) {
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'client',
                 $client->id,
@@ -125,8 +128,13 @@ class ClientObserver
             WebhookHandler::dispatch($event, $client, $client->company, 'client')->delay(0);
         }
 
-        // QuickBooks push - efficient check in observer (zero overhead if not configured)
-        if ($client->company->shouldPushToQuickbooks('client') && !$client->isDirty(['paid_to_date','balance','credit_balance','payment_balance'])) {
+        // Only push to QuickBooks if:
+        // 1. QuickBooks is connected and client sync is enabled
+        // 2. We're NOT currently importing from QuickBooks (prevent circular sync)
+        // 3. Only financial fields changed (not balance fields which are auto-calculated)
+        if ($client->company->shouldPushToQuickbooks('client')
+            && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$client->company_id])
+            && !$client->isDirty(['paid_to_date','balance','credit_balance','payment_balance'])) {
             \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
                 'client',
                 $client->id,

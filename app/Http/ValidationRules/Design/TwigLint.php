@@ -30,7 +30,7 @@ class TwigLint implements ValidationRule
         $twig = $ts->twig;
 
         try {
-            $twig->parse($twig->tokenize(new \Twig\Source(preg_replace('/<!--.*?-->/s', '', $value), '')));
+            $twig->parse($twig->tokenize(new \Twig\Source(preg_replace('/<!--.*?-->/s', '', $value ?? ''), '')));
         } catch (\Twig\Error\SyntaxError $e) {
             $fail($e->getMessage());
         }

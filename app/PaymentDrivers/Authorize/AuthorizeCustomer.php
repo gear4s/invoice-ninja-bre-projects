@@ -86,7 +86,7 @@ class AuthorizeCustomer
 
     public function importCustomers()
     {
-        $auth_customers = $this->getCustomerProfileIds();
+        $auth_customers = $this->getCustomerProfileIds() ?? [];
         $company = $this->authorize->company_gateway->company;
         $user = $company->owner();
 

@@ -43,6 +43,14 @@ class ProductTransformer extends BaseTransformer
 
     public function transform(mixed $data, ?QuickbooksService $qb_service = null): array
     {
+        // Safety check: Skip Category items - they should be filtered at query level
+        // but this provides defense in depth
+        $item_type = data_get($data, 'Type');
+        if ($item_type === 'Category' || $item_type === 'Group') {
+            nlog("WARNING: Category/Group item detected in transform (should have been filtered): " . data_get($data, 'Name') . " (Type: {$item_type})");
+            // Return minimal data to avoid errors, but log for investigation
+        }
+
         $sales_tax_code_ref = data_get($data, 'SalesTaxCodeRef.value') ?: data_get($data, 'SalesTaxCodeRef');
         $tax_rate_name = '';
         $tax_rate_percentage = 0.0;

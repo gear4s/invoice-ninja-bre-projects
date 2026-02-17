@@ -14,7 +14,6 @@ namespace App\PaymentDrivers;
 
 use App\Models\Client;
 use App\Models\Country;
-use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\SystemLog;
 use App\Models\GatewayType;

@@ -882,7 +882,8 @@ class Peppol extends AbstractService
         $tea = new TaxExclusiveAmount();
         $tea->currencyID = $this->invoice->client->currency()->code;
 
-        $tea->amount = round($amount - $totalTaxes, 2);
+        // $tea->amount = round($amount - $totalTaxes, 2);
+        $tea->amount = $this->invoice->uses_inclusive_taxes ? (string) round($amount - $totalTaxes, 2) : (string) $subtotal;
         $lmt->TaxExclusiveAmount = $tea;
 
         $tia = new TaxInclusiveAmount();

@@ -75,7 +75,8 @@ class QbClient implements SyncInterface
             }
 
             $client->fill($ninja_data[0]);
-            $client->service()->applyNumber()->save();
+            // During QB import, use saveQuietly() to prevent circular sync back to QuickBooks
+            $client->service()->applyNumber()->saveQuietly();
 
             $contact = $client->contacts()->where('email', $ninja_data[1]['email'])->first();
 

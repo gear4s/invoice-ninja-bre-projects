@@ -71,8 +71,8 @@ class JsonDesignService
         // This prevents buildSections() from generating default sections
         $this->pdfService->document_type = 'json_design';
 
-        // Populate table bodies before injecting sections
-        $sections = $this->populateTableBodies($sections, $builder);
+        // Table bodies are already built by JsonToSectionsAdapter with custom columns
+        // No need to populate them here
 
         // Inject our sections before build
         $builder->setSections($sections);
@@ -83,64 +83,16 @@ class JsonDesignService
         $builder->build();
 
         // Get the compiled HTML
-        return $builder->getCompiledHTML();
+        $html = $builder->getCompiledHTML();
+
+        // Log the final HTML output before PDF conversion
+        \Log::info('=== JSON Design: Final HTML Output (Before PDF Conversion) ===');
+        \Log::info($html);
+        \Log::info('=== End of HTML Output ===');
+
+        return $html;
     }
 
-    /**
-     * Populate table bodies in sections using PdfBuilder
-     *
-     * Finds table elements in sections and populates their tbody
-     * using PdfBuilder's buildTableBody() method.
-     *
-     * @param array $sections
-     * @param PdfBuilder $builder
-     * @return array
-     */
-    private function populateTableBodies(array $sections, PdfBuilder $builder): array
-    {
-        foreach ($sections as $sectionId => &$section) {
-            if (isset($section['elements'])) {
-                $section['elements'] = $this->populateTableBodyElements($section['elements'], $builder);
-            }
-        }
-
-        return $sections;
-    }
-
-    /**
-     * Recursively populate table body elements
-     *
-     * @param array $elements
-     * @param PdfBuilder $builder
-     * @return array
-     */
-    private function populateTableBodyElements(array $elements, PdfBuilder $builder): array
-    {
-        foreach ($elements as &$element) {
-            // Check if this is a table element
-            if (isset($element['element']) && $element['element'] === 'table') {
-                // Check if it has a data-table-type attribute
-                $tableType = $element['properties']['data-table-type'] ?? null;
-
-                if ($tableType && isset($element['elements'])) {
-                    // Find tbody in table elements
-                    foreach ($element['elements'] as &$tableChild) {
-                        if (isset($tableChild['element']) && $tableChild['element'] === 'tbody') {
-                            // Populate tbody with rows from PdfBuilder
-                            $tableChild['elements'] = $builder->buildTableBody('$' . $tableType);
-                        }
-                    }
-                }
-            }
-
-            // Recurse into nested elements
-            if (isset($element['elements'])) {
-                $element['elements'] = $this->populateTableBodyElements($element['elements'], $builder);
-            }
-        }
-
-        return $elements;
-    }
 
     /**
      * Generate base HTML template structure for JSON designs
