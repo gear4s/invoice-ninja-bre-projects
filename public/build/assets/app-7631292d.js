@@ -93,4 +93,4 @@ focus-trap/dist/focus-trap.js:
   * focus-trap 6.9.4
   * @license MIT, https://github.com/focus-trap/focus-trap/blob/master/LICENSE
   *)
-*/Da.start();window.axios=Jl;window.valid=Xu;document.querySelectorAll(".disposable-alert").forEach(e=>{setTimeout(()=>{e.remove()},5e3)});(async()=>{try{const e="/build/dist/builder.iife.js";await Ql(()=>import(e),[]),console.log("DocuNinja loaded")}catch{console.log("DocuNinja not available, skipping...")}})();
+*/Da.start();window.axios=Jl;window.valid=Xu;document.querySelectorAll(".disposable-alert").forEach(e=>{setTimeout(()=>{e.remove()},5e3)});(async()=>{try{const e="/build/assets/builder.iife.js";await Ql(()=>import(e),[]),console.log("DocuNinja loaded")}catch{console.log("DocuNinja not available, skipping...")}})();

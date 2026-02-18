@@ -64,11 +64,11 @@ export default defineConfig({
             targets: [
                 {
                     src: 'node_modules/@docuninja/builder2.0/dist/builder2.0.standalone.css',
-                    dest: 'dist',
+                    dest: 'assets',
                 },
                 {
                     src: 'node_modules/@docuninja/builder2.0/dist/builder.iife.js',
-                    dest: 'dist',
+                    dest: 'assets',
                 },
             ],
         }),
