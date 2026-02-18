@@ -174,6 +174,8 @@ class BaseTransformer
                 return RecurringInvoice::FREQUENCY_SIX_MONTHS;
             case RecurringInvoice::FREQUENCY_ANNUALLY:
             case 'yearly':
+            case 'annually':
+            case 'year':
                 return RecurringInvoice::FREQUENCY_ANNUALLY;
             case RecurringInvoice::FREQUENCY_TWO_YEARS:
             case '2years':

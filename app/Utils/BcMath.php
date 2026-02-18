@@ -135,14 +135,32 @@ class BcMath
     public static function round($number, int $precision = self::DEFAULT_SCALE): string
     {
         $number = (string) $number;
-        $scale = $precision + 1; // Add one extra decimal for rounding
+        
+        /** Previous implementation */
+        // $scale = $precision + 1; // Add one extra decimal for rounding
+        // // Multiply by 10^scale, add 0.5, floor, then divide by 10^scale
+        // $multiplier = bcpow('10', (string) $scale, 0);
+        // $rounded = bcadd(bcmul($number, $multiplier, 0), '0.5', 0);
+        // $result = bcdiv($rounded, $multiplier, $precision);
 
-        // Multiply by 10^scale, add 0.5, floor, then divide by 10^scale
-        $multiplier = bcpow('10', (string) $scale, 0);
-        $rounded = bcadd(bcmul($number, $multiplier, 0), '0.5', 0);
-        $result = bcdiv($rounded, $multiplier, $precision);
+        // return $result;
+        /** Previous implementation */
 
-        return $result;
+        /** New rounding implementation to work around changes to rounding in PHP 8.4 */
+        $multiplier = bcpow('10', (string) $precision, 0);
+
+        // Shift by 10^precision (keep 1 decimal to see the rounding digit),
+        // add/subtract 0.5, truncate, then shift back
+        $shifted = bcmul($number, $multiplier, 1);
+
+        if (bccomp($shifted, '0', 1) >= 0) {
+            $rounded = bcadd($shifted, '0.5', 0);
+        } else {
+            $rounded = bcsub($shifted, '0.5', 0);
+        }
+
+        return bcdiv($rounded, $multiplier, $precision);
+
     }
 
     /**

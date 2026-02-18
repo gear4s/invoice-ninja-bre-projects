@@ -1914,9 +1914,9 @@ class Peppol extends AbstractService
             // Required: TaxAmount (BT-110)
             $tax_amount = new TaxAmount();
             $tax_amount->currencyID = $this->invoice->client->currency()->code;
-            // $tax_amount->amount = (string)$grouped_tax['total'];
-            $tax_amount->amount = (string) round($this->normalizeAmount($this->invoice->total_taxes), 2);
-            $tax_total->TaxAmount = $tax_amount;
+            // $tax_amount->amount = (string) round($this->normalizeAmount($this->invoice->total_taxes), 2);
+                $tax_amount->amount = (string) \App\Utils\BcMath::round((string) $this->normalizeAmount($this->invoice->total_taxes), 2);
+                $tax_total->TaxAmount = $tax_amount;
 
             // Required: TaxSubtotal (BG-23)
             $tax_subtotal = new TaxSubtotal();
@@ -1936,7 +1936,8 @@ class Peppol extends AbstractService
             $subtotal_tax_amount = new TaxAmount();
             $subtotal_tax_amount->currencyID = $this->invoice->client->currency()->code;
 
-            $subtotal_tax_amount->amount = (string) round($this->normalizeAmount($grouped_tax['total']), 2);
+            // $subtotal_tax_amount->amount = (string) round($this->normalizeAmount($grouped_tax['total']), 2);
+            $subtotal_tax_amount->amount = (string) \App\Utils\BcMath::round((string) $this->normalizeAmount($grouped_tax['total']), 2);
 
             $tax_subtotal->TaxAmount = $subtotal_tax_amount;
 
