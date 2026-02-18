@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="{{ asset('build/dist/builder2.0.standalone.css') }}">
+<link rel="stylesheet" href="{{ asset('build/assets/builder2.0.standalone.css') }}">
 
 <div class="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden px-4 py-5 bg-white sm:gap-4 sm:px-6">
     <div class="p-2">
@@ -22,7 +22,7 @@
 </div>
     
 @assets
-<script src="{{ asset('build/dist/builder.iife.js') }}"></script>
+<script src="{{ asset('build/assets/builder.iife.js') }}"></script>
 @endassets
 
 @script

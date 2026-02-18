@@ -30,7 +30,7 @@ document.querySelectorAll('.disposable-alert').forEach((element) => {
  */
 (async () => {
     try {
-        const modulePath = '/build/dist/builder.iife.js';
+        const modulePath = '/build/assets/builder.iife.js';
         await import(/* @vite-ignore */ modulePath);
         console.log('DocuNinja loaded');
     } catch (e) {
