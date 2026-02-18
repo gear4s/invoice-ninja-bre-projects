@@ -56,6 +56,11 @@ class EntityEmailedNotification implements ShouldQueue
     {
         MultiDB::setDb($event->company->db);
 
+        if(!$event->invitation){
+            nlog('No invitation found');
+            return;
+        }
+
         $first_notification_sent = true;
 
         $this->resolveEntityString($event->invitation);

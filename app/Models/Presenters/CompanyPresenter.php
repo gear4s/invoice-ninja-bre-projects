@@ -82,7 +82,11 @@ class CompanyPresenter extends EntityPresenter
 
         try{
             $logo = Storage::disk($disk)->get($this->company_key . '/' . $basename);
-            return "data:image/png;base64," . base64_encode($logo);
+
+            if(!empty($logo)){
+                return "data:image/png;base64," . base64_encode($logo);
+            }
+
         }catch(\Throwable $e){
             //fall through
         }
