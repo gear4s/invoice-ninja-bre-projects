@@ -267,6 +267,12 @@ class StorecoveExpense
             return $storecove_invoice->getDocumentCurrencyCode() == $c->code;
         })->id ?? 1;
 
+        $countries = app('countries');
+
+        $country_id = $countries->first(function ($c) use ($party) {
+            return $party->getAddress()->getCountry() == $c->iso_3166_2 || $party->getAddress()->getCountry() == $c->iso_3166_3;
+        })->id ?? 1;
+
         //vendor
         $vendor = [
             'name' => $party->getCompanyName() ?? $party->getRegistrationName(),
@@ -280,6 +286,7 @@ class StorecoveExpense
             'city' => $party->getAddress()->getCity() ?? '',
             'state' => $party->getAddress()->getCounty() ?? '',
             'postal_code' => $party->getAddress()->getZip() ?? '',
+            'country_id' => $country_id,
             'contacts' => [
                 [
                     'first_name' => $party->getContact()->getFirstName() ?? '',
@@ -312,9 +319,9 @@ class StorecoveExpense
             'vendor' => $vendor,
         ];
 
-        nlog($expense);
-
         return $expense;
 
     }
+
+
 }
