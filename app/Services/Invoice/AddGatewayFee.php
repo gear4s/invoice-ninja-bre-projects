@@ -12,13 +12,14 @@
 
 namespace App\Services\Invoice;
 
-use App\DataMapper\InvoiceItem;
-use App\Models\CompanyGateway;
-use App\Models\Invoice;
-use App\Services\AbstractService;
 use App\Utils\Ninja;
-use Illuminate\Support\Facades\App;
+use App\Utils\BcMath;
+use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\CompanyGateway;
+use App\DataMapper\InvoiceItem;
+use App\Services\AbstractService;
+use Illuminate\Support\Facades\App;
 
 class AddGatewayFee extends AbstractService
 {
@@ -73,7 +74,7 @@ class AddGatewayFee extends AbstractService
 
         $new_balance = $this->invoice->balance;
 
-        if (floatval($new_balance) - floatval($balance) != 0) {
+        if (!BcMath::equal($new_balance, $balance)) {
             $adjustment = $new_balance - $balance;
 
             $this->invoice
@@ -117,7 +118,7 @@ class AddGatewayFee extends AbstractService
 
         $new_balance = $this->invoice->balance;
 
-        if (floatval($new_balance) - floatval($balance) != 0) {
+        if (!BcMath::equal($new_balance, $balance)) {
             $adjustment = $new_balance - $balance;
 
             $this->invoice
