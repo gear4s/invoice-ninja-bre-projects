@@ -262,7 +262,7 @@ class GoCardlessPaymentDriver extends BaseDriver
         $this->init();
 
         nlog('GoCardless Event');
-        nlog($request->all());
+        // nlog($request->all());
         if (! $request->has('events')) {
             nlog('No GoCardless events to process in response?');
 
@@ -272,6 +272,7 @@ class GoCardlessPaymentDriver extends BaseDriver
         sleep(1);
 
         foreach ($request->events as $event) {
+            nlog($event);
             if (
                 ($event['resource_type'] == 'payments' && $event['action'] == 'confirmed')
                 || $event['action'] === 'paid_out') {
