@@ -321,7 +321,7 @@ class BaseRepository
         if ($model instanceof Invoice) {
             if ($model->status_id != Invoice::STATUS_DRAFT) {
                 $model->service()->updateStatus()->save();
-                $model->client->service()->calculateBalance($model);
+                // $model->client->service()->calculateBalance($model); //2026-02-21 - disabled due to race conditions
             }
 
             if (!$model->design_id) {
