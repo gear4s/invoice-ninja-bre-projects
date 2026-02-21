@@ -194,7 +194,7 @@ class RefundPayment
      */
     private function setStatus()
     {
-        if ($this->total_refund == $this->payment->amount || floatval($this->payment->amount) == floatval($this->payment->refunded)) {
+        if ($this->total_refund == $this->payment->amount || \App\Utils\BcMath::equal($this->payment->amount, $this->payment->refunded)) {
             $this->payment->status_id = Payment::STATUS_REFUNDED;
         } else {
             $this->payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
