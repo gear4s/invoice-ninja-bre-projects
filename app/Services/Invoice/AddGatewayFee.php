@@ -81,7 +81,7 @@ class AddGatewayFee extends AbstractService
             ->ledger()
             ->updateInvoiceBalance($adjustment, 'Adjustment for adding gateway fee');
 
-            $this->invoice->client->service()->calculateBalance();
+            $this->invoice->client->service()->updateBalance($adjustment);
 
         }
 
