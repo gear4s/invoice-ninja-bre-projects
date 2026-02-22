@@ -21,6 +21,7 @@ use App\Repositories\QuoteRepository;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\QuoteTransformer;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
+use App\Utils\BcMath;
 
 class QbQuote implements SyncInterface
 {
@@ -98,7 +99,7 @@ class QbQuote implements SyncInterface
         $current_ninja_quote_balance = $quote->balance;
         $qb_quote_balance = $ninja_quote_data['balance'];
 
-        if (floatval($current_ninja_quote_balance) == floatval($qb_quote_balance)) {
+        if (BcMath::equal($current_ninja_quote_balance, $qb_quote_balance)) {
             nlog('Quote balance is the same, skipping update of line items');
             unset($ninja_quote_data['line_items']);
             $quote->fill($ninja_quote_data);

@@ -14,6 +14,7 @@ namespace App\Services\Quickbooks\Helpers;
 
 use App\Models\Company;
 use App\Services\Quickbooks\QuickbooksService;
+use App\Utils\BcMath;
 
 /**
  * Helper class for QuickBooks invoice-related business logic.
@@ -42,7 +43,7 @@ class Helper
         $tax_rate_id = null;
 
         foreach ($tax_rates as $tax) {
-            if (floatval($tax['rate']) == floatval($tax_rate) && $tax['name'] == $tax_name) {
+            if (BcMath::equal($tax['rate'], $tax_rate) && $tax['name'] == $tax_name) {
                 $tax_rate_id = $tax['id'];
             }
         }

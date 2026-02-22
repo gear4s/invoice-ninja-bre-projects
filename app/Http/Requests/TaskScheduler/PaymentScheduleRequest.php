@@ -12,10 +12,11 @@
 
 namespace App\Http\Requests\TaskScheduler;
 
+use App\Utils\BcMath;
 use App\Http\Requests\Request;
-use App\Models\RecurringInvoice;
 use App\Models\RecurringQuote;
 use Illuminate\Support\Carbon;
+use App\Models\RecurringInvoice;
 
 class PaymentScheduleRequest extends Request
 {
@@ -74,11 +75,11 @@ class PaymentScheduleRequest extends Request
 
             $first_map = $schedule_map->first();
 
-            if ($first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval($this->invoice->amount)) {
+            if ($first_map['is_amount'] && !BcMath::equal($schedule_map->sum('amount'), $this->invoice->amount)) {
                 $validator = \Validator::make([], []);
                 $validator->errors()->add('schedule', 'The total amount of the schedule does not match the invoice amount.');
                 throw new \Illuminate\Validation\ValidationException($validator);
-            } elseif (!$first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval(100)) {
+            } elseif (!$first_map['is_amount'] && !BcMath::equal($schedule_map->sum('amount'), 100)) {
                 $validator = \Validator::make([], []);
                 $validator->errors()->add('schedule', 'The total percentage amount of the schedule does not match 100%.');
                 throw new \Illuminate\Validation\ValidationException($validator);
@@ -110,7 +111,7 @@ class PaymentScheduleRequest extends Request
         $delta = round($amount * $remaining_cycles, 2);
         $adjustment = 0;
 
-        if (floatval($delta) != floatval($this->invoice->amount)) {
+        if (!BcMath::equal($delta, $this->invoice->amount)) {
             $adjustment = round(floatval($this->invoice->amount) - floatval($delta), 2); //adjustment to make the total amount equal to the invoice amount
         }
 

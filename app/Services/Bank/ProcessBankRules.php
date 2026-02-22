@@ -364,11 +364,11 @@ class ProcessBankRules extends AbstractService
     private function matchNumberOperator($bt_value, $rule_value, $operator): bool
     {
         return match ($operator) {
-            '>' => floatval($bt_value) > floatval($rule_value),
-            '>=' => floatval($bt_value) >= floatval($rule_value),
-            '=' => floatval($bt_value) == floatval($rule_value),
-            '<' => floatval($bt_value) < floatval($rule_value),
-            '<=' => floatval($bt_value) <= floatval($rule_value),
+            '>'  => round($bt_value - $rule_value, 2) > 0,
+            '>=' => round($bt_value - $rule_value, 2) >= 0,
+            '='  => round($bt_value - $rule_value, 2) == 0,
+            '<'  => round($bt_value - $rule_value, 2) < 0,
+            '<=' => round($bt_value - $rule_value, 2) <= 0,
             default => false,
         };
     }

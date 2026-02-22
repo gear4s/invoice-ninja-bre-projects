@@ -12,16 +12,17 @@
 
 namespace App\Jobs\Ninja;
 
-use App\Libraries\MultiDB;
-use App\Models\Account;
-use App\Models\Client;
-use App\Models\Company;
 use App\Models\User;
+use App\Utils\BcMath;
+use App\Models\Client;
+use App\Models\Account;
+use App\Models\Company;
+use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 class CompanySizeCheck implements ShouldQueue
 {
@@ -68,7 +69,7 @@ class CompanySizeCheck implements ShouldQueue
                       $old_credit_balance = $client->credit_balance;
                       $new_credit_balance = $client->service()->getCreditBalance();
 
-                      if (floatval($old_credit_balance) !== floatval($new_credit_balance)) {
+                      if (!BcMath::equal($old_credit_balance, $new_credit_balance)) {
                           $client->credit_balance = $client->service()->getCreditBalance();
                           $client->saveQuietly();
                       }
@@ -112,7 +113,7 @@ class CompanySizeCheck implements ShouldQueue
                           $old_credit_balance = $client->credit_balance;
                           $new_credit_balance = $client->service()->getCreditBalance();
 
-                          if (floatval($old_credit_balance) !== floatval($new_credit_balance)) {
+                          if (!BcMath::equal($old_credit_balance, $new_credit_balance)) {
                               $client->credit_balance = $client->service()->getCreditBalance();
                               $client->saveQuietly();
                           }

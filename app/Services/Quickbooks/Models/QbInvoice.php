@@ -21,6 +21,7 @@ use App\Repositories\InvoiceRepository;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\InvoiceTransformer;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
+use App\Utils\BcMath;
 
 class QbInvoice implements SyncInterface
 {
@@ -563,7 +564,7 @@ class QbInvoice implements SyncInterface
         $current_ninja_invoice_balance = $invoice->balance;
         $qb_invoice_balance = $ninja_invoice_data['balance'];
 
-        if (floatval($current_ninja_invoice_balance) == floatval($qb_invoice_balance)) {
+        if (BcMath::equal($current_ninja_invoice_balance, $qb_invoice_balance)) {
             nlog('Invoice balance is the same, skipping update of line items');
             unset($ninja_invoice_data['line_items']);
             $invoice->fill($ninja_invoice_data);

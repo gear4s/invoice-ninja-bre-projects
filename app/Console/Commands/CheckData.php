@@ -45,6 +45,7 @@ use App\Factory\ClientContactFactory;
 use App\Factory\VendorContactFactory;
 use App\Jobs\Company\CreateCompanyToken;
 use App\Models\RecurringInvoiceInvitation;
+use App\Utils\BcMath;
 use App\Utils\Traits\CleanLineItems;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -756,7 +757,7 @@ class CheckData extends Command
 
                       $over_payment = $over_payment * -1;
 
-                      if (floatval($over_payment) == floatval($client->balance)) {
+                      if (BcMath::equal($over_payment, $client->balance)) {
                       } else {
                           $this->logMessage("# {$client->id} # {$client->name} {$client->balance} is invalid should be {$over_payment}");
                       }
