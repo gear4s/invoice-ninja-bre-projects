@@ -12,10 +12,10 @@
 
 namespace App\Casts;
 
-use App\DataMapper\InvoiceSync;
+use App\DataMapper\PurchaseOrderSync;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 
-class InvoiceSyncCast implements CastsAttributes
+class PurchaseOrderSyncCast implements CastsAttributes
 {
     public function get($model, string $key, $value, array $attributes)
     {
@@ -24,12 +24,12 @@ class InvoiceSyncCast implements CastsAttributes
         }
 
         $data = json_decode($value, true);
-   
+
         if (!is_array($data) || empty($data)) {
             return null; // Return null if decoded data is not an array or is empty
         }
 
-        return InvoiceSync::fromArray($data);
+        return PurchaseOrderSync::fromArray($data);
     }
 
     public function set($model, string $key, $value, array $attributes)

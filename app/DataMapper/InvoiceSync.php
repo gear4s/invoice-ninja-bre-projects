@@ -26,6 +26,7 @@ class InvoiceSync implements Castable
         public string $qb_id = '',
         public array $invitations = [],
         public bool $dn_completed = false,
+        public string $dn_document_hashed_id = '',
     ){}
      /**
      * Get the name of the caster class to use when casting from / to this cast target.
@@ -43,6 +44,7 @@ class InvoiceSync implements Castable
             qb_id: $data['qb_id'] ?? '',
             invitations: $data['invitations'] ?? [],
             dn_completed: $data['dn_completed'] ?? false,
+            dn_document_hashed_id: $data['dn_document_hashed_id'] ?? '',
         );
     }
 

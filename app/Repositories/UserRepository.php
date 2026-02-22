@@ -273,7 +273,7 @@ class UserRepository extends BaseRepository
 
         $notes = $user->present()->name();
 
-        \DB::transaction(function () use ($user, $new_owner_user, $notes) {
+        \DB::transaction(function () use ($user, $new_owner_user) {
 
             // Relations to transfer user_id to new owner
             $allRelations = [
@@ -314,8 +314,9 @@ class UserRepository extends BaseRepository
 
             $user->forceDelete();
 
-            event(new UserWasPurged($new_owner_user, $notes, auth()->user()->company(), Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
         });
 
+        $company = $new_owner_user->account->default_company ?? $new_owner_user->companies->first();
+        event(new UserWasPurged($new_owner_user, $notes, $company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
     }
 }

@@ -12,13 +12,13 @@
 
 namespace App\DataMapper;
 
-use App\Casts\QuoteSyncCast;
+use App\Casts\PurchaseOrderSyncCast;
 use Illuminate\Contracts\Database\Eloquent\Castable;
 
 /**
- * QuoteSync.
+ * PurchaseOrderSync.
  */
-class QuoteSync implements Castable
+class PurchaseOrderSync implements Castable
 {
     public function __construct(
         public string $qb_id = '',
@@ -33,7 +33,7 @@ class QuoteSync implements Castable
      */
     public static function castUsing(array $arguments): string
     {
-        return QuoteSyncCast::class;
+        return PurchaseOrderSyncCast::class;
     }
 
     public static function fromArray(array $data): self
@@ -48,7 +48,7 @@ class QuoteSync implements Castable
 
     /**
      * Add an invitation to the invitations array
-     * 
+     *
      * @param string $invitation_key The invitation key
      * @param string $dn_id The DocuNinja ID
      * @param string $dn_invitation_id The DocuNinja invitation ID
@@ -70,7 +70,7 @@ class QuoteSync implements Castable
 
     /**
      * Get invitation data by invitation key
-     * 
+     *
      * @param string $invitation_key The invitation key
      * @return array|null The invitation data or null if not found
      */
@@ -86,7 +86,7 @@ class QuoteSync implements Castable
 
     /**
      * Remove an invitation by invitation key
-     * 
+     *
      * @param string $invitation_key The invitation key
      */
     public function removeInvitation(string $invitation_key): void
