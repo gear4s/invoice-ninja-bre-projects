@@ -31,6 +31,7 @@ use App\Models\RecurringQuote;
 use App\Utils\Traits\MakesHash;
 use App\Models\RecurringExpense;
 use App\Models\RecurringInvoice;
+use App\Events\User\UserWasPurged;
 use Illuminate\Support\Facades\DB;
 use App\DataMapper\CompanySettings;
 use App\Events\User\UserWasDeleted;
@@ -147,7 +148,7 @@ class UserRepository extends BaseRepository
         }
 
         if (array_key_exists('company_user', $data)) {
-            $this->forced_includes = 'company_users';
+            // $this->forced_includes = 'company_users'; //2026-02-23 - not needed @deprecate and remove in 5.13.0
 
             $company = auth()->user()->company();
 
@@ -270,7 +271,9 @@ class UserRepository extends BaseRepository
     public function purge(User $user, User $new_owner_user): void
     {
 
-        \DB::transaction(function () use ($user, $new_owner_user) {
+        $notes = $user->present()->name();
+
+        \DB::transaction(function () use ($user, $new_owner_user, $notes) {
 
             // Relations to transfer user_id to new owner
             $allRelations = [
@@ -310,6 +313,8 @@ class UserRepository extends BaseRepository
             }
 
             $user->forceDelete();
+
+            event(new UserWasPurged($new_owner_user, $notes, auth()->user()->company(), Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
         });
 
     }
