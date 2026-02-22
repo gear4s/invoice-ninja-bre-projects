@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d044985779d84769736a51fd6217b050",
+    "content-hash": "096397e4d6a85ca52121c72f15288ff6",
     "packages": [
         {
             "name": "afosto/yaac",
