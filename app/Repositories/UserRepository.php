@@ -317,6 +317,7 @@ class UserRepository extends BaseRepository
         });
 
         $company = $new_owner_user->account->default_company ?? $new_owner_user->companies->first();
+        
         event(new UserWasPurged($new_owner_user, $notes, $company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
     }
 }
