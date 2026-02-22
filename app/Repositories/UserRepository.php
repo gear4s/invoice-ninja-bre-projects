@@ -315,6 +315,29 @@ class UserRepository extends BaseRepository
                     ->update(['assigned_user_id' => null]);
             }
 
+            // Fix scheduler parameters JSON — embedded user_id
+            $user->schedules()->each(function ($scheduler) use ($new_owner_user, $user) {
+                $params = $scheduler->parameters;
+                if (isset($params['user_id']) && $params['user_id'] == $user->id) {
+                    $params['user_id'] = $new_owner_user->id;
+                    $scheduler->parameters = $params;
+                    $scheduler->save();
+                }
+            });
+
+            // Fix gmail_sending_user_id in company settings
+            $old_hashed_id = $user->hashed_id;
+
+            $new_owner_user->account->companies()->cursor()->each(function ($company) use ($old_hashed_id) {
+                $settings = $company->settings;
+                if (isset($settings->gmail_sending_user_id) && $settings->gmail_sending_user_id === $old_hashed_id) {
+                    $settings->gmail_sending_user_id = '0';
+                    $settings->email_sending_method = 'default';
+                    $company->settings = $settings;
+                    $company->save();
+                }
+            });
+
             $user->forceDelete();
 
         });
