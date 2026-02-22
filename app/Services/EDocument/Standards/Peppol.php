@@ -1197,7 +1197,7 @@ class Peppol extends AbstractService
                 $price = new Price();
                 $pa = new PriceAmount();
                 $pa->currencyID = $this->invoice->client->currency()->code;
-                $pa->amount = (string) $item->cost;
+                $pa->amount = $this->invoice->uses_inclusive_taxes ? (string) $item->net_cost :(string) $item->cost;
                 $price->PriceAmount = $pa;
                 $line->Price = $price;
             }
