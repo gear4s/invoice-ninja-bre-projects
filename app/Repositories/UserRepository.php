@@ -275,6 +275,9 @@ class UserRepository extends BaseRepository
 
         \DB::transaction(function () use ($user, $new_owner_user) {
 
+            /* Remove all of the system tokens for the user */
+            $user->tokens()->where('is_system', true)->forceDelete();
+
             // Relations to transfer user_id to new owner
             $allRelations = [
                 'activities', 'bank_integrations', 'bank_transaction_rules',
