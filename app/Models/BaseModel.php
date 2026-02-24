@@ -405,6 +405,7 @@ class BaseModel extends Model
      */
     public function getSignedPdfDocument(): ?\App\Models\Document
     {
+        /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote | \App\Models\PurchaseOrder $this */
         if (!$this->sync?->dn_document_hashed_id) {
             return null;
         }

@@ -210,7 +210,7 @@ class ReminderTest extends TestCase
         } while ($x === false);
 
         $this->assertNotNull($invoice->reminder_last_sent);
-        $this->assertEquals(now()->addDays(7), $invoice->next_send_date);
+        $this->assertEquals(now()->addDays(7)->format('Y-m-d'), \Carbon\Carbon::parse($invoice->next_send_date)->format('Y-m-d'));
 
         $this->assertNotNull($invoice->reminder1_sent);
         $this->assertEquals('2024-09-01', \Carbon\Carbon::parse($invoice->reminder_last_sent)->format('Y-m-d'));
