@@ -84,8 +84,8 @@ class EntityLevel implements EntityLevelInterface
      * Patterns allow optional country prefix (e.g., "AT" or "ATU12345678").
      */
     private array $vat_number_regex = [
-        'AT' => '/^(AT)?U\d{9}$/i', // Austria: U + 9 digits
-        'BE' => '/^(BE)?0\d{9}$/i', // Belgium: 0 + 9 digits
+        'AT' => '/^(AT)?U\d{8}$/i', // Austria: U + 8 digits
+        'BE' => '/^(BE)?[01]\d{9}$/i', // Belgium: 0 or 1 + 9 digits
         'BG' => '/^(BG)?\d{9,10}$/i', // Bulgaria: 9-10 digits
         'CY' => '/^(CY)?\d{8}[A-Z]$/i', // Cyprus: 8 digits + 1 letter
         'CZ' => '/^(CZ)?\d{8,10}$/i', // Czech Republic: 8-10 digits

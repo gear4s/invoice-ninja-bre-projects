@@ -256,7 +256,7 @@
     "src": "resources/js/clients/payments/stripe-becs.js"
   },
   "resources/js/clients/payments/stripe-browserpay.js": {
-    "file": "assets/stripe-browserpay-c23582f0.js",
+    "file": "assets/stripe-browserpay-91e96d1c.js",
     "imports": [
       "_wait-8f4ae121.js"
     ],

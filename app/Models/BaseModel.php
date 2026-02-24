@@ -396,6 +396,26 @@ class BaseModel extends Model
     }
 
     /**
+     * Retrieve the DocuNinja signed PDF document for this entity.
+     *
+     * Uses the dn_document_hashed_id stored on the entity's sync object
+     * to look up the Document record.
+     *
+     * @return \App\Models\Document|null
+     */
+    public function getSignedPdfDocument(): ?\App\Models\Document
+    {
+        /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote | \App\Models\PurchaseOrder $this */
+        if (!$this->sync?->dn_document_hashed_id) {
+            return null;
+        }
+
+        return $this->documents()
+            ->where('id', $this->decodePrimaryKey($this->sync->dn_document_hashed_id))
+            ->first();
+    }
+
+    /**
      * Merged PDFs associated with the entity / company
      * into a single document
      *

@@ -49,7 +49,7 @@ class CleanStaleInvoiceOrder implements ShouldQueue
                     ->withTrashed()
                     ->where('status_id', Invoice::STATUS_SENT)
                     ->where('is_proforma', 1)
-                    ->where('created_at', '<', now()->subHour())
+                    ->whereBetween('created_at', [now()->subDay(), now()->subHour()])
                     ->cursor()
                     ->each(function ($invoice) use ($repo) {
                         $invoice->is_proforma = false;
@@ -59,8 +59,8 @@ class CleanStaleInvoiceOrder implements ShouldQueue
 
             Invoice::query()
                    ->withTrashed()
+                   ->whereBetween('updated_at', [now()->subDay(), now()->subHour()])
                    ->where('status_id', Invoice::STATUS_SENT)
-                   ->where('updated_at', '<', now()->subHour())
                    ->where('balance', '>', 0)
                    ->whereJsonContains('line_items', ['type_id' => '3'])
                    ->cursor()
@@ -71,7 +71,7 @@ class CleanStaleInvoiceOrder implements ShouldQueue
             Invoice::query()
                    ->withTrashed()
                    ->whereIn('status_id', [Invoice::STATUS_PARTIAL, Invoice::STATUS_PAID])
-                   ->where('updated_at', '<', now()->subHour())
+                   ->whereBetween('updated_at', [now()->subDay(), now()->subHour()])
                    ->whereJsonContains('line_items', ['type_id' => '3'])
                    ->cursor()
                    ->each(function ($invoice) {
@@ -105,7 +105,7 @@ class CleanStaleInvoiceOrder implements ShouldQueue
                 ->withTrashed()
                 ->where('status_id', Invoice::STATUS_SENT)
                 ->where('is_proforma', 1)
-                ->where('created_at', '<', now()->subHour())
+                ->whereBetween('created_at', [now()->subDay(), now()->subHour()])
                 ->cursor()
                 ->each(function ($invoice) use ($repo) {
                     $invoice->is_proforma = false;
@@ -116,7 +116,7 @@ class CleanStaleInvoiceOrder implements ShouldQueue
             Invoice::query()
                 ->withTrashed()
                 ->where('status_id', Invoice::STATUS_SENT)
-                ->where('updated_at', '<', now()->subHour())
+                ->whereBetween('updated_at', [now()->subDay(), now()->subHour()])
                 ->where('balance', '>', 0)
                 ->whereJsonContains('line_items', ['type_id' => '3'])
                 ->cursor()
@@ -127,7 +127,7 @@ class CleanStaleInvoiceOrder implements ShouldQueue
             Invoice::query()
                 ->withTrashed()
                 ->whereIn('status_id', [Invoice::STATUS_PARTIAL, Invoice::STATUS_PAID])
-                ->where('updated_at', '<', now()->subHour())
+                ->whereBetween('updated_at', [now()->subDay(), now()->subHour()])
                 ->whereJsonContains('line_items', ['type_id' => '3'])
                 ->cursor()
                 ->each(function ($invoice) {

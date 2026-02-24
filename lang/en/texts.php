@@ -5913,6 +5913,8 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bank Transfer',
     'activity_164' => 'QuickBooks sync failed. :notes',
+    'activity_166' => 'User :notes was purged by :user',
+    'purged_user' => 'Successfully purged user',
 );
 
 return $lang;

@@ -312,6 +312,8 @@ class Activity extends StaticModel
 
     public const QUICKBOOKS_PUSH_SUCCESS = 165;
 
+    public const PURGE_USER = 166;
+
     protected $casts = [
         'is_system' => 'boolean',
         'updated_at' => 'timestamp',
