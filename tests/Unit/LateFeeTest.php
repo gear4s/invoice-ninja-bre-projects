@@ -492,6 +492,7 @@ class LateFeeTest extends TestCase
         $settings->num_days_reminder1 = 10;
         $settings->schedule_reminder1 = 'after_due_date';
         $settings->entity_send_time = 6;
+        $settings->timezone_id = '33';
 
         $client = $this->buildData($settings);
 
