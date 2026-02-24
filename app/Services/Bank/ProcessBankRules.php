@@ -363,6 +363,9 @@ class ProcessBankRules extends AbstractService
 
     private function matchNumberOperator($bt_value, $rule_value, $operator): bool
     {
+        $bt_value = (float) $bt_value;
+        $rule_value = (float) $rule_value;
+
         return match ($operator) {
             '>'  => round($bt_value - $rule_value, 2) > 0,
             '>=' => round($bt_value - $rule_value, 2) >= 0,
