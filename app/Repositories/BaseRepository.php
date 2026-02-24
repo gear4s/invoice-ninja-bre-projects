@@ -322,6 +322,12 @@ class BaseRepository
             if ($model->status_id != Invoice::STATUS_DRAFT) {
                 $model->service()->updateStatus()->save();
                 // $model->client->service()->calculateBalance($model); //2026-02-21 - disabled due to race conditions
+            
+                $adjustment = round($state['finished_amount'] - $state['starting_amount'], 2);
+                if ($adjustment != 0) {
+                    $model->client->service()->updateBalance($adjustment);
+                }
+                
             }
 
             if (!$model->design_id) {
