@@ -5703,7 +5703,7 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'custom_document_completed' => 'Document personnalisé complété',
     'email_client_when_custom_document_completed' => 'Envoyer un courriel au client lorsque le document personnalisé est signé',
     'sender' => 'Expéditeur',
-     'create_template' => 'Créer un modèle',
+    'create_template' => 'Créer un modèle',
     'edit_template' => 'Éditer un modèle',
     'delete_template' => 'Supprimer un modèle',
     'template_created' => 'Modèle créé',
@@ -5810,8 +5810,8 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'default_radio_group_label' => 'Groupe de boutons radio par défaut',
     'default_select_label' => 'Sélection par défaut',
     'delete_document' => 'Supprimer le document',
-    'delete_docuninja_document' => 'Supprimer le document',
-    'delete_docuninja_document_confirmation' => 'Êtes-vous sûr de vouloir supprimer ce document ?',
+    'delete_docuninja_document' => 'Supprimer le fichier',
+    'delete_docuninja_document_confirmation' => 'Êtes-vous certain de vouloir supprimer ce fichier du document ?',
     'delete_subscription' => 'Supprimer l\'abonnement',
     'disable_docuninja' => 'Désactiver DocuNinja',
     'document_not_found' => 'Document introuvable',
@@ -5912,6 +5912,8 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Virement bancaire Stripe',
     'activity_164' => 'La synchronisation QuickBooks a échoué. :notes',
+    'activity_166' => 'L\'utilisateur :notes a été purgé par :user',
+    'purged_user' => 'L\'utilisateur a été purgé',
 );
 
 return $lang;

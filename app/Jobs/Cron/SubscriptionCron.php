@@ -90,7 +90,7 @@ class SubscriptionCron
                                 ->with('subscription','client')
                                 ->where('company_id', $company->id)
                                 ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                                ->whereBetween('due_date', [now()->subMonth()->startOfDay(),now()->addDay()->startOfDay()])
+                                ->whereBetween('due_date', [now()->subMonth()->startOfDay(), now()->addDay()->startOfDay()])
                                 ->where('is_deleted', 0)
                                 ->where('is_proforma', 0)
                                 ->whereNotNull('subscription_id')

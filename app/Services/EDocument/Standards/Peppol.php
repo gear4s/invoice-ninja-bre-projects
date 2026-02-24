@@ -598,7 +598,7 @@ class Peppol extends AbstractService
         $binary = new \InvoiceNinja\EInvoice\Models\Peppol\EmbeddedDocumentBinaryObjectType\EmbeddedDocumentBinaryObject();
         $binary->value = base64_encode($file);
         $binary->mimeCode = $mime_code;
-        $binary->filename = $filename;
+        $binary->filename = str_replace(' ', '_', $filename);
         $attachment->EmbeddedDocumentBinaryObject = $binary;
 
         $adr->Attachment = $attachment;
@@ -710,7 +710,7 @@ class Peppol extends AbstractService
         $binary = new \InvoiceNinja\EInvoice\Models\Peppol\EmbeddedDocumentBinaryObjectType\EmbeddedDocumentBinaryObject();
         $binary->value = base64_encode($pdf);
         $binary->mimeCode = $mime_code;
-        $binary->filename = $filename;
+        $binary->filename = str_replace(' ', '_', $filename);
         $attachment->EmbeddedDocumentBinaryObject = $binary;
 
         $adr->Attachment = $attachment;
