@@ -155,5 +155,6 @@ class Preloader
         \Laravel\Octane\Tables\OpenSwooleTable::class,
         \Laravel\Octane\Tables\SwooleTable::class,
         \Laravel\Octane\WorkerExceptionInspector::class,
+        \Sabberworm\CSS\Rule\Rule::class
     )
     ->load();
