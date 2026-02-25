@@ -362,8 +362,8 @@ class NinjaMailerJob implements ShouldQueue
                 $email = $this->nmo->to_user->email;
                 $domain = explode("@", $email)[1] ?? "";
                 $dns = dns_get_record($domain, DNS_MX);
-                $server = $dns[0]["target"];
-                if (stripos($server, "outlook.com") !== false) {
+
+                if (is_array($dns) && isset($dns[0]["target"]) && stripos($dns[0]["target"], "outlook.com") !== false) {
 
                     $this->mailer = 'postmark';
                     $this->client_postmark_secret = config('services.postmark-outlook.token');
@@ -380,9 +380,10 @@ class NinjaMailerJob implements ShouldQueue
 
                     return $this;
                 }
-            } catch (\Exception $e) {
 
-                nlog("problem switching outlook driver - hosted");
+            } catch (\Throwable $e) {
+
+                nlog("problem switching outlook driver - hosted ".  $email ?? '');
                 nlog($e->getMessage());
             }
         }
