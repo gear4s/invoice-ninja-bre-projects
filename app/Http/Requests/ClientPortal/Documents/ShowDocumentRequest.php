@@ -12,6 +12,7 @@
 
 namespace App\Http\Requests\ClientPortal\Documents;
 
+use App\Models\Client;
 use App\Models\Company;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Http\FormRequest;
@@ -27,8 +28,27 @@ class ShowDocumentRequest extends FormRequest
      */
     public function authorize()
     {
-        return auth()->guard('contact')->user()->client_id == $this->document->documentable_id
-            || ($this->document->is_public && $this->document->documentable_type == Company::class && $this->document->company_id == auth()->guard('contact')->user()->company_id);
+        $contact = auth()->guard('contact')->user();
+        $document = $this->document;
+
+        // Documents attached directly to this client
+        if ($document->documentable_type === Client::class) {
+            return $document->documentable_id == $contact->client_id;
+        }
+
+        // Public company-level documents
+        if ($document->is_public && $document->documentable_type === Company::class) {
+            return $document->company_id == $contact->company_id;
+        }
+
+        // Public documents on entities (Invoice, Quote, etc.) belonging to this client
+        if ($document->is_public
+            && ($entity = $document->documentable)
+            && isset($entity->client_id)) {
+            return $entity->client_id == $contact->client_id;
+        }
+
+        return false;
     }
 
     /**
