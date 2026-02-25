@@ -5704,7 +5704,7 @@ $lang = array(
     'custom_document_completed' => 'Tài liệu Phong tục đã hoàn tất',
     'email_client_when_custom_document_completed' => 'email khách hàng khi Tài liệu Phong tục đã được ký',
     'sender' => 'Người gửi',
-     'create_template' => 'Tạo mẫu',
+    'create_template' => 'Tạo mẫu',
     'edit_template' => 'Chỉnh sửa',
     'delete_template' => 'Xóa',
     'template_created' => 'Mẫu đã tạo',
@@ -5811,8 +5811,8 @@ $lang = array(
     'default_radio_group_label' => 'Nhóm radio mặc định',
     'default_select_label' => 'Chọn mặc định',
     'delete_document' => 'Xóa liệu',
-    'delete_docuninja_document' => 'Xóa liệu',
-    'delete_docuninja_document_confirmation' => 'Bạn có chắc chắn đến Xóa liệu này không?',
+    'delete_docuninja_document' => 'Xóa',
+    'delete_docuninja_document_confirmation' => 'Bạn có chắc chắn muốn đến tập tin này khỏi tài liệu không?',
     'delete_subscription' => 'Xóa ký mới',
     'disable_docuninja' => 'Vô hiệu hóa DocuNinja',
     'document_not_found' => 'Không tìm thấy tài liệu',
@@ -5913,6 +5913,8 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Chuyển khoản Ngân hàng Stripe',
     'activity_164' => 'Đồng bộ QuickBooks thất bại. :notes',
+    'activity_166' => 'Người dùng :notes đã bị xóa bởi :user',
+    'purged_user' => 'Người dùng đã được Thành công',
 );
 
 return $lang;
