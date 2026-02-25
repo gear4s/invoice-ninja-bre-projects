@@ -19,7 +19,15 @@ use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
 use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
 
 class QuickbooksController extends BaseController
-{
+{    
+    /**
+     * sync
+     *
+     * Syncs the Quickbooks entities to Invoice Ninja
+     *
+     * @param  SyncQuickbooksRequest $request
+     * @return \Illuminate\Http\Response
+     */
     public function sync(SyncQuickbooksRequest $request)
     {
 
