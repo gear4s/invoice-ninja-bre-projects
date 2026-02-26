@@ -49,7 +49,7 @@ class SendEmailRequest extends Request
      */
     public function authorize(): bool
     {
-        return $this->checkUserAbleToSend();
+        return true; //required so that we can move the authorization check deeper after we have hydrated the entity
     }
 
     /**
@@ -139,6 +139,16 @@ class SendEmailRequest extends Request
             if ($user->hasExactPermission('disable_emails')) {
                 $validator->errors()->add('error', ctrans('texts.disable_emails_error'));
             }
+
+            $input = $this->all();
+
+            if (isset($input['entity']) && array_key_exists('entity_id', $input) && in_array($input['entity'], ['invoice','quote','credit','recurring_invoice','purchase_order','payment','purchaseOrder'])) {
+                $entity_obj = $input['entity']::whereId($input['entity_id'])->withTrashed()->company()->first();
+
+                if (!$entity_obj || !$user->can('edit', $entity_obj)) {
+                    $validator->errors()->add('error', ctrans('texts.not_authorized'));
+                }
+            }
         });
     }
 
@@ -148,21 +158,5 @@ class SendEmailRequest extends Request
             'template.in' => 'Template :input is not a valid template.',
             'entity.in' => 'Entity :input is not a valid entity.',
         ];
-    }
-
-    private function checkUserAbleToSend()
-    {
-        $input = $this->all();
-
-        if (!isset($input['entity']) || !array_key_exists('entity_id', $input)) {
-            return true; // Let validation rules handle missing fields
-        }
-
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-
-        $entity_obj = $input['entity']::whereId($input['entity_id'])->withTrashed()->company()->first();
-
-        return $entity_obj && $user->can('edit', $entity_obj);
     }
 }
