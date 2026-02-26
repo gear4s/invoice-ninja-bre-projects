@@ -216,7 +216,7 @@ class StorecoveRouter
         if ($country == 'LEI') {
             $country = 'BE';
             $identifier = 'BE:VAT';
-        } elseif ($country == 'GLN') {
+        } elseif (in_array($country,['GLN','0087'])) { // handle GLN and 0087 prefix
             return 'routing_id';
         }
 
