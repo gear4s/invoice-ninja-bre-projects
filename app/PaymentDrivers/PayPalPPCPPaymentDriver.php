@@ -12,20 +12,15 @@
 
 namespace App\PaymentDrivers;
 
-use Str;
 use Carbon\Carbon;
 use App\Models\Invoice;
 use App\Models\SystemLog;
-use App\Models\GatewayType;
 use App\Models\PaymentHash;
-use App\Models\PaymentType;
-use Illuminate\Http\Request;
 use App\Jobs\Util\SystemLogger;
 use App\Utils\Traits\MakesHash;
 use App\Exceptions\PaymentFailed;
 use App\Models\ClientGatewayToken;
 use Illuminate\Support\Facades\Http;
-use App\PaymentDrivers\PayPal\PayPalWebhook;
 use App\PaymentDrivers\PayPal\PayPalBasePaymentDriver;
 
 class PayPalPPCPPaymentDriver extends PayPalBasePaymentDriver
