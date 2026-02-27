@@ -119,11 +119,12 @@ class InvitationController extends Controller
                 ]);
             }
 
-            if (!auth()->guard('contact')->check()) {
+            if (!auth()->guard('contact')->check() || (int)auth()->guard('contact')->user()->id !== (int)$invitation->client_contact_id) {
                 $this->middleware('auth:contact');
                 /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\RecurringInvoiceInvitation $invitation */
-                return redirect()->route('client.login', ['intended' => route('client.' . $entity . '.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent])]);
+                return redirect()->route('client.login', ['company_key' => $invitation->company->company_key, 'intended' => route('client.' . $entity . '.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent])]);
             }
+
 
         } else {
             request()->session()->invalidate();
