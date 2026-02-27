@@ -12,7 +12,6 @@
 
 namespace App\Import\Transformer\Invoice2Go;
 
-use App\DataMapper\InvoiceItem;
 use App\Import\ImportException;
 use App\Import\Transformer\BaseTransformer;
 use App\Models\Invoice;
@@ -53,7 +52,7 @@ class InvoiceTransformer extends BaseTransformer
             'discount' => $this->getFloat($invoice_data, 'Discount'),
             'company_id'  => $this->company->id,
             'number'      => $this->getString($invoice_data, 'DocumentNumber'),
-            'notes'       => $this->getString($invoice_data, 'Comment'),
+            'public_notes'       => $this->getString($invoice_data, 'Comment'),
             'date'        => isset($invoice_data['DocumentDate']) ? $this->parseDate($invoice_data['DocumentDate']) : null,
             // 'currency_id' => $this->getCurrencyByCode( $invoice_data, 'Currency' ),
             'amount'      => $this->getFloat($invoice_data, 'TotalAmount'),

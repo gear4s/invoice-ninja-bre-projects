@@ -161,9 +161,16 @@ class PayPalPPCPPaymentDriver extends PayPalBasePaymentDriver
 
         nlog("Process response =>");
 
-        if (method_exists($response, 'json')) {
-            nlog($response->json());
-        } else {
+        /**
+         * If we hit the next block, it will 
+         * be due to an internal server error @ paypal!
+         */
+        if ($response instanceof Illuminate\Http\JsonResponse;) {
+            $response = $response->getData(true);
+            nlog($response);
+        }
+
+        if(is_array($response)) {
             nlog($response);
         }
 
