@@ -160,7 +160,7 @@ class PayPalPPCPPaymentDriver extends PayPalBasePaymentDriver
          * If we hit the next block, it will 
          * be due to an internal server error @ paypal!
          */
-        if ($response instanceof Illuminate\Http\JsonResponse;) {
+        if ($response instanceof Illuminate\Http\JsonResponse) {
             $response = $response->getData(true);
             nlog($response);
         }
