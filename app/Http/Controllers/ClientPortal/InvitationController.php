@@ -81,6 +81,7 @@ class InvitationController extends Controller
 
         $entity_obj = 'App\Models\\' . ucfirst(Str::camel($entity)) . 'Invitation';
 
+        /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\RecurringInvoiceInvitation $invitation */
         $invitation = $entity_obj::withTrashed()
                                     ->with($entity)
                                     ->where('key', $invitation_key)
