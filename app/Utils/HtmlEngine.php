@@ -925,14 +925,14 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     {
         if ($this->entity->partial > 0 && !empty($this->entity->partial_due_date)) {
 
-            $days_overdue = \Carbon\Carbon::parse($this->entity->partial_due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
+            $days_overdue = (int) \Carbon\Carbon::parse($this->entity->partial_due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
 
             return max($days_overdue, 0);
         }
 
         if (!empty($this->entity->due_date)) {
 
-            $days_overdue = \Carbon\Carbon::parse($this->entity->due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
+            $days_overdue = (int) \Carbon\Carbon::parse($this->entity->due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
 
             return max($days_overdue, 0);
         }
