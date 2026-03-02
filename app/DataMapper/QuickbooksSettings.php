@@ -95,6 +95,9 @@ class QuickbooksSettings implements Castable
             'product' => [
                 'direction' => $changes['product']['direction'] ?? $this->settings->product->direction->value,
             ],
+            'payment' => [
+                'direction' => $changes['payment']['direction'] ?? $this->settings->payment->direction->value,
+            ],
             'qb_income_account_id' => $changes['qb_income_account_id'] ?? $this->settings->qb_income_account_id,
             'automatic_taxes' => $changes['automatic_taxes'] ?? $this->settings->automatic_taxes,
         ];

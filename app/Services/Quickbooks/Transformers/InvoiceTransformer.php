@@ -64,6 +64,13 @@ class InvoiceTransformer extends BaseTransformer
         $qb_country = $qb_service->company->quickbooks->settings->country ?? 'US';
         $is_us = ($qb_country === 'US');
 
+        // US companies MUST use "TAX"/"NON" as TaxCodeRef — never numeric IDs.
+        // Force correct values regardless of what companySync stored (handles existing data).
+        if ($is_us) {
+            $taxable_code = 'TAX';
+            $exempt_code = 'NON';
+        }
+
         // Non-US regions (CA/AU/UK) require TaxCodeRef on EVERY line item using numeric tax code IDs.
         // US companies MUST use only "TAX" or "NON" as TaxCodeRef values.
         if (!$is_us && $exempt_code === 'NON') {
