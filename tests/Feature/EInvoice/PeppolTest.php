@@ -27,21 +27,15 @@ use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
 use App\Repositories\InvoiceRepository;
 use InvoiceNinja\EInvoice\EInvoice;
-use InvoiceNinja\EInvoice\Symfony\Encode;
 use App\Services\EDocument\Standards\Peppol;
-use App\Services\EDocument\Standards\FatturaPANew;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use InvoiceNinja\EInvoice\Models\Peppol\PaymentMeans;
 use App\Services\EDocument\Gateway\Storecove\Storecove;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronica;
-use App\Services\EDocument\Standards\Validation\Peppol\InvoiceLevel;
 use App\Services\EDocument\Standards\Validation\Peppol\EntityLevel;
 use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
 use InvoiceNinja\EInvoice\Models\Peppol\BranchType\FinancialInstitutionBranch;
 use InvoiceNinja\EInvoice\Models\Peppol\FinancialAccountType\PayeeFinancialAccount;
-use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronicaBodyType\FatturaElettronicaBody;
-use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronicaHeaderType\FatturaElettronicaHeader;
 
 class PeppolTest extends TestCase
 {
@@ -353,7 +347,7 @@ class PeppolTest extends TestCase
         $peppol->setInvoiceDefaults();
         $peppol->run();
 
-        $be_invoice = $peppol->getInvoice();
+        $be_invoice = $peppol->getDocument();
 
         $this->assertNotNull($be_invoice);
 
@@ -1469,7 +1463,7 @@ class PeppolTest extends TestCase
 
         // nlog($peppol->toObject());
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -1614,7 +1608,7 @@ class PeppolTest extends TestCase
 
         // nlog($peppol->toObject());
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -1744,7 +1738,7 @@ class PeppolTest extends TestCase
 
         // nlog($peppol->toObject());
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -1878,7 +1872,7 @@ class PeppolTest extends TestCase
 
         // nlog($peppol->toXml());
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -2033,7 +2027,7 @@ class PeppolTest extends TestCase
 
         // nlog($peppol->toXml());
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -2186,7 +2180,7 @@ class PeppolTest extends TestCase
         $peppol->setInvoiceDefaults();
         $peppol->run();
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -2337,7 +2331,7 @@ class PeppolTest extends TestCase
         $peppol->setInvoiceDefaults();
         $peppol->run();
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -2481,7 +2475,7 @@ class PeppolTest extends TestCase
         $peppol->run();
 
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -2606,7 +2600,7 @@ class PeppolTest extends TestCase
         $peppol->setInvoiceDefaults();
         $peppol->run();
 
-        $de_invoice = $peppol->getInvoice();
+        $de_invoice = $peppol->getDocument();
 
         $this->assertNotNull($de_invoice);
 
@@ -2705,7 +2699,7 @@ class PeppolTest extends TestCase
         $peppol = new Peppol($invoice);
         $peppol->run();
 
-        $fe = $peppol->getInvoice();
+        $fe = $peppol->getDocument();
 
         $this->assertNotNull($fe);
 
