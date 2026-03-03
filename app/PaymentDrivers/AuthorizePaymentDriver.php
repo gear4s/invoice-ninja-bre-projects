@@ -170,13 +170,34 @@ class AuthorizePaymentDriver extends BaseDriver
         return $response->getPublicClientKey();
     }
 
-    public function mode()
+    public function mode(): string
     {
-        if ($this->company_gateway->getConfigField('testMode')) {
-            return  ANetEnvironment::SANDBOX;
+        $endpoint = $this->company_gateway->getConfigField(
+            $this->company_gateway->getConfigField('testMode') ? 'developerEndpoint' : 'liveEndpoint'
+        );
+
+        if (! empty($endpoint)) {
+            $base = $this->stripEndpointToBaseUrl((string) $endpoint);
+            if ($base !== '') {
+                return $base;
+            }
         }
 
-        return $env = ANetEnvironment::PRODUCTION;
+        if ($this->company_gateway->getConfigField('testMode')) {
+            return ANetEnvironment::SANDBOX;
+        }
+
+        return ANetEnvironment::PRODUCTION;
+    }
+
+    private function stripEndpointToBaseUrl(string $url): string
+    {
+        $parsed = parse_url($url);
+        if (! $parsed || empty($parsed['scheme']) || empty($parsed['host'])) {
+            return '';
+        }
+
+        return $parsed['scheme'] . '://' . $parsed['host'];
     }
 
     public function validationMode()
