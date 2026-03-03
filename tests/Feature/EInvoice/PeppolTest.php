@@ -655,7 +655,7 @@ class PeppolTest extends TestCase
     public function testVatNumberValidationWithValidFormats()
     {
         $validVatNumbers = [
-            'AT' => ['ATU123456789', 'U123456789', 'AT U 123456789', 'U-123-456-789'], // U + 9 digits
+            'AT' => ['ATU12345678', 'U12345678', 'AT U 12345678', 'U-123-456-78'], // U + 8 digits
             'BE' => ['BE0123456789', '0123456789', 'BE 0 123456789', '0-123-456-789'], // 0 + 9 digits
             'BG' => ['BG123456789', '123456789', 'BG 1234567890', '123-456-789-0'], // 9-10 digits
             'CY' => ['CY12345678A', '12345678A', 'CY 12345678 A', '12345678-A'], // 8 digits + 1 letter
@@ -731,7 +731,7 @@ class PeppolTest extends TestCase
     public function testVatNumberValidationWithInvalidFormats()
     {
         $invalidVatNumbers = [
-            'AT' => ['AT123456789', 'U1234567', 'U1234567890', 'ATU12345678'], // Missing U, wrong digit count
+            'AT' => ['AT123456789', 'U1234567', 'U1234567890', 'ATU1234'], // Missing U, wrong digit count
             'BE' => ['BE123456789', '123456789', 'BE012345678', '012345678'], // Missing leading 0 or wrong length
             'BG' => ['BG12345678', '12345678', 'BG12345678901', '12345678901'], // Wrong length (not 9-10)
             'CY' => ['CY12345678', '1234567A', '123456789A', '12345678'], // Missing letter, wrong digit count, or no letter

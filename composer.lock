@@ -19409,7 +19409,6 @@
             "time": "2026-02-26T11:40:30+00:00"
         },
         {
-<<<<<<< HEAD
             "name": "php-debugbar/symfony-bridge",
             "version": "v1.1.0",
             "source": {
@@ -19421,14 +19420,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/php-debugbar/symfony-bridge/zipball/e37d2debe5d316408b00d0ab2688d9c2cf59b5ad",
                 "reference": "e37d2debe5d316408b00d0ab2688d9c2cf59b5ad",
-=======
-            "name": "phpstan/phpstan",
-            "version": "1.12.33",
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/37982d6fc7cbb746dda7773530cda557cdf119e1",
-                "reference": "37982d6fc7cbb746dda7773530cda557cdf119e1",
->>>>>>> v5-develop
                 "shasum": ""
             },
             "require": {
@@ -19534,11 +19525,7 @@
                     "type": "github"
                 }
             ],
-<<<<<<< HEAD
             "time": "2026-02-23T15:04:35+00:00"
-=======
-            "time": "2026-02-28T20:30:03+00:00"
->>>>>>> v5-develop
         },
         {
             "name": "phpunit/php-code-coverage",
