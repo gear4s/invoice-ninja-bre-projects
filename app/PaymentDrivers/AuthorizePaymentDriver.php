@@ -170,13 +170,50 @@ class AuthorizePaymentDriver extends BaseDriver
         return $response->getPublicClientKey();
     }
 
-    public function mode()
+    /**
+     * Allowed endpoint hosts for custom gateway configuration.
+     * Only URLs whose host matches one of these entries will be accepted.
+     * Authorize.net environments are handled separately via ANetEnvironment constants.
+     */
+    private const ALLOWED_ENDPOINT_HOSTS = [
+        'secure.nmi.com',
+    ];
+
+    public function mode(): string
     {
-        if ($this->company_gateway->getConfigField('testMode')) {
-            return  ANetEnvironment::SANDBOX;
+        $endpoint = $this->company_gateway->getConfigField(
+            $this->company_gateway->getConfigField('testMode') ? 'developerEndpoint' : 'liveEndpoint'
+        );
+
+        if (! empty($endpoint) && $this->isAllowedEndpoint((string) $endpoint)) {
+            return (string) $endpoint;
         }
 
-        return $env = ANetEnvironment::PRODUCTION;
+        if ($this->company_gateway->getConfigField('testMode')) {
+            return ANetEnvironment::SANDBOX;
+        }
+
+        return ANetEnvironment::PRODUCTION;
+    }
+
+    /**
+     * Validates that a URL's host is in the list of permitted gateway hosts.
+     * The full URL is preserved and returned by mode() — only the host is checked here.
+     * This prevents arbitrary URLs from being used as payment endpoints.
+     */
+    private function isAllowedEndpoint(string $url): bool
+    {
+        $parsed = parse_url($url);
+
+        if (! $parsed || empty($parsed['scheme']) || empty($parsed['host'])) {
+            return false;
+        }
+
+        if ($parsed['scheme'] !== 'https') {
+            return false;
+        }
+
+        return in_array($parsed['host'], self::ALLOWED_ENDPOINT_HOSTS, true);
     }
 
     public function validationMode()
