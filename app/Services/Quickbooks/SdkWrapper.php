@@ -158,6 +158,7 @@ class SdkWrapper
         $obj->refresh_token = $token->getRefreshToken();
         $obj->accessTokenExpiresAt = Carbon::createFromFormat('Y/m/d H:i:s', $token->getAccessTokenExpiresAt())->timestamp; //@phpstan-ignore-line - QB phpdoc wrong types!!
         $obj->refreshTokenExpiresAt = Carbon::createFromFormat('Y/m/d H:i:s', $token->getRefreshTokenExpiresAt())->timestamp; //@phpstan-ignore-line - QB phpdoc wrong types!!
+        $obj->requires_reconnect = false;
 
         $obj->realmID = $token->getRealmID();
         $obj->baseURL = $token->getBaseURL();

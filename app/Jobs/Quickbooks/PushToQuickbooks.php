@@ -16,6 +16,7 @@ use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
@@ -89,6 +90,7 @@ class PushToQuickbooks implements ShouldQueue
                 'client' => $this->pushClient($qbService, $entity),
                 'invoice' => $this->pushInvoice($qbService, $entity),
                 'product' => $this->pushProduct($qbService, $entity),
+                'payment' => $this->pushPayment($qbService, $entity),
                 default => nlog("QuickBooks: Unsupported entity type: {$this->entity_type}"),
             };
 
@@ -107,12 +109,13 @@ class PushToQuickbooks implements ShouldQueue
      *
      * @return Client|Invoice|null
      */
-    private function resolveEntity(): Client|Invoice|Product|null
+    private function resolveEntity(): Client|Invoice|Product|Payment|null
     {
         return match ($this->entity_type) {
             'client' => Client::withTrashed()->find($this->entity_id),
             'invoice' => Invoice::withTrashed()->find($this->entity_id),
             'product' => Product::withTrashed()->find($this->entity_id),
+            'payment' => Payment::withTrashed()->find($this->entity_id),
             default => null,
         };
     }
@@ -168,6 +171,18 @@ class PushToQuickbooks implements ShouldQueue
         $qbService->invoice->syncToForeign([$invoice]);
     }
 
+    /**
+     * Push a payment to QuickBooks.
+     *
+     * @param QuickbooksService $qbService
+     * @param Payment $payment
+     * @return void
+     */
+    private function pushPayment(QuickbooksService $qbService, Payment $payment): void
+    {
+        $qbService->payment->syncToForeign([$payment]);
+    }
+
     private function extractReadableError(string $rawMessage): string
     {
         if (preg_match('/with body:\s*\[(.+)\]/s', $rawMessage, $matches)) {
@@ -214,6 +229,7 @@ class PushToQuickbooks implements ShouldQueue
             match ($this->entity_type) {
                 'client' => $activity->client_id = $entity->id,
                 'invoice' => $activity->invoice_id = $entity->id,
+                'payment' => $activity->payment_id = $entity->id,
                 default => null,
             };
 
@@ -237,6 +253,7 @@ class PushToQuickbooks implements ShouldQueue
             match ($this->entity_type) {
                 'client' => $activity->client_id = $entity->id,
                 'invoice' => $activity->invoice_id = $entity->id,
+                'payment' => $activity->payment_id = $entity->id,
                 default => null,
             };
 

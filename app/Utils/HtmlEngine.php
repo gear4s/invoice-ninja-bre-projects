@@ -822,6 +822,7 @@ class HtmlEngine
 
             $data['$payments'] = ['value' => $payment_list, 'label' => ctrans('texts.payments')];
 
+            /** @var ?\App\Models\Payment $payment */
             $payment = $this->entity->net_payments()->first();
 
             if ($payment) {
@@ -843,6 +844,20 @@ class HtmlEngine
             $data['$sepa_qr_code_raw'] = ['value' => html_entity_decode($data['$sepa_qr_code']['value']), 'label' => ''];
         }
 
+        $data['$actual_delivery_date'] = ['value' => $this->translateDate(data_get($this->entity, 'e_invoice.Invoice.Delivery.0.ActualDeliveryDate', ''), $this->client->date_format(), $this->client->locale()), 'label' => ctrans('texts.actual_delivery_date')];
+        
+        $invoice_period = '';
+
+        if($period = data_get($this->entity, 'e_invoice.Invoice.InvoicePeriod.0', false)) {
+            try{
+                $invoice_period = $this->translateDate($period->StartDate, $this->client->date_format(), $this->client->locale()) . ' - ' . $this->translateDate($period->EndDate, $this->client->date_format(), $this->client->locale());
+            }
+            catch(\Throwable $e) {
+                nlog("Error getting invoice period: {$e->getMessage()}");
+            }
+        }
+
+        $data['$invoice_period'] = ['value' => $invoice_period, 'label' => ctrans('texts.invoice_period')];
 
         $data['$verifactu_qr_code'] = ['value' => $this->getVerifactuQrCode(), 'label' => ''];
 
@@ -858,6 +873,7 @@ class HtmlEngine
             return '';
         }
 
+        /** @var \App\Models\VerifactuLog $verifactu_log */
         $verifactu_log = $this->entity->verifactu_logs()->orderBy('id', 'desc')->first();
 
         if (!$verifactu_log) {

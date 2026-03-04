@@ -163,6 +163,7 @@ class QuickbooksService
                 && $this->company->quickbooks->refreshTokenExpiresAt < time();
             
             if ($refresh_token_expired) {
+                $this->markRequiresReconnect();
                 nlog('Quickbooks tokens expired (both access and refresh) => ' . $this->company->company_key);
                 throw new \Exception('Quickbooks tokens expired (both access and refresh)');
             }
@@ -177,6 +178,7 @@ class QuickbooksService
                 if (str_contains($error_message, 'invalid_grant') || str_contains($error_message, 'refresh token')) {
                     // Refresh token is invalid/expired - don't try to disconnect (which would also fail)
                     nlog('Quickbooks refresh token invalid/expired => ' . $this->company->company_key);
+                    $this->markRequiresReconnect();
                     throw new \Exception('Quickbooks refresh token invalid/expired');
                 }
                 
@@ -201,6 +203,14 @@ class QuickbooksService
 
         throw new \Exception('Quickbooks token expired and could not be refreshed');
 
+    }
+
+    private function markRequiresReconnect(): void
+    {
+        if ($this->company->quickbooks) {
+            $this->company->quickbooks->requires_reconnect = true;
+            $this->company->save();
+        }
     }
 
     /**
@@ -745,11 +755,22 @@ class QuickbooksService
             }
         }
 
-        nlog("QB TaxCode resolution: taxable={$default_taxable_code} exempt={$default_exempt_code} rate_map_count=" . count($tax_rate_to_tax_code));
+        // US companies MUST use "TAX"/"NON" as TaxCodeRef — never numeric IDs.
+        // Non-US (CA/AU/GB) use the resolved numeric TaxCode IDs.
+        if ($qb_country === 'US') {
+            $default_taxable_code = 'TAX';
+            $default_exempt_code = 'NON';
+        }
+
+        nlog("QB TaxCode resolution: country={$qb_country} taxable={$default_taxable_code} exempt={$default_exempt_code} rate_map_count=" . count($tax_rate_to_tax_code));
 
         $this->company->quickbooks->settings->tax_rate_map = $tax_rates;
         $this->company->quickbooks->settings->default_taxable_code = $default_taxable_code;
         $this->company->quickbooks->settings->default_exempt_code = $default_exempt_code;
+
+        // Fetch and cache payment methods for payment type mapping
+        $payment_methods = $this->fetchPaymentMethods();
+        $this->company->quickbooks->settings->payment_method_map = $payment_methods;
 
         $this->company->save();
 
@@ -769,6 +790,47 @@ class QuickbooksService
 
         return $this;
 
+    }
+
+    /**
+     * Fetch all active PaymentMethods from QuickBooks.
+     *
+     * @return array Array of ['id' => string, 'name' => string, 'type' => string]
+     */
+    public function fetchPaymentMethods(): array
+    {
+        try {
+            if (!$this->sdk) {
+                return [];
+            }
+
+            $query = "SELECT * FROM PaymentMethod WHERE Active = true";
+            $methods = $this->sdk->Query($query);
+
+            if (!is_array($methods)) {
+                return [];
+            }
+
+            $result = [];
+            foreach ($methods as $method) {
+                $id = is_object($method) ? (string) ($method->Id ?? '') : (string) ($method['Id'] ?? '');
+                $name = is_object($method) ? (string) ($method->Name ?? '') : (string) ($method['Name'] ?? '');
+                $type = is_object($method) ? (string) ($method->Type ?? '') : (string) ($method['Type'] ?? '');
+
+                if ($id && $name) {
+                    $result[] = [
+                        'id' => $id,
+                        'name' => $name,
+                        'type' => $type,
+                    ];
+                }
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            nlog("Error fetching payment methods: {$e->getMessage()}");
+            return [];
+        }
     }
 
     /**
