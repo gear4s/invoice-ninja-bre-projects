@@ -163,6 +163,7 @@ class QuickbooksService
                 && $this->company->quickbooks->refreshTokenExpiresAt < time();
             
             if ($refresh_token_expired) {
+                $this->markRequiresReconnect();
                 nlog('Quickbooks tokens expired (both access and refresh) => ' . $this->company->company_key);
                 throw new \Exception('Quickbooks tokens expired (both access and refresh)');
             }
@@ -177,6 +178,7 @@ class QuickbooksService
                 if (str_contains($error_message, 'invalid_grant') || str_contains($error_message, 'refresh token')) {
                     // Refresh token is invalid/expired - don't try to disconnect (which would also fail)
                     nlog('Quickbooks refresh token invalid/expired => ' . $this->company->company_key);
+                    $this->markRequiresReconnect();
                     throw new \Exception('Quickbooks refresh token invalid/expired');
                 }
                 
@@ -201,6 +203,14 @@ class QuickbooksService
 
         throw new \Exception('Quickbooks token expired and could not be refreshed');
 
+    }
+
+    private function markRequiresReconnect(): void
+    {
+        if ($this->company->quickbooks) {
+            $this->company->quickbooks->requires_reconnect = true;
+            $this->company->save();
+        }
     }
 
     /**

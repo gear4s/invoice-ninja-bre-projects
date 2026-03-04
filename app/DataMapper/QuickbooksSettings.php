@@ -34,6 +34,8 @@ class QuickbooksSettings implements Castable
 
     public string $companyName;
 
+    public bool $requires_reconnect = false;
+
     public QuickbooksSync $settings;
 
     public function __construct(array $attributes = [])
@@ -45,6 +47,7 @@ class QuickbooksSettings implements Castable
         $this->refreshTokenExpiresAt = $attributes['refreshTokenExpiresAt'] ?? 0;
         $this->baseURL = $attributes['baseURL'] ?? '';
         $this->companyName = $attributes['companyName'] ?? '';
+        $this->requires_reconnect = $attributes['requires_reconnect'] ?? false;
         $this->settings = new QuickbooksSync($attributes['settings'] ?? []);
     }
 
@@ -68,6 +71,7 @@ class QuickbooksSettings implements Castable
             'refreshTokenExpiresAt' => $this->refreshTokenExpiresAt,
             'baseURL' => $this->baseURL,
             'companyName' => $this->companyName,
+            'requires_reconnect' => $this->requires_reconnect,
             'settings' => $this->settings->toArray(),
         ];
     }
