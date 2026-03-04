@@ -265,6 +265,11 @@ class BaseTransformer
             throw new \App\Import\ImportException("Error, you are attempting to import more clients than your plan allows ({$hosted_client_count})");
         }
 
+        // 2026-03-05: If we don't have a client name or email, we can't create a client.
+        if(empty($client_name) && empty($client_email)) {
+            throw new \App\Import\ImportException("A Client Name or Email is required, none provided!");
+        }
+
         $client_repository = app()->make(ClientRepository::class);
         $client_repository->import_mode = true;
 
