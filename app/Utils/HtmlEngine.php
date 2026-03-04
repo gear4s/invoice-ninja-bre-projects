@@ -822,7 +822,7 @@ class HtmlEngine
 
             $data['$payments'] = ['value' => $payment_list, 'label' => ctrans('texts.payments')];
 
-            /** @var \App\Models\Payment $payment */
+            /** @var ?\App\Models\Payment $payment */
             $payment = $this->entity->net_payments()->first();
 
             if ($payment) {
