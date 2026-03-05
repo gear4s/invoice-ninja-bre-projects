@@ -1169,7 +1169,6 @@ class BaseController extends Controller
                     if (in_array($baseInclude, $validIncludes)) {
                         $data[] = $include;
                     }
-                    // Invalid includes like 'deleted' are silently ignored
                 }
             }
         }

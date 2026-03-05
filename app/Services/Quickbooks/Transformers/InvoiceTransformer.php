@@ -13,9 +13,6 @@
 namespace App\Services\Quickbooks\Transformers;
 
 use App\Models\Invoice;
-use App\Models\Product;
-use App\DataMapper\InvoiceItem;
-use App\Services\Quickbooks\Helpers\Helper;
 
 /**
  * Class InvoiceTransformer.

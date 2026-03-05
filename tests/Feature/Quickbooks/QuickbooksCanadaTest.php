@@ -13,12 +13,8 @@
 namespace Tests\Feature\Quickbooks;
 
 use App\DataMapper\ClientSync;
-use App\DataMapper\InvoiceItem;
 use App\DataMapper\InvoiceSync;
 use App\DataMapper\ProductSync;
-use App\DataMapper\QuickbooksSettings;
-use App\DataMapper\QuickbooksSync;
-use App\DataMapper\QuickbooksSyncMap;
 use App\Factory\ClientContactFactory;
 use App\Factory\ClientFactory;
 use App\Factory\InvoiceFactory;
@@ -28,15 +24,12 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
-use App\Models\TaxRate;
 use App\Models\User;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\ClientTransformer;
 use App\Services\Quickbooks\Transformers\InvoiceTransformer;
 use App\Services\Quickbooks\Transformers\ProductTransformer;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\Session;
 use Tests\TestCase;
 
 /**
@@ -1728,7 +1721,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($client_qb_id, data_get($qb_inv, 'CustomerRef'));
 
         // Verify line items exist
-        $lines = $qb_inv->Line;
+        $lines = data_get($qb_inv, 'Line');
         $this->assertNotEmpty($lines);
 
         // Filter to SalesItemLineDetail lines only (QB adds SubTotalLineDetail automatically)
@@ -1838,7 +1831,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotNull($qb_inv);
 
         // 6. Verify the product item ref on the line
-        $lines = collect($qb_inv->Line)
+        $lines = collect(data_get($qb_inv, 'Line'))
             ->filter(fn($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
         $this->assertCount(1, $lines);
 
