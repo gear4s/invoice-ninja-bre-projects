@@ -340,8 +340,7 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','local
     Route::post('quickbooks/sync', [QuickbooksController::class, 'sync'])->name('quickbooks.sync');
     Route::post('quickbooks/settings', [QuickbooksController::class, 'settings'])->name('quickbooks.settings');
     Route::post('quickbooks/disconnect', [QuickbooksController::class, 'disconnect'])->name('quickbooks.disconnect');
-    Route::get('quickbooks/status', [QuickbooksController::class, 'status'])->name('quickbooks.status');
-    Route::get('quickbooks/reconnect-url', [QuickbooksController::class, 'reconnectUrl'])->name('quickbooks.reconnect_url');
+    Route::post('quickbooks/reconnect_url', [QuickbooksController::class, 'reconnectUrl'])->name('quickbooks.reconnect_url');
 
     Route::resource('recurring_expenses', RecurringExpenseController::class);
     Route::post('recurring_expenses/bulk', [RecurringExpenseController::class, 'bulk'])->name('recurring_expenses.bulk');

@@ -91,15 +91,23 @@ class QuickbooksService
                 'baseUrl' => $this->testMode ? CoreConstants::SANDBOX_DEVELOPMENT : CoreConstants::QBO_BASEURL,
             ];
 
-            $merged = array_merge($config, $this->ninjaAccessToken());
+            // Don't merge expired tokens when reconnection is required
+            // This allows getAuthorizationUrl() to work correctly
+            $requires_reconnect = $this->company->quickbooks && $this->company->quickbooks->requires_reconnect;
+            
+            if (!$requires_reconnect) {
+                $config = array_merge($config, $this->ninjaAccessToken());
+            }
 
-            $this->sdk = DataService::Configure($merged);
+            $this->sdk = DataService::Configure($config);
 
             $this->sdk->enableLog();
             $this->sdk->setMinorVersion("75");
             $this->sdk->throwExceptionOnError(true);
 
-            $this->checkToken();
+            if (!$requires_reconnect) {
+                $this->checkToken();
+            }
         }
 
         $this->invoice = new QbInvoice($this);
