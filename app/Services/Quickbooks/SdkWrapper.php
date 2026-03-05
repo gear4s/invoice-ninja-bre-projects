@@ -38,7 +38,7 @@ class SdkWrapper
         if ($this->company->quickbooks && 
             $this->company->quickbooks->accessTokenKey && 
             !$this->company->quickbooks->requires_reconnect) {
-            $this->setNinjaAccessToken($this->company->quickbooks);
+        $this->setNinjaAccessToken($this->company->quickbooks);
         }
 
         return $this;

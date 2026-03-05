@@ -106,7 +106,7 @@ class QuickbooksService
             $this->sdk->throwExceptionOnError(true);
 
             if (!$requires_reconnect) {
-                $this->checkToken();
+            $this->checkToken();
             }
         }
 
