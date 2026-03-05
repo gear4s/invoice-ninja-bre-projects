@@ -1145,11 +1145,31 @@ class BaseController extends Controller
             $included = request()->input('include') ?? '';
             $included = explode(',', $included);
 
+            // Get valid includes from transformer
+            $transformer = new $this->entity_transformer(request()->input('serializer'));
+            $validIncludes = array_merge(
+                $transformer->getDefaultIncludes() ?? [],
+                $transformer->getAvailableIncludes() ?? []
+            );
+
             foreach ($included as $include) {
+                $include = trim($include);
+                
+                if (empty($include)) {
+                    continue;
+                }
+
                 if ($include == 'clients') {
                     $data[] = 'clients.contacts';
-                } elseif ($include) {
-                    $data[] = $include;
+                } else {
+                    // For nested includes (e.g., "client.group_settings"), extract the base relationship
+                    $baseInclude = explode('.', $include)[0];
+                    
+                    // Validate that the base relationship is in the transformer's available includes
+                    if (in_array($baseInclude, $validIncludes)) {
+                        $data[] = $include;
+                    }
+                    // Invalid includes like 'deleted' are silently ignored
                 }
             }
         }

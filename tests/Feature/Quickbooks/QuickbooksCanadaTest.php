@@ -1224,6 +1224,318 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(150.00, floatval(data_get($qb_item, 'UnitPrice')));
     }
 
+    /**
+     * Test creating a product with income_account_id and verify 1:1 mapping.
+     */
+    public function test_product_with_income_account_id_maps_correctly()
+    {
+        $unique = 'Test Product Income Account ' . time();
+        $expected_income_account_id = '1'; // Services account ID
+
+        // Create product with income_account_id set
+        $product = ProductFactory::create($this->company->id, $this->user->id);
+        $product->product_key = $unique;
+        $product->notes = 'Product with custom income account';
+        $product->price = 99.99;
+        $product->cost = 50.00;
+        $product->tax_id = Product::PRODUCT_TYPE_SERVICE;
+        $product->income_account_id = $expected_income_account_id;
+        $product->saveQuietly();
+
+        // Push to QuickBooks
+        $this->qb->product->syncToForeign([$product]);
+
+        // Refresh product to get QB ID
+        $product = $product->fresh();
+        $this->assertNotNull($product->sync->qb_id, 'Product should have QB ID after sync');
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product->sync->qb_id];
+
+        // Fetch from QuickBooks
+        $qb_item = $this->qb->sdk->FindById('Item', $product->sync->qb_id);
+        $this->assertNotNull($qb_item, 'Could not fetch product from QuickBooks');
+
+        // Verify 1:1 mapping of all fields
+        $this->assertEquals($unique, data_get($qb_item, 'Name'), 'Product key should match');
+        $this->assertEquals('Product with custom income account', data_get($qb_item, 'Description'), 'Notes should match');
+        $this->assertEquals(99.99, floatval(data_get($qb_item, 'UnitPrice')), 'Price should match');
+        $this->assertEquals(50.00, floatval(data_get($qb_item, 'PurchaseCost')), 'Cost should match');
+        $this->assertEquals('Service', data_get($qb_item, 'Type'), 'Type should be Service');
+        $this->assertEquals('true', data_get($qb_item, 'Active'), 'Product should be active');
+        
+        // Verify income account ID matches what was set
+        $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
+        $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
+        $this->assertEquals($expected_income_account_id, $actual_account_id, 'Income account ID should match the product setting');
+    }
+
+    /**
+     * Test creating a product without income_account_id uses default.
+     */
+    public function test_product_without_income_account_id_uses_default()
+    {
+        $unique = 'Test Product Default Account ' . time();
+
+        // Get default income account ID
+        $default_income_account_id = $this->qb->getIncomeAccountId();
+        $this->assertNotNull($default_income_account_id, 'Default income account should be available');
+
+        // Create product without income_account_id
+        $product = ProductFactory::create($this->company->id, $this->user->id);
+        $product->product_key = $unique;
+        $product->notes = 'Product without custom income account';
+        $product->price = 75.50;
+        $product->cost = 30.00;
+        $product->tax_id = Product::PRODUCT_TYPE_PHYSICAL;
+        $product->income_account_id = null; // Explicitly null
+        $product->saveQuietly();
+
+        // Push to QuickBooks
+        $this->qb->product->syncToForeign([$product]);
+
+        // Refresh product to get QB ID
+        $product = $product->fresh();
+        $this->assertNotNull($product->sync->qb_id, 'Product should have QB ID after sync');
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product->sync->qb_id];
+
+        // Fetch from QuickBooks
+        $qb_item = $this->qb->sdk->FindById('Item', $product->sync->qb_id);
+        $this->assertNotNull($qb_item, 'Could not fetch product from QuickBooks');
+
+        // Verify income account uses default
+        $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
+        $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
+        $this->assertEquals($default_income_account_id, $actual_account_id, 'Should use default income account when product has none set');
+        
+        // Verify other fields
+        $this->assertEquals($unique, data_get($qb_item, 'Name'));
+        $this->assertEquals('NonInventory', data_get($qb_item, 'Type'), 'Physical product should be NonInventory');
+        $this->assertEquals(75.50, floatval(data_get($qb_item, 'UnitPrice')));
+    }
+
+    /**
+     * Test service product with income_account_id.
+     */
+    public function test_service_product_with_income_account_id()
+    {
+        $unique = 'Test Service Income Account ' . time();
+        $expected_income_account_id = '1';
+
+        $product = ProductFactory::create($this->company->id, $this->user->id);
+        $product->product_key = $unique;
+        $product->notes = 'Service product with income account';
+        $product->price = 200.00;
+        $product->cost = 100.00;
+        $product->tax_id = Product::PRODUCT_TYPE_SERVICE;
+        $product->income_account_id = $expected_income_account_id;
+        $product->saveQuietly();
+
+        $this->qb->product->syncToForeign([$product]);
+
+        $product = $product->fresh();
+        $this->assertNotNull($product->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product->sync->qb_id];
+
+        $qb_item = $this->qb->sdk->FindById('Item', $product->sync->qb_id);
+        $this->assertNotNull($qb_item);
+
+        // Verify service type
+        $this->assertEquals('Service', data_get($qb_item, 'Type'));
+        
+        // Verify income account
+        $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
+        $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
+        $this->assertEquals($expected_income_account_id, $actual_account_id);
+        
+        // Verify all fields
+        $this->assertEquals($unique, data_get($qb_item, 'Name'));
+        $this->assertEquals('Service product with income account', data_get($qb_item, 'Description'));
+        $this->assertEquals(200.00, floatval(data_get($qb_item, 'UnitPrice')));
+        $this->assertEquals(100.00, floatval(data_get($qb_item, 'PurchaseCost')));
+    }
+
+    /**
+     * Test physical product with income_account_id.
+     */
+    public function test_physical_product_with_income_account_id()
+    {
+        $unique = 'Test Physical Income Account ' . time();
+        $expected_income_account_id = '1';
+
+        $product = ProductFactory::create($this->company->id, $this->user->id);
+        $product->product_key = $unique;
+        $product->notes = 'Physical product with income account';
+        $product->price = 150.00;
+        $product->cost = 80.00;
+        $product->tax_id = Product::PRODUCT_TYPE_PHYSICAL;
+        $product->income_account_id = $expected_income_account_id;
+        $product->saveQuietly();
+
+        $this->qb->product->syncToForeign([$product]);
+
+        $product = $product->fresh();
+        $this->assertNotNull($product->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product->sync->qb_id];
+
+        $qb_item = $this->qb->sdk->FindById('Item', $product->sync->qb_id);
+        $this->assertNotNull($qb_item);
+
+        // Verify physical product type
+        $this->assertEquals('NonInventory', data_get($qb_item, 'Type'));
+        
+        // Verify income account
+        $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
+        $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
+        $this->assertEquals($expected_income_account_id, $actual_account_id);
+        
+        // Verify all fields
+        $this->assertEquals($unique, data_get($qb_item, 'Name'));
+        $this->assertEquals('Physical product with income account', data_get($qb_item, 'Description'));
+        $this->assertEquals(150.00, floatval(data_get($qb_item, 'UnitPrice')));
+        $this->assertEquals(80.00, floatval(data_get($qb_item, 'PurchaseCost')));
+    }
+
+    /**
+     * Test product with empty string income_account_id uses default.
+     */
+    public function test_product_with_empty_income_account_id_uses_default()
+    {
+        $unique = 'Test Product Empty Account ' . time();
+        $default_income_account_id = $this->qb->getIncomeAccountId();
+        $this->assertNotNull($default_income_account_id);
+
+        $product = ProductFactory::create($this->company->id, $this->user->id);
+        $product->product_key = $unique;
+        $product->notes = 'Product with empty income account';
+        $product->price = 45.00;
+        $product->cost = 20.00;
+        $product->tax_id = Product::PRODUCT_TYPE_SERVICE;
+        $product->income_account_id = ''; // Empty string
+        $product->saveQuietly();
+
+        $this->qb->product->syncToForeign([$product]);
+
+        $product = $product->fresh();
+        $this->assertNotNull($product->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product->sync->qb_id];
+
+        $qb_item = $this->qb->sdk->FindById('Item', $product->sync->qb_id);
+        $this->assertNotNull($qb_item);
+
+        // Verify uses default when empty
+        $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
+        $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
+        $this->assertEquals($default_income_account_id, $actual_account_id, 'Empty income_account_id should fall back to default');
+    }
+
+    /**
+     * Test comprehensive product field mapping for 1:1 verification.
+     */
+    public function test_product_comprehensive_field_mapping()
+    {
+        $unique = 'Test Comprehensive Mapping ' . time();
+        $expected_income_account_id = '1';
+
+        // Create product with all fields populated
+        $product = ProductFactory::create($this->company->id, $this->user->id);
+        $product->product_key = $unique;
+        $product->notes = 'Comprehensive test product with all fields';
+        $product->price = 123.45;
+        $product->cost = 67.89;
+        $product->tax_id = Product::PRODUCT_TYPE_SERVICE;
+        $product->income_account_id = $expected_income_account_id;
+        $product->saveQuietly();
+
+        // Capture original values
+        $original_values = [
+            'product_key' => $product->product_key,
+            'notes' => $product->notes,
+            'price' => $product->price,
+            'cost' => $product->cost,
+            'tax_id' => $product->tax_id,
+            'income_account_id' => $product->income_account_id,
+        ];
+
+        // Push to QuickBooks
+        $this->qb->product->syncToForeign([$product]);
+
+        // Refresh product
+        $product = $product->fresh();
+        $this->assertNotNull($product->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product->sync->qb_id];
+
+        // Fetch from QuickBooks
+        $qb_item = $this->qb->sdk->FindById('Item', $product->sync->qb_id);
+        $this->assertNotNull($qb_item);
+
+        // Verify 1:1 mapping of all fields
+        $this->assertEquals($original_values['product_key'], data_get($qb_item, 'Name'), 'product_key → Name');
+        $this->assertEquals($original_values['notes'], data_get($qb_item, 'Description'), 'notes → Description');
+        $this->assertEquals($original_values['price'], floatval(data_get($qb_item, 'UnitPrice')), 'price → UnitPrice');
+        $this->assertEquals($original_values['cost'], floatval(data_get($qb_item, 'PurchaseCost')), 'cost → PurchaseCost');
+        
+        // Verify type mapping
+        $expected_type = $original_values['tax_id'] == Product::PRODUCT_TYPE_SERVICE ? 'Service' : 'NonInventory';
+        $this->assertEquals($expected_type, data_get($qb_item, 'Type'), 'tax_id → Type');
+        
+        // Verify income account
+        $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
+        $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
+        $this->assertEquals($original_values['income_account_id'], $actual_account_id, 'income_account_id → IncomeAccountRef.value');
+        
+        // Verify product is active
+        $this->assertEquals('true', data_get($qb_item, 'Active'), 'Product should be active');
+    }
+
+    /**
+     * Test multiple products with different income accounts.
+     */
+    public function test_multiple_products_different_income_accounts()
+    {
+        $default_account = $this->qb->getIncomeAccountId();
+        $this->assertNotNull($default_account);
+
+        // Product 1: With income_account_id
+        $product1 = ProductFactory::create($this->company->id, $this->user->id);
+        $product1->product_key = 'Product With Account ' . time();
+        $product1->notes = 'Has income account';
+        $product1->price = 100.00;
+        $product1->tax_id = Product::PRODUCT_TYPE_SERVICE;
+        $product1->income_account_id = '1';
+        $product1->saveQuietly();
+
+        // Product 2: Without income_account_id
+        $product2 = ProductFactory::create($this->company->id, $this->user->id);
+        $product2->product_key = 'Product Without Account ' . time();
+        $product2->notes = 'Uses default account';
+        $product2->price = 200.00;
+        $product2->tax_id = Product::PRODUCT_TYPE_SERVICE;
+        $product2->income_account_id = null;
+        $product2->saveQuietly();
+
+        // Push both
+        $this->qb->product->syncToForeign([$product1, $product2]);
+
+        // Verify product 1
+        $product1 = $product1->fresh();
+        $this->assertNotNull($product1->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product1->sync->qb_id];
+        
+        $qb_item1 = $this->qb->sdk->FindById('Item', $product1->sync->qb_id);
+        $income_account_ref1 = data_get($qb_item1, 'IncomeAccountRef');
+        $account_id1 = is_object($income_account_ref1) ? data_get($income_account_ref1, 'value') : $income_account_ref1;
+        $this->assertEquals('1', $account_id1, 'Product 1 should use specified income account');
+
+        // Verify product 2
+        $product2 = $product2->fresh();
+        $this->assertNotNull($product2->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product2->sync->qb_id];
+        
+        $qb_item2 = $this->qb->sdk->FindById('Item', $product2->sync->qb_id);
+        $income_account_ref2 = data_get($qb_item2, 'IncomeAccountRef');
+        $account_id2 = is_object($income_account_ref2) ? data_get($income_account_ref2, 'value') : $income_account_ref2;
+        $this->assertEquals($default_account, $account_id2, 'Product 2 should use default income account');
+    }
+
     public function test_client_push_to_qb_and_verify()
     {
         $unique = 'Test Client ' . time();
@@ -1619,12 +1931,24 @@ class QuickbooksCanadaTest extends TestCase
                     // Deactivate the item
                     $qb_obj = $this->qb->sdk->FindById('Item', $id);
                     if ($qb_obj) {
-                        $update = \QuickBooksOnline\API\Facades\Item::create([
+                        // Build update array with all required fields
+                        $update_data = [
                             'Id' => $id,
                             'SyncToken' => data_get($qb_obj, 'SyncToken'),
                             'Name' => data_get($qb_obj, 'Name'),
+                            'Type' => data_get($qb_obj, 'Type'), // Required for Minor Version 75+
                             'Active' => false,
-                        ]);
+                        ];
+
+                        // Include account references (required for Item updates)
+                        if ($income_account_ref = data_get($qb_obj, 'IncomeAccountRef')) {
+                            $update_data['IncomeAccountRef'] = $income_account_ref;
+                        }
+                        if ($expense_account_ref = data_get($qb_obj, 'ExpenseAccountRef')) {
+                            $update_data['ExpenseAccountRef'] = $expense_account_ref;
+                        }
+
+                        $update = \QuickBooksOnline\API\Facades\Item::create($update_data);
                         $this->qb->sdk->Update($update);
                     }
                 }

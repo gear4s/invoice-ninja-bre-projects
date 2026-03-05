@@ -79,42 +79,52 @@ class InvoiceTransformer extends BaseTransformer
         }
 
         foreach ($invoice->line_items as $line_item) {
-            // Get product's QuickBooks ID (business logic handled by QbProduct)
-            $product_qb_id = $qb_service->product->findOrCreateProduct($line_item);
+            try {
+                // Get product's QuickBooks ID (business logic handled by QbProduct)
+                $product_qb_id = $qb_service->product->findOrCreateProduct($line_item);
 
-            // Determine TaxCodeRef from line-item taxes only (never invoice-level taxes for QB sync)
-            if (isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])) {
-                $tax_code_id = $exempt_code;
-            } elseif ($ast) {
-                $tax_code_id = $taxable_code;
-            } elseif ($is_us) {
-                // US companies: TaxCodeRef MUST be "TAX" or "NON" — never numeric IDs
-                $tax_code_id = $this->resolveLineTaxCodeUS($line_item, $taxable_code, $exempt_code);
-            } else {
-                // Non-US companies (CA/AU/UK): resolve to numeric TaxCode ID from tax_rate_map
-                $tax_code_id = $this->resolveLineTaxCode($line_item, $tax_rate_map, $taxable_code, $exempt_code);
+                // Skip line items where product creation failed (null or empty)
+                if (empty($product_qb_id)) {
+                    continue;
+                }
+
+                // Determine TaxCodeRef from line-item taxes only (never invoice-level taxes for QB sync)
+                if (isset($line_item->tax_id) && in_array($line_item->tax_id, ['5', '8'])) {
+                    $tax_code_id = $exempt_code;
+                } elseif ($ast) {
+                    $tax_code_id = $taxable_code;
+                } elseif ($is_us) {
+                    // US companies: TaxCodeRef MUST be "TAX" or "NON" — never numeric IDs
+                    $tax_code_id = $this->resolveLineTaxCodeUS($line_item, $taxable_code, $exempt_code);
+                } else {
+                    // Non-US companies (CA/AU/UK): resolve to numeric TaxCode ID from tax_rate_map
+                    $tax_code_id = $this->resolveLineTaxCode($line_item, $tax_rate_map, $taxable_code, $exempt_code);
+                }
+
+                $line_payload = [
+                    'LineNum' => $line_num,
+                    'DetailType' => 'SalesItemLineDetail',
+                    'SalesItemLineDetail' => [
+                        'ItemRef' => [
+                            'value' => $product_qb_id,
+                        ],
+                        'Qty' => $line_item->quantity ?? 1,
+                        'UnitPrice' => $line_item->cost ?? 0,
+                        'TaxCodeRef' => [
+                            'value' => $tax_code_id,
+                        ],
+                    ],
+                    'Description' => $line_item->notes ?? '',
+                    'Amount' => $line_item->line_total ?? ($line_item->cost * ($line_item->quantity ?? 1)),
+                ];
+
+                $line_items[] = $line_payload;
+
+                $line_num++;
+            } catch (\Throwable $e) {
+                // Skip line items that fail to process
+                continue;
             }
-
-            $line_payload = [
-                'LineNum' => $line_num,
-                'DetailType' => 'SalesItemLineDetail',
-                'SalesItemLineDetail' => [
-                    'ItemRef' => [
-                        'value' => $product_qb_id,
-                    ],
-                    'Qty' => $line_item->quantity ?? 1,
-                    'UnitPrice' => $line_item->cost ?? 0,
-                    'TaxCodeRef' => [
-                        'value' => $tax_code_id,
-                    ],
-                ],
-                'Description' => $line_item->notes ?? '',
-                'Amount' => $line_item->line_total ?? ($line_item->cost * ($line_item->quantity ?? 1)),
-            ];
-
-            $line_items[] = $line_payload;
-
-            $line_num++;
         }
 
         // QuickBooks requires at least one line item
