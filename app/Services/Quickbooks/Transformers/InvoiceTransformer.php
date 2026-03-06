@@ -111,7 +111,8 @@ class InvoiceTransformer extends BaseTransformer
                             'value' => $tax_code_id,
                         ],
                     ],
-                    'Description' => $line_item->notes ?? '',
+                    // QuickBooks Description max length is 4000 characters
+                    'Description' => mb_substr($line_item->notes ?? '', 0, 4000),
                     'Amount' => $line_item->line_total ?? ($line_item->cost * ($line_item->quantity ?? 1)),
                 ];
 
@@ -188,12 +189,14 @@ class InvoiceTransformer extends BaseTransformer
                 'value' => $client_qb_id,
             ],
             'BillEmail' => [
-                'Address' => $email,
+                // QuickBooks Email Address max length is 100 characters
+                'Address' => mb_substr($email, 0, 100),
             ],
             'TxnDate' => $invoice->date,
             'DueDate' => $invoice->due_date,
             'TotalAmt' => $invoice->amount,
-            'DocNumber' => $invoice->number,
+            // QuickBooks DocNumber max length is 21 characters
+            'DocNumber' => mb_substr($invoice->number ?? '', 0, 21),
             'ApplyTaxAfterDiscount' => true,
             'PrintStatus' => 'NeedToPrint',
             'EmailStatus' => 'NotSet',
@@ -222,18 +225,21 @@ class InvoiceTransformer extends BaseTransformer
             $memo_value = trim($public_notes . ($public_notes && $terms ? "\n\n" : '') . $terms);
 
             if ($memo_value) {
+                // QuickBooks CustomerMemo max length is 4000 characters
                 $invoice_data['CustomerMemo'] = [
-                    'value' => $memo_value,
+                    'value' => mb_substr($memo_value, 0, 4000),
                 ];
             }
         }
 
         if ($invoice->private_notes) {
-            $invoice_data['PrivateNote'] = $qb_service->helper->cleanHtmlText($invoice->private_notes);
+            // QuickBooks PrivateNote max length is 4000 characters
+            $invoice_data['PrivateNote'] = mb_substr($qb_service->helper->cleanHtmlText($invoice->private_notes), 0, 4000);
         }
 
         if ($invoice->po_number) {
-            $invoice_data['PONumber'] = $invoice->po_number;
+            // QuickBooks PONumber max length is 25 characters
+            $invoice_data['PONumber'] = mb_substr($invoice->po_number, 0, 25);
         }
 
         // QuickBooks uses 'Deposit' field for partial payments/deposits

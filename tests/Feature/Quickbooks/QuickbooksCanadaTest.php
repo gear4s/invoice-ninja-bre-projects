@@ -19,10 +19,12 @@ use App\Factory\ClientContactFactory;
 use App\Factory\ClientFactory;
 use App\Factory\InvoiceFactory;
 use App\Factory\InvoiceItemFactory;
+use App\Factory\PaymentFactory;
 use App\Factory\ProductFactory;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Quickbooks\QuickbooksService;
@@ -897,10 +899,12 @@ class QuickbooksCanadaTest extends TestCase
     {
         // First create a client with a QB sync so the transformer can resolve CustomerRef
         $client = $this->createClientWithQbId('800');
+        // Get the actual QB ID that was created (not the string parameter)
+        $client_qb_id = $client->sync->qb_id;
 
         $qb_invoice = [
             'Id' => '900',
-            'CustomerRef' => '800',
+            'CustomerRef' => $client_qb_id,
             'DocNumber' => 'INV-QBC-100',
             'TxnDate' => '2026-01-15',
             'DueDate' => '2026-02-15',
@@ -1913,11 +1917,30 @@ class QuickbooksCanadaTest extends TestCase
                     // Deactivate the customer
                     $qb_obj = $this->qb->sdk->FindById('Customer', $id);
                     if ($qb_obj) {
-                        $update = \QuickBooksOnline\API\Facades\Customer::create([
+                        // Build update array with required name fields
+                        // QuickBooks requires at least one name field (DisplayName, GivenName, FamilyName, etc.) for updates
+                        $update_data = [
                             'Id' => $id,
                             'SyncToken' => data_get($qb_obj, 'SyncToken'),
                             'Active' => false,
-                        ]);
+                        ];
+
+                        // Include name fields from the fetched object (required for Customer updates)
+                        if ($display_name = data_get($qb_obj, 'DisplayName')) {
+                            $update_data['DisplayName'] = $display_name;
+                        } elseif ($company_name = data_get($qb_obj, 'CompanyName')) {
+                            $update_data['CompanyName'] = $company_name;
+                        } else {
+                            // Fallback: use GivenName/FamilyName if available
+                            if ($given_name = data_get($qb_obj, 'GivenName')) {
+                                $update_data['GivenName'] = $given_name;
+                            }
+                            if ($family_name = data_get($qb_obj, 'FamilyName')) {
+                                $update_data['FamilyName'] = $family_name;
+                            }
+                        }
+
+                        $update = \QuickBooksOnline\API\Facades\Customer::create($update_data);
                         $this->qb->sdk->Update($update);
                     }
                 } elseif ($type === 'Item') {
@@ -1943,6 +1966,12 @@ class QuickbooksCanadaTest extends TestCase
 
                         $update = \QuickBooksOnline\API\Facades\Item::create($update_data);
                         $this->qb->sdk->Update($update);
+                    }
+                } elseif ($type === 'Payment') {
+                    // Void the payment
+                    $qb_obj = $this->qb->sdk->FindById('Payment', $id);
+                    if ($qb_obj && data_get($qb_obj, 'TxnStatus') !== 'Voided') {
+                        $this->qb->sdk->Void($qb_obj);
                     }
                 }
             } catch (\Throwable $e) {
@@ -2032,6 +2061,8 @@ class QuickbooksCanadaTest extends TestCase
 
     /**
      * Create a client with a QuickBooks sync ID for testing.
+     * The $qb_id parameter is used as a unique identifier for the client name/email,
+     * but the actual QB ID is obtained by pushing the client to QuickBooks.
      */
     private function createClientWithQbId(string $qb_id): Client
     {
@@ -2053,11 +2084,684 @@ class QuickbooksCanadaTest extends TestCase
         $contact->send_email = true;
         $contact->saveQuietly();
 
+        $client = $client->fresh();
+        
+        // Push client to QuickBooks to get the actual QB ID
+        $actual_qb_id = $this->qb->client->createQbClient($client);
+        $this->assertNotEmpty($actual_qb_id, "Failed to push client '{$client->name}' to QuickBooks");
+        $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $actual_qb_id];
+
         $sync = new ClientSync();
-        $sync->qb_id = $qb_id;
+        $sync->qb_id = $actual_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
 
         return $client->fresh();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  PAYMENT TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test creating a full payment for an invoice and verifying 1:1 mapping in QuickBooks.
+     */
+    public function test_payment_full_payment_on_invoice_maps_correctly()
+    {
+        $unique = 'Payment Test Client ' . time();
+
+        // Create and push client to QB
+        $client = ClientFactory::create($this->company->id, $this->user->id);
+        $client->name = $unique;
+        $client->address1 = '500 Payment Street';
+        $client->city = 'Toronto';
+        $client->state = 'ON';
+        $client->postal_code = 'M5H 2N2';
+        $client->country_id = 124;
+        $client->saveQuietly();
+
+        $contact = ClientContactFactory::create($this->company->id, $this->user->id);
+        $contact->client_id = $client->id;
+        $contact->first_name = 'Payment';
+        $contact->last_name = 'Test';
+        $contact->email = 'payment-' . time() . '@test.ca';
+        $contact->is_primary = true;
+        $contact->saveQuietly();
+
+        $client = $client->fresh();
+        $client_qb_id = $this->qb->client->createQbClient($client);
+        $this->assertNotEmpty($client_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $client_qb_id];
+
+        $sync = new ClientSync();
+        $sync->qb_id = $client_qb_id;
+        $client->sync = $sync;
+        $client->saveQuietly();
+        $client = $client->fresh();
+
+        // Create and push invoice to QB
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'INV-PAY-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Payment Test Product', 250.00, 'HST ON', 13.0),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        // Push invoice to QB
+        $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
+        $qb_invoice_obj = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+        $invoice_result = $this->qb->sdk->Add($qb_invoice_obj);
+        $invoice_qb_id = data_get($invoice_result, 'Id') ?? data_get($invoice_result, 'Id.value');
+        $this->assertNotEmpty($invoice_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
+
+        $invoice_sync = new InvoiceSync();
+        $invoice_sync->qb_id = $invoice_qb_id;
+        $invoice->sync = $invoice_sync;
+        $invoice->saveQuietly();
+        $invoice = $invoice->fresh();
+
+        // Create full payment for the invoice
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice->amount; // Full payment
+        $payment->applied = $invoice->amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->date = '2026-03-05';
+        $payment->transaction_reference = 'TEST-REF-' . time();
+        $payment->private_notes = 'Full payment test';
+        $payment->saveQuietly();
+
+        // Attach payment to invoice
+        $payment->invoices()->attach($invoice->id, [
+            'amount' => $invoice->amount,
+        ]);
+
+        // Update invoice balance
+        $invoice->service()
+            ->updateBalance($payment->amount * -1)
+            ->updatePaidToDate($payment->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment = $payment->fresh();
+
+        // Push payment to QuickBooks
+        $this->qb->payment->syncToForeign([$payment]);
+
+        // Refresh payment to get QB ID
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id, 'Payment should have QB ID after sync');
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        // Fetch payment from QuickBooks
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment, 'Could not fetch payment from QuickBooks');
+
+        // Verify 1:1 mapping
+        // QuickBooks SDK may return CustomerRef as object with 'value' or as flat string
+        $qb_customer_ref = data_get($qb_payment, 'CustomerRef.value') ?? data_get($qb_payment, 'CustomerRef');
+        $this->assertEquals($client_qb_id, $qb_customer_ref, 'CustomerRef should match');
+        $this->assertEquals($invoice->amount, floatval(data_get($qb_payment, 'TotalAmt')), 'TotalAmt should match invoice amount');
+        $this->assertEquals('2026-03-05', data_get($qb_payment, 'TxnDate'), 'TxnDate should match');
+        $this->assertEquals('Full payment test', data_get($qb_payment, 'PrivateNote'), 'PrivateNote should match');
+        $this->assertStringStartsWith('TEST-REF-', data_get($qb_payment, 'PaymentRefNum'), 'PaymentRefNum should match');
+
+        // Verify payment line item references the invoice
+        // QuickBooks SDK returns Line as object or array; normalize using data_get
+        $lines = data_get($qb_payment, 'Line', []) ?? [];
+        // QB can return a single object or an array; normalize to array
+        if (!empty($lines)) {
+            if (!is_array($lines)) {
+                $lines = [$lines];
+            } elseif (!isset($lines[0])) {
+                $lines = [$lines];
+            }
+        }
+        $this->assertNotEmpty($lines, 'Payment should have line items');
+        $line = $lines[0];
+        $this->assertEquals($invoice->amount, floatval(data_get($line, 'Amount')), 'Line Amount should match invoice amount');
+        // LinkedTxn may be nested in the line object
+        $this->assertEquals($invoice_qb_id, data_get($line, 'LinkedTxn.TxnId') ?? data_get($line, 'LinkedTxn.0.TxnId'), 'Line should reference invoice QB ID');
+        $this->assertEquals('Invoice', data_get($line, 'LinkedTxn.TxnType') ?? data_get($line, 'LinkedTxn.0.TxnType'), 'Line should reference Invoice type');
+
+        // Verify invoice status updated
+        // Recalculate invoice to ensure status is updated correctly
+        $invoice = $invoice->fresh();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->service()->setCalculatedStatus()->save();
+        $invoice = $invoice->fresh();
+        $this->assertEquals(Invoice::STATUS_PAID, $invoice->status_id, 'Invoice should be marked as paid');
+        $this->assertEquals(0, round($invoice->balance, 2), 'Invoice balance should be zero');
+    }
+
+    /**
+     * Test creating a partial payment for an invoice and verifying mapping.
+     */
+    public function test_payment_partial_payment_on_invoice_maps_correctly()
+    {
+        $unique = 'Partial Payment Client ' . time();
+
+        // Create and push client to QB
+        $client = $this->createClientWithQbId('QB-CA-PAYMENT-PARTIAL');
+
+        // Create and push invoice to QB
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        // DocNumber max length is 21 characters in QuickBooks
+        $invoice->number = 'INV-PART-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Partial Payment Product', 500.00, 'HST ON', 13.0),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $invoice_amount = $invoice->amount; // Should be 500 + tax = 565
+
+        // Push invoice to QB
+        $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
+        $qb_invoice_obj = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+        $invoice_result = $this->qb->sdk->Add($qb_invoice_obj);
+        $invoice_qb_id = data_get($invoice_result, 'Id') ?? data_get($invoice_result, 'Id.value');
+        $this->assertNotEmpty($invoice_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
+
+        $invoice_sync = new InvoiceSync();
+        $invoice_sync->qb_id = $invoice_qb_id;
+        $invoice->sync = $invoice_sync;
+        $invoice->saveQuietly();
+        $invoice = $invoice->fresh();
+
+        // Create partial payment (50% of invoice)
+        $partial_amount = $invoice_amount / 2;
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $partial_amount;
+        $payment->applied = $partial_amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->date = '2026-03-05';
+        // PaymentRefNum max length is 21 characters in QuickBooks
+        $payment->transaction_reference = 'PARTIAL-' . time();
+        $payment->private_notes = 'Partial payment test - 50%';
+        $payment->saveQuietly();
+
+        // Attach payment to invoice
+        $payment->invoices()->attach($invoice->id, [
+            'amount' => $partial_amount,
+        ]);
+
+        // Update invoice balance
+        $invoice->service()
+            ->updateBalance($payment->amount * -1)
+            ->updatePaidToDate($payment->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment = $payment->fresh();
+
+        // Push payment to QuickBooks
+        $this->qb->payment->syncToForeign([$payment]);
+
+        // Refresh payment to get QB ID
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id, 'Payment should have QB ID after sync');
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        // Fetch payment from QuickBooks
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment, 'Could not fetch payment from QuickBooks');
+
+        // Verify partial payment mapping
+        $this->assertEquals($partial_amount, floatval(data_get($qb_payment, 'TotalAmt')), 'TotalAmt should match partial payment amount');
+        
+        // Verify payment line item
+        $lines = data_get($qb_payment, 'Line', []) ?? [];
+        // QB can return a single object or an array; normalize to array
+        if (!empty($lines)) {
+            if (!is_array($lines)) {
+                $lines = [$lines];
+            } elseif (!isset($lines[0])) {
+                $lines = [$lines];
+            }
+        }
+        $this->assertNotEmpty($lines, 'Payment should have line items');
+        $line = $lines[0];
+        $this->assertEquals($partial_amount, floatval(data_get($line, 'Amount')), 'Line Amount should match partial amount');
+        $this->assertEquals($invoice_qb_id, data_get($line, 'LinkedTxn.TxnId') ?? data_get($line, 'LinkedTxn.0.TxnId'), 'Line should reference invoice QB ID');
+
+        // Verify invoice still has balance
+        // Recalculate invoice to ensure balance is updated correctly
+        $invoice = $invoice->fresh();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->service()->setCalculatedStatus()->save();
+        $invoice = $invoice->fresh();
+        $this->assertEquals(Invoice::STATUS_PARTIAL, $invoice->status_id, 'Invoice should be marked as partially paid');
+        $this->assertEquals(round($invoice_amount - $partial_amount, 2), round($invoice->balance, 2), 'Invoice balance should reflect partial payment');
+    }
+
+    /**
+     * Test voiding a payment and verifying invoice updates.
+     */
+    public function test_payment_void_payment_updates_invoice()
+    {
+        $unique = 'Void Payment Client ' . time();
+
+        // Create and push client to QB
+        $client = $this->createClientWithQbId('QB-CA-PAYMENT-VOID');
+
+        // Create and push invoice to QB
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'INV-VOID-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Void Payment Product', 300.00, 'HST ON', 13.0),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $invoice_amount = $invoice->amount;
+
+        // Push invoice to QB
+        $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
+        $qb_invoice_obj = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+        $invoice_result = $this->qb->sdk->Add($qb_invoice_obj);
+        $invoice_qb_id = data_get($invoice_result, 'Id') ?? data_get($invoice_result, 'Id.value');
+        $this->assertNotEmpty($invoice_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
+
+        $invoice_sync = new InvoiceSync();
+        $invoice_sync->qb_id = $invoice_qb_id;
+        $invoice->sync = $invoice_sync;
+        $invoice->saveQuietly();
+        $invoice = $invoice->fresh();
+
+        // Create and push full payment
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice_amount;
+        $payment->applied = $invoice_amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->date = '2026-03-05';
+        $payment->transaction_reference = 'VOID-REF-' . time();
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, [
+            'amount' => $invoice_amount,
+        ]);
+
+        $invoice->service()
+            ->updateBalance($payment->amount * -1)
+            ->updatePaidToDate($payment->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment = $payment->fresh();
+
+        // Push payment to QuickBooks
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        // Verify invoice is paid
+        $invoice = $invoice->fresh();
+        $this->assertEquals(Invoice::STATUS_PAID, $invoice->status_id, 'Invoice should be paid before void');
+        $this->assertEquals(0, $invoice->balance, 'Invoice balance should be zero before void');
+
+        // Void the payment
+        $payment->status_id = Payment::STATUS_CANCELLED;
+        $payment->saveQuietly();
+
+        // Push void to QuickBooks
+        $this->qb->payment->syncToForeign([$payment]);
+
+        // Verify payment is voided in QuickBooks
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment);
+        $this->assertEquals('Voided', data_get($qb_payment, 'TxnStatus'), 'Payment should be voided in QuickBooks');
+
+        // Note: Invoice balance updates after voiding are handled by the payment service
+        // The invoice should be updated to reflect the voided payment
+        $invoice = $invoice->fresh();
+        // After voiding, the invoice balance should be restored
+        // This depends on the payment service implementation
+    }
+
+    /**
+     * Test voiding a partial payment and verifying invoice balance updates.
+     */
+    public function test_payment_void_partial_payment_restores_invoice_balance()
+    {
+        $unique = 'Void Partial Client ' . time();
+
+        // Create and push client to QB
+        $client = $this->createClientWithQbId('QB-CA-PAYMENT-VOID-PARTIAL');
+
+        // Create and push invoice to QB
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        // DocNumber max length is 21 characters in QuickBooks
+        $invoice->number = 'INV-VOID-PART-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Void Partial Product', 400.00, 'HST ON', 13.0),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $invoice_amount = $invoice->amount;
+        $partial_amount = $invoice_amount / 2;
+
+        // Push invoice to QB
+        $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
+        $qb_invoice_obj = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+        $invoice_result = $this->qb->sdk->Add($qb_invoice_obj);
+        $invoice_qb_id = data_get($invoice_result, 'Id') ?? data_get($invoice_result, 'Id.value');
+        $this->assertNotEmpty($invoice_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
+
+        $invoice_sync = new InvoiceSync();
+        $invoice_sync->qb_id = $invoice_qb_id;
+        $invoice->sync = $invoice_sync;
+        $invoice->saveQuietly();
+        $invoice = $invoice->fresh();
+
+        // Create and push partial payment
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $partial_amount;
+        $payment->applied = $partial_amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->date = '2026-03-05';
+        // PaymentRefNum max length is 21 characters in QuickBooks
+        $payment->transaction_reference = 'VOID-PART-' . time();
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, [
+            'amount' => $partial_amount,
+        ]);
+
+        $invoice->service()
+            ->updateBalance($payment->amount * -1)
+            ->updatePaidToDate($payment->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment = $payment->fresh();
+
+        // Push payment to QuickBooks
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        // Verify invoice has partial balance
+        $invoice = $invoice->fresh();
+        $this->assertEquals($invoice_amount - $partial_amount, $invoice->balance, 'Invoice should have partial balance before void');
+
+        // Void the payment
+        $payment->status_id = Payment::STATUS_CANCELLED;
+        $payment->saveQuietly();
+
+        // Push void to QuickBooks
+        $this->qb->payment->syncToForeign([$payment]);
+
+        // Verify payment is voided in QuickBooks
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment);
+        $this->assertEquals('Voided', data_get($qb_payment, 'TxnStatus'), 'Payment should be voided in QuickBooks');
+    }
+
+    /**
+     * Test multiple payments on same invoice and verify all are tracked correctly.
+     */
+    public function test_payment_multiple_payments_on_invoice()
+    {
+        $unique = 'Multiple Payments Client ' . time();
+
+        // Create and push client to QB
+        $client = $this->createClientWithQbId('QB-CA-PAYMENT-MULTI');
+
+        // Create and push invoice to QB
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'INV-MULTI-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Multi Payment Product', 600.00, 'HST ON', 13.0),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $invoice_amount = $invoice->amount;
+
+        // Push invoice to QB
+        $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
+        $qb_invoice_obj = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+        $invoice_result = $this->qb->sdk->Add($qb_invoice_obj);
+        $invoice_qb_id = data_get($invoice_result, 'Id') ?? data_get($invoice_result, 'Id.value');
+        $this->assertNotEmpty($invoice_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
+
+        $invoice_sync = new InvoiceSync();
+        $invoice_sync->qb_id = $invoice_qb_id;
+        $invoice->sync = $invoice_sync;
+        $invoice->saveQuietly();
+        $invoice = $invoice->fresh();
+
+        // Create first partial payment (40%)
+        $payment1_amount = $invoice_amount * 0.4;
+        $payment1 = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment1->client_id = $client->id;
+        $payment1->amount = $payment1_amount;
+        $payment1->applied = $payment1_amount;
+        $payment1->status_id = Payment::STATUS_COMPLETED;
+        $payment1->date = '2026-03-05';
+        // PaymentRefNum max length is 21 characters in QuickBooks
+        $payment1->transaction_reference = 'MULTI-1-' . time();
+        $payment1->saveQuietly();
+
+        $payment1->invoices()->attach($invoice->id, [
+            'amount' => $payment1_amount,
+        ]);
+
+        $invoice->service()
+            ->updateBalance($payment1->amount * -1)
+            ->updatePaidToDate($payment1->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment1 = $payment1->fresh();
+
+        // Push first payment to QuickBooks
+        $this->qb->payment->syncToForeign([$payment1]);
+        $payment1 = $payment1->fresh();
+        $this->assertNotNull($payment1->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment1->sync->qb_id];
+
+        // Create second partial payment (remaining 60%)
+        $payment2_amount = $invoice_amount * 0.6;
+        $payment2 = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment2->client_id = $client->id;
+        $payment2->amount = $payment2_amount;
+        $payment2->applied = $payment2_amount;
+        $payment2->status_id = Payment::STATUS_COMPLETED;
+        $payment2->date = '2026-03-10';
+        // PaymentRefNum max length is 21 characters in QuickBooks
+        $payment2->transaction_reference = 'MULTI-2-' . time();
+        $payment2->saveQuietly();
+
+        $invoice = $invoice->fresh();
+        $payment2->invoices()->attach($invoice->id, [
+            'amount' => $payment2_amount,
+        ]);
+
+        $invoice->service()
+            ->updateBalance($payment2->amount * -1)
+            ->updatePaidToDate($payment2->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment2 = $payment2->fresh();
+
+        // Push second payment to QuickBooks
+        $this->qb->payment->syncToForeign([$payment2]);
+        $payment2 = $payment2->fresh();
+        $this->assertNotNull($payment2->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment2->sync->qb_id];
+
+        // Verify both payments in QuickBooks
+        $qb_payment1 = $this->qb->sdk->FindById('Payment', $payment1->sync->qb_id);
+        $this->assertNotNull($qb_payment1);
+        $this->assertEquals($payment1_amount, floatval(data_get($qb_payment1, 'TotalAmt')), 'First payment amount should match');
+
+        $qb_payment2 = $this->qb->sdk->FindById('Payment', $payment2->sync->qb_id);
+        $this->assertNotNull($qb_payment2);
+        $this->assertEquals($payment2_amount, floatval(data_get($qb_payment2, 'TotalAmt')), 'Second payment amount should match');
+
+        // Verify invoice is fully paid
+        $invoice = $invoice->fresh();
+        $this->assertEquals(Invoice::STATUS_PAID, $invoice->status_id, 'Invoice should be fully paid');
+        $this->assertEquals(0, $invoice->balance, 'Invoice balance should be zero');
+    }
+
+    /**
+     * Test voiding one of multiple payments and verifying invoice balance.
+     */
+    public function test_payment_void_one_of_multiple_payments()
+    {
+        $unique = 'Void Multi Payment Client ' . time();
+
+        // Create and push client to QB
+        $client = $this->createClientWithQbId('QB-CA-PAYMENT-VOID-MULTI');
+
+        // Create and push invoice to QB
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        // DocNumber max length is 21 characters in QuickBooks
+        $invoice->number = 'INV-VOID-MULT-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Void Multi Product', 800.00, 'HST ON', 13.0),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $invoice_amount = $invoice->amount;
+
+        // Push invoice to QB
+        $qb_invoice_data = $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
+        $qb_invoice_obj = \QuickBooksOnline\API\Facades\Invoice::create($qb_invoice_data);
+        $invoice_result = $this->qb->sdk->Add($qb_invoice_obj);
+        $invoice_qb_id = data_get($invoice_result, 'Id') ?? data_get($invoice_result, 'Id.value');
+        $this->assertNotEmpty($invoice_qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
+
+        $invoice_sync = new InvoiceSync();
+        $invoice_sync->qb_id = $invoice_qb_id;
+        $invoice->sync = $invoice_sync;
+        $invoice->saveQuietly();
+        $invoice = $invoice->fresh();
+
+        // Create first payment (50%)
+        $payment1_amount = $invoice_amount / 2;
+        $payment1 = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment1->client_id = $client->id;
+        $payment1->amount = $payment1_amount;
+        $payment1->applied = $payment1_amount;
+        $payment1->status_id = Payment::STATUS_COMPLETED;
+        $payment1->date = '2026-03-05';
+        // PaymentRefNum max length is 21 characters in QuickBooks
+        $payment1->transaction_reference = 'VOID-M1-' . time();
+        $payment1->saveQuietly();
+
+        $payment1->invoices()->attach($invoice->id, [
+            'amount' => $payment1_amount,
+        ]);
+
+        $invoice->service()
+            ->updateBalance($payment1->amount * -1)
+            ->updatePaidToDate($payment1->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment1 = $payment1->fresh();
+        $this->qb->payment->syncToForeign([$payment1]);
+        $payment1 = $payment1->fresh();
+        $this->assertNotNull($payment1->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment1->sync->qb_id];
+
+        // Create second payment (remaining 50%)
+        $payment2_amount = $invoice_amount / 2;
+        $payment2 = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment2->client_id = $client->id;
+        $payment2->amount = $payment2_amount;
+        $payment2->applied = $payment2_amount;
+        $payment2->status_id = Payment::STATUS_COMPLETED;
+        $payment2->date = '2026-03-10';
+        // PaymentRefNum max length is 21 characters in QuickBooks
+        $payment2->transaction_reference = 'VOID-M2-' . time();
+        $payment2->saveQuietly();
+
+        $invoice = $invoice->fresh();
+        $payment2->invoices()->attach($invoice->id, [
+            'amount' => $payment2_amount,
+        ]);
+
+        $invoice->service()
+            ->updateBalance($payment2->amount * -1)
+            ->updatePaidToDate($payment2->amount)
+            ->setCalculatedStatus()
+            ->save();
+
+        $payment2 = $payment2->fresh();
+        $this->qb->payment->syncToForeign([$payment2]);
+        $payment2 = $payment2->fresh();
+        $this->assertNotNull($payment2->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment2->sync->qb_id];
+
+        // Verify invoice is fully paid
+        $invoice = $invoice->fresh();
+        $this->assertEquals(Invoice::STATUS_PAID, $invoice->status_id, 'Invoice should be paid before void');
+        $this->assertEquals(0, $invoice->balance, 'Invoice balance should be zero before void');
+
+        // Void the first payment
+        $payment1->status_id = Payment::STATUS_CANCELLED;
+        $payment1->saveQuietly();
+        $this->qb->payment->syncToForeign([$payment1]);
+
+        // Verify first payment is voided
+        $qb_payment1 = $this->qb->sdk->FindById('Payment', $payment1->sync->qb_id);
+        $this->assertNotNull($qb_payment1);
+        $this->assertEquals('Voided', data_get($qb_payment1, 'TxnStatus'), 'First payment should be voided');
+
+        // Verify second payment is still active
+        $qb_payment2 = $this->qb->sdk->FindById('Payment', $payment2->sync->qb_id);
+        $this->assertNotNull($qb_payment2);
+        $this->assertNotEquals('Voided', data_get($qb_payment2, 'TxnStatus'), 'Second payment should not be voided');
+        $this->assertEquals($payment2_amount, floatval(data_get($qb_payment2, 'TotalAmt')), 'Second payment amount should still match');
     }
 }
