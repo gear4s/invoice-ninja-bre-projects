@@ -55,6 +55,30 @@ class CompanyObserver
                 }
             }
 
+
+            /**
+             * If the company is using docuninja company.enable_modules === true AND a sync metadata field has changed, ie:
+             * 
+             * company.settings.name
+             * company.settings.company_logo
+             * company.settings.website
+             * company.settings.address1
+             * company.settings.address2
+             * company.settings.city
+             * company.settings.state
+             * company.settings.postal_code
+             * company.settings.phone
+             * company.settings.email
+             * company.settings.country_id
+             * company.settings.vat_number
+             * company.settings.currency_id
+             * company.settings.timezone_id
+             * company.settings.language_id
+             * company.settings.date_format
+             * 
+             * Then we must use the API to update the company settings in DocuNinja.
+             */
+            
         }
 
     }

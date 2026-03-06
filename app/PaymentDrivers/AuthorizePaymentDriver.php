@@ -45,6 +45,18 @@ class AuthorizePaymentDriver extends BaseDriver
         GatewayType::BANK_TRANSFER => AuthorizeACH::class,
     ];
 
+    /**
+     * Allowed endpoint hosts for custom gateway configuration.
+     * Only URLs whose host matches one of these entries will be accepted.
+     * Authorize.net environments are handled separately via ANetEnvironment constants.
+     */
+    private array $allowed_endpoint_hosts = [
+        'secure.nmi.com',
+        'api.authorize.net',
+        'apitest.authorize.net',
+        'api2.authorize.net',
+    ];
+
     public const SYSTEM_LOG_TYPE = SystemLog::TYPE_AUTHORIZE;
 
     public function setPaymentMethod($payment_method_id)
@@ -170,30 +182,20 @@ class AuthorizePaymentDriver extends BaseDriver
         return $response->getPublicClientKey();
     }
 
-    /**
-     * Allowed endpoint hosts for custom gateway configuration.
-     * Only URLs whose host matches one of these entries will be accepted.
-     * Authorize.net environments are handled separately via ANetEnvironment constants.
-     */
-    private const ALLOWED_ENDPOINT_HOSTS = [
-        'secure.nmi.com',
-    ];
-
     public function mode(): string
     {
+        $test_mode =$this->company_gateway->getConfigField('testMode');
+
         $endpoint = $this->company_gateway->getConfigField(
-            $this->company_gateway->getConfigField('testMode') ? 'developerEndpoint' : 'liveEndpoint'
+            $test_mode ? 'developerEndpoint' : 'liveEndpoint'
         );
 
         if (! empty($endpoint) && $this->isAllowedEndpoint((string) $endpoint)) {
-            return (string) $endpoint;
+            return "https://{$endpoint}";
         }
 
-        if ($this->company_gateway->getConfigField('testMode')) {
-            return ANetEnvironment::SANDBOX;
-        }
-
-        return ANetEnvironment::PRODUCTION;
+        return $test_mode ? ANetEnvironment::SANDBOX : ANetEnvironment::PRODUCTION;
+        
     }
 
     /**
@@ -213,7 +215,7 @@ class AuthorizePaymentDriver extends BaseDriver
             return false;
         }
 
-        return in_array($parsed['host'], self::ALLOWED_ENDPOINT_HOSTS, true);
+        return in_array($parsed['host'], $this->allowed_endpoint_hosts);
     }
 
     public function validationMode()

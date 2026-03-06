@@ -102,60 +102,6 @@ class QuickbooksController extends BaseController
     }
 
     /**
-     * status
-     *
-     * Returns the current QuickBooks connection status including whether reconnection is required.
-     *
-     * @param  Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function status(Request $request)
-    {
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-        $company = $user->company();
-
-        if (!$company->quickbooks || !$company->quickbooks->isConfigured()) {
-            return response()->json([
-                'connected' => false,
-                'requires_reconnect' => false,
-            ]);
-        }
-
-        // Check if flag is already set
-        if ($company->quickbooks->requires_reconnect) {
-            return response()->json([
-                'connected' => true,
-                'requires_reconnect' => true,
-                'reason' => 'token_refresh_failed',
-            ]);
-        }
-
-        // Check refresh token expiration
-        $refresh_expired = $company->quickbooks->refreshTokenExpiresAt > 0 
-            && $company->quickbooks->refreshTokenExpiresAt < time();
-
-        if ($refresh_expired) {
-            // Set the flag for future requests
-            $company->quickbooks->requires_reconnect = true;
-            $company->save();
-            
-            return response()->json([
-                'connected' => true,
-                'requires_reconnect' => true,
-                'reason' => 'refresh_token_expired',
-                'expired_at' => $company->quickbooks->refreshTokenExpiresAt,
-            ]);
-        }
-
-        return response()->json([
-            'connected' => true,
-            'requires_reconnect' => false,
-            'refresh_token_expires_at' => $company->quickbooks->refreshTokenExpiresAt,
-        ]);
-    }
-
-    /**
      * reconnectUrl
      *
      * Returns the URL for the user to reconnect their QuickBooks account.
@@ -176,7 +122,8 @@ class QuickbooksController extends BaseController
         // Generate a one-time token for the reconnect flow
         $token = Str::random(64);
         
-        Cache::put('qb_reconnect_' . $token, [
+        Cache::put($token, [
+            'context' => 'quickbooks.reconnect',
             'company_key' => $company->company_key,
             'user_id' => $user->id,
         ], now()->addMinutes(30));
