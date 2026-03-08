@@ -712,8 +712,8 @@ class QbInvoice implements SyncInterface
         $qb_record = $this->find($id);
 
         if ($this->service->syncable('invoice', \App\Enum\SyncDirection::PULL) && $invoice = $this->findInvoice($id)) {
-            $invoice->sync = null;
-            $invoice->saveQuietly();
+            // $invoice->sync = null;
+            // $invoice->saveQuietly();
             $this->invoice_repository->delete($invoice);
         }
     }
