@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "05003792e6ff08c3d34abc489a7003f1",
+    "content-hash": "1b74189cd9dbfc430f4a65c9c3e0f784",
     "packages": [
         {
             "name": "afosto/yaac",
@@ -4481,65 +4481,6 @@
                 }
             ],
             "time": "2022-05-21T17:30:32+00:00"
-        },
-        {
-            "name": "invoiceninja/admin-api",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../admin-api",
-                "reference": "55444c631b32b7ad71dd6c78bf38fbd5eef5e057"
-            },
-            "require": {
-                "afosto/yaac": "^1.5",
-                "asm/php-ansible": "dev-main",
-                "ext-curl": "*",
-                "ext-dom": "*",
-                "ext-json": "*",
-                "ext-libxml": "*",
-                "ext-simplexml": "*",
-                "illuminate/database": "^11",
-                "illuminate/support": "^11",
-                "imdhemy/laravel-purchases": "^1.7",
-                "php": "^8.2|^8.3|^8.4"
-            },
-            "require-dev": {
-                "larastan/larastan": "^3.0",
-                "orchestra/testbench": "^9.0",
-                "phpstan/phpstan": "^2.0",
-                "phpunit/phpunit": "^11.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "InvoiceNinja\\AdminApi\\Providers\\AdminApiServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "InvoiceNinja\\AdminApi\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Elastic"
-            ],
-            "authors": [
-                {
-                    "name": "David Bomba",
-                    "email": "turbo124@gmail.com"
-                }
-            ],
-            "description": "API endpoints for the admin interface",
-            "transport-options": {
-                "relative": true
-            }
         },
         {
             "name": "invoiceninja/einvoice",
@@ -22169,8 +22110,7 @@
         "asm/php-ansible": 20,
         "beganovich/snappdf": 20,
         "invoiceninja/einvoice": 20,
-        "socialiteproviders/apple": 20,
-        "invoiceninja/admin-api": 20
+        "socialiteproviders/apple": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
