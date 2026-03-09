@@ -26,7 +26,10 @@ use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\PaymentType;
+use App\Models\TaxRate;
 use App\Models\User;
+use App\Services\Quickbooks\Models\QbInvoice;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\ClientTransformer;
 use App\Services\Quickbooks\Transformers\InvoiceTransformer;
@@ -2100,6 +2103,849 @@ class QuickbooksUSATest extends TestCase
     }
 
     // ──────────────────────────────────────────────────────────────────────
+    //  AST TAX RESPONSE PROCESSING TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test that pushing an invoice with AST writes QB-calculated taxes back to Ninja line items.
+     */
+    public function test_ast_tax_response_written_back_to_ninja_line_items()
+    {
+        $ast = $this->company->quickbooks->settings->automatic_taxes;
+        if (!$ast) {
+            $this->markTestSkipped('QBUS company does not have AST enabled');
+        }
+
+        $client = $this->pushClientToQb('AST Tax Test Client ' . time());
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'AST-TAX-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Taxable Widget', 200.00, '', 0, '1', 1),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        // Use syncToForeign which calls processQuickbooksTaxResponse internally
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id, 'Invoice should have QB ID after sync');
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        // Verify QB-calculated taxes were written back to Ninja line items
+        $line_items = $invoice->line_items;
+        $this->assertNotEmpty($line_items);
+
+        $taxable_line = $line_items[0];
+        $this->assertGreaterThan(0, $taxable_line->tax_rate1, 'Taxable line item should have tax_rate1 set by QB AST');
+        $this->assertNotEmpty($taxable_line->tax_name1, 'Taxable line item should have tax_name1 set by QB AST');
+
+        // Invoice-level taxes should be cleared (only line-item taxes used)
+        $this->assertEquals('', $invoice->tax_name1, 'Invoice-level tax_name1 should be empty with AST');
+        $this->assertEquals(0, $invoice->tax_rate1, 'Invoice-level tax_rate1 should be zero with AST');
+    }
+
+    /**
+     * Test AST with mixed taxable and exempt line items — only taxable lines get tax.
+     */
+    public function test_ast_mixed_taxable_exempt_lines_tax_assignment()
+    {
+        $ast = $this->company->quickbooks->settings->automatic_taxes;
+        if (!$ast) {
+            $this->markTestSkipped('QBUS company does not have AST enabled');
+        }
+
+        $client = $this->pushClientToQb('AST Mixed Tax Client ' . time());
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'AST-MIX-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Taxable Product', 150.00, '', 0, '1', 1),
+            $this->makeLineItem('Exempt Product', 100.00, '', 0, '5', 1), // tax_id=5 = exempt
+            $this->makeLineItem('Another Taxable', 250.00, '', 0, '1', 1),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        $line_items = $invoice->line_items;
+        $this->assertCount(3, $line_items);
+
+        // Line 1: Taxable — should have tax
+        $this->assertGreaterThan(0, $line_items[0]->tax_rate1, 'Taxable line 1 should have tax');
+
+        // Line 2: Exempt — should have NO tax
+        $this->assertEquals(0, $line_items[1]->tax_rate1, 'Exempt line should have zero tax rate');
+        $this->assertEquals('', $line_items[1]->tax_name1, 'Exempt line should have empty tax name');
+
+        // Line 3: Taxable — should have tax
+        $this->assertGreaterThan(0, $line_items[2]->tax_rate1, 'Taxable line 2 should have tax');
+    }
+
+    /**
+     * Test AST validates and syncs amounts between QB and Ninja.
+     */
+    public function test_ast_validates_and_syncs_amounts()
+    {
+        $ast = $this->company->quickbooks->settings->automatic_taxes;
+        if (!$ast) {
+            $this->markTestSkipped('QBUS company does not have AST enabled');
+        }
+
+        $client = $this->pushClientToQb('AST Validate Client ' . time());
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'AST-VAL-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Validate Product', 300.00, '', 0, '1', 2),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        // Fetch the QB invoice to compare amounts
+        $qb_inv = $this->qb->sdk->FindById('Invoice', $invoice->sync->qb_id);
+        $this->assertNotNull($qb_inv);
+
+        $qb_total_amt = floatval(data_get($qb_inv, 'TotalAmt'));
+        $qb_total_tax = floatval(data_get($qb_inv, 'TxnTaxDetail.TotalTax'));
+
+        // Ninja amounts should match QB within tolerance (0.01)
+        $this->assertEqualsWithDelta($qb_total_amt, $invoice->amount, 0.02, 'Ninja amount should match QB TotalAmt');
+        $this->assertGreaterThan(0, $qb_total_tax, 'QB should have calculated tax');
+    }
+
+    /**
+     * Test AST creates TaxRate records in Ninja from QB response.
+     */
+    public function test_ast_creates_tax_rate_if_needed()
+    {
+        $ast = $this->company->quickbooks->settings->automatic_taxes;
+        if (!$ast) {
+            $this->markTestSkipped('QBUS company does not have AST enabled');
+        }
+
+        $client = $this->pushClientToQb('AST TaxRate Client ' . time());
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'AST-TR-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('TaxRate Test Product', 100.00, '', 0, '1', 1),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        // After AST processing, the tax name/rate from the line item should exist as a TaxRate
+        $line_items = $invoice->line_items;
+        if ($line_items[0]->tax_rate1 > 0) {
+            $tax_rate = TaxRate::where('company_id', $this->company->id)
+                ->where('name', $line_items[0]->tax_name1)
+                ->where('rate', $line_items[0]->tax_rate1)
+                ->first();
+
+            $this->assertNotNull($tax_rate, 'TaxRate should be created from QB AST response');
+        }
+    }
+
+    /**
+     * Test AST with all exempt lines — no taxes applied.
+     */
+    public function test_ast_all_exempt_lines_no_taxes()
+    {
+        $ast = $this->company->quickbooks->settings->automatic_taxes;
+        if (!$ast) {
+            $this->markTestSkipped('QBUS company does not have AST enabled');
+        }
+
+        $client = $this->pushClientToQb('AST Exempt Client ' . time());
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'AST-EXM-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Exempt A', 100.00, '', 0, '5', 1),
+            $this->makeLineItem('Exempt B', 200.00, '', 0, '5', 1),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        // Fetch QB invoice — should have zero tax
+        $qb_inv = $this->qb->sdk->FindById('Invoice', $invoice->sync->qb_id);
+        $qb_total_tax = floatval(data_get($qb_inv, 'TxnTaxDetail.TotalTax', 0));
+        $this->assertEquals(0, $qb_total_tax, 'All-exempt invoice should have zero tax');
+
+        // Ninja line items should have no taxes
+        foreach ($invoice->line_items as $line) {
+            $this->assertEquals(0, $line->tax_rate1, 'Exempt line should have zero tax rate');
+        }
+    }
+
+    /**
+     * Test AST aggregates multi-jurisdiction taxes (state + county + city) into single rate.
+     */
+    public function test_ast_multi_tax_jurisdiction_aggregation()
+    {
+        $ast = $this->company->quickbooks->settings->automatic_taxes;
+        if (!$ast) {
+            $this->markTestSkipped('QBUS company does not have AST enabled');
+        }
+
+        $client = $this->pushClientToQb('AST Multi-Tax Client ' . time());
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = 'AST-MTX-' . time();
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Multi-Tax Product', 500.00, '', 0, '1', 1),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        // Verify that taxes are aggregated into tax_name1/tax_rate1 only
+        // (tax_name2/3 and tax_rate2/3 should be empty/zero)
+        $line = $invoice->line_items[0];
+        if ($line->tax_rate1 > 0) {
+            $this->assertNotEmpty($line->tax_name1, 'Aggregated tax should have a name');
+            $this->assertEquals('', $line->tax_name2, 'tax_name2 should be empty (aggregated into tax_name1)');
+            $this->assertEquals(0, $line->tax_rate2, 'tax_rate2 should be zero (aggregated into tax_rate1)');
+            $this->assertEquals('', $line->tax_name3, 'tax_name3 should be empty');
+            $this->assertEquals(0, $line->tax_rate3, 'tax_rate3 should be zero');
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  PAYMENT METHOD MAPPING TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test cash payment maps to correct QB PaymentMethodRef.
+     */
+    public function test_payment_method_cash_maps_correctly()
+    {
+        $client = $this->pushClientToQb('Cash Payment Client ' . time());
+
+        $invoice = $this->pushInvoiceToQb($client, 'INV-CASH-' . time(), 100.00);
+
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice->amount;
+        $payment->applied = $invoice->amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->type_id = PaymentType::CASH;
+        $payment->date = '2026-03-05';
+        $payment->transaction_reference = 'CASH-' . time();
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, ['amount' => $invoice->amount]);
+        $invoice->service()->updateBalance($payment->amount * -1)->updatePaidToDate($payment->amount)->setCalculatedStatus()->save();
+
+        $payment = $payment->fresh();
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        // Fetch from QB and check PaymentMethodRef
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment);
+
+        $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
+        // PaymentMethodRef should be set if the payment_method_map has a Cash entry
+        $method_map = $this->company->quickbooks->settings->payment_method_map ?? [];
+        $has_cash = collect($method_map)->contains(fn($m) => strcasecmp($m['name'] ?? '', 'Cash') === 0);
+        if ($has_cash) {
+            $this->assertNotEmpty($payment_method_ref, 'Cash payment should have PaymentMethodRef');
+        }
+    }
+
+    /**
+     * Test credit card payment maps to QB PaymentMethodRef.
+     */
+    public function test_payment_method_credit_card_maps_correctly()
+    {
+        $client = $this->pushClientToQb('CC Payment Client ' . time());
+
+        $invoice = $this->pushInvoiceToQb($client, 'INV-CC-' . time(), 150.00);
+
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice->amount;
+        $payment->applied = $invoice->amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->type_id = PaymentType::VISA;
+        $payment->date = '2026-03-05';
+        $payment->transaction_reference = 'CC-' . time();
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, ['amount' => $invoice->amount]);
+        $invoice->service()->updateBalance($payment->amount * -1)->updatePaidToDate($payment->amount)->setCalculatedStatus()->save();
+
+        $payment = $payment->fresh();
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment);
+
+        // Verify PaymentMethodRef exists if map has credit card entry
+        $method_map = $this->company->quickbooks->settings->payment_method_map ?? [];
+        $has_cc = collect($method_map)->contains(fn($m) => strcasecmp($m['type'] ?? '', 'CREDIT_CARD') === 0);
+        if ($has_cc) {
+            $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
+            $this->assertNotEmpty($payment_method_ref, 'Credit card payment should have PaymentMethodRef');
+        }
+    }
+
+    /**
+     * Test check/bank transfer payment maps to QB PaymentMethodRef.
+     */
+    public function test_payment_method_check_maps_correctly()
+    {
+        $client = $this->pushClientToQb('Check Payment Client ' . time());
+
+        $invoice = $this->pushInvoiceToQb($client, 'INV-CHK-' . time(), 200.00);
+
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice->amount;
+        $payment->applied = $invoice->amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->type_id = PaymentType::CHECK;
+        $payment->date = '2026-03-05';
+        $payment->transaction_reference = 'CHK-' . time();
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, ['amount' => $invoice->amount]);
+        $invoice->service()->updateBalance($payment->amount * -1)->updatePaidToDate($payment->amount)->setCalculatedStatus()->save();
+
+        $payment = $payment->fresh();
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment);
+
+        $method_map = $this->company->quickbooks->settings->payment_method_map ?? [];
+        $has_check = collect($method_map)->contains(fn($m) => strcasecmp($m['name'] ?? '', 'Check') === 0);
+        if ($has_check) {
+            $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
+            $this->assertNotEmpty($payment_method_ref, 'Check payment should have PaymentMethodRef');
+        }
+    }
+
+    /**
+     * Test payment with unknown type_id has no PaymentMethodRef.
+     */
+    public function test_payment_method_unknown_type_no_ref()
+    {
+        $client = $this->pushClientToQb('Unknown Payment Client ' . time());
+
+        $invoice = $this->pushInvoiceToQb($client, 'INV-UNK-' . time(), 75.00);
+
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice->amount;
+        $payment->applied = $invoice->amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->type_id = null; // No type set
+        $payment->date = '2026-03-05';
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, ['amount' => $invoice->amount]);
+        $invoice->service()->updateBalance($payment->amount * -1)->updatePaidToDate($payment->amount)->setCalculatedStatus()->save();
+
+        $payment = $payment->fresh();
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        $qb_payment = $this->qb->sdk->FindById('Payment', $payment->sync->qb_id);
+        $this->assertNotNull($qb_payment);
+
+        // No type_id should result in no PaymentMethodRef
+        $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
+        $this->assertEmpty($payment_method_ref, 'Null type_id should have no PaymentMethodRef');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  CREDIT MEMO / ZERO-AMOUNT PAYMENT TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test QB payment import with amount=0 creates a credit memo.
+     */
+    public function test_credit_memo_from_zero_amount_payment()
+    {
+        // Create a client with QB ID for the transformer to resolve
+        $client = $this->createClientWithQbId('QB-US-CREDIT-MEMO');
+
+        $transformer = new \App\Services\Quickbooks\Transformers\PaymentTransformer($this->company);
+
+        // Simulate a QB payment with amount=0 (credit memo)
+        $qb_payment_data = [
+            'Id' => 'CM-' . time(),
+            'TotalAmt' => 0,
+            'UnappliedAmt' => 0,
+            'TxnDate' => '2026-03-05',
+            'CustomerRef' => $client->sync->qb_id,
+            'CurrencyRef' => 'USD',
+            'PrivateNote' => 'Credit memo test',
+            'Line' => [
+                [
+                    'Amount' => 50.00,
+                    'LinkedTxn' => [
+                        'TxnId' => 'CM-TXN-123',
+                        'TxnType' => 'CreditMemo',
+                    ],
+                ],
+            ],
+        ];
+
+        $payment = $transformer->buildPayment($qb_payment_data);
+
+        $this->assertNotNull($payment, 'Payment should be created from credit memo');
+        $this->assertEquals(0, $payment->amount, 'Credit memo payment should have amount=0');
+        $this->assertEquals(PaymentType::CREDIT, $payment->type_id, 'Credit memo should have CREDIT type');
+
+        // Verify credit was created
+        $credit = \App\Models\Credit::where('client_id', $client->id)
+            ->where('amount', 50.00)
+            ->first();
+
+        $this->assertNotNull($credit, 'Credit record should be created from credit memo');
+        $this->assertEquals(50.00, $credit->amount, 'Credit amount should match');
+        $this->assertEquals(4, $credit->status_id, 'Credit should be completed');
+
+        // Verify paymentable links payment to credit
+        $paymentable = \App\Models\Paymentable::where('payment_id', $payment->id)
+            ->where('paymentable_type', \App\Models\Credit::class)
+            ->first();
+        $this->assertNotNull($paymentable, 'Paymentable should link payment to credit');
+        $this->assertEquals(50.00, $paymentable->amount, 'Paymentable amount should match credit');
+    }
+
+    /**
+     * Test QB payment import with amount>0 does NOT create a credit memo.
+     */
+    public function test_normal_payment_does_not_create_credit()
+    {
+        $client = $this->createClientWithQbId('QB-US-NO-CREDIT');
+
+        $transformer = new \App\Services\Quickbooks\Transformers\PaymentTransformer($this->company);
+
+        $qb_payment_data = [
+            'Id' => 'PAY-NORM-' . time(),
+            'TotalAmt' => 100.00,
+            'UnappliedAmt' => 0,
+            'TxnDate' => '2026-03-05',
+            'CustomerRef' => $client->sync->qb_id,
+            'CurrencyRef' => 'USD',
+            'Line' => [
+                [
+                    'Amount' => 100.00,
+                    'LinkedTxn' => [
+                        'TxnId' => 'INV-123',
+                        'TxnType' => 'Invoice',
+                    ],
+                ],
+            ],
+        ];
+
+        $payment = $transformer->buildPayment($qb_payment_data);
+
+        $this->assertNotNull($payment);
+        $this->assertEquals(100.00, $payment->amount, 'Normal payment should have correct amount');
+        $this->assertNotEquals(PaymentType::CREDIT, $payment->type_id, 'Normal payment should NOT have CREDIT type');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  PAYMENT CLOSED-PERIOD ERROR HANDLING TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test immutable payment is skipped during sync.
+     */
+    public function test_immutable_payment_skipped_during_sync()
+    {
+        $client = $this->pushClientToQb('Immutable Payment Client ' . time());
+
+        $invoice = $this->pushInvoiceToQb($client, 'INV-IMM-' . time(), 100.00);
+
+        // Create payment and push to QB
+        $payment = PaymentFactory::create($this->company->id, $this->user->id);
+        $payment->client_id = $client->id;
+        $payment->amount = $invoice->amount;
+        $payment->applied = $invoice->amount;
+        $payment->status_id = Payment::STATUS_COMPLETED;
+        $payment->date = '2026-03-05';
+        $payment->saveQuietly();
+
+        $payment->invoices()->attach($invoice->id, ['amount' => $invoice->amount]);
+        $invoice->service()->updateBalance($payment->amount * -1)->updatePaidToDate($payment->amount)->setCalculatedStatus()->save();
+
+        $payment = $payment->fresh();
+        $this->qb->payment->syncToForeign([$payment]);
+        $payment = $payment->fresh();
+        $this->assertNotNull($payment->sync->qb_id);
+        $this->qb_cleanup[] = ['type' => 'Payment', 'id' => $payment->sync->qb_id];
+
+        $original_qb_id = $payment->sync->qb_id;
+
+        // Flag payment as immutable (simulating closed period)
+        $sync = $payment->sync;
+        $sync->qb_immutable = true;
+        $payment->sync = $sync;
+        $payment->status_id = Payment::STATUS_CANCELLED;
+        $payment->saveQuietly();
+
+        // Try to void — should be skipped
+        $this->qb->payment->syncToForeign([$payment]);
+
+        $payment = $payment->fresh();
+        // QB ID should remain unchanged because the void was skipped
+        $this->assertEquals($original_qb_id, $payment->sync->qb_id, 'Immutable payment QB ID should not be cleared');
+    }
+
+    /**
+     * Test isClosedPeriodError detects closed period patterns.
+     */
+    public function test_closed_period_error_detection()
+    {
+        // Use reflection to test the private method
+        $qb_payment = new \App\Services\Quickbooks\Models\QbPayment($this->qb);
+        $method = new \ReflectionMethod($qb_payment, 'isClosedPeriodError');
+
+        $this->assertTrue($method->invoke($qb_payment, 'The period has been closed'), 'Should detect "period has been closed"');
+        $this->assertTrue($method->invoke($qb_payment, 'Error 6140: Closed period transaction'), 'Should detect "error 6140"');
+        $this->assertTrue($method->invoke($qb_payment, 'Error 6210: Cannot modify'), 'Should detect "error 6210"');
+        $this->assertTrue($method->invoke($qb_payment, 'Business validation error occurred'), 'Should detect "business validation error"');
+        $this->assertTrue($method->invoke($qb_payment, "You can't void this transaction"), 'Should detect "you can\'t void"');
+        $this->assertFalse($method->invoke($qb_payment, 'Network timeout'), 'Should not match unrelated errors');
+        $this->assertFalse($method->invoke($qb_payment, 'Invalid amount'), 'Should not match unrelated errors');
+    }
+
+    /**
+     * Test extractReadableError parses XML errors from QB.
+     */
+    public function test_extract_readable_error_from_xml()
+    {
+        $qb_payment = new \App\Services\Quickbooks\Models\QbPayment($this->qb);
+        $method = new \ReflectionMethod($qb_payment, 'extractReadableError');
+
+        // Test XML parsing
+        $xml_error = 'Request is not made successful. with body: [<?xml version="1.0"?><IntuitResponse><Fault><Error><Message>Business Validation Error</Message><Detail>Period is closed</Detail></Error></Fault></IntuitResponse>]';
+        $result = $method->invoke($qb_payment, $xml_error);
+        $this->assertStringContainsString('Business Validation Error', $result);
+        $this->assertStringContainsString('Period is closed', $result);
+
+        // Test fallback when no XML
+        $plain_error = 'Request is not made successful. Something went wrong';
+        $result = $method->invoke($qb_payment, $plain_error);
+        $this->assertStringContainsString('Something went wrong', $result);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  PRODUCT CATEGORY/GROUP SKIP TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test that Category items are skipped during syncToNinja.
+     */
+    public function test_product_sync_skips_category_items()
+    {
+        $qb_category_item = [
+            'Id' => 'CAT-' . time(),
+            'Name' => 'Electronics Category',
+            'Type' => 'Category',
+        ];
+
+        // Count products before sync
+        $product_count_before = Product::where('company_id', $this->company->id)->count();
+
+        // syncToNinja should skip Category items
+        $this->qb->product->syncToNinja([$qb_category_item]);
+
+        $product_count_after = Product::where('company_id', $this->company->id)->count();
+
+        $this->assertEquals($product_count_before, $product_count_after, 'Category items should be skipped during sync');
+    }
+
+    /**
+     * Test that Group items are skipped during syncToNinja.
+     */
+    public function test_product_sync_skips_group_items()
+    {
+        $qb_group_item = [
+            'Id' => 'GRP-' . time(),
+            'Name' => 'Bundle Group',
+            'Type' => 'Group',
+        ];
+
+        $product_count_before = Product::where('company_id', $this->company->id)->count();
+
+        $this->qb->product->syncToNinja([$qb_group_item]);
+
+        $product_count_after = Product::where('company_id', $this->company->id)->count();
+
+        $this->assertEquals($product_count_before, $product_count_after, 'Group items should be skipped during sync');
+    }
+
+    /**
+     * Test findOrCreateProduct excludes Category/Group types in QB query.
+     */
+    public function test_find_or_create_product_excludes_categories()
+    {
+        $unique = 'Valid Product ' . time();
+
+        $line_item = InvoiceItemFactory::create();
+        $line_item->product_key = $unique;
+        $line_item->notes = 'Test product that should not match categories';
+        $line_item->cost = 50.00;
+        $line_item->quantity = 1;
+        $line_item->type_id = '1';
+        $line_item->tax_id = '1';
+
+        // This should create a new product (Service/NonInventory), never match a Category
+        $qb_id = $this->qb->product->findOrCreateProduct($line_item);
+        $this->assertNotEmpty($qb_id, 'Should create a new product');
+        $this->qb_cleanup[] = ['type' => 'Item', 'id' => $qb_id];
+
+        // Verify the created item is not a Category
+        $qb_item = $this->qb->sdk->FindById('Item', $qb_id);
+        $this->assertNotEquals('Category', data_get($qb_item, 'Type'), 'Created item should not be Category');
+        $this->assertNotEquals('Group', data_get($qb_item, 'Type'), 'Created item should not be Group');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  DUPLICATE CLIENT DISPLAY NAME RESOLUTION TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test createQbClient resolves existing customer by display name instead of creating duplicate.
+     */
+    public function test_client_duplicate_display_name_resolved()
+    {
+        $unique = 'Duplicate Test Client ' . time();
+
+        // First push: creates the customer in QB
+        $client1 = ClientFactory::create($this->company->id, $this->user->id);
+        $client1->name = $unique;
+        $client1->address1 = '100 First Avenue';
+        $client1->city = 'New York';
+        $client1->state = 'NY';
+        $client1->postal_code = '10001';
+        $client1->country_id = 840;
+        $client1->saveQuietly();
+
+        $contact1 = ClientContactFactory::create($this->company->id, $this->user->id);
+        $contact1->client_id = $client1->id;
+        $contact1->first_name = 'First';
+        $contact1->last_name = 'Contact';
+        $contact1->email = 'first-' . time() . '@dup-test.com';
+        $contact1->is_primary = true;
+        $contact1->saveQuietly();
+
+        $client1 = $client1->fresh();
+        $qb_id_1 = $this->qb->client->createQbClient($client1);
+        $this->assertNotEmpty($qb_id_1);
+        $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $qb_id_1];
+
+        // Second push: different Ninja client with SAME name, no sync->qb_id
+        // Should find existing QB customer by display name
+        $client2 = ClientFactory::create($this->company->id, $this->user->id);
+        $client2->name = $unique; // Same name
+        $client2->address1 = '200 Second Avenue';
+        $client2->city = 'Boston';
+        $client2->state = 'MA';
+        $client2->postal_code = '02101';
+        $client2->country_id = 840;
+        $client2->saveQuietly();
+
+        $contact2 = ClientContactFactory::create($this->company->id, $this->user->id);
+        $contact2->client_id = $client2->id;
+        $contact2->first_name = 'Second';
+        $contact2->last_name = 'Contact';
+        $contact2->email = 'second-' . time() . '@dup-test.com';
+        $contact2->is_primary = true;
+        $contact2->saveQuietly();
+
+        $client2 = $client2->fresh();
+        $qb_id_2 = $this->qb->client->createQbClient($client2);
+        $this->assertNotEmpty($qb_id_2);
+
+        // Should resolve to the SAME QB customer ID (not create a duplicate)
+        $this->assertEquals($qb_id_1, $qb_id_2, 'Second client with same name should resolve to existing QB customer');
+
+        // Verify client2 now has the sync->qb_id set
+        $client2 = $client2->fresh();
+        $this->assertEquals($qb_id_1, $client2->sync->qb_id, 'Client 2 should have QB ID stored from name resolution');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  SALES RECEIPT / IMPORT TESTS
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Test QB invoice pull (qbToNinja) handles line items with TAX code correctly.
+     */
+    public function test_invoice_pull_with_tax_line_items()
+    {
+        $client = $this->createClientWithQbId('QB-US-PULL-TAX');
+        $client_qb_id = $client->sync->qb_id;
+
+        $qb_invoice = [
+            'Id' => 'PULL-TAX-' . time(),
+            'CustomerRef' => $client_qb_id,
+            'DocNumber' => 'INV-PULL-TAX',
+            'TxnDate' => '2026-03-01',
+            'DueDate' => '2026-03-31',
+            'Balance' => 216.50,
+            'TotalAmt' => 216.50,
+            'Line' => [
+                [
+                    'DetailType' => 'SalesItemLineDetail',
+                    'Amount' => 200.00,
+                    'Description' => 'Taxable product',
+                    'SalesItemLineDetail' => [
+                        'ItemRef' => ['name' => 'Widget'],
+                        'Qty' => 2,
+                        'UnitPrice' => 100.00,
+                        'TaxCodeRef' => ['value' => 'TAX'],
+                    ],
+                ],
+            ],
+            'TxnTaxDetail' => [
+                'TotalTax' => 16.50,
+                'TaxLine' => [
+                    [
+                        'Amount' => 16.50,
+                        'DetailType' => 'TaxLineDetail',
+                        'TaxLineDetail' => [
+                            'TaxRateRef' => ['value' => '1'],
+                            'TaxPercent' => 8.25,
+                            'NetAmountTaxable' => 200.00,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $this->invoice_transformer->qbToNinja($qb_invoice, $this->qb);
+
+        $this->assertIsArray($result);
+        $this->assertEquals($client->id, $result['client_id']);
+        $this->assertEquals('INV-PULL-TAX', $result['number']);
+        $this->assertEquals(216.50, $result['balance']);
+
+        // Verify line items exist (requires qb_service for helper->getLineItems)
+        $this->assertArrayHasKey('line_items', $result);
+        $this->assertNotEmpty($result['line_items']);
+    }
+
+    /**
+     * Test QB invoice pull with NON (exempt) line items.
+     */
+    public function test_invoice_pull_with_exempt_line_items()
+    {
+        $client = $this->createClientWithQbId('QB-US-PULL-NON');
+        $client_qb_id = $client->sync->qb_id;
+
+        $qb_invoice = [
+            'Id' => 'PULL-NON-' . time(),
+            'CustomerRef' => $client_qb_id,
+            'DocNumber' => 'INV-PULL-NON',
+            'TxnDate' => '2026-03-01',
+            'DueDate' => '2026-03-31',
+            'Balance' => 50.00,
+            'TotalAmt' => 50.00,
+            'Line' => [
+                [
+                    'DetailType' => 'SalesItemLineDetail',
+                    'Amount' => 50.00,
+                    'Description' => 'Exempt product',
+                    'SalesItemLineDetail' => [
+                        'ItemRef' => ['name' => 'Gift Card'],
+                        'Qty' => 1,
+                        'UnitPrice' => 50.00,
+                        'TaxCodeRef' => ['value' => 'NON'],
+                    ],
+                ],
+            ],
+            'TxnTaxDetail' => [
+                'TotalTax' => 0,
+            ],
+        ];
+
+        $result = $this->invoice_transformer->qbToNinja($qb_invoice, $this->qb);
+
+        $this->assertIsArray($result);
+        $this->assertEquals(50.00, $result['balance']);
+        $this->assertEquals(0, floatval(data_get($qb_invoice, 'TxnTaxDetail.TotalTax')));
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
     //  PRIVATE HELPER METHODS
     // ──────────────────────────────────────────────────────────────────────
 
@@ -2138,6 +2984,34 @@ class QuickbooksUSATest extends TestCase
         $client->saveQuietly();
 
         return $client->fresh();
+    }
+
+    /**
+     * Push an invoice to QuickBooks and return the saved invoice with sync ID.
+     */
+    private function pushInvoiceToQb(Client $client, string $number, float $amount): Invoice
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $client->id;
+        $invoice->number = $number;
+        $invoice->date = '2026-03-01';
+        $invoice->due_date = '2026-03-31';
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->line_items = [
+            $this->makeLineItem('Product ' . $number, $amount, '', 0, '1', 1),
+        ];
+        $invoice->saveQuietly();
+        $invoice = $invoice->calc()->getInvoice();
+        $invoice->saveQuietly();
+
+        // Push via syncToForeign to get AST tax processing
+        $this->qb->invoice->syncToForeign([$invoice]);
+
+        $invoice = $invoice->fresh();
+        $this->assertNotNull($invoice->sync->qb_id, "Failed to push invoice '{$number}' to QuickBooks");
+        $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice->sync->qb_id];
+
+        return $invoice;
     }
 
     /**
