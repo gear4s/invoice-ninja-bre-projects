@@ -100,6 +100,7 @@ class UpdateInvoiceRequest extends Request
             'sometimes',
             'nullable',
             function ($attribute, $value, $fail) {
+
                 if (BcMath::comp($this->invoice->fresh()->paid_to_date, $value) !== 0) {
                     $fail(ctrans('texts.invoice_status_changed'));
                 }
