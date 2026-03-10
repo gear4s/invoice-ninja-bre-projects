@@ -309,7 +309,7 @@ class Account extends BaseModel
     public function isPremium(): bool
     {
         // return true;
-        return Ninja::isHosted() && $this->isPaidHostedClient() && !$this->isTrial() && Carbon::createFromTimestamp($this->created_at)->diffInMonths() > 2;
+        return Ninja::isHosted() && $this->isPaidHostedClient() && !$this->isTrial() && (int) Carbon::createFromTimestamp($this->created_at)->diffInMonths() > 2;
     }
 
     public function isPaidHostedClient(): bool
@@ -377,7 +377,7 @@ class Account extends BaseModel
 
     public function isNewHostedAccount()
     {
-        return Ninja::isHosted() && Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 2;
+        return Ninja::isHosted() && (int) Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 2;
     }
 
     public function isTrial(): bool
@@ -513,11 +513,11 @@ class Account extends BaseModel
             return (int) $this->email_quota;
         }
 
-        if (Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 1) {
+        if ((int) Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 1) {
             return 20;
         }
 
-        if (Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 2 && !$this->payment_id) {
+        if ((int) Carbon::createFromTimestamp($this->created_at)->diffInWeeks() <= 2 && !$this->payment_id) {
             return 20;
         }
 
@@ -525,7 +525,7 @@ class Account extends BaseModel
             $multiplier = $this->plan == 'enterprise' ? 2 : 1.2;
 
             $limit = $this->paid_plan_email_quota;
-            $limit += Carbon::createFromTimestamp($this->created_at)->diffInMonths() * (20 * $multiplier);
+            $limit += (int) Carbon::createFromTimestamp($this->created_at)->diffInMonths() * (20 * $multiplier);
         } else {
             $limit = $this->free_plan_email_quota;
             // $limit += Carbon::createFromTimestamp($this->created_at)->diffInMonths() * 1.5;
