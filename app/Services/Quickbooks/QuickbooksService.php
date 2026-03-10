@@ -91,15 +91,23 @@ class QuickbooksService
                 'baseUrl' => $this->testMode ? CoreConstants::SANDBOX_DEVELOPMENT : CoreConstants::QBO_BASEURL,
             ];
 
-            $merged = array_merge($config, $this->ninjaAccessToken());
+            // Don't merge expired tokens when reconnection is required
+            // This allows getAuthorizationUrl() to work correctly
+            $requires_reconnect = $this->company->quickbooks && $this->company->quickbooks->requires_reconnect;
+            
+            if (!$requires_reconnect) {
+                $config = array_merge($config, $this->ninjaAccessToken());
+            }
 
-            $this->sdk = DataService::Configure($merged);
+            $this->sdk = DataService::Configure($config);
 
             $this->sdk->enableLog();
             $this->sdk->setMinorVersion("75");
             $this->sdk->throwExceptionOnError(true);
 
+            if (!$requires_reconnect) {
             $this->checkToken();
+            }
         }
 
         $this->invoice = new QbInvoice($this);
@@ -163,6 +171,7 @@ class QuickbooksService
                 && $this->company->quickbooks->refreshTokenExpiresAt < time();
             
             if ($refresh_token_expired) {
+                $this->markRequiresReconnect();
                 nlog('Quickbooks tokens expired (both access and refresh) => ' . $this->company->company_key);
                 throw new \Exception('Quickbooks tokens expired (both access and refresh)');
             }
@@ -177,6 +186,7 @@ class QuickbooksService
                 if (str_contains($error_message, 'invalid_grant') || str_contains($error_message, 'refresh token')) {
                     // Refresh token is invalid/expired - don't try to disconnect (which would also fail)
                     nlog('Quickbooks refresh token invalid/expired => ' . $this->company->company_key);
+                    $this->markRequiresReconnect();
                     throw new \Exception('Quickbooks refresh token invalid/expired');
                 }
                 
@@ -201,6 +211,14 @@ class QuickbooksService
 
         throw new \Exception('Quickbooks token expired and could not be refreshed');
 
+    }
+
+    private function markRequiresReconnect(): void
+    {
+        if ($this->company->quickbooks) {
+            $this->company->quickbooks->requires_reconnect = true;
+            $this->company->save();
+        }
     }
 
     /**

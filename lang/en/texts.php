@@ -5931,7 +5931,7 @@ $lang = array(
     'bidirectional' => 'Bidirectional',
     'sync_started' => 'Sync has started',
     'quickbooks_read_only_data' => 'QuickBooks Income Accounts and Stored Tax Rates',
-    
+    'hide_peppol_sent_status' => 'Hide Peppol Sent Status',
 );
 
 return $lang;
