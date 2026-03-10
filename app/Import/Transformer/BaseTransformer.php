@@ -204,9 +204,11 @@ class BaseTransformer
     public function getAutoBillFlag(string $option): string
     {
         switch ($option) {
+            case 'no':
             case 'off':
             case 'false':
                 return 'off';
+            case 'yes':
             case 'always':
             case 'true':
                 return 'always';

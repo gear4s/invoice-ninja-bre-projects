@@ -704,7 +704,7 @@ class CompanyExport implements ShouldQueue
                 try {
                     $content = $document->getFile();
 
-                    if ($content === false) {
+                    if ($content === false || is_null($content)) {
                         continue;
                     }
 
