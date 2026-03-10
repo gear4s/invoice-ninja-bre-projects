@@ -5932,6 +5932,8 @@ $lang = array(
     'sync_started' => 'Sync has started',
     'quickbooks_read_only_data' => 'QuickBooks Income Accounts and Stored Tax Rates',
     'hide_peppol_sent_status' => 'Hide Peppol Sent Status',
+    'quickbooks_requires_reauth' => 'QuickBooks requires re-authentication',
+    'quickbooks_requires_reauth_body' => 'Your QuickBooks connection has expired and requires re-authentication. Please log into the administrator portal and reconnect your QuickBooks account. We will send you this notification daily until this issue is resolved.',
 );
 
 return $lang;
