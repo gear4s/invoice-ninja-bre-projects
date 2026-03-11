@@ -76,7 +76,7 @@ class CreateTestData extends Command
             return;
         }
 
-        if (! $this->confirm('Are you sure you want to inject dummy data?')) {
+        if (!$this->confirm('Are you sure you want to inject dummy data?')) {
             return;
         }
 
@@ -88,8 +88,8 @@ class CreateTestData extends Command
         $this->info('Warming up cache');
 
         $this->createSmallAccount();
-        $this->createMediumAccount();
-        $this->createLargeAccount();
+        // $this->createMediumAccount();
+        // $this->createLargeAccount();
     }
 
     private function createSmallAccount()
@@ -107,11 +107,13 @@ class CreateTestData extends Command
 
         $user = User::whereEmail('small@example.com')->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $account->id,
                 'email' => 'small@example.com',
-                'confirmation_code' => $this->createDbHash(config('database.default')),
+                'confirmation_code' => $this->createDbHash(
+                    config('database.default'),
+                ),
             ]);
         }
 
@@ -135,10 +137,12 @@ class CreateTestData extends Command
             'settings' => null,
         ]);
 
-        Product::factory()->count(50)->create([
-            'user_id' => $user->id,
-            'company_id' => $company->id,
-        ]);
+        Product::factory()
+            ->count(50)
+            ->create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+            ]);
 
         $this->info('Creating ' . $this->count . ' clients');
 
@@ -202,11 +206,13 @@ class CreateTestData extends Command
 
         $user = User::whereEmail('medium@example.com')->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $account->id,
                 'email' => 'medium@example.com',
-                'confirmation_code' => $this->createDbHash(config('database.default')),
+                'confirmation_code' => $this->createDbHash(
+                    config('database.default'),
+                ),
             ]);
         }
 
@@ -229,10 +235,12 @@ class CreateTestData extends Command
             'settings' => null,
         ]);
 
-        Product::factory()->count(50)->create([
-            'user_id' => $user->id,
-            'company_id' => $company->id,
-        ]);
+        Product::factory()
+            ->count(50)
+            ->create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+            ]);
 
         $this->count = $this->count * 10;
 
@@ -299,11 +307,13 @@ class CreateTestData extends Command
 
         $user = User::whereEmail('large@example.com')->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $account->id,
                 'email' => 'large@example.com',
-                'confirmation_code' => $this->createDbHash(config('database.default')),
+                'confirmation_code' => $this->createDbHash(
+                    config('database.default'),
+                ),
             ]);
         }
 
@@ -326,10 +336,12 @@ class CreateTestData extends Command
             'settings' => null,
         ]);
 
-        Product::factory()->count(15000)->create([
-            'user_id' => $user->id,
-            'company_id' => $company->id,
-        ]);
+        Product::factory()
+            ->count(15000)
+            ->create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+            ]);
 
         $this->count = $this->count * 10;
 
@@ -390,12 +402,14 @@ class CreateTestData extends Command
             'company_id' => $company->id,
         ]);
 
-        Document::factory()->count(50)->create([
-            'user_id' => $user->id,
-            'company_id' => $company->id,
-            'documentable_type' => Client::class,
-            'documentable_id' => $client->id,
-        ]);
+        Document::factory()
+            ->count(50)
+            ->create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'documentable_type' => Client::class,
+                'documentable_id' => $client->id,
+            ]);
 
         ClientContact::factory()->create([
             'user_id' => $user->id,
@@ -404,11 +418,13 @@ class CreateTestData extends Command
             'is_primary' => 1,
         ]);
 
-        ClientContact::factory()->count(rand(1, 5))->create([
-            'user_id' => $user->id,
-            'client_id' => $client->id,
-            'company_id' => $company->id,
-        ]);
+        ClientContact::factory()
+            ->count(rand(1, 5))
+            ->create([
+                'user_id' => $user->id,
+                'client_id' => $client->id,
+                'company_id' => $company->id,
+            ]);
 
         $client->number = $this->getNextClientNumber($client);
 
@@ -424,11 +440,13 @@ class CreateTestData extends Command
 
     private function createExpense($client)
     {
-        Expense::factory()->count(rand(1, 5))->create([
-            'user_id' => $client->user->id,
-            'client_id' => $client->id,
-            'company_id' => $client->company->id,
-        ]);
+        Expense::factory()
+            ->count(rand(1, 5))
+            ->create([
+                'user_id' => $client->user->id,
+                'client_id' => $client->id,
+                'company_id' => $client->company->id,
+            ]);
     }
 
     private function createVendor($client)
@@ -438,12 +456,14 @@ class CreateTestData extends Command
             'company_id' => $client->company->id,
         ]);
 
-        Document::factory()->count(1)->create([
-            'user_id' => $client->user->id,
-            'company_id' => $client->company_id,
-            'documentable_type' => Vendor::class,
-            'documentable_id' => $vendor->id,
-        ]);
+        Document::factory()
+            ->count(1)
+            ->create([
+                'user_id' => $client->user->id,
+                'company_id' => $client->company_id,
+                'documentable_type' => Vendor::class,
+                'documentable_id' => $vendor->id,
+            ]);
 
         VendorContact::factory()->create([
             'user_id' => $client->user->id,
@@ -452,12 +472,14 @@ class CreateTestData extends Command
             'is_primary' => 1,
         ]);
 
-        VendorContact::factory()->count(rand(1, 5))->create([
-            'user_id' => $client->user->id,
-            'vendor_id' => $vendor->id,
-            'company_id' => $client->company->id,
-            'is_primary' => 0,
-        ]);
+        VendorContact::factory()
+            ->count(rand(1, 5))
+            ->create([
+                'user_id' => $client->user->id,
+                'vendor_id' => $vendor->id,
+                'company_id' => $client->company->id,
+                'is_primary' => 0,
+            ]);
     }
 
     private function createTask($client)
@@ -467,12 +489,14 @@ class CreateTestData extends Command
             'company_id' => $client->company->id,
         ]);
 
-        Document::factory()->count(5)->create([
-            'user_id' => $client->user->id,
-            'company_id' => $client->company_id,
-            'documentable_type' => Task::class,
-            'documentable_id' => $vendor->id,
-        ]);
+        Document::factory()
+            ->count(5)
+            ->create([
+                'user_id' => $client->user->id,
+                'company_id' => $client->company_id,
+                'documentable_type' => Task::class,
+                'documentable_id' => $vendor->id,
+            ]);
     }
 
     private function createProject($client)
@@ -482,19 +506,24 @@ class CreateTestData extends Command
             'company_id' => $client->company->id,
         ]);
 
-        Document::factory()->count(5)->create([
-            'user_id' => $client->user->id,
-            'company_id' => $client->company_id,
-            'documentable_type' => Project::class,
-            'documentable_id' => $vendor->id,
-        ]);
+        Document::factory()
+            ->count(5)
+            ->create([
+                'user_id' => $client->user->id,
+                'company_id' => $client->company_id,
+                'documentable_type' => Project::class,
+                'documentable_id' => $vendor->id,
+            ]);
     }
 
     private function createInvoice($client)
     {
         $faker = Factory::create();
 
-        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); //stub the company and user_id
+        $invoice = InvoiceFactory::create(
+            $client->company->id,
+            $client->user->id,
+        ); //stub the company and user_id
         $invoice->client_id = $client->id;
         //        $invoice->date = $faker->date();
         $dateable = Carbon::now()->subDays(rand(0, 90));
@@ -505,12 +534,12 @@ class CreateTestData extends Command
 
         if (rand(0, 1)) {
             $invoice->tax_name1 = 'GST';
-            $invoice->tax_rate1 = 10.00;
+            $invoice->tax_rate1 = 10.0;
         }
 
         if (rand(0, 1)) {
             $invoice->tax_name2 = 'VAT';
-            $invoice->tax_rate2 = 17.50;
+            $invoice->tax_rate2 = 17.5;
         }
 
         if (rand(0, 1)) {
@@ -539,23 +568,39 @@ class CreateTestData extends Command
             $invoice = $invoice->service()->markPaid()->save();
         }
 
-        Document::factory()->count(5)->create([
+        Document::factory()
+            ->count(5)
+            ->create([
+                'user_id' => $invoice->user->id,
+                'company_id' => $invoice->company_id,
+                'documentable_type' => Invoice::class,
+                'documentable_id' => $invoice->id,
+            ]);
+
+        RecurringInvoice::factory()->create([
             'user_id' => $invoice->user->id,
-            'company_id' => $invoice->company_id,
-            'documentable_type' => Invoice::class,
-            'documentable_id' => $invoice->id,
+            'company_id' => $invoice->company->id,
+            'client_id' => $invoice->client_id,
         ]);
 
-        RecurringInvoice::factory()->create(['user_id' => $invoice->user->id, 'company_id' => $invoice->company->id, 'client_id' => $invoice->client_id]);
-
-        event(new InvoiceWasCreated($invoice, $invoice->company, Ninja::eventVars()));
+        event(
+            new InvoiceWasCreated(
+                $invoice,
+                $invoice->company,
+                Ninja::eventVars(),
+            ),
+        );
     }
 
     private function createCredit($client)
     {
         $faker = Factory::create();
 
-        $credit = Credit::factory()->create(['user_id' => $client->user->id, 'company_id' => $client->company->id, 'client_id' => $client->id]);
+        $credit = Credit::factory()->create([
+            'user_id' => $client->user->id,
+            'company_id' => $client->company->id,
+            'client_id' => $client->id,
+        ]);
 
         $dateable = Carbon::now()->subDays(rand(0, 90));
         $credit->date = $dateable;
@@ -565,12 +610,12 @@ class CreateTestData extends Command
 
         if (rand(0, 1)) {
             $credit->tax_name1 = 'GST';
-            $credit->tax_rate1 = 10.00;
+            $credit->tax_rate1 = 10.0;
         }
 
         if (rand(0, 1)) {
             $credit->tax_name2 = 'VAT';
-            $credit->tax_rate2 = 17.50;
+            $credit->tax_rate2 = 17.5;
         }
 
         if (rand(0, 1)) {
@@ -595,7 +640,11 @@ class CreateTestData extends Command
         $faker = Factory::create();
 
         //$quote = QuoteFactory::create($client->company->id, $client->user->id);//stub the company and user_id
-        $quote = Quote::factory()->create(['user_id' => $client->user->id, 'company_id' => $client->company->id, 'client_id' => $client->id]);
+        $quote = Quote::factory()->create([
+            'user_id' => $client->user->id,
+            'company_id' => $client->company->id,
+            'client_id' => $client->id,
+        ]);
         $quote->date = $faker->date();
         $quote->client_id = $client->id;
 
@@ -606,12 +655,12 @@ class CreateTestData extends Command
 
         if (rand(0, 1)) {
             $quote->tax_name1 = 'GST';
-            $quote->tax_rate1 = 10.00;
+            $quote->tax_rate1 = 10.0;
         }
 
         if (rand(0, 1)) {
             $quote->tax_name2 = 'VAT';
-            $quote->tax_rate2 = 17.50;
+            $quote->tax_rate2 = 17.5;
         }
 
         if (rand(0, 1)) {
@@ -643,12 +692,12 @@ class CreateTestData extends Command
 
             if (rand(0, 1)) {
                 $item->tax_name1 = 'GST';
-                $item->tax_rate1 = 10.00;
+                $item->tax_rate1 = 10.0;
             }
 
             if (rand(0, 1)) {
                 $item->tax_name1 = 'VAT';
-                $item->tax_rate1 = 17.50;
+                $item->tax_rate1 = 17.5;
             }
 
             if (rand(0, 1)) {
@@ -671,5 +720,4 @@ class CreateTestData extends Command
 
         return $line_items;
     }
-
 }
