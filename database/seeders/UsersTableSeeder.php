@@ -41,7 +41,7 @@ class UsersTableSeeder extends Seeder
         $account = Account::factory()->create();
         $company = Company::factory()->create([
             'account_id' => $account->id,
-            'domain' => 'ninja.test',
+            'subdomain' => 'ninja.test',
         ]);
 
         $account->default_company_id = $company->id;
@@ -49,7 +49,9 @@ class UsersTableSeeder extends Seeder
 
         $user = User::factory()->create([
             'account_id' => $account->id,
-            'confirmation_code' => $this->createDbHash(config('database.default')),
+            'confirmation_code' => $this->createDbHash(
+                config('database.default'),
+            ),
         ]);
 
         $userPermissions = collect([
@@ -81,24 +83,31 @@ class UsersTableSeeder extends Seeder
             'last_name' => $faker->lastName(),
             'email' => config('ninja.testvars.clientname'),
             'company_id' => $company->id,
+            'user_id' => $user->id,
             'password' => Hash::make(config('ninja.testvars.password')),
             'email_verified_at' => now(),
-            'client_id' =>$client->id,
+            'client_id' => $client->id,
+            'is_primary' => 1,
         ]);
 
-        Client::factory()->count(20)->create(['user_id' => $user->id, 'company_id' => $company->id])->each(function ($c) use ($user, $company) {
-            ClientContact::factory()->create([
-                'user_id' => $user->id,
-                'client_id' => $c->id,
-                'company_id' => $company->id,
-                'is_primary' => 1,
-            ]);
+        Client::factory()
+            ->count(20)
+            ->create(['user_id' => $user->id, 'company_id' => $company->id])
+            ->each(function ($c) use ($user, $company) {
+                ClientContact::factory()->create([
+                    'user_id' => $user->id,
+                    'client_id' => $c->id,
+                    'company_id' => $company->id,
+                    'is_primary' => 1,
+                ]);
 
-            ClientContact::factory()->count(10)->create([
-                'user_id' => $user->id,
-                'client_id' => $c->id,
-                'company_id' => $company->id,
-            ]);
-        });
+                ClientContact::factory()
+                    ->count(10)
+                    ->create([
+                        'user_id' => $user->id,
+                        'client_id' => $c->id,
+                        'company_id' => $company->id,
+                    ]);
+            });
     }
 }

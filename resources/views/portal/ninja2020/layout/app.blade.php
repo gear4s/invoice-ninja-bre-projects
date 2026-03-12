@@ -78,7 +78,7 @@
         <!-- Styles -->
         @vite('resources/sass/app.scss')
 
-        @if(auth()->guard('contact')->user() && !auth()->guard('contact')->user()->user->account->isPaid())
+        @if(auth()->guard('contact')->user() && !auth()->guard('contact')->user()->user?->account?->isPaid())
             <link href="{{ asset('favicon.png') }}" rel="shortcut icon" type="image/png">
         @endif
 
@@ -117,7 +117,7 @@
             @yield('body')
         @endcomponent
 
-        @livewireScriptConfig 
+        @livewireScriptConfig
 
         <script src="{{ asset('vendor/cookieconsent@3/cookieconsent.min.js') }}" data-cfasync="false"></script>
         <script>

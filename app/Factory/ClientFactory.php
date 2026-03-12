@@ -23,6 +23,12 @@ class ClientFactory
         $client = new Client();
         $client->company_id = $company_id;
         $client->user_id = $user_id;
+
+        // Denormalise account_id onto the client so we can query all clients
+        // across every company that belongs to the same account in a single
+        // index-friendly WHERE clause (no join needed).
+        $company = \App\Models\Company::find($company_id);
+        $client->account_id = $company ? $company->account_id : null;
         $client->name = '';
         $client->website = '';
         $client->private_notes = '';

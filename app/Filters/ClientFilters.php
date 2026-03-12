@@ -42,13 +42,17 @@ class ClientFilters extends QueryFilters
      */
     public function balance(string $balance = ''): Builder
     {
-        if (strlen($balance) == 0 || count(explode(":", $balance)) < 2) {
+        if (strlen($balance) == 0 || count(explode(':', $balance)) < 2) {
             return $this->builder;
         }
 
         $parts = $this->split($balance);
 
-        return $this->builder->where('balance', $parts->operator, $parts->value);
+        return $this->builder->where(
+            'balance',
+            $parts->operator,
+            $parts->value,
+        );
     }
 
     /**
@@ -74,7 +78,9 @@ class ClientFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->whereHas('contacts', function ($query) use ($email) {
+        return $this->builder->whereHas('contacts', function ($query) use (
+            $email,
+        ) {
             $query->where('email', $email);
         });
     }
@@ -112,8 +118,10 @@ class ClientFilters extends QueryFilters
             return $this->builder;
         }
 
-        return $this->builder->where('group_settings_id', $this->decodePrimaryKey($group_id));
-
+        return $this->builder->where(
+            'group_settings_id',
+            $this->decodePrimaryKey($group_id),
+        );
     }
 
     /**
@@ -125,7 +133,6 @@ class ClientFilters extends QueryFilters
      */
     public function filter(string $filter = ''): Builder
     {
-
         if (strlen($filter) == 0) {
             return $this->builder;
         }
@@ -135,12 +142,20 @@ class ClientFilters extends QueryFilters
         return $this->builder->where(function ($query) use ($searchTerms) {
             foreach ($searchTerms as $term) {
                 $query->where(function ($subQuery) use ($term) {
-                    $subQuery->where('name', 'like', '%' . $term . '%')
+                    $subQuery
+                        ->where('name', 'like', '%' . $term . '%')
                         ->orWhere('id_number', 'like', '%' . $term . '%')
                         ->orWhere('number', 'like', '%' . $term . '%')
-                        ->orWhereHas('contacts', function ($contactQuery) use ($term) {
-                            $contactQuery->where('first_name', 'like', '%' . $term . '%')
-                                ->orWhere('last_name', 'like', '%' . $term . '%')
+                        ->orWhereHas('contacts', function ($contactQuery) use (
+                            $term,
+                        ) {
+                            $contactQuery
+                                ->where('first_name', 'like', '%' . $term . '%')
+                                ->orWhere(
+                                    'last_name',
+                                    'like',
+                                    '%' . $term . '%',
+                                )
                                 ->orWhere('email', 'like', '%' . $term . '%')
                                 ->orWhere('phone', 'like', '%' . $term . '%');
                         })
@@ -151,8 +166,6 @@ class ClientFilters extends QueryFilters
                 });
             }
         });
-
-
     }
 
     /**
@@ -173,56 +186,66 @@ class ClientFilters extends QueryFilters
             $sort_col[0] = 'name';
         }
 
-        if(is_array($sort_col) && $sort_col[0] == 'contacts'){   
-        }
-        elseif (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (is_array($sort_col) && $sort_col[0] == 'contacts') {
+        } elseif (
+            !is_array($sort_col) ||
+            count($sort_col) != 2 ||
+            !in_array(
+                $sort_col[0],
+                \Illuminate\Support\Facades\Schema::getColumnListing(
+                    $this->builder->getModel()->getTable(),
+                ),
+            )
+        ) {
             return $this->builder;
         }
 
-        $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
+        $dir = $sort_col[1] == 'asc' ? 'asc' : 'desc';
 
         if ($sort_col[0] == 'number') {
-            return $this->builder->orderByRaw("REGEXP_REPLACE(number,'[^0-9]+','')+0 " . $dir);
+            return $this->builder->orderByRaw(
+                "REGEXP_REPLACE(number,'[^0-9]+','')+0 " . $dir,
+            );
         }
 
         if ($sort_col[0] == 'name') {
             // Use a raw subquery in the ORDER BY instead of adding it to SELECT
             // This avoids conflicts with the Excludable trait
-            
+
             return $this->builder->orderByRaw(
                 "
                 COALESCE(
-                    NULLIF(clients.name, ''), 
+                    NULLIF(clients.name, ''),
                     (
-                        SELECT COALESCE(NULLIF(first_name, ''), email) 
-                        FROM client_contacts 
-                        WHERE client_contacts.client_id = clients.id 
-                        AND client_contacts.deleted_at IS NULL 
+                        SELECT COALESCE(NULLIF(first_name, ''), email)
+                        FROM client_contacts
+                        WHERE client_contacts.client_id = clients.id
+                        AND client_contacts.deleted_at IS NULL
                         LIMIT 1
                     )
-                ) " . $dir
+                ) " . $dir,
             );
         }
 
-
-        if($sort_col[0] == 'contacts'){
-            return $this->builder->orderByRaw("
+        if ($sort_col[0] == 'contacts') {
+            return $this->builder->orderByRaw(
+                "
                 (
-                    SELECT 
-                        CASE 
-                            WHEN first_name IS NOT NULL AND first_name != '' AND last_name IS NOT NULL AND last_name != '' 
+                    SELECT
+                        CASE
+                            WHEN first_name IS NOT NULL AND first_name != '' AND last_name IS NOT NULL AND last_name != ''
                             THEN CONCAT(first_name, ' ', last_name)
-                            WHEN first_name IS NOT NULL AND first_name != '' 
+                            WHEN first_name IS NOT NULL AND first_name != ''
                             THEN first_name
-                            WHEN last_name IS NOT NULL AND last_name != '' 
+                            WHEN last_name IS NOT NULL AND last_name != ''
                             THEN last_name
                             ELSE email
                         END
-                    FROM client_contacts 
-                    WHERE client_contacts.client_id = clients.id 
+                    FROM client_contacts
+                    WHERE client_contacts.client_id = clients.id
                     AND client_contacts.deleted_at IS NULL
                     ORDER BY
-                        CASE 
+                        CASE
                             WHEN first_name IS NOT NULL AND first_name != '' AND last_name IS NOT NULL AND last_name != '' THEN 1
                             WHEN first_name IS NOT NULL AND first_name != '' THEN 2
                             WHEN last_name IS NOT NULL AND last_name != '' THEN 3
@@ -232,20 +255,25 @@ class ClientFilters extends QueryFilters
                         last_name ASC,
                         email ASC
                     LIMIT 1
-                ) " . $dir
+                ) " . $dir,
             );
         }
         return $this->builder->orderBy($sort_col[0], $dir);
     }
 
     /**
-     * Filters the query by the users company ID.
+     * Filters the query by the users account ID.
+     *
+     * Clients are global across all companies that belong to the same account,
+     * so we scope by account_id rather than company_id.  This means every
+     * company accessible from the company-switcher dropdown will see the same
+     * shared client list.
      *
      * @return Builder
      */
     public function entityFilter(): Builder
     {
-        return $this->builder->company();
+        return $this->builder->account();
     }
 
     public function filter_details(string $filter = '')

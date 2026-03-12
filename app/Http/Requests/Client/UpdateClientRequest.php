@@ -45,7 +45,6 @@ class UpdateClientRequest extends Request
         /** @var  \App\Models\User $user */
         $user = auth()->user();
 
-
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
         $rules['documents'] = 'bail|sometimes|array';
@@ -55,11 +54,32 @@ class UpdateClientRequest extends Request
         $rules['size_id'] = 'integer|nullable';
         $rules['country_id'] = 'integer|nullable|exists:countries,id';
         $rules['shipping_country_id'] = 'integer|nullable|exists:countries,id';
-        $rules['classification'] = 'bail|sometimes|nullable|in:individual,business,company,partnership,trust,charity,government,other';
-        $rules['id_number'] = ['sometimes', 'bail', 'nullable', Rule::unique('clients')->where('company_id', $user->company()->id)->ignore($this->client->id)];
-        $rules['number'] = ['sometimes', 'bail', Rule::unique('clients')->where('company_id', $user->company()->id)->ignore($this->client->id)];
+        $rules['classification'] =
+            'bail|sometimes|nullable|in:individual,business,company,partnership,trust,charity,government,other';
+        // Uniqueness is enforced across the whole account so that a client
+        // number or ID number cannot be duplicated in any company that belongs
+        // to the same account (global shared client pool).
+        $rules['id_number'] = [
+            'sometimes',
+            'bail',
+            'nullable',
+            Rule::unique('clients')
+                ->where('account_id', $user->account_id)
+                ->ignore($this->client->id),
+        ];
+        $rules['number'] = [
+            'sometimes',
+            'bail',
+            Rule::unique('clients')
+                ->where('account_id', $user->account_id)
+                ->ignore($this->client->id),
+        ];
 
-        $rules['e_invoice'] = ['sometimes','nullable', new ValidClientScheme()];
+        $rules['e_invoice'] = [
+            'sometimes',
+            'nullable',
+            new ValidClientScheme(),
+        ];
 
         $rules['settings'] = new ValidClientGroupSettingsRule();
         $rules['contacts'] = 'array';
@@ -68,51 +88,77 @@ class UpdateClientRequest extends Request
             'nullable',
             'sometimes',
             'string',
-            'min:7',             // must be at least 10 characters in length
-            'regex:/[a-z]/',      // must contain at least one lowercase letter
-            'regex:/[A-Z]/',      // must contain at least one uppercase letter
-            'regex:/[0-9]/',      // must contain at least one digit
+            'min:7', // must be at least 10 characters in length
+            'regex:/[a-z]/', // must contain at least one lowercase letter
+            'regex:/[A-Z]/', // must contain at least one uppercase letter
+            'regex:/[0-9]/', // must contain at least one digit
             //'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
-
-        $rules['custom_value1'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
-        $rules['custom_value2'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
-        $rules['custom_value3'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
-        $rules['custom_value4'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
+        $rules['custom_value1'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
+        $rules['custom_value2'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
+        $rules['custom_value3'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
+        $rules['custom_value4'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
 
         $rules['settings.currency_id'] = 'required|exists:currencies,id';
-        
+
         return $rules;
     }
 
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-
             $user = auth()->user();
             $company = $user->company();
 
-            if (isset($this->settings['lock_invoices']) && $company->verifactuEnabled() && $this->settings['lock_invoices'] != 'when_sent') {
-                $validator->errors()->add('settings.lock_invoices', 'Locked Invoices Cannot Be Disabled');
+            if (
+                isset($this->settings['lock_invoices']) &&
+                $company->verifactuEnabled() &&
+                $this->settings['lock_invoices'] != 'when_sent'
+            ) {
+                $validator
+                    ->errors()
+                    ->add(
+                        'settings.lock_invoices',
+                        'Locked Invoices Cannot Be Disabled',
+                    );
             }
-
         });
     }
 
@@ -120,8 +166,12 @@ class UpdateClientRequest extends Request
     {
         return [
             'email' => ctrans('validation.email', ['attribute' => 'email']),
-            'name.required' => ctrans('validation.required', ['attribute' => 'name']),
-            'required' => ctrans('validation.required', ['attribute' => 'email']),
+            'name.required' => ctrans('validation.required', [
+                'attribute' => 'name',
+            ]),
+            'required' => ctrans('validation.required', [
+                'attribute' => 'email',
+            ]),
             'contacts.*.password.min' => ctrans('texts.password_strength'),
             'contacts.*.password.regex' => ctrans('texts.password_strength'),
             'contacts.*.password.string' => ctrans('texts.password_strength'),
@@ -144,17 +194,22 @@ class UpdateClientRequest extends Request
         }
 
         if (empty($input['settings']['currency_id'])) {
-            $input['settings']['currency_id'] = (string) $user->company()->settings->currency_id;
+            $input['settings']['currency_id'] = (string) $user->company()
+                ->settings->currency_id;
         }
 
         if (isset($input['language_code'])) {
-            $input['settings']['language_id'] = $this->getLanguageId($input['language_code']);
+            $input['settings']['language_id'] = $this->getLanguageId(
+                $input['language_code'],
+            );
         }
 
         $input = $this->decodePrimaryKeys($input);
 
         if (array_key_exists('settings', $input)) {
-            $input['settings'] = $this->filterSaveableSettings($input['settings']);
+            $input['settings'] = $this->filterSaveableSettings(
+                $input['settings'],
+            );
         }
 
         if (array_key_exists('name', $input)) {
@@ -163,24 +218,38 @@ class UpdateClientRequest extends Request
 
         // allow setting country_id by iso code
         if (isset($input['country_code'])) {
-            $input['country_id'] = $this->getCountryCode($input['country_code']);
+            $input['country_id'] = $this->getCountryCode(
+                $input['country_code'],
+            );
         }
 
         // allow setting country_id by iso code
         if (isset($input['shipping_country_code'])) {
-            $input['shipping_country_id'] = $this->getCountryCode($input['shipping_country_code']);
+            $input['shipping_country_id'] = $this->getCountryCode(
+                $input['shipping_country_code'],
+            );
         }
 
         if (isset($input['e_invoice']) && is_array($input['e_invoice'])) {
             //ensure it is normalized first!
-            $input['e_invoice'] = $this->client->filterNullsRecursive($input['e_invoice']);
+            $input['e_invoice'] = $this->client->filterNullsRecursive(
+                $input['e_invoice'],
+            );
         }
 
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace(
+                "\n",
+                '',
+                $input['public_notes'],
+            );
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace(
+                "\n",
+                '',
+                $input['private_notes'],
+            );
         }
 
         $this->replace($input);
@@ -188,12 +257,12 @@ class UpdateClientRequest extends Request
 
     private function getCountryCode($country_code)
     {
-
         /** @var \Illuminate\Support\Collection<\App\Models\Country> */
         $countries = app('countries');
 
         $country = $countries->first(function ($item) use ($country_code) {
-            return $item->iso_3166_2 == $country_code || $item->iso_3166_3 == $country_code;
+            return $item->iso_3166_2 == $country_code ||
+                $item->iso_3166_3 == $country_code;
         });
 
         return $country ? (string) $country->id : '';
@@ -201,7 +270,6 @@ class UpdateClientRequest extends Request
 
     private function getLanguageId($language_code)
     {
-
         /** @var \Illuminate\Support\Collection<\App\Models\Language> */
         $languages = app('languages');
 
@@ -229,14 +297,14 @@ class UpdateClientRequest extends Request
         // Do not allow a user to force pdf variables on the client settings.
         unset($settings['pdf_variables']);
 
-        if (! $account->isFreeHostedClient()) {
+        if (!$account->isFreeHostedClient()) {
             return $settings;
         }
 
         $saveable_casts = CompanySettings::$free_plan_casts;
 
         foreach ($settings as $key => $value) {
-            if (! array_key_exists($key, $saveable_casts)) {
+            if (!array_key_exists($key, $saveable_casts)) {
                 unset($settings->{$key});
             }
 

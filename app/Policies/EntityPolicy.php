@@ -12,6 +12,7 @@
 
 namespace App\Policies;
 
+use App\Models\Client;
 use App\Models\User;
 
 /**
@@ -35,7 +36,9 @@ class EntityPolicy
     /**
      * Checks if the user has edit permissions.
      *
-     * We MUST also check that the user can both edit a entity and also check the entity belongs to the users company!!!!!!
+     * For Client entities we check that the entity belongs to the same
+     * *account* as the user (cross-company global clients).  For every other
+     * entity type we still enforce the stricter same-company check.
      *
      * @param  User $user
      * @param  $entity
@@ -43,27 +46,86 @@ class EntityPolicy
      */
     public function edit(User $user, $entity): bool
     {
-        return ($user->isAdmin() && $entity->company_id == $user->companyId())
-            || ($user->hasPermission('edit_' . \Illuminate\Support\Str::snake(class_basename($entity))) && $entity->company_id == $user->companyId())
-            // || ($user->hasPermission('edit_all') && $entity->company_id == $user->companyId()) //this is redundant as the edit_ check covers the _all check
-            || ($user->owns($entity) && $entity->company_id == $user->companyId())
-            || ($user->assigned($entity) && $entity->company_id == $user->companyId());
+        if ($entity instanceof Client) {
+            return $this->entityBelongsToAccount($user, $entity) &&
+                ($user->isAdmin() ||
+                    $user->hasPermission(
+                        'edit_' .
+                            \Illuminate\Support\Str::snake(
+                                class_basename($entity),
+                            ),
+                    ) ||
+                    $user->owns($entity) ||
+                    $user->assigned($entity));
+        }
+
+        return ($user->isAdmin() &&
+            $entity->company_id == $user->companyId()) ||
+            ($user->hasPermission(
+                'edit_' .
+                    \Illuminate\Support\Str::snake(class_basename($entity)),
+            ) &&
+                $entity->company_id == $user->companyId()) ||
+            ($user->owns($entity) &&
+                $entity->company_id == $user->companyId()) ||
+            ($user->assigned($entity) &&
+                $entity->company_id == $user->companyId());
     }
 
     /**
      *  Checks if the user has view permissions.
      *
-     * We MUST also check that the user can both view a entity and also check the entity belongs to the users company!!!!!!
+     * For Client entities we check that the entity belongs to the same
+     * *account* as the user (cross-company global clients).  For every other
+     * entity type we still enforce the stricter same-company check.
+     *
      * @param  User $user
      * @param  $entity
      * @return bool
      */
     public function view(User $user, $entity): bool
     {
-        return ($user->isAdmin() && $entity->company_id == $user->companyId())
-            || ($user->hasPermission('view_' . \Illuminate\Support\Str::snake(class_basename($entity))) && $entity->company_id == $user->companyId())
-            // || ($user->hasPermission('view_all') && $entity->company_id == $user->companyId()) //this is redundant as the edit_ check covers the _all check
-            || ($user->owns($entity) && $entity->company_id == $user->companyId())
-            || ($user->assigned($entity) && $entity->company_id == $user->companyId());
+        if ($entity instanceof Client) {
+            return $this->entityBelongsToAccount($user, $entity) &&
+                ($user->isAdmin() ||
+                    $user->hasPermission(
+                        'view_' .
+                            \Illuminate\Support\Str::snake(
+                                class_basename($entity),
+                            ),
+                    ) ||
+                    $user->owns($entity) ||
+                    $user->assigned($entity));
+        }
+
+        return ($user->isAdmin() &&
+            $entity->company_id == $user->companyId()) ||
+            ($user->hasPermission(
+                'view_' .
+                    \Illuminate\Support\Str::snake(class_basename($entity)),
+            ) &&
+                $entity->company_id == $user->companyId()) ||
+            ($user->owns($entity) &&
+                $entity->company_id == $user->companyId()) ||
+            ($user->assigned($entity) &&
+                $entity->company_id == $user->companyId());
+    }
+
+    /**
+     * Determines whether the given entity belongs to the same account as the
+     * authenticated user.  Used for global (cross-company) client access.
+     *
+     * @param  User  $user
+     * @param  mixed $entity
+     * @return bool
+     */
+    protected function entityBelongsToAccount(User $user, $entity): bool
+    {
+        // account_id is denormalised onto Client rows; fall back to looking it
+        // up through the company relationship if it isn't set for any reason.
+        $entity_account_id =
+            $entity->account_id ?? optional($entity->company)->account_id;
+
+        return $entity_account_id == $user->account_id;
     }
 }

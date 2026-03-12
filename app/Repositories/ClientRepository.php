@@ -62,7 +62,10 @@ class ClientRepository extends BaseRepository
         unset($data['contacts']);
 
         /* When uploading documents, only the document array is sent, so we must return early*/
-        if (array_key_exists('documents', $data) && count($data['documents']) >= 1) {
+        if (
+            array_key_exists('documents', $data) &&
+            count($data['documents']) >= 1
+        ) {
             $this->saveDocuments($data['documents'], $client);
 
             return $client;
@@ -71,10 +74,23 @@ class ClientRepository extends BaseRepository
         $client->fill($data);
 
         if (array_key_exists('settings', $data)) {
-            $client->settings = $client->saveSettings($data['settings'], $client);
+            $client->settings = $client->saveSettings(
+                $data['settings'],
+                $client,
+            );
         }
 
-        if (! $client->country_id || $client->country_id == 0) {
+        // Ensure account_id is always denormalised onto the client so that
+        // account-wide (cross-company) queries work without a join.
+        if (empty($client->account_id)) {
+            /** @var \App\Models\Company $company **/
+            $company = Company::find($client->company_id);
+            if ($company) {
+                $client->account_id = $company->account_id;
+            }
+        }
+
+        if (!$client->country_id || $client->country_id == 0) {
             /** @var \App\Models\Company $company **/
             $company = Company::find($client->company_id);
             $client->country_id = $company->settings->country_id;
@@ -82,7 +98,12 @@ class ClientRepository extends BaseRepository
 
         $client->save();
 
-        if (! isset($client->number) || empty($client->number) || strlen($client->number ?? '') == 0) {//@phpstan-ignore-line
+        if (
+            !isset($client->number) ||
+            empty($client->number) ||
+            strlen($client->number ?? '') == 0
+        ) {
+            //@phpstan-ignore-line
             $x = 1;
 
             do {
@@ -107,10 +128,12 @@ class ClientRepository extends BaseRepository
 
         //24-01-2023 when a logo is uploaded, no other data is set, so we need to catch here and not update
         //the contacts array UNLESS there are no contacts and we need to maintain state.
-        if (array_key_exists('contacts', $contact_data) || $client->contacts()->count() == 0) {
+        if (
+            array_key_exists('contacts', $contact_data) ||
+            $client->contacts()->count() == 0
+        ) {
             $this->contact_repo->save($contact_data, $client);
         }
-
 
         return $client;
     }
@@ -128,7 +151,7 @@ class ClientRepository extends BaseRepository
 
         return $this->save(
             $client,
-            ClientFactory::create($user->company()->id, $user->id)
+            ClientFactory::create($user->company()->id, $user->id),
         );
     }
 
@@ -142,24 +165,32 @@ class ClientRepository extends BaseRepository
     public function assignGroup($clients, $group_settings_id): void
     {
         Client::query()
-              ->company()
-              ->whereIn('id', $clients->pluck('id'))
-              ->update(['group_settings_id' => $group_settings_id]);
+            ->company()
+            ->whereIn('id', $clients->pluck('id'))
+            ->update(['group_settings_id' => $group_settings_id]);
     }
 
     public function purge($client)
     {
-
         $purged_client = $client->present()->name();
         $purged_client_hash = $client->client_hash;
 
         $user = auth()->user() ?? $client->user;
         $company = $client->company;
 
-        $event_vars = \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
+        $event_vars = \App\Utils\Ninja::eventVars(
+            auth()->user() ? auth()->user()->id : null,
+        );
         $event_vars['client_hash'] = $purged_client_hash;
 
-        event(new \App\Events\Client\ClientWasPurged($purged_client, $user, $company, $event_vars));
+        event(
+            new \App\Events\Client\ClientWasPurged(
+                $purged_client,
+                $user,
+                $company,
+                $event_vars,
+            ),
+        );
 
         nlog("Purging client id => {$client->id} => {$client->number}");
 
@@ -200,17 +231,22 @@ class ClientRepository extends BaseRepository
             'App\Models\Payment' => $client->payments()->pluck('id')->toArray(),
             'App\Models\Credit' => $client->credits()->pluck('id')->toArray(),
             'App\Models\Expense' => $client->expenses()->pluck('id')->toArray(),
-            'App\Models\RecurringInvoice' => $client->recurring_invoices()->pluck('id')->toArray(),
-            'App\Models\RecurringExpense' => $client->recurring_expenses()->pluck('id')->toArray(),
+            'App\Models\RecurringInvoice' => $client
+                ->recurring_invoices()
+                ->pluck('id')
+                ->toArray(),
+            'App\Models\RecurringExpense' => $client
+                ->recurring_expenses()
+                ->pluck('id')
+                ->toArray(),
             'App\Models\Project' => $client->projects()->pluck('id')->toArray(),
             'App\Models\Task' => $client->tasks()->pluck('id')->toArray(),
             'App\Models\Client' => [$client->id],
         ];
 
         PurgeClientDocuments::dispatch($data, $client->company);
-
     }
-    
+
     /**
      * clone/duplicate a client
      *
@@ -220,7 +256,8 @@ class ClientRepository extends BaseRepository
     public function clone(Client $client)
     {
         $clone_client = $client->replicate();
-        $clone_client->name = $clone_client->name . ' clone ' . date('Y-m-d H:i:s');
+        $clone_client->name =
+            $clone_client->name . ' clone ' . date('Y-m-d H:i:s');
         $clone_client->client_hash = \Illuminate\Support\Str::random(40);
         $clone_client->sync = null;
         $clone_client->number = null;
@@ -231,15 +268,19 @@ class ClientRepository extends BaseRepository
         $clone_client->save();
 
         $clone_client->service()->applyNumber()->save();
-        
-        $client->contacts->each(function (ClientContact $contact) use ($clone_client) {
+
+        $client->contacts->each(function (ClientContact $contact) use (
+            $clone_client,
+        ) {
             $clone_contact = $contact->replicate();
             $clone_contact->client_id = $clone_client->id;
             $clone_contact->contact_key = \Illuminate\Support\Str::random(32);
             $clone_contact->save();
         });
 
-        $client->locations->each(function (Location $location) use ($clone_client) {
+        $client->locations->each(function (Location $location) use (
+            $clone_client,
+        ) {
             $clone_location = $location->replicate();
             $clone_location->client_id = $clone_client->id;
             $clone_location->save();
@@ -247,6 +288,4 @@ class ClientRepository extends BaseRepository
 
         return $clone_client;
     }
-
-
 }

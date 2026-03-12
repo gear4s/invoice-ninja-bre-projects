@@ -59,10 +59,10 @@ class StoreClientRequest extends Request
             'nullable',
             'sometimes',
             'string',
-            'min:7',             // must be at least 10 characters in length
-            'regex:/[a-z]/',      // must contain at least one lowercase letter
-            'regex:/[A-Z]/',      // must contain at least one uppercase letter
-            'regex:/[0-9]/',      // must contain at least one digit
+            'min:7', // must be at least 10 characters in length
+            'regex:/[a-z]/', // must contain at least one lowercase letter
+            'regex:/[A-Z]/', // must contain at least one uppercase letter
+            'regex:/[0-9]/', // must contain at least one digit
             //'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
@@ -70,49 +70,93 @@ class StoreClientRequest extends Request
             $rules['id'] = new CanStoreClientsRule($user->company()->id);
         }
 
-        $rules['number'] = ['bail', 'nullable', Rule::unique('clients')->where('company_id', $user->company()->id)];
-        $rules['id_number'] = ['bail', 'nullable', Rule::unique('clients')->where('company_id', $user->company()->id)];
-        $rules['classification'] = 'bail|sometimes|nullable|in:individual,business,company,partnership,trust,charity,government,other';
+        // Uniqueness is enforced across the whole account so that a client
+        // number or ID number cannot be duplicated in any company that belongs
+        // to the same account (global shared client pool).
+        $rules['number'] = [
+            'bail',
+            'nullable',
+            Rule::unique('clients')->where('account_id', $user->account_id),
+        ];
+        $rules['id_number'] = [
+            'bail',
+            'nullable',
+            Rule::unique('clients')->where('account_id', $user->account_id),
+        ];
+        $rules['classification'] =
+            'bail|sometimes|nullable|in:individual,business,company,partnership,trust,charity,government,other';
         $rules['shipping_country_id'] = 'integer|nullable|exists:countries,id';
-        $rules['number'] = ['sometimes', 'nullable', 'bail', Rule::unique('clients')->where('company_id', $user->company()->id)];
+        $rules['number'] = [
+            'sometimes',
+            'nullable',
+            'bail',
+            Rule::unique('clients')->where('account_id', $user->account_id),
+        ];
         $rules['country_id'] = 'integer|nullable|exists:countries,id';
-        $rules['custom_value1'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
-        $rules['custom_value2'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
-        $rules['custom_value3'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
-        $rules['custom_value4'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
-            if (is_array($value)) {
-                $fail("The $attribute must not be an array.");
-            }
-        }];
+        $rules['custom_value1'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
+        $rules['custom_value2'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
+        $rules['custom_value3'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
+        $rules['custom_value4'] = [
+            'bail',
+            'nullable',
+            'sometimes',
+            function ($attribute, $value, $fail) {
+                if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            },
+        ];
 
         $rules['settings.currency_id'] = 'required|exists:currencies,id';
-        
+
         return $rules;
     }
 
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-
             $user = auth()->user();
             $company = $user->company();
 
-            if (isset($this->settings['lock_invoices']) && $company->verifactuEnabled() && $this->settings['lock_invoices'] != 'when_sent') {
-                $validator->errors()->add('settings.lock_invoices', 'Locked Invoices Cannot Be Disabled');
+            if (
+                isset($this->settings['lock_invoices']) &&
+                $company->verifactuEnabled() &&
+                $this->settings['lock_invoices'] != 'when_sent'
+            ) {
+                $validator
+                    ->errors()
+                    ->add(
+                        'settings.lock_invoices',
+                        'Locked Invoices Cannot Be Disabled',
+                    );
             }
-
         });
     }
 
@@ -134,7 +178,10 @@ class StoreClientRequest extends Request
         $settings = (array) ClientSettings::defaults();
 
         /* Stub settings if they don't exist */
-        if (!array_key_exists('settings', $input) || is_null($input['settings'])) {
+        if (
+            !array_key_exists('settings', $input) ||
+            is_null($input['settings'])
+        ) {
             $input['settings'] = [];
         } elseif (is_object($input['settings'])) {
             $input['settings'] = (array) $input['settings'];
@@ -159,45 +206,66 @@ class StoreClientRequest extends Request
         $input = $this->decodePrimaryKeys($input);
 
         //is no settings->currency_id is set then lets dive in and find either a group or company currency all the below may be redundant!!
-        if (! array_key_exists('currency_id', $input['settings']) && isset($input['group_settings_id'])) {
+        if (
+            !array_key_exists('currency_id', $input['settings']) &&
+            isset($input['group_settings_id'])
+        ) {
             $group_settings = GroupSetting::find($input['group_settings_id']);
 
-            if ($group_settings && property_exists($group_settings->settings, 'currency_id') && is_numeric($group_settings->settings->currency_id)) {
-                $input['settings']['currency_id'] = (string) $group_settings->settings->currency_id;
+            if (
+                $group_settings &&
+                property_exists($group_settings->settings, 'currency_id') &&
+                is_numeric($group_settings->settings->currency_id)
+            ) {
+                $input['settings']['currency_id'] =
+                    (string) $group_settings->settings->currency_id;
             } else {
-                $input['settings']['currency_id'] = (string) $user->company()->settings->currency_id;
+                $input['settings']['currency_id'] = (string) $user->company()
+                    ->settings->currency_id;
             }
-        } elseif (! array_key_exists('currency_id', $input['settings'])) {
-            $input['settings']['currency_id'] = (string) $user->company()->settings->currency_id;
+        } elseif (!array_key_exists('currency_id', $input['settings'])) {
+            $input['settings']['currency_id'] = (string) $user->company()
+                ->settings->currency_id;
         } elseif (empty($input['settings']['currency_id']) ?? true) {
-            $input['settings']['currency_id'] = (string) $user->company()->settings->currency_id;
+            $input['settings']['currency_id'] = (string) $user->company()
+                ->settings->currency_id;
         }
 
         if (isset($input['currency_code'])) {
-            $input['settings']['currency_id'] = $this->getCurrencyCode($input['currency_code']);
+            $input['settings']['currency_id'] = $this->getCurrencyCode(
+                $input['currency_code'],
+            );
         }
 
         if (isset($input['language_code'])) {
-            $input['settings']['language_id'] = $this->getLanguageId($input['language_code']);
+            $input['settings']['language_id'] = $this->getLanguageId(
+                $input['language_code'],
+            );
 
             if (strlen($input['settings']['language_id']) == 0) {
                 unset($input['settings']['language_id']);
             }
         }
 
-
         // allow setting country_id by iso code
         if (isset($input['country_code'])) {
-            $input['country_id'] = $this->getCountryCode($input['country_code']);
+            $input['country_id'] = $this->getCountryCode(
+                $input['country_code'],
+            );
         }
 
         // allow setting country_id by iso code
         if (isset($input['shipping_country_code'])) {
-            $input['shipping_country_id'] = $this->getCountryCode($input['shipping_country_code']);
+            $input['shipping_country_id'] = $this->getCountryCode(
+                $input['shipping_country_code'],
+            );
         }
 
         /* If there is a client number, just unset it here. */
-        if (array_key_exists('number', $input) && (is_null($input['number']) || empty($input['number']))) {
+        if (
+            array_key_exists('number', $input) &&
+            (is_null($input['number']) || empty($input['number']))
+        ) {
             unset($input['number']);
         }
 
@@ -215,7 +283,9 @@ class StoreClientRequest extends Request
     public function messages()
     {
         return [
-            'contacts.*.email.required' => ctrans('validation.email', ['attribute' => 'email']),
+            'contacts.*.email.required' => ctrans('validation.email', [
+                'attribute' => 'email',
+            ]),
             'currency_code' => 'Currency code does not exist',
         ];
     }
@@ -228,38 +298,34 @@ class StoreClientRequest extends Request
         $language = $languages->firstWhere('locale', $language_code);
 
         return $language ? (string) $language->id : '';
-
     }
 
     private function getCountryCode(string $country_code)
     {
-
         /** @var \Illuminate\Support\Collection<\App\Models\Country> */
         $countries = app('countries');
 
         $country_code = strtoupper($country_code);
 
         $country = $countries->first(function ($item) use ($country_code) {
-            return $item->iso_3166_2 == $country_code || $item->iso_3166_3 == $country_code;
+            return $item->iso_3166_2 == $country_code ||
+                $item->iso_3166_3 == $country_code;
         });
 
         return $country ? (string) $country->id : '';
-
     }
 
     private function getCurrencyCode($code)
     {
-
         /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
         $currencies = app('currencies');
 
         $code = strtoupper($code);
-        
+
         $currency = $currencies->first(function ($item) use ($code) {
             return $item->code == $code;
         });
 
-        return  $currency ? (string) $currency->id : '';
-
+        return $currency ? (string) $currency->id : '';
     }
 }
