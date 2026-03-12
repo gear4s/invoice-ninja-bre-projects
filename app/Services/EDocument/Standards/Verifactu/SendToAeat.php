@@ -65,6 +65,12 @@ class SendToAeat implements ShouldQueue
     {
         MultiDB::setDB($this->company->db);
 
+        if (empty(config('services.verifactu.certificate')) || empty(config('services.verifactu.ssl_key'))) {
+            nlog('SendToAeat: SSL certificate or key not configured, skipping AEAT submission.');
+
+            return;
+        }
+
         $invoice = Invoice::withTrashed()->find($this->invoice_id);
 
         $invoice = $invoice->service()->markSent()->save();

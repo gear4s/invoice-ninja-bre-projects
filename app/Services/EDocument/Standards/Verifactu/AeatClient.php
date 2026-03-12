@@ -63,6 +63,10 @@ class AeatClient
      */
     private function signSoapEnvelope(string $xml): string
     {
+        if (empty($this->ssl_key) || empty($this->certificate)) {
+            throw new \RuntimeException('Verifactu SSL key and certificate paths must be configured. Check services.verifactu.ssl_key and services.verifactu.certificate.');
+        }
+
         try {
             $signingService = new SigningService(
                 $xml,
