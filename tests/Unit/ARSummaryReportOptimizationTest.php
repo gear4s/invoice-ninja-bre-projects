@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -42,6 +43,7 @@ class ARSummaryReportOptimizationTest extends TestCase
 
         $this->user = User::factory()->create([
             'account_id' => $account->id,
+            'email' => Str::random(32) . '@example.com',
         ]);
     }
 
@@ -204,35 +206,35 @@ class ARSummaryReportOptimizationTest extends TestCase
         $results = DB::table('invoices')
             ->selectRaw('
                 client_id,
-                SUM(CASE 
-                    WHEN (due_date > ? OR due_date IS NULL) 
-                    THEN balance 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN (due_date > ? OR due_date IS NULL)
+                    THEN balance
+                    ELSE 0
                 END) as current,
-                SUM(CASE 
-                    WHEN due_date BETWEEN ? AND ? 
-                    THEN balance 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN due_date BETWEEN ? AND ?
+                    THEN balance
+                    ELSE 0
                 END) as age_30,
-                SUM(CASE 
-                    WHEN due_date BETWEEN ? AND ? 
-                    THEN balance 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN due_date BETWEEN ? AND ?
+                    THEN balance
+                    ELSE 0
                 END) as age_60,
-                SUM(CASE 
-                    WHEN due_date BETWEEN ? AND ? 
-                    THEN balance 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN due_date BETWEEN ? AND ?
+                    THEN balance
+                    ELSE 0
                 END) as age_90,
-                SUM(CASE 
-                    WHEN due_date BETWEEN ? AND ? 
-                    THEN balance 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN due_date BETWEEN ? AND ?
+                    THEN balance
+                    ELSE 0
                 END) as age_120,
-                SUM(CASE 
-                    WHEN due_date BETWEEN ? AND ? 
-                    THEN balance 
-                    ELSE 0 
+                SUM(CASE
+                    WHEN due_date BETWEEN ? AND ?
+                    THEN balance
+                    ELSE 0
                 END) as age_120_plus,
                 SUM(balance) as total
             ', [
