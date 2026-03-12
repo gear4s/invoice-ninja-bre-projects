@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,19 +19,18 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\PaymentController
  */
 class UpdatePaymentTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -46,7 +44,7 @@ class UpdatePaymentTest extends TestCase
         );
     }
 
-    public function testUpdatingPaymentableDates()
+    public function test_updating_paymentable_dates()
     {
         $this->invoice = $this->invoice->service()->markPaid()->save();
 
@@ -72,14 +70,11 @@ class UpdatePaymentTest extends TestCase
 
         });
 
-
-
-
     }
 
-    public function testUpdatePaymentClientPaidToDate()
+    public function test_update_payment_client_paid_to_date()
     {
-        //Create new client
+        // Create new client
         $client = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
@@ -88,8 +83,8 @@ class UpdatePaymentTest extends TestCase
         $this->assertEquals(0, $client->balance);
         $this->assertEquals(0, $client->paid_to_date);
 
-        //Create Invoice
-        $invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        // Create Invoice
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
         $invoice->line_items = $this->buildLineItems();
         $invoice->uses_inclusive_taxes = false;
@@ -114,7 +109,7 @@ class UpdatePaymentTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/payments?include=invoices,paymentables', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $this->assertEquals(10, $client->fresh()->paid_to_date);
     }

@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 use App\Models\Company;
@@ -13,7 +13,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -64,11 +65,11 @@ return new class extends Migration {
             $settings = $company->settings;
 
             $settings->purchase_order_design_id = 'Wpmbk5ezJn';
-            $settings->purchase_order_footer = ''; //@implemented
-            $settings->purchase_order_terms = ''; //@implemented
-            $settings->purchase_order_public_notes = ''; //@implemented
-            $settings->purchase_order_number_pattern = ''; //@implemented
-            $settings->purchase_order_number_counter = 1; //@implemented
+            $settings->purchase_order_footer = ''; // @implemented
+            $settings->purchase_order_terms = ''; // @implemented
+            $settings->purchase_order_public_notes = ''; // @implemented
+            $settings->purchase_order_number_pattern = ''; // @implemented
+            $settings->purchase_order_number_counter = 1; // @implemented
             $settings->email_subject_purchase_order = '';
             $settings->email_template_purchase_order = '';
             $settings->require_purchase_order_signature = false;
@@ -83,7 +84,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

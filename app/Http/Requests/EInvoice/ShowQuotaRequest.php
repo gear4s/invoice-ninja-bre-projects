@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\EInvoice;
 
+use App\Models\User;
+use App\Utils\Ninja;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ShowQuotaRequest extends FormRequest
@@ -12,10 +14,10 @@ class ShowQuotaRequest extends FormRequest
             return true;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        return \App\Utils\Ninja::isSelfHost() && $user->account->isPaid();
+        return Ninja::isSelfHost() && $user->account->isPaid();
     }
 
     public function rules(): array

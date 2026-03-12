@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -51,8 +50,8 @@ class BankTransfer implements LivewireMethodInterface
      */
     private function resolveBankType()
     {
-        return match ($this->stripe->client->currency()->code) { //@phpstan-ignore-line
-            'GBP' =>  ['type' => 'gb_bank_transfer'],
+        return match ($this->stripe->client->currency()->code) { // @phpstan-ignore-line
+            'GBP' => ['type' => 'gb_bank_transfer'],
             'EUR' => ['type' => 'eu_bank_transfer', 'eu_bank_transfer' => ['country' => $this->stripe->client->country->iso_3166_2]],
             'JPY' => ['type' => 'jp_bank_transfer'],
             'MXN' => ['type' => 'mx_bank_transfer'],
@@ -62,8 +61,6 @@ class BankTransfer implements LivewireMethodInterface
 
     /**
      * Return URL
-     *
-     * @return string
      */
     private function buildReturnUrl(): string
     {
@@ -74,11 +71,8 @@ class BankTransfer implements LivewireMethodInterface
         ]);
     }
 
-
     /**
      * paymentResponse
-     *
-     * @param  PaymentResponseRequest $request
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
@@ -88,7 +82,7 @@ class BankTransfer implements LivewireMethodInterface
         $this->stripe->client = $this->stripe->payment_hash->fee_invoice->client;
 
         if ($request->payment_intent) {
-            $pi = \Stripe\PaymentIntent::retrieve(
+            $pi = PaymentIntent::retrieve(
                 $request->payment_intent,
                 $this->stripe->stripe_connect_auth
             );
@@ -99,8 +93,8 @@ class BankTransfer implements LivewireMethodInterface
             }
 
             /*  Create a pending payment */
-            if ($pi->status == 'requires_action' && $pi->next_action->type == 'display_bank_transfer_instructions') { //@phpstan-ignore-line
-                match ($pi->next_action->display_bank_transfer_instructions->currency) { //@phpstan-ignore-line
+            if ($pi->status == 'requires_action' && $pi->next_action->type == 'display_bank_transfer_instructions') { // @phpstan-ignore-line
+                match ($pi->next_action->display_bank_transfer_instructions->currency) { // @phpstan-ignore-line
                     'mxn' => $data['bank_details'] = $this->formatDataforMx($pi),
                     'gbp' => $data['bank_details'] = $this->formatDataforUk($pi),
                     'eur' => $data['bank_details'] = $this->formatDataforEur($pi),
@@ -119,20 +113,17 @@ class BankTransfer implements LivewireMethodInterface
 
     /**
      * formatDataForUk
-     *
-     * @param  PaymentIntent $pi
-     * @return array
      */
     public function formatDataForUk(PaymentIntent $pi): array
     {
-        return  [
+        return [
             'amount' => Number::formatMoney($this->stripe->convertFromStripeAmount($pi->next_action->display_bank_transfer_instructions->amount_remaining, $this->stripe->client->currency()->precision, $this->stripe->client->currency()), $this->stripe->client),
             'account_holder_name' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->sort_code->account_holder_name,
             'account_number' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->sort_code->account_number,
             'sort_code' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->sort_code->sort_code,
             'reference' => $pi->next_action->display_bank_transfer_instructions->reference,
             'description' => $pi->description,
-            'gateway'   => $this->stripe->company_gateway,
+            'gateway' => $this->stripe->company_gateway,
             'currency' => $pi->next_action->display_bank_transfer_instructions->currency,
 
         ];
@@ -140,55 +131,45 @@ class BankTransfer implements LivewireMethodInterface
 
     /**
      * formatDataforMx
-     *
-     * @param  PaymentIntent $pi
-     * @return array
      */
     public function formatDataforMx(PaymentIntent $pi): array
     {
-        return  [
+        return [
             'amount' => Number::formatMoney($this->stripe->convertFromStripeAmount($pi->next_action->display_bank_transfer_instructions->amount_remaining, $this->stripe->client->currency()->precision, $this->stripe->client->currency()), $this->stripe->client),
             'account_holder_name' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->spei->bank_name,
             'account_number' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->spei->bank_code,
             'sort_code' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->spei->clabe,
             'reference' => $pi->next_action->display_bank_transfer_instructions->reference,
             'description' => $pi->description,
-            'gateway'   => $this->stripe->company_gateway,
+            'gateway' => $this->stripe->company_gateway,
             'currency' => $pi->next_action->display_bank_transfer_instructions->currency,
 
         ];
     }
 
-
     /**
      * formatDataforEur
      *
-     * @param  mixed $pi
-     * @return array
+     * @param  mixed  $pi
      */
     public function formatDataforEur(PaymentIntent $pi): array
     {
-        return  [
+        return [
             'amount' => Number::formatMoney($this->stripe->convertFromStripeAmount($pi->next_action->display_bank_transfer_instructions->amount_remaining, $this->stripe->client->currency()->precision, $this->stripe->client->currency()), $this->stripe->client),
             'account_holder_name' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->iban->account_holder_name,
             'account_number' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->iban->iban,
             'sort_code' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->iban->bic,
             'reference' => $pi->next_action->display_bank_transfer_instructions->reference,
             'description' => $pi->description,
-            'gateway'   => $this->stripe->company_gateway,
+            'gateway' => $this->stripe->company_gateway,
             'currency' => $pi->next_action->display_bank_transfer_instructions->currency,
 
         ];
     }
 
-    /**
-     *
-     * @param PaymentIntent $pi
-     * @return array
-     */
     public function formatDataforJp(PaymentIntent $pi): array
     {
-        return  [
+        return [
             'amount' => Number::formatMoney($this->stripe->convertFromStripeAmount($pi->next_action->display_bank_transfer_instructions->amount_remaining, $this->stripe->client->currency()->precision, $this->stripe->client->currency()), $this->stripe->client),
             'account_holder_name' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->zengin->account_holder_name,
             'account_number' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->zengin->account_number,
@@ -199,21 +180,15 @@ class BankTransfer implements LivewireMethodInterface
             'branch_name' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->zengin->branch_name,
             'reference' => $pi->next_action->display_bank_transfer_instructions->reference,
             'description' => $pi->description,
-            'gateway'   => $this->stripe->company_gateway,
+            'gateway' => $this->stripe->company_gateway,
             'currency' => $pi->next_action->display_bank_transfer_instructions->currency,
 
         ];
     }
 
-
-    /**
-     *
-     * @param PaymentIntent $pi
-     * @return array
-     */
     public function formatDataforUs(PaymentIntent $pi): array
     {
-        return  [
+        return [
             'amount' => Number::formatMoney($this->stripe->convertFromStripeAmount($pi->next_action->display_bank_transfer_instructions->amount_remaining, $this->stripe->client->currency()->precision, $this->stripe->client->currency()), $this->stripe->client),
             'account_holder_name' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->aba->bank_name,
             'account_number' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->aba->account_number,
@@ -221,18 +196,14 @@ class BankTransfer implements LivewireMethodInterface
             'sort_code' => $pi->next_action->display_bank_transfer_instructions->financial_addresses[0]->aba->routing_number,
             'reference' => $pi->next_action->display_bank_transfer_instructions->reference,
             'description' => $pi->description,
-            'gateway'   => $this->stripe->company_gateway,
+            'gateway' => $this->stripe->company_gateway,
             'currency' => $pi->next_action->display_bank_transfer_instructions->currency,
 
         ];
     }
 
-
     /**
      * processSuccesfulRedirect
-     *
-     * @param  PaymentIntent $payment_intent
-     * @return Payment
      */
     public function processSuccesfulRedirect(PaymentIntent $payment_intent): Payment
     {
@@ -258,7 +229,7 @@ class BankTransfer implements LivewireMethodInterface
             $this->stripe->client->company,
         );
 
-        return  $payment;
+        return $payment;
     }
 
     /**
@@ -293,7 +264,7 @@ class BankTransfer implements LivewireMethodInterface
     {
         $this->stripe->init();
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = PaymentIntent::create([
             'amount' => $this->stripe->convertToStripeAmount($data['total']['amount_with_fee'], $this->stripe->client->currency()->precision, $this->stripe->client->currency()),
             'currency' => $this->stripe->client->currency()->code,
             'customer' => $this->stripe->findOrCreateCustomer()->id,
@@ -313,7 +284,6 @@ class BankTransfer implements LivewireMethodInterface
                 'gateway_type_id' => GatewayType::DIRECT_DEBIT,
             ],
         ], $this->stripe->stripe_connect_auth);
-
 
         $this->stripe->payment_hash->data = array_merge((array) $this->stripe->payment_hash->data, ['stripe_amount' => $this->stripe->convertToStripeAmount($data['total']['amount_with_fee'], $this->stripe->client->currency()->precision, $this->stripe->client->currency())]);
         $this->stripe->payment_hash->save();

@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Jobs\Mail\NinjaMailer;
 use App\Jobs\Mail\NinjaMailerObject;
 use App\Models\Company;
@@ -10,8 +9,11 @@ use App\Models\User;
 use App\Services\Email\AdminEmailMailable;
 use App\Services\Email\EmailMailable;
 use App\Services\Email\EmailObject;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Facades\Notification;
 use Modules\Admin\Jobs\Account\EmailQuality;
+use Tests\TestCase;
 
 class EmailQualityTest extends TestCase
 {
@@ -19,21 +21,34 @@ class EmailQualityTest extends TestCase
     {
         parent::setUp();
 
-        if (! class_exists(\Modules\Admin\Jobs\Account\EmailQuality::class)) {
+        if (!class_exists(EmailQuality::class)) {
             $this->markTestSkipped('EmailQuality class is not available (Admin module not installed).');
         }
     }
 
     private function makeCompanyMock(string $companyName = 'Test Company'): Company
     {
-        $presenter = new class ($companyName) {
+        $presenter = new class($companyName)
+        {
             private string $name;
-            public function __construct(string $name) { $this->name = $name; }
-            public function name(): string { return $this->name; }
+
+            public function __construct(string $name)
+            {
+                $this->name = $name;
+            }
+
+            public function name(): string
+            {
+                return $this->name;
+            }
         };
 
-        $owner_presenter = new class {
-            public function name(): string { return 'Test Owner'; }
+        $owner_presenter = new class
+        {
+            public function name(): string
+            {
+                return 'Test Owner';
+            }
         };
 
         $owner = $this->createMock(User::class);
@@ -43,8 +58,12 @@ class EmailQualityTest extends TestCase
         $company->method('present')->willReturn($presenter);
         $company->method('owner')->willReturn($owner);
         $company->method('notification')->willReturn(
-            new class {
-                public function ninja() { return null; }
+            new class
+            {
+                public function ninja()
+                {
+                    return null;
+                }
             }
         );
 
@@ -61,12 +80,12 @@ class EmailQualityTest extends TestCase
 
     private function buildNinjaMailerNmo(string $subject, string $body, ?Company $company = null): NinjaMailerObject
     {
-        $mail_obj = new \stdClass();
+        $mail_obj = new \stdClass;
         $mail_obj->subject = $subject;
         $mail_obj->data = ['body' => $body];
         $mail_obj->markdown = 'email.template.client';
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new NinjaMailer($mail_obj);
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -77,7 +96,7 @@ class EmailQualityTest extends TestCase
 
     private function buildEmailMailableNmo(string $subject, string $body, ?Company $company = null): NinjaMailerObject
     {
-        $email_object = new EmailObject();
+        $email_object = new EmailObject;
         $email_object->subject = $subject;
         $email_object->body = $body;
         $email_object->company_key = 'test-key';
@@ -86,10 +105,10 @@ class EmailQualityTest extends TestCase
         $email_object->whitelabel = false;
         $email_object->invitation = null;
         $email_object->html_template = 'email.template.client';
-        $email_object->to = [new \Illuminate\Mail\Mailables\Address('test@example.com')];
+        $email_object->to = [new Address('test@example.com')];
         $email_object->documents = [];
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new EmailMailable($email_object);
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -98,7 +117,7 @@ class EmailQualityTest extends TestCase
         return $nmo;
     }
 
-    public function testCleanNinjaMailerSubjectPasses()
+    public function test_clean_ninja_mailer_subject_passes()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildNinjaMailerNmo('Your invoice is ready', 'Please find your invoice attached.', $company);
@@ -107,7 +126,7 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($eq->run());
     }
 
-    public function testSpamKeywordInNinjaMailerSubjectTriggersHit()
+    public function test_spam_keyword_in_ninja_mailer_subject_triggers_hit()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildNinjaMailerNmo('Your McAfee subscription renewal', 'Renew now.', $company);
@@ -116,7 +135,7 @@ class EmailQualityTest extends TestCase
         $this->assertTrue($eq->run());
     }
 
-    public function testCleanEmailMailableSubjectPasses()
+    public function test_clean_email_mailable_subject_passes()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildEmailMailableNmo('Invoice #1001 from Acme Corp', 'Here is your invoice.', $company);
@@ -125,7 +144,7 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($eq->run());
     }
 
-    public function testSpamKeywordInEmailMailableSubjectTriggersHit()
+    public function test_spam_keyword_in_email_mailable_subject_triggers_hit()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildEmailMailableNmo('Norton Security Alert', 'Your Norton subscription.', $company);
@@ -134,7 +153,7 @@ class EmailQualityTest extends TestCase
         $this->assertTrue($eq->run());
     }
 
-    public function testEmailMailableStripsBrTagsFromSubject()
+    public function test_email_mailable_strips_br_tags_from_subject()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildEmailMailableNmo('Your<br>Invoice<br>Ready', 'Body text.', $company);
@@ -143,7 +162,7 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($eq->run());
     }
 
-    public function testSpamCompanyNameTriggersHit()
+    public function test_spam_company_name_triggers_hit()
     {
         $company = $this->makeCompanyMock('PayPal Inc');
         $nmo = $this->buildNinjaMailerNmo('Your invoice', 'Body.', $company);
@@ -152,7 +171,7 @@ class EmailQualityTest extends TestCase
         $this->assertTrue($eq->run());
     }
 
-    public function testPercentInEmailIsFlagged()
+    public function test_percent_in_email_is_flagged()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildNinjaMailerNmo('Your invoice', 'Body.', $company);
@@ -164,11 +183,11 @@ class EmailQualityTest extends TestCase
         $this->assertTrue(true); // No exception thrown
     }
 
-    public function testEmailMailableWithClosuresDoesNotThrow()
+    public function test_email_mailable_with_closures_does_not_throw()
     {
         $company = $this->makeCompanyMock();
 
-        $email_object = new EmailObject();
+        $email_object = new EmailObject;
         $email_object->subject = 'Your invoice is ready';
         $email_object->body = 'Please find your invoice attached.';
         $email_object->company_key = 'test-key';
@@ -177,12 +196,12 @@ class EmailQualityTest extends TestCase
         $email_object->whitelabel = false;
         $email_object->invitation = null;
         $email_object->html_template = 'email.template.client';
-        $email_object->to = [new \Illuminate\Mail\Mailables\Address('test@example.com')];
+        $email_object->to = [new Address('test@example.com')];
         $email_object->documents = [];
 
         $mailable = new EmailMailable($email_object);
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = $mailable;
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -195,18 +214,18 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testOriginalMailableIsNotMutated()
+    public function test_original_mailable_is_not_mutated()
     {
         $company = $this->makeCompanyMock();
 
-        $mail_obj = new \stdClass();
+        $mail_obj = new \stdClass;
         $mail_obj->subject = 'Your invoice is ready';
         $mail_obj->data = ['body' => 'Clean body text.'];
         $mail_obj->markdown = 'email.template.client';
 
         $mailable = new NinjaMailer($mail_obj);
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = $mailable;
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -221,7 +240,7 @@ class EmailQualityTest extends TestCase
         $this->assertNull($mailable->subject, 'Mailable subject property should not have been set');
     }
 
-    public function testSpamReplyToNameIsFlagged()
+    public function test_spam_reply_to_name_is_flagged()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildNinjaMailerNmo('Your invoice', 'Body.', $company);
@@ -234,7 +253,7 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testCaseInsensitiveSpamDetection()
+    public function test_case_insensitive_spam_detection()
     {
         $company = $this->makeCompanyMock();
         $nmo = $this->buildNinjaMailerNmo('MCAFEE RENEWAL NOTICE', 'Please renew.', $company);
@@ -243,14 +262,14 @@ class EmailQualityTest extends TestCase
         $this->assertTrue($eq->run());
     }
 
-    public function testUnknownMailableTypeReturnsCleanResult()
+    public function test_unknown_mailable_type_returns_clean_result()
     {
         $company = $this->makeCompanyMock();
 
         // Use a plain Mailable (neither NinjaMailer nor EmailMailable)
-        $mailable = new \Illuminate\Mail\Mailable();
+        $mailable = new Mailable;
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = $mailable;
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -263,11 +282,11 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testAdminEmailMailableSpamSubjectTriggersHit()
+    public function test_admin_email_mailable_spam_subject_triggers_hit()
     {
         $company = $this->makeCompanyMock();
 
-        $email_object = new EmailObject();
+        $email_object = new EmailObject;
         $email_object->subject = 'Norton Security Alert';
         $email_object->body = 'Your Norton subscription.';
         $email_object->company_key = 'test-key';
@@ -276,11 +295,11 @@ class EmailQualityTest extends TestCase
         $email_object->whitelabel = false;
         $email_object->invitation = null;
         $email_object->html_template = 'email.admin.generic';
-        $email_object->to = [new \Illuminate\Mail\Mailables\Address('test@example.com')];
+        $email_object->to = [new Address('test@example.com')];
         $email_object->documents = [];
         $email_object->attachments = [];
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new AdminEmailMailable($email_object);
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -290,11 +309,11 @@ class EmailQualityTest extends TestCase
         $this->assertTrue($eq->run());
     }
 
-    public function testAdminEmailMailableCleanSubjectPasses()
+    public function test_admin_email_mailable_clean_subject_passes()
     {
         $company = $this->makeCompanyMock();
 
-        $email_object = new EmailObject();
+        $email_object = new EmailObject;
         $email_object->subject = 'Invoice reminder sent';
         $email_object->body = 'A reminder was sent to the client.';
         $email_object->company_key = 'test-key';
@@ -303,11 +322,11 @@ class EmailQualityTest extends TestCase
         $email_object->whitelabel = false;
         $email_object->invitation = null;
         $email_object->html_template = 'email.admin.generic';
-        $email_object->to = [new \Illuminate\Mail\Mailables\Address('test@example.com')];
+        $email_object->to = [new Address('test@example.com')];
         $email_object->documents = [];
         $email_object->attachments = [];
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new AdminEmailMailable($email_object);
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -317,13 +336,13 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($eq->run());
     }
 
-    public function testNinjaMailerWithNullMailObjDoesNotThrow()
+    public function test_ninja_mailer_with_null_mail_obj_does_not_throw()
     {
         $company = $this->makeCompanyMock();
 
         $mailable = new NinjaMailer(null);
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = $mailable;
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];
@@ -336,11 +355,11 @@ class EmailQualityTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testNullMailableDoesNotThrow()
+    public function test_null_mailable_does_not_throw()
     {
         $company = $this->makeCompanyMock();
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = null;
         $nmo->company = $company;
         $nmo->to_user = (object) ['email' => 'client@example.com'];

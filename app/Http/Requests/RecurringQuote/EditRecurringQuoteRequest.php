@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,7 +36,7 @@ class EditRecurringQuoteRequest extends Request
     {
         $input = $this->all();
 
-        //$input['id'] = $this->encodePrimaryKey($input['id']);
+        // $input['id'] = $this->encodePrimaryKey($input['id']);
 
         $this->replace($input);
     }

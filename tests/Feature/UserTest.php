@@ -6,33 +6,44 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Account;
-use App\Models\Company;
-use App\Libraries\MultiDB;
-use App\Utils\TruthSource;
-use Tests\MockAccountData;
-use App\Models\CompanyUser;
-use App\Models\CompanyToken;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
-use App\Repositories\UserRepository;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use App\Http\Middleware\PasswordProtection;
-use Illuminate\Validation\ValidationException;
+use App\Libraries\MultiDB;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\CompanyUser;
+use App\Models\Credit;
+use App\Models\CreditInvitation;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Models\Product;
+use App\Models\Project;
+use App\Models\Quote;
+use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoice;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Models\VendorContact;
+use App\Repositories\UserRepository;
+use App\Utils\TruthSource;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\UserController
  */
 class UserTest extends TestCase
@@ -40,6 +51,7 @@ class UserTest extends TestCase
     use MockAccountData;
 
     private $default_email = 'attach@gmail.com';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -68,10 +80,10 @@ class UserTest extends TestCase
         $user = User::factory()->create([
             'account_id' => $account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
-        $user->password = \Illuminate\Support\Facades\Hash::make('ALongAndBriliantPassword');
+        $user->password = Hash::make('ALongAndBriliantPassword');
         $user->email_verified_at = now();
         $user->save();
 
@@ -98,13 +110,13 @@ class UserTest extends TestCase
             'is_admin' => 1,
             'is_locked' => 0,
             'permissions' => '',
-            'notifications' => \App\DataMapper\CompanySettings::notificationAdminDefaults(),
+            'notifications' => CompanySettings::notificationAdminDefaults(),
             'settings' => null,
         ]);
 
-        $token = \Illuminate\Support\Str::random(64);
+        $token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -126,8 +138,7 @@ class UserTest extends TestCase
 
     }
 
-
-    public function testValidEmailUpdate()
+    public function test_valid_email_update()
     {
         $company_token = $this->mockAccount();
         $user = auth()->user();
@@ -146,7 +157,7 @@ class UserTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->putJson('/api/v1/users/'.$user->hashed_id.'?include=company_user', $data);
+        ])->putJson('/api/v1/users/' . $user->hashed_id . '?include=company_user', $data);
 
         $response->assertStatus(200);
 
@@ -154,8 +165,7 @@ class UserTest extends TestCase
 
     }
 
-
-    public function testNullEmail()
+    public function test_null_email()
     {
 
         $company_token = $this->mockAccount();
@@ -172,7 +182,7 @@ class UserTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->putJson('/api/v1/users/'.$user->hashed_id.'?include=company_user', $data);
+        ])->putJson('/api/v1/users/' . $user->hashed_id . '?include=company_user', $data);
 
         $response->assertStatus(200);
 
@@ -183,20 +193,20 @@ class UserTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->putJson('/api/v1/users/'.$user->hashed_id.'?include=company_user', $data);
+        ])->putJson('/api/v1/users/' . $user->hashed_id . '?include=company_user', $data);
 
         $response->assertStatus(200);
 
         $data = $user->toArray();
 
-        $data['email'] = \Illuminate\Support\Str::random(32)."@example.com";
+        $data['email'] = Str::random(32) . '@example.com';
         unset($data['password']);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->putJson('/api/v1/users/'.$user->hashed_id.'?include=company_user', $data);
+        ])->putJson('/api/v1/users/' . $user->hashed_id . '?include=company_user', $data);
 
         $response->assertStatus(200);
 
@@ -204,18 +214,17 @@ class UserTest extends TestCase
         $this->assertEquals($arr['data']['email'], $data['email']);
     }
 
-
-    public function testUserLocale()
+    public function test_user_locale()
     {
 
         $company_token = $this->mockAccount();
 
         $user = auth()->user();
 
-        $user->language_id = "13";
+        $user->language_id = '13';
         $user->save();
 
-        $this->assertEquals("fr_CA", $user->getLocale());
+        $this->assertEquals('fr_CA', $user->getLocale());
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -226,9 +235,7 @@ class UserTest extends TestCase
 
     }
 
-
-
-    public function testUserResponse()
+    public function test_user_response()
     {
         $company_token = $this->mockAccount();
 
@@ -239,16 +246,16 @@ class UserTest extends TestCase
         }
 
         $data = [
-                'first_name' => 'hey',
-                'last_name' => 'you',
-                'email' => 'normal_user@gmail.com',
-                'company_user' => [
-                    'is_admin' => true,
-                    'is_owner' => false,
-                    'permissions' => 'create_client,create_invoice',
-                ],
-                'phone' => null,
-            ];
+            'first_name' => 'hey',
+            'last_name' => 'you',
+            'email' => 'normal_user@gmail.com',
+            'company_user' => [
+                'is_admin' => true,
+                'is_owner' => false,
+                'permissions' => 'create_client,create_invoice',
+            ],
+            'phone' => null,
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -272,7 +279,7 @@ class UserTest extends TestCase
 
         $this->assertCount(2, $arr['data']);
 
-        //archive the user we just created:
+        // archive the user we just created:
 
         $data = [
             'action' => 'archive',
@@ -325,10 +332,9 @@ class UserTest extends TestCase
         $response->assertStatus(200);
         $this->assertCount(0, $response->json()['data']);
 
-
     }
 
-    public function testUserAttemptingtToDeleteThemselves()
+    public function test_user_attemptingt_to_delete_themselves()
     {
 
         $account = Account::factory()->create([
@@ -342,8 +348,8 @@ class UserTest extends TestCase
         $user = User::factory()->create([
             'account_id' => $account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
-            'password' => \Illuminate\Support\Facades\Hash::make('ALongAndBriliantPassword'),
+            'email' => Str::random(32) . '@example.com',
+            'password' => Hash::make('ALongAndBriliantPassword'),
         ]);
 
         $settings = CompanySettings::defaults();
@@ -361,13 +367,13 @@ class UserTest extends TestCase
             'is_admin' => 1,
             'is_locked' => 0,
             'permissions' => '',
-            'notifications' => \App\DataMapper\CompanySettings::notificationAdminDefaults(),
+            'notifications' => CompanySettings::notificationAdminDefaults(),
             'settings' => null,
         ]);
 
-        $token = \Illuminate\Support\Str::random(64);
+        $token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -385,7 +391,6 @@ class UserTest extends TestCase
             'X-API-TOKEN' => $token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
         ])->postJson('/api/v1/users/bulk?action=delete', $data);
-
 
         $response->assertStatus(401);
 
@@ -419,7 +424,7 @@ class UserTest extends TestCase
 
     // }
 
-    public function testUserFiltersWith()
+    public function test_user_filters_with()
     {
         $company_token = $this->mockAccount();
 
@@ -427,14 +432,13 @@ class UserTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->get('/api/v1/users?with='.$company_token->user->hashed_id);
+        ])->get('/api/v1/users?with=' . $company_token->user->hashed_id);
 
         $response->assertStatus(200);
     }
 
-    public function testUserList()
+    public function test_user_list()
     {
-
 
         $company_token = $this->mockAccount();
 
@@ -447,7 +451,7 @@ class UserTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testValidationRulesPhoneIsNull()
+    public function test_validation_rules_phone_is_null()
     {
         $this->withoutMiddleware(PasswordProtection::class);
         $company_token = $this->mockAccount();
@@ -479,7 +483,7 @@ class UserTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testValidationRulesPhoneIsBlankString()
+    public function test_validation_rules_phone_is_blank_string()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -499,7 +503,7 @@ class UserTest extends TestCase
                 'is_owner' => false,
                 'permissions' => 'create_client,create_invoice',
             ],
-            'phone' => "",
+            'phone' => '',
         ];
 
         $response = $this->withHeaders([
@@ -515,7 +519,6 @@ class UserTest extends TestCase
         $user_id = $this->decodePrimaryKey($arr['data']['id']);
         $user = User::find($user_id);
 
-
         $data = [
             'first_name' => 'hey',
             'last_name' => 'you',
@@ -526,20 +529,19 @@ class UserTest extends TestCase
                 'permissions' => 'create_client,create_invoice',
                 'notifications' => '',
             ],
-            'phone' => "",
+            'phone' => '',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->putJson('/api/v1/users/'.$user->hashed_id.'?include=company_user', $data);
+        ])->putJson('/api/v1/users/' . $user->hashed_id . '?include=company_user', $data);
     }
 
-    public function testUserStore()
+    public function test_user_store()
     {
         $this->withoutMiddleware(PasswordProtection::class);
-
 
         $_user = MultiDB::hasUser(['email' => 'bob1@good.ole.boys.com']);
 
@@ -573,7 +575,7 @@ class UserTest extends TestCase
         $this->assertNotNull($arr['data']['company_user']);
     }
 
-    public function testUserAttachAndDetach()
+    public function test_user_attach_and_detach()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -593,10 +595,10 @@ class UserTest extends TestCase
         $response = false;
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $company_token->token,
-                'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-            ])->postJson('/api/v1/users?include=company_user', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $company_token->token,
+            'X-API-PASSWORD' => 'ALongAndBriliantPassword',
+        ])->postJson('/api/v1/users?include=company_user', $data);
 
         $response->assertStatus(200);
 
@@ -606,7 +608,7 @@ class UserTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->delete('/api/v1/users/'.$arr['data']['id'].'/detach_from_company?include=company_user');
+        ])->delete('/api/v1/users/' . $arr['data']['id'] . '/detach_from_company?include=company_user');
 
         $response->assertStatus(200);
 
@@ -621,7 +623,7 @@ class UserTest extends TestCase
         $this->assertNotNull($user);
     }
 
-    public function testAttachUserToMultipleCompanies()
+    public function test_attach_user_to_multiple_companies()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -633,40 +635,38 @@ class UserTest extends TestCase
             $_user->account->delete();
         }
 
-
         $_user = MultiDB::hasUser(['email' => 'bob@good.ole.boys.co2.com']);
 
         if ($_user) {
             $_user->account->delete();
         }
 
-
         /* Create New Company */
         $company2 = Company::factory()->create([
             'account_id' => $company_token->account_id,
         ]);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = auth()->user()->id;
         $company_token->company_id = $company2->id;
         $company_token->account_id = auth()->user()->account_id;
         $company_token->name = 'test token';
-        $company_token->token = \Illuminate\Support\Str::random(64);
+        $company_token->token = Str::random(64);
         $company_token->is_system = true;
         $company_token->save();
 
-        /*Manually link this user to the company*/
+        /* Manually link this user to the company */
         auth()->user()->companies()->attach($company2->id, [
-             'account_id' => $company_token->account_id,
-             'is_owner' => 1,
-             'is_admin' => 1,
-             'is_locked' => 0,
-             'permissions' => '',
-             'notifications' => \App\DataMapper\CompanySettings::notificationAdminDefaults(),
-             'settings' => null,
-         ]);
+            'account_id' => $company_token->account_id,
+            'is_owner' => 1,
+            'is_admin' => 1,
+            'is_locked' => 0,
+            'permissions' => '',
+            'notifications' => CompanySettings::notificationAdminDefaults(),
+            'settings' => null,
+        ]);
 
-        /*Create New Blank User and Attach to Company 2*/
+        /* Create New Blank User and Attach to Company 2 */
         $data = [
             'first_name' => 'Test',
             'last_name' => 'Palloni',
@@ -683,7 +683,7 @@ class UserTest extends TestCase
         // $this->assertNotNull($new_user->company_user);
         // $this->assertEquals($new_user->company_user->company_id, $company2->id);
 
-        /*Create brand new user manually with company_user object and attach to a different company*/
+        /* Create brand new user manually with company_user object and attach to a different company */
         $data = [
             'first_name' => 'hey',
             'last_name' => 'you',
@@ -717,7 +717,7 @@ class UserTest extends TestCase
 
         $this->assertNotNull($cu);
 
-        /*Update the user permissions of this user*/
+        /* Update the user permissions of this user */
         $data = [
             'first_name' => 'Captain',
             'last_name' => 'Morgain',
@@ -733,7 +733,7 @@ class UserTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $company_token->token,
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
-        ])->putJson('/api/v1/users/'.$this->encodePrimaryKey($user->id).'?include=company_user', $data);
+        ])->putJson('/api/v1/users/' . $this->encodePrimaryKey($user->id) . '?include=company_user', $data);
 
         $response->assertStatus(200);
 
@@ -745,7 +745,7 @@ class UserTest extends TestCase
         $this->assertEquals($arr['data']['company_user']['permissions'], 'create_invoice,create_invoice');
     }
 
-    public function testPurgeUserTransfersEntities()
+    public function test_purge_user_transfers_entities()
     {
         // Create account and owner user
         $account = Account::factory()->create([
@@ -758,7 +758,7 @@ class UserTest extends TestCase
 
         $owner_user = User::factory()->create([
             'account_id' => $account->id,
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -781,7 +781,7 @@ class UserTest extends TestCase
         // Create secondary user to be purged
         $secondary_user = User::factory()->create([
             'account_id' => $account->id,
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $secondary_user->companies()->attach($company->id, [
@@ -795,14 +795,14 @@ class UserTest extends TestCase
         ]);
 
         // Create a client owned by secondary user
-        $client = \App\Models\Client::factory()->create([
+        $client = Client::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'assigned_user_id' => $secondary_user->id,
         ]);
 
         // Create client contact
-        $client_contact = \App\Models\ClientContact::factory()->create([
+        $client_contact = ClientContact::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
@@ -810,55 +810,55 @@ class UserTest extends TestCase
         ]);
 
         // Create invoice owned by secondary user
-        $invoice = \App\Models\Invoice::factory()->create([
+        $invoice = Invoice::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
             'assigned_user_id' => $secondary_user->id,
-            'status_id' => \App\Models\Invoice::STATUS_DRAFT,
+            'status_id' => Invoice::STATUS_DRAFT,
         ]);
         $invoice = $invoice->service()->createInvitations()->markSent()->save();
 
         // Create credit owned by secondary user
-        $credit = \App\Models\Credit::factory()->create([
+        $credit = Credit::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
             'assigned_user_id' => $secondary_user->id,
-            'status_id' => \App\Models\Credit::STATUS_DRAFT,
+            'status_id' => Credit::STATUS_DRAFT,
         ]);
 
         $credit = $credit->service()->createInvitations()->markSent()->save();
 
         // Create quote owned by secondary user
-        $quote = \App\Models\Quote::factory()->create([
+        $quote = Quote::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
             'assigned_user_id' => $secondary_user->id,
-            'status_id' => \App\Models\Quote::STATUS_DRAFT,
+            'status_id' => Quote::STATUS_DRAFT,
         ]);
         $quote = $quote->service()->createInvitations()->markSent()->save();
 
         // Create recurring invoice owned by secondary user
-        $recurring_invoice = \App\Models\RecurringInvoice::factory()->create([
+        $recurring_invoice = RecurringInvoice::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
             'assigned_user_id' => $secondary_user->id,
-            'status_id' => \App\Models\RecurringInvoice::STATUS_DRAFT,
+            'status_id' => RecurringInvoice::STATUS_DRAFT,
         ]);
 
         $recurring_invoice = $recurring_invoice->service()->createInvitations()->start()->save();
         // Create expense owned by secondary user
-        $expense = \App\Models\Expense::factory()->create([
+        $expense = Expense::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'assigned_user_id' => $secondary_user->id,
         ]);
 
         // Create task owned by secondary user
-        $task = \App\Models\Task::factory()->create([
+        $task = Task::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
@@ -866,14 +866,14 @@ class UserTest extends TestCase
         ]);
 
         // Create vendor owned by secondary user
-        $vendor = \App\Models\Vendor::factory()->create([
+        $vendor = Vendor::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'assigned_user_id' => $secondary_user->id,
         ]);
 
         // Create vendor contact
-        $vendor_contact = \App\Models\VendorContact::factory()->create([
+        $vendor_contact = VendorContact::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'vendor_id' => $vendor->id,
@@ -881,14 +881,14 @@ class UserTest extends TestCase
         ]);
 
         // Create product owned by secondary user
-        $product = \App\Models\Product::factory()->create([
+        $product = Product::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'assigned_user_id' => $secondary_user->id,
         ]);
 
         // Create project owned by secondary user
-        $project = \App\Models\Project::factory()->create([
+        $project = Project::factory()->create([
             'user_id' => $secondary_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
@@ -896,13 +896,12 @@ class UserTest extends TestCase
         ]);
 
         // Create an entity owned by owner but assigned to secondary user
-        $invoice_assigned_only = \App\Models\Invoice::factory()->create([
+        $invoice_assigned_only = Invoice::factory()->create([
             'user_id' => $owner_user->id,
             'company_id' => $company->id,
             'client_id' => $client->id,
             'assigned_user_id' => $secondary_user->id,
         ]);
-
 
         $invoice = $invoice->load('invitations');
 
@@ -928,7 +927,7 @@ class UserTest extends TestCase
         $invoice_assigned_only_id = $invoice_assigned_only->id;
 
         // Perform the purge
-        $user_repo = new UserRepository();
+        $user_repo = new UserRepository;
         $owner_user->setCompany($company);
         $user_repo->purge($secondary_user, $owner_user);
 
@@ -936,68 +935,68 @@ class UserTest extends TestCase
         $this->assertNull(User::find($secondary_user_id));
 
         // Assert all entities are now owned by owner user
-        $client = \App\Models\Client::find($client_id);
+        $client = Client::find($client_id);
         $this->assertEquals($owner_user->id, $client->user_id);
         $this->assertNull($client->assigned_user_id);
 
         // Assert client contact user_id updated
-        $client_contact = \App\Models\ClientContact::find($client_contact_id);
+        $client_contact = ClientContact::find($client_contact_id);
         $this->assertEquals($owner_user->id, $client_contact->user_id);
 
-        $invoice = \App\Models\Invoice::find($invoice_id);
+        $invoice = Invoice::find($invoice_id);
         $this->assertEquals($owner_user->id, $invoice->user_id);
         $this->assertNull($invoice->assigned_user_id);
 
         // Assert invoice invitation user_id updated
-        $invoice_invitation = \App\Models\InvoiceInvitation::find($invoice_invitation_id);
+        $invoice_invitation = InvoiceInvitation::find($invoice_invitation_id);
         $this->assertEquals($owner_user->id, $invoice_invitation->user_id);
 
-        $credit = \App\Models\Credit::find($credit_id);
+        $credit = Credit::find($credit_id);
         $this->assertEquals($owner_user->id, $credit->user_id);
         $this->assertNull($credit->assigned_user_id);
 
         // Assert credit invitation user_id updated
-        $credit_invitation = \App\Models\CreditInvitation::find($credit_invitation_id);
+        $credit_invitation = CreditInvitation::find($credit_invitation_id);
         $this->assertEquals($owner_user->id, $credit_invitation->user_id);
 
-        $quote = \App\Models\Quote::find($quote_id);
+        $quote = Quote::find($quote_id);
         $this->assertEquals($owner_user->id, $quote->user_id);
         $this->assertNull($quote->assigned_user_id);
 
         // Assert quote invitation user_id updated
-        $quote_invitation = \App\Models\QuoteInvitation::find($quote_invitation_id);
+        $quote_invitation = QuoteInvitation::find($quote_invitation_id);
         $this->assertEquals($owner_user->id, $quote_invitation->user_id);
 
-        $recurring_invoice = \App\Models\RecurringInvoice::find($recurring_invoice_id);
+        $recurring_invoice = RecurringInvoice::find($recurring_invoice_id);
         $this->assertEquals($owner_user->id, $recurring_invoice->user_id);
         $this->assertNull($recurring_invoice->assigned_user_id);
 
-        $expense = \App\Models\Expense::find($expense_id);
+        $expense = Expense::find($expense_id);
         $this->assertEquals($owner_user->id, $expense->user_id);
         $this->assertNull($expense->assigned_user_id);
 
-        $task = \App\Models\Task::find($task_id);
+        $task = Task::find($task_id);
         $this->assertEquals($owner_user->id, $task->user_id);
         $this->assertNull($task->assigned_user_id);
 
-        $vendor = \App\Models\Vendor::find($vendor_id);
+        $vendor = Vendor::find($vendor_id);
         $this->assertEquals($owner_user->id, $vendor->user_id);
         $this->assertNull($vendor->assigned_user_id);
 
         // Assert vendor contact user_id updated
-        $vendor_contact = \App\Models\VendorContact::find($vendor_contact_id);
+        $vendor_contact = VendorContact::find($vendor_contact_id);
         $this->assertEquals($owner_user->id, $vendor_contact->user_id);
 
-        $product = \App\Models\Product::find($product_id);
+        $product = Product::find($product_id);
         $this->assertEquals($owner_user->id, $product->user_id);
         $this->assertNull($product->assigned_user_id);
 
-        $project = \App\Models\Project::find($project_id);
+        $project = Project::find($project_id);
         $this->assertEquals($owner_user->id, $project->user_id);
         $this->assertNull($project->assigned_user_id);
 
         // Assert entity owned by owner but assigned to secondary now has null assigned_user_id
-        $invoice_assigned_only = \App\Models\Invoice::find($invoice_assigned_only_id);
+        $invoice_assigned_only = Invoice::find($invoice_assigned_only_id);
         $this->assertEquals($owner_user->id, $invoice_assigned_only->user_id);
         $this->assertNull($invoice_assigned_only->assigned_user_id);
     }

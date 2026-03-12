@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,7 @@ use App\Http\Requests\Yodlee\YodleeAdminRequest;
 use App\Http\Requests\Yodlee\YodleeAuthRequest;
 use App\Jobs\Bank\ProcessBankTransactionsYodlee;
 use App\Models\BankIntegration;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class YodleeController extends BaseController
@@ -25,7 +25,7 @@ class YodleeController extends BaseController
     public function auth(YodleeAuthRequest $request)
     {
 
-        $yodlee = new Yodlee();
+        $yodlee = new Yodlee;
 
         $company = $request->getCompany();
 
@@ -47,7 +47,7 @@ class YodleeController extends BaseController
 
         $yodlee = new Yodlee($token);
 
-        if ($request->has('window_closed') && $request->input("window_closed") == "true") {
+        if ($request->has('window_closed') && $request->input('window_closed') == 'true') {
             $this->getAccounts($company, $token);
         }
 
@@ -89,7 +89,7 @@ class YodleeController extends BaseController
                 $bi->integration_type = BankIntegration::INTEGRATION_TYPE_YODLEE;
                 $bi->save();
             } else {
-                $bank_integration = new BankIntegration();
+                $bank_integration = new BankIntegration;
                 $bank_integration->company_id = $company->id;
                 $bank_integration->account_id = $company->account_id;
                 $bank_integration->user_id = $company->owner()->id;
@@ -111,7 +111,7 @@ class YodleeController extends BaseController
             }
         }
 
-        $company->account->bank_integrations->where("integration_type", BankIntegration::INTEGRATION_TYPE_YODLEE)->where('auto_sync', true)->each(function ($bank_integration) use ($company) { // TODO: filter to yodlee only
+        $company->account->bank_integrations->where('integration_type', BankIntegration::INTEGRATION_TYPE_YODLEE)->where('auto_sync', true)->each(function ($bank_integration) use ($company) { // TODO: filter to yodlee only
             ProcessBankTransactionsYodlee::dispatch($company->account->bank_integration_account_id, $bank_integration);
         });
     }
@@ -126,26 +126,34 @@ class YodleeController extends BaseController
      *      tags={"yodlee"},
      *      summary="Processing webhooks from Yodlee",
      *      description="Notifies the system when a data point can be refreshed",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Credit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -181,7 +189,7 @@ class YodleeController extends BaseController
 }*/
     public function refreshWebhook(Request $request)
     {
-        //we should ignore this one
+        // we should ignore this one
         // nlog("yodlee refresh");
         // nlog($request->all());
 
@@ -216,7 +224,7 @@ class YodleeController extends BaseController
     */
     public function balanceWebhook(Request $request)
     {
-        nlog("yodlee refresh");
+        nlog('yodlee refresh');
         nlog($request->all());
 
         return response()->json(['message' => 'Success'], 200);
@@ -251,7 +259,7 @@ class YodleeController extends BaseController
     */
     public function refreshUpdatesWebhook(Request $request)
     {
-        //notifies a user if there are problems with yodlee accessing the data
+        // notifies a user if there are problems with yodlee accessing the data
         // nlog("update refresh");
         // nlog($request->all());
 
@@ -261,7 +269,6 @@ class YodleeController extends BaseController
 
         // return response()->json(['message' => 'Unauthorized'], 403);
     }
-
 
     /*
     "event": {
@@ -286,8 +293,7 @@ class YodleeController extends BaseController
     */
     public function dataUpdatesWebhook(Request $request)
     {
-        //this is the main hook we use for notifications
-
+        // this is the main hook we use for notifications
 
         return response()->json(['message' => 'Success'], 200);
 
@@ -298,7 +304,7 @@ class YodleeController extends BaseController
 
     public function accountStatus(YodleeAdminRequest $request, $account_number)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $bank_integration = BankIntegration::query()
@@ -322,7 +328,7 @@ class YodleeController extends BaseController
 
     private function transformSummary($summary): array
     {
-        $dto = new \stdClass();
+        $dto = new \stdClass;
         $dto->id = $summary['id'] ?? 0;
         $dto->account_type = $summary['CONTAINER'] ?? '';
 

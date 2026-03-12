@@ -6,31 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Import;
 
-use App\Models\Client;
-use App\Models\Vendor;
-use App\Models\Company;
-use App\Libraries\MultiDB;
-use Illuminate\Support\Str;
-use App\Import\Providers\Csv;
-use Illuminate\Bus\Queueable;
-use App\Import\Providers\Wave;
-use App\Import\Providers\Zoho;
-use App\Import\Providers\QBBackup;
-use App\Import\Providers\Invoicely;
-use App\Import\Providers\Freshbooks;
-use App\Import\Providers\Invoice2Go;
 use App\Factory\ClientContactFactory;
 use App\Factory\VendorContactFactory;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Import\Providers\Csv;
+use App\Import\Providers\Freshbooks;
+use App\Import\Providers\Invoice2Go;
+use App\Import\Providers\Invoicely;
+use App\Import\Providers\QBBackup;
+use App\Import\Providers\Wave;
+use App\Import\Providers\Zoho;
+use App\Libraries\MultiDB;
+use App\Models\Client;
+use App\Models\Company;
+use App\Models\Vendor;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 class CSVIngest implements ShouldQueue
 {
@@ -63,7 +62,7 @@ class CSVIngest implements ShouldQueue
         $this->import_type = $request['import_type'];
         $this->skip_header = $request['skip_header'] ?? null;
         $this->column_map
-            = ! empty($request['column_map'])
+            = !empty($request['column_map'])
                 ? array_combine(array_keys($request['column_map']), array_column($request['column_map'], 'mapping')) : null;
     }
 
@@ -143,7 +142,7 @@ class CSVIngest implements ShouldQueue
             case 'quickbooks':
                 return new QBBackup($this->request, $this->company);
             default:
-                nlog("could not return provider");
+                nlog('could not return provider');
                 break;
         }
     }

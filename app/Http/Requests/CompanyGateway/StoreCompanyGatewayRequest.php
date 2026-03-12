@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Http\Requests\CompanyGateway;
 use App\Http\Requests\Request;
 use App\Http\ValidationRules\ValidCompanyGatewayFeesAndLimitsRule;
 use App\Models\Gateway;
+use App\Models\User;
 use App\Utils\Traits\CompanyGatewayFeesAndLimitsSaver;
 use Illuminate\Validation\Rule;
 
@@ -24,12 +24,10 @@ class StoreCompanyGatewayRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin();
@@ -38,8 +36,8 @@ class StoreCompanyGatewayRequest extends Request
     public function rules()
     {
         $rules = [
-            'gateway_key' => ['bail', 'required','alpha_num',Rule::exists('gateways', 'key')],
-            'fees_and_limits' => new ValidCompanyGatewayFeesAndLimitsRule(),
+            'gateway_key' => ['bail', 'required', 'alpha_num', Rule::exists('gateways', 'key')],
+            'fees_and_limits' => new ValidCompanyGatewayFeesAndLimitsRule,
         ];
 
         return $rules;
@@ -52,7 +50,7 @@ class StoreCompanyGatewayRequest extends Request
         if ($gateway = Gateway::query()->where('key', $input['gateway_key'])->first()) {
             $default_gateway_fields = json_decode($gateway->fields);
 
-            /*Force gateway properties */
+            /* Force gateway properties */
             if (isset($input['config']) && is_object(json_decode($input['config']))) {
                 foreach (json_decode($input['config']) as $key => $value) {
                     $default_gateway_fields->{$key} = $value;

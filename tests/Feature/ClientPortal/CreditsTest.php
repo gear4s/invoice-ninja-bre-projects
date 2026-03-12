@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,8 +30,8 @@ use function now;
 
 class CreditsTest extends TestCase
 {
-    use DatabaseTransactions;
     use AppSetup;
+    use DatabaseTransactions;
 
     private $faker;
 
@@ -44,7 +43,7 @@ class CreditsTest extends TestCase
 
     }
 
-    public function testShowingOnlyCreditsWithDueDateLessOrEqualToNow()
+    public function test_showing_only_credits_with_due_date_less_or_equal_to_now()
     {
         $account = Account::factory()->create();
 
@@ -111,7 +110,7 @@ class CreditsTest extends TestCase
         $user->forceDelete();
     }
 
-    public function testShowingCreditsWithNullDueDate()
+    public function test_showing_credits_with_null_due_date()
     {
         $account = Account::factory()->create();
 

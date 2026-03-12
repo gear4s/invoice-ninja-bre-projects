@@ -6,24 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\Services\Quickbooks\Transformers;
 
-use Tests\TestCase;
-use Tests\MockAccountData;
 use App\Models\Company;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Services\Quickbooks\Transformers\CompanyTransformer;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class CompanyTransformerTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     private CompanyTransformer $transformer;
+
     private array $qbCompanyInfo;
 
     protected function setUp(): void
@@ -107,12 +107,12 @@ class CompanyTransformerTest extends TestCase
         ];
     }
 
-    public function testTransformerInstance(): void
+    public function test_transformer_instance(): void
     {
         $this->assertInstanceOf(CompanyTransformer::class, $this->transformer);
     }
 
-    public function testTransformReturnsArray(): void
+    public function test_transform_returns_array(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -121,7 +121,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertArrayHasKey('settings', $result);
     }
 
-    public function testQuickbooksDataStructure(): void
+    public function test_quickbooks_data_structure(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -129,7 +129,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('Sandbox Company_US_1', $result['quickbooks']['companyName']);
     }
 
-    public function testSettingsDataStructure(): void
+    public function test_settings_data_structure(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -147,7 +147,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertArrayHasKey('timezone_id', $settings);
     }
 
-    public function testAddressMapping(): void
+    public function test_address_mapping(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -160,7 +160,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('87999', $settings['postal_code']);
     }
 
-    public function testContactInformationMapping(): void
+    public function test_contact_information_mapping(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -170,7 +170,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('david@invoiceninja.com', $settings['email']);
     }
 
-    public function testCountryResolution(): void
+    public function test_country_resolution(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -181,7 +181,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertIsString($settings['country_id']);
     }
 
-    public function testTimezoneResolution(): void
+    public function test_timezone_resolution(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -192,7 +192,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertIsString($settings['timezone_id']);
     }
 
-    public function testCanPersistQuickbooksData(): void
+    public function test_can_persist_quickbooks_data(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -210,7 +210,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('Sandbox Company_US_1', $company->quickbooks->companyName);
     }
 
-    public function testCanPersistSettingsData(): void
+    public function test_can_persist_settings_data(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -233,7 +233,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('david@invoiceninja.com', $company->settings->email);
     }
 
-    public function testCanPersistBothQuickbooksAndSettings(): void
+    public function test_can_persist_both_quickbooks_and_settings(): void
     {
         $result = $this->transformer->transform($this->qbCompanyInfo);
 
@@ -254,7 +254,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('david@invoiceninja.com', $company->settings->email);
     }
 
-    public function testAddressFallbackToLegalAddr(): void
+    public function test_address_fallback_to_legal_addr(): void
     {
         // Remove CompanyAddr to test fallback
         $qbData = $this->qbCompanyInfo;
@@ -267,7 +267,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('San Pablo', $result['settings']['city']);
     }
 
-    public function testEmailFallback(): void
+    public function test_email_fallback(): void
     {
         // Remove Email to test fallback to CustomerCommunicationEmailAddr
         $qbData = $this->qbCompanyInfo;
@@ -279,7 +279,7 @@ class CompanyTransformerTest extends TestCase
         $this->assertEquals('david@invoiceninja.com', $result['settings']['email']);
     }
 
-    public function testHandlesEmptyData(): void
+    public function test_handles_empty_data(): void
     {
         $emptyData = [
             'CompanyName' => '',

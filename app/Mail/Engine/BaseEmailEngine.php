@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -65,7 +64,7 @@ class BaseEmailEngine implements EngineInterface
 
     public function setSubject($subject)
     {
-        if (! empty($this->variables)) {
+        if (!empty($this->variables)) {
             $subject = str_replace(array_keys($this->variables), array_values($this->variables), $subject);
         }
 
@@ -76,7 +75,7 @@ class BaseEmailEngine implements EngineInterface
 
     public function setBody($body)
     {
-        if (! empty($this->variables)) {
+        if (!empty($this->variables)) {
             $body = str_replace(array_keys($this->variables), array_values($this->variables), $body);
             $body = str_replace(array_keys($this->variables), array_values($this->variables), $body);
         }
@@ -107,7 +106,6 @@ class BaseEmailEngine implements EngineInterface
         return $this;
     }
 
-
     public function setViewLink($link)
     {
         $this->link = $link;
@@ -125,7 +123,7 @@ class BaseEmailEngine implements EngineInterface
     public function setTextBody($text)
     {
 
-        if (! empty($this->variables)) {
+        if (!empty($this->variables)) {
 
             $text = str_replace(['$paymentLink', '$viewButton', '$view_button', '$viewLink', '$view_link'], "\r\n\r\n" . '$view_url' . "\r\n", $text);
             $text = str_replace(array_keys($this->variables), array_values($this->variables), $text);
@@ -196,5 +194,4 @@ class BaseEmailEngine implements EngineInterface
     {
         return $this->text_body;
     }
-
 }

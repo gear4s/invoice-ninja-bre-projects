@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -105,6 +104,7 @@ class InvoiceItemReportRow
     {
         if ($this->regional_calculator) {
             $regional_columns = $this->regional_calculator->calculateColumns($this->invoice, $tax_amount);
+
             return array_merge($row, $regional_columns);
         }
 

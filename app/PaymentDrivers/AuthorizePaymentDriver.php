@@ -6,25 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
-use App\Models\ClientGatewayToken;
-use App\Jobs\Mail\PaymentFailedMailer;
-use App\PaymentDrivers\Authorize\AuthorizeACH;
-use net\authorize\api\constants\ANetEnvironment;
-use App\PaymentDrivers\Authorize\AuthorizeCustomer;
-use App\PaymentDrivers\Authorize\RefundTransaction;
 use App\Http\Requests\Payments\PaymentWebhookRequest;
+use App\Jobs\Mail\PaymentFailedMailer;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Authorize\AuthorizeACH;
 use App\PaymentDrivers\Authorize\AuthorizeCreditCard;
+use App\PaymentDrivers\Authorize\AuthorizeCustomer;
 use App\PaymentDrivers\Authorize\AuthorizePaymentMethod;
+use App\PaymentDrivers\Authorize\RefundTransaction;
+use net\authorize\api\constants\ANetEnvironment;
 use net\authorize\api\contract\v1\GetMerchantDetailsRequest;
 use net\authorize\api\contract\v1\MerchantAuthenticationType;
 use net\authorize\api\controller\GetMerchantDetailsController;
@@ -108,11 +107,9 @@ class AuthorizePaymentDriver extends BaseDriver
             $fields[] = ['name' => 'client_custom_value1', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client1'), 'type' => 'text', 'validation' => 'required'];
         }
 
-
         if ($this->company_gateway->require_custom_value2) {
             $fields[] = ['name' => 'client_custom_value2', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client2'), 'type' => 'text', 'validation' => 'required'];
         }
-
 
         if ($this->company_gateway->require_custom_value3) {
             $fields[] = ['name' => 'client_custom_value3', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client3'), 'type' => 'text', 'validation' => 'required'];
@@ -154,7 +151,7 @@ class AuthorizePaymentDriver extends BaseDriver
     {
         $this->init();
 
-        //Universal token billing.
+        // Universal token billing.
         $this->setPaymentMethod($cgt->gateway_type_id);
 
         return $this->payment_method->tokenBilling($cgt, $payment_hash);
@@ -164,7 +161,7 @@ class AuthorizePaymentDriver extends BaseDriver
     {
         error_reporting(E_ALL & ~E_DEPRECATED);
 
-        $this->merchant_authentication = new MerchantAuthenticationType();
+        $this->merchant_authentication = new MerchantAuthenticationType;
         $this->merchant_authentication->setName($this->company_gateway->getConfigField('apiLoginId'));
         $this->merchant_authentication->setTransactionKey($this->company_gateway->getConfigField('transactionKey'));
 
@@ -173,7 +170,7 @@ class AuthorizePaymentDriver extends BaseDriver
 
     public function getPublicClientKey()
     {
-        $request = new GetMerchantDetailsRequest();
+        $request = new GetMerchantDetailsRequest;
         $request->setMerchantAuthentication($this->merchant_authentication);
 
         $controller = new GetMerchantDetailsController($request);
@@ -184,19 +181,20 @@ class AuthorizePaymentDriver extends BaseDriver
 
     public function mode(): string
     {
-        $test_mode =$this->company_gateway->getConfigField('testMode');
+        $test_mode = $this->company_gateway->getConfigField('testMode');
 
         $endpoint = $this->company_gateway->getConfigField(
             $test_mode ? 'developerEndpoint' : 'liveEndpoint'
         );
 
-        if (! empty($endpoint) && $this->isAllowedEndpoint((string) $endpoint)) {
+        if (!empty($endpoint) && $this->isAllowedEndpoint((string) $endpoint)) {
             $endpoint = preg_replace('#^https?://#', '', $endpoint);
+
             return "https://{$endpoint}";
         }
 
         return $test_mode ? ANetEnvironment::SANDBOX : ANetEnvironment::PRODUCTION;
-        
+
     }
 
     /**
@@ -208,7 +206,7 @@ class AuthorizePaymentDriver extends BaseDriver
     {
         $parsed = parse_url($url);
 
-        if (! $parsed || empty($parsed['scheme']) || empty($parsed['host'])) {
+        if (!$parsed || empty($parsed['scheme']) || empty($parsed['host'])) {
             return false;
         }
 
@@ -227,14 +225,13 @@ class AuthorizePaymentDriver extends BaseDriver
     public function findClientGatewayRecord(): ?ClientGatewayToken
     {
         return ClientGatewayToken::where('client_id', $this->client->id)
-                                 ->where('company_gateway_id', $this->company_gateway->id)
-                                 ->first();
+            ->where('company_gateway_id', $this->company_gateway->id)
+            ->first();
     }
 
     /**
      * Detach payment method from Authorize.net.
      *
-     * @param ClientGatewayToken $token
      * @return void
      */
     public function detach(ClientGatewayToken $token)
@@ -246,7 +243,7 @@ class AuthorizePaymentDriver extends BaseDriver
     {
         $this->init();
 
-        nlog("starting import auth.net");
+        nlog('starting import auth.net');
 
         return (new AuthorizeCustomer($this))->importCustomers();
     }
@@ -266,7 +263,6 @@ class AuthorizePaymentDriver extends BaseDriver
      *
      * We only handle voided payments for now.
      *
-     * @param  PaymentWebhookRequest $request
      * @return void
      */
     public function processWebhookRequest(PaymentWebhookRequest $request)
@@ -347,9 +343,9 @@ class AuthorizePaymentDriver extends BaseDriver
     {
 
         $payment = Payment::withTrashed()
-                        ->where('company_id', $this->company_gateway->company_id)
-                        ->where('transaction_reference', $data['payload']['id'])
-                        ->first();
+            ->where('company_id', $this->company_gateway->company_id)
+            ->where('transaction_reference', $data['payload']['id'])
+            ->first();
 
         if ($payment && $payment->status_id == Payment::STATUS_COMPLETED) {
 

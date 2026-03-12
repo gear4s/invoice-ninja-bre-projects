@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,6 +28,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Stripe\Charge;
+use Stripe\PaymentIntent;
 
 class PaymentIntentProcessingWebhook implements ShouldQueue
 {
@@ -38,7 +39,7 @@ class PaymentIntentProcessingWebhook implements ShouldQueue
     use SerializesModels;
     use Utilities;
 
-    public $tries = 1; //number of retries
+    public $tries = 1; // number of retries
 
     public $deleteWhenMissingModels = true;
 
@@ -75,12 +76,12 @@ class PaymentIntentProcessingWebhook implements ShouldQueue
                 ->first();
 
             if ($payment) {
-                nlog("found payment");
+                nlog('found payment');
                 $this->payment_completed = true;
             }
 
             if (isset($transaction['payment_method'])) {
-                /** @var \App\Models\ClientGatewayToken $cgt **/
+                /** @var ClientGatewayToken $cgt * */
                 $cgt = ClientGatewayToken::where('token', $transaction['payment_method'])->first();
 
                 if ($cgt && isset($cgt->meta)) {
@@ -108,32 +109,34 @@ class PaymentIntentProcessingWebhook implements ShouldQueue
             $charge_id = $this->stripe_request['object']['latest_charge'];
         } // API VERSION 2022-11-15
 
-
         if (!$charge_id) {
-            nlog("could not resolve charge");
+            nlog('could not resolve charge');
+
             return;
         }
 
-        $pi = \Stripe\PaymentIntent::retrieve($this->stripe_request['object']['id'], $stripe_driver->stripe_connect_auth);
+        $pi = PaymentIntent::retrieve($this->stripe_request['object']['id'], $stripe_driver->stripe_connect_auth);
 
-        $charge = \Stripe\Charge::retrieve($charge_id, $stripe_driver->stripe_connect_auth);
+        $charge = Charge::retrieve($charge_id, $stripe_driver->stripe_connect_auth);
 
         if (!$charge) {
-            nlog("no charge found");
+            nlog('no charge found');
             nlog($this->stripe_request);
+
             return;
         }
 
         $company = Company::query()->where('company_key', $this->company_key)->first();
 
         $payment = Payment::query()
-                         ->where('company_id', $company->id)
-                         ->where('transaction_reference', $charge['id'])
-                         ->first();
+            ->where('company_id', $company->id)
+            ->where('transaction_reference', $charge['id'])
+            ->first();
 
-        //return early
+        // return early
         if ($payment && $payment->status_id == Payment::STATUS_PENDING) {
-            nlog(" payment found and status correct - returning ");
+            nlog(' payment found and status correct - returning ');
+
             return;
         } elseif ($payment) {
             $payment->status_id = Payment::STATUS_PENDING;
@@ -153,7 +156,8 @@ class PaymentIntentProcessingWebhook implements ShouldQueue
         }
 
         if ($payment_hash->payment) {
-            nlog("payment found");
+            nlog('payment found');
+
             return;
         }
 
@@ -234,7 +238,7 @@ class PaymentIntentProcessingWebhook implements ShouldQueue
                 return;
             }
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) \sprintf('%s (%s)', $method->us_bank_account['bank_name'], ctrans('texts.ach'));
             $payment_meta->last4 = (string) $method->us_bank_account['last4'];
             $payment_meta->type = GatewayType::BANK_TRANSFER;
@@ -254,7 +258,7 @@ class PaymentIntentProcessingWebhook implements ShouldQueue
 
             $driver->storeGatewayToken($data, $additional_data);
         } catch (\Exception $e) {
-            nlog("failed to import payment methods");
+            nlog('failed to import payment methods');
             nlog($e->getMessage());
         }
     }

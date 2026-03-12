@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,14 +22,11 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class DeleteInvoiceTest extends TestCase
 {
     use DatabaseTransactions;
-    use MockAccountData;
     use MakesHash;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -43,9 +39,9 @@ class DeleteInvoiceTest extends TestCase
         );
     }
 
-    public function testDeleteAndRestoreInvoice()
+    public function test_delete_and_restore_invoice()
     {
-        //create an invoice for 36000 with a partial of 6000
+        // create an invoice for 36000 with a partial of 6000
 
         $data = [
             'name' => 'A Nice Client - About to be deleted',
@@ -108,7 +104,6 @@ class DeleteInvoiceTest extends TestCase
         $this->assertEquals(6000, $invoice->partial);
         $this->assertEquals(36000, $invoice->amount);
 
-
         // apply a payment of 6000
 
         $data = [
@@ -151,9 +146,9 @@ class DeleteInvoiceTest extends TestCase
         $this->assertEquals(30000, $invoice->balance);
         $this->assertEquals(6000, $invoice->paid_to_date);
 
-        //delete the invoice an inspect the balances
+        // delete the invoice an inspect the balances
 
-        $invoice_repo = new InvoiceRepository();
+        $invoice_repo = new InvoiceRepository;
 
         $invoice = $invoice_repo->delete($invoice);
         $invoice = $invoice->fresh();
@@ -171,7 +166,7 @@ class DeleteInvoiceTest extends TestCase
         $this->assertEquals(0, $client->balance);
         $this->assertEquals(0, $client->paid_to_date);
 
-        //restore the invoice. this should also rehydrate the payments and restore the correct paid to dates on the client record
+        // restore the invoice. this should also rehydrate the payments and restore the correct paid to dates on the client record
 
         $invoice_repo->restore($invoice);
         $invoice = $invoice->fresh();
@@ -187,7 +182,7 @@ class DeleteInvoiceTest extends TestCase
         $this->assertNull($payment->deleted_at);
     }
 
-    public function testInvoiceDeletionAfterCancellation()
+    public function test_invoice_deletion_after_cancellation()
     {
         $data = [
             'name' => 'A Nice Client',
@@ -207,7 +202,7 @@ class DeleteInvoiceTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 
@@ -262,7 +257,7 @@ class DeleteInvoiceTest extends TestCase
         $this->assertEquals(0, $invoice->client->fresh()->balance);
         $this->assertEquals(20, $invoice->client->paid_to_date);
 
-        //partially refund payment
+        // partially refund payment
         $payment = $invoice->fresh()->payments()->first();
 
         $data = [
@@ -280,23 +275,23 @@ class DeleteInvoiceTest extends TestCase
 
         $payment->refund($data);
 
-        //test balances
+        // test balances
         $this->assertEquals(10, $payment->fresh()->refunded);
         $this->assertEquals(10, $invoice->client->fresh()->paid_to_date);
         $this->assertEquals(10, $invoice->fresh()->balance);
 
-        //cancel invoice and paid_to_date
+        // cancel invoice and paid_to_date
         $invoice->fresh()->service()->handleCancellation()->save();
 
-        //test balances and paid_to_date
+        // test balances and paid_to_date
         $this->assertEquals(0, $invoice->fresh()->balance);
         $this->assertEquals(0, $invoice->client->fresh()->balance);
         $this->assertEquals(10, $invoice->client->fresh()->paid_to_date);
 
-        //delete invoice
+        // delete invoice
         $invoice->fresh()->service()->markDeleted()->save();
 
-        //test balances and paid_to_date
+        // test balances and paid_to_date
         $this->assertEquals(0, $invoice->fresh()->balance);
         $this->assertEquals(0, $invoice->client->fresh()->balance);
         $this->assertEquals(0, $invoice->client->fresh()->paid_to_date);
@@ -305,7 +300,7 @@ class DeleteInvoiceTest extends TestCase
     /**
      *  App\Services\Invoice\MarkInvoiceDeleted
      */
-    public function testInvoiceDeletion()
+    public function test_invoice_deletion()
     {
         $data = [
             'name' => 'A Nice Client',
@@ -325,7 +320,7 @@ class DeleteInvoiceTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 
@@ -374,7 +369,7 @@ class DeleteInvoiceTest extends TestCase
         $this->assertEquals(20, $invoice->balance);
         $this->assertEquals(20, $invoice->client->balance);
 
-        //delete invoice
+        // delete invoice
         $data = [
             'ids' => [$invoice_one_hashed_id],
         ];
@@ -391,12 +386,12 @@ class DeleteInvoiceTest extends TestCase
         $this->assertTrue((bool) $invoice->is_deleted);
         $this->assertNotNull($invoice->deleted_at);
 
-        //delete invoice
+        // delete invoice
         $data = [
             'ids' => [$invoice_one_hashed_id],
         ];
 
-        //restore invoice
+        // restore invoice
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -413,9 +408,9 @@ class DeleteInvoiceTest extends TestCase
     /**
      *  App\Services\Invoice\HandleRestore
      */
-    public function testInvoiceDeletionAndRestoration()
+    public function test_invoice_deletion_and_restoration()
     {
-        //create new client
+        // create new client
 
         $data = [
             'name' => 'A Nice Client',
@@ -433,11 +428,11 @@ class DeleteInvoiceTest extends TestCase
         $client_hash_id = $arr['data']['id'];
         $client = Client::find($this->decodePrimaryKey($client_hash_id));
 
-        //new client
+        // new client
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
 
-        //create new invoice.
+        // create new invoice.
         $line_items = [];
 
         $item = InvoiceItemFactory::create();
@@ -488,7 +483,7 @@ class DeleteInvoiceTest extends TestCase
 
         $invoice_two_hashed_id = $arr['data']['id'];
 
-        //mark as paid
+        // mark as paid
 
         $data = [
             'amount' => 40.0,
@@ -528,7 +523,7 @@ class DeleteInvoiceTest extends TestCase
 
         // $this->assertEquals(20, $invoice_one->company_ledger->sortByDesc('id')->first()->balance);
 
-        //test balance
+        // test balance
         $this->assertEquals($invoice_one->amount, 20);
         $this->assertEquals($invoice_one->balance, 0);
         $this->assertEquals($invoice_two->amount, 20);
@@ -537,11 +532,11 @@ class DeleteInvoiceTest extends TestCase
         $this->assertEquals($client->fresh()->paid_to_date, 40);
         $this->assertEquals($client->balance, 0);
 
-        //hydrate associated payment
+        // hydrate associated payment
         $this->assertEquals($payment->amount, 40);
         $this->assertEquals($payment->applied, 40);
 
-        //delete invoice
+        // delete invoice
         $data = [
             'ids' => [$invoice_one_hashed_id],
         ];
@@ -565,7 +560,7 @@ class DeleteInvoiceTest extends TestCase
         $this->assertTrue((bool) $invoice_one->is_deleted);
         $this->assertNotNull($invoice_one->deleted_at);
 
-        //restore invoice
+        // restore invoice
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,

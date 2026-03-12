@@ -1,14 +1,15 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Artisan;
 
 class FixesForDescriptionInPdfDesigns extends Migration
 {
@@ -19,7 +20,7 @@ class FixesForDescriptionInPdfDesigns extends Migration
      */
     public function up()
     {
-        \Illuminate\Support\Facades\Artisan::call('ninja:design-update');
+        Artisan::call('ninja:design-update');
     }
 
     /**
@@ -27,7 +28,5 @@ class FixesForDescriptionInPdfDesigns extends Migration
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 }

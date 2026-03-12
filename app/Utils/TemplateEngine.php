@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,6 +15,8 @@ use App\DataMapper\EmailTemplateDefaults;
 use App\Mail\Engine\PaymentEmailEngine;
 use App\Models\Client;
 use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\InvoiceInvitation;
 use App\Models\Payment;
@@ -23,6 +24,8 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderInvitation;
 use App\Models\Quote;
 use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoice;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorContact;
 use App\Services\Pdf\Markdown;
@@ -37,8 +40,8 @@ use League\CommonMark\CommonMarkConverter;
 class TemplateEngine
 {
     use MakesHash;
-    use MakesTemplateData;
     use MakesInvoiceHtml;
+    use MakesTemplateData;
 
     public $body;
 
@@ -50,10 +53,10 @@ class TemplateEngine
 
     public $template;
 
-    /** @var \App\Models\Invoice | \App\Models\Quote | \App\Models\Credit | \App\Models\PurchaseOrder | \App\Models\RecurringInvoice | \App\Models\Payment $entity_obj **/
-    private \App\Models\Invoice|\App\Models\Quote|\App\Models\Credit|\App\Models\PurchaseOrder|\App\Models\RecurringInvoice|\App\Models\Payment $entity_obj;
+    /** @var Invoice | Quote | Credit | PurchaseOrder | RecurringInvoice | Payment * */
+    private \App\Models\Invoice|\App\Models\Quote|\App\Models\Credit|\App\Models\PurchaseOrder|\App\Models\RecurringInvoice|Payment $entity_obj;
 
-    /** @var \App\Models\Company | \App\Models\Client | null $settings_entity **/
+    /** @var Company | Client | null * */
     private $settings_entity;
 
     private $settings;
@@ -108,7 +111,7 @@ class TemplateEngine
             $this->entity = 'payment';
             $this->entity_obj = $payment;
         } elseif ($invoice = Invoice::query()->whereHas('invitations')->withTrashed()->company()->first()) {
-            /** @var \App\Models\Invoice $invoice */
+            /** @var Invoice $invoice */
             $this->entity_obj = $invoice;
         } else {
             $this->mockEntity();
@@ -119,7 +122,7 @@ class TemplateEngine
 
     private function setSettingsObject()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if ($this->entity == 'purchaseOrder' || $this->entity == 'purchase_order') {
@@ -208,7 +211,6 @@ class TemplateEngine
             $this->labels_and_values = (new HtmlEngine($this->entity_obj->invitations->first()))->generateLabelsAndValues();
         }
 
-
         $this->body = strtr($this->body, $this->labels_and_values['labels']);
         $this->body = strtr($this->body, $this->labels_and_values['values']);
 
@@ -218,13 +220,13 @@ class TemplateEngine
         $email_style = $this->settings_entity->getSetting('email_style');
 
         if ($email_style !== 'custom') {
-            $this->body = \App\Services\Pdf\Markdown::parse($this->body);
+            $this->body = Markdown::parse($this->body);
         }
     }
 
     private function renderTemplate()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         /* wrapper */
@@ -246,7 +248,6 @@ class TemplateEngine
             $data['company'] = $this->entity_obj->company;
             $data['settings'] = $this->settings;
         }
-
 
         if ($email_style == 'custom') {
             $wrapper = $this->settings_entity->getSetting('email_style_custom') ?? '';
@@ -289,17 +290,17 @@ class TemplateEngine
         try {
             DB::connection(config('database.default'))->beginTransaction();
 
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = auth()->user();
 
             $vendor = false;
-            /** @var \App\Models\Client $client */
+            /** @var Client $client */
             $client = Client::factory()->create([
                 'user_id' => $user->id,
                 'company_id' => $user->company()->id,
             ]);
 
-            /** @var \App\Models\ClientContact $contact */
+            /** @var ClientContact $contact */
             $contact = ClientContact::factory()->create([
                 'user_id' => $user->id,
                 'company_id' => $user->company()->id,
@@ -309,7 +310,7 @@ class TemplateEngine
             ]);
 
             if ($this->entity == 'payment') {
-                /** @var \App\Models\Payment $payment */
+                /** @var Payment $payment */
                 $payment = Payment::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -321,7 +322,7 @@ class TemplateEngine
 
                 $this->entity_obj = $payment;
 
-                /** @var \App\Models\Invoice $invoice */
+                /** @var Invoice $invoice */
                 $invoice = Invoice::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -331,7 +332,7 @@ class TemplateEngine
                     'number' => rand(1, 10000),
                 ]);
 
-                /** @var \App\Models\InvoiceInvitation $invitation */
+                /** @var InvoiceInvitation $invitation */
                 $invitation = InvoiceInvitation::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -339,14 +340,14 @@ class TemplateEngine
                     'client_contact_id' => $contact->id,
                 ]);
 
-                /** @var \App\Models\Invoice $invoice */
+                /** @var Invoice $invoice */
                 $this->entity_obj->invoices()->attach($invoice->id, [
                     'amount' => 10,
                 ]);
             }
 
             if (!$this->entity || $this->entity == 'invoice') {
-                /** @var \App\Models\Invoice $invoice */
+                /** @var Invoice $invoice */
                 $invoice = Invoice::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -366,7 +367,7 @@ class TemplateEngine
             }
 
             if ($this->entity == 'quote') {
-                /** @var \App\Models\Quote $quote */
+                /** @var Quote $quote */
                 $quote = Quote::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -384,13 +385,13 @@ class TemplateEngine
             }
 
             if ($this->entity == 'purchaseOrder') {
-                /** @var \App\Models\Vendor $vendor **/
+                /** @var Vendor $vendor * */
                 $vendor = Vendor::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
                 ]);
 
-                /** @var \App\Models\VendorContact $contact **/
+                /** @var VendorContact $contact * */
                 $contact = VendorContact::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -399,7 +400,7 @@ class TemplateEngine
                     'send_email' => true,
                 ]);
 
-                /** @var \App\Models\PurchaseOrder $purchase_order **/
+                /** @var PurchaseOrder $purchase_order * */
                 $purchase_order = PurchaseOrder::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -408,7 +409,7 @@ class TemplateEngine
 
                 $this->entity_obj = $purchase_order;
 
-                /** @var \App\Models\PurchaseOrderInvitation $invitation **/
+                /** @var PurchaseOrderInvitation $invitation * */
                 $invitation = PurchaseOrderInvitation::factory()->create([
                     'user_id' => $user->id,
                     'company_id' => $user->company()->id,
@@ -434,7 +435,7 @@ class TemplateEngine
             }
 
         } catch (\Throwable $th) {
-            nlog("Throwable:: transaction:: TemplateEngine MockEntity");
+            nlog('Throwable:: transaction:: TemplateEngine MockEntity');
 
             DB::connection(config('database.default'))->rollBack();
 

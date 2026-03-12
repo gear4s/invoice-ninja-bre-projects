@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,14 +21,14 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\RecurringQuoteController
  */
 class RecurringQuoteTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -44,7 +43,7 @@ class RecurringQuoteTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testRecurringQuoteListFilter()
+    public function test_recurring_quote_list_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -54,7 +53,7 @@ class RecurringQuoteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRecurringQuoteList()
+    public function test_recurring_quote_list()
     {
         RecurringQuote::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id, 'client_id' => $this->client->id]);
 
@@ -66,7 +65,7 @@ class RecurringQuoteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRecurringQuoteRESTEndPoints()
+    public function test_recurring_quote_rest_end_points()
     {
         RecurringQuote::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id, 'client_id' => $this->client->id]);
 
@@ -76,14 +75,14 @@ class RecurringQuoteTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_quotes/'.$this->encodePrimaryKey($RecurringQuote->id));
+        ])->get('/api/v1/recurring_quotes/' . $this->encodePrimaryKey($RecurringQuote->id));
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_quotes/'.$this->encodePrimaryKey($RecurringQuote->id).'/edit');
+        ])->get('/api/v1/recurring_quotes/' . $this->encodePrimaryKey($RecurringQuote->id) . '/edit');
 
         $response->assertStatus(200);
 
@@ -97,13 +96,13 @@ class RecurringQuoteTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_quotes/'.$this->encodePrimaryKey($RecurringQuote->id), $RecurringQuote_update)
+        ])->put('/api/v1/recurring_quotes/' . $this->encodePrimaryKey($RecurringQuote->id), $RecurringQuote_update)
             ->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/recurring_quotes/'.$this->encodePrimaryKey($RecurringQuote->id));
+        ])->delete('/api/v1/recurring_quotes/' . $this->encodePrimaryKey($RecurringQuote->id));
 
         $response->assertStatus(200);
     }

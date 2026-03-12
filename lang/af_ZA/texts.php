@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organisasie',
     'name' => 'Naam',
     'website' => 'Webwerf',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'The Enterprise Plan adds support for multiple users and file attachments, :link to see the full list of features.',
     'return_to_app' => 'Return To App',
 
-
     // Payment updates
     'refund_payment' => 'Refund Payment',
     'refund_max' => 'Max:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Russian (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Accounting & Legal',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Gold Troy Ounce',
     'currency_nicaraguan_córdoba' => 'Nicaraguan Córdoba',
     'currency_malagasy_ariary' => 'Malagasy ariary',
-    "currency_tongan_pa_anga" => "Tongan Pa'anga",
+    'currency_tongan_pa_anga' => "Tongan Pa'anga",
 
     'review_app_help' => 'We hope you\'re enjoying using the app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'writing a review',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ':user archived recurring expense :recurring_expense',
     'activity_123' => ':user deleted recurring expense :recurring_expense',
     'activity_124' => ':user restored recurring expense :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'To view the :entity you need to set a password.',
     'unsubscribe' => 'Unsubscribe',
     'unsubscribed' => 'Unsubscribed',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'E-Invoice',
     'light_dark_mode' => 'Light/Dark Mode',
     'activities' => 'Activities',
-    'recent_transactions' => "Recent Transactions",
-    'country_Palestine' => "Palestine",
+    'recent_transactions' => 'Recent Transactions',
+    'country_Palestine' => 'Palestine',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Duties',
     'order_number' => 'Order Number',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'Required fields form',
     'add_step' => 'Add step',
     'steps' => 'Steps',
-    'steps_order_help' =>  'The order of the steps is important. The first step should not depend on any other step. The second step should depend on the first step, and so on.',
+    'steps_order_help' => 'The order of the steps is important. The first step should not depend on any other step. The second step should depend on the first step, and so on.',
     'other_steps' => 'Other steps',
     'use_available_payments' => 'Use Available Payments',
     'test_email_sent' => 'Successfully sent email',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'Credit Updated',
     'payment_updated' => 'Payment Updated',
     'search_placeholder' => 'Find invoices, clients, and more',
-    'invalid_vat_number' => "The VAT number is not valid for the selected country. Format should be Country Code followed by number only ie, DE123456789",
+    'invalid_vat_number' => 'The VAT number is not valid for the selected country. Format should be Country Code followed by number only ie, DE123456789',
     'acts_as_sender' => 'Send E-Invoices',
     'acts_as_receiver' => 'Receive E-Invoices',
     'peppol_token_generated' => 'PEPPOL token successfully generated.',
@@ -5913,6 +5911,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bankoorplasing',
     'activity_164' => 'QuickBooks-sinkronisering het misluk. :notes',
-);
+];
 
 return $lang;

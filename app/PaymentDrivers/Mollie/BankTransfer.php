@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,12 +23,13 @@ use App\PaymentDrivers\Common\MethodInterface;
 use App\PaymentDrivers\MolliePaymentDriver;
 use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\RedirectResponseor;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
 use Illuminate\View\View;
+use Mollie\Api\Exceptions\ApiException;
 use Mollie\Api\Resources\Payment as ResourcesPayment;
 
-class BankTransfer implements MethodInterface, LivewireMethodInterface
+class BankTransfer implements LivewireMethodInterface, MethodInterface
 {
     protected MolliePaymentDriver $mollie;
 
@@ -42,9 +42,6 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
 
     /**
      * Show the authorization page for bank transfer.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function authorizeView(array $data): View
     {
@@ -53,9 +50,6 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle the authorization for bank transfer.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function authorizeResponse(Request $request): RedirectResponse
     {
@@ -65,8 +59,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
     /**
      * Show the payment page for bank transfer.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponseor|RedirectResponse
+     * @return RedirectResponseor|RedirectResponse
      */
     public function paymentView(array $data)
     {
@@ -101,7 +94,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
             return redirect(
                 $payment->getCheckoutUrl()
             );
-        } catch (\Mollie\Api\Exceptions\ApiException|\Exception $exception) {
+        } catch (ApiException|Exception $exception) {
             return $this->processUnsuccessfulPayment($exception);
         }
     }
@@ -109,9 +102,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
     /**
      * Handle unsuccessful payment.
      *
-     * @param Exception $e
      * @throws PaymentFailed
-     * @return void
      */
     public function processUnsuccessfulPayment(Exception $e): void
     {
@@ -132,12 +123,11 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
     /**
      * Handle the payments for the bank transfer.
      *
-     * @param PaymentResponseRequest $request
      * @return mixed
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
-        if (! \property_exists($this->mollie->payment_hash->data, 'payment_id')) {
+        if (!\property_exists($this->mollie->payment_hash->data, 'payment_id')) {
             return $this->processUnsuccessfulPayment(
                 new PaymentFailed('Whoops, something went wrong. Missing required [payment_id] parameter. Please contact administrator. Reference hash: ' . $this->mollie->payment_hash->hash)
             );
@@ -159,7 +149,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
             return $this->processUnsuccessfulPayment(
                 new PaymentFailed(ctrans('texts.status_voided'))
             );
-        } catch (\Mollie\Api\Exceptions\ApiException|\Exception $exception) {
+        } catch (ApiException|Exception $exception) {
             return $this->processUnsuccessfulPayment($exception);
         }
     }
@@ -167,9 +157,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
     /**
      * Handle the successful payment for bank transfer.
      *
-     * @param ResourcesPayment $payment
-     * @param string $status
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  string  $status
      */
     public function processSuccessfulPayment(ResourcesPayment $payment, $status = 'paid'): RedirectResponse
     {
@@ -199,9 +187,6 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle 'open' payment status for bank transfer.
-     *
-     * @param ResourcesPayment $payment
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function processOpenPayment(ResourcesPayment $payment): RedirectResponse
     {
@@ -209,7 +194,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -219,7 +204,7 @@ class BankTransfer implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

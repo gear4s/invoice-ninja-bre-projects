@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,6 +15,7 @@ use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Class QueryFilters.
@@ -62,8 +62,6 @@ abstract class QueryFilters
 
     /**
      * Create a new QueryFilters instance.
-     *
-     * @param Request $request
      */
     public function __construct(Request $request)
     {
@@ -73,8 +71,7 @@ abstract class QueryFilters
     /**
      * Apply the filters to the builder.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $builder
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function apply(Builder $builder)
     {
@@ -85,7 +82,7 @@ abstract class QueryFilters
         $this->clientFilter();
 
         foreach ($this->filters() as $name => $value) {
-            if (! method_exists($this, $name)) {
+            if (!method_exists($this, $name)) {
                 continue;
             }
 
@@ -114,14 +111,13 @@ abstract class QueryFilters
     /**
      * Explodes the value by delimiter.
      *
-     * @param  string $value
-     * @return \stdClass
+     * @param  string  $value
      */
     public function split($value): \stdClass
     {
         $exploded_array = explode(':', $value);
 
-        $parts = new \stdClass();
+        $parts = new \stdClass;
 
         $parts->value = $exploded_array[0];
         $parts->operator = $this->operatorConvertor($exploded_array[1]);
@@ -132,9 +128,6 @@ abstract class QueryFilters
     /**
      * Filters the list based on the status
      * archived, active, deleted.
-     *
-     * @param string $filter
-     * @return Builder
      */
     public function status(string $filter = ''): Builder
     {
@@ -164,9 +157,6 @@ abstract class QueryFilters
 
     /**
      * String to operator convertor.
-     *
-     * @param string $operator
-     * @return string
      */
     private function operatorConvertor(string $operator): string
     {
@@ -190,8 +180,6 @@ abstract class QueryFilters
      * Filters the query by the contact's client_id.
      *
      * -Can only be used on contact routes
-     *
-     * @return Builder
      */
     public function clientFilter(): Builder
     {
@@ -241,9 +229,8 @@ abstract class QueryFilters
     }
 
     /**
-     *
-     * @param ?string $value
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  ?string  $value
+     * @return Builder
      */
     public function is_deleted($value = 'true')
     {
@@ -260,7 +247,7 @@ abstract class QueryFilters
 
     public function client_id(string $client_id = ''): Builder
     {
-        if (strlen($client_id) == 0 || !in_array('client_id', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (strlen($client_id) == 0 || !in_array('client_id', Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -269,7 +256,7 @@ abstract class QueryFilters
 
     public function vendor_id(string $vendor_id = ''): Builder
     {
-        if (strlen($vendor_id) == 0 || !in_array('vendor_id', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (strlen($vendor_id) == 0 || !in_array('vendor_id', Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -296,9 +283,6 @@ abstract class QueryFilters
         return $this->builder;
     }
 
-    /**
-     * @return Builder
-     */
     public function without_deleted_clients(): Builder
     {
         return $this->builder->where(function ($query) {
@@ -308,9 +292,6 @@ abstract class QueryFilters
         });
     }
 
-    /**
-     * @return Builder
-     */
     public function without_deleted_vendors(): Builder
     {
         return $this->builder->where(function ($query) {
@@ -319,7 +300,6 @@ abstract class QueryFilters
             })->orWhere('vendor_id', null);
         });
     }
-
 
     public function with(string $value = ''): Builder
     {
@@ -337,19 +317,14 @@ abstract class QueryFilters
             ->company();
     }
 
-
-
     /**
      * Filter by created at date range
-     *
-     * @param string $date_range
-     * @return Builder
      */
     public function created_between(string $date_range = ''): Builder
     {
-        $parts = explode(",", $date_range);
+        $parts = explode(',', $date_range);
 
-        if (count($parts) != 2 || !in_array('created_at', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (count($parts) != 2 || !in_array('created_at', Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -367,15 +342,12 @@ abstract class QueryFilters
 
     /**
      * Filter by date range
-     *
-     * @param string $date_range
-     * @return Builder
      */
     public function date_range(string $date_range = ''): Builder
     {
-        $parts = explode(",", $date_range);
+        $parts = explode(',', $date_range);
 
-        if (count($parts) != 2 || !in_array('date', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (count($parts) != 2 || !in_array('date', Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -393,16 +365,13 @@ abstract class QueryFilters
 
     /**
      * Filter by due date range
-     *
-     * @param string $date_range
-     * @return Builder
      */
     public function due_date_range(string $date_range = ''): Builder
     {
 
-        $parts = explode(",", $date_range);
+        $parts = explode(',', $date_range);
 
-        if (count($parts) != 2 || !in_array('due_date', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (count($parts) != 2 || !in_array('due_date', Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -417,7 +386,4 @@ abstract class QueryFilters
         }
 
     }
-
-
-
 }

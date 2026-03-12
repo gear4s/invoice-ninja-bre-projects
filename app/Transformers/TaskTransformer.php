@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34,9 +33,6 @@ class TaskTransformer extends EntityTransformer
         'project',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'client',
         'status',
@@ -68,7 +64,7 @@ class TaskTransformer extends EntityTransformer
     {
         $transformer = new UserTransformer($this->serializer);
 
-        if (!$task->user) { //@phpstan-ignore-line
+        if (!$task->user) { // @phpstan-ignore-line
             return null;
         }
 
@@ -137,13 +133,13 @@ class TaskTransformer extends EntityTransformer
             'project_id' => $this->encodePrimaryKey($task->project_id) ?: '',
             'is_deleted' => (bool) $task->is_deleted,
             'time_log' => $task->time_log ?: '',
-            'is_running' => (bool) $task->is_running, //@deprecate
+            'is_running' => (bool) $task->is_running, // @deprecate
             'custom_value1' => $task->custom_value1 ?: '',
             'custom_value2' => $task->custom_value2 ?: '',
             'custom_value3' => $task->custom_value3 ?: '',
             'custom_value4' => $task->custom_value4 ?: '',
             'status_id' => $this->encodePrimaryKey($task->status_id) ?: '',
-            'status_sort_order' => (int) $task->status_sort_order, //deprecated 5.0.34
+            'status_sort_order' => (int) $task->status_sort_order, // deprecated 5.0.34
             'is_date_based' => (bool) $task->is_date_based,
             'status_order' => is_null($task->status_order) ? null : (int) $task->status_order,
             'date' => $task->calculated_start_date ?: '',

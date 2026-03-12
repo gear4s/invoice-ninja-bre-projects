@@ -2,12 +2,12 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
-use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
-
 class Encadenamiento extends BaseXmlModel
 {
     protected ?string $primerRegistro = null;
+
     protected ?RegistroAnterior $registroAnterior = null;
+
     protected ?RegistroAnterior $registroPosterior = null;
 
     public function toXml(\DOMDocument $doc): \DOMElement
@@ -30,13 +30,13 @@ class Encadenamiento extends BaseXmlModel
 
     public static function fromXml($xml): BaseXmlModel
     {
-        $encadenamiento = new self();
+        $encadenamiento = new self;
 
         if (is_string($xml)) {
-            error_log("Loading XML in Encadenamiento::fromXml: " . $xml);
-            $dom = new \DOMDocument();
+            error_log('Loading XML in Encadenamiento::fromXml: ' . $xml);
+            $dom = new \DOMDocument;
             if (!$dom->loadXML($xml)) {
-                error_log("Failed to load XML in Encadenamiento::fromXml");
+                error_log('Failed to load XML in Encadenamiento::fromXml');
                 throw new \DOMException('Invalid XML');
             }
             $element = $dom->documentElement;
@@ -59,14 +59,14 @@ class Encadenamiento extends BaseXmlModel
 
             return $encadenamiento;
         } catch (\Exception $e) {
-            error_log("Error parsing XML in Encadenamiento::fromXml: " . $e->getMessage());
+            error_log('Error parsing XML in Encadenamiento::fromXml: ' . $e->getMessage());
             throw new \InvalidArgumentException('Error parsing XML: ' . $e->getMessage());
         }
     }
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $encadenamiento = new self();
+        $encadenamiento = new self;
 
         // Handle PrimerRegistro
         $primerRegistro = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'PrimerRegistro')->item(0);
@@ -94,6 +94,7 @@ class Encadenamiento extends BaseXmlModel
             throw new \InvalidArgumentException('PrimerRegistro must be "S" or null');
         }
         $this->primerRegistro = $primerRegistro;
+
         return $this;
     }
 
@@ -105,6 +106,7 @@ class Encadenamiento extends BaseXmlModel
     public function setRegistroAnterior(?RegistroAnterior $registroAnterior): self
     {
         $this->registroAnterior = $registroAnterior;
+
         return $this;
     }
 
@@ -116,6 +118,7 @@ class Encadenamiento extends BaseXmlModel
     public function setRegistroPosterior(?RegistroAnterior $registroPosterior): self
     {
         $this->registroPosterior = $registroPosterior;
+
         return $this;
     }
 }

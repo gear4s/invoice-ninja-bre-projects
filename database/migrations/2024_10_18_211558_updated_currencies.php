@@ -1,9 +1,7 @@
 <?php
 
 use App\Models\Currency;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
@@ -13,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Model::unguard();
 
         $currencies = [

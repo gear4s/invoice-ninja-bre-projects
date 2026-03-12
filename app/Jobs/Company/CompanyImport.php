@@ -6,86 +6,87 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Company;
 
-use ZipArchive;
-use App\Models\Task;
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Models\Quote;
-use App\Models\Backup;
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Design;
-use App\Models\Vendor;
-use App\Models\Company;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Product;
-use App\Models\Project;
-use App\Models\TaxRate;
-use App\Models\Webhook;
-use App\Utils\TempFile;
-use App\Models\Activity;
-use App\Models\Document;
-use App\Models\Location;
+use App\Exceptions\ImportCompanyFailed;
+use App\Exceptions\NonExistingMigrationFile;
+use App\Factory\ClientContactFactory;
+use App\Jobs\Mail\NinjaMailerJob;
+use App\Jobs\Mail\NinjaMailerObject;
+use App\Jobs\Util\UploadAvatar;
 use App\Libraries\MultiDB;
-use App\Models\TaskStatus;
-use App\Models\CompanyUser;
-use App\Models\Paymentable;
-use App\Models\PaymentTerm;
-use Illuminate\Support\Str;
-use App\Models\GroupSetting;
-use App\Models\Subscription;
-use JsonMachine\JsonMachine;
-use App\Models\ClientContact;
-use App\Models\CompanyLedger;
-use App\Models\PurchaseOrder;
-use App\Models\VendorContact;
-use Illuminate\Bus\Queueable;
-use App\Models\CompanyGateway;
+use App\Mail\Import\CompanyImportFailure;
+use App\Mail\Import\ImportCompleted;
+use App\Models\Activity;
+use App\Models\Backup;
 use App\Models\BankIntegration;
 use App\Models\BankTransaction;
-use App\Models\EInvoicingToken;
-use App\Models\ExpenseCategory;
-use App\Models\QuoteInvitation;
-use App\Utils\Traits\MakesHash;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\ClientGatewayToken;
+use App\Models\Company;
+use App\Models\CompanyGateway;
+use App\Models\CompanyLedger;
+use App\Models\CompanyUser;
+use App\Models\Credit;
 use App\Models\CreditInvitation;
+use App\Models\Design;
+use App\Models\Document;
+use App\Models\EInvoicingToken;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
+use App\Models\GroupSetting;
+use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Models\Location;
+use App\Models\Payment;
+use App\Models\Paymentable;
+use App\Models\PaymentTerm;
+use App\Models\Product;
+use App\Models\Project;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderInvitation;
+use App\Models\Quote;
+use App\Models\QuoteInvitation;
 use App\Models\RecurringExpense;
 use App\Models\RecurringInvoice;
-use App\Jobs\Mail\NinjaMailerJob;
-use App\Models\InvoiceInvitation;
-use App\Models\ClientGatewayToken;
-use Illuminate\Support\Facades\App;
-use App\Jobs\Mail\NinjaMailerObject;
-use App\Mail\Import\ImportCompleted;
-use App\Factory\ClientContactFactory;
-use App\Utils\Traits\GeneratesCounter;
-use Illuminate\Queue\SerializesModels;
-use App\Exceptions\ImportCompanyFailed;
-use App\Models\PurchaseOrderInvitation;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Queue\InteractsWithQueue;
-use App\Mail\Import\CompanyImportFailure;
 use App\Models\RecurringInvoiceInvitation;
+use App\Models\Scheduler;
+use App\Models\Subscription;
+use App\Models\Task;
+use App\Models\TaskStatus;
+use App\Models\TaxRate;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Models\VendorContact;
+use App\Models\Webhook;
+use App\Utils\Ninja;
+use App\Utils\TempFile;
+use App\Utils\Traits\GeneratesCounter;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
-use App\Exceptions\NonExistingMigrationFile;
+use JsonMachine\JsonMachine;
+use ZipArchive;
 
 class CompanyImport implements ShouldQueue
 {
     use Dispatchable;
+    use GeneratesCounter;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use MakesHash;
-    use GeneratesCounter;
 
     public $tries = 1;
 
@@ -172,63 +173,63 @@ class CompanyImport implements ShouldQueue
     ];
 
     private $company_properties = [
-        "convert_products",
-        "fill_products",
-        "update_products",
-        "show_product_details",
-        "client_can_register",
-        "custom_surcharge_taxes1",
-        "custom_surcharge_taxes2",
-        "custom_surcharge_taxes3",
-        "custom_surcharge_taxes4",
-        "show_product_cost",
-        "enabled_tax_rates",
-        "enabled_modules",
-        "enable_product_cost",
-        "enable_product_quantity",
-        "default_quantity",
-        "subdomain",
-        "size_id",
-        "first_day_of_week",
-        "first_month_of_year",
-        "portal_mode",
-        "portal_domain",
-        "enable_modules",
-        "custom_fields",
-        "industry_id",
-        "slack_webhook_url",
-        "google_analytics_key",
-        "created_at",
-        "updated_at",
-        "enabled_item_tax_rates",
-        "is_large",
-        "enable_shop_api",
-        "default_auto_bill",
-        "mark_expenses_invoiceable",
-        "mark_expenses_paid",
-        "invoice_expense_documents",
-        "auto_start_tasks",
-        "invoice_task_timelog",
-        "invoice_task_documents",
-        "show_tasks_table",
-        "is_disabled",
-        "default_task_is_date_based",
-        "enable_product_discount",
-        "calculate_expense_tax_by_amount",
-        "expense_inclusive_taxes",
-        "session_timeout",
-        "oauth_password_required",
-        "invoice_task_datelog",
-        "default_password_timeout",
-        "show_task_end_date",
-        "markdown_enabled",
-        "use_comma_as_decimal_place",
-        "report_include_drafts",
-        "client_registration_fields",
-        "convert_rate_to_client",
-        "legal_entity_id",
-        "e_invoice",
-        "quickbooks",
+        'convert_products',
+        'fill_products',
+        'update_products',
+        'show_product_details',
+        'client_can_register',
+        'custom_surcharge_taxes1',
+        'custom_surcharge_taxes2',
+        'custom_surcharge_taxes3',
+        'custom_surcharge_taxes4',
+        'show_product_cost',
+        'enabled_tax_rates',
+        'enabled_modules',
+        'enable_product_cost',
+        'enable_product_quantity',
+        'default_quantity',
+        'subdomain',
+        'size_id',
+        'first_day_of_week',
+        'first_month_of_year',
+        'portal_mode',
+        'portal_domain',
+        'enable_modules',
+        'custom_fields',
+        'industry_id',
+        'slack_webhook_url',
+        'google_analytics_key',
+        'created_at',
+        'updated_at',
+        'enabled_item_tax_rates',
+        'is_large',
+        'enable_shop_api',
+        'default_auto_bill',
+        'mark_expenses_invoiceable',
+        'mark_expenses_paid',
+        'invoice_expense_documents',
+        'auto_start_tasks',
+        'invoice_task_timelog',
+        'invoice_task_documents',
+        'show_tasks_table',
+        'is_disabled',
+        'default_task_is_date_based',
+        'enable_product_discount',
+        'calculate_expense_tax_by_amount',
+        'expense_inclusive_taxes',
+        'session_timeout',
+        'oauth_password_required',
+        'invoice_task_datelog',
+        'default_password_timeout',
+        'show_task_end_date',
+        'markdown_enabled',
+        'use_comma_as_decimal_place',
+        'report_include_drafts',
+        'client_registration_fields',
+        'convert_rate_to_client',
+        'legal_entity_id',
+        'e_invoice',
+        'quickbooks',
     ];
 
     private array $protected_input = [
@@ -289,10 +290,7 @@ class CompanyImport implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param Company $company
-     * @param User $user
-     * @param string $file_location - the cache hash of the import data.
-     * @param array $request_array
+     * @param  string  $file_location  - the cache hash of the import data.
      */
     public function __construct(Company $company, User $user, string $file_location, array $request_array)
     {
@@ -307,12 +305,13 @@ class CompanyImport implements ShouldQueue
     {
         set_time_limit(0);
 
-        $json = JsonMachine::fromFile($this->file_path, '/' . $key, new ExtJsonDecoder());
+        $json = JsonMachine::fromFile($this->file_path, '/' . $key, new ExtJsonDecoder);
 
         try {
             $iterator_array = iterator_to_array($json);
         } catch (\Throwable $th) {
             nlog("Key '{$key}' does not exist in JSON file: " . $th->getMessage());
+
             return [];
         }
 
@@ -351,27 +350,27 @@ class CompanyImport implements ShouldQueue
 
         if (array_key_exists('import_settings', $this->request_array) && $this->request_array['import_settings'] == 'true') {
             $this->preFlightChecks()
-                 ->importSettings()
-                 ->importLogo();
+                ->importSettings()
+                ->importLogo();
         }
 
         if (array_key_exists('import_data', $this->request_array) && $this->request_array['import_data'] == 'true') {
             try {
                 $this->preFlightChecks()
-                     ->purgeCompanyData()
-                     ->importCompany()
-                     ->importLogo()
-                     ->importData()
-                     ->miscTransformations()
-                     ->postImportCleanup();
+                    ->purgeCompanyData()
+                    ->importCompany()
+                    ->importLogo()
+                    ->importData()
+                    ->miscTransformations()
+                    ->postImportCleanup();
 
                 $data = [
-                    'errors'  => [],
+                    'errors' => [],
                 ];
 
                 $_company = Company::query()->find($this->company->id);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new ImportCompleted($_company, $data);
                 $nmo->company = $_company;
                 $nmo->settings = $_company->settings;
@@ -396,65 +395,62 @@ class CompanyImport implements ShouldQueue
     private function miscTransformations()
     {
         Invoice::withTrashed()
-                ->where('company_id', $this->company->id)
-                ->cursor()
-                ->each(function ($invoice) {
+            ->where('company_id', $this->company->id)
+            ->cursor()
+            ->each(function ($invoice) {
 
-                    $items = $invoice->line_items;
+                $items = $invoice->line_items;
 
-                    $this->import_notifications_enabled = false;
+                $this->import_notifications_enabled = false;
 
-                    foreach ($items as $key => $value) {
+                foreach ($items as $key => $value) {
 
-                        if (isset($value->task_id) && strlen($value->task_id) > 1) {
+                    if (isset($value->task_id) && strlen($value->task_id) > 1) {
 
-                            $t_id = false;
+                        $t_id = false;
 
-                            try {
-                                $t_id = $this->transformId('tasks', $value->task_id);
-                            } catch (\Exception $e) {
-                            }
-
-                            if ($t_id && $t = Task::withTrashed()->where('company_id', $this->company->id)->where('id', $t_id)->first()) {
-                                $items[$key]->task_id = $t->hashed_id;
-                            } else {
-                                $items[$key]->task_id = null;
-                            }
-
+                        try {
+                            $t_id = $this->transformId('tasks', $value->task_id);
+                        } catch (\Exception $e) {
                         }
 
-
-
-                        if (isset($value->expense_id) && strlen($value->expense_id) > 1) {
-
-                            $e_id = false;
-                            try {
-                                $e_id = $this->transformId('expenses', $value->expense_id);
-                            } catch (\Exception $e) {
-                            }
-
-                            if ($e = Expense::withTrashed()->where('company_id', $this->company->id)->where('id', $e_id)->first()) {
-                                $items[$key]->expense_id = $e->hashed_id;
-                            } else {
-                                $items[$key]->expense_id = null;
-                            }
-
+                        if ($t_id && $t = Task::withTrashed()->where('company_id', $this->company->id)->where('id', $t_id)->first()) {
+                            $items[$key]->task_id = $t->hashed_id;
+                        } else {
+                            $items[$key]->task_id = null;
                         }
 
                     }
 
-                    $this->import_notifications_enabled = true;
+                    if (isset($value->expense_id) && strlen($value->expense_id) > 1) {
 
-                    $invoice->line_items = array_values($items);
-                    $invoice->saveQuietly();
+                        $e_id = false;
+                        try {
+                            $e_id = $this->transformId('expenses', $value->expense_id);
+                        } catch (\Exception $e) {
+                        }
 
+                        if ($e = Expense::withTrashed()->where('company_id', $this->company->id)->where('id', $e_id)->first()) {
+                            $items[$key]->expense_id = $e->hashed_id;
+                        } else {
+                            $items[$key]->expense_id = null;
+                        }
 
-                });
+                    }
+
+                }
+
+                $this->import_notifications_enabled = true;
+
+                $invoice->line_items = array_values($items);
+                $invoice->saveQuietly();
+
+            });
 
         // Re-link expense.transaction_id after bank_transactions have been imported
         $this->import_notifications_enabled = false;
 
-        foreach ((object) $this->getObject("expenses") as $obj) {
+        foreach ((object) $this->getObject('expenses') as $obj) {
             if (!empty($obj->transaction_id)) {
                 try {
                     $new_expense_id = $this->transformId('expenses', $obj->hashed_id);
@@ -472,7 +468,7 @@ class CompanyImport implements ShouldQueue
             }
         }
 
-        foreach ((object) $this->getObject("bank_transactions") as $obj) {
+        foreach ((object) $this->getObject('bank_transactions') as $obj) {
             if (!empty($obj->payment_id)) {
                 try {
                     $new_bt_id = $this->transformId('bank_transactions', $obj->hashed_id);
@@ -498,21 +494,21 @@ class CompanyImport implements ShouldQueue
     //
     private function postImportCleanup()
     {
-        //ensure all clients have a contact
+        // ensure all clients have a contact
 
         $this->company
-             ->clients()
-             ->whereDoesntHave('contacts')
-             ->cursor()
-             ->each(function ($client) {
-                 $new_contact = ClientContactFactory::create($client->company_id, $client->user_id);
-                 $new_contact->client_id = $client->id;
-                 $new_contact->contact_key = Str::random(40);
-                 $new_contact->is_primary = true;
-                 $new_contact->confirmed = true;
-                 $new_contact->email = ' ';
-                 $new_contact->save();
-             });
+            ->clients()
+            ->whereDoesntHave('contacts')
+            ->cursor()
+            ->each(function ($client) {
+                $new_contact = ClientContactFactory::create($client->company_id, $client->user_id);
+                $new_contact->client_id = $client->id;
+                $new_contact->contact_key = Str::random(40);
+                $new_contact->is_primary = true;
+                $new_contact->confirmed = true;
+                $new_contact->email = ' ';
+                $new_contact->save();
+            });
     }
 
     private function unzipFile()
@@ -521,12 +517,12 @@ class CompanyImport implements ShouldQueue
 
         $path = TempFile::filePath(Storage::disk($disk)->get($this->file_location), basename($this->file_location));
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $res = $zip->open($path);
         $file_path = sys_get_temp_dir() . '/' . sha1(microtime());
 
         if ($res === true) {
-            echo "ok";
+            echo 'ok';
             $extraction_res = $zip->extractTo($file_path);
 
             nlog($extraction_res);
@@ -535,20 +531,19 @@ class CompanyImport implements ShouldQueue
             nlog($closer);
 
         } else {
-            echo "failed, code: " . $res;
+            echo 'failed, code: ' . $res;
         }
 
         $file_path = "{$file_path}/backup.json";
 
         nlog($file_path);
 
-        if (! file_exists($file_path)) {
+        if (!file_exists($file_path)) {
             throw new NonExistingMigrationFile('Backup file does not exist, or is corrupted.');
         }
 
         return $file_path;
     }
-
 
     /**
      * On the hosted platform we cannot allow the
@@ -568,12 +563,12 @@ class CompanyImport implements ShouldQueue
 
         $company_users = $this->company->users;
 
-        nlog("Backup user count = " . count($backup_users));
+        nlog('Backup user count = ' . count($backup_users));
 
         if (count($backup_users) > 1) {
         }
 
-        nlog("backup users email = " . $backup_users[0]->email);
+        nlog('backup users email = ' . $backup_users[0]->email);
 
         if (count($backup_users) == 1 && $this->company_owner->email != $backup_users[0]->email) {
         }
@@ -595,7 +590,7 @@ class CompanyImport implements ShouldQueue
         }
 
         if ($this->company->account->isFreeHostedClient() && (count($this->getObject('clients', true)) > config('ninja.quotas.free.clients'))) {
-            nlog("client quota busted");
+            nlog('client quota busted');
 
             $client_limit = config('ninja.quotas.free.clients');
             $client_count = count($this->getObject('clients', true));
@@ -608,7 +603,7 @@ class CompanyImport implements ShouldQueue
         return $this;
     }
 
-    //check if this is a complete company import OR if it is selective
+    // check if this is a complete company import OR if it is selective
     /*
      Company and settings only
      Data
@@ -616,7 +611,7 @@ class CompanyImport implements ShouldQueue
 
     private function preFlightChecks()
     {
-        //check the file version and perform any necessary adjustments to the file in order to proceed - needed when we change schema
+        // check the file version and perform any necessary adjustments to the file in order to proceed - needed when we change schema
 
         $data = (object) $this->getObject('app_version', true);
 
@@ -633,7 +628,7 @@ class CompanyImport implements ShouldQueue
 
     private function importSettings()
     {
-        $co = (object) $this->getObject("company", true);
+        $co = (object) $this->getObject('company', true);
 
         $settings = $co->settings;
         $settings->invoice_number_counter = 1;
@@ -650,11 +645,11 @@ class CompanyImport implements ShouldQueue
         $settings->project_number_counter = 1;
         $settings->purchase_order_number_counter = 1;
 
-        $settings->email_style_custom = str_replace(['{!!','!!}','{{','}}','@dd', '@dump', '@if', '@if(','@endif','@isset','@unless','@auth','@empty','@guest','@env','@section','@switch', '@foreach', '@while', '@include', '@each', '@once', '@push', '@use', '@forelse', '@verbatim', '<?php', '@php', '@for','@class','</s','<s','html;base64'], '', $settings->email_style_custom);
+        $settings->email_style_custom = str_replace(['{!!', '!!}', '{{', '}}', '@dd', '@dump', '@if', '@if(', '@endif', '@isset', '@unless', '@auth', '@empty', '@guest', '@env', '@section', '@switch', '@foreach', '@while', '@include', '@each', '@once', '@push', '@use', '@forelse', '@verbatim', '<?php', '@php', '@for', '@class', '</s', '<s', 'html;base64'], '', $settings->email_style_custom);
         $settings->company_logo = (strlen($settings->company_logo) > 2 && stripos($settings->company_logo, 'http') !== false) ? $settings->company_logo : "https://{$settings->company_logo}";
 
         foreach ($this->protected_input as $protected_var) {
-            $settings->{$protected_var} = str_replace("script", "", $settings->{$protected_var});
+            $settings->{$protected_var} = str_replace('script', '', $settings->{$protected_var});
         }
 
         $this->company->saveSettings($settings, $this->company);
@@ -688,7 +683,7 @@ class CompanyImport implements ShouldQueue
     private function importCompany()
     {
 
-        $tmp_company = (object) $this->getObject("company", true);
+        $tmp_company = (object) $this->getObject('company', true);
         $this->old_company_key = $tmp_company->company_key;
         $tmp_company->company_key = $this->createHash();
         $tmp_company->db = config('database.default');
@@ -717,20 +712,20 @@ class CompanyImport implements ShouldQueue
         return $this;
     }
 
-
     private function importLogo()
     {
         $logo_path = "{$this->root_file_path}company_logo.png";
 
         // Check for null bytes in path
         if (strpos($logo_path, "\0") !== false) {
-            nlog("Logo path contains null bytes - skipping logo import");
+            nlog('Logo path contains null bytes - skipping logo import');
+
             return $this;
         }
 
         if (file_exists($logo_path)) {
 
-            $path = (new \App\Jobs\Util\UploadAvatar($logo_path, $this->company->company_key))->handle();
+            $path = (new UploadAvatar($logo_path, $this->company->company_key))->handle();
 
             if ($path) {
                 $settings = $this->company->settings;
@@ -754,7 +749,7 @@ class CompanyImport implements ShouldQueue
             $this->{$method}();
         }
 
-        nlog("finished importing company data");
+        nlog('finished importing company data');
 
         return $this;
     }
@@ -762,7 +757,7 @@ class CompanyImport implements ShouldQueue
     private function import_e_invoicing_tokens()
     {
         $this->genericImportWithoutCompany(
-            \App\Models\EInvoicingToken::class,
+            EInvoicingToken::class,
             [],
             [],
             'e_invoicing_tokens',
@@ -775,7 +770,7 @@ class CompanyImport implements ShouldQueue
     private function import_schedulers()
     {
         $this->genericNewClassImport(
-            \App\Models\Scheduler::class,
+            Scheduler::class,
             ['company_id', 'id', 'hashed_id'],
             [
                 ['users' => 'user_id'],
@@ -790,7 +785,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             BankIntegration::class,
-            ['assigned_user_id','account_id', 'company_id', 'id', 'hashed_id'],
+            ['assigned_user_id', 'account_id', 'company_id', 'id', 'hashed_id'],
             [
                 ['users' => 'user_id'],
             ],
@@ -805,7 +800,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             BankTransaction::class,
-            ['assigned_user_id','company_id', 'id', 'hashed_id', 'user_id', 'payment_id'],
+            ['assigned_user_id', 'company_id', 'id', 'hashed_id', 'user_id', 'payment_id'],
             [
                 ['users' => 'user_id'],
                 ['vendors' => 'vendor_id'],
@@ -821,10 +816,10 @@ class CompanyImport implements ShouldQueue
 
     private function import_recurring_expenses()
     {
-        //unset / transforms / object_property / match_key
+        // unset / transforms / object_property / match_key
         $this->genericImport(
             RecurringExpense::class,
-            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'project_id', 'vendor_id','recurring_expense_id'],
+            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'project_id', 'vendor_id', 'recurring_expense_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -858,7 +853,7 @@ class CompanyImport implements ShouldQueue
     private function import_tax_rates()
     {
         // foreach($this->backup_file->tax_rates as $obj)
-        foreach ((object) $this->getObject("tax_rates") as $obj) {
+        foreach ((object) $this->getObject('tax_rates') as $obj) {
             $user_id = $this->transformId('users', $obj->user_id);
 
             $obj_array = (array) $obj;
@@ -868,7 +863,7 @@ class CompanyImport implements ShouldQueue
             unset($obj_array['id']);
             unset($obj_array['tax_rate_id']);
 
-            /** @var \App\Models\TaxRate $new_obj */
+            /** @var TaxRate $new_obj */
             $new_obj = TaxRate::firstOrNew(
                 ['name' => $obj->name, 'company_id' => $this->company->id, 'rate' => $obj->rate],
                 $obj_array,
@@ -913,7 +908,7 @@ class CompanyImport implements ShouldQueue
         $this->genericImport(
             Client::class,
             ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'gateway_tokens', 'contacts', 'documents', 'country', 'sync'],
-            [['users' => 'user_id'], ['users' => 'assigned_user_id'],['group_settings' => 'group_settings_id']],
+            [['users' => 'user_id'], ['users' => 'assigned_user_id'], ['group_settings' => 'group_settings_id']],
             'clients',
             'number'
         );
@@ -925,7 +920,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             ClientContact::class,
-            ['user_id', 'company_id', 'id', 'hashed_id','company'],
+            ['user_id', 'company_id', 'id', 'hashed_id', 'company'],
             [['users' => 'user_id'], ['clients' => 'client_id']],
             'client_contacts',
             'email'
@@ -951,7 +946,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             VendorContact::class,
-            ['user_id', 'company_id', 'id', 'hashed_id','company','assigned_user_id'],
+            ['user_id', 'company_id', 'id', 'hashed_id', 'company', 'assigned_user_id'],
             [['users' => 'user_id'], ['vendors' => 'vendor_id']],
             'vendor_contacts',
             'email'
@@ -979,7 +974,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Project::class,
-            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id','client_id'],
+            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id'],
             [['users' => 'user_id'], ['users' => 'assigned_user_id'], ['clients' => 'client_id']],
             'projects',
             'number'
@@ -1016,7 +1011,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericNewClassImport(
             ClientGatewayToken::class,
-            ['company_id', 'id', 'hashed_id','client_id'],
+            ['company_id', 'id', 'hashed_id', 'client_id'],
             [['clients' => 'client_id', 'company_gateways' => 'company_gateway_id']],
             'client_gateway_tokens'
         );
@@ -1054,7 +1049,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             RecurringInvoice::class,
-            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id', 'status', 'location_id'],
+            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id', 'subscription_id', 'project_id', 'vendor_id', 'status', 'location_id'],
             [
                 ['subscriptions' => 'subscription_id'],
                 ['users' => 'user_id'],
@@ -1085,7 +1080,6 @@ class CompanyImport implements ShouldQueue
             'key'
         );
 
-
         return $this;
     }
 
@@ -1093,7 +1087,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Invoice::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'sync', 'location_id'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id', 'status', 'sync', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1132,7 +1126,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             PurchaseOrder::class,
-            ['user_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'vendor_id', 'subscription_id','client_id', 'location_id'],
+            ['user_id', 'company_id', 'id', 'hashed_id', 'recurring_id', 'status', 'vendor_id', 'subscription_id', 'client_id', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1165,12 +1159,11 @@ class CompanyImport implements ShouldQueue
         return $this;
     }
 
-
     private function import_quotes()
     {
         $this->genericImport(
             Quote::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'location_id', 'invoice_id'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id', 'status', 'location_id', 'invoice_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1203,7 +1196,6 @@ class CompanyImport implements ShouldQueue
             'key'
         );
 
-
         return $this;
     }
 
@@ -1211,7 +1203,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Credit::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'location_id'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id', 'status', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1251,7 +1243,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Expense::class,
-            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'project_id','vendor_id','recurring_expense_id', 'transaction_id'],
+            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'project_id', 'vendor_id', 'recurring_expense_id', 'transaction_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1272,7 +1264,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Task::class,
-            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'invoice_id','project_id', 'status_id'],
+            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'invoice_id', 'project_id', 'status_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1292,7 +1284,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Payment::class,
-            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'client_contact_id','invitation_id','vendor_id','paymentables'],
+            ['assigned_user_id', 'user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'client_contact_id', 'invitation_id', 'vendor_id', 'paymentables'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1353,14 +1345,13 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImportWithoutCompany(
             Backup::class,
-            ['hashed_id','id','laravel_through_key'],
+            ['hashed_id', 'id', 'laravel_through_key'],
             [
                 ['activities' => 'activity_id'],
             ],
             'backups',
             'created_at'
         );
-
 
         return $this;
     }
@@ -1369,7 +1360,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             CompanyLedger::class,
-            ['company_id', 'user_id', 'client_id', 'activity_id', 'id','account_id'],
+            ['company_id', 'user_id', 'client_id', 'activity_id', 'id', 'account_id'],
             [
                 ['users' => 'user_id'],
                 ['clients' => 'client_id'],
@@ -1410,7 +1401,7 @@ class CompanyImport implements ShouldQueue
 
     private function import_documents()
     {
-        foreach ((object) $this->getObject("documents") as $document) {
+        foreach ((object) $this->getObject('documents') as $document) {
 
             if (!$this->transformDocumentId($document->documentable_id, $document->documentable_type)) {
                 continue;
@@ -1452,7 +1443,7 @@ class CompanyImport implements ShouldQueue
                 continue;
             }
 
-            $new_document = new Document();
+            $new_document = new Document;
             $new_document->disk = config('filesystems.default');
             $new_document->user_id = $this->transformId('users', $document->user_id);
             $new_document->assigned_user_id = $this->transformId('users', $document->assigned_user_id);
@@ -1461,7 +1452,7 @@ class CompanyImport implements ShouldQueue
             $new_document->vendor_id = $this->transformId('vendors', $document->vendor_id);
             $new_document->url = $new_document_url;
             $new_document->preview = $document->preview;
-            $new_document->name = str_replace("/", "-", $document->name);
+            $new_document->name = str_replace('/', '-', $document->name);
             $new_document->type = $document->type;
             $new_document->disk = config('filesystems.default');
             $new_document->hash = $document->hash;
@@ -1488,7 +1479,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Webhook::class,
-            ['company_id', 'user_id', 'hashed_id', 'id',],
+            ['company_id', 'user_id', 'hashed_id', 'id'],
             [
                 ['users' => 'user_id'],
             ],
@@ -1499,7 +1490,6 @@ class CompanyImport implements ShouldQueue
         return $this;
     }
 
-
     private function import_system_logs()
     {
         return $this;
@@ -1509,10 +1499,10 @@ class CompanyImport implements ShouldQueue
     {
         User::unguard();
 
-        //foreach ($this->backup_file->users as $user)
-        foreach ((object) $this->getObject("users") as $user) {
+        // foreach ($this->backup_file->users as $user)
+        foreach ((object) $this->getObject('users') as $user) {
 
-            if ($userX = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
+            if ($userX = MultiDB::hasUser(['email' => $user->email])) { // ensures that we do no inject existing users into the new account.
 
                 if ($userX->account_id != $this->account->id) {
                     throw new ImportCompanyFailed("{$userX->email} is already in the system attached to a different account");
@@ -1523,11 +1513,11 @@ class CompanyImport implements ShouldQueue
             MultiDB::setDb($this->company->db);
 
             $user_array = (array) $user;
-            unset($user_array['laravel_through_key']); //@phpstan-ignore-line
-            unset($user_array['hashed_id']); //@phpstan-ignore-line
-            unset($user_array['id']); //@phpstan-ignore-line
+            unset($user_array['laravel_through_key']); // @phpstan-ignore-line
+            unset($user_array['hashed_id']); // @phpstan-ignore-line
+            unset($user_array['id']); // @phpstan-ignore-line
 
-            /*Make sure we are searching for archived users also and restore if we find them.*/
+            /* Make sure we are searching for archived users also and restore if we find them. */
 
             $new_user = User::withTrashed()->firstOrNew(
                 ['email' => $user->email],
@@ -1548,7 +1538,7 @@ class CompanyImport implements ShouldQueue
         CompanyUser::unguard();
 
         // foreach($this->backup_file->company_users as $cu)
-        foreach ((object) $this->getObject("company_users") as $cu) {
+        foreach ((object) $this->getObject('company_users') as $cu) {
             $user_id = $this->transformId('users', $cu->user_id);
 
             $cu_array = (array) $cu;
@@ -1617,8 +1607,7 @@ class CompanyImport implements ShouldQueue
     private function paymentablesImport()
     {
         // foreach($this->backup_file->payments as $payment)
-        foreach ((object) $this->getObject("payments") as $payment) {
-
+        foreach ((object) $this->getObject('payments') as $payment) {
 
             foreach ($payment->paymentables as $paymentable_obj) {
 
@@ -1626,7 +1615,7 @@ class CompanyImport implements ShouldQueue
                     $ppid = $this->transformId('payments', $paymentable_obj->payment_id);
                     $paymentable_id = $this->convertPaymentableId($paymentable_obj->paymentable_type, $paymentable_obj->paymentable_id);
 
-                    $paymentable = new Paymentable();
+                    $paymentable = new Paymentable;
                     $paymentable->payment_id = $ppid;
                     $paymentable->paymentable_type = $paymentable_obj->paymentable_type;
                     $paymentable->amount = $paymentable_obj->amount;
@@ -1639,6 +1628,7 @@ class CompanyImport implements ShouldQueue
                     $paymentable->save(['timestamps' => false]);
                 } catch (\Exception $e) {
                     nlog("Skipping paymentable: {$e->getMessage()}");
+
                     continue;
                 }
             }
@@ -1659,7 +1649,7 @@ class CompanyImport implements ShouldQueue
             case Payment::class:
                 return $this->transformId('payments', $id);
             default:
-                # code...
+                // code...
                 break;
         }
     }
@@ -1681,6 +1671,7 @@ class CompanyImport implements ShouldQueue
                 }
 
                 $index++;
+
                 return $value;
 
             })
@@ -1700,7 +1691,7 @@ class CompanyImport implements ShouldQueue
         $class::unguard();
 
         foreach ((object) $this->getObject($object_property) as $obj) {
-            /* Remove unwanted keys*/
+            /* Remove unwanted keys */
             $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
@@ -1734,7 +1725,7 @@ class CompanyImport implements ShouldQueue
                     } elseif (isset($obj->quote_id)) {
                         $activity_invitation_key = 'quote_invitations';
                     } elseif (isset($obj->credit_id)) {
-                        $activity_invitation_key  = 'credit_invitations';
+                        $activity_invitation_key = 'credit_invitations';
                     }
                 }
 
@@ -1767,10 +1758,9 @@ class CompanyImport implements ShouldQueue
             /**
              *  @class \stdClass $parameters
              *
-             *  @property string $entity
-             *  @property string $entity_id
-            */
-
+             * @property string $entity
+             * @property string $entity_id
+             */
             if ($class == 'App\Models\Scheduler') {
 
                 /** @var \stdClass $parameters */
@@ -1787,7 +1777,7 @@ class CompanyImport implements ShouldQueue
                 }
 
                 if (isset($parameters->entity_id)) {
-                    $parameters->entity_id = $this->encodePrimaryKey($this->transformId($parameters->entity . "s", $parameters->entity_id));
+                    $parameters->entity_id = $this->encodePrimaryKey($this->transformId($parameters->entity . 's', $parameters->entity_id));
                 }
 
                 if (isset($parameters->invoice_id)) {
@@ -1801,7 +1791,7 @@ class CompanyImport implements ShouldQueue
                 $obj_array['parameters'] = $parameters;
             }
 
-            $new_obj = new $class();
+            $new_obj = new $class;
             $new_obj->company_id = $this->company->id;
             $obj_array = $this->filterVersionProps($class, $obj_array);
 
@@ -1819,13 +1809,13 @@ class CompanyImport implements ShouldQueue
     {
         $class::unguard();
 
-        //foreach($this->backup_file->{$object_property} as $obj)
+        // foreach($this->backup_file->{$object_property} as $obj)
         foreach ((object) $this->getObject($object_property) as $obj) {
             if (is_null($obj)) {
                 continue;
             }
 
-            /* Remove unwanted keys*/
+            /* Remove unwanted keys */
             $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
@@ -1842,7 +1832,7 @@ class CompanyImport implements ShouldQueue
                 $obj_array['deleted_at'] = now();
             }
 
-            /* New to convert product ids from old hashes to new hashes*/
+            /* New to convert product ids from old hashes to new hashes */
             if ($class == 'App\Models\Subscription') {
                 $obj_array['product_ids'] = $this->recordProductIds($obj_array['product_ids']);
                 $obj_array['recurring_product_ids'] = $this->recordProductIds($obj_array['recurring_product_ids']);
@@ -1883,7 +1873,7 @@ class CompanyImport implements ShouldQueue
         $x = 0;
 
         foreach ((object) $this->getObject($object_property) as $obj) {
-            /* Remove unwanted keys*/
+            /* Remove unwanted keys */
             $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
@@ -1903,7 +1893,7 @@ class CompanyImport implements ShouldQueue
                 $obj_array['deleted_at'] = now();
             }
 
-            /* New to convert product ids from old hashes to new hashes*/
+            /* New to convert product ids from old hashes to new hashes */
             if ($class == 'App\Models\Subscription') {
                 if (array_key_exists('company', $obj_array)) {
                     unset($obj_array['company']);
@@ -1916,77 +1906,77 @@ class CompanyImport implements ShouldQueue
 
             $obj_array = $this->filterVersionProps($class, $obj_array);
 
-            /* Expenses that don't have a number will not be inserted - so need to override here*/
+            /* Expenses that don't have a number will not be inserted - so need to override here */
             if ($class == 'App\Models\Expense' && is_null($obj->{$match_key})) {
-                $new_obj = new Expense();
+                $new_obj = new Expense;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextExpenseNumber($new_obj);
             } elseif ($class == 'App\Models\Invoice' && is_null($obj->{$match_key})) {
-                $new_obj = new Invoice();
+                $new_obj = new Invoice;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->design_id = 2;
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextInvoiceNumber($client = Client::withTrashed()->find($obj_array['client_id']), $new_obj);
             } elseif ($class == 'App\Models\PurchaseOrder' && is_null($obj->{$match_key})) {
-                $new_obj = new PurchaseOrder();
+                $new_obj = new PurchaseOrder;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->design_id = 2;
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextPurchaseOrderNumber($new_obj);
             } elseif ($class == 'App\Models\Payment' && is_null($obj->{$match_key})) {
-                $new_obj = new Payment();
+                $new_obj = new Payment;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextPaymentNumber($client = Client::withTrashed()->find($obj_array['client_id']), $new_obj);
             } elseif ($class == 'App\Models\Quote' && is_null($obj->{$match_key})) {
-                $new_obj = new Quote();
+                $new_obj = new Quote;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->design_id = 2;
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextQuoteNumber($client = Client::withTrashed()->find($obj_array['client_id']), $new_obj);
             } elseif ($class == 'App\Models\Credit' && is_null($obj->{$match_key})) {
-                $new_obj = new Credit();
+                $new_obj = new Credit;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->design_id = 2;
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextCreditNumber($client = Client::withTrashed()->find($obj_array['client_id']), $new_obj);
             } elseif ($class == 'App\Models\ClientContact') {
-                $new_obj = new ClientContact();
+                $new_obj = new ClientContact;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
             } elseif ($class == 'App\Models\VendorContact') {
-                $new_obj = new VendorContact();
+                $new_obj = new VendorContact;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
             } elseif ($class == 'App\Models\RecurringExpense' && is_null($obj->{$match_key})) {
-                $new_obj = new RecurringExpense();
+                $new_obj = new RecurringExpense;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextRecurringExpenseNumber($new_obj);
             } elseif ($class == 'App\Models\Project' && is_null($obj->{$match_key})) {
-                $new_obj = new Project();
+                $new_obj = new Project;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextProjectNumber($new_obj);
             } elseif ($class == 'App\Models\Task' && is_null($obj->{$match_key})) {
-                $new_obj = new Task();
+                $new_obj = new Task;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
                 $new_obj->number = $this->getNextTaskNumber($new_obj);
             } elseif ($class == 'App\Models\Vendor' && is_null($obj->{$match_key})) {
-                $new_obj = new Vendor();
+                $new_obj = new Vendor;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
@@ -1997,28 +1987,34 @@ class CompanyImport implements ShouldQueue
                     $obj_array,
                 );
             } elseif ($class == 'App\Models\BankIntegration') {
-                $new_obj = new BankIntegration();
+                $new_obj = new BankIntegration;
                 $new_obj->company_id = $this->company->id;
                 $new_obj->account_id = $this->account->id;
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
             } elseif ($class == 'App\Models\BankTransaction') {
-                $new_obj = new BankTransaction();
+                $new_obj = new BankTransaction;
                 $new_obj->company_id = $this->company->id;
 
-                $obj_array['invoice_ids'] = collect(explode(",", $obj_array['invoice_ids'] ?? ''))
-                    ->filter(function ($id) { return strlen($id) > 1; })
+                $obj_array['invoice_ids'] = collect(explode(',', $obj_array['invoice_ids'] ?? ''))
+                    ->filter(function ($id) {
+                        return strlen($id) > 1;
+                    })
                     ->map(function ($id) {
                         $new_id = $this->transformId('invoices', $id);
-                        return $new_id ? $this->encodePrimaryKey($new_id) : null;
-                    })->filter()->implode(",");
 
-                $obj_array['expense_id'] = collect(explode(",", $obj_array['expense_id'] ?? ''))
-                    ->filter(function ($id) { return strlen($id) > 1; })
+                        return $new_id ? $this->encodePrimaryKey($new_id) : null;
+                    })->filter()->implode(',');
+
+                $obj_array['expense_id'] = collect(explode(',', $obj_array['expense_id'] ?? ''))
+                    ->filter(function ($id) {
+                        return strlen($id) > 1;
+                    })
                     ->map(function ($id) {
                         $new_id = $this->transformId('expenses', $id);
+
                         return $new_id ? $this->encodePrimaryKey($new_id) : null;
-                    })->filter()->implode(",");
+                    })->filter()->implode(',');
 
                 $new_obj->fill($obj_array);
                 $new_obj->save(['timestamps' => false]);
@@ -2042,7 +2038,7 @@ class CompanyImport implements ShouldQueue
 
     private function recordProductIds($ids)
     {
-        $id_array = explode(",", $ids);
+        $id_array = explode(',', $ids);
 
         $tmp_arr = [];
 
@@ -2058,7 +2054,7 @@ class CompanyImport implements ShouldQueue
             }
         }
 
-        return implode(",", $tmp_arr);
+        return implode(',', $tmp_arr);
     }
 
     /* Transform all IDs from old to new
@@ -2075,7 +2071,7 @@ class CompanyImport implements ShouldQueue
             return null;
         }
 
-        if ($resource == 'tasks' && in_array($old, ['WjnegnldwZ','kQBeX5layK','MVyb895dvA','OpnelpJeKB'])) {
+        if ($resource == 'tasks' && in_array($old, ['WjnegnldwZ', 'kQBeX5layK', 'MVyb895dvA', 'OpnelpJeKB'])) {
             return null;
         }
 
@@ -2083,12 +2079,12 @@ class CompanyImport implements ShouldQueue
             return $this->company_owner->id;
         }
 
-        if (! array_key_exists($resource, $this->ids)) {
+        if (!array_key_exists($resource, $this->ids)) {
             nlog("Resource {$resource} not available.");
             throw new \Exception("Resource {$resource} not available.");
         }
 
-        if (! array_key_exists("{$old}", $this->ids[$resource])) {
+        if (!array_key_exists("{$old}", $this->ids[$resource])) {
             nlog("Missing {$resource} key: {$old}");
 
             if ($resource == 'users') {
@@ -2109,7 +2105,6 @@ class CompanyImport implements ShouldQueue
         return $this->ids[$resource]["{$old}"];
     }
 
-
     private function sendImportMail($message)
     {
         App::forgetInstance('translator');
@@ -2118,7 +2113,7 @@ class CompanyImport implements ShouldQueue
 
         $_company = Company::find($this->company->id);
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new CompanyImportFailure($_company, $message);
         $nmo->company = $this->company;
         $nmo->settings = $this->company->settings;

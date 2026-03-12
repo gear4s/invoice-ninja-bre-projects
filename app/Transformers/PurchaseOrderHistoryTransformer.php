@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,12 +29,12 @@ class PurchaseOrderHistoryTransformer extends EntityTransformer
 
     public function transform(?Backup $backup)
     {
-        if (! $backup) {
+        if (!$backup) {
             return [
                 'id' => '',
                 'activity_id' => '',
                 'json_backup' => (string) '',
-                'html_backup' => (string) '', //deprecated
+                'html_backup' => (string) '', // deprecated
                 'amount' => (float) 0,
                 'created_at' => (int) 0,
                 'updated_at' => (int) 0,
@@ -46,7 +45,7 @@ class PurchaseOrderHistoryTransformer extends EntityTransformer
             'id' => $this->encodePrimaryKey($backup->id),
             'activity_id' => $this->encodePrimaryKey($backup->activity_id),
             'json_backup' => (string) '',
-            'html_backup' => (string) '', //deprecated
+            'html_backup' => (string) '', // deprecated
             'amount' => (float) $backup->amount,
             'created_at' => (int) $backup->created_at,
             'updated_at' => (int) $backup->updated_at,

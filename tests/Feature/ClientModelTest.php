@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,8 +20,9 @@ use Tests\TestCase;
 
 class ClientModelTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,7 +33,7 @@ class ClientModelTest extends TestCase
             $this->markTestSkipped('Skip test for GH Actions');
         }
 
-        if (! config('ninja.testvars.stripe')) {
+        if (!config('ninja.testvars.stripe')) {
             $this->markTestSkipped('Skip test no company gateways installed');
         }
 
@@ -43,7 +43,7 @@ class ClientModelTest extends TestCase
 
     }
 
-    public function testNewWithoutAndDeletedClientFilters()
+    public function test_new_without_and_deleted_client_filters()
     {
 
         $this->invoice->amount = 10;
@@ -57,7 +57,6 @@ class ClientModelTest extends TestCase
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
         ]);
-
 
         $cd2 = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -81,7 +80,6 @@ class ClientModelTest extends TestCase
             'partial_due_date' => null,
         ]);
 
-
         $i2 = Invoice::factory()->create([
             'client_id' => $cd2->id,
             'user_id' => $this->user->id,
@@ -96,8 +94,8 @@ class ClientModelTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-        'X-API-SECRET' => config('ninja.api_secret'),
-        'X-API-TOKEN' => $this->token,
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/invoices?status=active');
 
         $response->assertStatus(200);
@@ -125,7 +123,6 @@ class ClientModelTest extends TestCase
 
         $this->assertEquals($invoice_count + 2, count($arr['data']));
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -149,7 +146,6 @@ class ClientModelTest extends TestCase
 
         $this->assertEquals($invoice_count + 1, count($arr['data']));
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -160,10 +156,9 @@ class ClientModelTest extends TestCase
 
         $this->assertEquals($invoice_count + 1, count($arr['data']));
 
-
     }
 
-    public function testPaymentMethodsWithCreditsEnforced()
+    public function test_payment_methods_with_credits_enforced()
     {
 
         $payment_methods = $this->client->service()->getPaymentMethods(40);

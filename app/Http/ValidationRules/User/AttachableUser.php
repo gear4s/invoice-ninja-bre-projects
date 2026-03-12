@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,8 +25,8 @@ class AttachableUser implements Rule
     public function __construct() {}
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
@@ -44,8 +43,7 @@ class AttachableUser implements Rule
     }
 
     /**
-     * @param $user_id
-     * @return bool
+     * @param  $user_id
      */
     private function checkUserIsAttachable($email): bool
     {
@@ -55,17 +53,17 @@ class AttachableUser implements Rule
 
         $user = User::where('email', $email)->first();
 
-        if (! $user) {
+        if (!$user) {
             return true;
         }
 
         $user_already_attached = CompanyUser::query()
-                                    ->where('user_id', $user->id)
-                                    ->where('account_id', $user->account_id)
-                                    ->where('company_id', auth()->user()->company()->id)
-                                    ->exists();
+            ->where('user_id', $user->id)
+            ->where('account_id', $user->account_id)
+            ->where('company_id', auth()->user()->company()->id)
+            ->exists();
 
-        //If the user is already attached or isn't link to this account - return false
+        // If the user is already attached or isn't link to this account - return false
         if ($user_already_attached) {
             $this->message = ctrans('texts.user_duplicate_error');
 

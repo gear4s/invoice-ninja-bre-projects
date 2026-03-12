@@ -6,26 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\BTCPay;
 
+use App\Exceptions\PaymentFailed;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Jobs\Mail\PaymentFailureMailer;
 use App\Models\Payment;
 use App\PaymentDrivers\BTCPayPaymentDriver;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
-use App\Utils\Traits\MakesHash;
 use App\PaymentDrivers\Common\MethodInterface;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
-use App\Exceptions\PaymentFailed;
-use App\Jobs\Mail\PaymentFailureMailer;
-use Illuminate\Mail\Mailables\Address;
-use App\Services\Email\EmailObject;
 use App\Services\Email\Email;
+use App\Services\Email\EmailObject;
+use App\Utils\Traits\MakesHash;
+use BTCPayServer\Client\Invoice;
+use BTCPayServer\Client\InvoiceCheckoutOptions;
+use BTCPayServer\Util\PreciseNumber;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Facades\App;
 
-class BTCPay implements MethodInterface, LivewireMethodInterface
+class BTCPay implements LivewireMethodInterface, MethodInterface
 {
     use MakesHash;
 
@@ -40,6 +42,7 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
     public function authorizeView($data) {}
 
     public function authorizeRequest($request) {}
+
     public function authorizeResponse($request) {}
 
     public function paymentView($data)
@@ -78,32 +81,31 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
             $metaData = [
                 'buyerName' => $cli->name,
                 'buyerAddress1' => $cli->address1,
-                'buyerAddress2' =>  $cli->address2,
-                'buyerCity' =>  $cli->city,
+                'buyerAddress2' => $cli->address2,
+                'buyerCity' => $cli->city,
                 'buyerState' => $cli->state,
                 'buyerZip' => $cli->postal_code,
                 'buyerCountry' => $cli->country_id,
                 'buyerPhone' => $cli->phone,
-                'itemDesc' => "From InvoiceNinja",
+                'itemDesc' => 'From InvoiceNinja',
                 'InvoiceNinjaPaymentHash' => $drv->payment_hash->hash,
             ];
 
-
             $urlRedirect = redirect()->route('client.invoice.show', ['invoice' => $_invoice->invoice_id])->getTargetUrl();
-            $checkoutOptions = new \BTCPayServer\Client\InvoiceCheckoutOptions();
+            $checkoutOptions = new InvoiceCheckoutOptions;
             $checkoutOptions->setRedirectURL($urlRedirect);
 
-            $client = new \BTCPayServer\Client\Invoice($drv->btcpay_url, $drv->api_key);
+            $client = new Invoice($drv->btcpay_url, $drv->api_key);
             $rep = $client->createInvoice(
                 $drv->store_id,
                 $request->currency,
-                \BTCPayServer\Util\PreciseNumber::parseString($request->amount),
+                PreciseNumber::parseString($request->amount),
                 $_invoice->invoice_number,
                 $cli->present()->email(),
                 $metaData,
                 $checkoutOptions
             );
-            //$payment->transaction_reference = $rep->getId();
+            // $payment->transaction_reference = $rep->getId();
             // $payment->save();
 
             return redirect($rep->getCheckoutLink());
@@ -117,20 +119,20 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
     {
         try {
             if ($amount == $payment->amount) {
-                $refundVariant = "Fiat";
-                $refundPaymentMethod = "BTC";
-                $refundDescription = "Full refund";
+                $refundVariant = 'Fiat';
+                $refundPaymentMethod = 'BTC';
+                $refundDescription = 'Full refund';
                 $refundCustomCurrency = null;
                 $refundCustomAmount = null;
             } else {
-                $refundVariant = "Custom";
-                $refundPaymentMethod = "";
-                $refundDescription = "Partial refund";
+                $refundVariant = 'Custom';
+                $refundPaymentMethod = '';
+                $refundDescription = 'Partial refund';
                 $refundCustomCurrency = $payment->currency;
                 $refundCustomAmount = $amount;
             }
 
-            $client = new \BTCPayServer\Client\Invoice($this->driver_class->btcpay_url, $this->driver_class->api_key);
+            $client = new Invoice($this->driver_class->btcpay_url, $this->driver_class->api_key);
             $refund = $client->refundInvoice(
                 $this->driver_class->store_id,
                 $payment->transaction_reference,
@@ -144,7 +146,7 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
             );
             App::setLocale($payment->company->getLocale());
 
-            $mo = new EmailObject();
+            $mo = new EmailObject;
             $mo->subject = ctrans('texts.btcpay_refund_subject');
             $mo->body = ctrans('texts.btcpay_refund_body') . '<br>' . $refund->getViewLink();
             $mo->text_body = ctrans('texts.btcpay_refund_body') . '\n' . $refund->getViewLink();
@@ -160,7 +162,7 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
                 'transaction_reference' => $refund->getId(),
                 'transaction_response' => json_encode($refund),
                 'success' => true,
-                'description' => "Please follow this link to claim your refund: " . $refund->getViewLink(),
+                'description' => 'Please follow this link to claim your refund: ' . $refund->getViewLink(),
                 'code' => 202,
             ];
 
@@ -171,7 +173,7 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -179,7 +181,7 @@ class BTCPay implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

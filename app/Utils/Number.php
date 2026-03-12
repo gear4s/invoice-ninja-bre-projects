@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,26 +19,20 @@ use App\Models\Currency;
  */
 class Number
 {
-    /**
-     * @param float $value
-     * @param int   $precision
-     *
-     * @return float
-     */
     public static function roundValue(float $value, int $precision = 2): float
     {
-        $str = sprintf('%.'.($precision + 3).'f', $value);
-        return (float) \App\Utils\BcMath::round($str, $precision);
+        $str = sprintf('%.' . ($precision + 3) . 'f', $value);
+
+        return (float) BcMath::round($str, $precision);
         // return round($value, $precision, PHP_ROUND_HALF_UP);
     }
 
     /**
      * Formats a given value based on the clients currency.
      *
-     * @param  float  $value    The number to be formatted
-     * @param  object $currency The client currency object
-     *
-     * @return string           The formatted value
+     * @param  float  $value  The number to be formatted
+     * @param  object  $currency  The client currency object
+     * @return string The formatted value
      */
     public static function formatValue($value, $currency): string
     {
@@ -55,9 +48,8 @@ class Number
     /**
      * Formats a given value based on the clients currency.
      *
-     * @param  float  $value    The number to be formatted
-     *
-     * @return string           The formatted value
+     * @param  float  $value  The number to be formatted
+     * @return string The formatted value
      */
     public static function formatValueNoTrailingZeroes($value, $entity): string
     {
@@ -96,32 +88,32 @@ class Number
             return 0;
         }
 
-        //remove everything except for numbers, decimals, commas and hyphens
+        // remove everything except for numbers, decimals, commas and hyphens
         $value = preg_replace('/[^0-9.,-]+/', '', $value);
 
         $decimal = strpos($value, '.');
         $comma = strpos($value, ',');
 
-        if ($comma === false) { //no comma must be a decimal number already
+        if ($comma === false) { // no comma must be a decimal number already
             return (float) $value;
         }
 
-        if (!$decimal && substr($value, -3, 1) != ",") {
-            $value = $value . ".00";
+        if (!$decimal && substr($value, -3, 1) != ',') {
+            $value = $value . '.00';
         }
 
         $decimal = strpos($value, '.');
 
-        if ($decimal < $comma) { //decimal before a comma = euro
-            $value = str_replace(['.',','], ['','.'], $value);
+        if ($decimal < $comma) { // decimal before a comma = euro
+            $value = str_replace(['.', ','], ['', '.'], $value);
+
             return (float) $value;
         }
 
-        //comma first = traditional thousand separator
+        // comma first = traditional thousand separator
         $value = str_replace(',', '', $value);
 
         return (float) $value;
-
 
     }
 
@@ -129,8 +121,8 @@ class Number
      * Formats a given value based on the clients currency
      * BACK to a float.
      *
-     * @param string $value The formatted number to be converted back to float
-     * @return float            The formatted value
+     * @param  string  $value  The formatted number to be converted back to float
+     * @return float The formatted value
      */
     public static function parseFloatXX($value)
     {
@@ -162,8 +154,7 @@ class Number
         return (float) $s;
     }
 
-
-    //next iteration of float parsing
+    // next iteration of float parsing
     public static function parseFloat2($value)
     {
 
@@ -171,19 +162,19 @@ class Number
             return 0;
         }
 
-        //remove everything except for numbers, decimals, commas and hyphens
+        // remove everything except for numbers, decimals, commas and hyphens
         $value = preg_replace('/[^0-9.,-]+/', '', $value);
 
         $decimal = strpos($value, '.');
         $comma = strpos($value, ',');
 
-        //check the 3rd last character
-        if (!in_array(substr($value, -3, 1), [".", ","])) {
+        // check the 3rd last character
+        if (!in_array(substr($value, -3, 1), ['.', ','])) {
 
-            if ($comma && (substr($value, -3, 1) != ".")) {
-                $value .= ".00";
-            } elseif ($decimal && (substr($value, -3, 1) != ",")) {
-                $value .= ",00";
+            if ($comma && (substr($value, -3, 1) != '.')) {
+                $value .= '.00';
+            } elseif ($decimal && (substr($value, -3, 1) != ',')) {
+                $value .= ',00';
             }
 
         }
@@ -191,22 +182,22 @@ class Number
         $decimal = strpos($value, '.');
         $comma = strpos($value, ',');
 
-        if ($comma === false) { //no comma must be a decimal number already
+        if ($comma === false) { // no comma must be a decimal number already
             return (float) $value;
         }
 
-        if ($decimal < $comma) { //decimal before a comma = euro
-            $value = str_replace(['.',','], ['','.'], $value);
+        if ($decimal < $comma) { // decimal before a comma = euro
+            $value = str_replace(['.', ','], ['', '.'], $value);
+
             return (float) $value;
         }
 
-        //comma first = traditional thousand separator
+        // comma first = traditional thousand separator
         $value = str_replace(',', '', $value);
 
         return (float) $value;
 
     }
-
 
     public static function parseStringFloat($value)
     {
@@ -225,9 +216,8 @@ class Number
     /**
      * Formats a given value based on the clients currency AND country.
      *
-     * @param $value            The number to be formatted
-     * @param $entity
-     * @return string           The formatted value
+     * @param  $value  The number to be formatted
+     * @return string The formatted value
      */
     public static function formatMoney($value, $entity): string
     {
@@ -272,7 +262,7 @@ class Number
         } elseif ($swapSymbol) {
             return "{$value} " . trim($symbol);
         } elseif ($entity->getSetting('show_currency_code') === false) {
-            /* Ensures we place the negative symbol ahead of the currency symbol*/
+            /* Ensures we place the negative symbol ahead of the currency symbol */
             if ($_value < 0) {
                 $value = substr($value, 1);
                 $symbol = "-{$symbol}";
@@ -280,16 +270,16 @@ class Number
 
             return "{$symbol}{$value}";
         } else {
-            return self::formatValue($value, $currency); //@phpstan-ignore-line
+            return self::formatValue($value, $currency); // @phpstan-ignore-line
         }
     }
 
     /**
      * Formats a given value based on the clients currency AND country.
      *
-     * @param float $value The number to be formatted
-     * @param mixed $entity
-     * @return string           The formatted value
+     * @param  float  $value  The number to be formatted
+     * @param  mixed  $entity
+     * @return string The formatted value
      */
     public static function formatMoneyNoRounding($value, $entity): string
     {
@@ -326,12 +316,12 @@ class Number
         $v = rtrim(sprintf('%f', $value), '0');
         $parts = explode('.', $v);
 
-        //04-04-2023 if currency = JPY override precision to 0
+        // 04-04-2023 if currency = JPY override precision to 0
         if ($currency->code == 'JPY') {
             $precision = 0;
         }
 
-        $value = number_format((float) $v, $precision, $decimal, $thousand);//@phpstan-ignore-line
+        $value = number_format((float) $v, $precision, $decimal, $thousand); // @phpstan-ignore-line
         $symbol = $currency->symbol;
 
         if ($entity->getSetting('show_currency_code') === true && $currency->code == 'CHF') {
@@ -348,7 +338,7 @@ class Number
 
             return "{$symbol}{$value}";
         } else {
-            return self::formatValue($value, $currency); //@phpstan-ignore-line
+            return self::formatValue($value, $currency); // @phpstan-ignore-line
         }
     }
 }

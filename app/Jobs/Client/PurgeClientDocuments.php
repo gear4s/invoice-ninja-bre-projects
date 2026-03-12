@@ -2,15 +2,14 @@
 
 namespace App\Jobs\Client;
 
+use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Document;
-use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class PurgeClientDocuments implements ShouldQueue
 {
@@ -35,14 +34,14 @@ class PurgeClientDocuments implements ShouldQueue
     private function deleteDocumentsForEntities(string $class, array $value)
     {
         Document::withTrashed()
-                    ->where('documentable_type', $class)
-                    ->whereIn('documentable_id', $value)
-                    ->cursor()
-                    ->each(function ($document) {
+            ->where('documentable_type', $class)
+            ->whereIn('documentable_id', $value)
+            ->cursor()
+            ->each(function ($document) {
 
-                        $document->deleteFile();
-                        $document->forceDelete();
+                $document->deleteFile();
+                $document->forceDelete();
 
-                    });
+            });
     }
 }

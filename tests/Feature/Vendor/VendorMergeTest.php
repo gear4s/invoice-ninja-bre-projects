@@ -6,28 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Vendor;
 
-use Faker\Factory;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Vendor;
 use App\Models\Account;
 use App\Models\Company;
 use App\Models\Country;
+use App\Models\User;
+use App\Models\Vendor;
 use App\Models\VendorContact;
 use App\Utils\Traits\AppSetup;
-use Illuminate\Support\Facades\Artisan;
+use Faker\Factory;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
 
 class VendorMergeTest extends TestCase
 {
-    use DatabaseTransactions;
     use AppSetup;
+    use DatabaseTransactions;
 
     private $user;
 
@@ -52,7 +51,7 @@ class VendorMergeTest extends TestCase
         }
     }
 
-    public function testSearchingForContacts()
+    public function test_searching_for_contacts()
     {
         $account = Account::factory()->create();
 
@@ -100,7 +99,7 @@ class VendorMergeTest extends TestCase
         }));
     }
 
-    public function testMergeVendors()
+    public function test_merge_vendors()
     {
         $account = Account::factory()->create();
 
@@ -137,7 +136,7 @@ class VendorMergeTest extends TestCase
             'company_id' => $company->id,
             'email' => 'search@gmail.com',
         ]);
-        //4contacts
+        // 4contacts
 
         $mergable_vendor = Vendor::factory()->create([
             'user_id' => $user->id,
@@ -163,7 +162,7 @@ class VendorMergeTest extends TestCase
             'company_id' => $company->id,
             'email' => 'search@gmail.com',
         ]);
-        //4 contacts
+        // 4 contacts
 
         $this->assertEquals(4, $vendor->contacts->count());
         $this->assertEquals(4, $mergable_vendor->contacts->count());

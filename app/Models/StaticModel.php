@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,12 +14,13 @@ namespace App\Models;
 use App\Models\Traits\Excludable;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * App\Models\StaticModel
  *
  * @property-read mixed $id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel newModelQuery()
@@ -30,13 +30,14 @@ use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundExceptio
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel with($value)
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel withTrashed($value)
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel findOrFail($value)
+ *
  * @mixin \Eloquent
  */
 #[\AllowDynamicProperties]
 class StaticModel extends Model
 {
-    use MakesHash;
     use Excludable;
+    use MakesHash;
 
     protected $casts = [
         'updated_at' => 'timestamp',
@@ -56,7 +57,7 @@ class StaticModel extends Model
      */
     public function scopeCompany($query)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $query->where('company_id', $user->companyId());
@@ -67,8 +68,8 @@ class StaticModel extends Model
     /**
      * Retrieve the model for a bound value.
      *
-     * @param mixed $value
-     * @param null $field
+     * @param  mixed  $value
+     * @param  null  $field
      * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,10 +22,9 @@ class PaymentCreatedActivity implements ShouldQueue
     protected $activity_repo;
 
     public $delay = 5;
+
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -53,7 +51,7 @@ class PaymentCreatedActivity implements ShouldQueue
 
         $user_id = $event->event_vars['user_id'] ?? $event->payment->user_id;
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $fields->payment_id = $payment->id;
         $fields->invoice_id = $invoice_id;

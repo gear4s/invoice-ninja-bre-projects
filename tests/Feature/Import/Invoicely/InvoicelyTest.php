@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,14 +24,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Import\Providers\Invoicely
  */
 class InvoicelyTest extends TestCase
 {
+    use DatabaseTransactions;
     use MakesHash;
     use MockAccountData;
-    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -47,10 +45,10 @@ class InvoicelyTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testClientInvoicelyImport()
+    public function test_client_invoicely_import()
     {
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/invoicely_clients.csv'
+            base_path() . '/tests/Feature/Import/invoicely_clients.csv'
         );
         $hash = Str::random(32);
 
@@ -68,7 +66,7 @@ class InvoicelyTest extends TestCase
             'import_type' => 'invoicely',
         ];
 
-        Cache::put($hash.'-client', base64_encode($csv), 360);
+        Cache::put($hash . '-client', base64_encode($csv), 360);
 
         $csv_importer = new Invoicely($data, $this->company);
 
@@ -87,10 +85,10 @@ class InvoicelyTest extends TestCase
         $this->assertEquals('5558675309', $client->phone);
     }
 
-    public function testInvoiceInvoicelyImport()
+    public function test_invoice_invoicely_import()
     {
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/invoicely_clients.csv'
+            base_path() . '/tests/Feature/Import/invoicely_clients.csv'
         );
         $hash = Str::random(32);
 
@@ -108,7 +106,7 @@ class InvoicelyTest extends TestCase
             'import_type' => 'invoicely',
         ];
 
-        Cache::put($hash.'-client', base64_encode($csv), 360);
+        Cache::put($hash . '-client', base64_encode($csv), 360);
 
         $csv_importer = new Invoicely($data, $this->company);
 
@@ -125,10 +123,10 @@ class InvoicelyTest extends TestCase
 
         $this->assertInstanceOf(Client::class, $client);
         $this->assertEquals('5558675309', $client->phone);
-        //now import the invoices
+        // now import the invoices
 
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/invoicely_invoices.csv'
+            base_path() . '/tests/Feature/Import/invoicely_invoices.csv'
         );
         $hash = Str::random(32);
 
@@ -148,14 +146,13 @@ class InvoicelyTest extends TestCase
             'import_type' => 'invoicely',
         ];
 
-        Cache::put($hash.'-invoice', base64_encode($csv), 360);
+        Cache::put($hash . '-invoice', base64_encode($csv), 360);
 
         $csv_importer = new Invoicely($data, $this->company);
 
         $count = $csv_importer->import('invoice');
 
         $base_transformer = new BaseTransformer($this->company);
-
 
         $this->assertTrue($base_transformer->hasInvoice('INV-1'));
 

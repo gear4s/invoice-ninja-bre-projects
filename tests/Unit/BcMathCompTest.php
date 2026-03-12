@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,29 +31,29 @@ class BcMathCompTest extends TestCase
     // The original bug: float vs padded DB string
     // ==========================================
 
-    public function testFloatVsDatabaseDecimalPaidToDate()
+    public function test_float_vs_database_decimal_paid_to_date()
     {
         // Database returns "554.170000", request sends float 554.17
         $this->assertEquals(0, BcMath::comp('554.170000', 554.17));
     }
 
-    public function testFloatVsDatabaseDecimalSymmetric()
+    public function test_float_vs_database_decimal_symmetric()
     {
         // Same comparison in reverse order
         $this->assertEquals(0, BcMath::comp(554.17, '554.170000'));
     }
 
-    public function testFloatVsCleanString()
+    public function test_float_vs_clean_string()
     {
         $this->assertEquals(0, BcMath::comp(554.17, '554.17'));
     }
 
-    public function testBothFloats()
+    public function test_both_floats()
     {
         $this->assertEquals(0, BcMath::comp(554.17, 554.17));
     }
 
-    public function testBothStrings()
+    public function test_both_strings()
     {
         $this->assertEquals(0, BcMath::comp('554.170000', '554.17'));
     }
@@ -63,39 +62,39 @@ class BcMathCompTest extends TestCase
     // IEEE 754 notorious problem values as floats
     // ==========================================
 
-    public function testPointOneFloat()
+    public function test_point_one_float()
     {
         // 0.1 cannot be exactly represented in IEEE 754
         $this->assertEquals(0, BcMath::comp(0.1, '0.1'));
         $this->assertEquals(0, BcMath::comp(0.1, '0.1000000000'));
     }
 
-    public function testPointTwoFloat()
+    public function test_point_two_float()
     {
         $this->assertEquals(0, BcMath::comp(0.2, '0.2'));
         $this->assertEquals(0, BcMath::comp(0.2, '0.2000000000'));
     }
 
-    public function testPointThreeFloat()
+    public function test_point_three_float()
     {
         // 0.3 is a classic IEEE 754 problem
         $this->assertEquals(0, BcMath::comp(0.3, '0.3'));
     }
 
-    public function testPointOnePlusPointTwoVsPointThree()
+    public function test_point_one_plus_point_two_vs_point_three()
     {
         // 0.1 + 0.2 = 0.30000000000000004 in IEEE 754
         $sum = 0.1 + 0.2;
         $this->assertEquals(0, BcMath::comp($sum, '0.3'));
     }
 
-    public function testPointSevenFloat()
+    public function test_point_seven_float()
     {
         // 0.7 is another problematic IEEE 754 value
         $this->assertEquals(0, BcMath::comp(0.7, '0.7'));
     }
 
-    public function testPointOneFourFloat()
+    public function test_point_one_four_float()
     {
         // 1.4 stored as 1.3999999999999999 in some representations
         $this->assertEquals(0, BcMath::comp(1.4, '1.4'));
@@ -105,33 +104,33 @@ class BcMathCompTest extends TestCase
     // Realistic invoice amounts (float vs string)
     // ==========================================
 
-    public function testTypicalInvoiceAmount()
+    public function test_typical_invoice_amount()
     {
         $this->assertEquals(0, BcMath::comp(1250.50, '1250.500000'));
     }
 
-    public function testSmallInvoiceAmount()
+    public function test_small_invoice_amount()
     {
         $this->assertEquals(0, BcMath::comp(0.99, '0.990000'));
     }
 
-    public function testLargeInvoiceAmount()
+    public function test_large_invoice_amount()
     {
         $this->assertEquals(0, BcMath::comp(99999.99, '99999.990000'));
     }
 
-    public function testWholeNumberAmount()
+    public function test_whole_number_amount()
     {
         $this->assertEquals(0, BcMath::comp(500.00, '500.000000'));
     }
 
-    public function testZeroAmount()
+    public function test_zero_amount()
     {
         $this->assertEquals(0, BcMath::comp(0.0, '0.000000'));
         $this->assertEquals(0, BcMath::comp(0.0, '0'));
     }
 
-    public function testOnecentAmount()
+    public function test_onecent_amount()
     {
         $this->assertEquals(0, BcMath::comp(0.01, '0.010000'));
     }
@@ -141,28 +140,28 @@ class BcMathCompTest extends TestCase
     // Simulates real tax/total calculations
     // ==========================================
 
-    public function testTaxCalculationResultVsDbString()
+    public function test_tax_calculation_result_vs_db_string()
     {
         // 6570.20 * 7.5 / 100 = 492.765 (with potential IEEE drift)
         $tax = 6570.20 * 7.5 / 100;
         $this->assertEquals(0, BcMath::comp($tax, '492.765'));
     }
 
-    public function testInvoiceTotalCalculationVsDbString()
+    public function test_invoice_total_calculation_vs_db_string()
     {
         // Typical: sum of line items
         $total = 149.99 + 249.99 + 99.99;
         $this->assertEquals(0, BcMath::comp($total, '499.97'));
     }
 
-    public function testDiscountCalculationVsDbString()
+    public function test_discount_calculation_vs_db_string()
     {
         $subtotal = 1000.0;
         $discount = $subtotal * 12.5 / 100;
         $this->assertEquals(0, BcMath::comp($discount, '125'));
     }
 
-    public function testGatewayFeeVsDbString()
+    public function test_gateway_fee_vs_db_string()
     {
         $amount = 1500.00;
         $fee = ($amount * 2.9 / 100) + 0.30;
@@ -173,29 +172,29 @@ class BcMathCompTest extends TestCase
     // Actual inequality must still be detected
     // ==========================================
 
-    public function testActualDifferenceDetected()
+    public function test_actual_difference_detected()
     {
         $this->assertEquals(-1, BcMath::comp(554.17, '554.18'));
         $this->assertEquals(1, BcMath::comp(554.18, '554.17'));
     }
 
-    public function testSmallActualDifference()
+    public function test_small_actual_difference()
     {
         $this->assertEquals(-1, BcMath::comp('100.00', '100.01'));
         $this->assertEquals(1, BcMath::comp('100.01', '100.00'));
     }
 
-    public function testFloatActuallyGreater()
+    public function test_float_actually_greater()
     {
         $this->assertEquals(1, BcMath::comp(554.18, '554.170000'));
     }
 
-    public function testFloatActuallyLess()
+    public function test_float_actually_less()
     {
         $this->assertEquals(-1, BcMath::comp(554.16, '554.170000'));
     }
 
-    public function testNegativeVsPositive()
+    public function test_negative_vs_positive()
     {
         $this->assertEquals(-1, BcMath::comp(-1.0, '1.0'));
         $this->assertEquals(1, BcMath::comp(1.0, '-1.0'));
@@ -205,36 +204,36 @@ class BcMathCompTest extends TestCase
     // Null, empty, and edge-case inputs
     // ==========================================
 
-    public function testNullVsZeroString()
+    public function test_null_vs_zero_string()
     {
         $this->assertEquals(0, BcMath::comp(null, '0'));
         $this->assertEquals(0, BcMath::comp(null, '0.000000'));
     }
 
-    public function testEmptyStringVsZero()
+    public function test_empty_string_vs_zero()
     {
         $this->assertEquals(0, BcMath::comp('', '0'));
         $this->assertEquals(0, BcMath::comp('', 0.0));
     }
 
-    public function testIntegerVsFloat()
+    public function test_integer_vs_float()
     {
         $this->assertEquals(0, BcMath::comp(100, 100.0));
         $this->assertEquals(0, BcMath::comp(100, '100.000000'));
     }
 
-    public function testIntegerVsString()
+    public function test_integer_vs_string()
     {
         $this->assertEquals(0, BcMath::comp(0, '0'));
         $this->assertEquals(0, BcMath::comp(500, '500'));
     }
 
-    public function testNegativeFloatVsNegativeDbString()
+    public function test_negative_float_vs_negative_db_string()
     {
         $this->assertEquals(0, BcMath::comp(-554.17, '-554.170000'));
     }
 
-    public function testNegativeFloatVsNegativeString()
+    public function test_negative_float_vs_negative_string()
     {
         $this->assertEquals(0, BcMath::comp(-0.99, '-0.99'));
     }
@@ -244,25 +243,25 @@ class BcMathCompTest extends TestCase
     // Ensures normalizeNumber works across all ops
     // ==========================================
 
-    public function testAddFloatAndString()
+    public function test_add_float_and_string()
     {
         $result = BcMath::add(554.17, '0.000000');
         $this->assertEquals(0, bccomp($result, '554.17', 2));
     }
 
-    public function testSubFloatFromDbString()
+    public function test_sub_float_from_db_string()
     {
         $result = BcMath::sub('554.170000', 554.17);
         $this->assertEquals(0, bccomp($result, '0', 10));
     }
 
-    public function testMulFloatAndString()
+    public function test_mul_float_and_string()
     {
         $result = BcMath::mul(1.1, '100');
         $this->assertEquals(0, bccomp($result, '110', 2));
     }
 
-    public function testDivFloatByString()
+    public function test_div_float_by_string()
     {
         $result = BcMath::div(554.17, '1');
         $this->assertEquals(0, bccomp($result, '554.17', 2));
@@ -274,7 +273,7 @@ class BcMathCompTest extends TestCase
     // ensure normalizeNumber handles both old and new behavior
     // ==========================================
 
-    public function testPHP84FloatCastingEdgeCases()
+    public function test_ph_p84_float_casting_edge_cases()
     {
         // These floats have known IEEE 754 representation issues
         // that PHP 8.4 may expose differently when casting to string
@@ -302,7 +301,7 @@ class BcMathCompTest extends TestCase
         }
     }
 
-    public function testPHP84TrailingZeroPaddedDbValues()
+    public function test_ph_p84_trailing_zero_padded_db_values()
     {
         // Database decimal columns return varying trailing zeros
         // depending on column precision (DECIMAL(16,6) vs DECIMAL(10,2))
@@ -332,7 +331,7 @@ class BcMathCompTest extends TestCase
     // High precision: values near float limits
     // ==========================================
 
-    public function testHighPrecisionFloat()
+    public function test_high_precision_float()
     {
         // Large integers with decimals lose float precision beyond ~15 significant digits.
         // 1234567890.12 has 12 significant digits — the fractional part drifts in IEEE 754.
@@ -343,13 +342,13 @@ class BcMathCompTest extends TestCase
         $this->assertEquals(0, BcMath::comp(100000.50, '100000.50'));
     }
 
-    public function testVerySmallFloat()
+    public function test_very_small_float()
     {
         $this->assertEquals(0, BcMath::comp(0.0001, '0.0001'));
         $this->assertEquals(0, BcMath::comp(0.0001, '0.000100'));
     }
 
-    public function testNearZeroFloat()
+    public function test_near_zero_float()
     {
         $this->assertEquals(0, BcMath::comp(0.0000000001, '0.0000000001'));
     }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,14 +21,14 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\TaxRateController
  */
 class TaxRateApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -40,7 +39,7 @@ class TaxRateApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testRemovingDefaultTaxes()
+    public function test_removing_default_taxes()
     {
         $t = TaxRate::factory()->create([
             'company_id' => $this->company->id,
@@ -78,7 +77,7 @@ class TaxRateApiTest extends TestCase
 
     }
 
-    public function testTaxRatesGetFilter()
+    public function test_tax_rates_get_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -88,7 +87,7 @@ class TaxRateApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testTaxRatePost()
+    public function test_tax_rate_post()
     {
         $rate_name = $this->faker->firstName();
 
@@ -110,7 +109,7 @@ class TaxRateApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/tax_rates/'.$arr['data']['id'], $data);
+        ])->put('/api/v1/tax_rates/' . $arr['data']['id'], $data);
 
         $response->assertStatus(200);
 
@@ -128,7 +127,7 @@ class TaxRateApiTest extends TestCase
         $this->assertNotEmpty($arr['data']['name']);
     }
 
-    public function testTaxRatePostWithActionStart()
+    public function test_tax_rate_post_with_action_start()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -144,7 +143,7 @@ class TaxRateApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testTaxRatePut()
+    public function test_tax_rate_put()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -153,12 +152,12 @@ class TaxRateApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/tax_rates/'.$this->encodePrimaryKey($this->tax_rate->id), $data);
+        ])->put('/api/v1/tax_rates/' . $this->encodePrimaryKey($this->tax_rate->id), $data);
 
         $response->assertStatus(200);
     }
 
-    public function testTaxRatesGet()
+    public function test_tax_rates_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -168,29 +167,29 @@ class TaxRateApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testTaxRateGet()
+    public function test_tax_rate_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/tax_rates/'.$this->encodePrimaryKey($this->tax_rate->id));
+        ])->get('/api/v1/tax_rates/' . $this->encodePrimaryKey($this->tax_rate->id));
 
         $response->assertStatus(200);
     }
 
-    public function testTaxRateNotArchived()
+    public function test_tax_rate_not_archived()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/tax_rates/'.$this->encodePrimaryKey($this->tax_rate->id));
+        ])->get('/api/v1/tax_rates/' . $this->encodePrimaryKey($this->tax_rate->id));
 
         $arr = $response->json();
 
         $this->assertEquals(0, $arr['data']['archived_at']);
     }
 
-    public function testTaxRateArchived()
+    public function test_tax_rate_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->tax_rate->id)],
@@ -206,7 +205,7 @@ class TaxRateApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testTaxRateRestored()
+    public function test_tax_rate_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->tax_rate->id)],
@@ -222,7 +221,7 @@ class TaxRateApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testTaxRateDeleted()
+    public function test_tax_rate_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->tax_rate->id)],

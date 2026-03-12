@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -45,10 +44,10 @@ class SendFailedEmails implements ShouldQueue
      */
     public function handle()
     {
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->processEmails();
         } else {
-            //multiDB environment, need to
+            // multiDB environment, need to
             foreach (MultiDB::$dbs as $db) {
                 MultiDB::setDB($db);
 
@@ -67,7 +66,7 @@ class SendFailedEmails implements ShouldQueue
             $invitation = $job_meta_array['entity_name']::where('key', $job_meta_array['invitation_key'])->with('contact')->first();
 
             if ($invitation->invoice) {
-                if (! $invitation->contact->trashed() && $invitation->contact->send_email && $invitation->contact->email && !$invitation->contact->is_locked) {
+                if (!$invitation->contact->trashed() && $invitation->contact->send_email && $invitation->contact->email && !$invitation->contact->is_locked) {
                     EmailEntity::dispatch($invitation->withoutRelations(), $invitation->company->db, $job_meta_array['reminder_template']);
                 }
             }

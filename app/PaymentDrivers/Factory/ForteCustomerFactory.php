@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,25 +20,25 @@ class ForteCustomerFactory
     {
 
         return [
-            "first_name" => $client->present()->first_name(),
-            "last_name" => $client->present()->last_name(),
-            "company_name" => $client->present()->name(),
-            "addresses" => [
+            'first_name' => $client->present()->first_name(),
+            'last_name' => $client->present()->last_name(),
+            'company_name' => $client->present()->name(),
+            'addresses' => [
                 [
-                    "label" => "Billing Address",
-                    "first_name" => $client->present()->first_name(),
-                    "last_name" => $client->present()->last_name(),
-                    "company_name" => $client->present()->name(),
-                    "phone" => $client->present()->phone(),
-                    "email" => $client->present()->email(),
-                    "shipping_address_type" => "commercial",
-                    "address_type" => "default_shipping",
-                    "physical_address" => [
-                        "street_line1" => $client->address2,
-                        "street_line2" => $client->address1,
-                        "locality" => $client->city,
-                        "region" => $client->state,
-                        "postal_code" => $client->postal_code,
+                    'label' => 'Billing Address',
+                    'first_name' => $client->present()->first_name(),
+                    'last_name' => $client->present()->last_name(),
+                    'company_name' => $client->present()->name(),
+                    'phone' => $client->present()->phone(),
+                    'email' => $client->present()->email(),
+                    'shipping_address_type' => 'commercial',
+                    'address_type' => 'default_shipping',
+                    'physical_address' => [
+                        'street_line1' => $client->address2,
+                        'street_line2' => $client->address1,
+                        'locality' => $client->city,
+                        'region' => $client->state,
+                        'postal_code' => $client->postal_code,
                     ],
                 ],
                 // [
@@ -81,8 +80,8 @@ class ForteCustomerFactory
                 'currency_id' => $company->settings->currency_id,
             ],
         ])->merge($this->getShippingAddress($customer))
-        ->merge($this->getBillingAddress($customer))
-        ->toArray();
+            ->merge($this->getBillingAddress($customer))
+            ->toArray();
 
     }
 

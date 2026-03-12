@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,9 +25,10 @@ use App\Utils\TempFile;
 use App\Utils\Traits\SavesDocuments;
 use Cache;
 use Exception;
+use Illuminate\Http\UploadedFile;
 use Mindee\Client;
 use Mindee\Product\Invoice\InvoiceV4;
-use Illuminate\Http\UploadedFile;
+use Mindee\Product\Invoice\InvoiceV4Document;
 
 class MindeeEDocument extends AbstractService
 {
@@ -39,7 +39,7 @@ class MindeeEDocument extends AbstractService
      */
     public function __construct(public UploadedFile $file, public Company $company)
     {
-        # curl -X POST http://localhost:8000/api/v1/edocument/upload -H "Content-Type: multipart/form-data" -H "X-API-TOKEN: 7tdDdkz987H3AYIWhNGXy8jTjJIoDhkAclCDLE26cTCj1KYX7EBHC66VEitJwWhn" -H "X-Requested-With: XMLHttpRequest" -F _method=PUT -F documents[]=@einvoice.xml
+        // curl -X POST http://localhost:8000/api/v1/edocument/upload -H "Content-Type: multipart/form-data" -H "X-API-TOKEN: 7tdDdkz987H3AYIWhNGXy8jTjJIoDhkAclCDLE26cTCj1KYX7EBHC66VEitJwWhn" -H "X-Requested-With: XMLHttpRequest" -F _method=PUT -F documents[]=@einvoice.xml
     }
 
     /**
@@ -61,7 +61,7 @@ class MindeeEDocument extends AbstractService
         $result = $mindeeClient->parse(InvoiceV4::class, $inputSource);
         $this->incrementRequestCounts();
 
-        /** @var \Mindee\Product\Invoice\InvoiceV4Document $prediction */
+        /** @var InvoiceV4Document $prediction */
         $prediction = $result->document->inference->prediction;
 
         if ($prediction->documentType->value !== 'INVOICE') {
@@ -77,17 +77,17 @@ class MindeeEDocument extends AbstractService
         $expense = Expense::query()
             ->where('company_id', $this->company->id)
             ->where('amount', $grandTotalAmount)
-            ->where("transaction_reference", $documentno)
-            ->whereDate("date", $documentdate)
+            ->where('transaction_reference', $documentno)
+            ->whereDate('date', $documentdate)
             ->first();
 
         if (!$expense) {
             // The document does not exist as an expense
             // Handle accordingly
 
-            /** @var \App\Models\Currency $currency */
+            /** @var Currency $currency */
             $currency = app('currencies')->first(function ($c) use ($invoiceCurrency) {
-                /** @var \App\Models\Currency $c */
+                /** @var Currency $c */
                 return $c->code == strtoupper($invoiceCurrency);
             });
 
@@ -99,7 +99,7 @@ class MindeeEDocument extends AbstractService
 
             $this->saveDocuments([
                 $this->file,
-                TempFile::UploadedFileFromRaw(strval($result->document), $documentno . "_mindee_orc_result.txt", "text/plain"),
+                TempFile::UploadedFileFromRaw(strval($result->document), $documentno . '_mindee_orc_result.txt', 'text/plain'),
             ], $expense);
             // $expense->saveQuietly();
 
@@ -113,11 +113,11 @@ class MindeeEDocument extends AbstractService
                 $counter++;
             }
 
-            /** @var \App\Models\VendorContact $vendor_contact */
-            $vendor_contact = VendorContact::query()->where("company_id", $this->company->id)->where("email", $prediction->supplierEmail)->first();
+            /** @var VendorContact $vendor_contact */
+            $vendor_contact = VendorContact::query()->where('company_id', $this->company->id)->where('email', $prediction->supplierEmail)->first();
 
-            /** @var \App\Models\Vendor|null $vendor */
-            $vendor = $vendor_contact ? $vendor_contact->vendor : Vendor::query()->where("company_id", $this->company->id)->where("name", $prediction->supplierName)->first();
+            /** @var Vendor|null $vendor */
+            $vendor = $vendor_contact ? $vendor_contact->vendor : Vendor::query()->where('company_id', $this->company->id)->where('name', $prediction->supplierName)->first();
 
             if ($vendor) {
                 $expense->vendor_id = $vendor->id;
@@ -132,9 +132,9 @@ class MindeeEDocument extends AbstractService
                 // $vendor->city = $city;
                 // $vendor->postal_code = $postcode;
 
-                /** @var ?\App\Models\Country $country */
+                /** @var ?Country $country */
                 $country = app('countries')->first(function ($c) use ($country) {
-                    /** @var \App\Models\Country $c */
+                    /** @var Country $c */
                     return $c->iso_3166_2 == $country || $c->iso_3166_3 == $country;
                 });
 
@@ -157,11 +157,12 @@ class MindeeEDocument extends AbstractService
         } else {
             // The document exists as an expense
             // Handle accordingly
-            nlog("Mindee: Document already exists");
-            $expense->private_notes = $expense->private_notes . ctrans("texts.edocument_import_already_exists", ["date" => now()->format('Y-m-d')]);
+            nlog('Mindee: Document already exists');
+            $expense->private_notes = $expense->private_notes . ctrans('texts.edocument_import_already_exists', ['date' => now()->format('Y-m-d')]);
         }
 
         $expense->save();
+
         return $expense;
     }
 

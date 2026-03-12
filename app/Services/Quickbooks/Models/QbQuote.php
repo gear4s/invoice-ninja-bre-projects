@@ -6,22 +6,24 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2025. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Models;
 
-use Carbon\Carbon;
-use App\Models\Quote;
 use App\DataMapper\QuoteSync;
+use App\Enum\SyncDirection;
 use App\Factory\QuoteFactory;
 use App\Interfaces\SyncInterface;
+use App\Models\Paymentable;
+use App\Models\Quote;
 use App\Repositories\QuoteRepository;
 use App\Services\Quickbooks\QuickbooksService;
-use App\Services\Quickbooks\Transformers\QuoteTransformer;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
+use App\Services\Quickbooks\Transformers\QuoteTransformer;
 use App\Utils\BcMath;
+use Carbon\Carbon;
+use QuickBooksOnline\API\Data\IPPSalesReceipt;
 
 class QbQuote implements SyncInterface
 {
@@ -32,7 +34,7 @@ class QbQuote implements SyncInterface
     public function __construct(public QuickbooksService $service)
     {
         $this->quote_transformer = new QuoteTransformer($this->service->company);
-        $this->quote_repository = new QuoteRepository();
+        $this->quote_repository = new QuoteRepository;
     }
 
     public function find(string $id): mixed
@@ -80,13 +82,11 @@ class QbQuote implements SyncInterface
                 $quote->fill($ninja_quote_data);
                 $quote->saveQuietly();
 
-
                 $quote = $quote->calc()->getQuote()->service()->markSent()->applyNumber()->createInvitations()->save();
 
             }
 
             $ninja_quote_data = false;
-
 
         }
 
@@ -113,21 +113,21 @@ class QbQuote implements SyncInterface
     private function findQuote(string $id, ?string $client_id = null): ?Quote
     {
         $search = Quote::query()
-                            ->withTrashed()
-                            ->where('company_id', $this->service->company->id)
-                            ->where('sync->qb_id', $id);
+            ->withTrashed()
+            ->where('company_id', $this->service->company->id)
+            ->where('sync->qb_id', $id);
 
         if ($search->count() == 0) {
             $quote = QuoteFactory::create($this->service->company->id, $this->service->company->owner()->id);
             $quote->client_id = (int) $client_id;
 
-            $sync = new QuoteSync();
+            $sync = new QuoteSync;
             $sync->qb_id = $id;
             $quote->sync = $sync;
 
             return $quote;
         } elseif ($search->count() == 1) {
-            return $this->service->syncable('quote', \App\Enum\SyncDirection::PULL) ? $search->first() : null;
+            return $this->service->syncable('quote', SyncDirection::PULL) ? $search->first() : null;
         }
 
         return null;
@@ -139,16 +139,16 @@ class QbQuote implements SyncInterface
 
         $qb_record = $this->find($id);
 
-
-        if ($this->service->syncable('quote', \App\Enum\SyncDirection::PULL)) {
+        if ($this->service->syncable('quote', SyncDirection::PULL)) {
 
             $quote = $this->findQuote($id);
 
-            nlog("Comparing QB last updated: " . $last_updated);
-            nlog("Comparing Ninja last updated: " . $quote->updated_at);
+            nlog('Comparing QB last updated: ' . $last_updated);
+            nlog('Comparing Ninja last updated: ' . $quote->updated_at);
 
             if (data_get($qb_record, 'TxnStatus') === 'Voided') {
                 $this->delete($id);
+
                 return;
             }
 
@@ -166,9 +166,6 @@ class QbQuote implements SyncInterface
 
     /**
      * syncNinjaQuote
-     *
-     * @param  $record
-     * @return void
      */
     public function syncNinjaQuote($record): void
     {
@@ -190,7 +187,7 @@ class QbQuote implements SyncInterface
             if ($quote->id) {
                 $this->qbQuoteUpdate($ninja_quote_data, $quote);
             }
-            //new quote scaffold
+            // new quote scaffold
             $quote->fill($ninja_quote_data);
             $quote->saveQuietly();
 
@@ -207,19 +204,19 @@ class QbQuote implements SyncInterface
                 $ninja_payment = $payment_transformer->buildPayment($payment);
                 $ninja_payment->service()->applyNumber()->save();
 
-                $paymentable = new \App\Models\Paymentable();
+                $paymentable = new Paymentable;
                 $paymentable->payment_id = $ninja_payment->id;
                 $paymentable->paymentable_id = $quote->id;
                 $paymentable->paymentable_type = 'quotes';
                 $paymentable->amount = $transformed['applied'] + $ninja_payment->credits->sum('amount');
-                $paymentable->created_at = $ninja_payment->date; //@phpstan-ignore-line
+                $paymentable->created_at = $ninja_payment->date; // @phpstan-ignore-line
                 $paymentable->save();
 
                 $quote->service()->applyPayment($ninja_payment, $paymentable->amount);
 
             }
 
-            if ($record instanceof \QuickBooksOnline\API\Data\IPPSalesReceipt) {
+            if ($record instanceof IPPSalesReceipt) {
                 $quote->service()->markPaid()->save();
             }
 
@@ -230,14 +227,13 @@ class QbQuote implements SyncInterface
     /**
      * Deletes the quote from Ninja and sets the sync to null
      *
-     * @param string $id
-     * @return void
+     * @param  string  $id
      */
     public function delete($id): void
     {
         $qb_record = $this->find($id);
 
-        if ($this->service->syncable('quote', \App\Enum\SyncDirection::PULL) && $quote = $this->findQuote($id)) {
+        if ($this->service->syncable('quote', SyncDirection::PULL) && $quote = $this->findQuote($id)) {
             $quote->sync = null;
             $quote->saveQuietly();
             $this->quote_repository->delete($quote);

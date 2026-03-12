@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,10 +19,7 @@ class ActionPurchaseOrderRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-
     public function authorize(): bool
     {
         return auth()->user()->can('edit', $this->purchase_order);
@@ -42,7 +38,7 @@ class ActionPurchaseOrderRequest extends Request
 
         if ($this->action) {
             $input['action'] = $this->action;
-        } elseif (! array_key_exists('action', $input)) {
+        } elseif (!array_key_exists('action', $input)) {
             $this->error_msg = 'Action is a required field';
         }
 

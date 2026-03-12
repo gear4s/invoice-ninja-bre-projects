@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,72 +30,72 @@ class Decorator implements DecoratorInterface
 
     public function invoice(): InvoiceDecorator
     {
-        return new InvoiceDecorator();
+        return new InvoiceDecorator;
     }
 
     public function client(): ClientDecorator
     {
-        return new ClientDecorator();
+        return new ClientDecorator;
     }
 
     public function contact(): ContactDecorator
     {
-        return new ContactDecorator();
+        return new ContactDecorator;
     }
 
     public function vendor_contact(): VendorContactDecorator
     {
-        return new VendorContactDecorator();
+        return new VendorContactDecorator;
     }
 
     public function payment(): PaymentDecorator
     {
-        return new PaymentDecorator();
+        return new PaymentDecorator;
     }
 
     public function credit(): CreditDecorator
     {
-        return new CreditDecorator();
+        return new CreditDecorator;
     }
 
     public function vendor(): VendorDecorator
     {
-        return new VendorDecorator();
+        return new VendorDecorator;
     }
 
     public function expense(): ExpenseDecorator
     {
-        return new ExpenseDecorator();
+        return new ExpenseDecorator;
     }
 
     public function product(): ProductDecorator
     {
-        return new ProductDecorator();
+        return new ProductDecorator;
     }
 
     public function project(): ProjectDecorator
     {
-        return new ProjectDecorator();
+        return new ProjectDecorator;
     }
 
     public function task(): TaskDecorator
     {
-        return new TaskDecorator();
+        return new TaskDecorator;
     }
 
     public function quote(): QuoteDecorator
     {
-        return new QuoteDecorator();
+        return new QuoteDecorator;
     }
 
     public function recurring_invoice(): RecurringInvoiceDecorator
     {
-        return new RecurringInvoiceDecorator();
+        return new RecurringInvoiceDecorator;
     }
 
     public function purchase_order(): PurchaseOrderDecorator
     {
-        return new PurchaseOrderDecorator();
+        return new PurchaseOrderDecorator;
     }
 
     public function getKeyPart(int $index, string $key): ?string

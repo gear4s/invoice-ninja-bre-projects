@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -45,19 +44,19 @@ class CreateRecurringInvitations extends AbstractService
         try {
             $this->entity->client->contacts->each(function ($contact) {
                 $invitation = $this->invitation_class::query()->whereCompanyId($this->entity->company_id)
-                                            ->whereClientContactId($contact->id)
-                                            ->where($this->entity_id_name, $this->entity->id)
-                                            ->withTrashed()
-                                            ->first();
+                    ->whereClientContactId($contact->id)
+                    ->where($this->entity_id_name, $this->entity->id)
+                    ->withTrashed()
+                    ->first();
 
-                if (! $invitation && $contact->send_email) {
+                if (!$invitation && $contact->send_email) {
                     $ii = $this->invitation_factory::create($this->entity->company_id, $this->entity->user_id);
                     $ii->key = $this->createDbHash($this->entity->company->db);
                     $ii->{$this->entity_id_name} = $this->entity->id;
                     $ii->client_contact_id = $contact->id;
                     $ii->can_sign = $contact->can_sign;
                     $ii->save();
-                } elseif ($invitation && ! $contact->send_email) {
+                } elseif ($invitation && !$contact->send_email) {
                     $invitation->delete();
                 }
             });
@@ -67,16 +66,15 @@ class CreateRecurringInvitations extends AbstractService
 
         if ($this->entity->invitations()->count() == 0) {
             $invitation = $this->invitation_class::query()->where('company_id', $this->entity->company_id)
-                                    ->where($this->entity_id_name, $this->entity->id)
-                                    ->withTrashed()
-                                    ->first();
+                ->where($this->entity_id_name, $this->entity->id)
+                ->withTrashed()
+                ->first();
 
             if ($invitation) {
                 $invitation->restore();
                 $invitation->save();
             }
         }
-
 
         return $this->entity;
     }

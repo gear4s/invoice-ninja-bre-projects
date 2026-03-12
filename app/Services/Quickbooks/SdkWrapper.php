@@ -6,23 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks;
 
 use App\DataMapper\QuickbooksSettings;
-use Carbon\Carbon;
 use App\Models\Company;
-use QuickBooksOnline\API\DataService\DataService;
+use Carbon\Carbon;
 use QuickBooksOnline\API\Core\OAuth\OAuth2\OAuth2AccessToken;
+use QuickBooksOnline\API\DataService\DataService;
 
 class SdkWrapper
 {
     public const MAXRESULTS = 10000;
 
-    private $entities = ['Customer','Invoice', 'Item', 'SalesReceipt', 'Vendor', 'Purchase', 'Payment'];
+    private $entities = ['Customer', 'Invoice', 'Item', 'SalesReceipt', 'Vendor', 'Purchase', 'Payment'];
 
     private ?OAuth2AccessToken $token = null;
 
@@ -35,10 +34,10 @@ class SdkWrapper
     {
         // Only set access token if quickbooks settings exist and have valid token data
         // During reconnection flow, we may not have valid tokens yet
-        if ($this->company->quickbooks && 
-            $this->company->quickbooks->accessTokenKey && 
+        if ($this->company->quickbooks &&
+            $this->company->quickbooks->accessTokenKey &&
             !$this->company->quickbooks->requires_reconnect) {
-        $this->setNinjaAccessToken($this->company->quickbooks);
+            $this->setNinjaAccessToken($this->company->quickbooks);
         }
 
         return $this;
@@ -74,6 +73,7 @@ class SdkWrapper
     {
         return $this->sdk->getCompanyPreferences();
     }
+
     /*
     accessTokenKey
     tokenType
@@ -98,9 +98,6 @@ class SdkWrapper
 
     /**
      * Set Stored NinjaAccessToken
-     *
-     * @param  QuickbooksSettings $token_object
-     * @return self
      */
     public function setNinjaAccessToken(QuickbooksSettings $token_object): self
     {
@@ -113,8 +110,8 @@ class SdkWrapper
             8726400
         );
 
-        $token->setAccessTokenExpiresAt($token_object->accessTokenExpiresAt); //@phpstan-ignore-line
-        $token->setRefreshTokenExpiresAt($token_object->refreshTokenExpiresAt); //@phpstan-ignore-line
+        $token->setAccessTokenExpiresAt($token_object->accessTokenExpiresAt); // @phpstan-ignore-line
+        $token->setRefreshTokenExpiresAt($token_object->refreshTokenExpiresAt); // @phpstan-ignore-line
         $token->setAccessTokenValidationPeriodInSeconds(3600);
         $token->setRefreshTokenValidationPeriodInSeconds(8726400);
 
@@ -126,7 +123,6 @@ class SdkWrapper
 
         return $this;
     }
-
 
     public function refreshToken(string $refresh_token): self
     {
@@ -140,9 +136,6 @@ class SdkWrapper
 
     /**
      * SetsAccessToken
-     *
-     * @param  OAuth2AccessToken $token
-     * @return self
      */
     public function setAccessToken(OAuth2AccessToken $token): self
     {
@@ -158,11 +151,11 @@ class SdkWrapper
 
     public function saveOAuthToken(OAuth2AccessToken $token): void
     {
-        $obj = $this->company->quickbooks ?? new QuickbooksSettings();
+        $obj = $this->company->quickbooks ?? new QuickbooksSettings;
         $obj->accessTokenKey = $token->getAccessToken();
         $obj->refresh_token = $token->getRefreshToken();
-        $obj->accessTokenExpiresAt = Carbon::createFromFormat('Y/m/d H:i:s', $token->getAccessTokenExpiresAt())->timestamp; //@phpstan-ignore-line - QB phpdoc wrong types!!
-        $obj->refreshTokenExpiresAt = Carbon::createFromFormat('Y/m/d H:i:s', $token->getRefreshTokenExpiresAt())->timestamp; //@phpstan-ignore-line - QB phpdoc wrong types!!
+        $obj->accessTokenExpiresAt = Carbon::createFromFormat('Y/m/d H:i:s', $token->getAccessTokenExpiresAt())->timestamp; // @phpstan-ignore-line - QB phpdoc wrong types!!
+        $obj->refreshTokenExpiresAt = Carbon::createFromFormat('Y/m/d H:i:s', $token->getRefreshTokenExpiresAt())->timestamp; // @phpstan-ignore-line - QB phpdoc wrong types!!
         $obj->requires_reconnect = false;
 
         $obj->realmID = $token->getRealmID();
@@ -172,13 +165,13 @@ class SdkWrapper
         $this->company->save();
     }
 
-
-    /// Data Access ///
+    // / Data Access ///
 
     public function totalRecords(string $entity): int
     {
         $whereClause = $this->buildEntityWhereClause($entity);
-        $query = "select count(*) from $entity" . ($whereClause ? " WHERE $whereClause" : "");
+        $query = "select count(*) from $entity" . ($whereClause ? " WHERE $whereClause" : '');
+
         return (int) $this->sdk->Query($query);
     }
 
@@ -206,7 +199,7 @@ class SdkWrapper
 
             // Build query with filters for specific entities
             $whereClause = $this->buildEntityWhereClause($entity);
-            $baseQuery = "select * from $entity" . ($whereClause ? " WHERE $whereClause" : "");
+            $baseQuery = "select * from $entity" . ($whereClause ? " WHERE $whereClause" : '');
 
             $total = $this->totalRecords($entity);
             $total = min($max, $total);
@@ -225,7 +218,7 @@ class SdkWrapper
 
             } while ($start < $total);
             if (empty($records)) {
-                throw new \Exception("No records retrieved!");
+                throw new \Exception('No records retrieved!');
             }
 
         } catch (\Throwable $th) {
@@ -241,7 +234,7 @@ class SdkWrapper
      * For Items, we only include types that can be used as line items on invoices.
      * QuickBooks doesn't support != operator, so we use IN with valid types.
      *
-     * @param string $entity The QuickBooks entity name
+     * @param  string  $entity  The QuickBooks entity name
      * @return string The WHERE clause (without the WHERE keyword) or empty string
      */
     private function buildEntityWhereClause(string $entity): string

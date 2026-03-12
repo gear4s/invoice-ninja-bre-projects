@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -47,7 +46,6 @@ class S3Cleanup extends Command
 
     /**
      * Execute the console command.
-     *
      */
     public function handle()
     {
@@ -66,7 +64,7 @@ class S3Cleanup extends Command
         $this->LogMessage('Disk Cleanup');
 
         foreach ($directories as $dir) {
-            if (! in_array($dir, $merged)) {
+            if (!in_array($dir, $merged)) {
                 $this->logMessage("Deleting $dir");
 
                 /* Ensure we are not deleting the root folder */

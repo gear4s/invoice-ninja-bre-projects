@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,18 +25,12 @@ class AccountTransformer extends EntityTransformer
 {
     use MakesHash;
 
-    /**
-     * @var array
-     */
     protected array $defaultIncludes = [
-        //'default_company',
-        //'user',
-        //'company_users'
+        // 'default_company',
+        // 'user',
+        // 'company_users'
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'default_company',
         'company_users',
@@ -45,9 +38,6 @@ class AccountTransformer extends EntityTransformer
     ];
 
     /**
-     * @param Account $account
-     *
-     *
      * @return array
      */
     public function transform(Account $account)
@@ -79,7 +69,7 @@ class AccountTransformer extends EntityTransformer
             'report_errors' => (bool) $account->report_errors,
             'debug_enabled' => (bool) config('ninja.debug_enabled'),
             'is_docker' => (bool) config('ninja.is_docker'),
-            'is_scheduler_running' => Ninja::isHosted() ? (bool) true : (bool) $account->is_scheduler_running, //force true for hosted 03/01/2022
+            'is_scheduler_running' => Ninja::isHosted() ? (bool) true : (bool) $account->is_scheduler_running, // force true for hosted 03/01/2022
             'default_company_id' => (string) $this->encodePrimaryKey($account->default_company_id),
             'disable_auto_update' => (bool) config('ninja.disable_auto_update'),
             'emails_sent' => (int) $account->emailsSent(),
@@ -94,7 +84,7 @@ class AccountTransformer extends EntityTransformer
             'has_iap_plan' => (bool) $account->inapp_transaction_id,
             'tax_api_enabled' => (bool) config('services.tax.zip_tax.key') ? true : false,
             'nordigen_enabled' => (bool) (config('ninja.nordigen.secret_id') && config('ninja.nordigen.secret_key')) ? true : false,
-            'upload_extensions' => (string) "png,ai,jpeg,tiff,pdf,gif,psd,txt,doc,xls,ppt,xlsx,docx,pptx,webp,xml,zip,csv,ods,odt,odp," . config('ninja.upload_extensions'),
+            'upload_extensions' => (string) 'png,ai,jpeg,tiff,pdf,gif,psd,txt,doc,xls,ppt,xlsx,docx,pptx,webp,xml,zip,csv,ods,odt,odp,' . config('ninja.upload_extensions'),
             'e_invoice_quota' => (int) $account->e_invoice_quota,
             'can_trial' => (bool) $account->canTrial(),
             'docuninja_num_users' => (int) $account->docuninja_num_users,

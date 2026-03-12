@@ -13,7 +13,7 @@ class VerifactuDocumentValidatorTest extends TestCase
     public function test_xsd_errors_are_formatted_readably()
     {
         // Create a mock LibXMLError object that simulates the error from the log
-        $mockError = new \LibXMLError();
+        $mockError = new \LibXMLError;
         $mockError->line = 12;
         $mockError->message = 'Element \'{https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd}Desglose\': Missing child element(s). Expected is ( {https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd}DetalleDesglose ).';
 
@@ -79,7 +79,7 @@ class VerifactuDocumentValidatorTest extends TestCase
         $errorsProperty = $reflection->getProperty('errors');
         $errorsProperty->setValue($validator, [
             'xsd' => ['Error 1', 'Error 2'],
-            'structure' => ['Error 3']
+            'structure' => ['Error 3'],
         ]);
 
         $summary = $validator->getErrorSummary();
@@ -100,7 +100,7 @@ class VerifactuDocumentValidatorTest extends TestCase
         $errorsProperty = $reflection->getProperty('errors');
         $errorsProperty->setValue($validator, [
             'xsd' => ['Error 1', 'Error 2'],
-            'business' => ['Error 3']
+            'business' => ['Error 3'],
         ]);
 
         $formatted = $validator->getFormattedErrors();

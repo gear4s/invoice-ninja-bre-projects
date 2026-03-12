@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,7 +29,6 @@ class ContactDecorator implements DecoratorInterface
             $contact = $entity->vendor->primary_contact->first() ?? $entity->vendor->contacts()->whereNotNull('email')->orderBy('is_primary', 'desc')->first();
         }
 
-
         if ($contact && method_exists($this, $key)) {
             return $this->{$key}($contact);
         } elseif ($contact && ($contact->{$key} ?? false)) {
@@ -40,5 +38,4 @@ class ContactDecorator implements DecoratorInterface
         return '';
 
     }
-
 }

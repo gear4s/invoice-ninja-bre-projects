@@ -6,38 +6,36 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu;
 
-use Mail;
+use App\DataMapper\Analytics\VerifactuLog;
+use App\Jobs\Util\SystemLogger;
+use App\Libraries\MultiDB;
+use App\Models\Activity;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Models\Activity;
 use App\Models\SystemLog;
-use App\Libraries\MultiDB;
-use Illuminate\Bus\Queueable;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Queue\SerializesModels;
-use Turbo124\Beacon\Facades\LightLogs;
 use App\Repositories\ActivityRepository;
-use Illuminate\Queue\InteractsWithQueue;
-use App\DataMapper\Analytics\VerifactuLog;
+use App\Services\EDocument\Standards\Verifactu;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\EDocument\Standards\Verifactu;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Turbo124\Beacon\Facades\LightLogs;
 
 class SendToAeat implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use MakesHash;
 
     public $tries = 5;
 
@@ -53,9 +51,7 @@ class SendToAeat implements ShouldQueue
     /**
      * __construct
      *
-     * @param  int $invoice_id
-     * @param  Company $company
-     * @param  string $action create, modify, cancel
+     * @param  string  $action  create, modify, cancel
      * @return void
      */
     public function __construct(private int $invoice_id, private Company $company, private string $action) {}
@@ -90,10 +86,9 @@ class SendToAeat implements ShouldQueue
      * Two code paths here:
      * 1. F3 - we are replacing the invoice with a new one: ie. invoice->amount >=0
      * 2. R2 - we are modifying the invoice with a negative amount: ie. invoice->amount < 0
-     * @param  Invoice $invoice
+     *
      * @return void
      */
-
     public function createInvoice(Invoice $invoice)
     {
         sleep(rand(1, 2));
@@ -125,24 +120,23 @@ class SendToAeat implements ShouldQueue
             $invoice->saveQuietly();
         }
 
-
         $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_INVOICE_SENT : Activity::VERIFACTU_INVOICE_SENT_FAILURE, $message);
         $this->systemLog($invoice, $response, $response['success'] ? SystemLog::EVENT_VERIFACTU_SUCCESS : SystemLog::EVENT_VERIFACTU_FAILURE, SystemLog::TYPE_VERIFACTU_INVOICE);
 
         /** Check if we have emailed the invoice to the end client - if not - do it now! */
         $invoice->invitations()
-                ->where('email_error', 'primed') // This is a special flag for AEAT submission
-                ->whereHas('contact', function ($query) {
-                    $query->where(function ($sq) {
-                        $sq->whereNotNull('email')
+            ->where('email_error', 'primed') // This is a special flag for AEAT submission
+            ->whereHas('contact', function ($query) {
+                $query->where(function ($sq) {
+                    $sq->whereNotNull('email')
                         ->orWhere('email', '!=', '');
-                    })->where('is_locked', false)
+                })->where('is_locked', false)
                     ->withoutTrashed();
-                })->each(function ($invitation) {
-                    $invitation->invoice->service()->sendEmail($invitation->contact);
-                    $invitation->email_error = '';
-                    $invitation->saveQuietly();
-                });
+            })->each(function ($invitation) {
+                $invitation->invoice->service()->sendEmail($invitation->contact);
+                $invitation->email_error = '';
+                $invitation->saveQuietly();
+            });
 
     }
 
@@ -164,9 +158,9 @@ class SendToAeat implements ShouldQueue
         $soapXml = $cancellation->toSoapEnvelope();
 
         $response = $verifactu->setInvoice($document)
-                        ->setHuella($huella)
-                        ->setPreviousHash($last_hash->hash)
-                        ->send($soapXml);
+            ->setHuella($huella)
+            ->setPreviousHash($last_hash->hash)
+            ->send($soapXml);
 
         nlog($response);
 
@@ -175,12 +169,12 @@ class SendToAeat implements ShouldQueue
         $message = '';
 
         if ($response['success']) {
-            //if successful, we need to pop this invoice from the child array of the parent invoice!
-            nlog("searching for parent invoice " . $invoice->backup->parent_invoice_id);
+            // if successful, we need to pop this invoice from the child array of the parent invoice!
+            nlog('searching for parent invoice ' . $invoice->backup->parent_invoice_id);
             $parent = Invoice::withTrashed()->find($this->decodePrimaryKey($invoice->backup->parent_invoice_id));
 
             if ($parent) {
-                $parent->backup->child_invoice_ids = $parent->backup->child_invoice_ids->reject(fn($id) => $id === $invoice->hashed_id);
+                $parent->backup->child_invoice_ids = $parent->backup->child_invoice_ids->reject(fn ($id) => $id === $invoice->hashed_id);
                 $parent->saveQuietly();
             }
 
@@ -193,7 +187,7 @@ class SendToAeat implements ShouldQueue
             $message = $response['errors'][0]['message'];
         }
 
-        //@todo - verifactu logging
+        // @todo - verifactu logging
         $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_CANCELLATION_SENT : Activity::VERIFACTU_CANCELLATION_SENT_FAILURE, $message);
         $this->systemLog($invoice, $response, $response['success'] ? SystemLog::EVENT_VERIFACTU_SUCCESS : SystemLog::EVENT_VERIFACTU_FAILURE, SystemLog::TYPE_VERIFACTU_CANCELLATION);
     }
@@ -212,7 +206,7 @@ class SendToAeat implements ShouldQueue
 
     private function writeActivity(Invoice $invoice, int $activity_id, string $notes = ''): void
     {
-        $activity = new Activity();
+        $activity = new Activity;
         $activity->user_id = $invoice->user_id;
         $activity->client_id = $invoice->client_id;
         $activity->company_id = $invoice->company_id;
@@ -242,9 +236,7 @@ class SendToAeat implements ShouldQueue
     /**
      * cancellationHash
      *
-     * @param  mixed $document
-     * @param  string $huella
-     * @return string
+     * @param  mixed  $document
      */
     private function cancellationHash($document, string $huella): string
     {

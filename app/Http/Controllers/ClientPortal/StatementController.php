@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,10 @@ namespace App\Http\Controllers\ClientPortal;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClientPortal\Statements\ShowStatementRequest;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -22,8 +24,6 @@ class StatementController extends Controller
 {
     /**
      * Show the statement in the client portal.
-     *
-     * @return \Illuminate\View\View
      */
     public function index(): View
     {
@@ -33,8 +33,7 @@ class StatementController extends Controller
     /**
      * Show the raw stream of the PDF.
      *
-     * @param ShowStatementRequest $request
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|JsonResponse|\Illuminate\Http\Response|StreamedResponse
+     * @return Application|ResponseFactory|JsonResponse|Response|StreamedResponse
      */
     public function raw(ShowStatementRequest $request)
     {

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,8 @@ use Tests\TestCase;
 
 class ClientMergeTest extends TestCase
 {
-    use DatabaseTransactions;
     use AppSetup;
+    use DatabaseTransactions;
 
     private $user;
 
@@ -46,7 +45,7 @@ class ClientMergeTest extends TestCase
         $this->faker = Factory::create();
     }
 
-    public function testSearchingForContacts()
+    public function test_searching_for_contacts()
     {
         $account = Account::factory()->create();
 
@@ -94,7 +93,7 @@ class ClientMergeTest extends TestCase
         }));
     }
 
-    public function testMergeClients()
+    public function test_merge_clients()
     {
         $account = Account::factory()->create();
 
@@ -131,7 +130,7 @@ class ClientMergeTest extends TestCase
             'company_id' => $company->id,
             'email' => 'search@gmail.com',
         ]);
-        //4contacts
+        // 4contacts
 
         $mergable_client = Client::factory()->create([
             'user_id' => $user->id,
@@ -157,7 +156,7 @@ class ClientMergeTest extends TestCase
             'company_id' => $company->id,
             'email' => 'search@gmail.com',
         ]);
-        //4 contacts
+        // 4 contacts
 
         $this->assertEquals(4, $client->contacts->count());
         $this->assertEquals(4, $mergable_client->contacts->count());

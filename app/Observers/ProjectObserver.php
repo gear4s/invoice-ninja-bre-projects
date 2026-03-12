@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,14 +22,13 @@ class ProjectObserver
     /**
      * Handle the product "created" event.
      *
-     * @param Project $project
      * @return void
      */
     public function created(Project $project)
     {
         $subscriptions = Webhook::where('company_id', $project->company_id)
-                            ->where('event_id', Webhook::EVENT_PROJECT_CREATE)
-                            ->exists();
+            ->where('event_id', Webhook::EVENT_PROJECT_CREATE)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_PROJECT_CREATE, $project, $project->company, 'client')->delay(0);
@@ -40,7 +38,6 @@ class ProjectObserver
     /**
      * Handle the product "updated" event.
      *
-     * @param Project $project
      * @return void
      */
     public function updated(Project $project)
@@ -55,10 +52,9 @@ class ProjectObserver
             $event = Webhook::EVENT_PROJECT_DELETE;
         }
 
-
         $subscriptions = Webhook::where('company_id', $project->company_id)
-                                    ->where('event_id', $event)
-                                    ->exists();
+            ->where('event_id', $event)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $project, $project->company, 'client')->delay(0);
@@ -68,7 +64,6 @@ class ProjectObserver
     /**
      * Handle the product "deleted" event.
      *
-     * @param Project $project
      * @return void
      */
     public function deleted(Project $project)
@@ -78,8 +73,8 @@ class ProjectObserver
         }
 
         $subscriptions = Webhook::where('company_id', $project->company_id)
-                            ->where('event_id', Webhook::EVENT_ARCHIVE_PROJECT)
-                            ->exists();
+            ->where('event_id', Webhook::EVENT_ARCHIVE_PROJECT)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_ARCHIVE_PROJECT, $project, $project->company, 'client')->delay(0);
@@ -89,7 +84,6 @@ class ProjectObserver
     /**
      * Handle the product "restored" event.
      *
-     * @param Project $project
      * @return void
      */
     public function restored(Project $project)
@@ -100,7 +94,6 @@ class ProjectObserver
     /**
      * Handle the product "force deleted" event.
      *
-     * @param Project $project
      * @return void
      */
     public function forceDeleted(Project $project)
@@ -110,7 +103,7 @@ class ProjectObserver
     /**
      * Handle the product "archived" event.
      *
-     * @param Project $project
+     * @param  Project  $project
      * @return void
      */
 }

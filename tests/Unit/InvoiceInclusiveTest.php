@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,13 +18,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Helpers\Invoice\InvoiceSumInclusive
  */
 class InvoiceInclusiveTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     public $invoice;
 
     public $invoice_calc;
@@ -64,7 +63,7 @@ class InvoiceInclusiveTest extends TestCase
         return $line_items;
     }
 
-    public function testInvoiceTotals()
+    public function test_invoice_totals()
     {
 
         $this->invoice_calc = new InvoiceSumInclusive($this->invoice);
@@ -74,10 +73,9 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals(round($this->invoice_calc->getTotal(), 0), 20);
     }
 
-    public function testInvoiceTotalsWithDiscount()
+    public function test_invoice_totals_with_discount()
     {
         $this->invoice->discount = 5;
-
 
         $this->invoice_calc = new InvoiceSumInclusive($this->invoice);
         $this->invoice_calc->build();
@@ -87,11 +85,10 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getBalance(), 15);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurcharge()
+    public function test_invoice_totals_with_discount_with_surcharge()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
-
 
         $this->invoice_calc = new InvoiceSumInclusive($this->invoice);
         $this->invoice_calc->build();
@@ -101,7 +98,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getBalance(), 20);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurchargeWithInclusiveTax()
+    public function test_invoice_totals_with_discount_with_surcharge_with_inclusive_tax()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -119,7 +116,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($calc->getBalance(), 20);
     }
 
-    public function testInvoiceTotalsWithPercentDiscountWithSurchargeWithInclusiveTax()
+    public function test_invoice_totals_with_percent_discount_with_surcharge_with_inclusive_tax()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -135,7 +132,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getTotal(), 24);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurchargeWithExclusiveTax()
+    public function test_invoice_totals_with_discount_with_surcharge_with_exclusive_tax()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -150,10 +147,10 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
         $this->assertEquals($this->invoice_calc->getTotal(), 20);
         $this->assertEquals($this->invoice_calc->getTotal(), 20);
-        //$this->assertEquals($this->invoice_calc->getTotalTaxes(), 1.5);
+        // $this->assertEquals($this->invoice_calc->getTotalTaxes(), 1.5);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurchargeWithDoubleExclusiveTax()
+    public function test_invoice_totals_with_discount_with_surcharge_with_double_exclusive_tax()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -164,7 +161,6 @@ class InvoiceInclusiveTest extends TestCase
         $this->invoice->uses_inclusive_taxes = true;
         $this->invoice->is_amount_discount = true;
 
-
         $this->invoice_calc = new InvoiceSumInclusive($this->invoice);
         $this->invoice_calc->build();
 
@@ -173,7 +169,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getTotalTaxes(), 2.72);
     }
 
-    public function testLineItemTaxRatesInclusiveTaxes()
+    public function test_line_item_tax_rates_inclusive_taxes()
     {
         $line_items = [];
 
@@ -216,7 +212,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getBalance(), 20);
     }
 
-    public function testLineItemTaxRatesInclusiveTaxesWithInvoiceTaxes()
+    public function test_line_item_tax_rates_inclusive_taxes_with_invoice_taxes()
     {
         $line_items = [];
 
@@ -258,7 +254,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getBalance(), 20);
     }
 
-    public function testLineItemTaxRatesInclusiveTaxesWithInvoiceTaxesAndDiscounts()
+    public function test_line_item_tax_rates_inclusive_taxes_with_invoice_taxes_and_discounts()
     {
         $line_items = [];
 
@@ -303,13 +299,12 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals(0.95, $this->invoice_calc->getTotalDiscount());
         $this->assertEquals(4.92, $this->invoice_calc->getTotalTaxes());
 
-
         $this->assertEquals(count($this->invoice_calc->getTaxMap()), 1);
         $this->assertEquals($this->invoice_calc->getTotal(), 18.05);
         $this->assertEquals($this->invoice_calc->getBalance(), 18.05);
     }
 
-    public function testLineItemTaxRatesInclusiveTaxesWithInvoiceTaxesAndAmountDiscounts()
+    public function test_line_item_tax_rates_inclusive_taxes_with_invoice_taxes_and_amount_discounts()
     {
         $line_items = [];
 
@@ -357,7 +352,7 @@ class InvoiceInclusiveTest extends TestCase
         $this->assertEquals($this->invoice_calc->getBalance(), 5);
     }
 
-    public function testLineItemTaxRatesInclusiveTaxesWithInvoiceTaxesAndAmountDiscountsWithLargeCosts()
+    public function test_line_item_tax_rates_inclusive_taxes_with_invoice_taxes_and_amount_discounts_with_large_costs()
     {
         $line_items = [];
 

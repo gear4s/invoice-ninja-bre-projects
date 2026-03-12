@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,7 @@ class ProductFactory
 {
     public static function create(int $company_id, int $user_id): Product
     {
-        $product = new Product();
+        $product = new Product;
         $product->company_id = $company_id;
         $product->user_id = $user_id;
 
@@ -37,7 +36,6 @@ class ProductFactory
         $product->custom_value4 = '';
         $product->is_deleted = false;
         $product->tax_id = 1;
-
 
         return $product;
     }

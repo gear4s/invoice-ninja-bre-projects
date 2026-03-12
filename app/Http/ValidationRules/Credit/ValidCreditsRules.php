@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,8 @@ class ValidCreditsRules implements Rule
     use MakesHash;
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     private $error_msg;
@@ -44,7 +43,7 @@ class ValidCreditsRules implements Rule
 
     private function checkCreditsAreHomogenous()
     {
-        if (! array_key_exists('client_id', $this->input)) {
+        if (!array_key_exists('client_id', $this->input)) {
             $this->error_msg = ctrans('texts.client_id_required');
 
             return false;
@@ -56,7 +55,7 @@ class ValidCreditsRules implements Rule
         $total_credit_amount = array_sum(array_map('floatval', array_column($this->input['credits'], 'amount')));
 
         if ($total_credit_amount <= 0) {
-            $this->error_msg = "Total of credits must be more than zero.";
+            $this->error_msg = 'Total of credits must be more than zero.';
 
             return false;
         }
@@ -68,13 +67,15 @@ class ValidCreditsRules implements Rule
 
             $cred = $cred_collection->firstWhere('id', $credit['credit_id']);
 
-            if (! $cred) {
+            if (!$cred) {
                 $this->error_msg = ctrans('texts.credit_not_found');
+
                 return false;
             }
 
             if ($cred->client_id != $this->input['client_id']) {
                 $this->error_msg = ctrans('texts.invoices_dont_match_client');
+
                 return false;
             }
 
@@ -85,11 +86,12 @@ class ValidCreditsRules implements Rule
 
             if ($cred->balance < $credit['amount']) {
                 $this->error_msg = ctrans('texts.insufficient_credit_balance');
+
                 return false;
             }
         }
 
-        if (! (array_unique($unique_array) == $unique_array)) {
+        if (!(array_unique($unique_array) == $unique_array)) {
             $this->error_msg = ctrans('texts.duplicate_credits_submitted');
 
             return false;

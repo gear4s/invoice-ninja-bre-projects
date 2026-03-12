@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,13 +19,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ExpenseCategoryController
  */
 class ExpenseCategoryApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -39,7 +37,7 @@ class ExpenseCategoryApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testExpenseCategoryPost()
+    public function test_expense_category_post()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -53,7 +51,7 @@ class ExpenseCategoryApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testExpenseCategoryPut()
+    public function test_expense_category_put()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -62,34 +60,34 @@ class ExpenseCategoryApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/expense_categories/'.$this->encodePrimaryKey($this->expense_category->id), $data);
+        ])->put('/api/v1/expense_categories/' . $this->encodePrimaryKey($this->expense_category->id), $data);
 
         $response->assertStatus(200);
     }
 
-    public function testExpenseCategoryGet()
+    public function test_expense_category_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/expense_categories/'.$this->encodePrimaryKey($this->expense_category->id));
+        ])->get('/api/v1/expense_categories/' . $this->encodePrimaryKey($this->expense_category->id));
 
         $response->assertStatus(200);
     }
 
-    public function testExpenseCategoryNotArchived()
+    public function test_expense_category_not_archived()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/expense_categories/'.$this->encodePrimaryKey($this->expense_category->id));
+        ])->get('/api/v1/expense_categories/' . $this->encodePrimaryKey($this->expense_category->id));
 
         $arr = $response->json();
 
         $this->assertEquals(0, $arr['data']['archived_at']);
     }
 
-    public function testExpenseCategoryArchived()
+    public function test_expense_category_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->expense_category->id)],
@@ -105,7 +103,7 @@ class ExpenseCategoryApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testExpenseCategoryRestored()
+    public function test_expense_category_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->expense_category->id)],
@@ -121,7 +119,7 @@ class ExpenseCategoryApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testExpenseCategoryDeleted()
+    public function test_expense_category_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->expense_category->id)],

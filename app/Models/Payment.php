@@ -6,23 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use App\DataMapper\PaymentSync;
+use App\Events\Payment\PaymentWasRefunded;
+use App\Events\Payment\PaymentWasVoided;
+use App\Services\Ledger\LedgerService;
+use App\Services\Payment\PaymentService;
 use App\Utils\Ninja;
 use App\Utils\Number;
-use App\DataMapper\PaymentSync;
-use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Inviteable;
-use App\Services\Ledger\LedgerService;
-use App\Events\Payment\PaymentWasVoided;
-use App\Services\Payment\PaymentService;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Payment\Refundable;
-use App\Events\Payment\PaymentWasRefunded;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 /**
  * App\Models\Payment
@@ -57,7 +61,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float $exchange_rate
  * @property int $currency_id
  * @property int|null $exchange_currency_id
- * @property \App\Models\Paymentable $paymentable
+ * @property Paymentable $paymentable
  * @property object|null $meta
  * @property array|null $refund_meta
  * @property string|null $custom_value1
@@ -67,19 +71,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $transaction_id
  * @property string|null $idempotency_key
  * @property object|null $sync
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Client $client
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\CompanyGateway|null $company_gateway
- * @property-read \App\Models\ClientContact|null $contact
- * @property-read \App\Models\Currency|null $currency
- * @property-read \App\Models\Currency|null $exchange_currency
- * @property-read \App\Models\GatewayType|null $gateway_type
+ * @property-read User|null $assigned_user
+ * @property-read Client $client
+ * @property-read Company $company
+ * @property-read CompanyGateway|null $company_gateway
+ * @property-read ClientContact|null $contact
+ * @property-read Currency|null $currency
+ * @property-read Currency|null $exchange_currency
+ * @property-read GatewayType|null $gateway_type
  * @property-read mixed $hashed_id
- * @property-read \App\Models\Project|null $project
- * @property-read \App\Models\PaymentType|null $type
- * @property-read \App\Models\User|null $user
- * @property-read \App\Models\Vendor|null $vendor
+ * @property-read Project|null $project
+ * @property-read PaymentType|null $type
+ * @property-read User|null $user
+ * @property-read Vendor|null $vendor
+ *
  * @method static \Database\Factories\PaymentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Payment filter(\App\Filters\QueryFilters $filters)
  * @method static \Illuminate\Database\Eloquent\Builder|Payment newModelQuery()
@@ -88,21 +93,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|Payment query()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Payment withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Credit> $credits
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Payment>|\Illuminate\Support\Collection $paymentables
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CompanyLedger> $company_ledger
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Credit> $credits
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Document> $documents
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Invoice> $invoices
+ * @property \Illuminate\Database\Eloquent\Collection<int, Payment>|Collection $paymentables
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Activity> $activities
+ *
  * @mixin \Eloquent
  */
 class Payment extends BaseModel
 {
-    use MakesHash;
     use Filterable;
-    use SoftDeletes;
-    use Refundable;
     use Inviteable;
+    use MakesHash;
+    use Refundable;
+    use SoftDeletes;
 
     public const STATUS_PENDING = 1;
 
@@ -186,117 +193,108 @@ class Payment extends BaseModel
         return self::class;
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function company_gateway(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company_gateway(): BelongsTo
     {
         return $this->belongsTo(CompanyGateway::class)->withTrashed();
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientContact::class)->withTrashed();
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class)->where('company_id', $this->company_id)->take(50)->orderBy('id', 'desc');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
-     */
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    public function invoices(): MorphToMany
     {
         return $this->morphedByMany(Invoice::class, 'paymentable')->withTrashed()->withPivot('amount', 'refunded', 'deleted_at')->withTimestamps();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
-     */
-    public function credits(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    public function credits(): MorphToMany
     {
         return $this->morphedByMany(Credit::class, 'paymentable')->withTrashed()->withPivot('amount', 'refunded', 'deleted_at')->withTimestamps();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
-     */
-    public function company_ledger(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function company_ledger(): MorphMany
     {
         return $this->morphMany(CompanyLedger::class, 'company_ledgerable');
     }
 
-    public function type(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function type(): BelongsTo
     {
         return $this->belongsTo(PaymentType::class);
     }
 
-    public function currency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function transaction(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function transaction(): BelongsTo
     {
         return $this->belongsTo(BankTransaction::class)->withTrashed();
     }
 
-    public function exchange_currency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function exchange_currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class, 'exchange_currency_id', 'id');
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
     public function translatedType(): string
     {
-        if (! $this->type_id) {
+        if (!$this->type_id) {
             return '';
         }
 
-        $pt = new PaymentType();
+        $pt = new PaymentType;
 
         return $pt->name($this->type_id);
     }
 
-    public function gateway_type(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function gateway_type(): BelongsTo
     {
         return $this->belongsTo(GatewayType::class);
     }
 
-    public function paymentables(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function paymentables(): HasMany
     {
         return $this->hasMany(Paymentable::class);
     }
@@ -313,7 +311,7 @@ class Payment extends BaseModel
 
     public function clientPaymentDate()
     {
-        if (! $this->date) {
+        if (!$this->date) {
             return '';
         }
 
@@ -393,18 +391,12 @@ class Payment extends BaseModel
             'gateway_refund' => false,
             'email_receipt' => false,
         ];
-     *
-     * @param array $data
-     * @return self
      */
     public function refund(array $data): self
     {
         return $this->service()->refundPayment($data);
     }
 
-    /**
-     * @return float
-     */
     public function getCompletedAmount(): float
     {
         return $this->amount - $this->refunded;
@@ -412,13 +404,13 @@ class Payment extends BaseModel
 
     public function recordRefund($amount = null)
     {
-        //do i need $this->isRefunded() here?
+        // do i need $this->isRefunded() here?
         if ($this->isVoided()) {
             return false;
         }
 
-        //if no refund specified
-        if (! $amount) {
+        // if no refund specified
+        if (!$amount) {
             $amount = $this->amount;
         }
 

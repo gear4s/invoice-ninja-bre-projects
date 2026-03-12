@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,6 @@ class RecurringInvoiceArchivedActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -44,7 +41,7 @@ class RecurringInvoiceArchivedActivity implements ShouldQueue
 
         $event->recurring_invoice->service()->deletePdf();
 
-        $fields = new stdClass();
+        $fields = new stdClass;
         $user_id = $event->event_vars['user_id'] ?? $event->recurring_invoice->user_id;
 
         $fields->user_id = $user_id;

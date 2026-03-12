@@ -4,7 +4,8 @@ use App\Models\Currency;
 use App\Utils\Traits\AppSetup;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     use AppSetup;
 
     /**
@@ -19,7 +20,7 @@ return new class extends Migration {
         if ($currency) {
             $currency->update(['symbol' => '$']);
         }
-        
+
     }
 
     /**

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,8 +22,6 @@ class UpdateUserRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -42,7 +39,7 @@ class UpdateUserRequest extends Request
         $rules['email'] = ['email:rfc', 'bail', 'sometimes', new UniqueUserRule($this->user, $input['email'])];
 
         if (Ninja::isHosted() && $this->phone_has_changed && $this->phone && isset($this->phone)) {
-            $rules['phone'] = ['sometimes', 'bail', 'string', new HasValidPhoneNumber()];
+            $rules['phone'] = ['sometimes', 'bail', 'string', new HasValidPhoneNumber];
         }
 
         return $rules;

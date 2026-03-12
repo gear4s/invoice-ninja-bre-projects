@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Credit Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -62,12 +61,12 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
     public function handle()
     {
         if ($this->bank_integration->integration_type != BankIntegration::INTEGRATION_TYPE_YODLEE) {
-            throw new \Exception("Invalid BankIntegration Type");
+            throw new \Exception('Invalid BankIntegration Type');
         }
 
         set_time_limit(0);
 
-        //Loop through everything until we are up to date - improve handling of delayed accounts
+        // Loop through everything until we are up to date - improve handling of delayed accounts
         $this->from_date = $this->from_date ? Carbon::parse($this->from_date)->subWeeks(2)->format('Y-m-d') : '2021-01-01';
 
         nlog("Yodlee: Processing transactions for account: {$this->bank_integration->account->key}");
@@ -80,18 +79,18 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
 
                 $content = [
                     "Processing transactions for account: {$this->bank_integration->bank_account_id} failed",
-                    "Exception Details => ",
+                    'Exception Details => ',
                     $e->getMessage(),
                 ];
 
                 $this->bank_integration->company->notification(new GenericNinjaAdminNotification($content))->ninja();
+
                 return;
             }
         } while ($this->stop_loop);
 
         BankMatchingService::dispatch($this->company->id, $this->company->db);
     }
-
 
     private function processTransactions()
     {
@@ -101,6 +100,7 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
             $this->bank_integration->disabled_upstream = true;
             $this->bank_integration->save();
             $this->stop_loop = false;
+
             return;
         }
 
@@ -109,7 +109,7 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
 
             if ($account_summary) {
 
-                $at = new AccountTransformer();
+                $at = new AccountTransformer;
                 $account = $at->transform($account_summary);
 
                 if ($account[0]['current_balance']) {
@@ -132,29 +132,30 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
             'skip' => $this->skip,
         ];
 
-        //Get transaction count object
+        // Get transaction count object
         $transaction_count = $yodlee->getTransactionCount($data);
 
-        //Get int count
+        // Get int count
         $count = $transaction_count->transaction->TOTAL->count;
 
-        //get transactions array
+        // get transactions array
         $transactions = $yodlee->getTransactions($data);
 
-        //if no transactions, update the from_date and move on
+        // if no transactions, update the from_date and move on
         if (count($transactions) == 0) {
             $this->bank_integration->from_date = now()->subDays(2);
             $this->bank_integration->disabled_upstream = false;
             $this->bank_integration->save();
             $this->stop_loop = false;
+
             return;
         }
 
-        //Harvest the company
+        // Harvest the company
 
         MultiDB::setDb($this->company->db);
 
-        /*Get the user */
+        /* Get the user */
         $user_id = $this->company->owner()->id;
 
         /* Unguard the model to perform batch inserts */
@@ -163,28 +164,28 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
         $now = now();
 
         foreach ($transactions as $transaction) {
-            if (BankTransaction::query() //ensure we don't duplicate transactions with the same ID
-                            ->where('transaction_id', $transaction['transaction_id'])
-                            ->where('company_id', $this->company->id)
-                            ->where('bank_integration_id', $this->bank_integration->id)
-                            ->withTrashed()
-                            ->exists()) {
+            if (BankTransaction::query() // ensure we don't duplicate transactions with the same ID
+                ->where('transaction_id', $transaction['transaction_id'])
+                ->where('company_id', $this->company->id)
+                ->where('bank_integration_id', $this->bank_integration->id)
+                ->withTrashed()
+                ->exists()) {
                 continue;
-            } elseif (BankTransaction::query() //ensure we don't duplicate transactions that have the same amount, currency, account type, category type, date, and description
-                            ->where('company_id', $this->company->id)
-                            ->where('bank_integration_id', $this->bank_integration->id)
-                            ->where('amount', $transaction['amount'])
-                            ->where('currency_id', $transaction['currency_id'])
-                            ->where('account_type', $transaction['account_type'])
-                            ->where('category_type', $transaction['category_type'])
-                            ->where('date', $transaction['date'])
-                            ->where('description', $transaction['description'])
-                            ->withTrashed()
-                            ->exists()) {
+            } elseif (BankTransaction::query() // ensure we don't duplicate transactions that have the same amount, currency, account type, category type, date, and description
+                ->where('company_id', $this->company->id)
+                ->where('bank_integration_id', $this->bank_integration->id)
+                ->where('amount', $transaction['amount'])
+                ->where('currency_id', $transaction['currency_id'])
+                ->where('account_type', $transaction['account_type'])
+                ->where('category_type', $transaction['category_type'])
+                ->where('date', $transaction['date'])
+                ->where('description', $transaction['description'])
+                ->withTrashed()
+                ->exists()) {
                 continue;
             }
 
-            //this should be much faster to insert than using ::create()
+            // this should be much faster to insert than using ::create()
             $bt = \DB::table('bank_transactions')->insert(
                 array_merge($transaction, [
                     'company_id' => $this->company->id,
@@ -196,7 +197,6 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
             );
         }
 
-
         $this->skip = $this->skip + 500;
 
         if ($count < 500) {
@@ -205,7 +205,6 @@ class ProcessBankTransactionsYodlee implements ShouldQueue
             $this->bank_integration->save();
         }
     }
-
 
     public function middleware()
     {

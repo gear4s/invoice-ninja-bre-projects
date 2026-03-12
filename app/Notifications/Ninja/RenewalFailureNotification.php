@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,6 @@ class RenewalFailureNotification extends Notification
      *
      * @return void
      */
-
     public function __construct(protected ?string $notification_message) {}
 
     /**
@@ -40,7 +38,6 @@ class RenewalFailureNotification extends Notification
      * Get the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     *
      */
     public function toMail($notifiable) {}
 
@@ -62,10 +59,10 @@ class RenewalFailureNotification extends Notification
         $content = "Plan paid, account not updated\n";
         $content .= "Contact/Inapp Purchase: {$this->notification_message}";
 
-        return (new SlackMessage())
-                ->success()
-                ->from(ctrans('texts.notification_bot'))
-                ->image('https://app.invoiceninja.com/favicon.png')
-                ->content($content);
+        return (new SlackMessage)
+            ->success()
+            ->from(ctrans('texts.notification_bot'))
+            ->image('https://app.invoiceninja.com/favicon.png')
+            ->content($content);
     }
 }

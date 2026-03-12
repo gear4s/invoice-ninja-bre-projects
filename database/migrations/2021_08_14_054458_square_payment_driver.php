@@ -4,7 +4,8 @@ use App\Models\Gateway;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -14,13 +15,13 @@ return new class extends Migration {
     {
         Model::unguard();
 
-        $fields = new \stdClass;
+        $fields = new stdClass;
         $fields->accessToken = '';
         $fields->applicationId = '';
         $fields->locationId = '';
         $fields->testMode = false;
 
-        $square = new Gateway();
+        $square = new Gateway;
         $square->id = 57;
         $square->name = 'Square';
         $square->provider = 'Square';

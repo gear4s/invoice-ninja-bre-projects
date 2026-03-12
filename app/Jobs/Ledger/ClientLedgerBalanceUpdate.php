@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -40,9 +39,6 @@ class ClientLedgerBalanceUpdate implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     *
-     * @return void
      */
     public function handle(): void
     {
@@ -50,24 +46,24 @@ class ClientLedgerBalanceUpdate implements ShouldQueue
         MultiDB::setDb($this->company->db);
 
         CompanyLedger::query()
-                        ->whereNull('balance')
-                        ->where('client_id', $this->client->id)
-                        ->orderBy('id', 'ASC')
-                        ->get()
-                        ->each(function ($company_ledger) {
+            ->whereNull('balance')
+            ->where('client_id', $this->client->id)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->each(function ($company_ledger) {
 
-                            $parent_ledger = CompanyLedger::query()
-                                                    ->where('id', '<', $company_ledger->id)
-                                                    ->where('client_id', $company_ledger->client_id)
-                                                    ->where('company_id', $company_ledger->company_id)
-                                                    ->whereNotNull('balance')
-                                                    ->orderBy('id', 'DESC')
-                                                    ->first();
+                $parent_ledger = CompanyLedger::query()
+                    ->where('id', '<', $company_ledger->id)
+                    ->where('client_id', $company_ledger->client_id)
+                    ->where('company_id', $company_ledger->company_id)
+                    ->whereNotNull('balance')
+                    ->orderBy('id', 'DESC')
+                    ->first();
 
-                            $company_ledger->balance = ($parent_ledger ? $parent_ledger->balance : 0) + $company_ledger->adjustment;
-                            $company_ledger->save();
+                $company_ledger->balance = ($parent_ledger ? $parent_ledger->balance : 0) + $company_ledger->adjustment;
+                $company_ledger->save();
 
-                        });
+            });
 
     }
 

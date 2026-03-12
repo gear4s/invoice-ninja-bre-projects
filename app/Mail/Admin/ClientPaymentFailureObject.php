@@ -6,20 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Mail\Admin;
 
-use stdClass;
-use App\Utils\Ninja;
+use App\DataMapper\EmailTemplateDefaults;
 use App\Models\Invoice;
 use App\Utils\HtmlEngine;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\App;
-use App\DataMapper\EmailTemplateDefaults;
-use App\Utils\Number;
+use stdClass;
 
 class ClientPaymentFailureObject
 {
@@ -38,10 +37,8 @@ class ClientPaymentFailureObject
     /**
      * Create a new job instance.
      *
-     * @param $client
-     * @param $message
-     * @param $company
-     * @param $amount
+     * @param  $message
+     * @param  $amount
      */
     public function __construct($client, $error, $company, $payment_hash)
     {
@@ -58,7 +55,7 @@ class ClientPaymentFailureObject
 
     public function build()
     {
-        if (! $this->payment_hash) {
+        if (!$this->payment_hash) {
             return;
         }
 
@@ -71,7 +68,7 @@ class ClientPaymentFailureObject
 
         $data = $this->getData();
 
-        $mail_obj = new stdClass();
+        $mail_obj = new stdClass;
         $mail_obj->amount = $this->getAmount();
         $mail_obj->subject = $data['subject'];
         $mail_obj->data = $this->getData();
@@ -116,7 +113,7 @@ class ClientPaymentFailureObject
     {
         $invitation = $this->invoices->first()->invitations->first();
 
-        if (! $invitation) {
+        if (!$invitation) {
             throw new \Exception('Unable to find invitation for reference');
         }
 

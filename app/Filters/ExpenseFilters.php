@@ -6,13 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\Client;
+use App\Models\ExpenseCategory;
+use App\Models\Invoice;
+use App\Models\Project;
+use App\Models\Vendor;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * ExpenseFilters.
@@ -22,8 +27,6 @@ class ExpenseFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -32,7 +35,7 @@ class ExpenseFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('number', 'like', '%' . $filter . '%')
                 ->orWhere('amount', 'like', '%' . $filter . '%')
                 ->orWhere('public_notes', 'like', '%' . $filter . '%')
@@ -62,8 +65,6 @@ class ExpenseFilters extends QueryFilters
      * - invoiced
      * - paid
      * - unpaid
-     *
-     * @return Builder
      */
     public function client_status(string $value = ''): Builder
     {
@@ -81,16 +82,16 @@ class ExpenseFilters extends QueryFilters
             if (in_array('logged', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->where('amount', '>=', 0)
-                          ->whereNull('invoice_id')
-                          ->whereNull('payment_date')
-                          ->where('should_be_invoiced', false);
+                        ->whereNull('invoice_id')
+                        ->whereNull('payment_date')
+                        ->where('should_be_invoiced', false);
                 });
             }
 
             if (in_array('pending', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->where('should_be_invoiced', true)
-                          ->whereNull('invoice_id');
+                        ->whereNull('invoice_id');
                 });
             }
 
@@ -109,18 +110,18 @@ class ExpenseFilters extends QueryFilters
             if (in_array('paid', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->whereNotNull('payment_date')
-                            ->orWhere('transaction_reference', '!=', '')
-                            ->orWhereNotNull('transaction_reference');
+                        ->orWhere('transaction_reference', '!=', '')
+                        ->orWhereNotNull('transaction_reference');
                 });
             }
 
             if (in_array('unpaid', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->whereNull('payment_date')
-                          ->where(function ($query) {
-                              $query->where('transaction_reference', '')
-                                   ->orWhereNull('transaction_reference');
-                          });
+                        ->where(function ($query) {
+                            $query->where('transaction_reference', '')
+                                ->orWhereNull('transaction_reference');
+                        });
                 });
             }
 
@@ -138,13 +139,10 @@ class ExpenseFilters extends QueryFilters
 
     /**
      * Filter expenses that only have invoices
-     *
-     * @param string $value
-     * @return Builder
      */
     public function has_invoices(string $value = ''): Builder
     {
-        $split = explode(",", $value);
+        $split = explode(',', $value);
 
         if (is_array($split) && in_array($split[0], ['client', 'project'])) {
 
@@ -152,7 +150,7 @@ class ExpenseFilters extends QueryFilters
 
             return $this->builder->whereHas('invoice', function ($query) use ($search_key, $split) {
                 $query->where($search_key, $this->decodePrimaryKey($split[1]))
-                      ->whereIn('status_id', [\App\Models\Invoice::STATUS_DRAFT, \App\Models\Invoice::STATUS_SENT, \App\Models\Invoice::STATUS_PARTIAL]);
+                    ->whereIn('status_id', [Invoice::STATUS_DRAFT, Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL]);
             });
         }
 
@@ -166,17 +164,17 @@ class ExpenseFilters extends QueryFilters
     {
         if ($value == 'true') {
             return $this->builder->where('is_deleted', 0)
-                                ->whereNull('transaction_id')
-                                ->where(function ($query) {
-                                    $query->whereHas('client', function ($sub_query) {
-                                        $sub_query->where('is_deleted', 0)->where('deleted_at', null);
-                                    })->orWhere('client_id', null);
-                                })
-                                ->where(function ($query) {
-                                    $query->whereHas('vendor', function ($sub_query) {
-                                        $sub_query->where('is_deleted', 0)->where('deleted_at', null);
-                                    })->orWhere('vendor_id', null);
-                                });
+                ->whereNull('transaction_id')
+                ->where(function ($query) {
+                    $query->whereHas('client', function ($sub_query) {
+                        $sub_query->where('is_deleted', 0)->where('deleted_at', null);
+                    })->orWhere('client_id', null);
+                })
+                ->where(function ($query) {
+                    $query->whereHas('vendor', function ($sub_query) {
+                        $sub_query->where('is_deleted', 0)->where('deleted_at', null);
+                    })->orWhere('vendor_id', null);
+                });
         }
 
         return $this->builder;
@@ -184,7 +182,7 @@ class ExpenseFilters extends QueryFilters
 
     public function categories(string $categories = ''): Builder
     {
-        $categories_exploded = explode(",", $categories);
+        $categories_exploded = explode(',', $categories);
 
         if (empty($categories) || count(array_filter($categories_exploded)) == 0) {
             return $this->builder;
@@ -216,13 +214,11 @@ class ExpenseFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
-
 
         // Handle relationship-based sorting
         if (is_array($sort_col) && count($sort_col) == 2 && $sort_col[0] == 'documents') {
@@ -231,7 +227,7 @@ class ExpenseFilters extends QueryFilters
             return $this->builder->withCount('documents')->orderBy('documents_count', $dir);
         }
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -239,37 +235,36 @@ class ExpenseFilters extends QueryFilters
 
         if ($sort_col[0] == 'client_id' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(client_id), client_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\Client::select('name')
+                ->orderByRaw('ISNULL(client_id), client_id ' . $sort_col[1])
+                ->orderBy(Client::select('name')
                     ->whereColumn('clients.id', 'expenses.client_id'), $sort_col[1]);
         }
 
-
         if ($sort_col[0] == 'project' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(project_id), project_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\Project::select('name')
+                ->orderByRaw('ISNULL(project_id), project_id ' . $sort_col[1])
+                ->orderBy(Project::select('name')
                     ->whereColumn('projects.id', 'expenses.project_id'), $sort_col[1]);
         }
 
         if ($sort_col[0] == 'vendor_id' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(vendor_id), vendor_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\Vendor::select('name')
+                ->orderByRaw('ISNULL(vendor_id), vendor_id ' . $sort_col[1])
+                ->orderBy(Vendor::select('name')
                     ->whereColumn('vendors.id', 'expenses.vendor_id'), $sort_col[1]);
 
         }
 
         if ($sort_col[0] == 'category_id' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(category_id), category_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\ExpenseCategory::select('name')
+                ->orderByRaw('ISNULL(category_id), category_id ' . $sort_col[1])
+                ->orderBy(ExpenseCategory::select('name')
                     ->whereColumn('expense_categories.id', 'expenses.category_id'), $sort_col[1]);
         }
 
         if ($sort_col[0] == 'payment_date' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(payment_date), payment_date ' . $sort_col[1]);
+                ->orderByRaw('ISNULL(payment_date), payment_date ' . $sort_col[1]);
         }
 
         if ($sort_col[0] == 'number') {
@@ -285,8 +280,6 @@ class ExpenseFilters extends QueryFilters
 
     /**
      * Filters the query by the users company ID.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {

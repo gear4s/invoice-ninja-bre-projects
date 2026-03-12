@@ -3,7 +3,8 @@
 use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -12,8 +13,8 @@ return new class extends Migration {
 
         $cur = Currency::find(119);
 
-        if(!$cur) {
-            $cur = new \App\Models\Currency();
+        if (!$cur) {
+            $cur = new Currency;
             $cur->id = 119;
             $cur->code = 'MGA';
             $cur->name = 'Malagasy ariary';

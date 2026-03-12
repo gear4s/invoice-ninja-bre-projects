@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,9 +15,6 @@ use App\Models\Company;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class ContainerTest extends TestCase
 {
     use MockAccountData;
@@ -32,7 +28,7 @@ class ContainerTest extends TestCase
         app()->instance(Company::class, $this->company);
     }
 
-    public function testBindingWorks()
+    public function test_binding_works()
     {
         $resolved_company = resolve(Company::class);
 

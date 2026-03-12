@@ -6,24 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use Elastic\ScoutDriverPlus\Searchable;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
-use Laracasts\Presenter\PresentableTrait;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Presenters\VendorContactPresenter;
 use App\Notifications\ClientContactResetPassword;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Utils\Traits\MakesHash;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Contracts\Translation\HasLocalePreference;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use Laracasts\Presenter\PresentableTrait;
 
 /**
  * App\Models\VendorContact
@@ -63,13 +66,14 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @property bool $can_sign
  * @property string|null $contact_key
  * @property string|null $remember_token
- * @property-read \App\Models\Company $company
+ * @property-read Company $company
  * @property-read mixed $contact_id
  * @property-read mixed $hashed_id
  * @property-read int|null $notifications_count
  * @property-read int|null $purchase_order_invitations_count
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor $vendor
+ * @property-read User $user
+ * @property-read Vendor $vendor
+ *
  * @method static \Database\Factories\VendorContactFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|VendorContact newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|VendorContact newQuery()
@@ -77,18 +81,20 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @method static \Illuminate\Database\Eloquent\Builder|VendorContact query()
  * @method static \Illuminate\Database\Eloquent\Builder|VendorContact withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|VendorContact withoutTrashed()
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PurchaseOrderInvitation> $purchase_order_invitations
+ *
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PurchaseOrderInvitation> $purchase_order_invitations
+ *
  * @mixin \Eloquent
  */
 class VendorContact extends Authenticatable implements HasLocalePreference
 {
-    use Notifiable;
-    use MakesHash;
-    use PresentableTrait;
-    use SoftDeletes;
     use HasFactory;
+    use MakesHash;
+    use Notifiable;
+    use PresentableTrait;
     use Searchable;
+    use SoftDeletes;
 
     /* Used to authenticate a vendor */
     protected $guard = 'vendor';
@@ -136,7 +142,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     public function toSearchableArray()
     {
         return [
-            'id' => $this->company->db . ":" . $this->id,
+            'id' => $this->company->db . ':' . $this->id,
             'name' => $this->present()->search_display(),
             'hashed_id' => $this->hashed_id,
             'email' => (string) $this->email,
@@ -154,7 +160,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
 
     public function avatar()
@@ -168,7 +174,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
 
     public function setAvatarAttribute($value)
     {
-        if (! filter_var($value, FILTER_VALIDATE_URL) && $value) {
+        if (!filter_var($value, FILTER_VALIDATE_URL) && $value) {
             $this->attributes['avatar'] = url('/') . $value;
         } else {
             $this->attributes['avatar'] = $value;
@@ -190,7 +196,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
         return $this->encodePrimaryKey($this->id);
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class)->withTrashed();
     }
@@ -200,12 +206,12 @@ class VendorContact extends Authenticatable implements HasLocalePreference
         return $this->where('is_primary', true);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
@@ -219,7 +225,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     {
         return once(function () {
 
-            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            /** @var Collection<Language> */
             $languages = app('languages');
 
             $language_id = $this->company->getSetting('language_id');
@@ -235,8 +241,8 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     /**
      * Retrieve the model for a bound value.
      *
-     * @param mixed $value
-     * @param null $field
+     * @param  mixed  $value
+     * @param  null  $field
      * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)
@@ -247,7 +253,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
             ->firstOrFail();
     }
 
-    public function purchase_order_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function purchase_order_invitations(): HasMany
     {
         return $this->hasMany(PurchaseOrderInvitation::class);
     }
@@ -268,5 +274,4 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     {
         return config('ninja.react_url') . "/#/vendors/{$this->vendor->hashed_id}";
     }
-
 }

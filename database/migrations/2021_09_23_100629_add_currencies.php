@@ -4,7 +4,8 @@ use App\Models\Currency;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -47,7 +48,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-            
+
         Schema::table('payments', function (Blueprint $table) {
-                        
+
             if (!Schema::hasColumn('payments', 'sync')) {
                 $table->text('sync')->nullable();
             }
@@ -25,8 +25,5 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        
-    }
+    public function down(): void {}
 };

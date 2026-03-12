@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,13 +27,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Services\Invoice\HandleReversal
  */
 class ReverseInvoiceTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -51,7 +49,7 @@ class ReverseInvoiceTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testReverseInvoice()
+    public function test_reverse_invoice()
     {
         $amount = $this->invoice->amount;
         $balance = $this->invoice->balance;
@@ -68,11 +66,11 @@ class ReverseInvoiceTest extends TestCase
         $balance_remaining = $this->invoice->balance;
         $total_paid = $this->invoice->amount - $this->invoice->balance;
 
-        /*Adjust payment applied and the paymentables to the correct amount */
+        /* Adjust payment applied and the paymentables to the correct amount */
 
         $paymentables = Paymentable::wherePaymentableType(Invoice::class)
-                                    ->wherePaymentableId($this->invoice->id)
-                                    ->get();
+            ->wherePaymentableId($this->invoice->id)
+            ->get();
 
         $paymentables->each(function ($paymentable) use ($total_paid) {
             $reversable_amount = $paymentable->amount - $paymentable->refunded;
@@ -90,7 +88,7 @@ class ReverseInvoiceTest extends TestCase
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = (float) $total_paid;
-        $item->notes = 'Credit for reversal of '.$this->invoice->number;
+        $item->notes = 'Credit for reversal of ' . $this->invoice->number;
 
         $line_items[] = $item;
 
@@ -104,13 +102,13 @@ class ReverseInvoiceTest extends TestCase
         $credit = $credit_calc->getCredit();
 
         $credit->service()
-                ->setStatus(Credit::STATUS_SENT)
-                ->markSent()->save();
+            ->setStatus(Credit::STATUS_SENT)
+            ->markSent()->save();
 
         /* Set invoice balance to 0 */
         $this->invoice->ledger()->updateInvoiceBalance($balance_remaining * -1, $item->notes)->save();
 
-        /* Set invoice status to reversed... somehow*/
+        /* Set invoice status to reversed... somehow */
         $this->invoice->service()->setStatus(Invoice::STATUS_REVERSED)->save();
 
         /* Reduce client.paid_to_date by $total_paid amount */
@@ -121,10 +119,10 @@ class ReverseInvoiceTest extends TestCase
 
         $this->client->save();
 
-        //create a ledger row for this with the resulting Credit ( also include an explanation in the notes section )
+        // create a ledger row for this with the resulting Credit ( also include an explanation in the notes section )
     }
 
-    public function testReversalViaAPI()
+    public function test_reversal_via_api()
     {
         $this->assertEquals($this->client->balance, $this->invoice->balance);
 
@@ -148,7 +146,7 @@ class ReverseInvoiceTest extends TestCase
         $this->assertEquals($this->client->paid_to_date, ($client_paid_to_date));
     }
 
-    public function testReversalNoPayment()
+    public function test_reversal_no_payment()
     {
         $this->assertEquals($this->client->balance, $this->invoice->balance);
 

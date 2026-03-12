@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -58,9 +57,9 @@ class StartMigration implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param $filepath
-     * @param User $user
-     * @param Company $company
+     * @param  $filepath
+     * @param  User  $user
+     * @param  Company  $company
      */
     public $tries = 1;
 
@@ -83,7 +82,7 @@ class StartMigration implements ShouldQueue
     {
         nlog('Inside Migration Job');
 
-        Cache::put("migration-{$this->company->company_key}", "started", 86400);
+        Cache::put("migration-{$this->company->company_key}", 'started', 86400);
 
         set_time_limit(0);
 
@@ -96,7 +95,7 @@ class StartMigration implements ShouldQueue
         $this->company->is_disabled = true;
         $this->company->save();
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         $archive = $zip->open(public_path("storage/{$this->filepath}"));
         $filename = pathinfo($this->filepath, PATHINFO_FILENAME);
 
@@ -106,7 +105,7 @@ class StartMigration implements ShouldQueue
         $this->company->save();
 
         try {
-            if (! $archive) {
+            if (!$archive) {
                 throw new ProcessingMigrationArchiveFailed('Processing migration archive failed. Migration file is possibly corrupted.');
             }
 
@@ -119,7 +118,7 @@ class StartMigration implements ShouldQueue
 
             $file = public_path("storage/migrations/$filename/migration.json");
 
-            if (! file_exists($file)) {
+            if (!file_exists($file)) {
                 throw new NonExistingMigrationFile('Migration file does not exist, or it is corrupted.');
             }
 
@@ -130,7 +129,7 @@ class StartMigration implements ShouldQueue
             $this->company->update_products = $update_product_flag;
             $this->company->save();
 
-            Cache::put("migration-{$this->company->company_key}", "completed", 86400);
+            Cache::put("migration-{$this->company->company_key}", 'completed', 86400);
 
             App::forgetInstance('translator');
             $t = app('translator');
@@ -139,7 +138,7 @@ class StartMigration implements ShouldQueue
             $this->company->update_products = $update_product_flag;
             $this->company->save();
 
-            Cache::put("migration-{$this->company->company_key}", "failed", 86400);
+            Cache::put("migration-{$this->company->company_key}", 'failed', 86400);
 
             if (Ninja::isHosted()) {
                 app('sentry')->captureException($e);

@@ -6,32 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\PostMark;
 
-use App\Models\Company;
-use App\Models\SystemLog;
-use App\Libraries\MultiDB;
-use Postmark\PostmarkClient;
-use Illuminate\Bus\Queueable;
+use App\DataMapper\Analytics\Mail\EmailBounce;
+use App\DataMapper\Analytics\Mail\EmailSpam;
 use App\Jobs\Util\SystemLogger;
-use App\Models\QuoteInvitation;
+use App\Libraries\MultiDB;
+use App\Models\Company;
 use App\Models\CreditInvitation;
 use App\Models\InvoiceInvitation;
-use Illuminate\Queue\SerializesModels;
-use Turbo124\Beacon\Facades\LightLogs;
 use App\Models\PurchaseOrderInvitation;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Models\QuoteInvitation;
 use App\Models\RecurringInvoiceInvitation;
+use App\Models\SystemLog;
+use App\Notifications\Ninja\EmailBounceNotification;
+use App\Notifications\Ninja\EmailSpamNotification;
+use App\Utils\Ninja;
+use Carbon\Carbon;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\DataMapper\Analytics\Mail\EmailSpam;
-use App\DataMapper\Analytics\Mail\EmailBounce;
-use App\Notifications\Ninja\EmailSpamNotification;
-use App\Notifications\Ninja\EmailBounceNotification;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Postmark\PostmarkClient;
+use Turbo124\Beacon\Facades\LightLogs;
 
 class ProcessPostmarkWebhook implements ShouldQueue
 {
@@ -58,11 +59,10 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
      */
     public function __construct(private array $request, private string $security_token)
     {
-        if (\App\Utils\Ninja::isHosted()) {
+        if (Ninja::isHosted()) {
             $this->onQueue('postmark');
         }
     }
@@ -89,13 +89,11 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
     /**
      * Execute the job.
-     *
      */
     public function handle()
     {
         MultiDB::findAndSetDbByCompanyKey($this->request['Tag']);
         $this->company = Company::query()->where('company_key', $this->request['Tag'])->first(); /** @phpstan-ignore-line */
-
         $this->invitation = $this->discoverInvitation($this->request['MessageID']);
 
         if ($this->company && $this->request['RecordType'] == 'SpamComplaint' && config('ninja.notification.slack')) {
@@ -125,7 +123,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
             case 'Open':
                 return $this->processOpen();
             default:
-                # code...
+                // code...
                 break;
         }
     }
@@ -178,6 +176,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         if ($sl) {
             $this->updateSystemLog($sl, $data);
+
             return;
         }
 
@@ -218,6 +217,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         if ($sl) {
             $this->updateSystemLog($sl, $data);
+
             return;
         }
 
@@ -278,6 +278,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         if ($sl) {
             $this->updateSystemLog($sl, $data);
+
             return;
         }
 
@@ -339,18 +340,23 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         if ($invitation = InvoiceInvitation::where('message_id', $message_id)->first()) {
             $this->entity = 'invoice';
+
             return $invitation;
         } elseif ($invitation = QuoteInvitation::where('message_id', $message_id)->first()) {
             $this->entity = 'quote';
+
             return $invitation;
         } elseif ($invitation = RecurringInvoiceInvitation::where('message_id', $message_id)->first()) {
             $this->entity = 'recurring_invoice';
+
             return $invitation;
         } elseif ($invitation = CreditInvitation::where('message_id', $message_id)->first()) {
             $this->entity = 'credit';
+
             return $invitation;
         } elseif ($invitation = PurchaseOrderInvitation::where('message_id', $message_id)->first()) {
             $this->entity = 'purchase_order';
+
             return $invitation;
         } else {
             return $invitation;
@@ -376,7 +382,6 @@ class ProcessPostmarkWebhook implements ShouldQueue
         return $messageDetail;
 
     }
-
 
     public function getBounceId(string $message_id): ?int
     {
@@ -425,7 +430,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
                     'delivery_message' => $event->Details->DeliveryMessage ?? $event->Details->Summary ?? '',
                     'server' => $event->Details->DestinationServer ?? '',
                     'server_ip' => $event->Details->DestinationIP ?? '',
-                    'date' => \Carbon\Carbon::parse($event->ReceivedAt)->setTimezone($this->invitation->company->timezone()->name)->format('Y-m-d H:i:s') ?? '',
+                    'date' => Carbon::parse($event->ReceivedAt)->setTimezone($this->invitation->company->timezone()->name)->format('Y-m-d H:i:s') ?? '',
                 ];
 
             })->toArray();
@@ -449,7 +454,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
     {
 
         if ($exception) {
-            nlog("PROCESSPOSTMARKWEBHOOK:: " . $exception->getMessage());
+            nlog('PROCESSPOSTMARKWEBHOOK:: ' . $exception->getMessage());
         }
 
         config(['queue.failed.driver' => null]);

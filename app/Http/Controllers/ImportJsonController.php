@@ -6,18 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Utils\Ninja;
-use Illuminate\Http\Response;
-use App\Utils\Traits\MakesHash;
-use App\Jobs\Company\CompanyImport;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\Import\ImportJsonRequest;
+use App\Jobs\Company\CompanyImport;
+use App\Models\User;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ImportJsonController extends BaseController
 {
@@ -35,22 +36,29 @@ class ImportJsonController extends BaseController
      *      tags={"import"},
      *      summary="Import data from the system",
      *      description="Import data from the system",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="success",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -58,7 +66,7 @@ class ImportJsonController extends BaseController
     public function import(ImportJsonRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $metadata = [];
@@ -88,7 +96,7 @@ class ImportJsonController extends BaseController
 
             $parsed_filename = sprintf(
                 '%s.%s',
-                \Illuminate\Support\Str::random(32),
+                Str::random(32),
                 preg_replace('/[^a-zA-Z0-9]/', '', $extension) // Sanitize extension
             );
 
@@ -100,11 +108,11 @@ class ImportJsonController extends BaseController
                 );
         }
 
-        CompanyImport::dispatch($user->company(), $user, $file_location, $request->except(['files','file']));
+        CompanyImport::dispatch($user->company(), $user, $file_location, $request->except(['files', 'file']));
 
         unset($metadata['uploaded_filepath']);
 
-        return response()->json(array_merge(['message' => 'Processing','success' => true], $metadata), 200);
+        return response()->json(array_merge(['message' => 'Processing', 'success' => true], $metadata), 200);
     }
 
     private function handleChunkedUpload(ImportJsonRequest $request)
@@ -178,6 +186,7 @@ class ImportJsonController extends BaseController
                 $this->cleanupS3Chunks($disk, $metadata['fileHash']);
 
                 $metadata['uploaded_filepath'] = $finalPath;
+
                 return $metadata;
 
             } catch (\Exception $e) {

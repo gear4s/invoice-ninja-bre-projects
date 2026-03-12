@@ -6,25 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Storecove;
 
+use App\Services\EDocument\Gateway\MutatorInterface;
 use App\Services\EDocument\Gateway\MutatorUtil;
 use App\Services\EDocument\Standards\Peppol\RO;
-use App\Services\EDocument\Gateway\MutatorInterface;
-use App\Services\EDocument\Gateway\Storecove\StorecoveRouter;
+use InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
+use InvoiceNinja\EInvoice\Models\Peppol\IdentifierType\CompanyID;
+use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 
 class Mutator implements MutatorInterface
 {
-    /** @var \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote */
-    private \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice;
+    private \InvoiceNinja\EInvoice\Models\Peppol\Invoice|CreditNote $p_invoice;
 
-    private ?\InvoiceNinja\EInvoice\Models\Peppol\Invoice $_client_settings;
+    private ?Invoice $_client_settings;
 
-    private ?\InvoiceNinja\EInvoice\Models\Peppol\Invoice $_company_settings;
+    private ?Invoice $_company_settings;
 
     private $invoice;
 
@@ -40,31 +40,31 @@ class Mutator implements MutatorInterface
     /**
      * setInvoice
      *
-     * @param  mixed $invoice
-     * @return self
+     * @param  mixed  $invoice
      */
     public function setInvoice($invoice): self
     {
         $this->invoice = $invoice;
+
         return $this;
     }
 
     /**
      * setPeppol
      *
-     * @param  \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice
-     * @return self
+     * @param  Invoice|CreditNote  $p_invoice
      */
     public function setPeppol($p_invoice): self
     {
         $this->p_invoice = $p_invoice;
+
         return $this;
     }
 
     /**
      * getPeppol
      *
-     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote
+     * @return Invoice|CreditNote
      */
     public function getPeppol(): mixed
     {
@@ -74,31 +74,31 @@ class Mutator implements MutatorInterface
     /**
      * setClientSettings
      *
-     * @param  mixed $client_settings
-     * @return self
+     * @param  mixed  $client_settings
      */
     public function setClientSettings($client_settings): self
     {
         $this->_client_settings = $client_settings;
+
         return $this;
     }
 
     /**
      * setCompanySettings
      *
-     * @param  \InvoiceNinja\EInvoice\Models\Peppol\Invoice $company_settings
-     * @return self
+     * @param  Invoice  $company_settings
      */
     public function setCompanySettings($company_settings): self
     {
         $this->_company_settings = $company_settings;
+
         return $this;
     }
 
     /**
      * getClientSettings
      *
-     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice
+     * @return Invoice
      */
     public function getClientSettings(): mixed
     {
@@ -108,7 +108,7 @@ class Mutator implements MutatorInterface
     /**
      * getCompanySettings
      *
-     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice
+     * @return Invoice
      */
     public function getCompanySettings(): mixed
     {
@@ -117,8 +117,6 @@ class Mutator implements MutatorInterface
 
     /**
      * getInvoice
-     *
-     * @return mixed
      */
     public function getInvoice(): mixed
     {
@@ -127,22 +125,18 @@ class Mutator implements MutatorInterface
 
     /**
      * getSetting
-     *
-     * @param  string $property_path
-     * @return mixed
      */
     public function getSetting(string $property_path): mixed
     {
         return $this->mutator_util->getSetting($property_path);
     }
+
     /**
      * senderSpecificLevelMutators
      *
      * Runs sender level specific requirements for the e-invoice,
      *
      * ie, mutations that are required by the senders country.
-     *
-     * @return self
      */
     public function senderSpecificLevelMutators(): self
     {
@@ -160,7 +154,6 @@ class Mutator implements MutatorInterface
      * Runs receiver level specific requirements for the e-invoice
      *
      * ie mutations that are required by the receiving country
-     * @return self
      */
     public function receiverSpecificLevelMutators(): self
     {
@@ -176,9 +169,8 @@ class Mutator implements MutatorInterface
      * DE
      *
      * @Completed
-     * @Tested
      *
-     * @return self
+     * @Tested
      */
     public function DE(): self
     {
@@ -190,10 +182,10 @@ class Mutator implements MutatorInterface
 
     public function DK(): self
     {
-        //Block that handle CVR for Denmark
-        $companyID = new \InvoiceNinja\EInvoice\Models\Peppol\IdentifierType\CompanyID();
-        $companyID->schemeID = "0184";
-        $companyID->value = $this->override_vat_number ?? preg_replace("/[^a-zA-Z0-9]/", "", $this->invoice->company->settings->id_number);
+        // Block that handle CVR for Denmark
+        $companyID = new CompanyID;
+        $companyID->schemeID = '0184';
+        $companyID->value = $this->override_vat_number ?? preg_replace('/[^a-zA-Z0-9]/', '', $this->invoice->company->settings->id_number);
 
         $this->p_invoice->AccountingSupplierParty->Party->PartyLegalEntity[0]->CompanyID = $companyID;
 
@@ -207,7 +199,6 @@ class Mutator implements MutatorInterface
      * @Completed
      *
      * Completed - QR-Bill to be implemented at a later date.
-     * @return self
      */
     public function CH(): self
     {
@@ -223,18 +214,16 @@ class Mutator implements MutatorInterface
      * Also need to ensure customerAssignedAccountIdValue is set so that the sender can be resolved.
      *
      * Need a way to define if the client is a government entity.
-     *
-     * @return self
      */
     public function AT(): self
     {
-        //special fields for sending to AT:GOV
+        // special fields for sending to AT:GOV
 
         if ($this->invoice->client->classification == 'government') {
-            //routing "b" for production "test" for test environment
-            $this->setStorecoveMeta($this->buildRouting(["scheme" => 'AT:GOV', "id" => 'b']));
+            // routing "b" for production "test" for test environment
+            $this->setStorecoveMeta($this->buildRouting(['scheme' => 'AT:GOV', 'id' => 'b']));
 
-            //for government clients this must be set.
+            // for government clients this must be set.
             $this->mutator_util->setCustomerAssignedAccountId(true);
         }
 
@@ -244,7 +233,7 @@ class Mutator implements MutatorInterface
     public function AU(): self
     {
 
-        //if payment means are included, they must be the same `type`
+        // if payment means are included, they must be the same `type`
         return $this;
     }
 
@@ -256,8 +245,6 @@ class Mutator implements MutatorInterface
      * B2G Testing
      *
      * testing. // routing identifier - 293098
-     *
-     * @return self
      */
     public function ES(): self
     {
@@ -267,7 +254,7 @@ class Mutator implements MutatorInterface
         }
 
         if ($this->invoice->client->classification == 'business' && $this->invoice->company->getSetting('classification') == 'business') {
-            //must have a paymentmeans as credit_transfer
+            // must have a paymentmeans as credit_transfer
             $this->mutator_util->setPaymentMeans(true);
         }
 
@@ -299,8 +286,6 @@ class Mutator implements MutatorInterface
 
     /**
      * FI
-     *
-     * @return self
      */
     public function FI(): self
     {
@@ -314,9 +299,8 @@ class Mutator implements MutatorInterface
 
     /**
      * FR
-     * @Pending - clarification on codes needed
      *
-     * @return self
+     * @Pending - clarification on codes needed
      */
     public function FR(): self
     {
@@ -326,9 +310,9 @@ class Mutator implements MutatorInterface
         // The SIRET / 0009 identifier of the final recipient is to be included in the invoice.accountingCustomerParty.publicIdentifiers array.
 
         if ($this->invoice->client->classification == 'government') {
-            //route to SIRET 0009:11000201100044
+            // route to SIRET 0009:11000201100044
             $this->setStorecoveMeta($this->buildRouting([
-                ["scheme" => 'FR:SIRET', "id" => '11000201100044'],
+                ['scheme' => 'FR:SIRET', 'id' => '11000201100044'],
 
                 // ["scheme" => 'FR:SIRET', "id" => '0009:11000201100044']
             ]));
@@ -339,16 +323,16 @@ class Mutator implements MutatorInterface
         }
 
         if (strlen($this->invoice->client->id_number ?? '') == 9) {
-            //SIREN
+            // SIREN
             $this->setStorecoveMeta($this->buildRouting([
-                ["scheme" => 'FR:SIRET', "id" => "{$this->invoice->client->id_number}"],
+                ['scheme' => 'FR:SIRET', 'id' => "{$this->invoice->client->id_number}"],
 
                 // ["scheme" => 'FR:SIRET', "id" => "0002:{$this->invoice->client->id_number}"]
             ]));
         } else {
-            //SIRET
+            // SIRET
             $this->setStorecoveMeta($this->buildRouting([
-                ["scheme" => 'FR:SIRET', "id" => "{$this->invoice->client->id_number}"],
+                ['scheme' => 'FR:SIRET', 'id' => "{$this->invoice->client->id_number}"],
 
                 // ["scheme" => 'FR:SIRET', "id" => "0009:{$this->invoice->client->id_number}"]
             ]));
@@ -359,19 +343,17 @@ class Mutator implements MutatorInterface
 
     /**
      * IT
-     *
-     * @return self
      */
     public function IT(): self
     {
 
         // IT Sender, IT Receiver, B2B/B2G
         // Provide the receiver IT:VAT and the receiver IT:CUUO (codice destinatario)
-        if (in_array($this->invoice->client->classification, ['business','government']) && $this->invoice->company->country()->iso_3166_2 == 'IT') {
+        if (in_array($this->invoice->client->classification, ['business', 'government']) && $this->invoice->company->country()->iso_3166_2 == 'IT') {
 
             $this->setStorecoveMeta($this->buildRouting([
-                ["scheme" => 'IT:IVA', "id" => $this->invoice->client->vat_number],
-                ["scheme" => 'IT:CUUO', "id" => $this->invoice->client->routing_id],
+                ['scheme' => 'IT:IVA', 'id' => $this->invoice->client->vat_number],
+                ['scheme' => 'IT:CUUO', 'id' => $this->invoice->client->routing_id],
             ]));
 
             return $this;
@@ -382,7 +364,7 @@ class Mutator implements MutatorInterface
         if ($this->invoice->client->classification == 'individual' && $this->invoice->company->country()->iso_3166_2 == 'IT') {
 
             $this->setStorecoveMeta($this->buildRouting([
-                ["scheme" => 'IT:CF', "id" => $this->invoice->client->vat_number],
+                ['scheme' => 'IT:CF', 'id' => $this->invoice->client->vat_number],
                 // ["scheme" => 'IT:CUUO', "id" => $this->invoice->client->routing_id]
             ]));
 
@@ -397,9 +379,9 @@ class Mutator implements MutatorInterface
 
             $code = $this->getClientRoutingCode();
 
-            nlog("foreign receiver");
+            nlog('foreign receiver');
             $this->setStorecoveMeta($this->buildRouting([
-                ["scheme" => $code, "id" => $this->invoice->client->vat_number],
+                ['scheme' => $code, 'id' => $this->invoice->client->vat_number],
             ]));
 
             return $this;
@@ -410,8 +392,6 @@ class Mutator implements MutatorInterface
 
     /**
      * client_IT
-     *
-     * @return self
      */
     public function client_IT(): self
     {
@@ -432,19 +412,15 @@ class Mutator implements MutatorInterface
 
     /**
      * MY
-     *
-     * @return self
      */
     public function MY(): self
     {
-        //way too much to digest here, delayed.
+        // way too much to digest here, delayed.
         return $this;
     }
 
     /**
      * NL
-     *
-     * @return self
      */
     public function NL(): self
     {
@@ -458,8 +434,6 @@ class Mutator implements MutatorInterface
 
     /**
      * NZ
-     *
-     * @return self
      */
     public function NZ(): self
     {
@@ -469,8 +443,6 @@ class Mutator implements MutatorInterface
 
     /**
      * PL
-     *
-     * @return self
      */
     public function PL(): self
     {
@@ -500,17 +472,15 @@ class Mutator implements MutatorInterface
 
     /**
      * RO
-     *
-     * @return self
      */
     public function RO(): self
     {
         // Because using this network is not yet mandatory, the default workflow is to not use this network. Therefore, you have to force its use, as follows:
-        $meta = ["networks" => [
+        $meta = ['networks' => [
             [
-                "application" => "ro-anaf",
-                "settings" => [
-                    "enabled" => true,
+                'application' => 'ro-anaf',
+                'settings' => [
+                    'enabled' => true,
                 ],
             ],
         ]];
@@ -518,7 +488,7 @@ class Mutator implements MutatorInterface
         $this->setStorecoveMeta($meta);
 
         $this->setStorecoveMeta($this->buildRouting([
-            ["scheme" => 'RO:VAT', "id" => $this->invoice->client->vat_number],
+            ['scheme' => 'RO:VAT', 'id' => $this->invoice->client->vat_number],
         ]));
 
         $ro = new RO($this->invoice);
@@ -533,9 +503,14 @@ class Mutator implements MutatorInterface
         $this->p_invoice->AccountingCustomerParty->Party->PostalAddress->CityName = $resolved_city;
 
         $query = $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification;
-        usort($query, function($a, $b) {
-            if ($a->value === null && $b->value !== null) return -1; //@phpstan-ignore-line
-            if ($a->value !== null && $b->value === null) return 1; //@phpstan-ignore-line
+        usort($query, function ($a, $b) {
+            if ($a->value === null && $b->value !== null) {
+                return -1;
+            } // @phpstan-ignore-line
+            if ($a->value !== null && $b->value === null) {
+                return 1;
+            } // @phpstan-ignore-line
+
             return 0;
         });
         $this->p_invoice->AccountingSupplierParty->Party->PartyIdentification = $query;
@@ -545,16 +520,14 @@ class Mutator implements MutatorInterface
 
     /**
      * SG
-     *
-     * @return self
      */
     public function SG(): self
     {
-        //delayed  - stage 2
+        // delayed  - stage 2
         return $this;
     }
 
-    //Sweden
+    // Sweden
     public function SE(): self
     {
         // Deliver invoices to the "Svefaktura" co-operation of local Swedish service providers.
@@ -593,7 +566,7 @@ class Mutator implements MutatorInterface
         return $this;
     }
 
-    /////////////// Storecove Helpers ///////////////
+    // ///////////// Storecove Helpers ///////////////
     private function getIndividualEmailRoute(): string
     {
         return $this->invoice->client->present()->email();
@@ -602,10 +575,10 @@ class Mutator implements MutatorInterface
     private function getClientPublicIdentifier(string $code): string
     {
         if ($this->invoice->client->classification == 'individual' && strlen($this->invoice->client->id_number ?? '') > 2) {
-            return preg_replace("/[^a-zA-Z0-9]/", "", $this->invoice->client->id_number ?? '');
+            return preg_replace('/[^a-zA-Z0-9]/', '', $this->invoice->client->id_number ?? '');
         }
 
-        return preg_replace("/[^a-zA-Z0-9]/", "", $this->invoice->client->vat_number ?? '');
+        return preg_replace('/[^a-zA-Z0-9]/', '', $this->invoice->client->vat_number ?? '');
     }
 
     public function setClientRoutingCode(): self
@@ -615,17 +588,16 @@ class Mutator implements MutatorInterface
             return $this->setEmailRouting($this->getIndividualEmailRoute());
         }
 
-        //Regardless, always include the client email address as a route - Storecove will only use this as a fallback.
+        // Regardless, always include the client email address as a route - Storecove will only use this as a fallback.
         $client_email = $this->getIndividualEmailRoute();
 
         if (strlen($client_email) > 2) {
             $this->setEmailRouting($client_email);
         }
 
+        if (stripos($this->invoice->client->routing_id ?? '', ':') !== false) {
 
-        if (stripos($this->invoice->client->routing_id ?? '', ":") !== false) {
-
-            $parts = explode(":", $this->invoice->client->routing_id);
+            $parts = explode(':', $this->invoice->client->routing_id);
 
             if (count($parts) == 2) {
                 $scheme = $parts[0];
@@ -633,7 +605,7 @@ class Mutator implements MutatorInterface
 
                 if ($this->storecove->discovery($id, $scheme)) {
                     $this->setStorecoveMeta($this->buildRouting([
-                        ["scheme" => $scheme, "id" => $id],
+                        ['scheme' => $scheme, 'id' => $id],
                     ]));
 
                     return $this;
@@ -660,23 +632,21 @@ class Mutator implements MutatorInterface
             $identifier = $this->getClientPublicIdentifier($code);
         }
 
-        $identifier = str_ireplace(["FR", "BE"], "", $identifier);
-        $identifier = preg_replace("/[^a-zA-Z0-9]/", "", $identifier);
+        $identifier = str_ireplace(['FR', 'BE'], '', $identifier);
+        $identifier = preg_replace('/[^a-zA-Z0-9]/', '', $identifier);
 
-
-        //Check the recipient is on the network, and can be delivered the correct document.
-        if($this->invoice->client->country->iso_3166_2 == "BE"){
+        // Check the recipient is on the network, and can be delivered the correct document.
+        if ($this->invoice->client->country->iso_3166_2 == 'BE') {
 
             if ($this->storecove->discovery($identifier, 'BE:EN')) {
-                    $this->setStorecoveMeta($this->buildRouting([
-                        ["scheme" => 'BE:EN', "id" => $identifier],
-                    ]));
-
-                    return $this;
-            }
-            elseif($this->storecove->discovery("BE".$identifier, 'BE:VAT')) {
                 $this->setStorecoveMeta($this->buildRouting([
-                    ["scheme" => 'BE:VAT', "id" => "BE".$identifier],
+                    ['scheme' => 'BE:EN', 'id' => $identifier],
+                ]));
+
+                return $this;
+            } elseif ($this->storecove->discovery('BE' . $identifier, 'BE:VAT')) {
+                $this->setStorecoveMeta($this->buildRouting([
+                    ['scheme' => 'BE:VAT', 'id' => 'BE' . $identifier],
                 ]));
 
                 return $this;
@@ -684,50 +654,37 @@ class Mutator implements MutatorInterface
 
         }
 
-
         $this->setStorecoveMeta($this->buildRouting([
-            ["scheme" => $code, "id" => $identifier],
+            ['scheme' => $code, 'id' => $identifier],
         ]));
-
 
         return $this;
     }
 
     /**
      * getClientRoutingCode
-     *
-     * @return string
      */
     private function getClientRoutingCode(): string
     {
-        return (new StorecoveRouter())->setInvoice($this->invoice)->resolveRouting($this->invoice->client->country->iso_3166_2, $this->invoice->client->classification);
+        return (new StorecoveRouter)->setInvoice($this->invoice)->resolveRouting($this->invoice->client->country->iso_3166_2, $this->invoice->client->classification);
     }
-
 
     /**
      * Builds the Routing object for StoreCove
-     *
-     * @param  array $identifiers
-     * @return array
      */
     private function buildRouting(array $identifiers): array
     {
         return
         [
-            "routing" => [
-                "eIdentifiers"
-                    => $identifiers,
+            'routing' => [
+                'eIdentifiers' => $identifiers,
 
             ],
         ];
     }
 
-
     /**
      * setEmailRouting
-     *
-     * @param  string $email
-     * @return self
      */
     private function setEmailRouting(string $email): self
     {
@@ -746,15 +703,10 @@ class Mutator implements MutatorInterface
         return $this;
     }
 
-
-
     /**
      * setStorecoveMeta
      *
      * updates the storecove payload for sending documents
-     *
-     * @param  array $meta
-     * @return self
      */
     private function setStorecoveMeta(array $meta): self
     {
@@ -766,13 +718,9 @@ class Mutator implements MutatorInterface
 
     /**
      * getStorecoveMeta
-     *
-     * @return array
      */
     public function getStorecoveMeta(): array
     {
         return $this->storecove_meta;
     }
-
-
 }

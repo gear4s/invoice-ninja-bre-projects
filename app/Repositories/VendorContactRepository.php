@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,7 +22,7 @@ use Illuminate\Support\Str;
 class VendorContactRepository extends BaseRepository
 {
     public $is_primary;
-    
+
     private bool $set_send_email_on_contact = false;
 
     public function save(array $data, Vendor $vendor): void
@@ -45,10 +44,10 @@ class VendorContactRepository extends BaseRepository
 
         $this->is_primary = true;
         /* Ensure send_email always exists in at least one contact */
-        if (! $vendor->contacts->contains('send_email', true)) {
+        if (!$vendor->contacts->contains('send_email', true)) {
             $this->set_send_email_on_contact = true;
         }
-        
+
         /* Set first record to primary - always */
         $contacts = $contacts->sortByDesc('is_primary')->map(function ($contact) {
             $contact['is_primary'] = $this->is_primary;
@@ -63,7 +62,7 @@ class VendorContactRepository extends BaseRepository
             return $contact;
         });
 
-        //loop and update/create contacts
+        // loop and update/create contacts
         $contacts->each(function ($contact) use ($vendor) {
             $update_contact = null;
 
@@ -71,8 +70,8 @@ class VendorContactRepository extends BaseRepository
                 $update_contact = VendorContact::find($contact['id']);
             }
 
-            if (! $update_contact) {
-                $update_contact = new VendorContact();
+            if (!$update_contact) {
+                $update_contact = new VendorContact;
                 $update_contact->vendor_id = $vendor->id;
                 $update_contact->company_id = $vendor->company_id;
                 $update_contact->user_id = $vendor->user_id;
@@ -100,9 +99,9 @@ class VendorContactRepository extends BaseRepository
 
         $vendor->fresh();
 
-        //always made sure we have one blank contact to maintain state
+        // always made sure we have one blank contact to maintain state
         if ($vendor->contacts()->count() == 0) {
-            $new_contact = new VendorContact();
+            $new_contact = new VendorContact;
             $new_contact->vendor_id = $vendor->id;
             $new_contact->company_id = $vendor->company_id;
             $new_contact->user_id = $vendor->user_id;

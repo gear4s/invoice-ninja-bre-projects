@@ -6,23 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\General;
 
-use App\Libraries\MultiDB;
 use App\Jobs\Mail\NinjaMailer;
-use App\Models\QuoteInvitation;
-use App\Models\CreditInvitation;
 use App\Jobs\Mail\NinjaMailerJob;
-use App\Models\InvoiceInvitation;
 use App\Jobs\Mail\NinjaMailerObject;
+use App\Libraries\MultiDB;
 use App\Mail\Admin\EntitySentObject;
+use App\Models\CreditInvitation;
+use App\Models\InvoiceInvitation;
 use App\Models\PurchaseOrderInvitation;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\QuoteInvitation;
 use App\Utils\Traits\Notifications\UserNotifies;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class EntityEmailedNotification implements ShouldQueue
 {
@@ -46,6 +45,7 @@ class EntityEmailedNotification implements ShouldQueue
         return $this;
 
     }
+
     /**
      * Handle the event.
      *
@@ -56,8 +56,9 @@ class EntityEmailedNotification implements ShouldQueue
     {
         MultiDB::setDb($event->company->db);
 
-        if(!$event->invitation){
+        if (!$event->invitation) {
             nlog('No invitation found');
+
             return;
         }
 
@@ -81,7 +82,7 @@ class EntityEmailedNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $sent_object = (new EntitySentObject($event->invitation, $this->entity_string, $event->template, $company_user->portalType()))->build();
                 $nmo->mailable = new NinjaMailer($sent_object);
                 $nmo->company = $event->invitation->company;

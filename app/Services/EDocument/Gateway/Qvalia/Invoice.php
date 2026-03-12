@@ -6,11 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Qvalia;
+
+use App\Enum\HttpVerb;
 
 class Invoice
 {
@@ -20,8 +21,6 @@ class Invoice
     /**
      * status
      *
-     * @param  string $legal_entity_id
-     * @param  string $integration_id
      * @return mixed
      */
 
@@ -47,15 +46,13 @@ class Invoice
     /**
      * status
      *
-     * @param  string $legal_entity_id
-     * @param  string $integration_id
      * @return mixed
      */
     public function status(string $legal_entity_id, string $integration_id)
     {
         $uri = "/account/{$legal_entity_id}/action/invoice/outgoing/status/{$integration_id}";
 
-        $r = $this->qvalia->httpClient($uri, (\App\Enum\HttpVerb::GET)->value, []);
+        $r = $this->qvalia->httpClient($uri, (HttpVerb::GET)->value, []);
 
         return $r->object();
     }
@@ -63,8 +60,6 @@ class Invoice
     /**
      * send
      *
-     * @param  string $legal_entity_id
-     * @param  string $document
      * @return mixed
      */
     public function send(string $legal_entity_id, string $document)
@@ -84,7 +79,7 @@ class Invoice
 
         $uri = "/transaction/{$legal_entity_id}/invoices/outgoing";
 
-        $r = $this->qvalia->httpClient($uri, (\App\Enum\HttpVerb::POST)->value, $data, $headers);
+        $r = $this->qvalia->httpClient($uri, (HttpVerb::POST)->value, $data, $headers);
 
         return $r->object();
 

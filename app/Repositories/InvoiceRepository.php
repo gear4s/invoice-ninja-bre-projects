@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,10 +25,9 @@ class InvoiceRepository extends BaseRepository
     /**
      * Saves the invoices.
      *
-     * @param      array $data       The invoice data
-     * @param      Invoice $invoice  The invoice
-     *
-     * @return     Invoice|null  Returns the invoice object
+     * @param  array  $data  The invoice data
+     * @param  Invoice  $invoice  The invoice
+     * @return Invoice|null Returns the invoice object
      */
     public function save($data, Invoice $invoice): ?Invoice
     {
@@ -39,9 +37,8 @@ class InvoiceRepository extends BaseRepository
     /**
      * Mark the invoice as sent.
      *
-     * @param Invoice $invoice  The invoice
-     *
-     * @return     Invoice|null  Return the invoice object
+     * @param  Invoice  $invoice  The invoice
+     * @return Invoice|null Return the invoice object
      */
     public function markSent(Invoice $invoice): ?Invoice
     {
@@ -60,7 +57,7 @@ class InvoiceRepository extends BaseRepository
      *
      * ie. invoice can be deleted from a business logic perspective.
      *
-     * @param Invoice $invoice
+     * @param  Invoice  $invoice
      * @return Invoice $invoice
      */
     public function delete($invoice): ?Invoice
@@ -71,7 +68,7 @@ class InvoiceRepository extends BaseRepository
         }
 
         $invoice = \DB::transaction(function () use ($invoice) {
-            return \App\Models\Invoice::withTrashed()->lockForUpdate()->find($invoice->id);
+            return Invoice::withTrashed()->lockForUpdate()->find($invoice->id);
         });
 
         if (!$invoice || $invoice->is_deleted) {
@@ -89,8 +86,7 @@ class InvoiceRepository extends BaseRepository
     /**
      * Handles the restoration on a deleted invoice.
      *
-     * @param  Invoice $invoice
-     * @return Invoice
+     * @param  Invoice  $invoice
      */
     public function restore($invoice): Invoice
     {
@@ -98,8 +94,8 @@ class InvoiceRepository extends BaseRepository
             return $invoice;
         }
 
-        //if we have just archived, only perform a soft restore
-        if (! $invoice->is_deleted) {
+        // if we have just archived, only perform a soft restore
+        if (!$invoice->is_deleted) {
             parent::restore($invoice);
 
             return $invoice;

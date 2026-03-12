@@ -6,26 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Repositories;
 
-use App\Models\User;
-use App\Models\Quote;
+use App\Models\Activity;
 use App\Models\Backup;
+use App\Models\CompanyToken;
 use App\Models\Credit;
 use App\Models\Design;
+use App\Models\Expense;
 use App\Models\Invoice;
-use App\Models\Activity;
-use App\Utils\HtmlEngine;
-use App\Models\CompanyToken;
+use App\Models\Payment;
 use App\Models\PurchaseOrder;
-use App\Utils\Traits\MakesHash;
-use App\Utils\VendorHtmlEngine;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
+use App\Models\User;
 use App\Services\Pdf\PdfService;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\MakesInvoiceHtml;
 
 /**
@@ -33,19 +32,19 @@ use App\Utils\Traits\MakesInvoiceHtml;
  */
 class ActivityRepository extends BaseRepository
 {
-    use MakesInvoiceHtml;
     use MakesHash;
+    use MakesInvoiceHtml;
 
     /**
      * Save the Activity.
      *
-     * @param \stdClass $fields The fields
-     * @param \App\Models\Invoice | \App\Models\Quote | \App\Models\Credit | \App\Models\PurchaseOrder | \App\Models\Expense | \App\Models\Payment $entity
-     * @param array $event_vars
+     * @param  \stdClass  $fields  The fields
+     * @param  Invoice | Quote | Credit | PurchaseOrder | Expense | Payment  $entity
+     * @param  array  $event_vars
      */
     public function save($fields, $entity, $event_vars)
     {
-        $activity = new Activity();
+        $activity = new Activity;
 
         foreach ($fields as $key => $value) {
             $activity->{$key} = $value;
@@ -64,7 +63,7 @@ class ActivityRepository extends BaseRepository
 
         $activity->save();
 
-        //rate limiter
+        // rate limiter
         if (!in_array($fields->activity_type_id, [Activity::EMAIL_INVOICE, Activity::EMAIL_CREDIT, Activity::EMAIL_QUOTE, Activity::EMAIL_PURCHASE_ORDER])) {
             $this->createBackup($entity, $activity);
         }
@@ -73,8 +72,8 @@ class ActivityRepository extends BaseRepository
     /**
      * Creates a backup.
      *
-     * @param \App\Models\Invoice | \App\Models\Quote | \App\Models\Credit | \App\Models\PurchaseOrder | \App\Models\Expense $entity
-     * @param \App\Models\Activity $activity  The activity
+     * @param  Invoice | Quote | Credit | PurchaseOrder | Expense  $entity
+     * @param  Activity  $activity  The activity
      */
     public function createBackup($entity, $activity)
     {
@@ -89,7 +88,7 @@ class ActivityRepository extends BaseRepository
             || get_class($entity) == Credit::class
             || get_class($entity) == RecurringInvoice::class
         ) {
-            $backup = new Backup();
+            $backup = new Backup;
             $entity->load('client');
             $backup->amount = $entity->amount;
             $backup->activity_id = $activity->id;
@@ -103,7 +102,7 @@ class ActivityRepository extends BaseRepository
 
         if (get_class($entity) == PurchaseOrder::class) {
 
-            $backup = new Backup();
+            $backup = new Backup;
             $entity->load('client');
             $backup->amount = $entity->amount;
             $backup->activity_id = $activity->id;
@@ -120,7 +119,7 @@ class ActivityRepository extends BaseRepository
     public function getTokenId(array $event_vars)
     {
         if (isset($event_vars['token']) && $event_vars['token']) {
-            /** @var \App\Models\CompanyToken $company_token **/
+            /** @var CompanyToken $company_token * */
             $company_token = CompanyToken::query()->where('token', $event_vars['token'])->first();
 
             if ($company_token) {
@@ -173,7 +172,7 @@ class ActivityRepository extends BaseRepository
 
         $design = Design::withTrashed()->find($entity_design_id);
 
-        if (! $entity->invitations()->exists() || ! $design) {
+        if (!$entity->invitations()->exists() || !$design) {
             return '';
         }
 

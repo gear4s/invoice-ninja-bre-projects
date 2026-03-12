@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -13,7 +13,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -21,7 +22,7 @@ return new class extends Migration {
      */
     public function up()
     {
-        /* add ability of companytokens to be deleted.*/
+        /* add ability of companytokens to be deleted. */
         Schema::table('company_tokens', function (Blueprint $table) {
             $table->boolean('is_deleted')->default(0);
         });
@@ -53,7 +54,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

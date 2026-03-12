@@ -6,15 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quote;
 
 use App\Models\Quote;
-use App\Services\AbstractService;
 use App\Models\RecurringInvoice;
+use App\Services\AbstractService;
 use Carbon\Carbon;
 
 class UpdateReminder extends AbstractService
@@ -24,7 +23,7 @@ class UpdateReminder extends AbstractService
     /* We only support setting reminders based on the due date, not the partial due date */
     public function run()
     {
-        if (! $this->settings) {
+        if (!$this->settings) {
             $this->settings = $this->quote->client->getMergedSettings();
         }
 
@@ -32,7 +31,7 @@ class UpdateReminder extends AbstractService
             $this->quote->next_send_date = null;
             $this->quote->saveQuietly();
 
-            return $this->quote; //exit early
+            return $this->quote; // exit early
         }
 
         if ($this->quote->next_send_date) {

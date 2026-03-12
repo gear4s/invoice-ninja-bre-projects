@@ -6,23 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\PayPal;
 
-use stdClass;
-use Tests\TestCase;
-use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
-use Illuminate\Support\Str;
-use App\Models\CompanyGateway;
 use App\DataMapper\FeesAndLimits;
-use Illuminate\Routing\Middleware\ThrottleRequests;
+use App\Models\CompanyGateway;
+use App\Models\GatewayType;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\PaymentHash;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Str;
+use stdClass;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class WebhookTest extends TestCase
 {
@@ -49,13 +49,13 @@ class WebhookTest extends TestCase
 
     }
 
-    public function testWebhooks()
+    public function test_webhooks()
     {
         $hook = json_decode($this->webhook_string, true);
         $this->assertIsArray($hook);
     }
 
-    public function testPaymentCreation()
+    public function test_payment_creation()
     {
         $hook = json_decode($this->webhook_string, true);
 
@@ -73,8 +73,8 @@ class WebhookTest extends TestCase
 
         $hash_data = [
             'invoices' => [
-                    ['invoice_id' => $invoice->hashed_id, 'amount' => $this->amount],
-                ],
+                ['invoice_id' => $invoice->hashed_id, 'amount' => $this->amount],
+            ],
             'credits' => 0,
             'amount_with_fee' => $this->amount,
             'pre_payment' => false,
@@ -83,13 +83,12 @@ class WebhookTest extends TestCase
             'is_recurring' => false,
         ];
 
-        $payment_hash = new PaymentHash();
+        $payment_hash = new PaymentHash;
         $payment_hash->hash = Str::random(32);
         $payment_hash->data = $hash_data;
         $payment_hash->fee_total = 0;
         $payment_hash->fee_invoice_id = $invoice->id;
         $payment_hash->save();
-
 
         $driver = $company_gateway->driver($this->client);
         $driver->setPaymentHash($payment_hash);
@@ -105,16 +104,15 @@ class WebhookTest extends TestCase
             'gateway_type_id' => GatewayType::PAYPAL,
         ];
 
-        $payment = $driver->createPayment($data, \App\Models\Payment::STATUS_COMPLETED);
+        $payment = $driver->createPayment($data, Payment::STATUS_COMPLETED);
 
         $this->assertNotNull($payment);
-
 
     }
 
     private function buildGateway()
     {
-        $config = new \stdClass();
+        $config = new stdClass;
         $config->merchantId = $this->merchant_id;
         $config->status = 'activated';
         $config->consent = 'true';
@@ -123,7 +121,7 @@ class WebhookTest extends TestCase
         $config->returnMessage = 'true';
         $config->paymentsReceivable = 'Yes';
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = '80af24a6a691230bbec33e930ab40666';
@@ -134,8 +132,8 @@ class WebhookTest extends TestCase
         $cg->config = encrypt($config);
         $cg->save();
 
-        $fees_and_limits = new stdClass();
-        $fees_and_limits->{3} = new FeesAndLimits();
+        $fees_and_limits = new stdClass;
+        $fees_and_limits->{3} = new FeesAndLimits;
 
         $cg->fees_and_limits = $fees_and_limits;
         $cg->save();

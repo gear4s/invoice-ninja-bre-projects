@@ -6,31 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\Tax;
 
-use Tests\TestCase;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Country;
-use App\Models\Invoice;
-use Tests\MockAccountData;
+use App\DataMapper\CompanySettings;
 use App\DataMapper\Tax\BaseRule;
 use App\DataMapper\Tax\TaxModel;
-use App\DataMapper\CompanySettings;
+use App\Models\Client;
 use App\Models\ClientContact;
-use App\Services\Tax\StorecoveAdapter;
-use Illuminate\Routing\Middleware\ThrottleRequests;
+use App\Models\Country;
+use App\Models\Invoice;
 use App\Services\EDocument\Gateway\Storecove\Storecove;
+use App\Services\Tax\StorecoveAdapter;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Once;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class TaxRuleConsistencyTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -46,16 +46,16 @@ class TaxRuleConsistencyTest extends TestCase
 
     private function setupTestData(array $params = []): array
     {
-        \Illuminate\Support\Once::flush();
+        Once::flush();
 
         $company_iso = isset($params['company_country']) ? $params['company_country'] : 'DE';
 
         $settings = CompanySettings::defaults();
         $settings->vat_number = $params['company_vat'] ?? 'DE123456789';
-        $settings->country_id = (string)Country::where('iso_3166_2', $company_iso)->first()->id;
+        $settings->country_id = (string) Country::where('iso_3166_2', $company_iso)->first()->id;
         $settings->email = $this->faker->safeEmail();
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->regions->EU->has_sales_above_threshold = $params['over_threshold'] ?? false;
         $tax_data->regions->EU->tax_all_subregions = true;
 
@@ -71,7 +71,7 @@ class TaxRuleConsistencyTest extends TestCase
             'vat_number' => $params['client_vat'] ?? '',
             'classification' => $params['classification'] ?? 'individual',
             'has_valid_vat_number' => $params['has_valid_vat'] ?? false,
-            'name' => 'Test Client'
+            'name' => 'Test Client',
         ]);
 
         $contact = ClientContact::factory()->create([
@@ -80,7 +80,7 @@ class TaxRuleConsistencyTest extends TestCase
             'user_id' => $client->user_id,
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
-            'email' => $this->faker->safeEmail()
+            'email' => $this->faker->safeEmail(),
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -90,7 +90,7 @@ class TaxRuleConsistencyTest extends TestCase
             'discount' => rand(1, 10),
         ]);
 
-        $e_invoice = new \InvoiceNinja\EInvoice\Models\Peppol\Invoice();
+        $e_invoice = new \InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 
         $stub = json_decode('{"Invoice":{"Note":"Nooo","PaymentMeans":[{"ID":{"value":"afdasfasdfasdfas"},"PayeeFinancialAccount":{"Name":"PFA-NAME","ID":{"value":"DE89370400440532013000"},"AliasName":"PFA-Alias","AccountTypeCode":{"value":"CHECKING"},"AccountFormatCode":{"value":"IBAN"},"CurrencyCode":{"value":"EUR"},"FinancialInstitutionBranch":{"ID":{"value":"DEUTDEMMXXX"},"Name":"Deutsche Bank"}}}]}}');
         foreach ($stub as $key => $value) {
@@ -100,13 +100,12 @@ class TaxRuleConsistencyTest extends TestCase
         $invoice->e_invoice = $e_invoice;
         $invoice->save();
 
-
         $invoice->setRelation('company', $this->company);
 
         return compact('company', 'client', 'invoice');
     }
 
-    public function testScenarios()
+    public function test_scenarios()
     {
         $scenarios = [
             'B2C Over Threshold' => [
@@ -165,16 +164,15 @@ class TaxRuleConsistencyTest extends TestCase
 
         foreach ($scenarios as $name => $scenario) {
 
-
             $data = $this->setupTestData($scenario['params']);
 
             // Test BaseRule
-            $baseRule = new BaseRule();
+            $baseRule = new BaseRule;
             $baseRule->setEntity($data['invoice']);
             $baseRule->defaultForeign();
 
             // Test StorecoveAdapter
-            $storecove = new Storecove();
+            $storecove = new Storecove;
             $storecove->build($data['invoice']);
 
             $this->assertEquals(

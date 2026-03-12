@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34,8 +33,9 @@ trait SettingsSaver
      *
      * Returns an array of errors, or boolean TRUE
      * on successful validation
-     * @param  array $settings The request() settings array
-     * @return array|bool      Array on failure, boolean TRUE on success
+     *
+     * @param  array  $settings  The request() settings array
+     * @return array|bool Array on failure, boolean TRUE on success
      */
     public function validateSettings($settings)
     {
@@ -45,22 +45,22 @@ trait SettingsSaver
         ksort($casts);
 
         foreach ($casts as $key => $value) {
-            //try casting floats here
+            // try casting floats here
             if ($value == 'float' && property_exists($settings, $key)) {
                 $settings->{$key} = floatval($settings->{$key});
             }
 
             if (in_array($key, CompanySettings::$string_casts)) {
                 $value = 'string';
-                if (! property_exists($settings, $key)) {
+                if (!property_exists($settings, $key)) {
                     continue;
-                } elseif (! $this->checkAttribute($value, $settings->{$key})) {
+                } elseif (!$this->checkAttribute($value, $settings->{$key})) {
                     return [$key, $value, $settings->{$key}];
                 }
 
                 continue;
             }
-            /*Separate loop if it is a _id field which is an integer cast as a string*/ elseif (substr($key, -3) == '_id' || substr($key, -14) == 'number_counter' || ($key == 'payment_terms' && property_exists($settings, $key) && strlen($settings->{$key} ?? '') >= 1) || ($key == 'valid_until' && property_exists($settings, $key) && strlen($settings->{$key} ?? '') >= 1)) {
+            /* Separate loop if it is a _id field which is an integer cast as a string */ elseif (substr($key, -3) == '_id' || substr($key, -14) == 'number_counter' || ($key == 'payment_terms' && property_exists($settings, $key) && strlen($settings->{$key} ?? '') >= 1) || ($key == 'valid_until' && property_exists($settings, $key) && strlen($settings->{$key} ?? '') >= 1)) {
                 $value = 'integer';
 
                 if (in_array($key, $this->string_ids)) {
@@ -68,9 +68,9 @@ trait SettingsSaver
                     $value = 'string';
                 }
 
-                if (! property_exists($settings, $key)) {
+                if (!property_exists($settings, $key)) {
                     continue;
-                } elseif (! $this->checkAttribute($value, $settings->{$key})) {
+                } elseif (!$this->checkAttribute($value, $settings->{$key})) {
                     return [$key, $value, $settings->{$key}];
                 }
 
@@ -80,12 +80,12 @@ trait SettingsSaver
             }
 
             /* Handles unset settings or blank strings */
-            if (! property_exists($settings, $key) || is_null($settings->{$key}) || ! isset($settings->{$key}) || $settings->{$key} == '') {
+            if (!property_exists($settings, $key) || is_null($settings->{$key}) || !isset($settings->{$key}) || $settings->{$key} == '') {
                 continue;
             }
 
-            /*Catch all filter */
-            if (! $this->checkAttribute($value, $settings->{$key})) {
+            /* Catch all filter */
+            if (!$this->checkAttribute($value, $settings->{$key})) {
                 return [$key, $value, $settings->{$key}];
             }
         }
@@ -95,9 +95,10 @@ trait SettingsSaver
 
     /**
      * Type checks a object property.
-     * @param  string $key   The type
-     * @param  string $value The object property
-     * @return bool        TRUE if the property is the expected type
+     *
+     * @param  string  $key  The type
+     * @param  string  $value  The object property
+     * @return bool TRUE if the property is the expected type
      */
     private function checkAttribute($key, $value): bool
     {

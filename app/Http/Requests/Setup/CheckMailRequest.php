@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Setup;
 
 use App\Http\Requests\Request;
+use App\Models\Account;
+use App\Utils\Ninja;
 use Illuminate\Support\Facades\Schema;
 
 class CheckMailRequest extends Request
@@ -24,12 +25,12 @@ class CheckMailRequest extends Request
      */
     public function authorize()
     {
-        if (!\App\Utils\Ninja::isSelfHost()) {
+        if (!Ninja::isSelfHost()) {
             return false;
         }
 
         try {
-            return !Schema::hasTable('accounts') || \App\Models\Account::count() == 0;
+            return !Schema::hasTable('accounts') || Account::count() == 0;
         } catch (\Throwable $e) {
             // If database connection fails, allow the request (we're checking the DB)
             return true;

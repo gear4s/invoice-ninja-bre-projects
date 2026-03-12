@@ -6,17 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Client;
 
+use App\Events\Client\ClientWasMerged;
 use App\Factory\CompanyLedgerFactory;
 use App\Models\Activity;
 use App\Models\Client;
 use App\Models\CompanyLedger;
 use App\Services\AbstractService;
+use App\Utils\Ninja;
 
 class Merge extends AbstractService
 {
@@ -45,7 +46,7 @@ class Merge extends AbstractService
         nlog("balance post {$this->client->balance}");
         nlog("paid_to_date post {$this->client->paid_to_date}");
 
-        $event_vars = \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
+        $event_vars = Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
         $event_vars['client_hash'] = $this->mergable_client->client_hash;
 
         $this->updateLedger($this->mergable_client->balance);
@@ -76,13 +77,12 @@ class Merge extends AbstractService
             }
         });
 
-
         $this->mergable_client->forceDelete();
 
         $this->client->credit_balance = $this->client->service()->getCreditBalance();
         $this->client->saveQuietly();
 
-        event(new \App\Events\Client\ClientWasMerged($mergeable_client, $this->client, $this->client->company, $event_vars));
+        event(new ClientWasMerged($mergeable_client, $this->client, $this->client->company, $event_vars));
 
         return $this->client;
     }
@@ -92,8 +92,8 @@ class Merge extends AbstractService
         $balance = 0;
 
         $company_ledger = CompanyLedger::query()->whereClientId($this->client->id)
-                                ->orderBy('id', 'DESC')
-                                ->first();
+            ->orderBy('id', 'DESC')
+            ->first();
 
         if ($company_ledger) {
             $balance = $company_ledger->balance;

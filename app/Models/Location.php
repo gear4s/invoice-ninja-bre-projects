@@ -6,15 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Models\Traits\Excludable;
-use Illuminate\Support\Facades\App;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\App;
 
 /**
  * App\Models\Location
@@ -42,19 +41,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $deleted_at
  * @property object|array|null $tax_data
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Vendor|null $vendor
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\Country|null $country
+ * @property-read User $user
+ * @property-read Client|null $client
+ * @property-read Vendor|null $vendor
+ * @property-read Company $company
+ * @property-read Country|null $country
  *
  * @mixin \Eloquent
  */
 class Location extends BaseModel
 {
-    use SoftDeletes;
-    use Filterable;
     use Excludable;
+    use Filterable;
+    use SoftDeletes;
 
     protected $hidden = [
         'id',
@@ -100,6 +99,7 @@ class Location extends BaseModel
     {
         return $this->belongsTo(User::class);
     }
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
@@ -119,5 +119,4 @@ class Location extends BaseModel
     {
         return self::class;
     }
-
 }

@@ -6,32 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Blockonomics;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentType;
-use App\Models\PaymentHash;
-use App\Models\Invoice;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use App\Utils\BcMath;
 use App\Exceptions\PaymentFailed;
-use Illuminate\Support\Facades\Http;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 use App\Jobs\Mail\PaymentFailureMailer;
-use App\PaymentDrivers\Common\MethodInterface;
+use App\Jobs\Util\SystemLogger;
+use App\Models\GatewayType;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\PaymentType;
+use App\Models\SystemLog;
 use App\PaymentDrivers\BlockonomicsPaymentDriver;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Utils\BcMath;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Http;
 
 class Blockonomics implements LivewireMethodInterface
 {
     use MakesHash;
+
     private string $test_txid = 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction';
 
     public function __construct(public BlockonomicsPaymentDriver $blockonomics) {}
@@ -41,7 +40,6 @@ class Blockonomics implements LivewireMethodInterface
     public function authorizeRequest($request) {}
 
     public function authorizeResponse($request) {}
-
 
     public function getBTCAddress(): array
     {
@@ -55,13 +53,13 @@ class Blockonomics implements LivewireMethodInterface
         $url = 'https://www.blockonomics.co/api/new_address?match_callback=' . $company_key;
 
         $response = Http::withToken($api_key)
-                        ->post($url, []);
+            ->post($url, []);
 
         nlog($response->body());
 
         if ($response->status() == 401) {
             return ['success' => false, 'message' => 'API Key is incorrect'];
-        };
+        }
 
         if ($response->successful()) {
             if (isset($response->object()->address)) {
@@ -119,7 +117,6 @@ class Blockonomics implements LivewireMethodInterface
 
         return render('gateways.blockonomics.pay', $data);
     }
-
 
     public function paymentResponse(PaymentResponseRequest $request)
     {
@@ -265,9 +262,7 @@ class Blockonomics implements LivewireMethodInterface
         $this->blockonomics->payment_hash->data = $payment_hash_data;
         $this->blockonomics->payment_hash->save();
     }
+
     // Not supported yet
-    public function refund(Payment $payment, $amount)
-    {
-        return;
-    }
+    public function refund(Payment $payment, $amount) {}
 }

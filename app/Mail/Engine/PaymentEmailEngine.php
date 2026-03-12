@@ -6,26 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Mail\Engine;
 
+use App\DataMapper\EmailTemplateDefaults;
+use App\Jobs\Entity\CreateRawPdf;
+use App\Models\Account;
+use App\Models\Design;
+use App\Models\Payment;
+use App\Services\Template\TemplateAction;
+use App\Utils\Helpers;
 use App\Utils\Ninja;
 use App\Utils\Number;
-use App\Utils\Helpers;
-use App\Models\Account;
-use App\Models\Payment;
-use Illuminate\Support\Str;
-use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\MakesDates;
-use App\Jobs\Entity\CreateRawPdf;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Cache;
-use App\DataMapper\EmailTemplateDefaults;
-use App\Services\Template\TemplateAction;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class PaymentEmailEngine extends BaseEmailEngine
 {
@@ -34,7 +34,7 @@ class PaymentEmailEngine extends BaseEmailEngine
 
     public $client;
 
-    /** @var \App\Models\Payment $payment */
+    /** @var Payment */
     public $payment;
 
     public $template_data;
@@ -62,7 +62,7 @@ class PaymentEmailEngine extends BaseEmailEngine
         $this->contact->load('client.company');
         $this->settings = $this->client->getMergedSettings();
         $this->template_data = $template_data;
-        $this->helpers = new Helpers();
+        $this->helpers = new Helpers;
     }
 
     public function build()
@@ -104,7 +104,7 @@ class PaymentEmailEngine extends BaseEmailEngine
 
             $template_in_use = false;
 
-            if ($this->is_refund && \App\Models\Design::where('id', $this->decodePrimaryKey($this->payment->client->getSetting('payment_refund_design_id')))->where('is_template', true)->exists()) {
+            if ($this->is_refund && Design::where('id', $this->decodePrimaryKey($this->payment->client->getSetting('payment_refund_design_id')))->where('is_template', true)->exists()) {
                 $pdf = (new TemplateAction(
                     [$this->payment->hashed_id],
                     $this->payment->client->getSetting('payment_refund_design_id'),
@@ -116,12 +116,12 @@ class PaymentEmailEngine extends BaseEmailEngine
                     false
                 ))->handle();
 
-                $file_name = ctrans('texts.payment_refund_receipt', ['number' => $this->payment->number ]) . '.pdf';
+                $file_name = ctrans('texts.payment_refund_receipt', ['number' => $this->payment->number]) . '.pdf';
                 $file_name = str_replace(' ', '_', $file_name);
                 $this->setAttachments([['file' => base64_encode($pdf), 'name' => $file_name]]);
                 $template_in_use = true;
 
-            } elseif (!$this->is_refund && \App\Models\Design::where('id', $this->decodePrimaryKey($this->payment->client->getSetting('payment_receipt_design_id')))->where('is_template', true)->exists()) {
+            } elseif (!$this->is_refund && Design::where('id', $this->decodePrimaryKey($this->payment->client->getSetting('payment_receipt_design_id')))->where('is_template', true)->exists()) {
                 $pdf = (new TemplateAction(
                     [$this->payment->hashed_id],
                     $this->payment->client->getSetting('payment_receipt_design_id'),
@@ -133,7 +133,7 @@ class PaymentEmailEngine extends BaseEmailEngine
                     false
                 ))->handle();
 
-                $file_name = ctrans('texts.payment_receipt', ['number' => $this->payment->number ]) . '.pdf';
+                $file_name = ctrans('texts.payment_receipt', ['number' => $this->payment->number]) . '.pdf';
                 $file_name = str_replace(' ', '_', $file_name);
                 $this->setAttachments([['file' => base64_encode($pdf), 'name' => $file_name]]);
                 $template_in_use = true;
@@ -148,7 +148,7 @@ class PaymentEmailEngine extends BaseEmailEngine
                     $this->setAttachments([['file' => base64_encode($pdf), 'name' => $file_name]]);
                 }
 
-                //attach invoice documents also to payments
+                // attach invoice documents also to payments
                 if ($this->client->getSetting('document_email_attachment') !== false) {
                     $invoice->documents()->where('is_public', true)->cursor()->each(function ($document) {
                         if ($document->size > $this->max_attachment_size) {
@@ -156,9 +156,9 @@ class PaymentEmailEngine extends BaseEmailEngine
                             $hash = Str::random(64);
                             Cache::put($hash, ['db' => $this->payment->company->db, 'doc_hash' => $document->hash], now()->addDays(7));
 
-                            $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . "</a>"]);
+                            $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . '</a>']);
                         } else {
-                            $this->setAttachments([['path' => $document->filePath(), 'name' => $document->name, 'mime' => null, ]]);
+                            $this->setAttachments([['path' => $document->filePath(), 'name' => $document->name, 'mime' => null]]);
                         }
                     });
                 }
@@ -290,7 +290,7 @@ class PaymentEmailEngine extends BaseEmailEngine
         $data['$company.city'] = ['value' => $this->settings->city ?: '&nbsp;', 'label' => ctrans('texts.city')];
         $data['$company.state'] = ['value' => $this->settings->state ?: '&nbsp;', 'label' => ctrans('texts.state')];
         $data['$company.postal_code'] = ['value' => $this->settings->postal_code ?: '&nbsp;', 'label' => ctrans('texts.postal_code')];
-        //$data['$company.country'] = ['value' => $this->getCountryName(), 'label' => ctrans('texts.country')];
+        // $data['$company.country'] = ['value' => $this->getCountryName(), 'label' => ctrans('texts.country')];
         $data['$company.phone'] = ['value' => $this->settings->phone ?: '&nbsp;', 'label' => ctrans('texts.phone')];
         $data['$company.email'] = ['value' => $this->settings->email ?: '&nbsp;', 'label' => ctrans('texts.email')];
         $data['$company.vat_number'] = ['value' => $this->settings->vat_number ?: '&nbsp;', 'label' => ctrans('texts.vat_number')];
@@ -312,7 +312,7 @@ class PaymentEmailEngine extends BaseEmailEngine
         $data['$viewButton'] = &$data['$view_link'];
         $data['$viewLink'] = &$data['$view_link'];
         $data['$paymentLink'] = &$data['$view_link'];
-        $data['$portalButton'] = ['value' =>  $this->buildViewButton($this->payment->getPortalLink(), ctrans('texts.login')), 'label' => ''];
+        $data['$portalButton'] = ['value' => $this->buildViewButton($this->payment->getPortalLink(), ctrans('texts.login')), 'label' => ''];
         $data['$portal_url'] = &$data['$portalButton'];
 
         $data['$view_url'] = ['value' => $this->payment->getLink(), 'label' => ctrans('texts.view_payment')];
@@ -337,7 +337,6 @@ class PaymentEmailEngine extends BaseEmailEngine
         } else {
             $data['$status_logo'] = ['value' => '', 'label' => ''];
         }
-
 
         $arrKeysLength = array_map('strlen', array_keys($data));
         array_multisort($arrKeysLength, SORT_DESC, $data);
@@ -416,7 +415,6 @@ class PaymentEmailEngine extends BaseEmailEngine
             $invoice_list = Number::formatMoney($this->payment->amount, $this->client) ?: '&nbsp;';
         }
 
-
         return $invoice_list;
 
     }
@@ -461,8 +459,6 @@ class PaymentEmailEngine extends BaseEmailEngine
 
     /**
      * generateLabelsAndValues
-     *
-     * @return array
      */
     public function generateLabelsAndValues(): array
     {
@@ -480,17 +476,12 @@ class PaymentEmailEngine extends BaseEmailEngine
 
     /**
      * buildViewButton
-     *
-     * @param  string $link
-     * @param  string $text
-     * @return string
      */
     private function buildViewButton(string $link, string $text): string
     {
         if ($this->settings->email_style == 'plain') {
             return '<a href="' . $link . '" target="_blank">' . $text . '</a>';
         }
-
 
         return '
 <div>
@@ -516,7 +507,6 @@ class PaymentEmailEngine extends BaseEmailEngine
 <![endif]-->
 </div>
         ';
-
 
     }
 }

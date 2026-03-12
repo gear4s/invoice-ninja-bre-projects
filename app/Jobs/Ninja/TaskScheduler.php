@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,7 +20,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Auth;
 
-//@rebuild it
+// @rebuild it
 class TaskScheduler implements ShouldQueue
 {
     use Dispatchable;
@@ -47,7 +46,7 @@ class TaskScheduler implements ShouldQueue
     {
         Auth::logout();
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             Scheduler::with('company')
                 ->where('is_paused', false)
                 ->where('is_deleted', false)
@@ -59,7 +58,7 @@ class TaskScheduler implements ShouldQueue
                     nlog("Doing job ::{$scheduler->id}:: {$scheduler->name}");
 
                     try {
-                        //@var \App\Models\Schedule $scheduler
+                        // @var \App\Models\Schedule $scheduler
                         $scheduler->service()->runTask();
                     } catch (\Throwable $e) {
 
@@ -71,7 +70,6 @@ class TaskScheduler implements ShouldQueue
                     }
 
                 });
-
 
             return;
         }
@@ -90,16 +88,14 @@ class TaskScheduler implements ShouldQueue
                     nlog("Doing job ::{$scheduler->id}:: {$scheduler->name}");
 
                     try {
-                        /** @var \App\Models\Scheduler $scheduler */
+                        /** @var Scheduler $scheduler */
                         $scheduler->service()->runTask();
                     } catch (\Throwable $e) {
                         nlog("Exception:: TaskScheduler:: #{$scheduler->id}::" . $e->getMessage());
                         nlog($e->getMessage());
                     }
 
-
                 });
         }
     }
-
 }

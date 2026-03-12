@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,8 +13,9 @@ namespace App\Services\Chart;
 
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\Currency;
 use App\Models\Expense;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 
 class ChartServiceLegacy
 {
@@ -44,7 +44,7 @@ class ChartServiceLegacy
         /* Push the company currency on also */
         $currencies->push((int) $this->company->settings->currency_id);
 
-        /* Add our expense currencies*/
+        /* Add our expense currencies */
         $expense_currencies = Expense::withTrashed()
             ->where('company_id', $this->company->id)
             ->where('is_deleted', 0)
@@ -54,8 +54,7 @@ class ChartServiceLegacy
         /* Merge and filter by unique */
         $currencies = $currencies->merge($expense_currencies)->unique();
 
-
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $cache_currencies = app('currencies');
 
         $filtered_currencies = $cache_currencies->whereIn('id', $currencies)->all();
@@ -100,9 +99,9 @@ class ChartServiceLegacy
             $outstanding = $this->getOutstanding($start_date, $end_date);
             $expenses = $this->getExpenses($start_date, $end_date);
 
-            $data[$key]['revenue'] = count($revenue) > 0 ? $revenue[array_search($key, array_column($revenue, 'currency_id'))] : new \stdClass();
-            $data[$key]['outstanding'] = count($outstanding) > 0 ? $outstanding[array_search($key, array_column($outstanding, 'currency_id'))] : new \stdClass();
-            $data[$key]['expenses'] = count($expenses) > 0 ? $expenses[array_search($key, array_column($expenses, 'currency_id'))] : new \stdClass();
+            $data[$key]['revenue'] = count($revenue) > 0 ? $revenue[array_search($key, array_column($revenue, 'currency_id'))] : new \stdClass;
+            $data[$key]['outstanding'] = count($outstanding) > 0 ? $outstanding[array_search($key, array_column($outstanding, 'currency_id'))] : new \stdClass;
+            $data[$key]['expenses'] = count($expenses) > 0 ? $expenses[array_search($key, array_column($expenses, 'currency_id'))] : new \stdClass;
         }
 
         return $data;
@@ -139,7 +138,7 @@ class ChartServiceLegacy
     private function addCurrencyCodes($data_set): array
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         foreach ($data_set as $key => $value) {

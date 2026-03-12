@@ -6,47 +6,50 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Utils\Ninja;
-use App\Models\Account;
-use App\Models\Expense;
-use Illuminate\Http\Response;
-use App\Factory\ExpenseFactory;
-use App\Filters\ExpenseFilters;
-use App\Utils\Traits\MakesHash;
-use App\Utils\Traits\Uploadable;
-use App\Utils\Traits\BulkOptions;
-use App\Utils\Traits\SavesDocuments;
-use App\Jobs\EDocument\ImportEDocument;
-use App\Repositories\ExpenseRepository;
-use App\Transformers\ExpenseTransformer;
 use App\Events\Expense\ExpenseWasCreated;
 use App\Events\Expense\ExpenseWasUpdated;
-use App\Services\Template\TemplateAction;
-use App\Http\Requests\Expense\EDocumentRequest;
+use App\Factory\ExpenseFactory;
+use App\Filters\ExpenseFilters;
 use App\Http\Requests\Expense\BulkExpenseRequest;
+use App\Http\Requests\Expense\CreateExpenseRequest;
+use App\Http\Requests\Expense\DestroyExpenseRequest;
 use App\Http\Requests\Expense\EditExpenseRequest;
+use App\Http\Requests\Expense\EDocumentRequest;
 use App\Http\Requests\Expense\ShowExpenseRequest;
 use App\Http\Requests\Expense\StoreExpenseRequest;
-use App\Http\Requests\Expense\CreateExpenseRequest;
 use App\Http\Requests\Expense\UpdateExpenseRequest;
 use App\Http\Requests\Expense\UploadExpenseRequest;
-use App\Http\Requests\Expense\DestroyExpenseRequest;
+use App\Jobs\EDocument\ImportEDocument;
+use App\Models\Account;
+use App\Models\Expense;
+use App\Models\User;
+use App\Repositories\ExpenseRepository;
+use App\Services\Template\TemplateAction;
+use App\Transformers\ExpenseTransformer;
+use App\Utils\Ninja;
+use App\Utils\Traits\BulkOptions;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\SavesDocuments;
+use App\Utils\Traits\Uploadable;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 /**
  * Class ExpenseController.
  */
 class ExpenseController extends BaseController
 {
-    use MakesHash;
-    use Uploadable;
     use BulkOptions;
+    use MakesHash;
     use SavesDocuments;
+    use Uploadable;
 
     protected $entity_type = Expense::class;
 
@@ -59,7 +62,6 @@ class ExpenseController extends BaseController
 
     /**
      * ExpenseController constructor.
-     * @param ExpenseRepository $expense_repo
      */
     public function __construct(ExpenseRepository $expense_repo)
     {
@@ -77,31 +79,39 @@ class ExpenseController extends BaseController
      *      description="Lists expenses, search and filters allow fine grained lists to be generated.
 
      *      Query parameters can be added to performed more fine grained filtering of the expenses, these are handled by the ExpenseFilters class which defines the methods available",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of expenses",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param ExpenseFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function index(ExpenseFilters $filters)
     {
@@ -113,10 +123,7 @@ class ExpenseController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowExpenseRequest $request
-     * @param Expense $expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/expenses/{id}",
@@ -124,6 +131,7 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Shows a client",
      *      description="Displays a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -133,28 +141,36 @@ class ExpenseController extends BaseController
      *          description="The Expense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the expense object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -167,10 +183,7 @@ class ExpenseController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditExpenseRequest $request
-     * @param Expense $expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/expenses/{id}/edit",
@@ -178,6 +191,7 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Shows a client for editting",
      *      description="Displays a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -187,28 +201,36 @@ class ExpenseController extends BaseController
      *          description="The Expense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -221,11 +243,7 @@ class ExpenseController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateExpenseRequest $request
-     * @param Expense $expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/expenses/{id}",
@@ -233,6 +251,7 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Updates a client",
      *      description="Handles the updating of a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -242,28 +261,36 @@ class ExpenseController extends BaseController
      *          description="The Expense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -288,10 +315,7 @@ class ExpenseController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateExpenseRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/expenses/create",
@@ -299,33 +323,41 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Gets a new blank client object",
      *      description="Returns a blank object with default values",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A blank client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function create(CreateExpenseRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $expense = ExpenseFactory::create($user->company()->id, $user->id);
@@ -337,10 +369,7 @@ class ExpenseController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreExpenseRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/expenses",
@@ -348,33 +377,41 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Adds a client",
      *      description="Adds an client to a company",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function store(StoreExpenseRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $expense = $this->expense_repo->save($request->all(), ExpenseFactory::create($user->company()->id, $user->id));
@@ -389,18 +426,17 @@ class ExpenseController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyExpenseRequest $request
-     * @param Expense $expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @throws \Exception
+     *
      * @OA\Delete(
      *      path="/api/v1/expenses/{id}",
      *      operationId="deleteExpense",
      *      tags={"expenses"},
      *      summary="Deletes a client",
      *      description="Handles the deletion of a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -410,27 +446,34 @@ class ExpenseController extends BaseController
      *          description="The Expense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -445,8 +488,7 @@ class ExpenseController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/expenses/bulk",
@@ -454,16 +496,21 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Performs bulk actions on an array of expenses",
      *      description="",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\RequestBody(
      *         description="User credentials",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="integer",
      *                     description="Array of hashed IDs to be bulk 'actioned",
@@ -472,36 +519,43 @@ class ExpenseController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The Expense User response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function bulk(BulkExpenseRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $expenses = Expense::withTrashed()->find($request->ids);
 
         if ($request->action == 'template' && $user->can('view', $expenses->first())) {
 
-            $hash_or_response = $request->boolean('send_email') ? 'email sent' : \Illuminate\Support\Str::uuid();
+            $hash_or_response = $request->boolean('send_email') ? 'email sent' : Str::uuid();
 
             TemplateAction::dispatch(
                 $expenses->pluck('hashed_id')->toArray(),
@@ -517,12 +571,11 @@ class ExpenseController extends BaseController
             return response()->json(['message' => $hash_or_response], 200);
         }
 
-
         if ($request->action == 'bulk_update' && $user->can('edit', $expenses->first())) {
 
             $expenses = Expense::withTrashed()
-                    ->company()
-                    ->whereIn('id', $request->ids);
+                ->company()
+                ->whereIn('id', $request->ids);
 
             $this->expense_repo->bulkUpdate($expenses, $request->column, $request->new_value);
 
@@ -531,7 +584,7 @@ class ExpenseController extends BaseController
         }
 
         if ($request->action == 'bulk_categorize' && $user->can('edit', $expenses->first())) {
-            $this->expense_repo->categorize($expenses, $request->category_id); //@phpstan-ignore-line
+            $this->expense_repo->categorize($expenses, $request->category_id); // @phpstan-ignore-line
             $expenses = collect([]);
         }
 
@@ -551,17 +604,13 @@ class ExpenseController extends BaseController
      */
     public function statement()
     {
-        //todo
+        // todo
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param UploadExpenseRequest $request
-     * @param Expense $expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/expenses/{id}/upload",
@@ -569,6 +618,7 @@ class ExpenseController extends BaseController
      *      tags={"expense"},
      *      summary="Uploads a document to a expense",
      *      description="Handles the uploading of a document to a expense",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -578,28 +628,36 @@ class ExpenseController extends BaseController
      *          description="The Expense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the Expense object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Expense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -624,16 +682,21 @@ class ExpenseController extends BaseController
      *      tags={"expenses"},
      *      summary="Uploads an electronic document to a expense",
      *      description="Handles the uploading of an electronic document to a expense",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\RequestBody(
      *         description="User credentials",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="string",
      *                     format="binary",
@@ -642,23 +705,29 @@ class ExpenseController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -667,15 +736,15 @@ class ExpenseController extends BaseController
     {
         $user = auth()->user();
 
-        //Handle single - or - array of uploaded files
-        $files = $request->file('documents') instanceof \Illuminate\Http\UploadedFile ? [$request->file('documents')] : (array) $request->file('documents');
+        // Handle single - or - array of uploaded files
+        $files = $request->file('documents') instanceof UploadedFile ? [$request->file('documents')] : (array) $request->file('documents');
 
         foreach ($files as $file) {
             $extension = $file->getClientOriginalExtension();
 
             $parsed_filename = sprintf(
                 '%s.%s',
-                \Illuminate\Support\Str::random(32),
+                Str::random(32),
                 preg_replace('/[^a-zA-Z0-9]/', '', $extension) // Sanitize extension
             );
 

@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Utils\Traits\Inviteable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -36,14 +36,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property boolean $can_sign
+ * @property bool $can_sign
  * @property string|null $signature_ip
  * @property string|null $email_status
- * @property \App\Models\Company $company
- * @property \App\Models\ClientContact $contact
+ * @property Company $company
+ * @property ClientContact $contact
  * @property mixed $hashed_id
- * @property \App\Models\Quote $quote
- * @property \App\Models\User $user
+ * @property Quote $quote
+ * @property User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\QuoteInvitationFactory factory($count = null, $state = [])
@@ -54,6 +55,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|QuoteInvitation withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|QuoteInvitation withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class QuoteInvitation extends BaseModel
@@ -88,49 +90,34 @@ class QuoteInvitation extends BaseModel
         return Quote::class;
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function quote(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function quote(): BelongsTo
     {
         return $this->belongsTo(Quote::class)->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function entity(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function entity(): BelongsTo
     {
         return $this->belongsTo(Quote::class)->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientContact::class, 'client_contact_id', 'id')->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
     public function signatureDiv()
     {
-        if (! $this->signature_base64) {
+        if (!$this->signature_base64) {
             return false;
         }
 
@@ -143,5 +130,4 @@ class QuoteInvitation extends BaseModel
         $this->quote->last_viewed = Carbon::now();
         $this->save();
     }
-
 }

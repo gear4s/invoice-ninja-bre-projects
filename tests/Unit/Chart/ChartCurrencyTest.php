@@ -6,33 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\Chart;
 
-use Tests\TestCase;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Currency;
-use Tests\MockAccountData;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
-use App\Services\Chart\ChartService;
+use App\Models\Client;
+use App\Models\Company;
+use App\Models\Currency;
+use App\Models\Expense;
+use App\Models\Invoice;
 use App\Repositories\InvoiceRepository;
+use App\Services\Chart\ChartService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *   App\Services\Chart\ChartService
  */
 class ChartCurrencyTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -40,7 +39,7 @@ class ChartCurrencyTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testAggregateRevenues()
+    public function test_aggregate_revenues()
     {
 
         $settings = CompanySettings::defaults();
@@ -67,7 +66,7 @@ class ChartCurrencyTest extends TestCase
         ]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '1'; //USD
+        $settings->currency_id = '1'; // USD
 
         $usd = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -81,7 +80,7 @@ class ChartCurrencyTest extends TestCase
         Currency::query()->where('id', 2)->update(['exchange_rate' => 0.5]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '2'; //GBP
+        $settings->currency_id = '2'; // GBP
 
         $gbp = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -106,7 +105,7 @@ class ChartCurrencyTest extends TestCase
                     'product_key' => 'product_1',
                     'quantity' => 1,
                     'cost' => 100,
-                ]
+                ],
             ],
             'tax_rate1' => 0,
             'tax_rate2' => 0,
@@ -129,7 +128,7 @@ class ChartCurrencyTest extends TestCase
                     'product_key' => 'product_1',
                     'quantity' => 1,
                     'cost' => 100,
-                ]
+                ],
             ],
             'tax_rate1' => 0,
             'tax_rate2' => 0,
@@ -137,7 +136,7 @@ class ChartCurrencyTest extends TestCase
             'discount' => 0,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $i1 = $repo->save([], $i1);
         $i2 = $repo->save([], $i2);
 
@@ -165,9 +164,7 @@ class ChartCurrencyTest extends TestCase
         $gbp->forceDelete();
     }
 
-
-
-    public function testAggregateOutstanding()
+    public function test_aggregate_outstanding()
     {
 
         $settings = CompanySettings::defaults();
@@ -194,7 +191,7 @@ class ChartCurrencyTest extends TestCase
         ]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '1'; //USD
+        $settings->currency_id = '1'; // USD
 
         $usd = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -206,14 +203,13 @@ class ChartCurrencyTest extends TestCase
         Currency::query()->where('id', 2)->update(['exchange_rate' => 0.5]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '2'; //GBP
+        $settings->currency_id = '2'; // GBP
 
         $gbp = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $company->id,
             'settings' => $settings,
         ]);
-
 
         $i1 = Invoice::factory()->create([
             'client_id' => $usd->id,
@@ -224,9 +220,8 @@ class ChartCurrencyTest extends TestCase
             'paid_to_date' => 0,
             'status_id' => 2,
             'date' => now(),
-            'due_date' => now()
+            'due_date' => now(),
         ]);
-
 
         $i1_overdue = Invoice::factory()->create([
             'client_id' => $usd->id,
@@ -237,9 +232,8 @@ class ChartCurrencyTest extends TestCase
             'paid_to_date' => 0,
             'status_id' => 2,
             'date' => now(),
-            'due_date' => now()->subDays(10)
+            'due_date' => now()->subDays(10),
         ]);
-
 
         $i2 = Invoice::factory()->create([
             'client_id' => $gbp->id,
@@ -250,21 +244,20 @@ class ChartCurrencyTest extends TestCase
             'paid_to_date' => 0,
             'status_id' => 2,
             'date' => now(),
-            'due_date' => now()
+            'due_date' => now(),
         ]);
 
-
         $i2_overdue = Invoice::factory()->create([
-           'client_id' => $gbp->id,
-           'user_id' => $this->user->id,
-           'company_id' => $company->id,
-           'amount' => 100,
-           'balance' => 100,
-           'paid_to_date' => 0,
-           'status_id' => 2,
-           'date' => now(),
-           'due_date' => now()->subDays(10)
-       ]);
+            'client_id' => $gbp->id,
+            'user_id' => $this->user->id,
+            'company_id' => $company->id,
+            'amount' => 100,
+            'balance' => 100,
+            'paid_to_date' => 0,
+            'status_id' => 2,
+            'date' => now(),
+            'due_date' => now()->subDays(10),
+        ]);
 
         $i1->service()->markPaid()->save();
         $i2->service()->markPaid()->save();
@@ -292,10 +285,7 @@ class ChartCurrencyTest extends TestCase
         $gbp->forceDelete();
     }
 
-
-
-
-    public function testAggregateExpenses()
+    public function test_aggregate_expenses()
     {
 
         $settings = CompanySettings::defaults();
@@ -322,7 +312,7 @@ class ChartCurrencyTest extends TestCase
         ]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '1'; //USD
+        $settings->currency_id = '1'; // USD
 
         $usd = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -334,7 +324,7 @@ class ChartCurrencyTest extends TestCase
         Currency::query()->where('id', 2)->update(['exchange_rate' => 0.5]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '2'; //GBP
+        $settings->currency_id = '2'; // GBP
 
         $gbp = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -355,7 +345,6 @@ class ChartCurrencyTest extends TestCase
             'client_id' => $usd->id,
             'amount' => 100,
         ]);
-
 
         $cs = new ChartService($company, $this->user, true);
         $results = $cs->totals('1970-01-01', '2050-01-01');
@@ -380,9 +369,7 @@ class ChartCurrencyTest extends TestCase
         $gbp->forceDelete();
     }
 
-
-
-    public function testRevenueValues()
+    public function test_revenue_values()
     {
         Invoice::factory()->create([
             'client_id' => $this->client->id,
@@ -415,10 +402,10 @@ class ChartCurrencyTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testgetCurrencyCodes()
+    public function testget_currency_codes()
     {
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '1'; //USD
+        $settings->currency_id = '1'; // USD
 
         Client::factory()->create([
             'user_id' => $this->user->id,
@@ -427,7 +414,7 @@ class ChartCurrencyTest extends TestCase
         ]);
 
         $settings = ClientSettings::defaults();
-        $settings->currency_id = '2'; //GBP
+        $settings->currency_id = '2'; // GBP
 
         Client::factory()->create([
             'user_id' => $this->user->id,
@@ -444,7 +431,7 @@ class ChartCurrencyTest extends TestCase
         $this->assertFalse(in_array('AUD', $cs->getCurrencyCodes()));
     }
 
-    public function testGetChartTotalsApi()
+    public function test_get_chart_totals_api()
     {
         $data = [
             'start_date' => now()->subDays(30)->format('Y-m-d'),
@@ -459,7 +446,7 @@ class ChartCurrencyTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testClientServiceDataSetBuild()
+    public function test_client_service_data_set_build()
     {
         $haystack = [
             [
@@ -488,7 +475,7 @@ class ChartCurrencyTest extends TestCase
     }
 
     /* coalesces the company currency with the null currencies */
-    public function testFindNullValueinArray()
+    public function test_find_null_valuein_array()
     {
         $haystack = [
             [
@@ -530,7 +517,7 @@ class ChartCurrencyTest extends TestCase
         $this->assertEquals($haystack[$c_key]['amount'], 21);
     }
 
-    public function testCollectionMerging()
+    public function test_collection_merging()
     {
         $currencies = collect([1, 2, 3, 4, 5, 6]);
 

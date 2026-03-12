@@ -6,17 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
 use App\Models\Invoice;
+use App\Services\Quickbooks\QuickbooksService;
 
 /**
  * Class InvoiceTransformer.
- *
  */
 class InvoiceTransformer extends BaseTransformer
 {
@@ -25,11 +24,9 @@ class InvoiceTransformer extends BaseTransformer
      *
      * Transforms a QB invoice to a Invoice Ninja Invoice
      *
-     * @param  mixed $qb_data
-     * @param  \App\Services\Quickbooks\QuickbooksService|null $qb_service
      * @return array
      */
-    public function qbToNinja(mixed $qb_data, ?\App\Services\Quickbooks\QuickbooksService $qb_service = null)
+    public function qbToNinja(mixed $qb_data, ?QuickbooksService $qb_service = null)
     {
         return $this->transform($qb_data, $qb_service);
     }
@@ -38,12 +35,8 @@ class InvoiceTransformer extends BaseTransformer
      * ninjaToQb
      *
      * Transforms a Invoice Ninja Invoice to a QB invoice
-     *
-     * @param  \App\Models\Invoice $invoice
-     * @param  \App\Services\Quickbooks\QuickbooksService $qb_service
-     * @return array
      */
-    public function ninjaToQb(Invoice $invoice, \App\Services\Quickbooks\QuickbooksService $qb_service): array
+    public function ninjaToQb(Invoice $invoice, QuickbooksService $qb_service): array
     {
         // Get client's QuickBooks ID (business logic handled by caller - QbInvoice)
         $client_qb_id = $invoice->client->sync->qb_id ?? null;
@@ -255,15 +248,14 @@ class InvoiceTransformer extends BaseTransformer
         return $invoice_data;
     }
 
-
     /**
      * Resolve the TaxCodeRef for a single line item by matching its tax name/rate
      * to the tax_rate_map (which includes tax_code_id from SalesTaxRateList).
      *
-     * @param  object $line_item The invoice line item
-     * @param  array $tax_rate_map The tax rate map with tax_code_id entries
-     * @param  string $taxable_code Default taxable TaxCode ID
-     * @param  string $exempt_code Default exempt TaxCode ID
+     * @param  object  $line_item  The invoice line item
+     * @param  array  $tax_rate_map  The tax rate map with tax_code_id entries
+     * @param  string  $taxable_code  Default taxable TaxCode ID
+     * @param  string  $exempt_code  Default exempt TaxCode ID
      * @return string The resolved TaxCode ID
      */
     private function resolveLineTaxCode(object $line_item, array $tax_rate_map, string $taxable_code, string $exempt_code): string
@@ -316,13 +308,11 @@ class InvoiceTransformer extends BaseTransformer
      * Build TxnTaxDetail for invoice-level tax calculation.
      * This handles total taxes applied to the invoice.
      *
-     * @param \App\Models\Invoice $invoice
-     * @param float $total_taxes The total tax amount
-     * @param float $taxable_amount The taxable amount (subtotal - discount + surcharges)
-     * @param \App\Services\Quickbooks\QuickbooksService $qb_service
+     * @param  float  $total_taxes  The total tax amount
+     * @param  float  $taxable_amount  The taxable amount (subtotal - discount + surcharges)
      * @return array|null TxnTaxDetail array or null if no taxes
      */
-    private function buildTxnTaxDetail(\App\Models\Invoice $invoice, float $total_taxes, float $taxable_amount, \App\Services\Quickbooks\QuickbooksService $qb_service): ?array
+    private function buildTxnTaxDetail(Invoice $invoice, float $total_taxes, float $taxable_amount, QuickbooksService $qb_service): ?array
     {
         // Build TxnTaxDetail from LINE-ITEM taxes only (getTaxMap).
         // Invoice-level taxes (getTotalTaxMap) are never used for QB sync.
@@ -369,7 +359,6 @@ class InvoiceTransformer extends BaseTransformer
         ];
     }
 
-
     /**
      * Find a TaxCode ID from the tax rate map by matching rate and name.
      * Uses fuzzy name matching (stripos) with a rate-only fallback.
@@ -409,12 +398,8 @@ class InvoiceTransformer extends BaseTransformer
 
     /**
      * transform
-     *
-     * @param  mixed $qb_data
-     * @param  \App\Services\Quickbooks\QuickbooksService|null $qb_service
-     * @return array|bool
      */
-    public function transform(mixed $qb_data, ?\App\Services\Quickbooks\QuickbooksService $qb_service = null): array|bool
+    public function transform(mixed $qb_data, ?QuickbooksService $qb_service = null): array|bool
     {
         $client_id = $this->getClientId(data_get($qb_data, 'CustomerRef', null));
 
@@ -430,7 +415,7 @@ class InvoiceTransformer extends BaseTransformer
             'private_notes' => data_get($qb_data, 'PrivateNote', ''),
             'public_notes' => data_get($qb_data, 'CustomerMemo', false),
             'due_date' => data_get($qb_data, 'DueDate', null),
-            'po_number' => data_get($qb_data, 'PONumber', ""),
+            'po_number' => data_get($qb_data, 'PONumber', ''),
             'partial' => (float) data_get($qb_data, 'Deposit', 0),
             'line_items' => $qb_service ? $qb_service->helper->getLineItems($qb_data, $tax_array) : [],
             'payment_ids' => $qb_service ? $qb_service->helper->getPayments($qb_data) : [],
@@ -440,5 +425,4 @@ class InvoiceTransformer extends BaseTransformer
 
         ] : false;
     }
-
 }

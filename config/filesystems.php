@@ -67,7 +67,7 @@ return [
         'debian_docker' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'permissions' => [
                 'file' => [
                     'public' => 0664,
@@ -84,7 +84,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => public_path('storage'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
             'permissions' => [
                 'file' => [
@@ -152,8 +152,8 @@ return [
             'driver' => 's3',
             'key' => env('R2_ACCESS_KEY_ID_BACKUP'),
             'secret' => env('R2_SECRET_ACCESS_KEY_BACKUP'),
-            'region' => env('R2_DEFAULT_REGION_BACKUP','auto'),
-            'bucket' => env('R2_BUCKET_BACKUP','auto'),
+            'region' => env('R2_DEFAULT_REGION_BACKUP', 'auto'),
+            'bucket' => env('R2_BUCKET_BACKUP', 'auto'),
             'url' => env('R2_URL_BACKUP'),
             'visibility' => 'private',
             'endpoint' => env('R2_ENDPOINT_BACKUP'),

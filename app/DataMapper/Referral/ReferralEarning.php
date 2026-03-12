@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,6 @@ namespace App\DataMapper\Referral;
 
 class ReferralEarning
 {
-    /** @var string $version */
     public string $version = 'alpha';
 
     public string $referral_start_date = ''; // The date this referral was registered.
@@ -25,22 +23,22 @@ class ReferralEarning
 
     public string $account_key = '';
 
-    public string $payout_status = 'pending'; //pending //qualified //paidout //invalid
+    public string $payout_status = 'pending'; // pending //qualified //paidout //invalid
 
     public float $gross_amount = 0;
 
     public float $commission_amount = 0;
 
     public string $notes = '';
+
     /**
      * __construct
-     *
-     * @param mixed $entity
      */
     public function __construct(mixed $entity = null)
     {
         if (!$entity) {
             $this->init();
+
             return;
         }
 

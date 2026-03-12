@@ -6,25 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
 use App\DataMapper\ClientSettings;
+use App\Models\Client;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Validation\ValidationException;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class ClientSettingsTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,10 +30,9 @@ class ClientSettingsTest extends TestCase
         $this->makeTestData();
     }
 
-
-    public function testBadProps()
+    public function test_bad_props()
     {
-        $client = \App\Models\Client::factory()->create([
+        $client = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'settings' => ClientSettings::defaults(),
@@ -59,7 +56,7 @@ class ClientSettingsTest extends TestCase
 
     }
 
-    public function testClientValidSettingsWithBadProps()
+    public function test_client_valid_settings_with_bad_props()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -119,11 +116,10 @@ class ClientSettingsTest extends TestCase
             ],
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$client_id, $data);
+        ])->putJson('/api/v1/clients/' . $client_id, $data);
 
         $response->assertStatus(200);
 
@@ -157,7 +153,7 @@ class ClientSettingsTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$client_id, $data);
+        ])->putJson('/api/v1/clients/' . $client_id, $data);
 
         $response->assertStatus(200);
 
@@ -172,9 +168,7 @@ class ClientSettingsTest extends TestCase
         // $this->assertEquals('1', $arr['data']['settings']['valid_until']);
     }
 
-
-
-    public function testClientBaseline()
+    public function test_client_baseline()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -199,7 +193,7 @@ class ClientSettingsTest extends TestCase
         $this->assertEquals('1', $arr['data']['settings']['currency_id']);
     }
 
-    public function testClientValidSettings()
+    public function test_client_valid_settings()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -237,7 +231,7 @@ class ClientSettingsTest extends TestCase
         $this->assertEquals('1', $arr['data']['settings']['valid_until']);
     }
 
-    public function testClientIllegalCurrency()
+    public function test_client_illegal_currency()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -254,17 +248,15 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data);
 
-
         $response->assertStatus(422);
     }
 
-    public function testClientIllegalLanguage()
+    public function test_client_illegal_language()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -289,7 +281,7 @@ class ClientSettingsTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function testClientIllegalPaymenTerms()
+    public function test_client_illegal_paymen_terms()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -311,11 +303,10 @@ class ClientSettingsTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data);
 
-
         $response->assertStatus(422);
     }
 
-    public function testClientIllegalValidUntil()
+    public function test_client_illegal_valid_until()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -332,17 +323,15 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data);
 
-
         $response->assertStatus(422);
     }
 
-    public function testClientIllegalDefaultTaskRate()
+    public function test_client_illegal_default_task_rate()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -375,7 +364,7 @@ class ClientSettingsTest extends TestCase
         $this->assertFalse(array_key_exists('default_task_rate', $arr));
     }
 
-    public function testClientIllegalSendReminderBool()
+    public function test_client_illegal_send_reminder_bool()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -397,11 +386,10 @@ class ClientSettingsTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data);
 
-
         $response->assertStatus(422);
     }
 
-    public function testClientSettingBools()
+    public function test_client_setting_bools()
     {
         $data = [
             'name' => $this->faker->firstName(),

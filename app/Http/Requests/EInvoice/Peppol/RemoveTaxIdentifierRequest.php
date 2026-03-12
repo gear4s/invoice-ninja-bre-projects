@@ -6,12 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice\Peppol;
 
+use App\Models\Company;
+use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +21,7 @@ class RemoveTaxIdentifierRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if (config('ninja.app_env') == 'local') {
@@ -30,11 +32,11 @@ class RemoveTaxIdentifierRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        /** @var \App\Models\Company $company **/
+        /** @var Company $company * */
         $company = auth()->user()->company();
         $tax_data = $company->tax_data;
 
@@ -42,7 +44,7 @@ class RemoveTaxIdentifierRequest extends FormRequest
             'country' => ['required', 'bail', Rule::in(array_keys(AddTaxIdentifierRequest::$vat_regex_patterns))],
             'vat_number' => ['required', function ($attribute, $value, $fail) use ($company, $tax_data) {
                 if ($company->settings->classification == 'individual') {
-                    $fail("Individuals cannot register additional VAT numbers, only business entities");
+                    $fail('Individuals cannot register additional VAT numbers, only business entities');
                 }
 
                 $country = $this->country;

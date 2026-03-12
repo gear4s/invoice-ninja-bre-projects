@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -45,8 +44,8 @@ class PaymentRepository extends BaseRepository
     /**
      * Saves and updates a payment. //todo refactor to handle refunds and payments.
      *
-     * @param array   $data the request object
-     * @param Payment $payment The Payment object
+     * @param  array  $data  the request object
+     * @param  Payment  $payment  The Payment object
      * @return Payment|null Payment $payment
      */
     public function save(array $data, Payment $payment): ?Payment
@@ -56,20 +55,21 @@ class PaymentRepository extends BaseRepository
 
     /**
      * Handles a positive payment request.
-     * @param  array $data      The data object
-     * @param  Payment $payment The $payment entity
-     * @return Payment          The updated/created payment object
+     *
+     * @param  array  $data  The data object
+     * @param  Payment  $payment  The $payment entity
+     * @return Payment The updated/created payment object
      */
     private function applyPayment(array $data, Payment $payment): Payment
     {
         $is_existing_payment = true;
         $client = false;
 
-        //check currencies here and fill the exchange rate data if necessary
-        if (! $payment->id) {
+        // check currencies here and fill the exchange rate data if necessary
+        if (!$payment->id) {
             $payment = $this->processExchangeRates($data, $payment);
 
-            /* This is needed here otherwise the ->fill() overwrites anything that exists*/
+            /* This is needed here otherwise the ->fill() overwrites anything that exists */
             if ($payment->exchange_rate != 1) {
                 unset($data['exchange_rate']);
             }
@@ -78,7 +78,7 @@ class PaymentRepository extends BaseRepository
 
             $client = Client::query()->where('id', $data['client_id'])->withTrashed()->first();
 
-            /*We only update the paid to date ONCE per payment*/
+            /* We only update the paid to date ONCE per payment */
             if (array_key_exists('invoices', $data) && is_array($data['invoices']) && count($data['invoices']) > 0) {
                 if ($data['amount'] == '') {
                     $data['amount'] = array_sum(array_column($data['invoices'], 'amount'));
@@ -86,7 +86,7 @@ class PaymentRepository extends BaseRepository
 
                 $client->service()->updatePaidToDate($data['amount'])->save();
             } else {
-                //this fixes an edge case with unapplied payments
+                // this fixes an edge case with unapplied payments
                 $client->service()->updatePaidToDate($data['amount'])->save();
             }
 
@@ -99,7 +99,7 @@ class PaymentRepository extends BaseRepository
 
         }
 
-        /*Fill the payment*/
+        /* Fill the payment */
         $fill_data = $data;
 
         if ($this->import_mode && isset($fill_data['invoices'])) {
@@ -120,44 +120,44 @@ class PaymentRepository extends BaseRepository
 
         $payment->saveQuietly();
 
-        /*Save documents*/
+        /* Save documents */
         if (array_key_exists('documents', $data)) {
             $this->saveDocuments($data['documents'], $payment);
         }
 
-        /*Ensure payment number generated*/
-        if (! $payment->number || strlen($payment->number ?? '') == 0) { //@phpstan-ignore-line
+        /* Ensure payment number generated */
+        if (!$payment->number || strlen($payment->number ?? '') == 0) { // @phpstan-ignore-line
             $payment->service()->applyNumber();
         }
 
-        /*Set local total variables*/
+        /* Set local total variables */
         $invoice_totals = 0;
         $credit_totals = 0;
 
-        /*Iterate through invoices and apply payments*/
+        /* Iterate through invoices and apply payments */
         if (array_key_exists('invoices', $data) && is_array($data['invoices']) && count($data['invoices']) > 0) {
             $invoice_totals = array_sum(array_column($data['invoices'], 'amount'));
 
             $invoices = Invoice::withTrashed()->whereIn('id', array_column($data['invoices'], 'invoice_id'))->get();
 
-            //todo optimize this into a single query
+            // todo optimize this into a single query
             foreach ($data['invoices'] as $paid_invoice) {
                 $invoice = $invoices->firstWhere('id', $paid_invoice['invoice_id']);
 
                 if ($invoice) {
 
-                    $paymentable = new Paymentable();
+                    $paymentable = new Paymentable;
                     $paymentable->payment_id = $payment->id;
                     $paymentable->paymentable_id = $invoice->id;
                     $paymentable->paymentable_type = 'invoices';
                     $paymentable->amount = $paid_invoice['amount'];
-                    $paymentable->created_at = $is_existing_payment ? now()->setTimezone($payment->company->timezone()->name) : $payment->date ?? now()->setTimezone($payment->company->timezone()->name) ; //@phpstan-ignore-line
+                    $paymentable->created_at = $is_existing_payment ? now()->setTimezone($payment->company->timezone()->name) : $payment->date ?? now()->setTimezone($payment->company->timezone()->name); // @phpstan-ignore-line
                     $paymentable->save();
 
                     $invoice = $invoice->service()
-                                       ->markSent()
-                                       ->applyPayment($payment, $paid_invoice['amount'])
-                                       ->save();
+                        ->markSent()
+                        ->applyPayment($payment, $paid_invoice['amount'])
+                        ->save();
                 }
             }
         } else {
@@ -169,20 +169,20 @@ class PaymentRepository extends BaseRepository
 
             $credits = Credit::query()->whereIn('id', array_column($data['credits'], 'credit_id'))->get();
 
-            //todo optimize into a single query
+            // todo optimize into a single query
             foreach ($data['credits'] as $paid_credit) {
 
-                /** @var \App\Models\Credit $credit **/
+                /** @var Credit $credit * */
                 $credit = $credits->firstWhere('id', $paid_credit['credit_id']);
 
                 if ($credit) {
 
-                    $paymentable = new Paymentable();
+                    $paymentable = new Paymentable;
                     $paymentable->payment_id = $payment->id;
                     $paymentable->paymentable_id = $credit->id;
                     $paymentable->paymentable_type = Credit::class;
                     $paymentable->amount = $paid_credit['amount'];
-                    $paymentable->created_at = $is_existing_payment ? now()->setTimezone($payment->company->timezone()->name) : $payment->date ?? now()->setTimezone($payment->company->timezone()->name) ; //@phpstan-ignore-line
+                    $paymentable->created_at = $is_existing_payment ? now()->setTimezone($payment->company->timezone()->name) : $payment->date ?? now()->setTimezone($payment->company->timezone()->name); // @phpstan-ignore-line
                     $paymentable->save();
 
                     $credit = $credit->service()->markSent()->save();
@@ -191,7 +191,7 @@ class PaymentRepository extends BaseRepository
             }
         }
 
-        if (! $is_existing_payment && ! $this->import_mode) {
+        if (!$is_existing_payment && !$this->import_mode) {
             if (array_key_exists('email_receipt', $data) && $data['email_receipt'] == 'true') {
                 $payment->service()->sendEmail();
             } elseif (!array_key_exists('email_receipt', $data) && $payment->client->getSetting('client_manual_payment_notification')) {
@@ -211,8 +211,7 @@ class PaymentRepository extends BaseRepository
     /**
      * If the client is paying in a currency other than
      * the company currency, we need to set a record.
-     * @param $data
-     * @param $payment
+     *
      * @return Payment $payment
      */
     public function processExchangeRates($data, $payment)
@@ -227,7 +226,7 @@ class PaymentRepository extends BaseRepository
         $company_currency = $client->company->settings->currency_id;
 
         if ($company_currency != $client_currency) {
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $payment->exchange_rate = $exchange_rate->exchangeRate($client_currency, $company_currency, Carbon::parse($payment->date));
             $payment->exchange_currency_id = $company_currency;
@@ -243,7 +242,7 @@ class PaymentRepository extends BaseRepository
 
     public function delete($payment)
     {
-        //cannot double delete a payment
+        // cannot double delete a payment
         if ($payment->is_deleted) {
             return;
         }
@@ -259,7 +258,7 @@ class PaymentRepository extends BaseRepository
 
     public function restore($payment)
     {
-        //we cannot restore a deleted payment.
+        // we cannot restore a deleted payment.
         if ($payment->is_deleted) {
             return;
         }

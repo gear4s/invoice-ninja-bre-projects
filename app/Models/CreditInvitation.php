@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Utils\Traits\Inviteable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -36,14 +36,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property boolean $can_sign
+ * @property bool $can_sign
  * @property string|null $signature_ip
  * @property string|null $email_status
- * @property \App\Models\Company $company
- * @property \App\Models\ClientContact $contact
- * @property \App\Models\Credit $credit
+ * @property Company $company
+ * @property ClientContact $contact
+ * @property Credit $credit
  * @property mixed $hashed_id
- * @property \App\Models\User $user
+ * @property User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\CreditInvitationFactory factory($count = null, $state = [])
@@ -73,12 +74,13 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|CreditInvitation whereViewedDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CreditInvitation withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|CreditInvitation withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class CreditInvitation extends BaseModel
 {
-    use SoftDeletes;
     use Inviteable;
+    use SoftDeletes;
 
     protected $fillable = [
         'id',
@@ -107,41 +109,27 @@ class CreditInvitation extends BaseModel
         return Credit::class;
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function credit(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function credit(): BelongsTo
     {
         return $this->belongsTo(Credit::class)->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function entity(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function entity(): BelongsTo
     {
         return $this->belongsTo(Credit::class)->withTrashed();
     }
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+
+    public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientContact::class, 'client_contact_id', 'id')->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -157,5 +145,4 @@ class CreditInvitation extends BaseModel
         $this->credit->last_viewed = Carbon::now();
         $this->save();
     }
-
 }

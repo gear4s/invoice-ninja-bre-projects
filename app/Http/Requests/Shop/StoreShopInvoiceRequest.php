@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,8 +19,8 @@ use App\Utils\Traits\MakesHash;
 
 class StoreShopInvoiceRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -78,7 +77,7 @@ class StoreShopInvoiceRequest extends Request
 
         if (isset($input['client_contacts'])) {
             foreach ($input['client_contacts'] as $key => $contact) {
-                if (! array_key_exists('send_email', $contact) || ! array_key_exists('id', $contact)) {
+                if (!array_key_exists('send_email', $contact) || !array_key_exists('id', $contact)) {
                     unset($input['client_contacts'][$key]);
                 }
             }
@@ -101,7 +100,7 @@ class StoreShopInvoiceRequest extends Request
         }
 
         $input['line_items'] = isset($input['line_items']) ? $this->cleanItems($input['line_items']) : [];
-        //$input['line_items'] = json_encode($input['line_items']);
+        // $input['line_items'] = json_encode($input['line_items']);
         $this->replace($input);
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,6 +36,7 @@ class PaymentDecorator extends Decorator implements DecoratorInterface
         } elseif ($key == 'applied' && (!$entity instanceof Payment)) {
             $refunded = $entity->payments()->withoutTrashed()->sum('paymentables.refunded');
             $amount = $entity->payments()->withoutTrashed()->sum('paymentables.amount');
+
             return $entity->payments()->withoutTrashed()->exists() ? ($amount - $refunded) : '';
         }
 
@@ -68,10 +68,12 @@ class PaymentDecorator extends Decorator implements DecoratorInterface
     {
         return $payment->applied ?? '';
     }
+
     public function transaction_reference(Payment $payment)
     {
         return $payment->transaction_reference ?? '';
     }
+
     public function currency(Payment $payment)
     {
         return $payment->currency()->exists() ? $payment->currency->code : $payment->company->currency()->code;
@@ -112,7 +114,7 @@ class PaymentDecorator extends Decorator implements DecoratorInterface
         return $payment->project()->exists() ? $payment->project->name : '';
     }
 
-    ///////////////////////////////////////////////////
+    // /////////////////////////////////////////////////
 
     public function vendor_id(Payment $payment)
     {
@@ -138,5 +140,4 @@ class PaymentDecorator extends Decorator implements DecoratorInterface
     {
         return $payment->translatedType();
     }
-
 }

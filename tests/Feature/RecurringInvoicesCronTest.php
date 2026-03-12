@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Jobs\Cron\RecurringInvoicesCron
  */
 class RecurringInvoicesCronTest extends TestCase
@@ -38,9 +36,9 @@ class RecurringInvoicesCronTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testCountCorrectNumberOfRecurringInvoicesDue()
+    public function test_count_correct_number_of_recurring_invoices_due()
     {
-        //spin up 5 valid and 1 invalid recurring invoices
+        // spin up 5 valid and 1 invalid recurring invoices
         $recurring_invoices = RecurringInvoice::where('next_send_date', '<=', Carbon::now()->addMinutes(30))->get();
 
         $recurring_all = RecurringInvoice::all();

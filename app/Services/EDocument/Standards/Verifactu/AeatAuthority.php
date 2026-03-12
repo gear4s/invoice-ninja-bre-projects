@@ -6,13 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu;
 
-use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
+use App\Services\EDocument\Standards\Verifactu\Signing\SigningService;
 use Illuminate\Support\Facades\Http;
 
 class AeatAuthority
@@ -72,26 +71,26 @@ class AeatAuthority
             </soapenv:Envelope>
             XML;
 
-        $signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($xml, file_get_contents($ssl_key), file_get_contents($certificate));
+        $signingService = new SigningService($xml, file_get_contents($ssl_key), file_get_contents($certificate));
         $soapXml = $signingService->sign();
 
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
             'SOAPAction' => '',
         ])
-                ->withOptions([
-                    'cert' => $certificate,
-                    'ssl_key' => $ssl_key,
-                    'verify' => false,
-                    'timeout' => 30,
-                ])
-                ->withBody($soapXml, 'text/xml')
-                ->post($this->base_url);
+            ->withOptions([
+                'cert' => $certificate,
+                'ssl_key' => $ssl_key,
+                'verify' => false,
+                'timeout' => 30,
+            ])
+            ->withBody($soapXml, 'text/xml')
+            ->post($this->base_url);
 
         $success = $response->successful();
 
         nlog($soapXml);
-        $responseProcessor = new ResponseProcessor();
+        $responseProcessor = new ResponseProcessor;
 
         $parsedResponse = $responseProcessor->processResponse($response->body());
         nlog($response->body());

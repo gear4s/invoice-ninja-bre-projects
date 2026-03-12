@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,14 +22,14 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\TokenController
  */
 class CompanyTokenApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,7 +44,7 @@ class CompanyTokenApiTest extends TestCase
         );
     }
 
-    public function testCompanyTokenListFilter()
+    public function test_company_token_list_filter()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -58,7 +57,7 @@ class CompanyTokenApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testCompanyTokenList()
+    public function test_company_token_list()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -71,7 +70,7 @@ class CompanyTokenApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testCompanyTokenPost()
+    public function test_company_token_post()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -88,7 +87,7 @@ class CompanyTokenApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testCompanyTokenPut()
+    public function test_company_token_put()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -102,7 +101,7 @@ class CompanyTokenApiTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/tokens/'.$this->encodePrimaryKey($company_token->id), $data);
+        ])->put('/api/v1/tokens/' . $this->encodePrimaryKey($company_token->id), $data);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -110,7 +109,7 @@ class CompanyTokenApiTest extends TestCase
         $this->assertEquals('newname', $arr['data']['name']);
     }
 
-    public function testCompanyTokenGet()
+    public function test_company_token_get()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -120,12 +119,12 @@ class CompanyTokenApiTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/tokens/'.$this->encodePrimaryKey($company_token->id));
+        ])->get('/api/v1/tokens/' . $this->encodePrimaryKey($company_token->id));
 
         $response->assertStatus(200);
     }
 
-    public function testCompanyTokenNotArchived()
+    public function test_company_token_not_archived()
     {
         $this->withoutMiddleware(PasswordProtection::class);
 
@@ -135,7 +134,7 @@ class CompanyTokenApiTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/tokens/'.$this->encodePrimaryKey($company_token->id));
+        ])->get('/api/v1/tokens/' . $this->encodePrimaryKey($company_token->id));
 
         $arr = $response->json();
 

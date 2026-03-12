@@ -6,13 +6,11 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils\Traits;
 
-use App\DataMapper\EmailTemplateDefaults;
 use App\Utils\Ninja;
 use App\Utils\SystemHealth;
 use Illuminate\Support\Facades\Cache;
@@ -34,7 +32,7 @@ trait AppSetup
     /**
      * @deprecated
      *
-     * @param  mixed $force
+     * @param  mixed  $force
      * @return void
      */
     public function buildCache($force = false)
@@ -44,7 +42,7 @@ trait AppSetup
         $cached_tables = config('ninja.cached_tables');
 
         foreach ($cached_tables as $name => $class) {
-            if (! Cache::has($name) || $force) {
+            if (!Cache::has($name) || $force) {
                 if ($name == 'payment_terms') {
                     $orderBy = 'num_days';
                 } elseif ($name == 'fonts') {
@@ -61,7 +59,7 @@ trait AppSetup
             }
         }
 
-        /*Build template cache*/
+        /* Build template cache */
     }
 
     private function updateEnvironmentProperty(string $property, $value): void

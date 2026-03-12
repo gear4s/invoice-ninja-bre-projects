@@ -17,7 +17,7 @@ return [
     'reset' => 'Kata sandi Anda telah diatur ulang!', // Your password has been reset
     'sent' => 'Kami telah mengirim email link reset kata sandi Anda!', // We have e-mailed your password reset link
     'token' => 'Token reset kata sandi ini tidak valid.', // This password reset token is invalid
-    'user' => "Kami tidak dapat menemukan pengguna dengan alamat email tersebut.", // We can't find a user with that e-mail address
+    'user' => 'Kami tidak dapat menemukan pengguna dengan alamat email tersebut.', // We can't find a user with that e-mail address
     'throttled' => 'Anda telah meminta reset kata sandi baru-baru ini, silakan periksa email Anda.', // You have requested password reset recently, please check your email
 
 ];

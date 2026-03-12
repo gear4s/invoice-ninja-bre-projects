@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class MollieAmountFormatTest extends TestCase
     /**
      *  \App\PaymentDrivers\MolliePaymentDriver::convertToMollieAmount()
      */
-    public function testFormatterIsWorkingCorrectly()
+    public function test_formatter_is_working_correctly()
     {
         $this->assertEquals('1000.00', \number_format((float) 1000, 2, '.', ''));
 

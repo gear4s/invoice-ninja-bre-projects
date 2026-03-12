@@ -15,10 +15,10 @@ class SigningService
 
     public function sign()
     {
-        $doc = new \DOMDocument();
+        $doc = new \DOMDocument;
         $doc->loadXML($this->xml);
 
-        $objDSig = new XMLSecurityDSig();
+        $objDSig = new XMLSecurityDSig;
         $objDSig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N);
         $objDSig->addReference(
             $doc,

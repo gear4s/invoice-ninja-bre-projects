@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,8 +22,6 @@ class PaymentEmailedActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -34,13 +31,13 @@ class PaymentEmailedActivity implements ShouldQueue
     /**
      * Handle the event.
      *
-     * @param object $event
+     * @param  object  $event
      */
     public function handle($event)
     {
         MultiDB::setDb($event->company->db);
 
-        $fields = new \stdClass();
+        $fields = new \stdClass;
 
         $user_id = $event->event_vars['user_id'] ?? $event->payment->user_id;
 

@@ -6,27 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\User;
 
-use App\Utils\Ninja;
-use App\Models\Company;
-use App\Models\SystemLog;
 use App\Libraries\MultiDB;
-use App\Jobs\Util\SystemLogger;
-use App\Mail\User\UserLoggedIn;
-use App\Jobs\Mail\NinjaMailerJob;
-use Illuminate\Support\Facades\App;
-use App\Jobs\Mail\NinjaMailerObject;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Queue\SerializesModels;
+use App\Models\Company;
+use App\Notifications\Ninja\GenericNinjaAdminNotification;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use App\Notifications\Ninja\GenericNinjaAdminNotification;
+use Illuminate\Queue\SerializesModels;
 
 class UpdateUserLoginFailed implements ShouldQueue
 {

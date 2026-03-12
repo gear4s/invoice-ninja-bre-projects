@@ -6,21 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\PayFast;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
+use App\Exceptions\PaymentFailed;
+use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
+use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Jobs\Util\SystemLogger;
-use App\Exceptions\PaymentFailed;
-use App\Models\ClientGatewayToken;
+use App\Models\SystemLog;
 use App\PaymentDrivers\PayFastPaymentDriver;
+use PayFast\PayFastApi;
 
 class Token
 {
@@ -37,7 +37,7 @@ class Token
         $amount = (int) round(($amount * pow(10, $this->payfast->client->currency()->precision)), 0);
 
         try {
-            $payfast = new \PayFast\PayFastApi(
+            $payfast = new PayFastApi(
                 [
                     'merchantId' => (string) $this->payfast->company_gateway->getConfigField('merchantId'),
                     'merchantKey' => $this->payfast->company_gateway->getConfigField('merchantKey'),
@@ -52,9 +52,9 @@ class Token
                 'm_payment_id' => $payment_hash->hash,
             ];
 
-            $response = $payfast->subscriptions->adhoc($cgt->token, $data); //@phpstan-ignore-line
+            $response = $payfast->subscriptions->adhoc($cgt->token, $data); // @phpstan-ignore-line
 
-            nlog("TokenBilling");
+            nlog('TokenBilling');
             nlog($response);
             nlog(now()->format('Y-m-d H:i:s'));
 
@@ -72,6 +72,7 @@ class Token
                 ],
                 'code' => 500,
             ];
+
             return $this->processUnsuccessfulPayment($data);
         }
 
@@ -94,7 +95,7 @@ class Token
     {
 
         $payment_record = [];
-        $payment_record['amount'] =  array_sum(array_column($this->payfast->payment_hash->invoices(), 'amount')) + $this->payfast->payment_hash->fee_total;
+        $payment_record['amount'] = array_sum(array_column($this->payfast->payment_hash->invoices(), 'amount')) + $this->payfast->payment_hash->fee_total;
         $payment_record['payment_type'] = PaymentType::CREDIT_CARD_OTHER;
         $payment_record['gateway_type_id'] = GatewayType::CREDIT_CARD;
         $payment_record['transaction_reference'] = $response['data']['pf_payment_id'];
@@ -126,7 +127,5 @@ class Token
         );
 
         throw new PaymentFailed('Failed to process the payment.', 500);
-
     }
-
 }

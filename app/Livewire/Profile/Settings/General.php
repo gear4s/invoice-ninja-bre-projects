@@ -6,15 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Profile\Settings;
 
-use Livewire\Component;
-use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class General extends Component
 {
@@ -73,13 +72,13 @@ class General extends Component
             $this->rules['email'][] = 'unique:client_contacts,email';
         }
 
-        if (! empty($this->password)) {
+        if (!empty($this->password)) {
             $this->rules['password'] = ['sometimes', 'nullable', 'required', 'min:6', 'confirmed'];
         }
 
         $data = $this->validate($this->rules);
 
-        if (! empty($this->password)) {
+        if (!empty($this->password)) {
             $profile->password = Hash::make($this->password);
         }
 

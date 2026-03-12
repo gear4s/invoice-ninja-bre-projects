@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,11 +25,11 @@ class BulkWebhookRequest extends Request
      */
     public function authorize()
     {
-        if (! $this->has('action')) {
+        if (!$this->has('action')) {
             return false;
         }
 
-        if (! in_array($this->action, $this->getBulkOptions(), true)) {
+        if (!in_array($this->action, $this->getBulkOptions(), true)) {
             return false;
         }
 

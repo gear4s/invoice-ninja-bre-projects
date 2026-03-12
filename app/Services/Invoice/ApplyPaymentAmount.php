@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,7 +34,7 @@ class ApplyPaymentAmount extends AbstractService
             $this->invoice = $this->invoice->service()->markSent()->save();
         }
 
-        /*Don't double pay*/
+        /* Don't double pay */
         if ($this->invoice->status_id == Invoice::STATUS_PAID) {
             return $this->invoice;
         }
@@ -64,17 +63,15 @@ class ApplyPaymentAmount extends AbstractService
             'amount' => $payment->amount,
         ]);
 
-
         $has_partial = $this->invoice->hasPartial();
 
         $invoice_service = $this->invoice->service()
-                ->setExchangeRate()
-                ->updateBalance($payment->amount * -1)
-                ->updatePaidToDate($payment->amount)
-                ->setCalculatedStatus()
-                ->applyNumber()
-                ->unlockDocuments();
-
+            ->setExchangeRate()
+            ->updateBalance($payment->amount * -1)
+            ->updatePaidToDate($payment->amount)
+            ->setCalculatedStatus()
+            ->applyNumber()
+            ->unlockDocuments();
 
         if ($has_partial) {
             $this->invoice->partial = max(0, $this->invoice->partial - $payment->amount);
@@ -93,7 +90,6 @@ class ApplyPaymentAmount extends AbstractService
             ->updateBalanceAndPaidToDate($payment->amount * -1, $payment->amount)
             ->save();
 
-
         if ($this->invoice->client->getSetting('client_manual_payment_notification')) {
             $payment->service()->sendEmail();
         }
@@ -101,7 +97,7 @@ class ApplyPaymentAmount extends AbstractService
         /* Update Invoice balance */
 
         $payment->ledger()
-                ->updatePaymentBalance($payment->amount * -1, "ApplyPaymentInvoice-");
+            ->updatePaymentBalance($payment->amount * -1, 'ApplyPaymentInvoice-');
 
         $this->invoice->service()->workFlow()->save();
 
@@ -122,7 +118,7 @@ class ApplyPaymentAmount extends AbstractService
         $company_currency = $payment->client->company->settings->currency_id;
 
         if ($company_currency != $client_currency) {
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $payment->exchange_rate = $exchange_rate->exchangeRate($client_currency, $company_currency, Carbon::parse($payment->date));
 

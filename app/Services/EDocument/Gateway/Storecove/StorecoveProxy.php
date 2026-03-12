@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Storecove;
 
-use App\Utils\Ninja;
+use App\Models\Account;
 use App\Models\Company;
+use App\Utils\Ninja;
 use Illuminate\Support\Facades\Http;
+use Modules\Admin\Jobs\Storecove\SendWelcomeEmail;
 
 class StorecoveProxy
 {
@@ -25,32 +26,30 @@ class StorecoveProxy
     public function setCompany(Company $company): self
     {
         $this->company = $company;
+
         return $this;
     }
 
     /**
      * Example refactor.
      * getLegalEntity
-     *
-     * @param  int $legal_entity_id
-     * @return array
      */
     public function getLegalEntity(int $legal_entity_id): array
     {
         if (Ninja::isHosted()) {
             $response = $this->storecove->getLegalEntity($legal_entity_id);
 
-            if (is_array($response)) { //successful response is the array
+            if (is_array($response)) { // successful response is the array
                 return $response;
             }
 
-            return $this->handleResponseError($response); //otherwise need to handle the http response returned
+            return $this->handleResponseError($response); // otherwise need to handle the http response returned
         }
 
         $uri = '/api/einvoice/peppol/legal_entity';
         $payload = ['legal_entity_id' => $legal_entity_id];
 
-        return $this->remoteRequest($uri, $payload); //abstract the http calls
+        return $this->remoteRequest($uri, $payload); // abstract the http calls
     }
 
     public function setup(array $data): array
@@ -64,7 +63,7 @@ class StorecoveProxy
 
         if (Ninja::isHosted()) {
 
-            //check if the user is already on the network.
+            // check if the user is already on the network.
             if ($already_registered = $this->storecove->checkNetworkStatus($data)) {
                 return $already_registered;
             }
@@ -74,7 +73,7 @@ class StorecoveProxy
             if (is_array($response)) {
 
                 if ($this->company->account->companies()->whereNotNull('legal_entity_id')->count() == 1) {
-                    \Modules\Admin\Jobs\Storecove\SendWelcomeEmail::dispatch($this->company);
+                    SendWelcomeEmail::dispatch($this->company);
                 }
 
                 return $response;
@@ -175,8 +174,7 @@ class StorecoveProxy
      *
      * Generic error handler that can return an array response
      *
-     * @param  mixed $response
-     * @return array
+     * @param  mixed  $response
      */
     public function handleResponseError($response): array
     {
@@ -237,7 +235,7 @@ class StorecoveProxy
                 // @dave is there any case this will run when user is not logged in? (async)
 
                 /**
-                 * @var \App\Models\Account $account
+                 * @var Account $account
                  */
                 $account = auth()->user()->company->account;
 
@@ -258,7 +256,7 @@ class StorecoveProxy
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'X-EInvoice-Token' => $this->company->account->e_invoicing_token,
-            "X-Requested-With" => "XMLHttpRequest",
+            'X-Requested-With' => 'XMLHttpRequest',
         ];
 
     }

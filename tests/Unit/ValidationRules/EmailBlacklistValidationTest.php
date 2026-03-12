@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\Http\ValidationRules\Account\EmailBlackListRule;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\ValidationRules\Account\EmailBlackListRule
  */
 class EmailBlacklistValidationTest extends TestCase
@@ -26,9 +24,9 @@ class EmailBlacklistValidationTest extends TestCase
         parent::setUp();
     }
 
-    public function testValidEmailRule()
+    public function test_valid_email_rule()
     {
-        $email_rule = new EmailBlackListRule();
+        $email_rule = new EmailBlackListRule;
         $email_rule->blacklist = ['gimmy@gmail.com'];
 
         $rules = [
@@ -43,10 +41,10 @@ class EmailBlacklistValidationTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testInValidEmailRule()
+    public function test_in_valid_email_rule()
     {
         $rules = [
-            'email' => [new EmailBlackListRule()],
+            'email' => [new EmailBlackListRule],
         ];
 
         $data = [

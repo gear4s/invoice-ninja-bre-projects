@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -68,7 +67,7 @@ class RFFService
             if (Str::startsWith($field['name'], 'client_')) {
                 if (
                     empty($_contact->client->{$_field})
-                    || is_null($_contact->client->{$_field}) //@phpstan-ignore-line
+                    || is_null($_contact->client->{$_field}) // @phpstan-ignore-line
                 ) {
                     // $this->show_form = true;
                     $this->unfilled_fields++;
@@ -78,7 +77,7 @@ class RFFService
             }
 
             if (Str::startsWith($field['name'], 'contact_')) {
-                if (empty($_contact->{$_field}) || is_null($_contact->{$_field}) || str_contains($_contact->{$_field}, '@example.com')) { //@phpstan-ignore-line
+                if (empty($_contact->{$_field}) || is_null($_contact->{$_field}) || str_contains($_contact->{$_field}, '@example.com')) { // @phpstan-ignore-line
                     $this->unfilled_fields++;
                 } else {
                     $this->fields[$index]['filled'] = true;
@@ -159,7 +158,6 @@ class RFFService
         // $_contact->client->custom_value4 = $data['client_custom_value4'] ?? '';
         // $_contact->push();
 
-
         $_contact
             ->fill($contact)
             ->push();
@@ -168,16 +166,16 @@ class RFFService
             ->fill($client)
             ->push();
 
-        /** @var \App\Models\CompanyGateway $cg */
+        /** @var CompanyGateway $cg */
         $cg = CompanyGateway::find(
             $this->company_gateway_id,
         );
 
-        //@phpstan-ignore-next-line
+        // @phpstan-ignore-next-line
         if ($cg && $cg->update_details) {
             $payment_gateway = $cg->driver($_contact->client)->init();
 
-            if (method_exists($payment_gateway, "updateCustomer")) {
+            if (method_exists($payment_gateway, 'updateCustomer')) {
                 $payment_gateway->updateCustomer();
             }
         }

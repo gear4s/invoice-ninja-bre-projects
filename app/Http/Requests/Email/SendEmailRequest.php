@@ -6,17 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Email;
 
-use App\Utils\Ninja;
-use Illuminate\Support\Str;
 use App\Http\Requests\Request;
+use App\Models\User;
+use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class SendEmailRequest extends Request
 {
@@ -44,12 +45,10 @@ class SendEmailRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        return true; //required so that we can move the authorization check deeper after we have hydrated the entity
+        return true; // required so that we can move the authorization check deeper after we have hydrated the entity
     }
 
     /**
@@ -59,7 +58,7 @@ class SendEmailRequest extends Request
      */
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return [
@@ -75,7 +74,7 @@ class SendEmailRequest extends Request
     {
         $input = $this->all();
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $settings = $user->company()->settings;
@@ -84,7 +83,7 @@ class SendEmailRequest extends Request
             $input['template'] = '';
         }
 
-        if (is_string($input['template']) && ! property_exists($settings, $input['template'])) {
+        if (is_string($input['template']) && !property_exists($settings, $input['template'])) {
             unset($input['template']);
         }
 
@@ -92,24 +91,24 @@ class SendEmailRequest extends Request
             $input['entity_id'] = $this->decodePrimaryKey($input['entity_id']);
         }
 
-        if (isset($input['entity']) && in_array($input['entity'], ['invoice','quote','credit','recurring_invoice','purchase_order','payment','purchaseOrder'])) {
+        if (isset($input['entity']) && in_array($input['entity'], ['invoice', 'quote', 'credit', 'recurring_invoice', 'purchase_order', 'payment', 'purchaseOrder'])) {
             $this->entity_plural = Str::plural($input['entity']) ?? '';
             $input['entity'] = "App\Models\\" . ucfirst(Str::camel($input['entity']));
         }
 
         if (isset($input['entity']) && $input['entity'] == 'purchaseOrder') {
-            $this->entity_plural = "purchase_orders";
+            $this->entity_plural = 'purchase_orders';
         }
 
         if (isset($input['cc_email'])) {
-            $input['cc_email'] = collect(explode(",", $input['cc_email']))->map(function ($email) {
+            $input['cc_email'] = collect(explode(',', $input['cc_email']))->map(function ($email) {
                 return trim($email);
             })->filter(function ($email) {
                 return filter_var($email, FILTER_VALIDATE_EMAIL);
             })->slice(0, 4)->toArray();
         }
 
-        if (\App\Utils\Ninja::isHosted() && !$user->account->isPaid()) {
+        if (Ninja::isHosted() && !$user->account->isPaid()) {
             unset($input['subject']);
             unset($input['body']);
             unset($input['cc_email']);
@@ -118,10 +117,10 @@ class SendEmailRequest extends Request
         $this->replace($input);
     }
 
-    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function (\Illuminate\Validation\Validator $validator) {
-            /** @var \App\Models\User $user */
+        $validator->after(function (Validator $validator) {
+            /** @var User $user */
             $user = auth()->user();
 
             if (Ninja::isHosted() && !$user->email_verified_at) {
@@ -142,7 +141,7 @@ class SendEmailRequest extends Request
 
             $input = $this->all();
 
-            if (isset($input['entity']) && array_key_exists('entity_id', $input) && in_array($input['entity'], ['invoice','quote','credit','recurring_invoice','purchase_order','payment','purchaseOrder'])) {
+            if (isset($input['entity']) && array_key_exists('entity_id', $input) && in_array($input['entity'], ['invoice', 'quote', 'credit', 'recurring_invoice', 'purchase_order', 'payment', 'purchaseOrder'])) {
                 $entity_obj = $input['entity']::whereId($input['entity_id'])->withTrashed()->company()->first();
 
                 if (!$entity_obj || !$user->can('edit', $entity_obj)) {

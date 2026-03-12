@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -38,11 +37,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $opened_date
  * @property string|null $email_status
  * @property bool $can_sign
- * @property \App\Models\Company $company
- * @property \App\Models\ClientContact $contact
+ * @property Company $company
+ * @property ClientContact $contact
  * @property string $hashed_id
- * @property \App\Models\RecurringInvoice $recurring_invoice
- * @property \App\Models\User $user
+ * @property RecurringInvoice $recurring_invoice
+ * @property User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoiceInvitation newModelQuery()
@@ -70,12 +70,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoiceInvitation whereViewedDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoiceInvitation withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoiceInvitation withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class RecurringInvoiceInvitation extends BaseModel
 {
-    use SoftDeletes;
     use Inviteable;
+    use SoftDeletes;
 
     protected $fillable = ['client_contact_id'];
 
@@ -90,7 +91,6 @@ class RecurringInvoiceInvitation extends BaseModel
     {
         return self::class;
     }
-
 
     public function getEntityString(): string
     {

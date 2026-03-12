@@ -6,25 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Authorize;
 
+use App\Jobs\Util\SystemLogger;
 use App\Models\Payment;
 use App\Models\SystemLog;
-use App\Jobs\Util\SystemLogger;
 use App\PaymentDrivers\AuthorizePaymentDriver;
-use net\authorize\api\contract\v1\PaymentType;
-use net\authorize\api\contract\v1\CreditCardType;
-use net\authorize\api\contract\v1\PaymentProfileType;
-use net\authorize\api\contract\v1\TransactionRequestType;
+use net\authorize\api\contract\v1\BankAccountType;
 use net\authorize\api\contract\v1\CreateTransactionRequest;
-use net\authorize\api\contract\v1\CustomerProfilePaymentType;
+use net\authorize\api\contract\v1\CreditCardType;
 use net\authorize\api\contract\v1\HeldTransactionRequestType;
-use net\authorize\api\controller\CreateTransactionController;
+use net\authorize\api\contract\v1\PaymentType;
+use net\authorize\api\contract\v1\SolutionType;
+use net\authorize\api\contract\v1\TransactionRequestType;
 use net\authorize\api\contract\v1\UpdateHeldTransactionRequest;
+use net\authorize\api\controller\CreateTransactionController;
 use net\authorize\api\controller\UpdateHeldTransactionController;
 
 /**
@@ -64,6 +63,7 @@ class RefundTransaction
             $amount = $transaction->getAuthAmount();
         } elseif ($transaction_type == 'voidHeldTransaction') {
             $amount = $transaction->getAuthAmount();
+
             return $this->declineHeldTransaction($payment, $amount);
         }
 
@@ -72,38 +72,38 @@ class RefundTransaction
         // Set the transaction's refId
         $refId = 'ref' . time();
 
-        //create a transaction
-        $transactionRequest = new TransactionRequestType();
+        // create a transaction
+        $transactionRequest = new TransactionRequestType;
         $transactionRequest->setTransactionType($transaction_type);
         $transactionRequest->setAmount($amount);
         $transactionRequest->setRefTransId($payment->transaction_reference);
 
         // Set payment info based on type
         if ($payment_details->getCreditCard()) {
-            $creditCard = new CreditCardType();
+            $creditCard = new CreditCardType;
             $creditCard->setCardNumber($payment_details->getCreditCard()->getCardNumber());
             $creditCard->setExpirationDate($payment_details->getCreditCard()->getExpirationDate());
-            $paymentOne = new PaymentType();
+            $paymentOne = new PaymentType;
             $paymentOne->setCreditCard($creditCard);
             $transactionRequest->setPayment($paymentOne);
         } elseif ($payment_details->getBankAccount()) {
-            $bankAccount = new \net\authorize\api\contract\v1\BankAccountType();
+            $bankAccount = new BankAccountType;
             $bankAccount->setRoutingNumber($payment_details->getBankAccount()->getRoutingNumber());
             $bankAccount->setAccountNumber($payment_details->getBankAccount()->getAccountNumber());
             $bankAccount->setAccountType($payment_details->getBankAccount()->getAccountType());
             $bankAccount->setNameOnAccount($payment_details->getBankAccount()->getNameOnAccount());
             $bankAccount->setBankName($payment_details->getBankAccount()->getBankName());
             $bankAccount->setEcheckType('WEB');
-            $paymentOne = new PaymentType();
+            $paymentOne = new PaymentType;
             $paymentOne->setBankAccount($bankAccount);
             $transactionRequest->setPayment($paymentOne);
         }
 
-        $solution = new \net\authorize\api\contract\v1\SolutionType();
+        $solution = new SolutionType;
         $solution->setId($this->authorize->company_gateway->getConfigField('testMode') ? 'AAA100303' : 'AAA172036');
         $transactionRequest->setSolution($solution);
 
-        $request = new CreateTransactionRequest();
+        $request = new CreateTransactionRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setRefId($refId);
         $request->setTransactionRequest($transactionRequest);
@@ -208,19 +208,18 @@ class RefundTransaction
         SystemLogger::dispatch($data, SystemLog::CATEGORY_GATEWAY_RESPONSE, SystemLog::EVENT_GATEWAY_FAILURE, SystemLog::TYPE_AUTHORIZE, $this->authorize->client, $this->authorize->client->company);
     }
 
-
     public function declineHeldTransaction(Payment $payment, $amount)
     {
 
         $this->authorize->init();
         $refId = 'ref' . time();
 
-        //create a transaction
-        $transactionRequestType = new HeldTransactionRequestType();
-        $transactionRequestType->setAction("decline"); //other possible value: decline
+        // create a transaction
+        $transactionRequestType = new HeldTransactionRequestType;
+        $transactionRequestType->setAction('decline'); // other possible value: decline
         $transactionRequestType->setRefTransId($payment->transaction_reference);
 
-        $request = new UpdateHeldTransactionRequest();
+        $request = new UpdateHeldTransactionRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setHeldTransactionRequest($transactionRequestType);
 
@@ -323,8 +322,6 @@ class RefundTransaction
         ];
 
         SystemLogger::dispatch($data, SystemLog::CATEGORY_GATEWAY_RESPONSE, SystemLog::EVENT_GATEWAY_FAILURE, SystemLog::TYPE_AUTHORIZE, $this->authorize->client, $this->authorize->client->company);
-
-
 
     }
 }

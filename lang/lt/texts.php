@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Įmonė',
     'name' => 'Pavadinimas',
     'website' => 'Internetinis puslapis',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Įmonių planas prideda palaikymą keliems vartotojams ir failų priedus, :link , kad pamatytumėte visą funkcijų sąrašą.',
     'return_to_app' => 'Sugrįžti į Aplikaciją',
 
-
     // Payment updates
     'refund_payment' => 'Grąžinti',
     'refund_max' => 'Maks.:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'serbų',
     'lang_Bulgarian' => 'bulgarų',
     'lang_Russian (Russia)' => 'Rusų (Rusija)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Apskaita ir teisė',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Auksinė Trojos uncija',
     'currency_nicaraguan_córdoba' => 'Nikaragvos Kordoba',
     'currency_malagasy_ariary' => 'Madagaskaro ariary',
-    "currency_tongan_pa_anga" => "Tongos Paanga",
+    'currency_tongan_pa_anga' => 'Tongos Paanga',
 
     'review_app_help' => 'Tikimės, kad jums patinka naudotis programa.<br/> Jei svarstytumėte :link , būtume labai dėkingi!',
     'writing_a_review' => 'rašyti apžvalgą',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ':user archyvuotos pasikartojančios išlaidos :recurring_expense',
     'activity_123' => ':user ištrintos pasikartojančios išlaidos :recurring_expense',
     'activity_124' => ':user atkurtos pasikartojančios išlaidos :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Norėdami peržiūrėti :entity turite nustatyti slaptažodį.',
     'unsubscribe' => 'Atsisakyti prenumeratos',
     'unsubscribed' => 'Atsisakė prenumeratos',
@@ -4869,7 +4867,7 @@ $lang = array(
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Mokama per :payeddue dienų grynasis iki :paydate',
-    'xinvoice_no_buyers_reference' => "Pirkėjo nuoroda nepateikta",
+    'xinvoice_no_buyers_reference' => 'Pirkėjo nuoroda nepateikta',
     'xinvoice_online_payment' => 'Sąskaitą reikia apmokėti internetu per pateiktą nuorodą',
     'pre_payment' => 'Avansas',
     'number_of_payments' => 'Mokėjimų kiekis',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'E. sąskaita faktūra',
     'light_dark_mode' => 'Šviesus/tamsus režimas',
     'activities' => 'Veikla',
-    'recent_transactions' => "Naujausi sandoriai",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Naujausi sandoriai',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taivanas',
     'duties' => 'Pareigos',
     'order_number' => 'Užsakymo numeris',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'Privalomų laukų forma',
     'add_step' => 'Pridėti žingsnį',
     'steps' => 'Žingsniai',
-    'steps_order_help' =>  'Veiksmų tvarka yra svarbi. Pirmasis žingsnis neturėtų priklausyti nuo jokio kito žingsnio. Antrasis žingsnis turėtų priklausyti nuo pirmojo žingsnio ir pan.',
+    'steps_order_help' => 'Veiksmų tvarka yra svarbi. Pirmasis žingsnis neturėtų priklausyti nuo jokio kito žingsnio. Antrasis žingsnis turėtų priklausyti nuo pirmojo žingsnio ir pan.',
     'other_steps' => 'Kiti žingsniai',
     'use_available_payments' => 'Naudokite turimus mokėjimus',
     'test_email_sent' => 'Sėkmingai išsiųstas el',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'Kreditas atnaujintas',
     'payment_updated' => 'Mokėjimas atnaujintas',
     'search_placeholder' => 'Raskite sąskaitas faktūras, klientus ir dar daugiau',
-    'invalid_vat_number' => "Pasirinktoje šalyje PVM kodas negalioja. Formatas turi būti šalies kodas ir tik skaičius, ty DE123456789",
+    'invalid_vat_number' => 'Pasirinktoje šalyje PVM kodas negalioja. Formatas turi būti šalies kodas ir tik skaičius, ty DE123456789',
     'acts_as_sender' => 'Siųsti el. sąskaitas faktūras',
     'acts_as_receiver' => 'Gaukite el. sąskaitas faktūras',
     'peppol_token_generated' => 'PEPPOL prieigos raktas sėkmingai sugeneruotas.',
@@ -5538,7 +5536,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Nustatykite automatinius priminimus el. paštu',
     'pro_plan_feature_11' => 'Automatiškai prie el. laiškų pridedama sąskaitos faktūros PDF formatu',
     'pro_plan_feature_12' => 'Rodyti klientų elektroninius parašus sąskaitose faktūrose',
-    'pro_plan_feature_13' => "Įgalinti žymimąjį langelį „Patvirtinti sąlygas“",
+    'pro_plan_feature_13' => 'Įgalinti žymimąjį langelį „Patvirtinti sąlygas“',
     'pro_plan_feature_14' => 'Ataskaitos: sąskaitos faktūros, išlaidos, pelnas ir nuostolis ir kt.',
     'pro_plan_feature_15' => 'Masiniai el. pašto sąskaitos faktūros, kainos pasiūlymai, kreditai',
     'pro_plan_feature_16' => 'Sujunkite 10 įmonių su 1 prisijungimu',
@@ -5913,6 +5911,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => '„Stripe“ banko pavedimas',
     'activity_164' => 'Nepavyko sinchronizuoti „QuickBooks“. :notes',
-);
+];
 
 return $lang;

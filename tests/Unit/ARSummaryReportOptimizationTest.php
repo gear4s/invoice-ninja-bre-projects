@@ -2,19 +2,19 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Models\Account;
-use App\Models\User;
 use App\Models\Client;
-use App\Models\Invoice;
 use App\Models\Company;
+use App\Models\Invoice;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 /**
  * Test AR Summary Report optimization strategy.
- * 
+ *
  * This test compares the current N+1 query approach (6 queries per client)
  * against an optimized single-query approach using CASE statements.
  */
@@ -23,20 +23,23 @@ class ARSummaryReportOptimizationTest extends TestCase
     use DatabaseTransactions, MakesHash;
 
     protected Company $company;
+
     protected User $user;
+
     protected array $testClients = [];
+
     protected array $testInvoices = [];
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $account = Account::factory()->create();
-        
+
         $this->company = Company::factory()->create([
             'account_id' => $account->id,
         ]);
-        
+
         $this->user = User::factory()->create([
             'account_id' => $account->id,
         ]);
@@ -64,20 +67,20 @@ class ARSummaryReportOptimizationTest extends TestCase
                 // Current (due in future or no due date)
                 ['balance' => 100, 'due_date' => $now->copy()->addDays(10), 'status' => Invoice::STATUS_SENT],
                 ['balance' => 50, 'due_date' => null, 'status' => Invoice::STATUS_SENT],
-                
+
                 // 0-30 days overdue
                 ['balance' => 200, 'due_date' => $now->copy()->subDays(15), 'status' => Invoice::STATUS_SENT],
                 ['balance' => 150, 'due_date' => $now->copy()->subDays(25), 'status' => Invoice::STATUS_PARTIAL],
-                
+
                 // 31-60 days overdue
                 ['balance' => 300, 'due_date' => $now->copy()->subDays(45), 'status' => Invoice::STATUS_SENT],
-                
+
                 // 61-90 days overdue
                 ['balance' => 400, 'due_date' => $now->copy()->subDays(75), 'status' => Invoice::STATUS_SENT],
-                
+
                 // 91-120 days overdue
                 ['balance' => 500, 'due_date' => $now->copy()->subDays(105), 'status' => Invoice::STATUS_SENT],
-                
+
                 // 120+ days overdue
                 ['balance' => 600, 'due_date' => $now->copy()->subDays(150), 'status' => Invoice::STATUS_SENT],
                 ['balance' => 700, 'due_date' => $now->copy()->subDays(365), 'status' => Invoice::STATUS_PARTIAL],
@@ -255,7 +258,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Test data quality: verify optimized query produces same results as current.
      */
-    public function testDataQualityOptimizedMatchesCurrent()
+    public function test_data_quality_optimized_matches_current()
     {
         $this->createTestData(5);
 
@@ -316,7 +319,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Test edge case: client with no invoices.
      */
-    public function testClientWithNoInvoices()
+    public function test_client_with_no_invoices()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -340,7 +343,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Test edge case: invoices with status other than SENT/PARTIAL should be excluded.
      */
-    public function testExcludesNonSentPartialInvoices()
+    public function test_excludes_non_sent_partial_invoices()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -392,7 +395,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Test edge case: deleted invoices should be excluded.
      */
-    public function testExcludesDeletedInvoices()
+    public function test_excludes_deleted_invoices()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -430,7 +433,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Test edge case: invoices with zero balance should be excluded.
      */
-    public function testExcludesZeroBalanceInvoices()
+    public function test_excludes_zero_balance_invoices()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -470,7 +473,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Performance test: compare query count between implementations.
      */
-    public function testPerformanceQueryCount()
+    public function test_performance_query_count()
     {
         $this->createTestData(10);
         $clientIds = collect($this->testClients)->pluck('id')->toArray();
@@ -483,7 +486,7 @@ class ARSummaryReportOptimizationTest extends TestCase
         }
         $currentQueries = DB::getQueryLog();
         // Only count invoice queries (not time zone or other queries)
-        $currentQueryCount = count(array_filter($currentQueries, function($query) {
+        $currentQueryCount = count(array_filter($currentQueries, function ($query) {
             return strpos($query['query'], 'from `invoices`') !== false;
         }));
         DB::disableQueryLog();
@@ -494,7 +497,7 @@ class ARSummaryReportOptimizationTest extends TestCase
         $this->getOptimizedImplementationResults($clientIds);
         $optimizedQueries = DB::getQueryLog();
         // Only count invoice queries
-        $optimizedQueryCount = count(array_filter($optimizedQueries, function($query) {
+        $optimizedQueryCount = count(array_filter($optimizedQueries, function ($query) {
             return strpos($query['query'], 'from `invoices`') !== false;
         }));
         DB::disableQueryLog();
@@ -512,7 +515,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Performance test: measure execution time difference.
      */
-    public function testPerformanceExecutionTime()
+    public function test_performance_execution_time()
     {
         $this->createTestData(50);
         $clientIds = collect($this->testClients)->pluck('id')->toArray();
@@ -531,7 +534,7 @@ class ARSummaryReportOptimizationTest extends TestCase
 
         // Optimized should be significantly faster
         $this->assertLessThan($currentTime, $optimizedTime, 'Optimized should be faster');
-        
+
         $speedup = $currentTime / $optimizedTime;
         // dump([
         //     'clients' => 50,
@@ -544,7 +547,7 @@ class ARSummaryReportOptimizationTest extends TestCase
     /**
      * Test aging bucket boundaries are correct.
      */
-    public function testAgingBucketBoundaries()
+    public function test_aging_bucket_boundaries()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,

@@ -6,14 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Project;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdateProjectRequest extends Request
@@ -22,13 +23,11 @@ class UpdateProjectRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->project);
@@ -37,7 +36,7 @@ class UpdateProjectRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -58,8 +57,7 @@ class UpdateProjectRequest extends Request
     {
         $input = $this->decodePrimaryKeys($this->all());
 
-
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 

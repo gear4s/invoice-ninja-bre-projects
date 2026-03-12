@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,14 +26,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
 
 class VendorExpenseNotify implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesDates;
     use Queueable;
     use SerializesModels;
-    use MakesDates;
 
     public $tries = 1;
 
@@ -58,12 +58,12 @@ class VendorExpenseNotify implements ShouldQueue
     private function notify(VendorContact $contact)
     {
 
-        \Illuminate\Support\Facades\App::forgetInstance('translator');
+        App::forgetInstance('translator');
         $t = app('translator');
-        $t->replace(\App\Utils\Ninja::transformTranslations($this->expense->company->settings));
-        \Illuminate\Support\Facades\App::setLocale($this->expense->vendor->locale());
+        $t->replace(Ninja::transformTranslations($this->expense->company->settings));
+        App::setLocale($this->expense->vendor->locale());
 
-        $mo = new EmailObject();
+        $mo = new EmailObject;
         $mo->contact = $contact;
         $mo->vendor_contact_id = $contact->id;
         $mo->user_id = $this->expense->user_id;
@@ -95,7 +95,7 @@ class VendorExpenseNotify implements ShouldQueue
 
         Email::dispatch($mo, $this->expense->company);
 
-        $fields = new \stdClass();
+        $fields = new \stdClass;
         $fields->expense_id = $this->expense->id;
         $fields->vendor_id = $contact->vendor_id;
         $fields->vendor_contact_id = $contact->id;
@@ -104,7 +104,7 @@ class VendorExpenseNotify implements ShouldQueue
         $fields->activity_type_id = Activity::VENDOR_NOTIFICATION_EMAIL;
         $fields->account_id = $this->expense->company->account_id;
 
-        $activity_repo = new ActivityRepository();
+        $activity_repo = new ActivityRepository;
         $activity_repo->save($fields, $this->expense, Ninja::eventVars());
 
     }

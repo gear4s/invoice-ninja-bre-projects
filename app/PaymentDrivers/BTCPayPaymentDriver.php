@@ -6,52 +6,50 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\PaymentDrivers;
 
-use App\Models\Client;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\SystemLog;
+use App\Jobs\Mail\PaymentFailedMailer;
 use App\Models\GatewayType;
+use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
+use App\Models\SystemLog;
+use App\PaymentDrivers\BTCPay\BTCPay;
 use App\Utils\Traits\MakesHash;
 use BTCPayServer\Client\Webhook;
-use App\Exceptions\PaymentFailed;
-use App\PaymentDrivers\BTCPay\BTCPay;
-use App\Jobs\Mail\PaymentFailedMailer;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
 
 class BTCPayPaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = true; //does this gateway support refunds?
+    public $refundable = true; // does this gateway support refunds?
 
-    public $token_billing = false; //does this gateway support token billing?
+    public $token_billing = false; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = false; //does this gateway support authorizations?
+    public $can_authorise_credit_card = false; // does this gateway support authorizations?
 
-    public $gateway; //initialized gateway
+    public $gateway; // initialized gateway
 
-    public $payment_method; //initialized payment method
+    public $payment_method; // initialized payment method
 
     public static $methods = [
-        GatewayType::CRYPTO => BTCPay::class, //maps GatewayType => Implementation class
+        GatewayType::CRYPTO => BTCPay::class, // maps GatewayType => Implementation class
     ];
 
-    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_BTC_PAY; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_BTC_PAY; // define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
 
-    public $btcpay_url  = "";
-    public $api_key  = "";
-    public $store_id = "";
-    public $webhook_secret = "";
+    public $btcpay_url = '';
+
+    public $api_key = '';
+
+    public $store_id = '';
+
+    public $webhook_secret = '';
+
     public $btcpay;
-
 
     public function init()
     {
@@ -59,7 +57,8 @@ class BTCPayPaymentDriver extends BaseDriver
         $this->api_key = $this->company_gateway->getConfigField('apiKey');
         $this->store_id = $this->company_gateway->getConfigField('storeId');
         $this->webhook_secret = $this->company_gateway->getConfigField('webhookSecret');
-        return $this; /* This is where you boot the gateway with your auth credentials*/
+
+        return $this; /* This is where you boot the gateway with your auth credentials */
     }
 
     /* Returns an array of gateway types for the payment gateway */
@@ -76,12 +75,13 @@ class BTCPayPaymentDriver extends BaseDriver
     {
         $class = self::$methods[$payment_method_id];
         $this->payment_method = new $class($this);
+
         return $this;
     }
 
     public function processPaymentView(array $data)
     {
-        return $this->payment_method->paymentView($data);  //this is your custom implementation from here
+        return $this->payment_method->paymentView($data);  // this is your custom implementation from here
     }
 
     public function processPaymentResponse($request)
@@ -112,9 +112,9 @@ class BTCPayPaymentDriver extends BaseDriver
         }
 
         if (
-            str_starts_with($btcpayRep->invoiceId, "__test__")
-            || $btcpayRep->type == "InvoiceProcessing"
-            || $btcpayRep->type == "InvoiceCreated"
+            str_starts_with($btcpayRep->invoiceId, '__test__')
+            || $btcpayRep->type == 'InvoiceProcessing'
+            || $btcpayRep->type == 'InvoiceCreated'
         ) {
             return;
         }
@@ -126,7 +126,6 @@ class BTCPayPaymentDriver extends BaseDriver
                 $sig = $value;
             }
         }
-
 
         sleep(1);
 
@@ -147,9 +146,8 @@ class BTCPayPaymentDriver extends BaseDriver
         $_invoice = $this->payment_hash->fee_invoice;
         $this->client = $_invoice->client;
 
-
         switch ($btcpayRep->type) {
-            case "InvoiceExpired":
+            case 'InvoiceExpired':
 
                 $payment = Payment::query()->withTrashed()->where('client_id', $_invoice->client_id)->where('id', $this->payment_hash->payment_id)->first();
 
@@ -165,7 +163,7 @@ class BTCPayPaymentDriver extends BaseDriver
                 }
 
                 break;
-            case "InvoiceInvalid":
+            case 'InvoiceInvalid':
 
                 $payment = Payment::query()->withTrashed()->where('client_id', $_invoice->client_id)->where('id', $this->payment_hash->payment_id)->first();
 
@@ -180,13 +178,12 @@ class BTCPayPaymentDriver extends BaseDriver
                 }
 
                 break;
-            case "InvoiceSettled":
+            case 'InvoiceSettled':
 
                 $payment = Payment::query()->withTrashed()->where('client_id', $_invoice->client_id)->where('id', $this->payment_hash->payment_id)->first();
                 $StatusId = Payment::STATUS_COMPLETED;
 
                 if (!$payment) {
-
 
                     $dataPayment = [
                         'payment_method' => $this->payment_method,
@@ -226,6 +223,7 @@ class BTCPayPaymentDriver extends BaseDriver
     public function refund(Payment $payment, $amount, $return_client_response = false)
     {
         $this->setPaymentMethod(GatewayType::CRYPTO);
-        return $this->payment_method->refund($payment, $amount); //this is your custom implementation from here
+
+        return $this->payment_method->refund($payment, $amount); // this is your custom implementation from here
     }
 }

@@ -6,72 +6,108 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
 use Illuminate\Support\Facades\Log;
-use RobRichards\XMLSecLibs\XMLSecurityKey;
 use RobRichards\XMLSecLibs\XMLSecurityDSig;
-use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
+use RobRichards\XMLSecLibs\XMLSecurityKey;
 
 class Invoice extends BaseXmlModel implements XmlModelInterface
 {
     // Constants for invoice types
     public const TIPO_FACTURA_NORMAL = 'F1';
+
     public const TIPO_FACTURA_RECTIFICATIVA_PARTIAL = 'R1';
+
     public const TIPO_FACTURA_RECTIFICATIVA = 'R2';
+
     public const TIPO_FACTURA_SUSTITUIDA = 'F3';
 
     // Constants for rectification types
     public const TIPO_RECTIFICATIVA_COMPLETA = 'I';      // Rectificación por diferencias (Complete rectification)
+
     public const TIPO_RECTIFICATIVA_SUSTITUTIVA = 'S';   // Rectificación sustitutiva (Substitutive rectification)
 
     protected string $idVersion;
+
     protected IDFactura $idFactura;
+
     protected ?string $refExterna = null;
+
     protected string $nombreRazonEmisor;
+
     protected ?string $subsanacion = null;
+
     protected ?string $rechazoPrevio = null;
+
     protected string $tipoFactura;
+
     protected ?string $tipoRectificativa = null;
+
     protected ?array $facturasRectificadas = null;
+
     protected ?array $facturasSustituidas = null;
+
     protected ?array $importeRectificacion = null;
+
     protected ?string $fechaOperacion = null;
+
     protected string $descripcionOperacion;
+
     protected ?string $facturaSimplificadaArt7273 = null;
+
     protected ?string $facturaSinIdentifDestinatarioArt61d = null;
+
     protected ?string $macrodato = null;
+
     protected ?string $emitidaPorTerceroODestinatario = null;
+
     protected ?PersonaFisicaJuridica $tercero = null;
+
     protected ?array $destinatarios = null;
+
     protected ?string $cupon = null;
+
     protected Desglose $desglose;
+
     protected float $cuotaTotal;
+
     protected float $importeTotal;
+
     protected Encadenamiento $encadenamiento;
+
     protected SistemaInformatico $sistemaInformatico;
+
     protected string $fechaHoraHusoGenRegistro;
+
     protected ?string $numRegistroAcuerdoFacturacion = null;
+
     protected ?string $idAcuerdoSistemaInformatico = null;
+
     protected string $tipoHuella;
+
     protected string $huella;
+
     protected ?string $signature = null;
+
     protected ?string $privateKeyPath = null;
+
     protected ?string $publicKeyPath = null;
+
     protected ?string $certificatePath = null;
+
     protected ?string $fechaExpedicionFactura = null;
 
     public function __construct()
     {
         // Initialize required properties
-        $this->desglose = new Desglose();
-        $this->encadenamiento = new Encadenamiento();
-        $this->sistemaInformatico = new SistemaInformatico();
-        $this->idFactura = new IDFactura();
+        $this->desglose = new Desglose;
+        $this->encadenamiento = new Encadenamiento;
+        $this->sistemaInformatico = new SistemaInformatico;
+        $this->idFactura = new IDFactura;
         $this->tipoFactura = self::TIPO_FACTURA_NORMAL; // Default to normal invoice
     }
 
@@ -84,6 +120,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setIdVersion(string $idVersion): self
     {
         $this->idVersion = $idVersion;
+
         return $this;
     }
 
@@ -95,6 +132,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
     {
         $this->fechaExpedicionFactura = $fechaExpedicionFactura;
+
         return $this;
     }
 
@@ -106,6 +144,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setIdFactura(IDFactura $idFactura): self
     {
         $this->idFactura = $idFactura;
+
         return $this;
     }
 
@@ -118,6 +157,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setNumSerieFactura(string $numSerieFactura): self
     {
         $this->idFactura->setNumSerieFactura($numSerieFactura);
+
         return $this;
     }
 
@@ -129,6 +169,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setIdEmisorFactura(string $idEmisorFactura): self
     {
         $this->idFactura->setIdEmisorFactura($idEmisorFactura);
+
         return $this;
     }
 
@@ -140,6 +181,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setRefExterna(?string $refExterna): self
     {
         $this->refExterna = $refExterna;
+
         return $this;
     }
 
@@ -151,6 +193,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setNombreRazonEmisor(string $nombreRazonEmisor): self
     {
         $this->nombreRazonEmisor = $nombreRazonEmisor;
+
         return $this;
     }
 
@@ -162,6 +205,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setSubsanacion(?string $subsanacion): self
     {
         $this->subsanacion = $subsanacion;
+
         return $this;
     }
 
@@ -173,6 +217,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setRechazoPrevio(?string $rechazoPrevio): self
     {
         $this->rechazoPrevio = $rechazoPrevio;
+
         return $this;
     }
 
@@ -188,6 +233,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             throw new \InvalidArgumentException('Invalid TipoFactura value. Must be one of: ' . implode(', ', $validTypes));
         }
         $this->tipoFactura = $tipoFactura;
+
         return $this;
     }
 
@@ -205,6 +251,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             }
         }
         $this->tipoRectificativa = $tipoRectificativa;
+
         return $this;
     }
 
@@ -216,6 +263,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFacturasRectificadas(?array $facturasRectificadas): self
     {
         $this->facturasRectificadas = $facturasRectificadas;
+
         return $this;
     }
 
@@ -227,6 +275,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFacturasSustituidas(?array $facturasSustituidas): self
     {
         $this->facturasSustituidas = $facturasSustituidas;
+
         return $this;
     }
 
@@ -247,6 +296,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     {
 
         $this->importeRectificacion = $amounts;
+
         return $this;
     }
 
@@ -258,6 +308,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFechaOperacion(?string $fechaOperacion): self
     {
         $this->fechaOperacion = $fechaOperacion;
+
         return $this;
     }
 
@@ -269,6 +320,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setDescripcionOperacion(string $descripcionOperacion): self
     {
         $this->descripcionOperacion = $descripcionOperacion;
+
         return $this;
     }
 
@@ -280,6 +332,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFacturaSimplificadaArt7273(?string $facturaSimplificadaArt7273): self
     {
         $this->facturaSimplificadaArt7273 = $facturaSimplificadaArt7273;
+
         return $this;
     }
 
@@ -291,6 +344,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFacturaSinIdentifDestinatarioArt61d(?string $facturaSinIdentifDestinatarioArt61d): self
     {
         $this->facturaSinIdentifDestinatarioArt61d = $facturaSinIdentifDestinatarioArt61d;
+
         return $this;
     }
 
@@ -302,6 +356,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setMacrodato(?string $macrodato): self
     {
         $this->macrodato = $macrodato;
+
         return $this;
     }
 
@@ -313,6 +368,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setEmitidaPorTerceroODestinatario(?string $emitidaPorTerceroODestinatario): self
     {
         $this->emitidaPorTerceroODestinatario = $emitidaPorTerceroODestinatario;
+
         return $this;
     }
 
@@ -324,10 +380,9 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setTercero(?PersonaFisicaJuridica $tercero): self
     {
         $this->tercero = $tercero;
+
         return $this;
     }
-
-
 
     public function getDestinatarios(): ?array
     {
@@ -350,6 +405,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         }
 
         $this->destinatarios = $destinatarios;
+
         return $this;
     }
 
@@ -364,6 +420,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             throw new \InvalidArgumentException('Cupon must be either "S" or "N"');
         }
         $this->cupon = $cupon;
+
         return $this;
     }
 
@@ -375,6 +432,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setDesglose(Desglose $desglose): self
     {
         $this->desglose = $desglose;
+
         return $this;
     }
 
@@ -386,6 +444,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setCuotaTotal(float $cuotaTotal): self
     {
         $this->cuotaTotal = $cuotaTotal;
+
         return $this;
     }
 
@@ -406,6 +465,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         }
 
         $this->importeTotal = (float) $importeTotal;
+
         return $this;
     }
 
@@ -417,6 +477,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setEncadenamiento(Encadenamiento $encadenamiento): self
     {
         $this->encadenamiento = $encadenamiento;
+
         return $this;
     }
 
@@ -428,6 +489,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setSistemaInformatico(SistemaInformatico $sistemaInformatico): self
     {
         $this->sistemaInformatico = $sistemaInformatico;
+
         return $this;
     }
 
@@ -442,6 +504,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         //     throw new \InvalidArgumentException('Invalid date format for FechaHoraHusoGenRegistro. Expected format: YYYY-MM-DDThh:mm:ss');
         // }
         $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
+
         return $this;
     }
 
@@ -453,6 +516,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setNumRegistroAcuerdoFacturacion(?string $numRegistroAcuerdoFacturacion): self
     {
         $this->numRegistroAcuerdoFacturacion = $numRegistroAcuerdoFacturacion;
+
         return $this;
     }
 
@@ -464,6 +528,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setIdAcuerdoSistemaInformatico(?string $idAcuerdoSistemaInformatico): self
     {
         $this->idAcuerdoSistemaInformatico = $idAcuerdoSistemaInformatico;
+
         return $this;
     }
 
@@ -475,6 +540,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setTipoHuella(string $tipoHuella): self
     {
         $this->tipoHuella = $tipoHuella;
+
         return $this;
     }
 
@@ -486,6 +552,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setHuella(string $huella): self
     {
         $this->huella = $huella;
+
         return $this;
     }
 
@@ -497,21 +564,21 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setSignature(?string $signature): self
     {
         $this->signature = $signature;
+
         return $this;
     }
 
     /**
      * Helper method to create a rectificative invoice with proper configuration
      *
-     * @param string $tipoRectificativa The type of rectification ('I' for complete, 'S' for substitutive)
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
+     * @param  string  $tipoRectificativa  The type of rectification ('I' for complete, 'S' for substitutive)
+     * @param  string  $descripcionOperacion  Description of the rectification operation
      */
     public function makeRectificative(string $tipoRectificativa, string $descripcionOperacion = 'Rectificación de factura'): self
     {
         $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
-             ->setTipoRectificativa($tipoRectificativa)
-             ->setDescripcionOperacion($descripcionOperacion);
+            ->setTipoRectificativa($tipoRectificativa)
+            ->setDescripcionOperacion($descripcionOperacion);
 
         return $this;
     }
@@ -519,8 +586,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     /**
      * Helper method to create a complete rectification invoice
      *
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
+     * @param  string  $descripcionOperacion  Description of the rectification operation
      */
     public function makeCompleteRectification(string $descripcionOperacion = 'Rectificación completa de factura'): self
     {
@@ -530,16 +596,15 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     /**
      * Helper method to create a substitutive rectification invoice
      *
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
+     * @param  string  $descripcionOperacion  Description of the rectification operation
      */
     public function makeSubstitutiveRectification(string $descripcionOperacion = 'Rectificación sustitutiva de factura'): self
     {
         // For substitutive rectifications, we need to ensure ImporteRectificacion is set
         // This method will throw an error if ImporteRectificacion is not set
         $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
-             ->setTipoRectificativa(self::TIPO_RECTIFICATIVA_SUSTITUTIVA)
-             ->setDescripcionOperacion($descripcionOperacion);
+            ->setTipoRectificativa(self::TIPO_RECTIFICATIVA_SUSTITUTIVA)
+            ->setDescripcionOperacion($descripcionOperacion);
 
         // Validate that ImporteRectificacion is set for substitutive rectifications
         if ($this->importeRectificacion === null) {
@@ -552,26 +617,23 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     /**
      * Helper method to create a rectificative invoice with ImporteRectificacion
      *
-     * @param string $tipoRectificativa The type of rectification ('I' for complete, 'S' for substitutive)
-     * @param array $importeRectificacion The rectification amount
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
+     * @param  string  $tipoRectificativa  The type of rectification ('I' for complete, 'S' for substitutive)
+     * @param  array  $importeRectificacion  The rectification amount
+     * @param  string  $descripcionOperacion  Description of the rectification operation
      */
     public function makeRectificativeWithAmount(string $tipoRectificativa, array $importeRectificacion, string $descripcionOperacion = 'Rectificación de factura'): self
     {
         $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
-             ->setTipoRectificativa($tipoRectificativa)
-             ->setImporteRectificacion($importeRectificacion)
-             ->setDescripcionOperacion($descripcionOperacion);
+            ->setTipoRectificativa($tipoRectificativa)
+            ->setImporteRectificacion($importeRectificacion)
+            ->setDescripcionOperacion($descripcionOperacion);
 
         return $this;
     }
 
-
     /**
      * Validate that the invoice is properly configured for its type
      *
-     * @return bool
      * @throws \InvalidArgumentException
      */
     public function validate(): bool
@@ -619,39 +681,42 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setPrivateKeyPath(string $path): self
     {
         $this->privateKeyPath = $path;
+
         return $this;
     }
 
     public function setPublicKeyPath(string $path): self
     {
         $this->publicKeyPath = $path;
+
         return $this;
     }
 
     public function setCertificatePath(string $path): self
     {
         $this->certificatePath = $path;
+
         return $this;
     }
 
     public function signXml(\DOMDocument $doc): void
     {
         if (!file_exists($this->certificatePath)) {
-            throw new \RuntimeException("Certificate file not found at: " . $this->certificatePath);
+            throw new \RuntimeException('Certificate file not found at: ' . $this->certificatePath);
         }
         if (!file_exists($this->privateKeyPath)) {
-            throw new \RuntimeException("Private key file not found at: " . $this->privateKeyPath);
+            throw new \RuntimeException('Private key file not found at: ' . $this->privateKeyPath);
         }
 
         try {
             $xmlContent = $doc->saveXML();
-            Log::debug("XML before signing:", ['xml' => $xmlContent]);
+            Log::debug('XML before signing:', ['xml' => $xmlContent]);
 
-            $objDSig = new XMLSecurityDSig(); //@phpstan-ignore-line
-            $objDSig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N); //@phpstan-ignore-line
+            $objDSig = new XMLSecurityDSig; // @phpstan-ignore-line
+            $objDSig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N); // @phpstan-ignore-line
 
             // Create a new security key
-            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'private']); //@phpstan-ignore-line
+            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'private']); // @phpstan-ignore-line
 
             // Load the private key
             $objKey->loadKey($this->privateKeyPath, true);
@@ -659,7 +724,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             // Add the reference
             $objDSig->addReference(
                 $doc,
-                XMLSecurityDSig::SHA256, //@phpstan-ignore-line
+                XMLSecurityDSig::SHA256, // @phpstan-ignore-line
                 [
                     'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
                     'http://www.w3.org/2001/10/xml-exc-c14n#',
@@ -677,20 +742,20 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             $objDSig->appendSignature($doc->documentElement);
 
             // Verify the signature
-            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'public']); //@phpstan-ignore-line
+            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'public']); // @phpstan-ignore-line
             $objKey->loadKey($this->publicKeyPath, true, true);
 
             if ($objDSig->verify($objKey) === 1) {
-                Log::debug("Signature verification successful");
+                Log::debug('Signature verification successful');
             } else {
-                Log::error("Signature verification failed");
+                Log::error('Signature verification failed');
             }
 
             $xmlContent = $doc->saveXML();
-            Log::debug("XML after signing:", ['xml' => $xmlContent]);
+            Log::debug('XML after signing:', ['xml' => $xmlContent]);
 
         } catch (\Exception $e) {
-            Log::error("Error during XML signing: " . $e->getMessage(), [
+            Log::error('Error during XML signing: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -709,7 +774,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             Log::debug('XML to verify: ' . $doc->saveXML());
 
             // Get the signature node
-            $objXMLSecDSig = new XMLSecurityDSig(); //@phpstan-ignore-line
+            $objXMLSecDSig = new XMLSecurityDSig; // @phpstan-ignore-line
 
             // Locate the signature
             Log::debug('Locating signature');
@@ -747,6 +812,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             $result = $objXMLSecDSig->verify($objKey) === 1;
 
             Log::info('Signature verification ' . ($result ? 'succeeded' : 'failed'));
+
             return $result;
         } catch (\Exception $e) {
             Log::error('Error during signature verification: ' . $e->getMessage());
@@ -805,7 +871,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             $root->appendChild($facturasRectificadasElement);
         }
 
-
         if ($this->tipoFactura === self::TIPO_FACTURA_SUSTITUIDA && $this->facturasSustituidas !== null) {
             $facturasSustituidasElement = $this->createElement($doc, 'FacturasSustituidas');
 
@@ -826,8 +891,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
 
             $root->appendChild($facturasSustituidasElement);
         }
-
-
 
         // 7. ImporteRectificacion (only for R1 invoices with proper structure)
         if (in_array($this->tipoFactura, [self::TIPO_FACTURA_RECTIFICATIVA_PARTIAL, self::TIPO_FACTURA_RECTIFICATIVA, self::TIPO_FACTURA_SUSTITUIDA]) && $this->importeRectificacion !== null) {
@@ -868,7 +931,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             }
             $root->appendChild($destinatariosElement);
         }
-
 
         // 10. Desglose
         if ($this->desglose !== null) {
@@ -996,7 +1058,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $regFactu->appendChild($registroFactura);
 
         // Import your existing XML into the RegistroFactura
-        $yourXmlDoc = new \DOMDocument();
+        $yourXmlDoc = new \DOMDocument;
         $yourXmlDoc->loadXML($this->toXmlString());
 
         // Import the root element from your XML
@@ -1054,12 +1116,13 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $previousErrorSetting = libxml_use_internal_errors(true);
 
         try {
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             if (!$doc->loadXML($xml)) {
                 $errors = libxml_get_errors();
                 libxml_clear_errors();
                 throw new \DOMException('Failed to load XML: ' . ($errors ? $errors[0]->message : 'Invalid XML format'));
             }
+
             return static::fromDOMElement($doc->documentElement);
         } finally {
             // Restore previous error handling setting
@@ -1069,7 +1132,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $invoice = new self();
+        $invoice = new self;
 
         // Parse IDVersion
         $idVersionElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDVersion')->item(0);
@@ -1162,7 +1225,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         // Parse Tercero
         $terceroElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'Tercero')->item(0);
         if ($terceroElement) {
-            $tercero = new PersonaFisicaJuridica();
+            $tercero = new PersonaFisicaJuridica;
 
             // Get NombreRazon
             $nombreRazonElement = $terceroElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NombreRazon')->item(0);
@@ -1241,7 +1304,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
 
         // Parse Destinatarios
 
-
         // Parse Destinatarios
         $destinatariosElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'Destinatarios')->item(0);
         if ($destinatariosElement) {
@@ -1255,7 +1317,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
                     $destinatario = IDOtro::fromDOMElement($idOtroElement);
                 } else {
                     // Create PersonaFisicaJuridica object
-                    $destinatario = new PersonaFisicaJuridica();
+                    $destinatario = new PersonaFisicaJuridica;
 
                     // Get NIF
                     $nifElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NIF')->item(0);
@@ -1278,14 +1340,13 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             $invoice->setDestinatarios($destinatarios);
         }
 
-
-
         return $invoice;
     }
 
     protected static function getElementText(\DOMElement $element, string $tagName): ?string
     {
         $node = $element->getElementsByTagNameNS(self::XML_NAMESPACE, $tagName)->item(0);
+
         return $node ? $node->nodeValue : null;
     }
 
@@ -1294,7 +1355,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
      */
     public function createCancellation(): RegistroAnulacion
     {
-        $cancellation = new RegistroAnulacion();
+        $cancellation = new RegistroAnulacion;
         $cancellation
             ->setSistemaInformatico($this->getSistemaInformatico())
             ->setNombreRazonEmisor($this->getNombreRazonEmisor())

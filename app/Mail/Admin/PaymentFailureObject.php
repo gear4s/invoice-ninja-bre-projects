@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,24 +27,21 @@ class PaymentFailureObject
     /**
      * Create a new job instance.
      *
-     * @param $client
-     * @param $message
-     * @param $company
-     * @param $amount
+     * @param  $message
      */
     public function __construct(public Client $client, public string $error, public Company $company, public float $amount, public ?PaymentHash $payment_hash, protected bool $use_react_url) {}
 
     public function build()
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        $mail_obj = new stdClass();
+        $mail_obj = new stdClass;
         $mail_obj->amount = $this->getAmount();
         $mail_obj->subject = $this->getSubject();
         $mail_obj->data = $this->getData();
@@ -53,11 +49,10 @@ class PaymentFailureObject
         $mail_obj->tag = $this->company->company_key;
         $mail_obj->text_view = 'email.template.text';
 
-
         $bccs = $this->client->getSetting('bcc_email');
 
         if (strlen($bccs) > 1) {
-            if (\App\Utils\Ninja::isHosted() && $this->company->account->isPaid()) {
+            if (Ninja::isHosted() && $this->company->account->isPaid()) {
                 $mail_obj->bcc = explode(',', str_replace(' ', '', $bccs));
             }
 
@@ -65,7 +60,6 @@ class PaymentFailureObject
                 $mail_obj->bcc = explode(',', str_replace(' ', '', $bccs));
             }
         }
-
 
         return $mail_obj;
     }
@@ -120,7 +114,7 @@ class PaymentFailureObject
 
     public function getDescription(bool $abbreviated = false)
     {
-        if (! $this->payment_hash) {
+        if (!$this->payment_hash) {
             return '';
         }
 

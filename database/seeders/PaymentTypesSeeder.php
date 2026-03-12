@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -95,7 +95,7 @@ class PaymentTypesSeeder extends Seeder
             if ($record) {
                 $record->id = $x;
                 $record->name = $paymentType['name'];
-                $record->gateway_type_id = ! empty($paymentType['gateway_type_id']) ? $paymentType['gateway_type_id'] : null;
+                $record->gateway_type_id = !empty($paymentType['gateway_type_id']) ? $paymentType['gateway_type_id'] : null;
 
                 $record->save();
             } else {

@@ -6,40 +6,40 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Email;
 
-use App\Models\Task;
-use App\Utils\Ninja;
-use App\Models\Quote;
+use App\DataMapper\CompanySettings;
+use App\DataMapper\EmailTemplateDefaults;
+use App\Jobs\Entity\CreateRawPdf;
+use App\Jobs\Invoice\CreateUbl;
 use App\Models\Account;
 use App\Models\Expense;
 use App\Models\Invoice;
-use App\Models\PurchaseOrder;
-use App\Jobs\Invoice\CreateUbl;
+use App\Models\Quote;
+use App\Models\Task;
+use App\Services\Pdf\Markdown;
+use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
-use App\Jobs\Entity\CreateRawPdf;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Mail\Mailables\Address;
-use App\DataMapper\EmailTemplateDefaults;
-use League\CommonMark\CommonMarkConverter;
 
 class EmailDefaults
 {
     use MakesHash;
+
     /**
      * The settings object for this email
-     * @var \App\DataMapper\CompanySettings $settings
+     *
+     * @var CompanySettings
      */
     protected $settings;
 
     /**
      * The HTML / Template to use for this email
-     * @var string $template
      */
     private string $template;
 
@@ -50,7 +50,7 @@ class EmailDefaults
     private string $locale;
 
     /**
-     * @param Email $email job class
+     * @param  Email  $email  job class
      */
     public function __construct(protected Email $email) {}
 
@@ -65,17 +65,18 @@ class EmailDefaults
         $this->settings = $this->email->email_object->settings;
 
         $this->setLocale()
-             ->setFrom()
-             ->setTo()
-             ->setCc()
-             ->setTemplate()
-             ->setBody()
-             ->setSubject()
-             ->setReplyTo()
-             ->setBcc()
-             ->setAttachments()
-             ->setVariables()
-             ->setHeaders();
+            ->setFrom()
+            ->setTo()
+            ->setCc()
+            ->setTemplate()
+            ->setBody()
+            ->setSubject()
+            ->setReplyTo()
+            ->setBcc()
+            ->setAttachments()
+            ->setVariables()
+            ->setHeaders();
+
         return $this->email->email_object;
     }
 
@@ -176,13 +177,13 @@ class EmailDefaults
             $this->email->email_object->body = EmailTemplateDefaults::getDefaultTemplate($this->email->email_object->email_template_body, $this->locale);
         }
 
-        $breaks = ["<br />","<br>","<br/>"];
+        $breaks = ['<br />', '<br>', '<br/>'];
         $this->email->email_object->text_body = str_ireplace($breaks, "\r\n", $this->email->email_object->body);
         $this->email->email_object->text_body = strip_tags($this->email->email_object->text_body);
-        $this->email->email_object->text_body = str_replace(['$view_button','$viewButton'], "\r\n\r\n" . '$view_url' . "\r\n", $this->email->email_object->text_body);
+        $this->email->email_object->text_body = str_replace(['$view_button', '$viewButton'], "\r\n\r\n" . '$view_url' . "\r\n", $this->email->email_object->text_body);
 
         if ($this->template == 'email.template.custom') {
-            $this->email->email_object->body = (str_replace('$body', $this->email->email_object->body, str_replace(["\r","\n"], "", $this->email->email_object->settings->email_style_custom)));
+            $this->email->email_object->body = (str_replace('$body', $this->email->email_object->body, str_replace(["\r", "\n"], '', $this->email->email_object->settings->email_style_custom)));
         }
 
         return $this;
@@ -194,7 +195,7 @@ class EmailDefaults
      */
     private function setSubject(): self
     {
-        if ($this->email->email_object->subject) { //where the user updates the subject from the UI
+        if ($this->email->email_object->subject) { // where the user updates the subject from the UI
             return $this;
         } elseif (strlen($this->email->email_object->settings?->{$this->email->email_object->email_template_subject}) > 3) {
             $this->email->email_object->subject = $this->email->email_object->settings?->{$this->email->email_object->email_template_subject};
@@ -213,7 +214,7 @@ class EmailDefaults
         $reply_to_email = $this->email->company->owner()->email;
         $reply_to_name = $this->email->company->owner()->present()->name();
 
-        if (str_contains($this->email->email_object->settings->reply_to_email, "@")) {
+        if (str_contains($this->email->email_object->settings->reply_to_email, '@')) {
             $reply_to_email = $this->email->email_object->settings->reply_to_email;
         } elseif (isset($this->email->email_object->invitation->user)) {
             $reply_to_email = $this->email->email_object->invitation->user->email;
@@ -243,10 +244,9 @@ class EmailDefaults
 
         $this->email->email_object->subject = strtr($this->email->email_object->subject, $this->email->email_object->variables);
 
-
-        //06-06-2023 ensure we do not parse markdown in custom templates
+        // 06-06-2023 ensure we do not parse markdown in custom templates
         if ($this->template != 'custom' && $this->template != 'email.template.custom') {
-            $this->email->email_object->body = \App\Services\Pdf\Markdown::parse($this->email->email_object->body);
+            $this->email->email_object->body = Markdown::parse($this->email->email_object->body);
         }
 
         return $this;
@@ -328,11 +328,11 @@ class EmailDefaults
             try {
                 $xml_string = $this->email->email_object->entity->service()->getEDocument();
             } catch (\Throwable $th) {
-                nlog("could not generate e invoice for:: " . $this->email->email_object->entity->id);
+                nlog('could not generate e invoice for:: ' . $this->email->email_object->entity->id);
             }
 
             if ($xml_string) {
-                $this->email->email_object->attachments = array_merge($this->email->email_object->attachments, [['file' => base64_encode($xml_string), 'name' => explode(".", $this->email->email_object->entity->getFileName('xml'))[0] . "-e_invoice.xml"]]);
+                $this->email->email_object->attachments = array_merge($this->email->email_object->attachments, [['file' => base64_encode($xml_string), 'name' => explode('.', $this->email->email_object->entity->getFileName('xml'))[0] . '-e_invoice.xml']]);
             }
 
         }
@@ -371,11 +371,11 @@ class EmailDefaults
 
             if (count($expense_ids) > 0) {
                 Expense::query()->whereIn('id', $this->transformKeys($expense_ids))
-                        ->where('invoice_documents', 1)
-                        ->cursor()
-                        ->each(function ($expense) {
-                            $this->email->email_object->documents = array_merge($this->email->email_object->documents, $expense->documents()->where('is_public', true)->pluck('id')->toArray());
-                        });
+                    ->where('invoice_documents', 1)
+                    ->cursor()
+                    ->each(function ($expense) {
+                        $this->email->email_object->documents = array_merge($this->email->email_object->documents, $expense->documents()->where('is_public', true)->pluck('id')->toArray());
+                    });
             }
 
             if (count($task_ids) > 0 && $this->email->company->invoice_task_documents) {
@@ -402,5 +402,4 @@ class EmailDefaults
 
         return $this;
     }
-
 }

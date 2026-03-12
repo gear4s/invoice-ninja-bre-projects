@@ -9,7 +9,7 @@ class CommaSeparatedEmailsTest extends TestCase
 {
     public function test_validates_single_email()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
 
         $rule->validate('emails', 'test@example.com', function () use (&$failed) {
@@ -21,7 +21,7 @@ class CommaSeparatedEmailsTest extends TestCase
 
     public function test_validates_multiple_emails()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
 
         $rule->validate('emails', 'test1@example.com, test2@example.com, test3@example.com', function () use (&$failed) {
@@ -33,7 +33,7 @@ class CommaSeparatedEmailsTest extends TestCase
 
     public function test_validates_emails_with_whitespace()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
 
         $rule->validate('emails', '  test1@example.com  ,  test2@example.com  ', function () use (&$failed) {
@@ -45,7 +45,7 @@ class CommaSeparatedEmailsTest extends TestCase
 
     public function test_fails_with_invalid_email()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
         $errorMessage = '';
 
@@ -60,7 +60,7 @@ class CommaSeparatedEmailsTest extends TestCase
 
     public function test_fails_with_empty_emails()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
 
         $rule->validate('emails', 'test@example.com, , test2@example.com', function () use (&$failed) {
@@ -87,7 +87,7 @@ class CommaSeparatedEmailsTest extends TestCase
 
     public function test_validates_null_value()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
 
         $rule->validate('emails', null, function () use (&$failed) {
@@ -99,7 +99,7 @@ class CommaSeparatedEmailsTest extends TestCase
 
     public function test_validates_empty_string()
     {
-        $rule = new CommaSeparatedEmails();
+        $rule = new CommaSeparatedEmails;
         $failed = false;
 
         $rule->validate('emails', '', function () use (&$failed) {

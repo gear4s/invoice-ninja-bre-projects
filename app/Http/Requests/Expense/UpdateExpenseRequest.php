@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,23 +13,23 @@ namespace App\Http\Requests\Expense;
 
 use App\Http\Requests\Request;
 use App\Models\Project;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdateExpenseRequest extends Request
 {
-    use MakesHash;
     use ChecksEntityStatus;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->expense);
@@ -38,10 +37,10 @@ class UpdateExpenseRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /* Ensure we have a client name, and that all emails are unique*/
+        /* Ensure we have a client name, and that all emails are unique */
         $rules = [];
 
         if (isset($this->number)) {
@@ -67,14 +66,14 @@ class UpdateExpenseRequest extends Request
     public function prepareForValidation()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
 
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -82,7 +81,7 @@ class UpdateExpenseRequest extends Request
             unset($input['documents']);
         }
 
-        if (! array_key_exists('currency_id', $input) || strlen($input['currency_id'] ?? '') == 0) {
+        if (!array_key_exists('currency_id', $input) || strlen($input['currency_id'] ?? '') == 0) {
             $input['currency_id'] = (string) $user->company()->settings->currency_id;
         }
 

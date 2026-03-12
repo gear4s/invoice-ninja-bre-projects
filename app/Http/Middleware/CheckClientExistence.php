@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,8 +21,6 @@ class CheckClientExistence
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
@@ -48,14 +45,14 @@ class CheckClientExistence
             })
             ->get();
 
-        /* This catches deleted clients who don't have access to the app. We automatically log them out here*/
+        /* This catches deleted clients who don't have access to the app. We automatically log them out here */
         if (count($multiple_contacts) == 0) {
             Auth::logout();
 
             return redirect()->route('client.login')->with('message', 'Login disabled');
         }
 
-        if (count($multiple_contacts) == 1 && ! Auth::guard('contact')->check()) {
+        if (count($multiple_contacts) == 1 && !Auth::guard('contact')->check()) {
 
             request()->session()->invalidate();
             request()->session()->regenerateToken();

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www/elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class Cancellation
 {
     public function __construct(
         public float $adjustment = 0, // The cancellation adjustment amount
-        public int $status_id = 0 //The status id of the invoice when it was cancelled
+        public int $status_id = 0 // The status id of the invoice when it was cancelled
     ) {}
 
     public static function fromArray(array|object $data): self

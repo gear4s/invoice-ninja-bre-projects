@@ -6,24 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice\Peppol;
 
-use App\Models\Country;
-use Illuminate\Auth\Access\AuthorizationException;
+use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class UpdateEntityRequest extends FormRequest
 {
     public function authorize(): bool
     {
         /**
-         * @var \App\Models\User
+         * @var User
          */
         $user = auth()->user();
 
@@ -36,7 +33,7 @@ class UpdateEntityRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -52,5 +49,4 @@ class UpdateEntityRequest extends FormRequest
 
         $this->replace($input);
     }
-
 }

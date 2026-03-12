@@ -6,14 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Utils\Ninja;
 use App\Utils\SystemHealth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class PingController extends BaseController
@@ -21,7 +22,7 @@ class PingController extends BaseController
     /**
      * Get a ping response from the system.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/ping",
@@ -29,10 +30,13 @@ class PingController extends BaseController
      *      tags={"ping"},
      *      summary="Attempts to ping the API",
      *      description="Attempts to ping the API",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The company and user name",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -42,7 +46,7 @@ class PingController extends BaseController
     public function index()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return response()->json(
@@ -56,7 +60,7 @@ class PingController extends BaseController
     /**
      * Get a health check of the system.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/health_check",
@@ -64,10 +68,13 @@ class PingController extends BaseController
      *      tags={"health_check"},
      *      summary="Attempts to get a health check from the API",
      *      description="Attempts to get a health check from the API",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A key/value map of the system health",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -88,7 +95,7 @@ class PingController extends BaseController
     /**
      * Get the last error from storage/logs/laravel.log
      *
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/last_error",
@@ -96,10 +103,13 @@ class PingController extends BaseController
      *      tags={"last_error"},
      *      summary="Get the last error from storage/logs/laravel.log",
      *      description="Get the last error from storage/logs/laravel.log",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The last error from the logs",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
@@ -108,7 +118,7 @@ class PingController extends BaseController
      */
     public function lastError()
     {
-        if (Ninja::isNinja() || ! auth()->user()->isAdmin()) {
+        if (Ninja::isNinja() || !auth()->user()->isAdmin()) {
             return response()->json(['message' => ctrans('texts.route_not_available'), 'errors' => []], 403);
         }
 

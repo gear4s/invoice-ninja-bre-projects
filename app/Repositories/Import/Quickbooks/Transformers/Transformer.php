@@ -34,37 +34,37 @@ class Transformer
     protected function transformInvoices(array $items): Collection
     {
         return $this->transformation($items, [
-            "TotalAmt",
-            "Line",
-            "DueDate",
-            "Deposit",
-            "Balance",
-            "CustomerMemo",
-            "DocNumber",
-            "CustomerRef",
-            "BillEmail",
+            'TotalAmt',
+            'Line',
+            'DueDate',
+            'Deposit',
+            'Balance',
+            'CustomerMemo',
+            'DocNumber',
+            'CustomerRef',
+            'BillEmail',
             'MetaData',
-            "BillAddr",
-            "ShipAddr",
-            "LinkedTxn",
-            "Id",
-            "CurrencyRef",
-            "TxnTaxDetail",
-            "TxnDate",
+            'BillAddr',
+            'ShipAddr',
+            'LinkedTxn',
+            'Id',
+            'CurrencyRef',
+            'TxnTaxDetail',
+            'TxnDate',
         ]);
     }
 
     protected function transformPayments(array $items): Collection
     {
         return $this->transformation($items, [
-            "PaymentRefNum",
-            "TotalAmt",
-            "CustomerRef",
-            "CurrencyRef",
-            "TxnDate",
-            "Line",
-            "PrivateNote",
-            "MetaData",
+            'PaymentRefNum',
+            'TotalAmt',
+            'CustomerRef',
+            'CurrencyRef',
+            'TxnDate',
+            'Line',
+            'PrivateNote',
+            'MetaData',
         ]);
     }
 
@@ -84,5 +84,4 @@ class Transformer
     {
         return collect($items)->select($keys);
     }
-
 }

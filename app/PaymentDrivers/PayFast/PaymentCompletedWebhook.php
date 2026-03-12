@@ -6,23 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\PayFast;
 
-use App\Models\Company;
-use App\Models\Payment;
 use App\Libraries\MultiDB;
+use App\Models\Company;
+use App\Models\CompanyGateway;
 use App\Models\GatewayType;
+use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
 use Illuminate\Bus\Queueable;
-use App\Models\CompanyGateway;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
 class PaymentCompletedWebhook implements ShouldQueue
@@ -62,7 +61,7 @@ class PaymentCompletedWebhook implements ShouldQueue
 
     public function handle()
     {
-        nlog("PaymentCompletedWebhook");
+        nlog('PaymentCompletedWebhook');
         nlog(now()->format('Y-m-d H:i:s'));
         MultiDB::findAndSetDbByCompanyKey($this->company_key);
 
@@ -74,11 +73,12 @@ class PaymentCompletedWebhook implements ShouldQueue
             ->first();
 
         if ($p) {
-            nlog("payment found returning");
+            nlog('payment found returning');
+
             return;
         }
 
-        nlog("yolo");
+        nlog('yolo');
         $payment_hash = PaymentHash::where('hash', $this->data['m_payment_id'])->first();
 
         $company_gateway = CompanyGateway::query()->where('company_id', $company->id)->where('id', $this->company_gateway_id)->first();
@@ -86,7 +86,7 @@ class PaymentCompletedWebhook implements ShouldQueue
         $driver->setPaymentHash($payment_hash);
 
         $payment_record = [];
-        $payment_record['amount'] =  $this->data['amount_gross'];
+        $payment_record['amount'] = $this->data['amount_gross'];
         $payment_record['payment_type'] = PaymentType::CREDIT_CARD_OTHER;
         $payment_record['gateway_type_id'] = GatewayType::CREDIT_CARD;
         $payment_record['transaction_reference'] = $this->data['pf_payment_id'];

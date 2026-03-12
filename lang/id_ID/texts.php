@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organisasi',
     'name' => 'Nama',
     'website' => 'Situs Web',
@@ -1169,7 +1169,6 @@ $lang = array(
     'enterprise_plan_features' => 'Paket Enterprise menambahkan dukungan untuk banyak pengguna dan lampiran file, :link untuk melihat daftar lengkap fitur.',
     'return_to_app' => 'Return To App',
 
-
     // Payment updates
     'refund_payment' => 'Refund Payment',
     'refund_max' => 'Max:',
@@ -1698,7 +1697,6 @@ $lang = array(
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Russian (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Accounting & Legal',
@@ -2356,7 +2354,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Gold Troy Ounce',
     'currency_nicaraguan_córdoba' => 'Nicaraguan Córdoba',
     'currency_malagasy_ariary' => 'Malagasy ariary',
-    "currency_tongan_pa_anga" => "Bahasa Tonga Pa&#39;anga",
+    'currency_tongan_pa_anga' => 'Bahasa Tonga Pa&#39;anga',
 
     'review_app_help' => 'We hope you\'re enjoying using the app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'writing a review',
@@ -4356,7 +4354,7 @@ $lang = array(
     'activity_122' => ':user archived recurring expense :recurring_expense',
     'activity_123' => ':user deleted recurring expense :recurring_expense',
     'activity_124' => ':user restored recurring expense :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'To view the :entity you need to set a password.',
     'unsubscribe' => 'Unsubscribe',
     'unsubscribed' => 'Unsubscribed',
@@ -4967,8 +4965,8 @@ $lang = array(
     'e_invoice' => 'E-Invoice',
     'light_dark_mode' => 'Light/Dark Mode',
     'activities' => 'Activities',
-    'recent_transactions' => "Transaksi Terbaru",
-    'country_Palestine' => "Palestine",
+    'recent_transactions' => 'Transaksi Terbaru',
+    'country_Palestine' => 'Palestine',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Duties',
     'order_number' => 'Order Number',
@@ -5185,7 +5183,7 @@ $lang = array(
     'rff' => 'Formulir bidang yang wajib diisi',
     'add_step' => 'Langkah Tambah',
     'steps' => 'Langkah',
-    'steps_order_help' =>  'Urutan langkah-langkahnya penting. Langkah pertama tidak boleh bergantung pada langkah lainnya. Langkah kedua harus bergantung pada langkah pertama, dan seterusnya.',
+    'steps_order_help' => 'Urutan langkah-langkahnya penting. Langkah pertama tidak boleh bergantung pada langkah lainnya. Langkah kedua harus bergantung pada langkah pertama, dan seterusnya.',
     'other_steps' => 'Langkah-langkah lainnya',
     'use_available_payments' => 'Gunakan Pembayaran yang Tersedia',
     'test_email_sent' => 'Berhasil mengirim email',
@@ -5394,7 +5392,7 @@ $lang = array(
     'credit_updated' => 'Kredit Diperbarui',
     'payment_updated' => 'Pembayaran Diperbarui',
     'search_placeholder' => 'Temukan faktur, klien, dan lainnya',
-    'invalid_vat_number' => "Nomor PPN tidak berlaku untuk negara yang dipilih. Formatnya harus Kode Negara diikuti dengan nomor saja, misalnya DE123456789",
+    'invalid_vat_number' => 'Nomor PPN tidak berlaku untuk negara yang dipilih. Formatnya harus Kode Negara diikuti dengan nomor saja, misalnya DE123456789',
     'acts_as_sender' => 'Kirim E-Faktur',
     'acts_as_receiver' => 'Terima E-Faktur',
     'peppol_token_generated' => 'Token PEPPOL berhasil dibuat.',
@@ -5531,7 +5529,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Siapkan Email Pengingat Otomatis',
     'pro_plan_feature_11' => 'Faktur PDF Terlampir Otomatis ke Email',
     'pro_plan_feature_12' => 'Menampilkan Tanda Tangan Elektronik Klien pada Faktur',
-    'pro_plan_feature_13' => "Aktifkan Kotak Centang &#39;Setujui Persyaratan&#39;",
+    'pro_plan_feature_13' => 'Aktifkan Kotak Centang &#39;Setujui Persyaratan&#39;',
     'pro_plan_feature_14' => 'Laporan: Faktur, Biaya, Laba Rugi, dan lainnya',
     'pro_plan_feature_15' => 'Faktur Email Massal, Kutipan, Kredit',
     'pro_plan_feature_16' => 'Interlink 10 Perusahaan dengan 1 Login',
@@ -5906,6 +5904,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Transfer Bank Stripe',
     'activity_164' => 'Sinkronisasi QuickBooks gagal. :notes',
-);
+];
 
 return $lang;

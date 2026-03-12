@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Expense;
 
 use App\Http\Requests\Request;
+use App\Models\Expense;
+use App\Models\User;
 use Illuminate\Validation\Rule;
 
 class BulkExpenseRequest extends Request
@@ -34,14 +35,14 @@ class BulkExpenseRequest extends Request
      */
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return [
             'action' => 'required|string|in:archive,restore,delete,bulk_update,bulk_categorize,template',
-            'ids' => ['required','bail','array', Rule::exists('expenses', 'id')->where('company_id', $user->company()->id)],
+            'ids' => ['required', 'bail', 'array', Rule::exists('expenses', 'id')->where('company_id', $user->company()->id)],
             'category_id' => ['sometimes', 'bail', Rule::exists('expense_categories', 'id')->where('company_id', $user->company()->id)],
-            'column' => ['required_if:action,bulk_update', 'string', Rule::in(\App\Models\Expense::$bulk_update_columns)],
+            'column' => ['required_if:action,bulk_update', 'string', Rule::in(Expense::$bulk_update_columns)],
             'new_value' => ['required_if:action,bulk_update|string'],
             'template' => 'sometimes|string',
             'template_id' => 'sometimes|string|required_if:action,template',

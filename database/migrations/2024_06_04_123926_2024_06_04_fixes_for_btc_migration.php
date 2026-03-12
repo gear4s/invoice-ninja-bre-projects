@@ -1,8 +1,7 @@
 <?php
 
+use App\Models\Gateway;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,8 +10,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if($g = \App\Models\Gateway::find(62))
-        {
+        if ($g = Gateway::find(62)) {
             $g->fields = '{"btcpayUrl":"", "apiKey":"", "storeId":"", "webhookSecret":""}';
             $g->save();
         }

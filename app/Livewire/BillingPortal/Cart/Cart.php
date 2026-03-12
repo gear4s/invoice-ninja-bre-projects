@@ -6,17 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal\Cart;
 
-use Livewire\Component;
-use App\Libraries\MultiDB;
 use App\Models\Subscription;
+use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\App;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class Cart extends Component
 {
@@ -29,17 +29,17 @@ class Cart extends Component
     public function mount()
     {
 
-        \Illuminate\Support\Facades\App::forgetInstance('translator');
+        App::forgetInstance('translator');
         $t = app('translator');
-        $t->replace(\App\Utils\Ninja::transformTranslations($this->subscription()->company->settings));
-        \Illuminate\Support\Facades\App::setLocale($this->subscription()->company->locale());
+        $t->replace(Ninja::transformTranslations($this->subscription()->company->settings));
+        App::setLocale($this->subscription()->company->locale());
 
     }
 
     #[Computed()]
     public function subscription()
     {
-        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration','steps']);
+        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration', 'steps']);
     }
 
     public function handleSubmit()

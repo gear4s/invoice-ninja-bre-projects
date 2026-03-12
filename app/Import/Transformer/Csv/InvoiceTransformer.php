@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. client Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,9 +22,9 @@ use App\Utils\Traits\CleanLineItems;
 class InvoiceTransformer extends BaseTransformer
 {
     use CleanLineItems;
+
     /**
-     * @param $data
-     *
+     * @param  $data
      * @return bool|array
      */
     public function transform($line_items_data)
@@ -120,7 +119,7 @@ class InvoiceTransformer extends BaseTransformer
             ),
             'footer' => $this->getString($invoice_data, 'invoice.footer'),
             'partial' => $this->getFloat($invoice_data, 'invoice.partial') > 0 ? $this->getFloat($invoice_data, 'invoice.partial') : null,
-            'partial_due_date' =>  isset($invoice_data['invoice.partial_due_date']) ? $this->parseDate($invoice_data['invoice.partial_due_date']) : null,
+            'partial_due_date' => isset($invoice_data['invoice.partial_due_date']) ? $this->parseDate($invoice_data['invoice.partial_due_date']) : null,
             'custom_surcharge1' => $this->getFloat(
                 $invoice_data,
                 'invoice.custom_surcharge1'
@@ -150,7 +149,7 @@ class InvoiceTransformer extends BaseTransformer
         ];
 
         /* If we can't find the client, then lets try and create a client */
-        if (! $transformed['client_id']) {
+        if (!$transformed['client_id']) {
             $client_transformer = new ClientTransformer($this->company);
 
             $transformed['client'] = $client_transformer->transform(
@@ -193,7 +192,6 @@ class InvoiceTransformer extends BaseTransformer
                 ],
             ];
         }
-
 
         $line_items = [];
 

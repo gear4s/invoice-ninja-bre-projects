@@ -6,35 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Preview;
 
-use App\Models\Vendor;
-use App\Models\PurchaseOrder;
 use App\Http\Requests\Request;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderInvitation;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Validation\Rule;
-use App\Utils\Traits\CleanLineItems;
-use App\Models\PurchaseOrderInvitation;
 
 class PreviewPurchaseOrderRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     private ?Vendor $vendor = null;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->hasIntersectPermissionsOrAdmin(['create_purchase_order', 'edit_purchase_order', 'view_purchase_order']);
@@ -43,7 +41,7 @@ class PreviewPurchaseOrderRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -63,7 +61,7 @@ class PreviewPurchaseOrderRequest extends Request
         $input['line_items'] = isset($input['line_items']) ? $this->cleanItems($input['line_items']) : [];
         $input['amount'] = 0;
         $input['balance'] = 0;
-        $input['number'] ??= ctrans('texts.live_preview') . ' #' . rand(0, 1000); //30-06-2023
+        $input['number'] ??= ctrans('texts.live_preview') . ' #' . rand(0, 1000); // 30-06-2023
 
         if ($input['entity_id'] ?? false) {
             $input['entity_id'] = $this->decodePrimaryKey($input['entity_id'], true);
@@ -72,13 +70,11 @@ class PreviewPurchaseOrderRequest extends Request
         $this->replace($input);
     }
 
-
-
     public function resolveInvitation()
     {
         $invitation = false;
 
-        if (! isset($this->entity_id)) {
+        if (!isset($this->entity_id)) {
             return $this->stubInvitation();
         }
 
@@ -89,7 +85,6 @@ class PreviewPurchaseOrderRequest extends Request
         }
 
         return $this->stubInvitation();
-
 
     }
 
@@ -126,7 +121,7 @@ class PreviewPurchaseOrderRequest extends Request
 
     private function stubEntity(Vendor $vendor)
     {
-        $entity = PurchaseOrder::factory()->make(['vendor_id' => $vendor->id,'user_id' => $vendor->user_id, 'company_id' => $vendor->company_id]);
+        $entity = PurchaseOrder::factory()->make(['vendor_id' => $vendor->id, 'user_id' => $vendor->user_id, 'company_id' => $vendor->company_id]);
 
         $entity->setRelation('vendor', $vendor);
         $entity->setRelation('company', $vendor->company);
@@ -135,6 +130,4 @@ class PreviewPurchaseOrderRequest extends Request
 
         return $entity;
     }
-
-
 }

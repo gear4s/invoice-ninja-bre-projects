@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,8 +24,7 @@ class QuoteTransformer extends BaseTransformer
     use CleanLineItems;
 
     /**
-     * @param $data
-     *
+     * @param  $data
      * @return bool|array
      */
     public function transform($line_items_data)
@@ -103,7 +101,7 @@ class QuoteTransformer extends BaseTransformer
             ),
             'footer' => $this->getString($quote_data, 'quote.footer'),
             'partial' => $this->getFloat($quote_data, 'quote.partial'),
-            'partial_due_date' =>  isset($quote_data['quote.partial_due_date']) ? $this->parseDate($quote_data['quote.partial_due_date']) : null,
+            'partial_due_date' => isset($quote_data['quote.partial_due_date']) ? $this->parseDate($quote_data['quote.partial_due_date']) : null,
             'custom_surcharge1' => $this->getString(
                 $quote_data,
                 'quote.custom_surcharge1'
@@ -133,7 +131,7 @@ class QuoteTransformer extends BaseTransformer
         ];
 
         /* If we can't find the client, then lets try and create a client */
-        if (! $transformed['client_id']) {
+        if (!$transformed['client_id']) {
             $client_transformer = new ClientTransformer($this->company);
 
             $transformed['client'] = $client_transformer->transform(
@@ -227,7 +225,7 @@ class QuoteTransformer extends BaseTransformer
                     $record,
                     'item.custom_value4'
                 ),
-                'type_id' => '1', //$this->getQuoteTypeId( $record, 'item.type_id' ),
+                'type_id' => '1', // $this->getQuoteTypeId( $record, 'item.type_id' ),
             ];
         }
         $transformed['line_items'] = $this->cleanItems($line_items);

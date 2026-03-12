@@ -6,13 +6,11 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
-use App\Models\Product;
 use App\Services\Quickbooks\QuickbooksService;
 
 /**
@@ -25,18 +23,17 @@ class ProductTransformer extends BaseTransformer
         return $this->transform($qb_data, $qb_service);
     }
 
-
-
     public function qbTransform($line_item, $income_account_id): array
     {
         // QuickBooks Name max length is 100 characters, Description max length is 4000 characters
         $product_name = strlen($line_item->product_key ?? '') > 0 ? $line_item->product_key : 'Product ' . uniqid();
+
         return [
             'Name' => mb_substr($product_name, 0, 100),
             'Description' => mb_substr($line_item->notes ?? '', 0, 4000),
             'PurchaseCost' => $line_item->product_cost ?? 0,
             'UnitPrice' => $line_item->cost,
-            'Type' => $line_item->type_id == '2' || in_array($line_item->tax_id, ['5','8']) ? 'Service' : 'NonInventory',
+            'Type' => $line_item->type_id == '2' || in_array($line_item->tax_id, ['5', '8']) ? 'Service' : 'NonInventory',
             'IncomeAccountRef' => [
                 'value' => strlen($line_item->income_account_id ?? '') > 0 ? $line_item->income_account_id : $income_account_id,
             ],
@@ -49,7 +46,7 @@ class ProductTransformer extends BaseTransformer
         // but this provides defense in depth
         $item_type = data_get($data, 'Type');
         if ($item_type === 'Category' || $item_type === 'Group') {
-            nlog("WARNING: Category/Group item detected in transform (should have been filtered): " . data_get($data, 'Name') . " (Type: {$item_type})");
+            nlog('WARNING: Category/Group item detected in transform (should have been filtered): ' . data_get($data, 'Name') . " (Type: {$item_type})");
             // Return minimal data to avoid errors, but log for investigation
         }
 
@@ -57,11 +54,11 @@ class ProductTransformer extends BaseTransformer
         $tax_rate_name = '';
         $tax_rate_percentage = 0.0;
         $tax_code = null;
-        
+
         if ($sales_tax_code_ref && $qb_service && ($tax_code = $qb_service->getTaxCode($sales_tax_code_ref))) {
 
             $tax_rate_ref = data_get($tax_code, 'SalesTaxRateList.TaxRateDetail.TaxRateRef', null);
-            
+
             if ($tax_rate_ref) {
                 $tax_rate_map_by_id = collect($qb_service->company->quickbooks->settings->tax_rate_map ?? [])->keyBy('id')->toArray();
                 $tax_rate = $tax_rate_map_by_id[$tax_rate_ref] ?? null;
@@ -73,11 +70,11 @@ class ProductTransformer extends BaseTransformer
         }
 
         $tax_id = '1';
-        
+
         if ($sales_tax_code_ref && stripos($sales_tax_code_ref, 'NON') !== false) {
             $tax_id = '5';
         }
-        
+
         if ($tax_id === '1' && data_get($data, 'Type') === 'Service') {
             $tax_id = '2';
         }
@@ -96,5 +93,4 @@ class ProductTransformer extends BaseTransformer
             'tax_rate1' => $tax_rate_percentage,
         ];
     }
-
 }

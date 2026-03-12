@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands\Elastic;
 
-use Illuminate\Console\Command;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\Credit;
@@ -16,6 +15,7 @@ use App\Models\Task;
 use App\Models\Vendor;
 use App\Models\VendorContact;
 use Elastic\Elasticsearch\ClientBuilder;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -56,6 +56,7 @@ class RebuildElasticIndexes extends Command
 
         if (!$this->checkElasticsearchConnection()) {
             $this->error('Cannot connect to Elasticsearch. Please check your configuration.');
+
             return self::FAILURE;
         }
 
@@ -91,6 +92,7 @@ class RebuildElasticIndexes extends Command
 
             if (!$this->confirm('Do you want to rebuild all indexes?', false)) {
                 $this->info('Operation cancelled.');
+
                 return self::SUCCESS;
             }
         }
@@ -111,6 +113,7 @@ class RebuildElasticIndexes extends Command
 
             if (!$this->rebuildIndex($modelClass, $indexName)) {
                 $this->error("Failed to rebuild {$modelName}. Stopping.");
+
                 return self::FAILURE;
             }
         }
@@ -119,6 +122,7 @@ class RebuildElasticIndexes extends Command
         $duration = now()->diffForHumans($startTime, true);
         $this->info('✓ All indexes rebuilt successfully!');
         $this->info("Total time: {$duration}");
+
         return self::SUCCESS;
     }
 
@@ -135,6 +139,7 @@ class RebuildElasticIndexes extends Command
         if (!$modelClass) {
             $this->error("Model '{$modelName}' not found.");
             $this->info('Available models: ' . implode(', ', array_map('class_basename', array_keys($this->searchableModels))));
+
             return self::FAILURE;
         }
 
@@ -143,7 +148,7 @@ class RebuildElasticIndexes extends Command
         try {
             $recordCount = $modelClass::count();
         } catch (\Exception $e) {
-            $this->warn("Could not count records: " . $e->getMessage());
+            $this->warn('Could not count records: ' . $e->getMessage());
             $recordCount = 0;
         }
 
@@ -152,12 +157,13 @@ class RebuildElasticIndexes extends Command
         $this->line("Index: {$indexName}");
         $this->line("Records: {$recordCount}");
         $this->line("Chunk size: {$this->option('chunk')}");
-        $this->line("Mode: " . ($this->option('no-queue') ? 'Synchronous' : 'Queued'));
+        $this->line('Mode: ' . ($this->option('no-queue') ? 'Synchronous' : 'Queued'));
         $this->newLine();
 
         if (!$this->option('force') && !$this->option('dry-run')) {
             if (!$this->confirm('Continue with rebuild?', true)) {
                 $this->info('Operation cancelled.');
+
                 return self::SUCCESS;
             }
         }
@@ -167,6 +173,7 @@ class RebuildElasticIndexes extends Command
             $this->line("  1. Drop index: {$indexName}");
             $this->line("  2. Run elastic:migrate for {$modelName}");
             $this->line("  3. Import {$recordCount} {$modelName} records");
+
             return self::SUCCESS;
         }
 
@@ -176,10 +183,12 @@ class RebuildElasticIndexes extends Command
             $duration = now()->diffForHumans($startTime, true);
             $this->newLine();
             $this->info("✓ {$modelName} rebuilt successfully in {$duration}!");
+
             return self::SUCCESS;
         }
 
         $this->error("✗ Failed to rebuild {$modelName}");
+
         return self::FAILURE;
     }
 
@@ -204,6 +213,7 @@ class RebuildElasticIndexes extends Command
         }
 
         $this->info('No changes made (dry run mode)');
+
         return self::SUCCESS;
     }
 
@@ -221,26 +231,27 @@ class RebuildElasticIndexes extends Command
                 if ($indexExists) {
                     try {
                         $client->indices()->delete(['index' => $indexName]);
-                        $this->info("    ✓ Index dropped");
+                        $this->info('    ✓ Index dropped');
                     } catch (\Exception $deleteException) {
-                        $this->warn("    ⚠ Failed to delete index: " . $deleteException->getMessage());
-                        $this->line("    - Continuing with migration...", 'comment');
+                        $this->warn('    ⚠ Failed to delete index: ' . $deleteException->getMessage());
+                        $this->line('    - Continuing with migration...', 'comment');
                     }
                 } else {
-                    $this->line("    - Index does not exist (will be created)", 'comment');
+                    $this->line('    - Index does not exist (will be created)', 'comment');
                 }
             } catch (\Exception $existsException) {
-                $this->warn("    ⚠ Could not check index existence: " . $existsException->getMessage());
-                $this->line("    - Continuing with migration...", 'comment');
+                $this->warn('    ⚠ Could not check index existence: ' . $existsException->getMessage());
+                $this->line('    - Continuing with migration...', 'comment');
             }
 
-            $this->line("  [2/3] Running elastic migration...");
+            $this->line('  [2/3] Running elastic migration...');
 
             try {
                 Artisan::call('elastic:migrate', [], $this->getOutput());
-                $this->info("    ✓ Migration completed");
+                $this->info('    ✓ Migration completed');
             } catch (\Exception $migrateException) {
-                $this->error("    ✗ Migration failed: " . $migrateException->getMessage());
+                $this->error('    ✗ Migration failed: ' . $migrateException->getMessage());
+
                 return false;
             }
 
@@ -249,32 +260,34 @@ class RebuildElasticIndexes extends Command
             try {
                 $recordCount = $modelClass::count();
             } catch (\Exception $countException) {
-                $this->warn("    ⚠ Could not count records: " . $countException->getMessage());
+                $this->warn('    ⚠ Could not count records: ' . $countException->getMessage());
                 $recordCount = 0;
             }
 
             if ($recordCount > 0) {
                 try {
                     if ($this->option('no-queue')) {
-                        $this->line("    - Using synchronous import (no queue)", 'comment');
+                        $this->line('    - Using synchronous import (no queue)', 'comment');
                         $this->importSynchronously($modelClass, $recordCount);
                     } else {
                         $this->importWithQueueTracking($modelClass, $recordCount);
                     }
                     $this->info("    ✓ Import completed for {$recordCount} records");
                 } catch (\Exception $importException) {
-                    $this->error("    ✗ Import failed: " . $importException->getMessage());
+                    $this->error('    ✗ Import failed: ' . $importException->getMessage());
+
                     return false;
                 }
             } else {
-                $this->line("    - No records to import", 'comment');
+                $this->line('    - No records to import', 'comment');
             }
 
             return true;
 
         } catch (\Exception $e) {
-            $this->error("    ✗ Unexpected error: " . $e->getMessage());
-            $this->line("    Stack trace: " . $e->getTraceAsString());
+            $this->error('    ✗ Unexpected error: ' . $e->getMessage());
+            $this->line('    Stack trace: ' . $e->getTraceAsString());
+
             return false;
         }
     }
@@ -307,7 +320,7 @@ class RebuildElasticIndexes extends Command
             $baselineJobCount = $this->getTotalActiveJobCount($connection, $queueName);
         } catch (\Exception $e) {
             $baselineJobCount = 0;
-            $this->line("    - Cannot track queue baseline: " . $e->getMessage(), 'comment');
+            $this->line('    - Cannot track queue baseline: ' . $e->getMessage(), 'comment');
         }
 
         $this->line("    - Baseline active jobs: {$baselineJobCount} (pending + processing)", 'comment');
@@ -318,7 +331,7 @@ class RebuildElasticIndexes extends Command
             '--chunk' => $chunkSize,
         ], $this->getOutput());
 
-        $this->line("    - Jobs dispatched to queue", 'comment');
+        $this->line('    - Jobs dispatched to queue', 'comment');
 
         if ($this->option('wait')) {
             $this->waitForOurJobsToComplete($connection, $queueName, $baselineJobCount, $expectedJobCount);
@@ -333,7 +346,7 @@ class RebuildElasticIndexes extends Command
     ): void {
         $this->newLine();
         $this->line("  Waiting for our {$expectedJobCount} jobs to complete...");
-        $this->line("  (Tracking: pending + processing jobs)", 'comment');
+        $this->line('  (Tracking: pending + processing jobs)', 'comment');
 
         $startTime = time();
         $lastReportedDelta = -1;
@@ -346,6 +359,7 @@ class RebuildElasticIndexes extends Command
 
                 if ($currentJobCount <= $baselineJobCount) {
                     $this->info("  ✓ Our jobs completed (active: {$currentJobCount}, baseline: {$baselineJobCount})");
+
                     return;
                 }
 
@@ -358,15 +372,17 @@ class RebuildElasticIndexes extends Command
                 }
 
                 if ($stableCount >= 15 && $delta <= $expectedJobCount) {
-                    $this->info("  ✓ Queue stabilized - assuming complete");
+                    $this->info('  ✓ Queue stabilized - assuming complete');
+
                     return;
                 }
 
                 sleep(2);
             } catch (\Exception $e) {
-                $this->warn("  ⚠ Could not check queue status: " . $e->getMessage());
-                $this->line("    - Waiting 10 seconds before continuing...", 'comment');
+                $this->warn('  ⚠ Could not check queue status: ' . $e->getMessage());
+                $this->line('    - Waiting 10 seconds before continuing...', 'comment');
                 sleep(10);
+
                 return;
             }
         }
@@ -414,6 +430,7 @@ class RebuildElasticIndexes extends Command
                 // Skip if model fails to count
             }
         }
+
         return $total;
     }
 
@@ -423,9 +440,11 @@ class RebuildElasticIndexes extends Command
             $client = $this->getElasticsearchClient();
             $client->ping();
             $this->info('✓ Elasticsearch connection successful');
+
             return true;
         } catch (\Exception $e) {
             $this->error('✗ Elasticsearch connection failed: ' . $e->getMessage());
+
             return false;
         }
     }

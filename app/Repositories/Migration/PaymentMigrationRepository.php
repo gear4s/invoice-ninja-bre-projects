@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,14 +42,14 @@ class PaymentMigrationRepository extends BaseRepository
     public function __construct(CreditRepository $credit_repo)
     {
         $this->credit_repo = $credit_repo;
-        $this->activity_repo = new ActivityRepository();
+        $this->activity_repo = new ActivityRepository;
     }
 
     /**
      * Saves and updates a payment. //todo refactor to handle refunds and payments.
      *
-     * @param array $data the request object
-     * @param Payment $payment The Payment object
+     * @param  array  $data  the request object
+     * @param  Payment  $payment  The Payment object
      * @return Payment|null Payment $payment
      */
     public function save(array $data, Payment $payment): ?Payment
@@ -64,17 +63,18 @@ class PaymentMigrationRepository extends BaseRepository
 
     /**
      * Handles a positive payment request.
-     * @param  array $data      The data object
-     * @param  Payment $payment The $payment entity
-     * @return Payment          The updated/created payment object
+     *
+     * @param  array  $data  The data object
+     * @param  Payment  $payment  The $payment entity
+     * @return Payment The updated/created payment object
      */
     private function applyPayment(array $data, Payment $payment): ?Payment
     {
-        //check currencies here and fill the exchange rate data if necessary
-        if (! $payment->id) {
+        // check currencies here and fill the exchange rate data if necessary
+        if (!$payment->id) {
             $this->processExchangeRates($data, $payment);
 
-            /*We only update the paid to date ONCE per payment*/
+            /* We only update the paid to date ONCE per payment */
             if (array_key_exists('invoices', $data) && is_array($data['invoices']) && count($data['invoices']) > 0) {
                 if ($data['amount'] == '') {
                     $data['amount'] = array_sum(array_column($data['invoices'], 'amount'));
@@ -82,11 +82,11 @@ class PaymentMigrationRepository extends BaseRepository
             }
         }
 
-        /*Fill the payment*/
+        /* Fill the payment */
         $payment->fill($data);
-        //$payment->status_id = Payment::STATUS_COMPLETED;
+        // $payment->status_id = Payment::STATUS_COMPLETED;
 
-        if (! array_key_exists('status_id', $data)) {
+        if (!array_key_exists('status_id', $data)) {
             info('payment with no status id?');
             info(print_r($data, true));
         }
@@ -100,13 +100,12 @@ class PaymentMigrationRepository extends BaseRepository
 
         $payment->deleted_at = $data['deleted_at'] ?: null;
 
-
         if (!$payment->currency_id || $payment->currency_id == 0 || $payment->currency_id == '') {
             $payment->currency_id = $payment->client->settings->currency_id ?? $payment->company->settings->currency_id;
         }
 
-        /*Ensure payment number generated*/
-        if (! $payment->number || strlen($payment->number) == 0) {//@phpstan-ignore-line
+        /* Ensure payment number generated */
+        if (!$payment->number || strlen($payment->number) == 0) {// @phpstan-ignore-line
             $payment->number = $payment->client->getNextPaymentNumber($payment->client, $payment);
         }
 
@@ -116,7 +115,7 @@ class PaymentMigrationRepository extends BaseRepository
         $credit_totals = 0;
         $invoices = false;
 
-        /*Iterate through invoices and apply payments*/
+        /* Iterate through invoices and apply payments */
         if (array_key_exists('invoices', $data) && is_array($data['invoices']) && count($data['invoices']) > 0) {
             $invoice_totals = array_sum(array_column($data['invoices'], 'amount'));
             $refund_totals = array_sum(array_column($data['invoices'], 'refunded'));
@@ -126,7 +125,7 @@ class PaymentMigrationRepository extends BaseRepository
             $payment->invoices()->saveMany($invoices); // 1:1 relationship so this is ok
 
             $payment->invoices->each(function ($inv) use ($invoice_totals, $refund_totals, $payment) {
-                if ($payment->status_id != Payment::STATUS_CANCELLED || ! $payment->is_deleted) {
+                if ($payment->status_id != Payment::STATUS_CANCELLED || !$payment->is_deleted) {
                     $inv->pivot->amount = $invoice_totals;
                     $inv->pivot->refunded = $refund_totals;
                     $inv->pivot->save();
@@ -148,7 +147,7 @@ class PaymentMigrationRepository extends BaseRepository
 
         if (array_key_exists('credits', $data) && is_array($data['credits']) && count($data['credits']) > 0) {
 
-            /** @var float $credit_totals **/
+            /** @var float $credit_totals * */
             $credit_totals = array_sum(array_column($data['credits'], 'amount'));
 
             $credits = Credit::query()->whereIn('id', array_column($data['credits'], 'credit_id'))->withTrashed()->get();
@@ -165,7 +164,7 @@ class PaymentMigrationRepository extends BaseRepository
             });
         }
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $fields->payment_id = $payment->id;
         $fields->client_id = $payment->client_id;
@@ -198,11 +197,10 @@ class PaymentMigrationRepository extends BaseRepository
      * If the client is paying in a currency other than
      * the company currency, we need to set a record.
      *
-     * @param array$data
-     * @param \App\Models\Payment $payment
-     * @return \App\Models\Payment
+     * @param  array  $data
+     * @param  Payment  $payment
      */
-    private function processExchangeRates($data, $payment): \App\Models\Payment
+    private function processExchangeRates($data, $payment): Payment
     {
         if ($payment->exchange_rate != 1) {
             return $payment;
@@ -216,7 +214,7 @@ class PaymentMigrationRepository extends BaseRepository
         if ($company_currency != $client_currency) {
             $currency = $client->currency();
 
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $payment->exchange_rate = $exchange_rate->exchangeRate($client_currency, $company_currency, Carbon::parse($payment->date));
             // $payment->exchange_currency_id = $client_currency;
@@ -228,7 +226,7 @@ class PaymentMigrationRepository extends BaseRepository
 
     public function delete($payment)
     {
-        //cannot double delete a payment
+        // cannot double delete a payment
         if ($payment->is_deleted) {
             return;
         }
@@ -240,7 +238,7 @@ class PaymentMigrationRepository extends BaseRepository
 
     public function restore($payment)
     {
-        //we cannot restore a deleted payment.
+        // we cannot restore a deleted payment.
         if ($payment->is_deleted) {
             return;
         }

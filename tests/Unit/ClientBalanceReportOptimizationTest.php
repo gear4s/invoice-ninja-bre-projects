@@ -2,13 +2,13 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use Tests\MockAccountData;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use App\Services\Report\ClientBalanceReport;
-use App\Models\Invoice;
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Services\Report\ClientBalanceReport;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
  * Test suite for Client Balance Report optimization
@@ -30,7 +30,7 @@ class ClientBalanceReportOptimizationTest extends TestCase
     /**
      * Test that optimized approach produces identical results to legacy
      */
-    public function testOptimizedMatchesLegacyResults()
+    public function test_optimized_matches_legacy_results()
     {
         // Create test data: 10 clients with varying invoice counts
         $clients = Client::factory()->count(10)->create([
@@ -84,7 +84,7 @@ class ClientBalanceReportOptimizationTest extends TestCase
     /**
      * Test query count reduction with optimized approach
      */
-    public function testQueryCountReduction()
+    public function test_query_count_reduction()
     {
         $clientCount = 50;
 
@@ -116,13 +116,13 @@ class ClientBalanceReportOptimizationTest extends TestCase
         // Optimized: ~10-15 queries (client fetch + aggregate + framework overhead)
         // Legacy: 100 queries (50 clients × 2)
         $this->assertLessThan($clientCount * 0.5, $queryCount,
-            "Expected < " . ($clientCount * 0.5) . " queries (optimized), got {$queryCount}");
+            'Expected < ' . ($clientCount * 0.5) . " queries (optimized), got {$queryCount}");
     }
 
     /**
      * Test with clients having no invoices
      */
-    public function testClientsWithNoInvoices()
+    public function test_clients_with_no_invoices()
     {
         // Create clients without invoices
         Client::factory()->count(5)->create([
@@ -136,14 +136,14 @@ class ClientBalanceReportOptimizationTest extends TestCase
 
         // Should return 0 for invoice count and balance
         $this->assertNotEmpty($output);
-        $lines = array_filter(explode("\n", $output), fn($line) => !empty($line));
+        $lines = array_filter(explode("\n", $output), fn ($line) => !empty($line));
         $this->assertGreaterThanOrEqual(5, count($lines));
     }
 
     /**
      * Test with date range filtering
      */
-    public function testDateRangeFiltering()
+    public function test_date_range_filtering()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -180,7 +180,7 @@ class ClientBalanceReportOptimizationTest extends TestCase
     /**
      * Test with different invoice statuses
      */
-    public function testInvoiceStatusFiltering()
+    public function test_invoice_status_filtering()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -218,14 +218,14 @@ class ClientBalanceReportOptimizationTest extends TestCase
 
         // Should only include SENT and PARTIAL invoices
         $this->assertNotEmpty($output);
-        $lines = array_filter(explode("\n", $output), fn($line) => !empty($line));
+        $lines = array_filter(explode("\n", $output), fn ($line) => !empty($line));
         $this->assertGreaterThanOrEqual(5, count($lines));
     }
 
     /**
      * Test with large dataset to measure performance improvement
      */
-    public function testLargeDatasetPerformance()
+    public function test_large_dataset_performance()
     {
         $clientCount = 100;
 
@@ -270,7 +270,7 @@ class ClientBalanceReportOptimizationTest extends TestCase
     /**
      * Test with zero balance invoices
      */
-    public function testZeroBalanceInvoices()
+    public function test_zero_balance_invoices()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -293,14 +293,14 @@ class ClientBalanceReportOptimizationTest extends TestCase
 
         // Should still count the invoices
         $this->assertNotEmpty($output);
-        $lines = array_filter(explode("\n", $output), fn($line) => !empty($line));
+        $lines = array_filter(explode("\n", $output), fn ($line) => !empty($line));
         $this->assertGreaterThanOrEqual(5, count($lines));
     }
 
     /**
      * Test report output structure
      */
-    public function testReportOutputStructure()
+    public function test_report_output_structure()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -324,7 +324,7 @@ class ClientBalanceReportOptimizationTest extends TestCase
 
         // Verify output contains client data
         $this->assertNotEmpty($output);
-        $lines = array_filter(explode("\n", $output), fn($line) => !empty($line));
+        $lines = array_filter(explode("\n", $output), fn ($line) => !empty($line));
         $this->assertGreaterThanOrEqual(5, count($lines));
     }
 }

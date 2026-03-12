@@ -6,17 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Flow2;
 
-use Livewire\Component;
 use App\Libraries\MultiDB;
+use App\Models\ClientContact;
 use App\Models\CompanyGateway;
 use App\Services\Client\RFFService;
 use App\Utils\Traits\WithSecureContext;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
+use Livewire\Component;
 
 class RequiredFields extends Component
 {
@@ -25,23 +27,41 @@ class RequiredFields extends Component
     public ?CompanyGateway $company_gateway;
 
     public ?string $client_name;
+
     public ?string $contact_first_name;
+
     public ?string $contact_last_name;
+
     public ?string $contact_email;
+
     public ?string $client_phone;
+
     public ?string $client_address_line_1;
+
     public ?string $client_city;
+
     public ?string $client_state;
+
     public ?int $client_country_id;
+
     public ?string $client_postal_code;
+
     public ?string $client_shipping_address_line_1;
+
     public ?string $client_shipping_city;
+
     public ?string $client_shipping_state;
+
     public ?string $client_shipping_postal_code;
+
     public ?int $client_shipping_country_id;
+
     public ?string $client_custom_value1;
+
     public ?string $client_custom_value2;
+
     public ?string $client_custom_value3;
+
     public ?string $client_custom_value4;
 
     // public $contact;
@@ -52,7 +72,9 @@ class RequiredFields extends Component
     public bool $is_loading = true;
 
     public array $errors = [];
+
     public $_key;
+
     public function mount(): void
     {
         $_context = $this->getContext($this->_key);
@@ -95,7 +117,7 @@ class RequiredFields extends Component
             company_gateway_id: (string) $this->company_gateway->id,
         );
 
-        /** @var \App\Models\ClientContact $contact */
+        /** @var ClientContact $contact */
         $rff->check($contact);
 
         if ($rff->unfilled_fields === 0 && !$this->company_gateway->always_show_required_fields) {
@@ -119,7 +141,7 @@ class RequiredFields extends Component
 
         $contact = auth()->guard('contact')->user();
 
-        /** @var \App\Models\ClientContact $contact */
+        /** @var ClientContact $contact */
         $errors = $rff->handleSubmit($data, $contact, return_errors: true, callback: function () {
             $this->dispatch('required-fields');
         });
@@ -130,7 +152,7 @@ class RequiredFields extends Component
         }
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+    public function render(): Factory|View
     {
         return render('flow2.required-fields', [
             'contact' => $this->getContext($this->_key)['contact'],

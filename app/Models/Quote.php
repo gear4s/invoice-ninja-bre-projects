@@ -6,29 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\DataMapper\QuoteSync;
+use App\Events\Quote\QuoteReminderWasEmailed;
+use App\Events\Quote\QuoteWasEmailed;
+use App\Helpers\Invoice\InvoiceSum;
+use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Models\Presenters\QuotePresenter;
+use App\Services\Quote\QuoteService;
 use App\Utils\Ninja;
 use App\Utils\Number;
-use Elastic\ScoutDriverPlus\Searchable;
-use Illuminate\Support\Carbon;
 use App\Utils\Traits\MakesHash;
-use App\Helpers\Invoice\InvoiceSum;
-use Illuminate\Support\Facades\App;
-use App\Services\Quote\QuoteService;
-use App\Utils\Traits\MakesReminders;
-use App\Events\Quote\QuoteWasEmailed;
 use App\Utils\Traits\MakesInvoiceValues;
-use App\Models\Presenters\QuotePresenter;
-use Laracasts\Presenter\PresentableTrait;
-use App\Helpers\Invoice\InvoiceSumInclusive;
-use App\Events\Quote\QuoteReminderWasEmailed;
+use App\Utils\Traits\MakesReminders;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
+use Laracasts\Presenter\PresentableTrait;
 
 /**
  * App\Models\Quote
@@ -105,42 +110,41 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float $paid_to_date
  * @property object|null $tax_data
  * @property int|null $subscription_id
- * @property \App\Models\User|null $assigned_user
- * @property \App\Models\Client $client
- * @property \App\Models\Company $company
- * @property \App\Models\QuoteInvitation $invitation
+ * @property User|null $assigned_user
+ * @property Client $client
+ * @property Company $company
+ * @property QuoteInvitation $invitation
  * @property-read mixed $balance_due
  * @property-read mixed $hashed_id
  * @property-read mixed $total
  * @property-read mixed $valid_until
  * @property-read int|null $invitations_count
- * @property-read \App\Models\Invoice|null $invoice
- * @property-read \App\Models\QuoteInvitation|null $invitations
- * @property-read \App\Models\Project|null $project
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor|null $vendor
- * @property-read \App\Models\Location|null $location
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuoteInvitation> $invitations
+ * @property-read Invoice|null $invoice
+ * @property-read QuoteInvitation|null $invitations
+ * @property-read Project|null $project
+ * @property-read User $user
+ * @property-read Vendor|null $vendor
+ * @property-read Location|null $location
+ * @property-read Collection<int, Activity> $activities
+ * @property-read Collection<int, Document> $documents
+ * @property-read Collection<int, Backup> $history
+ * @property-read Collection<int, QuoteInvitation> $invitations
+ *
  * @mixin \Eloquent
- * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin Builder
  */
 class Quote extends BaseModel
 {
-    use MakesHash;
     use Filterable;
-    use SoftDeletes;
+    use MakesHash;
+    use MakesInvoiceValues;
     use MakesReminders;
     use PresentableTrait;
-    use MakesInvoiceValues;
     use Searchable;
+    use SoftDeletes;
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -225,8 +229,8 @@ class Quote extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.quote') . " " . ($this->number ?? '') . " | " . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
+            'id' => $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.quote') . ' ' . ($this->number ?? '') . ' | ' . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'is_deleted' => (bool) $this->is_deleted,
@@ -245,7 +249,7 @@ class Quote extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
 
     public function getEntityType()
@@ -260,75 +264,69 @@ class Quote extends BaseModel
 
     public function getStatusIdAttribute($value)
     {
-        if ($this->due_date && ! $this->is_deleted && $value == self::STATUS_SENT && Carbon::parse($this->due_date)->lte(now()->startOfDay())) {
+        if ($this->due_date && !$this->is_deleted && $value == self::STATUS_SENT && Carbon::parse($this->due_date)->lte(now()->startOfDay())) {
             return self::STATUS_EXPIRED;
         }
 
         return $value;
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
-     */
-    public function history(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function history(): HasManyThrough
     {
         return $this->hasManyThrough(Backup::class, Activity::class);
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class)->where('company_id', $this->company_id)->where('client_id', $this->client_id)->orderBy('id', 'DESC')->take(50);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class)->withTrashed();
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class)->withTrashed();
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class)->withTrashed();
     }
 
-    public function invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invitations(): HasMany
     {
         return $this->hasMany(QuoteInvitation::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
-     */
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
@@ -357,7 +355,7 @@ class Quote extends BaseModel
     public function markInvitationsSent()
     {
         $this->invitations->each(function ($invitation) {
-            if (! isset($invitation->sent_date)) {
+            if (!isset($invitation->sent_date)) {
                 $invitation->sent_date = Carbon::now();
                 $invitation->saveQuietly();
             }
@@ -369,10 +367,6 @@ class Quote extends BaseModel
         return new QuoteService($this);
     }
 
-    /**
-     * @param int $status
-     * @return string
-     */
     public static function badgeForStatus(int $status): string
     {
         switch ($status) {
@@ -416,8 +410,6 @@ class Quote extends BaseModel
 
     /**
      * Check if the quote has been approved.
-     *
-     * @return bool
      */
     public function isApproved(): bool
     {
@@ -459,9 +451,6 @@ class Quote extends BaseModel
 
     /**
      * calculateTemplate
-     *
-     * @param  string $entity_string
-     * @return string
      */
     public function calculateTemplate(string $entity_string): string
     {
@@ -475,7 +464,7 @@ class Quote extends BaseModel
         if ($this->inReminderWindow(
             $client->getSetting('quote_schedule_reminder1'),
             $client->getSetting('quote_num_days_reminder1')
-        ) && ! $this->reminder1_sent) {
+        ) && !$this->reminder1_sent) {
             return 'reminder1';
             // } elseif ($this->inReminderWindow(
             //     $client->getSetting('schedule_reminder2'),
@@ -498,10 +487,6 @@ class Quote extends BaseModel
 
     }
 
-
-    /**
-     * @return bool
-     */
     public function canRemind(): bool
     {
         if (in_array($this->status_id, [self::STATUS_DRAFT, self::STATUS_APPROVED, self::STATUS_CONVERTED]) || $this->is_deleted) {
@@ -539,7 +524,4 @@ class Quote extends BaseModel
                 break;
         }
     }
-
-
-
 }

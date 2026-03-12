@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,7 +16,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClientPortal\Contact\ContactLoginRequest;
 use App\Http\ViewComposers\PortalComposer;
 use App\Libraries\MultiDB;
-use App\Models\Account;
 use App\Models\ClientContact;
 use App\Models\Company;
 use App\Utils\Ninja;
@@ -91,7 +89,7 @@ class ContactLoginController extends Controller
         if ($company) {
             $account = $company->account;
         } else {
-            abort(404, "We could not find this site, if you think this is an error, please contact the administrator.");
+            abort(404, 'We could not find this site, if you think this is an error, please contact the administrator.');
         }
 
         return $this->render('auth.login', ['account' => $account, 'company' => $company]);
@@ -118,13 +116,13 @@ class ContactLoginController extends Controller
         }
 
         if (Ninja::isHosted() && $request->has('password') && $company = Company::where('company_key', $request->input('company_key'))->first()) {
-            /** @var \App\Models\Company $company **/
+            /** @var Company $company * */
             $contact = ClientContact::where(['email' => $request->input('email'), 'company_id' => $company->id])
-                                     ->whereHas('client', function ($query) {
-                                         $query->where('is_deleted', 0);
-                                     })->first();
+                ->whereHas('client', function ($query) {
+                    $query->where('is_deleted', 0);
+                })->first();
 
-            if (! $contact) {
+            if (!$contact) {
                 return $this->sendFailedLoginResponse($request);
             }
 

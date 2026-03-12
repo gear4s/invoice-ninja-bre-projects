@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Currency;
 use App\Models\Gateway;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -12,23 +13,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table){
+        Schema::table('products', function (Blueprint $table) {
             $table->string('hash')->nullable();
         });
 
-        Schema::table('companies', function (Blueprint $table){
+        Schema::table('companies', function (Blueprint $table) {
             $table->bigInteger('legal_entity_id')->nullable();
         });
 
-
-        if($currency = \App\Models\Currency::find(39))
-        {
+        if ($currency = Currency::find(39)) {
             $currency->symbol = 'лв';
             $currency->save();
         }
 
-        if($gateway = Gateway::find(15))
-        {
+        if ($gateway = Gateway::find(15)) {
             $gateway->visible = 0;
             $gateway->save();
         }

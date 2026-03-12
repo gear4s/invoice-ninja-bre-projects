@@ -6,13 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Helpers;
 
+use App\DataMapper\InvoiceItem;
 use App\Models\Company;
+use App\Models\Product;
+use App\Models\TaxRate;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Utils\BcMath;
 
@@ -31,8 +33,8 @@ class Helper
      * Find a Tax Rate in QuickBooks by name or rate.
      * TaxRates are read-only in QuickBooks and cannot be created via API.
      *
-     * @param float $tax_rate The tax rate percentage
-     * @param string $tax_name The tax name
+     * @param  float  $tax_rate  The tax rate percentage
+     * @param  string  $tax_name  The tax name
      * @return string|null The QuickBooks Tax Rate ID, or null if not found
      */
     public function findTaxRate(float $tax_rate, string $tax_name): ?string
@@ -126,12 +128,14 @@ class Helper
             if (!empty($accounts) && isset($accounts[0])) {
                 $account = $accounts[0];
                 $account_id = data_get($account, 'Id') ?? data_get($account, 'Id.value');
+
                 return $account_id ? (string) $account_id : null;
             }
 
             return null;
         } catch (\Exception $e) {
             nlog("QuickBooks: Error fetching income account: {$e->getMessage()}");
+
             return null;
         }
     }
@@ -139,7 +143,7 @@ class Helper
     /**
      * Clean HTML text by replacing <br> tags with newlines and stripping all HTML tags.
      *
-     * @param string $text The text to clean
+     * @param  string  $text  The text to clean
      * @return string The cleaned text
      */
     public function cleanHtmlText(string $text): string
@@ -167,7 +171,7 @@ class Helper
      * Calculate total tax from QuickBooks data and create Tax Rate if needed.
      * This is business logic that creates/updates Tax Rate models.
      *
-     * @param mixed $qb_data QuickBooks invoice data
+     * @param  mixed  $qb_data  QuickBooks invoice data
      * @return array [tax_rate, tax_name]
      */
     public function calculateTotalTax(mixed $qb_data): array
@@ -177,7 +181,7 @@ class Helper
         $tax_rate = 0;
         $tax_name = '';
 
-        if ($total_tax == "0") {
+        if ($total_tax == '0') {
             return [$tax_rate, $tax_name];
         }
 
@@ -203,7 +207,7 @@ class Helper
             $formattedTaxRate = rtrim(rtrim(number_format($totalTaxRate, 6), '0'), '.');
             $formattedTaxRate = trim($formattedTaxRate);
 
-            $tr = \App\Models\TaxRate::firstOrNew(
+            $tr = TaxRate::firstOrNew(
                 [
                     'company_id' => $this->company->id,
                     'rate' => $formattedTaxRate,
@@ -228,7 +232,7 @@ class Helper
      * Check if discount is applied after tax and handle company custom field.
      * This is business logic that modifies company settings.
      *
-     * @param mixed $qb_data QuickBooks invoice data
+     * @param  mixed  $qb_data  QuickBooks invoice data
      * @return float The discount amount (positive) or 0
      */
     public function checkIfDiscountAfterTax(mixed $qb_data): float
@@ -255,7 +259,7 @@ class Helper
      * Split a tax name string into the name component and percentage component.
      * Handles formats like "New York State 4%" -> ["New York State", "4%"]
      *
-     * @param string $tax_name The tax name string (e.g., "New York State 4%")
+     * @param  string  $tax_name  The tax name string (e.g., "New York State 4%")
      * @return array{name: string, percentage: string}|null Returns array with 'name' and 'percentage' keys, or null if no percentage found
      */
     public function splitTaxName(string $tax_name): ?array
@@ -287,7 +291,7 @@ class Helper
     /**
      * Get payments from QuickBooks invoice data.
      *
-     * @param mixed $qb_data QuickBooks invoice data
+     * @param  mixed  $qb_data  QuickBooks invoice data
      * @return array Array of payment transaction IDs
      */
     public function getPayments(mixed $qb_data): array
@@ -313,14 +317,15 @@ class Helper
                 $payments[] = data_get($payment, 'TxnId', false);
             }
         }
+
         return $payments;
     }
 
     /**
      * Get line items from QuickBooks invoice data.
      *
-     * @param mixed $qb_data QuickBooks invoice data
-     * @param array $tax_array [tax_rate, tax_name]
+     * @param  mixed  $qb_data  QuickBooks invoice data
+     * @param  array  $tax_array  [tax_rate, tax_name]
      * @return array Array of InvoiceItem objects
      */
     public function getLineItems(mixed $qb_data, array $tax_array): array
@@ -343,7 +348,7 @@ class Helper
             $tax_rate = (float) data_get($qb_data, 'TxnTaxDetail.TaxLine.TaxLineDetail.TaxPercent', 0);
             $tax_name = $tax_rate > 0 ? "Sales Tax [{$tax_rate}]" : '';
 
-            $item = new \App\DataMapper\InvoiceItem();
+            $item = new InvoiceItem;
             $item->product_key = '';
             $item->notes = 'Recurring Charge';
             $item->quantity = 1;
@@ -355,6 +360,7 @@ class Helper
             $item->tax_rate1 = (float) $tax_rate;
             $item->tax_name1 = $tax_name;
             $items[] = (object) $item;
+
             return $items;
         }
 
@@ -362,7 +368,7 @@ class Helper
             $taxCodeRef = data_get($qb_item, 'TaxCodeRef', data_get($qb_item, 'SalesItemLineDetail.TaxCodeRef', 'TAX'));
 
             if (data_get($qb_item, 'DetailType') == 'SalesItemLineDetail') {
-                $item = new \App\DataMapper\InvoiceItem();
+                $item = new InvoiceItem;
                 $item->product_key = data_get($qb_item, 'SalesItemLineDetail.ItemRef.name', '');
                 $item->notes = data_get($qb_item, 'Description', '');
                 $item->quantity = (float) (data_get($qb_item, 'SalesItemLineDetail.Qty') ?? 1);
@@ -370,14 +376,14 @@ class Helper
                 $item->discount = (float) data_get($item, 'DiscountRate', data_get($qb_item, 'DiscountAmount', 0));
                 $item->is_amount_discount = data_get($qb_item, 'DiscountAmount', 0) > 0 ? true : false;
                 $item->type_id = stripos(data_get($qb_item, 'ItemAccountRef.name') ?? '', 'Service') !== false ? '2' : '1';
-                $item->tax_id = $taxCodeRef == 'NON' ? (string) \App\Models\Product::PRODUCT_TYPE_EXEMPT : $item->type_id;
+                $item->tax_id = $taxCodeRef == 'NON' ? (string) Product::PRODUCT_TYPE_EXEMPT : $item->type_id;
                 $item->tax_rate1 = $taxCodeRef == 'NON' ? 0 : (float) $tax_array[0];
                 $item->tax_name1 = $taxCodeRef == 'NON' ? '' : $tax_array[1];
                 $items[] = (object) $item;
             }
 
             if (data_get($qb_item, 'DetailType') == 'DiscountLineDetail' && $include_discount == 'true') {
-                $item = new \App\DataMapper\InvoiceItem();
+                $item = new InvoiceItem;
                 $item->product_key = ctrans('texts.discount');
                 $item->notes = ctrans('texts.discount');
                 $item->quantity = 1;
@@ -387,11 +393,10 @@ class Helper
                 $item->tax_rate1 = $include_discount == 'true' ? (float) $tax_array[0] : 0;
                 $item->tax_name1 = $include_discount == 'true' ? $tax_array[1] : '';
                 $item->type_id = '1';
-                $item->tax_id = (string) \App\Models\Product::PRODUCT_TYPE_PHYSICAL;
+                $item->tax_id = (string) Product::PRODUCT_TYPE_PHYSICAL;
                 $items[] = (object) $item;
             }
         }
-
 
         return $items;
     }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('accounts', function (Blueprint $table){
+        Schema::table('accounts', function (Blueprint $table) {
             $table->unsignedInteger('e_invoice_quota')->default(0);
         });
     }

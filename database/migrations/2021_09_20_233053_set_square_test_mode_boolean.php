@@ -7,7 +7,8 @@ use App\Models\Quote;
 use App\Utils\Ninja;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -25,9 +26,9 @@ return new class extends Migration {
      */
     public function down()
     {
-        //Fixes a state where the deleted_at timestamp is 000
+        // Fixes a state where the deleted_at timestamp is 000
 
-        if (! Ninja::isHosted()) {
+        if (!Ninja::isHosted()) {
             Invoice::withTrashed()->where('deleted_at', '0000-00-00 00:00:00.000000')->update(['deleted_at' => null]);
             Quote::withTrashed()->where('deleted_at', '0000-00-00 00:00:00.000000')->update(['deleted_at' => null]);
             Credit::withTrashed()->where('deleted_at', '0000-00-00 00:00:00.000000')->update(['deleted_at' => null]);

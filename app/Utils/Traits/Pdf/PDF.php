@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,10 @@ namespace App\Utils\Traits\Pdf;
 
 use setasign\Fpdi\Fpdi;
 
-class PDF extends FPDI
+class PDF extends Fpdi
 {
     public $text_alignment = 'L';
+
     public $x_offset = 0; // New property for X-axis offset
 
     public function Footer()

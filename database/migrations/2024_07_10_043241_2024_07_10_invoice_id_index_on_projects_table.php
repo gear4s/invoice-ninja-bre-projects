@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('invoices', function (Blueprint $table){
-            $table->index(['project_id','deleted_at']);
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->index(['project_id', 'deleted_at']);
         });
 
         Schema::table('quotes', function (Blueprint $table) {
-            $table->index(['project_id','deleted_at']);
+            $table->index(['project_id', 'deleted_at']);
         });
 
     }

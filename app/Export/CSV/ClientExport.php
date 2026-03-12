@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,6 +21,7 @@ use App\Utils\Ninja;
 use App\Utils\Number;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class ClientExport extends BaseExport
@@ -85,9 +85,9 @@ class ClientExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->client_transformer = new ClientTransformer();
-        $this->contact_transformer = new ClientContactTransformer();
-        $this->decorator = new Decorator();
+        $this->client_transformer = new ClientTransformer;
+        $this->contact_transformer = new ClientContactTransformer;
+        $this->decorator = new Decorator;
 
     }
 
@@ -102,17 +102,16 @@ class ClientExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($client) {
+            ->map(function ($client) {
 
-                    /** @var \App\Models\Client $client */
-                    $row = $this->buildRow($client);
-                    return $this->processMetaData($row, $client);
-                })->toArray();
+                /** @var Client $client */
+                $row = $this->buildRow($client);
+
+                return $this->processMetaData($row, $client);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
-
-
 
     public function init(): Builder
     {
@@ -127,8 +126,8 @@ class ClientExport extends BaseExport
         }
 
         $query = Client::query()->with('contacts')
-                                ->withTrashed()
-                                ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -150,19 +149,19 @@ class ClientExport extends BaseExport
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-              ->each(function ($client) {
+            ->each(function ($client) {
 
-                  /** @var \App\Models\Client $client */
-                  $this->csv->insertOne($this->buildRow($client));
-              });
+                /** @var Client $client */
+                $this->csv->insertOne($this->buildRow($client));
+            });
 
         return $this->csv->toString();
     }
@@ -194,6 +193,7 @@ class ClientExport extends BaseExport
         }
 
         $entity = $this->decorateAdvancedFields($client, $entity);
+
         return $this->convertFloats($entity);
     }
 
@@ -202,7 +202,7 @@ class ClientExport extends BaseExport
         $clean_row = [];
         foreach (array_values($this->input['report_keys']) as $key => $value) {
 
-            $report_keys = explode(".", $value);
+            $report_keys = explode('.', $value);
 
             $column_key = $value;
             $clean_row[$key]['entity'] = $report_keys[0];
@@ -211,7 +211,7 @@ class ClientExport extends BaseExport
             $clean_row[$key]['value'] = $row[$column_key];
             $clean_row[$key]['identifier'] = $value;
 
-            if (in_array($clean_row[$key]['id'], ['paid_to_date', 'balance', 'credit_balance','payment_balance'])) {
+            if (in_array($clean_row[$key]['id'], ['paid_to_date', 'balance', 'credit_balance', 'payment_balance'])) {
                 $clean_row[$key]['display_value'] = Number::formatMoney($row[$column_key], $resource);
             } else {
                 $clean_row[$key]['display_value'] = $row[$column_key];

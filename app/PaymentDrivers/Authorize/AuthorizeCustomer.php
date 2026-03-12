@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,9 +16,10 @@ use App\Factory\ClientFactory;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\ClientGatewayToken;
+use App\Models\Country;
 use App\Models\GatewayType;
 use App\PaymentDrivers\AuthorizePaymentDriver;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 use net\authorize\api\contract\v1\GetCustomerProfileIdsRequest;
 use net\authorize\api\contract\v1\GetCustomerProfileRequest;
 use net\authorize\api\controller\GetCustomerProfileController;
@@ -40,7 +40,7 @@ class AuthorizeCustomer
     private function getCustomerProfileIds()
     {
         // Get all existing customer profile ID's
-        $request = new GetCustomerProfileIdsRequest();
+        $request = new GetCustomerProfileIdsRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $controller = new GetCustomerProfileIdsController($request);
         $response = $controller->executeWithApiResponse($this->authorize->mode());
@@ -57,7 +57,7 @@ class AuthorizeCustomer
 
     private function getCustomerProfile($customer_profile_id)
     {
-        $request = new GetCustomerProfileRequest();
+        $request = new GetCustomerProfileRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setCustomerProfileId($customer_profile_id);
         $controller = new GetCustomerProfileController($request);
@@ -93,7 +93,7 @@ class AuthorizeCustomer
         foreach ($auth_customers as $gateway_customer_reference) {
             $profile = $this->getCustomerProfile($gateway_customer_reference);
 
-            //if the profile ID already exists in ClientGatewayToken we continue else - add.
+            // if the profile ID already exists in ClientGatewayToken we continue else - add.
             if ($client_gateway_token = ClientGatewayToken::where('company_id', $company->id)->where('gateway_customer_reference', $gateway_customer_reference)->first()) {
                 // nlog("found client");
                 $client = $client_gateway_token->client;
@@ -105,7 +105,7 @@ class AuthorizeCustomer
 
                 $first_payment_profile = &$profile['payment_profiles'][0];
 
-                if (! $first_payment_profile) {
+                if (!$first_payment_profile) {
                     continue;
                 }
 
@@ -132,16 +132,16 @@ class AuthorizeCustomer
 
                 foreach ($profile['payment_profiles'] as $payment_profile) {
                     $token_exists = ClientGatewayToken::where('company_id', $company->id)
-                                                      ->where('token', $payment_profile->getCustomerPaymentProfileId())
-                                                      ->where('gateway_customer_reference', $gateway_customer_reference)
-                                                      ->exists();
+                        ->where('token', $payment_profile->getCustomerPaymentProfileId())
+                        ->where('gateway_customer_reference', $gateway_customer_reference)
+                        ->exists();
                     if ($token_exists) {
                         continue;
                     }
 
                     //                    $expiry = $payment_profile->getPayment()->getCreditCard()->getExpirationDate();
 
-                    $payment_meta = new \stdClass();
+                    $payment_meta = new \stdClass;
                     $payment_meta->exp_month = 'xx';
                     $payment_meta->exp_year = 'xx';
                     $payment_meta->brand = (string) $payment_profile->getPayment()->getCreditCard()->getCardType();
@@ -162,7 +162,7 @@ class AuthorizeCustomer
     private function getCountryCode($country_code)
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $country = $countries->first(function ($item) use ($country_code) {

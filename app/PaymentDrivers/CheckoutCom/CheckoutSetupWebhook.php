@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -51,7 +50,7 @@ class CheckoutSetupWebhook implements ShouldQueue
 
         MultiDB::findAndSetDbByCompanyKey($this->company_key);
 
-        /** @var \App\Models\CompanyGateway $company_gateway */
+        /** @var CompanyGateway $company_gateway */
         $company_gateway = CompanyGateway::find($this->company_gateway_id);
 
         $this->checkout = $company_gateway->driver()->init();
@@ -80,21 +79,21 @@ class CheckoutSetupWebhook implements ShouldQueue
     public function createAuthenticationWorkflow()
     {
 
-        $signature = new WebhookSignature();
+        $signature = new WebhookSignature;
         $signature->key = $this->checkout->company_gateway->company->company_key;
-        $signature->method = "HMACSHA256";
+        $signature->method = 'HMACSHA256';
 
-        $actionRequest = new WebhookWorkflowActionRequest();
+        $actionRequest = new WebhookWorkflowActionRequest;
         $actionRequest->url = $this->checkout->company_gateway->webhookUrl();
         $actionRequest->signature = $signature;
 
-        $eventWorkflowConditionRequest = new EventWorkflowConditionRequest();
+        $eventWorkflowConditionRequest = new EventWorkflowConditionRequest;
         $eventWorkflowConditionRequest->events = [
-            "gateway" => ["payment_approved"],
-            "issuing" => ["authorization_approved","authorization_declined"],
+            'gateway' => ['payment_approved'],
+            'issuing' => ['authorization_approved', 'authorization_declined'],
         ];
 
-        $request = new CreateWorkflowRequest();
+        $request = new CreateWorkflowRequest;
         $request->actions = [$actionRequest];
         $request->conditions = [$eventWorkflowConditionRequest];
         $request->name = $this->authentication_webhook_name;
@@ -107,14 +106,11 @@ class CheckoutSetupWebhook implements ShouldQueue
             // API error
             $error_details = $e->error_details;
             $http_status_code = isset($e->http_metadata) ? $e->http_metadata->getStatusCode() : null;
-            nlog("Checkout WEBHOOK creation error");
+            nlog('Checkout WEBHOOK creation error');
             nlog($error_details);
         } catch (CheckoutAuthorizationException $e) {
             // Bad Invalid authorization
         }
 
     }
-
-
-
 }

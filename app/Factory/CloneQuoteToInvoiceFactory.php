@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class CloneQuoteToInvoiceFactory
 {
     public static function create(Quote $quote, $user_id): ?Invoice
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
 
         $quote_array = $quote->toArray();
 
@@ -31,9 +30,9 @@ class CloneQuoteToInvoiceFactory
         unset($quote_array['invitations']);
         unset($quote_array['user']);
 
-        //preserve terms if they exist on Quotes
-        //if(array_key_exists('terms', $quote_array) && strlen($quote_array['terms']) < 2)
-        if (! $quote->company->use_quote_terms_on_conversion) {
+        // preserve terms if they exist on Quotes
+        // if(array_key_exists('terms', $quote_array) && strlen($quote_array['terms']) < 2)
+        if (!$quote->company->use_quote_terms_on_conversion) {
             unset($quote_array['terms']);
         }
 
@@ -59,7 +58,6 @@ class CloneQuoteToInvoiceFactory
         $invoice->reminder_last_sent = null;
         $invoice->last_sent_date = null;
         $invoice->last_viewed = null;
-
 
         return $invoice;
     }

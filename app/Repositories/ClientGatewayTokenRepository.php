@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -39,10 +38,10 @@ class ClientGatewayTokenRepository extends BaseRepository
     public function setDefault(ClientGatewayToken $client_gateway_token): ClientGatewayToken
     {
         ClientGatewayToken::withTrashed()
-                            ->where('company_id', $client_gateway_token->company_id)
-                            ->where('client_id', $client_gateway_token->client_id)
-                            ->where('id', '!=', $client_gateway_token->id)
-                            ->update(['is_default' => false]);
+            ->where('company_id', $client_gateway_token->company_id)
+            ->where('client_id', $client_gateway_token->client_id)
+            ->where('id', '!=', $client_gateway_token->id)
+            ->update(['is_default' => false]);
 
         $client_gateway_token->is_default = true;
         $client_gateway_token->save();

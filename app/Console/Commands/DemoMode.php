@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -46,18 +45,17 @@ use App\Utils\Traits\AppSetup;
 use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\MakesHash;
 use Carbon\Carbon;
+use Faker\Factory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class DemoMode extends Command
 {
-    use MakesHash;
-    use GeneratesCounter;
     use AppSetup;
+    use GeneratesCounter;
+    use MakesHash;
 
     protected $signature = 'ninja:demo-mode';
 
@@ -83,7 +81,7 @@ class DemoMode extends Command
             return;
         }
 
-        $this->invoice_repo = new InvoiceRepository();
+        $this->invoice_repo = new InvoiceRepository;
 
         $this->info('Migrating');
         Artisan::call('migrate:fresh --force');
@@ -96,21 +94,21 @@ class DemoMode extends Command
         $this->info('Seeding Random Data');
         $this->createSmallAccount();
 
-        (new VersionCheck())->handle();
+        (new VersionCheck)->handle();
 
-        (new CompanySizeCheck())->handle();
+        (new CompanySizeCheck)->handle();
     }
 
     private function createSmallAccount()
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $this->count = 25;
 
         $this->info('Creating Small Account and Company');
 
         $account = Account::factory()->create([
-            "set_react_as_default_ap" => 0,
+            'set_react_as_default_ap' => 0,
         ]);
         $company = Company::factory()->create([
             'account_id' => $account->id,
@@ -142,7 +140,7 @@ class DemoMode extends Command
 
         $user = User::whereEmail('small@example.com')->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $account->id,
                 'email' => 'small@example.com',
@@ -154,7 +152,7 @@ class DemoMode extends Command
         (new CreateCompanyPaymentTerms($company, $user))->handle();
         (new CreateCompanyTaskStatuses($company, $user))->handle();
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -176,16 +174,16 @@ class DemoMode extends Command
 
         $u2 = User::where('email', 'demo@invoiceninja.com')->first();
 
-        if (! $u2) {
+        if (!$u2) {
             $u2 = User::factory()->create([
-                'email'             => 'demo@invoiceninja.com',
-                'password'          => Hash::make('Password0'),
+                'email' => 'demo@invoiceninja.com',
+                'password' => Hash::make('Password0'),
                 'account_id' => $account->id,
                 'confirmation_code' => $this->createDbHash(config('database.default')),
                 'email_verified_at' => now(),
             ]);
 
-            $company_token = new CompanyToken();
+            $company_token = new CompanyToken;
             $company_token->user_id = $u2->id;
             $company_token->company_id = $company->id;
             $company_token->account_id = $account->id;
@@ -363,9 +361,9 @@ class DemoMode extends Command
 
     private function createInvoice($client, $assigned_user_id = null)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
-        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); //stub the company and user_id
+        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
 
         if ((bool) rand(0, 1)) {
@@ -427,9 +425,9 @@ class DemoMode extends Command
 
     private function createRecurringInvoice($client, $assigned_user_id = null)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
-        $invoice = RecurringInvoiceFactory::create($client->company->id, $client->user->id); //stub the company and user_id
+        $invoice = RecurringInvoiceFactory::create($client->company->id, $client->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
         $invoice->frequency_id = RecurringInvoice::FREQUENCY_MONTHLY;
         $invoice->last_sent_date = now()->subMonth();
@@ -480,7 +478,7 @@ class DemoMode extends Command
 
     private function createCredit($client, $assigned_user_id = null)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $credit = Credit::factory()->create(['user_id' => $client->user->id, 'company_id' => $client->company->id, 'client_id' => $client->id]);
 
@@ -528,7 +526,7 @@ class DemoMode extends Command
 
     private function createQuote($client, $assigned_user_id = null)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $quote = Quote::factory()->create(['user_id' => $client->user->id, 'company_id' => $client->company_id, 'client_id' => $client->id]);
 
@@ -589,7 +587,7 @@ class DemoMode extends Command
         for ($x = 0; $x < $count; $x++) {
             $item = InvoiceItemFactory::create();
             $item->quantity = 1;
-            //$item->cost = 10;
+            // $item->cost = 10;
 
             // if (rand(0, 1)) {
             //     $item->tax_name1 = 'GST';
@@ -621,5 +619,4 @@ class DemoMode extends Command
 
         return $line_items;
     }
-
 }

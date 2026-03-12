@@ -6,14 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Report;
 
-use App\Utils\Ninja;
 use App\Http\Requests\Request;
+use App\Models\User;
+use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -25,8 +25,6 @@ class ProjectReportRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -36,7 +34,7 @@ class ProjectReportRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return [
@@ -52,15 +50,15 @@ class ProjectReportRequest extends Request
     {
         $input = $this->all();
 
-        if (! array_key_exists('date_range', $input) || $input['date_range'] == '') {
+        if (!array_key_exists('date_range', $input) || $input['date_range'] == '') {
             $input['date_range'] = 'all';
         }
 
-        if (! array_key_exists('report_keys', $input)) {
+        if (!array_key_exists('report_keys', $input)) {
             $input['report_keys'] = [];
         }
 
-        if (! array_key_exists('send_email', $input)) {
+        if (!array_key_exists('send_email', $input)) {
             $input['send_email'] = true;
         }
 
@@ -78,11 +76,12 @@ class ProjectReportRequest extends Request
     {
         $this->error_message = ctrans('texts.authorization_failure');
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if (Ninja::isHosted() && $user->account->isFreeHostedClient()) {
             $this->error_message = ctrans('texts.upgrade_to_view_reports');
+
             return false;
         }
 
@@ -94,5 +93,4 @@ class ProjectReportRequest extends Request
     {
         throw new AuthorizationException($this->error_message);
     }
-
 }

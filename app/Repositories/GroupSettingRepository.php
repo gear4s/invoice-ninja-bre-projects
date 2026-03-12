@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,8 +36,8 @@ class GroupSettingRepository extends BaseRepository
             $group_setting->settings = $settings;
         }
 
-        if (! array_key_exists('settings', $data) || count((array) $data['settings']) == 0) {
-            $settings = new \stdClass();
+        if (!array_key_exists('settings', $data) || count((array) $data['settings']) == 0) {
+            $settings = new \stdClass;
             $settings->entity = Client::class;
             $group_setting->settings = $settings;
         }

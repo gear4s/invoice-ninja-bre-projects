@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -53,8 +52,8 @@ class TaxSummary
     /**
      * Get the payment ratio for this invoice
      *
-     * @param float $invoice_amount Total invoice amount
-     * @param float $invoice_paid_to_date Amount paid on invoice
+     * @param  float  $invoice_amount  Total invoice amount
+     * @param  float  $invoice_paid_to_date  Amount paid on invoice
      * @return float Ratio of amount paid (0 to 1)
      */
     public function getPaymentRatio(float $invoice_amount, float $invoice_paid_to_date): float

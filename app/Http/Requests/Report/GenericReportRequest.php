@@ -6,23 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Report;
 
-use App\Models\Design;
 use App\Http\Requests\Request;
+use App\Models\Design;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Validation\Validator;
 
 class GenericReportRequest extends Request
 {
     use MakesHash;
+
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -46,7 +46,7 @@ class GenericReportRequest extends Request
         ];
     }
 
-    public function withValidator(\Illuminate\Validation\Validator $validator)
+    public function withValidator(Validator $validator)
     {
 
         $validator->after(function ($validator) {
@@ -63,15 +63,15 @@ class GenericReportRequest extends Request
     {
         $input = $this->all();
 
-        if (! array_key_exists('date_range', $input) || $input['date_range'] == '') {
+        if (!array_key_exists('date_range', $input) || $input['date_range'] == '') {
             $input['date_range'] = 'all';
         }
 
-        if (! array_key_exists('report_keys', $input)) {
+        if (!array_key_exists('report_keys', $input)) {
             $input['report_keys'] = [];
         }
 
-        if (! array_key_exists('send_email', $input)) {
+        if (!array_key_exists('send_email', $input)) {
             $input['send_email'] = true;
         }
 
@@ -101,7 +101,7 @@ class GenericReportRequest extends Request
     private function checkAuthority()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin() || $user->hasPermission('view_reports');

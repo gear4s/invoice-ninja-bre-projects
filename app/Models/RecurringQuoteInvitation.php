@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,11 +36,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\ClientContact $contact
+ * @property-read Company $company
+ * @property-read ClientContact $contact
  * @property-read mixed $hashed_id
- * @property-read \App\Models\RecurringQuote $recurring_quote
- * @property-read \App\Models\User $user
+ * @property-read RecurringQuote $recurring_quote
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringQuoteInvitation newModelQuery()
@@ -69,12 +69,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringQuoteInvitation whereViewedDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringQuoteInvitation withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringQuoteInvitation withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class RecurringQuoteInvitation extends BaseModel
 {
-    use SoftDeletes;
     use Inviteable;
+    use SoftDeletes;
 
     protected $fillable = ['client_contact_id'];
 

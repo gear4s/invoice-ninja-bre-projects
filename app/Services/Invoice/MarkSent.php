@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Webhook;
 use App\Services\AbstractService;
+use App\Services\Quickbooks\QuickbooksBatchCollector;
 use App\Utils\Ninja;
 
 class MarkSent extends AbstractService
@@ -32,26 +32,26 @@ class MarkSent extends AbstractService
 
         $adjustment = $this->invoice->amount ?? 0;
 
-        /*Set status*/
+        /* Set status */
         $this->invoice
-             ->service()
-             ->setStatus(Invoice::STATUS_SENT)
-             ->updateBalance($adjustment, true)
-             ->save();
+            ->service()
+            ->setStatus(Invoice::STATUS_SENT)
+            ->updateBalance($adjustment, true)
+            ->save();
 
-        /*Update ledger*/
+        /* Update ledger */
         $this->invoice
-             ->ledger()
-             ->updateInvoiceBalance($adjustment, "Invoice {$this->invoice->number} marked as sent.");
+            ->ledger()
+            ->updateInvoiceBalance($adjustment, "Invoice {$this->invoice->number} marked as sent.");
 
         $this->invoice->client->service()->updateBalance($adjustment);
         /* Perform additional actions on invoice */
         $this->invoice
-             ->service()
-             ->applyNumber()
-             ->setDueDate()
-             ->setReminder()
-             ->save();
+            ->service()
+            ->applyNumber()
+            ->setDueDate()
+            ->setReminder()
+            ->save();
 
         $this->invoice->markInvitationsSent();
 
@@ -59,12 +59,12 @@ class MarkSent extends AbstractService
 
         if ($fire_webhook) {
             event('eloquent.updated: App\Models\Invoice', $this->invoice);
-            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
+            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, 'client');
         }
 
-        if($this->invoice->company->quickbooks && $this->invoice->company->shouldPushToQuickbooks('invoice')) {
+        if ($this->invoice->company->quickbooks && $this->invoice->company->shouldPushToQuickbooks('invoice')) {
             // Guard handled inside QuickbooksBatchCollector::collect() — skips if importing
-            \App\Services\Quickbooks\QuickbooksBatchCollector::collect('invoice', $this->invoice->id, $this->invoice->company->db, $this->invoice->company_id);
+            QuickbooksBatchCollector::collect('invoice', $this->invoice->id, $this->invoice->company->db, $this->invoice->company_id);
         }
 
         return $this->invoice->fresh();

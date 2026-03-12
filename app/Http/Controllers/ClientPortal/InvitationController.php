@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,6 +24,7 @@ use App\Models\InvoiceInvitation;
 use App\Models\Payment;
 use App\Models\PurchaseOrderInvitation;
 use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoiceInvitation;
 use App\Services\ClientPortal\InstantPayment;
 use App\Utils\Ninja;
 use App\Utils\Traits\MakesDates;
@@ -39,8 +39,8 @@ use Illuminate\Support\Str;
  */
 class InvitationController extends Controller
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     public function router(string $entity, string $invitation_key)
     {
@@ -81,12 +81,12 @@ class InvitationController extends Controller
 
         $entity_obj = 'App\Models\\' . ucfirst(Str::camel($entity)) . 'Invitation';
 
-        /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\RecurringInvoiceInvitation $invitation */
+        /** @var InvoiceInvitation | QuoteInvitation | CreditInvitation | RecurringInvoiceInvitation $invitation */
         $invitation = $entity_obj::withTrashed()
-                                    ->with($entity)
-                                    ->where('key', $invitation_key)
-                                    ->with('contact.client')
-                                    ->firstOrFail();
+            ->with($entity)
+            ->where('key', $invitation_key)
+            ->with('contact.client')
+            ->firstOrFail();
 
         if ($invitation->trashed() || $invitation->{$entity}->is_deleted) {
             return $this->render('generic.not_available', ['passed_account' => $invitation->company->account, 'passed_company' => $invitation->company]);
@@ -100,7 +100,7 @@ class InvitationController extends Controller
         event(new ContactLoggedIn($client_contact, $client_contact->company, Ninja::eventVars()));
 
         if (empty($client_contact->email)) {
-            $client_contact->email = Str::random(15) . "@example.com";
+            $client_contact->email = Str::random(15) . '@example.com';
             $client_contact->save();
         }
 
@@ -111,7 +111,7 @@ class InvitationController extends Controller
 
             auth()->guard('contact')->loginUsingId($client_contact->id, true);
         } elseif ((bool) $invitation->contact->client->getSetting('enable_client_portal_password') !== false) {
-            //if no contact password has been set - allow user to set password - then continue to view entity
+            // if no contact password has been set - allow user to set password - then continue to view entity
             if (empty($invitation->contact->password)) {
                 return $this->render('view_entity.set_password', [
                     'root' => 'themes',
@@ -120,12 +120,12 @@ class InvitationController extends Controller
                 ]);
             }
 
-            if (!auth()->guard('contact')->check() || (int)auth()->guard('contact')->user()->id !== (int)$invitation->client_contact_id) {
+            if (!auth()->guard('contact')->check() || (int) auth()->guard('contact')->user()->id !== (int) $invitation->client_contact_id) {
                 $this->middleware('auth:contact');
-                /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\RecurringInvoiceInvitation $invitation */
+
+                /** @var InvoiceInvitation | QuoteInvitation | CreditInvitation | RecurringInvoiceInvitation $invitation */
                 return redirect()->route('client.login', ['company_key' => $invitation->company->company_key, 'intended' => route('client.' . $entity . '.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent])]);
             }
-
 
         } else {
             request()->session()->invalidate();
@@ -134,14 +134,14 @@ class InvitationController extends Controller
             auth()->guard('contact')->loginUsingId($client_contact->id, true);
         }
 
-        if (auth()->guard('contact')->user() && ! request()->has('silent') && ! $invitation->viewed_date) {
+        if (auth()->guard('contact')->user() && !request()->has('silent') && !$invitation->viewed_date) {
             $invitation->markViewed();
 
-            if (! $session_is_silent) {
+            if (!$session_is_silent) {
                 event(new InvitationWasViewed($invitation->{$entity}, $invitation, $invitation->{$entity}->company, Ninja::eventVars()));
             }
 
-            if (! $session_is_silent) {
+            if (!$session_is_silent) {
                 $this->fireEntityViewedEvent($invitation, $entity);
             }
         } else {
@@ -154,7 +154,6 @@ class InvitationController extends Controller
         return redirect()->route('client.' . $entity . '.show', [$entity => $this->encodePrimaryKey($invitation->{$key})]);
 
     }
-
 
     private function fireEntityViewedEvent($invitation, $entity_string)
     {
@@ -196,12 +195,12 @@ class InvitationController extends Controller
         $entity_obj = 'App\Models\\' . ucfirst(Str::camel($entity)) . 'Invitation';
 
         $invitation = $entity_obj::withTrashed()
-                                    ->where('key', $invitation_key)
-                                    ->with('contact.client')
-                                    ->firstOrFail();
+            ->where('key', $invitation_key)
+            ->with('contact.client')
+            ->firstOrFail();
 
         if (!$invitation) {
-            return response()->json(["message" => "no record found"], 400);
+            return response()->json(['message' => 'no record found'], 400);
         }
 
         $file_name = $invitation->{$entity}->numberFormatter() . '.pdf';
@@ -221,18 +220,17 @@ class InvitationController extends Controller
 
     public function routerForIframe(string $entity, string $client_hash, string $invitation_key) {}
 
-
     public function handlePasswordSet(Request $request)
     {
         $entity_obj = 'App\Models\\' . ucfirst(Str::camel($request->entity_type)) . 'Invitation';
         $key = $request->entity_type . '_id';
 
         $invitation = $entity_obj::where('key', $request->invitation_key)
-                                    ->whereHas($request->entity_type, function ($query) {
-                                        $query->where('is_deleted', 0);
-                                    })
-                                    ->with('contact.client')
-                                    ->firstOrFail();
+            ->whereHas($request->entity_type, function ($query) {
+                $query->where('is_deleted', 0);
+            })
+            ->with('contact.client')
+            ->firstOrFail();
 
         $contact = $invitation->contact;
         $contact->password = Hash::make($request->password);
@@ -245,14 +243,14 @@ class InvitationController extends Controller
         request()->session()->regenerateToken();
         auth()->guard('contact')->loginUsingId($contact->id, true);
 
-        if (! $invitation->viewed_date) {
+        if (!$invitation->viewed_date) {
             $invitation->markViewed();
 
-            if (! $is_silent) {
+            if (!$is_silent) {
                 event(new InvitationWasViewed($invitation->{$request->entity_type}, $invitation, $invitation->{$request->entity_type}->company, Ninja::eventVars()));
             }
 
-            if (! $is_silent) {
+            if (!$is_silent) {
                 $this->fireEntityViewedEvent($invitation, $request->entity_type);
             }
         }
@@ -262,10 +260,10 @@ class InvitationController extends Controller
 
     public function paymentRouter(string $contact_key, string $payment_id)
     {
-        /** @var \App\Models\ClientContact $contact **/
+        /** @var ClientContact $contact * */
         $contact = ClientContact::withTrashed()->where('contact_key', $contact_key)->firstOrFail();
 
-        /** @var \App\Models\Payment $payment **/
+        /** @var Payment $payment * */
         $payment = Payment::find($this->decodePrimaryKey($payment_id));
 
         if ($payment->client_id != $contact->client_id) {
@@ -283,10 +281,9 @@ class InvitationController extends Controller
     public function payInvoice(Request $request, string $invitation_key)
     {
         $invitation = InvoiceInvitation::withTrashed()
-                                    ->where('key', $invitation_key)
-                                    ->with('contact.client')
-                                    ->firstOrFail();
-
+            ->where('key', $invitation_key)
+            ->with('contact.client')
+            ->firstOrFail();
 
         if ($invitation->contact->trashed()) {
             $invitation->contact->restore();
@@ -301,17 +298,17 @@ class InvitationController extends Controller
 
         $invoice = $invitation->invoice->service()->removeUnpaidGatewayFees()->save();
 
-        if (! $invitation->viewed_date) {
+        if (!$invitation->viewed_date) {
             $invitation->markViewed();
 
-            if (! $is_silent) {
+            if (!$is_silent) {
                 event(new InvitationWasViewed($invitation->invoice, $invitation, $invitation->invoice->company, Ninja::eventVars()));
                 $this->fireEntityViewedEvent($invitation, $invoice);
             }
 
         }
 
-        if (! $is_silent) {
+        if (!$is_silent) {
             event(new ContactLoggedIn($invitation->contact, $invitation->contact->company, Ninja::eventVars()));
         }
 
@@ -349,7 +346,7 @@ class InvitationController extends Controller
             return redirect()->route('client.invoice.show', ['invoice' => $this->encodePrimaryKey($invitation->invoice_id)]);
         }
 
-        abort(404, "Invoice not found");
+        abort(404, 'Invoice not found');
     }
 
     public function unsubscribe(Request $request, string $entity, string $invitation_key)

@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Project;
 
 use App\Http\Requests\Request;
+use App\Models\Project;
 use App\Utils\Traits\MakesHash;
 
 class BulkProjectRequest extends Request
@@ -41,7 +41,7 @@ class BulkProjectRequest extends Request
             'action' => 'required|string',
             // 'ids' => 'required|array',
             'ids' => ['required', 'array', function ($attribute, $value, $fail) {
-                $projects = \App\Models\Project::withTrashed()->whereIn('id', $this->transformKeys($value))->company()->get();
+                $projects = Project::withTrashed()->whereIn('id', $this->transformKeys($value))->company()->get();
 
                 if ($projects->isEmpty()) {
                     return;

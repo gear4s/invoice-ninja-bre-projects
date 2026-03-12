@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,7 +34,7 @@ trait MakesTemplateData
      * to invoice values.
      *
      * @return array returns an array
-     * of keyed labels (appended with _label)
+     *               of keyed labels (appended with _label)
      */
     public function makeFakerValues(): array
     {
@@ -207,7 +206,7 @@ trait MakesTemplateData
         $data['$task.line_total'] = ['value' => '$100.00', 'label' => ctrans('texts.line_total')];
 
         $data['$vendor_name'] = ['value' => 'Joey Diaz Denkins', 'label' => ctrans('texts.vendor_name')];
-        ;
+
         $data['$vendor.name'] = &$data['$vendor_name'];
         $data['$vendor'] = &$data['$vendor_name'];
 

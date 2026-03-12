@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,7 @@ use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\RecurringQuote;
 use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -26,13 +26,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\RecurringQuoteController
  */
 class RecurringQuotesTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -49,7 +48,7 @@ class RecurringQuotesTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testRecurringQuoteList()
+    public function test_recurring_quote_list()
     {
         // Client::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id])->each(function ($c) {
         //     ClientContact::factory()->create([
@@ -78,19 +77,19 @@ class RecurringQuotesTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRecurringQuoteRESTEndPoints()
+    public function test_recurring_quote_rest_end_points()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_quotes/'.$this->recurring_quote->hashed_id);
+        ])->get('/api/v1/recurring_quotes/' . $this->recurring_quote->hashed_id);
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_quotes/'.$this->recurring_quote->hashed_id.'/edit');
+        ])->get('/api/v1/recurring_quotes/' . $this->recurring_quote->hashed_id . '/edit');
 
         $response->assertStatus(200);
 
@@ -102,7 +101,7 @@ class RecurringQuotesTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_quotes/'.$this->recurring_quote->hashed_id, $RecurringQuote_update);
+        ])->put('/api/v1/recurring_quotes/' . $this->recurring_quote->hashed_id, $RecurringQuote_update);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -112,7 +111,7 @@ class RecurringQuotesTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_quotes/'.$this->recurring_quote->hashed_id, $RecurringQuote_update)
+        ])->put('/api/v1/recurring_quotes/' . $this->recurring_quote->hashed_id, $RecurringQuote_update)
             ->assertStatus(200);
 
         $RecurringQuote_update = [
@@ -130,19 +129,19 @@ class RecurringQuotesTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/recurring_quotes/'.$this->encodePrimaryKey($this->recurring_quote->id));
+        ])->delete('/api/v1/recurring_quotes/' . $this->encodePrimaryKey($this->recurring_quote->id));
 
         $response->assertStatus(200);
     }
 
-    public function testSubscriptionIdPassesToQuote()
+    public function test_subscription_id_passes_to_quote()
     {
         $recurring_invoice = QuoteToRecurringQuoteFactory::create($this->quote);
         $recurring_invoice->user_id = $this->user->id;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->status_id = RecurringQuote::STATUS_ACTIVE;
         $recurring_invoice->remaining_cycles = 2;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->save();
 
         $recurring_invoice->number = $this->getNextRecurringQuoteNumber($this->quote->client, $this->quote);
@@ -154,14 +153,14 @@ class RecurringQuotesTest extends TestCase
         $this->assertEquals(10, $invoice->subscription_id);
     }
 
-    public function testSubscriptionIdPassesToQuoteIfNull()
+    public function test_subscription_id_passes_to_quote_if_null()
     {
         $recurring_invoice = QuoteToRecurringQuoteFactory::create($this->quote);
         $recurring_invoice->user_id = $this->user->id;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->status_id = RecurringQuote::STATUS_ACTIVE;
         $recurring_invoice->remaining_cycles = 2;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->save();
 
         $recurring_invoice->number = $this->getNextRecurringQuoteNumber($this->quote->client, $this->quote);
@@ -172,14 +171,14 @@ class RecurringQuotesTest extends TestCase
         $this->assertEquals(null, $invoice->subscription_id);
     }
 
-    public function testSubscriptionIdPassesToQuoteIfNothingSet()
+    public function test_subscription_id_passes_to_quote_if_nothing_set()
     {
         $recurring_invoice = QuoteToRecurringQuoteFactory::create($this->quote);
         $recurring_invoice->user_id = $this->user->id;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->status_id = RecurringQuote::STATUS_ACTIVE;
         $recurring_invoice->remaining_cycles = 2;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->save();
 
         $recurring_invoice->number = $this->getNextRecurringQuoteNumber($this->quote->client, $this->quote);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -61,8 +60,8 @@ class CompanyImportFailure extends Mailable
         $this->whitelabel = $this->company->account->isPaid();
 
         return $this->from(config('mail.from.address'), config('mail.from.name'))
-                    ->subject(ctrans('texts.company_import_failure_subject', ['company' => $this->company->present()->name()]))
-                    ->text('email.import.import_failure_text')
-                    ->view('email.import.import_failure', ['user_message' => $this->user_message, 'title' => $this->title]);
+            ->subject(ctrans('texts.company_import_failure_subject', ['company' => $this->company->present()->name()]))
+            ->text('email.import.import_failure_text')
+            ->view('email.import.import_failure', ['user_message' => $this->user_message, 'title' => $this->title]);
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,6 +25,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     ];
 
     private string $verifactu_xsd = 'Services/EDocument/Standards/Verifactu/xsd/SuministroLR.xsd';
+
     private string $verifactu_informacion_xsd = 'Services/EDocument/Standards/Verifactu/xsd/SuministroInformacion.xsd';
 
     public function __construct(public string $xml_document)
@@ -39,13 +39,11 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
 
     /**
      * Validate Verifactu XML document
-     *
-     * @return self
      */
     public function validate(): self
     {
         $this->validateVerifactuXsd()
-             ->validateVerifactuSchema();
+            ->validateVerifactuSchema();
 
         return $this;
     }
@@ -57,7 +55,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     {
         libxml_use_internal_errors(true);
 
-        $xml = new \DOMDocument();
+        $xml = new \DOMDocument;
         $xml->loadXML($this->xml_document);
 
         // Extract business content from SOAP envelope if needed
@@ -88,7 +86,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     /**
      * Format XSD validation errors to be more human-readable
      *
-     * @param \LibXMLError $error The libxml error object
+     * @param  \LibXMLError  $error  The libxml error object
      * @return string Formatted error message
      */
     private function formatXsdError(\LibXMLError $error): string
@@ -112,7 +110,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     /**
      * Translate XSD error messages to more user-friendly Spanish/English descriptions
      *
-     * @param string $message The original XSD error message
+     * @param  string  $message  The original XSD error message
      * @return string Translated and improved error message
      */
     private function translateXsdError(string $message): string
@@ -194,11 +192,10 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         $registroAlta = $xpath->query('//si:RegistroAlta | //sum1:RegistroAlta');
         if ($registroAlta->length > 0) {
             $tipoFactura = $xpath->query('.//si:TipoFactura | .//sum1:TipoFactura', $registroAlta->item(0));
-            if ($tipoFactura->length > 0 && in_array($tipoFactura->item(0)->textContent, ['R1','F3'])) {
+            if ($tipoFactura->length > 0 && in_array($tipoFactura->item(0)->textContent, ['R1', 'F3'])) {
                 return 'modification';
             }
         }
-
 
         // Check for cancellation structure
         $registroAnulacion = $xpath->query('//si:RegistroAnulacion | //sum1:RegistroAnulacion');
@@ -248,7 +245,8 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
             // Try alternative namespace
             $registroAlta = $xpath->query('//sum1:RegistroAlta');
             if ($registroAlta === false || $registroAlta->length === 0) {
-                $this->errors['structure'][] = "RegistroAlta element not found for modification";
+                $this->errors['structure'][] = 'RegistroAlta element not found for modification';
+
                 return;
             }
         }
@@ -277,7 +275,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         if ($tipoFactura === false || $tipoFactura->length === 0) {
             $tipoFactura = $xpath->query('.//sum1:TipoFactura', $registroAlta->item(0));
         }
-        if ($tipoFactura !== false && $tipoFactura->length > 0 && !in_array($tipoFactura->item(0)->textContent, ['R1','F3'])) {
+        if ($tipoFactura !== false && $tipoFactura->length > 0 && !in_array($tipoFactura->item(0)->textContent, ['R1', 'F3'])) {
             $this->errors['structure'][] = "TipoFactura must be 'R1' for modifications, found: " . $tipoFactura->item(0)->textContent;
         }
     }
@@ -292,7 +290,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         if ($facturasRectificadas !== false && $facturasRectificadas->length > 0) {
             $idFacturasRectificadas = $xpath->query('//si:FacturasRectificadas/si:IDFacturaRectificada | //sf:FacturasRectificadas/sf:IDFacturaRectificada');
             if ($idFacturasRectificadas === false || $idFacturasRectificadas->length === 0) {
-                $this->errors['structure'][] = "At least one IDFacturaRectificada is required in FacturasRectificadas";
+                $this->errors['structure'][] = 'At least one IDFacturaRectificada is required in FacturasRectificadas';
             } else {
                 // Validate each IDFacturaRectificada has required elements
                 foreach ($idFacturasRectificadas as $index => $idFacturaRectificada) {
@@ -301,13 +299,13 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
                     $fechaExpedicionFactura = $xpath->query('.//si:FechaExpedicionFactura | .//sf:FechaExpedicionFactura', $idFacturaRectificada);
 
                     if ($idEmisorFactura === false || $idEmisorFactura->length === 0) {
-                        $this->errors['structure'][] = "IDEmisorFactura is required in IDFacturaRectificada " . ($index + 1);
+                        $this->errors['structure'][] = 'IDEmisorFactura is required in IDFacturaRectificada ' . ($index + 1);
                     }
                     if ($numSerieFactura === false || $numSerieFactura->length === 0) {
-                        $this->errors['structure'][] = "NumSerieFactura is required in IDFacturaRectificada " . ($index + 1);
+                        $this->errors['structure'][] = 'NumSerieFactura is required in IDFacturaRectificada ' . ($index + 1);
                     }
                     if ($fechaExpedicionFactura === false || $fechaExpedicionFactura->length === 0) {
-                        $this->errors['structure'][] = "FechaExpedicionFactura is required in IDFacturaRectificada " . ($index + 1);
+                        $this->errors['structure'][] = 'FechaExpedicionFactura is required in IDFacturaRectificada ' . ($index + 1);
                     }
                 }
             }
@@ -318,7 +316,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         if ($impuestos !== false && $impuestos->length > 0) {
             $detalleIVA = $xpath->query('//si:Impuestos/si:DetalleIVA | //sf:Impuestos/sf:DetalleIVA');
             if ($detalleIVA === false || $detalleIVA->length === 0) {
-                $this->errors['structure'][] = "DetalleIVA is required when Impuestos is present";
+                $this->errors['structure'][] = 'DetalleIVA is required when Impuestos is present';
             }
         }
     }
@@ -388,7 +386,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         if ($regFactuElements->length > 0) {
             $businessContent = $regFactuElements->item(0);
 
-            $businessDoc = new \DOMDocument();
+            $businessDoc = new \DOMDocument;
             $businessDoc->appendChild($businessDoc->importNode($businessContent, true));
 
             return $businessDoc;
@@ -403,7 +401,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
      */
     private function validateVerifactuStructure(): void
     {
-        $doc = new \DOMDocument();
+        $doc = new \DOMDocument;
         $doc->loadXML($this->xml_document);
 
         $xpath = new \DOMXPath($doc);
@@ -429,12 +427,12 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
             // Validate modification structure
             $tipoRectificativa = $xpath->query('//si:TipoRectificativa');
             if ($tipoRectificativa->length === 0) {
-                $this->errors['structure'][] = "TipoRectificativa is required for modifications";
+                $this->errors['structure'][] = 'TipoRectificativa is required for modifications';
             }
 
             $facturasRectificadas = $xpath->query('//si:FacturasRectificadas');
             if ($facturasRectificadas->length === 0) {
-                $this->errors['structure'][] = "FacturasRectificadas is required for modifications";
+                $this->errors['structure'][] = 'FacturasRectificadas is required for modifications';
             }
         }
     }
@@ -474,7 +472,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     /**
      * Get context information for an error
      *
-     * @param string $error The error message
+     * @param  string  $error  The error message
      * @return string Context information
      */
     private function getErrorContext(string $error): string
@@ -505,7 +503,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     /**
      * Get suggestions for fixing an error
      *
-     * @param string $error The error message
+     * @param  string  $error  The error message
      * @return string Suggestion for fixing the error
      */
     private function getErrorSuggestion(string $error): string
@@ -536,7 +534,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     /**
      * Get error severity level
      *
-     * @param string $errorType The type of error
+     * @param  string  $errorType  The type of error
      * @return string Severity level
      */
     private function getErrorSeverity(string $errorType): string

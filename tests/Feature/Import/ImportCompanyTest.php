@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -53,13 +52,10 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
-/**
- *
- */
 class ImportCompanyTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
 
     public $account;
 
@@ -92,16 +88,16 @@ class ImportCompanyTest extends TestCase
         $this->account = Account::factory()->create();
         $this->company = Company::factory()->create(['account_id' => $this->account->id]);
 
-        $backup_json_file_zip = base_path().'/tests/Feature/Import/backup.zip';
+        $backup_json_file_zip = base_path() . '/tests/Feature/Import/backup.zip';
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $res = $zip->open($backup_json_file_zip);
         if ($res === true) {
             $zip->extractTo(sys_get_temp_dir());
             $zip->close();
         }
 
-        $backup_json_file = sys_get_temp_dir().'/backup/backup.json';
+        $backup_json_file = sys_get_temp_dir() . '/backup/backup.json';
 
         $this->backup_json_object = json_decode(file_get_contents($backup_json_file));
 
@@ -114,11 +110,11 @@ class ImportCompanyTest extends TestCase
         });
     }
 
-    public function testBackupJsonRead()
+    public function test_backup_json_read()
     {
-        $backup_json_file_zip = base_path().'/tests/Feature/Import/backup.zip';
+        $backup_json_file_zip = base_path() . '/tests/Feature/Import/backup.zip';
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         $res = $zip->open($backup_json_file_zip);
 
         if ($res === true) {
@@ -126,19 +122,19 @@ class ImportCompanyTest extends TestCase
             $zip->close();
         }
 
-        $backup_json_file = sys_get_temp_dir().'/backup/backup.json';
+        $backup_json_file = sys_get_temp_dir() . '/backup/backup.json';
 
         $this->assertTrue(is_array(json_decode(file_get_contents($backup_json_file), 1)));
 
         unlink($backup_json_file);
     }
 
-    public function testAppVersion()
+    public function test_app_version()
     {
         $this->assertEquals('5.1.65', $this->backup_json_object->app_version);
     }
 
-    public function testImportUsers()
+    public function test_import_users()
     {
         CompanyGateway::all()->each(function ($cg) {
             $cg->forceDelete();
@@ -417,7 +413,7 @@ class ImportCompanyTest extends TestCase
         $this->assertEquals(1, ClientContact::count());
         /***************************** Client Contacts *****************************/
 
-        //vendors!
+        // vendors!
         /* Generic */
         $this->assertEquals(1, count($this->backup_json_object->vendors));
 
@@ -434,7 +430,7 @@ class ImportCompanyTest extends TestCase
         /* Generic */
 
         $this->assertEquals(1, count($this->backup_json_object->projects));
-        //$class, $unset, $transforms, $object_property, $match_key
+        // $class, $unset, $transforms, $object_property, $match_key
         $this->genericImport(
             Project::class,
             ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id'],
@@ -445,9 +441,9 @@ class ImportCompanyTest extends TestCase
 
         $this->assertEquals(1, Project::count());
 
-        //projects!
+        // projects!
 
-        //products!
+        // products!
 
         $this->assertEquals(1, count($this->backup_json_object->products));
 
@@ -459,7 +455,7 @@ class ImportCompanyTest extends TestCase
         );
         $this->assertEquals(1, Product::count());
 
-        //company gateways
+        // company gateways
 
         $this->assertEquals(1, count($this->backup_json_object->company_gateways));
 
@@ -472,9 +468,9 @@ class ImportCompanyTest extends TestCase
 
         $this->assertEquals(1, CompanyGateway::count());
 
-        //company gateways
+        // company gateways
 
-        //client gateway tokens
+        // client gateway tokens
 
         $this->genericNewClassImport(
             ClientGatewayToken::class,
@@ -483,9 +479,9 @@ class ImportCompanyTest extends TestCase
             'client_gateway_tokens'
         );
 
-        //client gateway tokens
+        // client gateway tokens
 
-        //Group Settings
+        // Group Settings
         $this->genericImport(
             GroupSetting::class,
             ['user_id', 'company_id', 'id', 'hashed_id'],
@@ -493,9 +489,9 @@ class ImportCompanyTest extends TestCase
             'group_settings',
             'name'
         );
-        //Group Settings
+        // Group Settings
 
-        //Subscriptions
+        // Subscriptions
         $this->assertEquals(1, count($this->backup_json_object->subscriptions));
 
         $this->genericImport(
@@ -508,7 +504,7 @@ class ImportCompanyTest extends TestCase
 
         $this->assertEquals(1, Subscription::count());
 
-        //Subscriptions
+        // Subscriptions
 
         // Recurring Invoices
 
@@ -881,7 +877,7 @@ class ImportCompanyTest extends TestCase
     private function documentsImport()
     {
         foreach ($this->backup_json_object->documents as $document) {
-            $new_document = new Document();
+            $new_document = new Document;
             $new_document->user_id = $this->transformId('users', $document->user_id);
             $new_document->assigned_user_id = $this->transformId('users', $document->assigned_user_id);
             $new_document->company_id = $this->company->id;
@@ -956,7 +952,7 @@ class ImportCompanyTest extends TestCase
     {
         foreach ($this->backup_json_object->payments as $payment) {
             foreach ($payment->paymentables as $paymentable_obj) {
-                $paymentable = new Paymentable();
+                $paymentable = new Paymentable;
                 $paymentable->payment_id = $this->transformId('payments', $paymentable_obj->payment_id);
                 $paymentable->paymentable_type = $paymentable_obj->paymentable_type;
                 $paymentable->amount = $paymentable_obj->amount;
@@ -993,7 +989,7 @@ class ImportCompanyTest extends TestCase
         $class::unguard();
 
         foreach ($this->backup_json_object->{$object_property} as $obj) {
-            /* Remove unwanted keys*/
+            /* Remove unwanted keys */
             $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
@@ -1028,7 +1024,7 @@ class ImportCompanyTest extends TestCase
                 $obj_array['config'] = encrypt($obj_array['config']);
             }
 
-            $new_obj = new $class();
+            $new_obj = new $class;
             $new_obj->company_id = $this->company->id;
             $new_obj->fill($obj_array);
 
@@ -1045,7 +1041,7 @@ class ImportCompanyTest extends TestCase
         $class::unguard();
 
         foreach ($this->backup_json_object->{$object_property} as $obj) {
-            /* Remove unwanted keys*/
+            /* Remove unwanted keys */
             $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
@@ -1058,7 +1054,7 @@ class ImportCompanyTest extends TestCase
                 }
             }
 
-            /* New to convert product ids from old hashes to new hashes*/
+            /* New to convert product ids from old hashes to new hashes */
             if ($class instanceof Subscription) {
                 $obj_array['product_ids'] = $this->recordProductIds($obj_array['product_ids']);
                 $obj_array['recurring_product_ids'] = $this->recordProductIds($obj_array['recurring_product_ids']);
@@ -1085,7 +1081,7 @@ class ImportCompanyTest extends TestCase
         $class::unguard();
 
         foreach ($this->backup_json_object->{$object_property} as $obj) {
-            /* Remove unwanted keys*/
+            /* Remove unwanted keys */
             $obj_array = (array) $obj;
             foreach ($unset as $un) {
                 unset($obj_array[$un]);
@@ -1098,7 +1094,7 @@ class ImportCompanyTest extends TestCase
                 }
             }
 
-            /* New to convert product ids from old hashes to new hashes*/
+            /* New to convert product ids from old hashes to new hashes */
             if ($class instanceof Subscription) {
                 $obj_array['product_ids'] = $this->recordProductIds($obj_array['product_ids']);
                 $obj_array['recurring_product_ids'] = $this->recordProductIds($obj_array['recurring_product_ids']);
@@ -1139,11 +1135,11 @@ class ImportCompanyTest extends TestCase
             return null;
         }
 
-        if (! array_key_exists($resource, $this->ids)) {
+        if (!array_key_exists($resource, $this->ids)) {
             throw new \Exception("Resource {$resource} not available.");
         }
 
-        if (! array_key_exists("{$old}", $this->ids[$resource])) {
+        if (!array_key_exists("{$old}", $this->ids[$resource])) {
             throw new \Exception("Missing {$resource} key: {$old}");
         }
 
@@ -1154,7 +1150,7 @@ class ImportCompanyTest extends TestCase
     {
         parent::tearDown();
 
-        $backup_json_file = sys_get_temp_dir().'/backup/backup.json';
+        $backup_json_file = sys_get_temp_dir() . '/backup/backup.json';
 
         //   unlink($backup_json_file);
     }

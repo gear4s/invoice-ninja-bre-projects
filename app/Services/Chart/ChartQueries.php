@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -164,7 +163,6 @@ trait ChartQueries
 
         $user_filter = $this->is_admin ? '' : 'AND expenses.user_id = ' . $this->user->id;
 
-
         return DB::select("
                     SELECT
                     SUM(
@@ -289,7 +287,6 @@ trait ChartQueries
 
         $user_filter = $this->is_admin ? '' : 'AND payments.user_id = ' . $this->user->id;
 
-
         return DB::select("
             SELECT
             sum(payments.amount - payments.refunded) as total,
@@ -349,7 +346,8 @@ trait ChartQueries
 
         $user_filter = $this->is_admin ? '' : 'AND clients.user_id = ' . $this->user->id;
         $status_filter = $this->include_drafts ? 'AND invoices.status_id IN (1,2,3)' : 'AND invoices.status_id IN (2,3)';
-        //AND invoices.balance > 0
+
+        // AND invoices.balance > 0
         return DB::select("
             SELECT
             SUM(invoices.balance / COALESCE(NULLIF(invoices.exchange_rate, 0), 1)) as amount,
@@ -390,7 +388,6 @@ trait ChartQueries
         ", ['company_id' => $this->company->id, 'start_date' => $start_date, 'end_date' => $end_date]);
     }
 
-
     public function getRevenueQuery($start_date, $end_date)
     {
         $user_filter = $this->is_admin ? '' : 'AND payments.user_id = ' . $this->user->id;
@@ -412,12 +409,11 @@ trait ChartQueries
         ", ['company_id' => $this->company->id, 'start_date' => $start_date, 'end_date' => $end_date]);
     }
 
-
     public function getAggregateInvoicesQuery($start_date, $end_date)
     {
         $user_filter = $this->is_admin ? '' : 'AND clients.user_id = ' . $this->user->id;
 
-        //AND invoices.amount > 0 @2024-12-03 - allow negative invoices to be included
+        // AND invoices.amount > 0 @2024-12-03 - allow negative invoices to be included
         $status_filter = $this->include_drafts ? 'AND invoices.status_id IN (1,2,3,4)' : 'AND invoices.status_id IN (2,3,4)';
 
         return DB::select("
@@ -439,7 +435,6 @@ trait ChartQueries
         ]);
 
     }
-
 
     public function getInvoicesQuery($start_date, $end_date)
     {
@@ -498,7 +493,6 @@ trait ChartQueries
 
         $status_filter = $this->include_drafts ? 'AND invoices.status_id IN (1,2,3,4)' : 'AND invoices.status_id IN (2,3,4)';
 
-
         return DB::select("
             SELECT
             sum(invoices.balance) as total,
@@ -523,7 +517,6 @@ trait ChartQueries
         ]);
 
     }
-
 
     public function getAggregateInvoiceChartQuery($start_date, $end_date)
     {

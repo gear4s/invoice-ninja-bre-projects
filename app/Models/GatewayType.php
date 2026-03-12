@@ -6,11 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
+
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * App\Models\GatewayType
@@ -18,9 +19,10 @@ namespace App\Models;
  * @property int $id
  * @property string|null $alias
  * @property string|null $name
- * @property-read \App\Models\Gateway|null $gateway
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentType> $payment_methods
+ * @property-read Gateway|null $gateway
+ * @property-read Collection<int, PaymentType> $payment_methods
  * @property-read int|null $payment_methods_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|GatewayType newModelQuery()
@@ -29,7 +31,9 @@ namespace App\Models;
  * @method static \Illuminate\Database\Eloquent\Builder|GatewayType whereAlias($value)
  * @method static \Illuminate\Database\Eloquent\Builder|GatewayType whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|GatewayType whereName($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentType> $payment_methods
+ *
+ * @property-read Collection<int, PaymentType> $payment_methods
+ *
  * @mixin \Eloquent
  */
 class GatewayType extends StaticModel
@@ -146,7 +150,7 @@ class GatewayType extends StaticModel
             case self::ACSS:
                 return ctrans('texts.acss');
             case self::DIRECT_DEBIT:
-                return ctrans('texts.bank_transfer') . " / " . ctrans('texts.payment_type_direct_debit');
+                return ctrans('texts.bank_transfer') . ' / ' . ctrans('texts.payment_type_direct_debit');
             case self::INSTANT_BANK_PAY:
                 return ctrans('texts.payment_type_instant_bank_pay');
             case self::FPX:

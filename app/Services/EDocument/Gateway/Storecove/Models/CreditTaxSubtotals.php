@@ -2,7 +2,6 @@
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class CreditTaxSubtotals
@@ -79,30 +78,35 @@ class CreditTaxSubtotals
     public function setTaxAmount(?float $tax_amount): self
     {
         $this->tax_amount = $tax_amount;
+
         return $this;
     }
 
     public function setCountry(?string $country): self
     {
         $this->country = $country;
+
         return $this;
     }
 
     public function setTaxableAmount(?float $taxable_amount): self
     {
         $this->taxable_amount = $taxable_amount;
+
         return $this;
     }
 
     public function setPercentage(?float $percentage): self
     {
         $this->percentage = $percentage;
+
         return $this;
     }
 
     public function setCategory(?string $category): self
     {
         $this->category = $category;
+
         return $this;
     }
 

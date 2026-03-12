@@ -1,17 +1,18 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class VendorContactFactory extends Factory
 {
@@ -30,8 +31,8 @@ class VendorContactFactory extends Factory
             'email' => $this->faker->unique()->safeEmail(),
             'send_email' => true,
             'password' => bcrypt('password'),
-            'remember_token' => \Illuminate\Support\Str::random(10),
-            'contact_key' => \Illuminate\Support\Str::random(32),
+            'remember_token' => Str::random(10),
+            'contact_key' => Str::random(32),
         ];
     }
 }

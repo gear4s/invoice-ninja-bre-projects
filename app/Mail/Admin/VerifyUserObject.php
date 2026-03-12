@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,14 +26,14 @@ class VerifyUserObject
     public function build()
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        //@phpstan-ignore-next-line
+        // @phpstan-ignore-next-line
         $this->user->confirmation_code = $this->createDbHash($this->user->companies()->first()->db);
         // $this->user->confirmation_code = $this->createDbHash($this->company->db);
         $this->user->save();
@@ -57,7 +56,7 @@ class VerifyUserObject
             'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
 
-        $mail_obj = new \stdClass();
+        $mail_obj = new \stdClass;
         $mail_obj->subject = ctrans('texts.confirmation_subject');
         $mail_obj->data = $data;
         $mail_obj->markdown = 'email.admin.generic';

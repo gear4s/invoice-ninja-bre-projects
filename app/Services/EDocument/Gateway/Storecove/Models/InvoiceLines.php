@@ -2,7 +2,6 @@
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class InvoiceLines
@@ -35,7 +34,7 @@ class InvoiceLines
     public ?string $quantity_unit_code;
 
     #[SerializedPath('[cac:AllowanceCharge]')]
-    /** @var AllowanceCharges[]|null */ //todo
+    /** @var AllowanceCharges[]|null */ // todo
     public ?array $allowance_charges;
 
     #[SerializedPath('[cbc:LineExtensionAmount][#]')]
@@ -81,10 +80,10 @@ class InvoiceLines
     public ?string $note;
 
     /**
-     * @param AllowanceCharges[] $allowance_charges
-     * @param TaxesDutiesFees[] $taxes_duties_fees
-     * @param References[] $references
-     * @param AdditionalItemProperties[] $additional_item_properties
+     * @param  AllowanceCharges[]  $allowance_charges
+     * @param  TaxesDutiesFees[]  $taxes_duties_fees
+     * @param  References[]  $references
+     * @param  AdditionalItemProperties[]  $additional_item_properties
      */
     public function __construct(
         ?string $line_id,
@@ -266,151 +265,173 @@ class InvoiceLines
     public function setLineId(?string $line_id): self
     {
         $this->line_id = $line_id;
+
         return $this;
     }
 
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
     public function setName(?string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
     public function setOrderLineReferenceLineId(?string $order_line_reference_line_id): self
     {
         $this->order_line_reference_line_id = $order_line_reference_line_id;
+
         return $this;
     }
 
     public function setInvoicePeriod(?string $invoice_period): self
     {
         $this->invoice_period = $invoice_period;
+
         return $this;
     }
 
     public function setItemPrice(?float $item_price): self
     {
         $this->item_price = $item_price;
+
         return $this;
     }
 
     public function setQuantity(?float $quantity): self
     {
         $this->quantity = $quantity;
+
         return $this;
     }
 
     public function setBaseQuantity(?float $base_quantity): self
     {
         $this->base_quantity = $base_quantity;
+
         return $this;
     }
 
     public function setQuantityUnitCode(?string $quantity_unit_code): self
     {
         $this->quantity_unit_code = $quantity_unit_code;
+
         return $this;
     }
 
     /**
-     * @param AllowanceCharges[] $allowance_charges
+     * @param  AllowanceCharges[]  $allowance_charges
      */
     public function setAllowanceCharges(?array $allowance_charges): self
     {
         $this->allowance_charges = $allowance_charges;
+
         return $this;
     }
 
     public function setAmountExcludingVat(?float $amount_excluding_vat): self
     {
         $this->amount_excluding_vat = $amount_excluding_vat;
+
         return $this;
     }
 
     public function setAmountExcludingTax(?float $amount_excluding_tax): self
     {
         $this->amount_excluding_tax = $amount_excluding_tax;
+
         return $this;
     }
 
     public function setAmountIncludingTax(?float $amount_including_tax): self
     {
         $this->amount_including_tax = $amount_including_tax;
+
         return $this;
     }
 
-
     /**
-     * @param TaxesDutiesFees[] $taxes_duties_fees
+     * @param  TaxesDutiesFees[]  $taxes_duties_fees
      */
     public function setTaxesDutiesFees(?array $taxes_duties_fees): self
     {
         $this->taxes_duties_fees = $taxes_duties_fees;
+
         return $this;
     }
 
     public function setAccountingCost(?string $accounting_cost): self
     {
         $this->accounting_cost = $accounting_cost;
+
         return $this;
     }
 
     /**
-     * @param References[] $references
+     * @param  References[]  $references
      */
     public function setReferences(?array $references): self
     {
         $this->references = $references;
+
         return $this;
     }
 
     /**
-     * @param AdditionalItemProperties[] $additional_item_properties
+     * @param  AdditionalItemProperties[]  $additional_item_properties
      */
     public function setAdditionalItemProperties(?array $additional_item_properties): self
     {
         $this->additional_item_properties = $additional_item_properties;
+
         return $this;
     }
 
     public function setSellersItemIdentification(?string $sellers_item_identification): self
     {
         $this->sellers_item_identification = $sellers_item_identification;
+
         return $this;
     }
 
     public function setBuyersItemIdentification(?string $buyers_item_identification): self
     {
         $this->buyers_item_identification = $buyers_item_identification;
+
         return $this;
     }
 
     public function setStandardItemIdentification(?string $standard_item_identification): self
     {
         $this->standard_item_identification = $standard_item_identification;
+
         return $this;
     }
 
     public function setStandardItemIdentificationSchemeId(?string $standard_item_identification_scheme_id): self
     {
         $this->standard_item_identification_scheme_id = $standard_item_identification_scheme_id;
+
         return $this;
     }
 
     public function setStandardItemIdentificationSchemeAgencyId(?string $standard_item_identification_scheme_agency_id): self
     {
         $this->standard_item_identification_scheme_agency_id = $standard_item_identification_scheme_agency_id;
+
         return $this;
     }
 
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
         return $this;
     }
 }

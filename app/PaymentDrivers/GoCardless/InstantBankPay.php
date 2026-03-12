@@ -16,7 +16,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-class InstantBankPay implements MethodInterface, LivewireMethodInterface
+class InstantBankPay implements LivewireMethodInterface, MethodInterface
 {
     protected GoCardlessPaymentDriver $go_cardless;
 
@@ -30,8 +30,6 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
     /**
      * Authorization page for Instant Bank Pay.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
      * @throws BindingResolutionException
      */
     public function authorizeView(array $data): RedirectResponse
@@ -42,8 +40,8 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization for Instant Bank Pay.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  array  $data
+     *
      * @throws BindingResolutionException
      */
     public function authorizeResponse(Request $request): RedirectResponse
@@ -111,7 +109,6 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
 
             nlog($billing_request);
 
-
             $payment = $this->go_cardless->gateway->payments()->get(
                 $billing_request->payment_request->links->payment
             );
@@ -137,17 +134,15 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
     /**
      * Handle pending payments for Instant Bank Transfer.
      *
-     * @param \GoCardlessPro\Resources\Payment $payment
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function processPendingPayment(\GoCardlessPro\Resources\Payment $payment, array $data = [])
     {
         $data = [
-            'payment_method' => $payment->links->mandate, //@phpstan-ignore tag
+            'payment_method' => $payment->links->mandate, // @phpstan-ignore tag
             'payment_type' => PaymentType::INSTANT_BANK_PAY,
             'amount' => $this->go_cardless->payment_hash->data->amount_with_fee,
-            'transaction_reference' => $payment->id, //@phpstan-ignore tag
+            'transaction_reference' => $payment->id, // @phpstan-ignore tag
             'gateway_type_id' => GatewayType::INSTANT_BANK_PAY,
         ];
 
@@ -165,14 +160,10 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
         return redirect()->route('client.payments.show', ['payment' => $_payment->hashed_id]);
     }
 
-
-
     /**
      * Handle pending payments for Instant Bank Transfer.
      *
-     * @param \GoCardlessPro\Resources\Payment $payment
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function processSuccessfulPayment(\GoCardlessPro\Resources\Payment $payment, array $data = [])
     {
@@ -201,7 +192,7 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
     /**
      * Process unsuccessful payments for Direct Debit.
      *
-     * @param ResourcesPayment $payment
+     * @param  ResourcesPayment  $payment
      */
     public function processUnsuccessfulPayment(\GoCardlessPro\Resources\Payment $payment): void
     {
@@ -223,7 +214,7 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -233,7 +224,7 @@ class InstantBankPay implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

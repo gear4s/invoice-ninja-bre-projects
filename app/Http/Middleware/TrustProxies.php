@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,7 +31,7 @@ class TrustProxies extends Middleware
      */
     // protected $headers = Request::HEADER_X_FORWARDED_ALL;
 
-    //07-03-2022 - fixes for symfony 5.2
+    // 07-03-2022 - fixes for symfony 5.2
     protected $headers
         = Request::HEADER_X_FORWARDED_FOR
         | Request::HEADER_X_FORWARDED_HOST

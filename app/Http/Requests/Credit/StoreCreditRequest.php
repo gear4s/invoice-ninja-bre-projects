@@ -6,24 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Credit;
 
 use App\Http\Requests\Request;
-use App\Http\ValidationRules\Credit\UniqueCreditNumberRule;
 use App\Http\ValidationRules\Credit\ValidInvoiceCreditRule;
 use App\Models\Credit;
+use App\Models\User;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreCreditRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -32,7 +32,7 @@ class StoreCreditRequest extends Request
      */
     public function authorize()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Credit::class);
@@ -45,7 +45,7 @@ class StoreCreditRequest extends Request
      */
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -79,12 +79,12 @@ class StoreCreditRequest extends Request
         $rules['date'] = 'bail|sometimes|date:Y-m-d';
 
         if ($this->invoice_id) {
-            $rules['invoice_id'] = new ValidInvoiceCreditRule();
+            $rules['invoice_id'] = new ValidInvoiceCreditRule;
         }
 
         $rules['line_items'] = 'array';
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail',Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
 
         return $rules;
     }
@@ -98,11 +98,11 @@ class StoreCreditRequest extends Request
 
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -137,16 +137,16 @@ class StoreCreditRequest extends Request
         $input['amount'] = $this->entityTotalAmount($input['line_items']);
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
 
         $this->replace($input);

@@ -6,33 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Report;
 
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Utils\Number;
+use App\Export\CSV\BaseExport;
+use App\Libraries\MultiDB;
 use App\Models\Client;
-use League\Csv\Writer;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use Illuminate\Support\Facades\DB;
-use App\Export\CSV\BaseExport;
+use App\Models\User;
+use App\Services\Template\TemplateService;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Facades\App;
-use App\Services\Template\TemplateService;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class ClientBalanceReport extends BaseExport
 {
     use MakesDates;
-    //Name
-    //Invoice count
-    //Amount
-    //Amount with Tax
+
+    // Name
+    // Invoice count
+    // Amount
+    // Amount with Tax
     public Writer $csv;
 
     public string $date_key = 'created_at';
@@ -68,7 +68,7 @@ class ClientBalanceReport extends BaseExport
             'clients',
             'client_id',
         ]
-    */
+     */
     public function __construct(public Company $company, public array $input) {}
 
     public function run()
@@ -80,14 +80,14 @@ class ClientBalanceReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([ctrans('texts.client_balance_report')]);
-        $this->csv->insertOne([ctrans('texts.created_on'),' ',$this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale())]);
+        $this->csv->insertOne([ctrans('texts.created_on'), ' ', $this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale())]);
 
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = $this->report_keys;
@@ -122,7 +122,7 @@ class ClientBalanceReport extends BaseExport
 
         // Build rows using pre-fetched data
         foreach ($clients as $client) {
-            /** @var \App\Models\Client $client */
+            /** @var Client $client */
             $this->csv->insertOne($this->buildRowOptimized($client));
         }
 
@@ -145,7 +145,7 @@ class ClientBalanceReport extends BaseExport
             ->orderBy('balance', 'desc')
             ->cursor()
             ->each(function ($client) {
-                /** @var \App\Models\Client $client */
+                /** @var Client $client */
                 $this->csv->insertOne($this->buildRow($client));
             });
 
@@ -237,13 +237,13 @@ class ClientBalanceReport extends BaseExport
             'created_by' => $user_name,
         ];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         $ts_instance = $ts->setCompany($this->company)
-                    ->setData($data)
-                    ->setRawTemplate(file_get_contents(resource_path($this->template)))
-                    ->parseNinjaBlocks()
-                    ->save();
+            ->setData($data)
+            ->setRawTemplate(file_get_contents(resource_path($this->template)))
+            ->parseNinjaBlocks()
+            ->save();
 
         return $ts_instance->getPdf();
     }
@@ -255,7 +255,7 @@ class ClientBalanceReport extends BaseExport
     private function buildRow(Client $client): array
     {
         $query = Invoice::query()->where('client_id', $client->id)
-                                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL]);
+            ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL]);
 
         $query = $this->addDateRange($query, 'invoices');
 

@@ -6,30 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Task;
 use App\Models\TaskStatus;
-use Tests\MockAccountData;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\TaskStatusController
  */
 class TaskStatusApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -40,7 +39,7 @@ class TaskStatusApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testTaskStatusProperty()
+    public function test_task_status_property()
     {
         $t = Task::factory()->create([
             'company_id' => $this->company->id,
@@ -50,19 +49,19 @@ class TaskStatusApiTest extends TestCase
         $this->assertNull($t->status_order);
 
         $update = [
-            'description' => 'newdescription'
+            'description' => 'newdescription',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/tasks/'.$t->hashed_id, $update);
+        ])->put('/api/v1/tasks/' . $t->hashed_id, $update);
 
         $response->assertStatus(200);
 
     }
 
-    public function testSorting()
+    public function test_sorting()
     {
         TaskStatus::query()->where('company_id', $this->company->id)->cursor()->each(function ($ts) {
             $ts->forceDelete();
@@ -88,8 +87,7 @@ class TaskStatusApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/task_statuses/'.$task_status->hashed_id, $data);
-
+        ])->put('/api/v1/task_statuses/' . $task_status->hashed_id, $data);
 
         $t = TaskStatus::where('company_id', $this->company->id)->orderBy('status_order', 'asc')->first();
 
@@ -97,7 +95,7 @@ class TaskStatusApiTest extends TestCase
 
     }
 
-    public function testTaskStatusGetFilter()
+    public function test_task_status_get_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -107,7 +105,7 @@ class TaskStatusApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testTaskStatusPost()
+    public function test_task_status_post()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -121,7 +119,7 @@ class TaskStatusApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testTaskStatusPut()
+    public function test_task_status_put()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -130,34 +128,34 @@ class TaskStatusApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/task_statuses/'.$this->encodePrimaryKey($this->task_status->id), $data);
+        ])->put('/api/v1/task_statuses/' . $this->encodePrimaryKey($this->task_status->id), $data);
 
         $response->assertStatus(200);
     }
 
-    public function testTaskStatusGet()
+    public function test_task_status_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/task_statuses/'.$this->encodePrimaryKey($this->task_status->id));
+        ])->get('/api/v1/task_statuses/' . $this->encodePrimaryKey($this->task_status->id));
 
         $response->assertStatus(200);
     }
 
-    public function testTaskStatusNotArchived()
+    public function test_task_status_not_archived()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/task_statuses/'.$this->encodePrimaryKey($this->task_status->id));
+        ])->get('/api/v1/task_statuses/' . $this->encodePrimaryKey($this->task_status->id));
 
         $arr = $response->json();
 
         $this->assertEquals(0, $arr['data']['archived_at']);
     }
 
-    public function testTaskStatusArchived()
+    public function test_task_status_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->task_status->id)],
@@ -173,7 +171,7 @@ class TaskStatusApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testTaskStatusRestored()
+    public function test_task_status_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->task_status->id)],
@@ -189,7 +187,7 @@ class TaskStatusApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testTaskStatusDeletedFromDELETEROute()
+    public function test_task_status_deleted_from_deleter_oute()
     {
         // $data = [
         //     'ids' => [$this->encodePrimaryKey($this->task_status->id)],
@@ -198,7 +196,7 @@ class TaskStatusApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/task_statuses/'.$this->encodePrimaryKey($this->task_status->id));
+        ])->delete('/api/v1/task_statuses/' . $this->encodePrimaryKey($this->task_status->id));
 
         $arr = $response->json();
         // nlog($arr);
@@ -206,7 +204,7 @@ class TaskStatusApiTest extends TestCase
         $this->assertTrue($arr['data']['is_deleted']);
     }
 
-    public function testTaskStatusDeleted()
+    public function test_task_status_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->task_status->id)],

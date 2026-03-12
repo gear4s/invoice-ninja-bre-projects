@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -57,7 +56,6 @@ class NewPaymentNotification extends Notification
      * Get the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     *
      */
     public function toMail($notifiable) {}
 
@@ -86,16 +84,16 @@ class NewPaymentNotification extends Notification
 
         $invoice_texts = substr($invoice_texts, 0, -1);
 
-        return (new SlackMessage())
-                ->success()
-                //->to("#devv2")
-                ->from('System')
-                ->image($logo)
-                ->content(ctrans(
-                    'texts.notification_payment_paid',
-                    ['amount' => $amount,
-                        'client' => $this->payment->client->present()->name(),
-                        'invoice' => $invoice_texts, ]
-                ));
+        return (new SlackMessage)
+            ->success()
+                // ->to("#devv2")
+            ->from('System')
+            ->image($logo)
+            ->content(ctrans(
+                'texts.notification_payment_paid',
+                ['amount' => $amount,
+                    'client' => $this->payment->client->present()->name(),
+                    'invoice' => $invoice_texts, ]
+            ));
     }
 }

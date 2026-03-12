@@ -6,13 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Utils\Number;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -51,9 +53,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $require_custom_value4
  * @property bool $always_show_required_fields
  * @property-read int|null $client_gateway_tokens_count
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\Gateway $gateway
+ * @property-read Company $company
+ * @property-read Gateway $gateway
  * @property-read mixed $hashed_id
+ *
  * @method getConfigField(string $field)
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyGateway filter(\App\Filters\QueryFilters $filters)
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyGateway newModelQuery()
@@ -63,14 +66,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyGateway withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyGateway withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClientGatewayToken> $client_gateway_tokens
+ *
+ * @property-read Collection<int, ClientGatewayToken> $client_gateway_tokens
+ *
  * @method static CompanyGateway find($value)
+ *
  * @mixin \Eloquent
  */
 class CompanyGateway extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     public const GATEWAY_CREDIT = 10000000;
 
@@ -153,20 +159,20 @@ class CompanyGateway extends BaseModel
         '944c20175bbe6b9972c05bcfe294c2c7' => 313,
         'kivcvjexxvdiyqtj3mju5d6yhpeht2xs' => 314,
         '65faab2ab6e3223dbe848b1686490baz' => 320,
-        'b9886f9257f0c6ee7c302f1c74475f6c' => 321, //GoCardless
+        'b9886f9257f0c6ee7c302f1c74475f6c' => 321, // GoCardless
         'hxd6gwg3ekb9tb3v9lptgx1mqyg69zu9' => 322,
         '80af24a6a691230bbec33e930ab40666' => 323,
-        'vpyfbmdrkqcicpkjqdusgjfluebftuva' => 324, //BTCPay
-        '91be24c7b792230bced33e930ac61676' => 325, //Rotessa
-        'wbhf02us6owgo7p4nfjd0ymssdshks4d' => 326, //Blockonomics
-        'b67581d804dbad1743b61c57285142ad' => 327, //Powerboard
+        'vpyfbmdrkqcicpkjqdusgjfluebftuva' => 324, // BTCPay
+        '91be24c7b792230bced33e930ac61676' => 325, // Rotessa
+        'wbhf02us6owgo7p4nfjd0ymssdshks4d' => 326, // Blockonomics
+        'b67581d804dbad1743b61c57285142ad' => 327, // Powerboard
     ];
 
     protected $touches = [];
 
     public function isPayPal()
     {
-        return in_array($this->gateway_key, ['80af24a6a691230bbec33e930ab40666','80af24a6a691230bbec33e930ab40665']);
+        return in_array($this->gateway_key, ['80af24a6a691230bbec33e930ab40666', '80af24a6a691230bbec33e930ab40665']);
     }
 
     public function getEntityType()
@@ -177,22 +183,22 @@ class CompanyGateway extends BaseModel
     public function system_logs()
     {
         return $this->company
-                    ->system_log_relation
-                    ->where('type_id', $this->gateway_consts[$this->gateway->key])
-                    ->take(50);
+            ->system_log_relation
+            ->where('type_id', $this->gateway_consts[$this->gateway->key])
+            ->take(50);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function client_gateway_tokens(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function client_gateway_tokens(): HasMany
     {
         return $this->hasMany(ClientGatewayToken::class);
     }
 
-    public function gateway(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function gateway(): BelongsTo
     {
         return $this->belongsTo(Gateway::class, 'gateway_key', 'key');
     }
@@ -229,9 +235,6 @@ class CompanyGateway extends BaseModel
         // throw new \Exception("Payment Driver does not exist");
     }
 
-    /**
-     * @param $config
-     */
     public function setConfig($config)
     {
         $this->config = encrypt(json_encode($config));
@@ -240,9 +243,8 @@ class CompanyGateway extends BaseModel
     /**
      * setConfigField
      *
-     * @param  mixed $field
-     * @param  mixed $value
-     * @return void
+     * @param  mixed  $field
+     * @param  mixed  $value
      */
     public function setConfigField($field, $value): void
     {
@@ -258,7 +260,7 @@ class CompanyGateway extends BaseModel
      */
     public function getConfig()
     {
-        //return decrypt($this->config);
+        // return decrypt($this->config);
         return json_decode(decrypt($this->config));
     }
 
@@ -268,8 +270,6 @@ class CompanyGateway extends BaseModel
     }
 
     /**
-     * @param $field
-     *
      * @return mixed
      */
     public function getConfigField($field)
@@ -282,7 +282,7 @@ class CompanyGateway extends BaseModel
      */
     public function getAchEnabled()
     {
-        return ! empty($this->getConfigField('enable_ach'));
+        return !empty($this->getConfigField('enable_ach'));
     }
 
     /**
@@ -290,7 +290,7 @@ class CompanyGateway extends BaseModel
      */
     public function getApplePayEnabled()
     {
-        return ! empty($this->getConfigField('enable_apple_pay'));
+        return !empty($this->getConfigField('enable_apple_pay'));
     }
 
     /**
@@ -298,7 +298,7 @@ class CompanyGateway extends BaseModel
      */
     public function getAlipayEnabled()
     {
-        return ! empty($this->getConfigField('enable_alipay'));
+        return !empty($this->getConfigField('enable_alipay'));
     }
 
     /**
@@ -306,7 +306,7 @@ class CompanyGateway extends BaseModel
      */
     public function getSofortEnabled()
     {
-        return ! empty($this->getConfigField('enable_sofort'));
+        return !empty($this->getConfigField('enable_sofort'));
     }
 
     /**
@@ -314,7 +314,7 @@ class CompanyGateway extends BaseModel
      */
     public function getSepaEnabled()
     {
-        return ! empty($this->getConfigField('enable_sepa'));
+        return !empty($this->getConfigField('enable_sepa'));
     }
 
     /**
@@ -322,7 +322,7 @@ class CompanyGateway extends BaseModel
      */
     public function getBitcoinEnabled()
     {
-        return ! empty($this->getConfigField('enable_bitcoin'));
+        return !empty($this->getConfigField('enable_bitcoin'));
     }
 
     /**
@@ -330,7 +330,7 @@ class CompanyGateway extends BaseModel
      */
     public function getPayPalEnabled()
     {
-        return ! empty($this->getConfigField('enable_pay_pal'));
+        return !empty($this->getConfigField('enable_pay_pal'));
     }
 
     // public function feesEnabled()
@@ -361,6 +361,7 @@ class CompanyGateway extends BaseModel
     /**
      * Get Publishable Key
      * Only works for STRIPE and PAYMILL.
+     *
      * @return string The Publishable key
      */
     public function getPublishableKey(): string
@@ -384,10 +385,10 @@ class CompanyGateway extends BaseModel
     /**
      * Returns the formatted fee amount for the gateway.
      *
-     * @param float $amount The payment amount
-     * @param Client $client The client object
-     * @param int $gateway_type_id
-     * @return string           The fee amount formatted in the client currency
+     * @param  float  $amount  The payment amount
+     * @param  Client  $client  The client object
+     * @param  int  $gateway_type_id
+     * @return string The fee amount formatted in the client currency
      */
     public function calcGatewayFeeLabel($amount, Client $client, $gateway_type_id = GatewayType::CREDIT_CARD): string
     {
@@ -411,7 +412,6 @@ class CompanyGateway extends BaseModel
             }
         }
 
-
         return $label;
     }
 
@@ -419,7 +419,7 @@ class CompanyGateway extends BaseModel
     {
         $fees_and_limits = $this->getFeesAndLimits($gateway_type_id);
 
-        if (! $fees_and_limits) {
+        if (!$fees_and_limits) {
             return false;
         }
 
@@ -446,7 +446,7 @@ class CompanyGateway extends BaseModel
             }
 
             if ($fees_and_limits->fee_percent) {
-                if ($fees_and_limits->fee_percent == 100) { //unusual edge case if the user wishes to charge a fee of 100% 09/01/2022
+                if ($fees_and_limits->fee_percent == 100) { // unusual edge case if the user wishes to charge a fee of 100% 09/01/2022
                     $fee += $amount;
                 } else {
                     $fee += round(($amount * $fees_and_limits->fee_percent / 100), 2);
@@ -481,7 +481,7 @@ class CompanyGateway extends BaseModel
 
     public function getSettings()
     {
-        return $this->settings ?? new \stdClass();
+        return $this->settings ?? new \stdClass;
     }
 
     public function setSettings($settings)

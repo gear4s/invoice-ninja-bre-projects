@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,7 +16,6 @@ use App\Factory\CloneInvoiceFactory;
 use App\Factory\InvoiceFactory;
 use App\Factory\ProductFactory;
 use App\Factory\UserFactory;
-use App\Models\User;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -25,13 +23,10 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class FactoryCreationTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -45,10 +40,9 @@ class FactoryCreationTest extends TestCase
     }
 
     /**
-     *
      *       App\Factory\ProductFactory
      */
-    public function testProductionCreation()
+    public function test_production_creation()
     {
         $product = ProductFactory::create($this->company->id, $this->user->id);
         $product->save();
@@ -59,16 +53,15 @@ class FactoryCreationTest extends TestCase
     }
 
     /**
-     *
      *       App\Factory\InvoiceFactory
      */
-    public function testInvoiceCreation()
+    public function test_invoice_creation()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
 
         $client->save();
 
-        $invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
         $invoice->save();
 
@@ -78,16 +71,15 @@ class FactoryCreationTest extends TestCase
     }
 
     /**
-     *
      *  App\Factory\CloneInvoiceFactory
      */
-    public function testCloneInvoiceCreation()
+    public function test_clone_invoice_creation()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
 
         $client->save();
 
-        $invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
         $invoice->save();
 
@@ -104,10 +96,9 @@ class FactoryCreationTest extends TestCase
     }
 
     /**
-     *
      *  App\Factory\ClientFactory
      */
-    public function testClientCreate()
+    public function test_client_create()
     {
         $cliz = ClientFactory::create($this->company->id, $this->user->id);
 
@@ -119,10 +110,9 @@ class FactoryCreationTest extends TestCase
     }
 
     /**
-     *
      *  App\Factory\ClientContactFactory
      */
-    public function testClientContactCreate()
+    public function test_client_contact_create()
     {
         $cliz = ClientFactory::create($this->company->id, $this->user->id);
 
@@ -134,10 +124,9 @@ class FactoryCreationTest extends TestCase
     }
 
     /**
-     *
      *  App\Factory\UserFactory
      */
-    public function testUserCreate()
+    public function test_user_create()
     {
         $new_user = UserFactory::create($this->account->id);
         $new_user->email = $this->faker->freeEmail();

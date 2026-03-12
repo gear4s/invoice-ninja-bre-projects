@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class QuoteToRecurringQuoteFactory
 {
     public static function create(Quote $quote): RecurringQuote
     {
-        $recurring_quote = new RecurringQuote();
+        $recurring_quote = new RecurringQuote;
 
         $recurring_quote->status_id = RecurringQuote::STATUS_DRAFT;
         $recurring_quote->discount = $quote->discount;
@@ -31,7 +30,7 @@ class QuoteToRecurringQuoteFactory
         $recurring_quote->public_notes = $quote->public_notes;
         $recurring_quote->private_notes = $quote->private_notes;
         $recurring_quote->date = date_create()->format($quote->client->date_format());
-        $recurring_quote->due_date = $quote->due_date; //todo calculate based on terms
+        $recurring_quote->due_date = $quote->due_date; // todo calculate based on terms
         $recurring_quote->is_deleted = $quote->is_deleted;
         $recurring_quote->line_items = $quote->line_items;
         $recurring_quote->tax_name1 = $quote->tax_name1;

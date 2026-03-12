@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,9 +16,6 @@ use Illuminate\Support\Carbon;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class RecurringDateTest extends TestCase
 {
     use DatabaseTransactions;
@@ -29,10 +25,10 @@ class RecurringDateTest extends TestCase
     {
         parent::setUp();
 
-        //$this->makeTestData();
+        // $this->makeTestData();
     }
 
-    public function testNextDay()
+    public function test_next_day()
     {
         $trial = 60 * 60 * 24;
 
@@ -43,7 +39,7 @@ class RecurringDateTest extends TestCase
         $this->assertequals($trial_ends->format('Y-m-d'), '2021-12-03');
     }
 
-    public function testDateOverflowsForEndOfMonth()
+    public function test_date_overflows_for_end_of_month()
     {
         $today = Carbon::parse('2022-01-31');
 
@@ -52,5 +48,4 @@ class RecurringDateTest extends TestCase
         $this->assertEquals('2022-02-28', $next_month->format('Y-m-d'));
 
     }
-
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,10 @@ use App\Utils\Traits\AppSetup;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class CreditBalanceTest extends TestCase
 {
-    use MockUnitData;
     use AppSetup;
+    use MockUnitData;
 
     protected function setUp(): void
     {
@@ -36,7 +32,7 @@ class CreditBalanceTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testCreditBalance()
+    public function test_credit_balance()
     {
         $credit = Credit::factory()->create([
             'user_id' => $this->user->id,
@@ -51,7 +47,7 @@ class CreditBalanceTest extends TestCase
         $this->assertEquals($this->client->service()->getCreditBalance(), 10);
     }
 
-    public function testCreditBalance2()
+    public function test_credit_balance2()
     {
         $credit = Credit::factory()->create([
             'user_id' => $this->user->id,
@@ -66,8 +62,7 @@ class CreditBalanceTest extends TestCase
         $this->assertEquals($this->client->service()->getCreditBalance(), 10);
     }
 
-
-    public function testExpiredCreditBalance()
+    public function test_expired_credit_balance()
     {
         $credit = Credit::factory()->create([
             'user_id' => $this->user->id,
@@ -82,7 +77,7 @@ class CreditBalanceTest extends TestCase
         $this->assertEquals($this->client->service()->getCreditBalance(), 0);
     }
 
-    public function testCreditDeleteCheckClientBalance()
+    public function test_credit_delete_check_client_balance()
     {
         $credit = Credit::factory()->create([
             'user_id' => $this->user->id,
@@ -96,13 +91,12 @@ class CreditBalanceTest extends TestCase
         $credit->client->credit_balance = 10;
         $credit->push();
 
-
-        //delete invoice
+        // delete invoice
         $data = [
             'ids' => [$credit->hashed_id],
         ];
 
-        //restore invoice
+        // restore invoice
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -112,7 +106,7 @@ class CreditBalanceTest extends TestCase
 
         $this->assertEquals(0, $client->credit_balance);
 
-        //restore invoice
+        // restore invoice
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,

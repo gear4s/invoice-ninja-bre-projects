@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,11 +20,11 @@ use Illuminate\Queue\SerializesModels;
 
 class ProcessBulk implements ShouldQueue
 {
+    use BulkOptions;
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
-    use BulkOptions;
 
     /**
      * Repository for target resource.
@@ -48,10 +47,6 @@ class ProcessBulk implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
-     * @param array $data
-     * @param $repo
-     * @param string $method
      */
     public function __construct(array $data, $repo, string $method)
     {

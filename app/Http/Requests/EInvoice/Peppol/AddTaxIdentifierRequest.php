@@ -6,16 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice\Peppol;
 
 use App\Models\Country;
-use Illuminate\Validation\Rule;
+use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class AddTaxIdentifierRequest extends FormRequest
 {
@@ -54,7 +55,7 @@ class AddTaxIdentifierRequest extends FormRequest
 
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if (config('ninja.app_env') == 'local') {
@@ -65,7 +66,7 @@ class AddTaxIdentifierRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -89,7 +90,7 @@ class AddTaxIdentifierRequest extends FormRequest
                         }
                     }
                     if ($company->settings->classification == 'individual') {
-                        $fail("Individuals cannot register additional VAT numbers, only business entities");
+                        $fail('Individuals cannot register additional VAT numbers, only business entities');
                     }
                 },
             ],
@@ -113,13 +114,11 @@ class AddTaxIdentifierRequest extends FormRequest
     public function country(): Country
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         return $countries->first(function ($c) {
             return $this->country == $c->id;
         });
     }
-
-
 }

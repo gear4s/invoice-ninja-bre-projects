@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,6 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 
-/**
- *
- */
 class EncryptionSettingsTest extends TestCase
 {
     private string $settings;
@@ -28,7 +24,7 @@ class EncryptionSettingsTest extends TestCase
         $this->settings = '{"publishable_key":"publish","23_apiKey":"client","enable_ach":"1","enable_sofort":"1","enable_apple_pay":"1","enable_alipay":"1"}';
     }
 
-    public function testDecryption()
+    public function test_decryption()
     {
         $this->settings = encrypt($this->settings);
 
@@ -47,8 +43,6 @@ class EncryptionSettingsTest extends TestCase
     }
 
     /**
-     * @param $field
-     *
      * @return mixed
      */
     public function getConfigField($field)

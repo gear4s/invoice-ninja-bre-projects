@@ -6,23 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\ValidationRules;
 
-use Tests\TestCase;
-use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\Invoice\StoreInvoiceRequest;
+use App\Models\Invoice;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Validator;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
-/**
- *
- */
 class UniqueInvoiceNumberValidationTest extends TestCase
 {
     use MakesHash;
@@ -41,7 +37,7 @@ class UniqueInvoiceNumberValidationTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testValidEmailRule()
+    public function test_valid_email_rule()
     {
         auth()->login($this->user);
         auth()->user()->setCompany($this->company);
@@ -66,7 +62,7 @@ class UniqueInvoiceNumberValidationTest extends TestCase
             'number' => 'db_record',
         ];
 
-        $rules = (new StoreInvoiceRequest())->rules();
+        $rules = (new StoreInvoiceRequest)->rules();
 
         $validator = Validator::make($data, $rules);
 

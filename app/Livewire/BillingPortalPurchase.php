@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,14 +19,21 @@ use App\Libraries\MultiDB;
 use App\Mail\ContactPasswordlessLogin;
 use App\Models\Client;
 use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\Currency;
 use App\Models\Invoice;
+use App\Models\Language;
 use App\Models\Subscription;
 use App\Repositories\ClientContactRepository;
 use App\Repositories\ClientRepository;
-use App\Utils\Ninja;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Laracasts\Presenter\Exceptions\PresenterException;
 use Livewire\Component;
 
 class BillingPortalPurchase extends Component
@@ -45,7 +51,6 @@ class BillingPortalPurchase extends Component
      * @var string
      */
     public $heading_text;
-
 
     /**
      * E-mail address model for user input.
@@ -77,7 +82,6 @@ class BillingPortalPurchase extends Component
 
     /**
      * Rules for validating the form.
-     *
      */
     protected $rules = [
         'email' => ['required', 'email'],
@@ -86,14 +90,14 @@ class BillingPortalPurchase extends Component
     /**
      * Id for CompanyGateway record.
      *
-     * @var string|integer
+     * @var string|int
      */
     public $company_gateway_id;
 
     /**
      * Id for GatewayType.
      *
-     * @var string|integer
+     * @var string|int
      */
     public $payment_method_id;
 
@@ -170,7 +174,7 @@ class BillingPortalPurchase extends Component
     /**
      * Instance of company.
      *
-     * @var \App\Models\Company
+     * @var Company
      */
     public $company;
 
@@ -256,7 +260,8 @@ class BillingPortalPurchase extends Component
      * Create a blank client. Used for new customers purchasing.
      *
      * @return mixed
-     * @throws \Laracasts\Presenter\Exceptions\PresenterException
+     *
+     * @throws PresenterException
      */
     protected function createBlankClient()
     {
@@ -264,7 +269,7 @@ class BillingPortalPurchase extends Component
         $user = $this->subscription->user;
         $user->setCompany($company);
 
-        $client_repo = new ClientRepository(new ClientContactRepository());
+        $client_repo = new ClientRepository(new ClientContactRepository);
 
         $data = [
             'name' => '',
@@ -287,7 +292,7 @@ class BillingPortalPurchase extends Component
 
         if (array_key_exists('currency_id', $this->request_data)) {
 
-            /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+            /** @var Collection<Currency> */
             $currencies = app('currencies');
 
             $currency = $currencies->first(function ($item) {
@@ -299,7 +304,7 @@ class BillingPortalPurchase extends Component
             }
         } elseif ($this->subscription->group_settings && property_exists($this->subscription->group_settings->settings, 'currency_id')) {
 
-            /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+            /** @var Collection<Currency> */
             $currencies = app('currencies');
 
             $currency = $currencies->first(function ($item) {
@@ -314,7 +319,7 @@ class BillingPortalPurchase extends Component
         if (array_key_exists('locale', $this->request_data)) {
             $request = $this->request_data;
 
-            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            /** @var Collection<Language> */
             $languages = app('languages');
             $record = $languages->first(function ($item) use ($request) {
                 return $item->locale == $request['locale'];
@@ -333,7 +338,6 @@ class BillingPortalPurchase extends Component
     /**
      * Fetching payment methods from the client.
      *
-     * @param ClientContact $contact
      * @return $this
      */
     protected function getPaymentMethods(ClientContact $contact): self
@@ -354,6 +358,7 @@ class BillingPortalPurchase extends Component
             $this->steps['payment_required'] = false;
             $this->steps['fetched_payment_methods'] = false;
             $this->heading_text = ctrans('texts.payment_methods');
+
             return $this;
         } else {
             // $this->steps['fetched_payment_methods'] = true;
@@ -414,9 +419,6 @@ class BillingPortalPurchase extends Component
     /**
      * Middle method between selecting payment method &
      * submitting the from to the backend.
-     *
-     * @param $company_gateway_id
-     * @param $gateway_type_id
      */
     public function handleMethodSelectingEvent($company_gateway_id, $gateway_type_id, $is_paypal = false)
     {
@@ -474,7 +476,7 @@ class BillingPortalPurchase extends Component
             $context = 'whitelabel';
         }
 
-        if (config('ninja.ninja_default_company_id') == $this->subscription->company_id && in_array($this->subscription->service()->products()->first()?->product_key, ['peppol_500','peppol_1000','selfhost_peppol_500','selfhost_peppol_1000'])) {
+        if (config('ninja.ninja_default_company_id') == $this->subscription->company_id && in_array($this->subscription->service()->products()->first()?->product_key, ['peppol_500', 'peppol_1000', 'selfhost_peppol_500', 'selfhost_peppol_1000'])) {
             $context = $this->subscription->service()->products()->first()?->product_key;
         }
 
@@ -494,7 +496,7 @@ class BillingPortalPurchase extends Component
     /**
      * Proxy method for starting the trial.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function handleTrial()
     {
@@ -530,9 +532,6 @@ class BillingPortalPurchase extends Component
 
     /**
      * Update quantity property.
-     *
-     * @param string $option
-     * @return int
      */
     public function updateQuantity(string $option): int
     {
@@ -540,17 +539,20 @@ class BillingPortalPurchase extends Component
 
         if ($this->quantity == 1 && $option == 'decrement') {
             $this->price = $this->price * 1;
+
             return $this->quantity;
         }
 
         if ($this->quantity > $this->subscription->max_seats_limit && $option == 'increment') {
             $this->price = $this->price * $this->subscription->max_seats_limit;
+
             return $this->quantity;
         }
 
         if ($option == 'increment') {
             $this->quantity++;
             $this->price = $this->price * $this->quantity;
+
             return $this->quantity;
         }
 
@@ -564,6 +566,7 @@ class BillingPortalPurchase extends Component
     {
         if ($this->steps['discount_applied']) {
             $this->price = $this->subscription->promo_price;
+
             return;
         }
 
@@ -585,7 +588,7 @@ class BillingPortalPurchase extends Component
             ->where('company_id', $this->subscription->company_id)
             ->first();
 
-        $mailer = new NinjaMailerObject();
+        $mailer = new NinjaMailerObject;
         $mailer->mailable = new ContactPasswordlessLogin($this->email, $this->subscription->company, (string) route('client.subscription.purchase', $this->subscription->hashed_id) . '?coupon=' . $this->coupon);
         $mailer->company = $this->subscription->company;
         $mailer->settings = $this->subscription->company->settings;

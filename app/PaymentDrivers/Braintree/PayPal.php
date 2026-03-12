@@ -6,16 +6,21 @@ use App\Exceptions\PaymentFailed;
 use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 use App\Jobs\Util\SystemLogger;
 use App\Models\GatewayType;
+use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\BraintreePaymentDriver;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class PayPal implements LivewireMethodInterface
 {
     use MakesHash;
+
     /**
      * @var BraintreePaymentDriver
      */
@@ -35,7 +40,7 @@ class PayPal implements LivewireMethodInterface
         return render('gateways.braintree.paypal.authorize', $data);
     }
 
-    public function authorizeResponse($data): \Illuminate\Http\RedirectResponse
+    public function authorizeResponse($data): RedirectResponse
     {
         return back();
     }
@@ -43,8 +48,7 @@ class PayPal implements LivewireMethodInterface
     /**
      * Credit card payment page.
      *
-     * @param array $data
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Factory|View
      */
     public function paymentView(array $data)
     {
@@ -70,7 +74,7 @@ class PayPal implements LivewireMethodInterface
 
         $token = $this->getPaymentToken($request->all(), $customer->id);
 
-        $total_taxes = \App\Models\Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->braintree->payment_hash->invoices(), 'invoice_id')))->withTrashed()->sum('total_taxes');
+        $total_taxes = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->braintree->payment_hash->invoices(), 'invoice_id')))->withTrashed()->sum('total_taxes');
         $invoice = $this->braintree->payment_hash->fee_invoice;
         $po_number = $invoice->po_number ?? $invoice->number ?? '';
 
@@ -113,7 +117,7 @@ class PayPal implements LivewireMethodInterface
 
     private function getPaymentToken(array $data, string $customerId)
     {
-        if (array_key_exists('token', $data) && ! is_null($data['token'])) {
+        if (array_key_exists('token', $data) && !is_null($data['token'])) {
             return $data['token'];
         }
 
@@ -133,11 +137,8 @@ class PayPal implements LivewireMethodInterface
 
     /**
      * Process & complete the successful PayPal transaction.
-     *
-     * @param $response
-     * @return \Illuminate\Http\RedirectResponse
      */
-    private function processSuccessfulPayment($response): \Illuminate\Http\RedirectResponse
+    private function processSuccessfulPayment($response): RedirectResponse
     {
         $state = $this->braintree->payment_hash->data;
 
@@ -186,7 +187,7 @@ class PayPal implements LivewireMethodInterface
     private function storePaymentMethod($method, string $customer_reference)
     {
         try {
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->email = (string) $method->email;
             $payment_meta->type = GatewayType::PAYPAL;
 
@@ -203,7 +204,7 @@ class PayPal implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -211,7 +212,7 @@ class PayPal implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

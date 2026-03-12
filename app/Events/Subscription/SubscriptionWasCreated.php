@@ -4,6 +4,7 @@ namespace App\Events\Subscription;
 
 use App\Models\Company;
 use App\Models\Subscription;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -44,7 +45,7 @@ class SubscriptionWasCreated
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return \Illuminate\Broadcasting\Channel|array
+     * @return Channel|array
      */
     public function broadcastOn()
     {

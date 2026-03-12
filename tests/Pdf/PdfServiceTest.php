@@ -6,31 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Pdf;
 
-use Tests\TestCase;
-use App\Models\Client;
-use App\Models\Vendor;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Models\Payment;
-use Tests\MockAccountData;
-use App\Models\ClientContact;
-use App\Models\PurchaseOrder;
-use App\Models\VendorContact;
-use App\Services\Pdf\PdfService;
 use App\DataMapper\CompanySettings;
+use App\Factory\DesignFactory;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\Design;
+use App\Models\Invoice;
+use App\Models\PurchaseOrder;
+use App\Models\Vendor;
+use App\Models\VendorContact;
+use App\Services\Client\Statement;
 use App\Services\Pdf\PdfConfiguration;
-use App\Services\Template\TemplateAction;
+use App\Services\Pdf\PdfService;
 use App\Services\Template\TemplateService;
+use Illuminate\Support\Facades\Storage;
 use Str;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *   App\Services\Pdf\PdfService
  */
 class PdfServiceTest extends TestCase
@@ -89,12 +89,12 @@ class PdfServiceTest extends TestCase
 
         $company = Company::factory()->create(array_merge([
             'account_id' => $this->account->id,
-            'settings' => $settings
+            'settings' => $settings,
         ], $company_props));
 
         $client = Client::factory()->create([
             'user_id' => $this->user->id,
-            'company_id' => $company->id
+            'company_id' => $company->id,
         ]);
 
         $contact = ClientContact::factory()->create([
@@ -127,13 +127,13 @@ class PdfServiceTest extends TestCase
     {
 
         $company = Company::factory()->create(array_merge([
-                    'account_id' => $this->account->id,
-                    'settings' => $settings
-                ], $company_props));
+            'account_id' => $this->account->id,
+            'settings' => $settings,
+        ], $company_props));
 
         $vendor = Vendor::factory()->create([
             'user_id' => $this->user->id,
-            'company_id' => $company->id
+            'company_id' => $company->id,
         ]);
 
         $contact = VendorContact::factory()->create([
@@ -163,16 +163,14 @@ class PdfServiceTest extends TestCase
 
     }
 
-
-    public function testTemplateClientStatementGeneration()
+    public function test_template_client_statement_generation()
     {
-
 
         foreach ($this->template_designs['statements'] as $template) {
 
             $invoice = $this->stubInvoice(CompanySettings::defaults());
 
-            $design = \App\Factory\DesignFactory::create($invoice->company_id, $invoice->user_id);
+            $design = DesignFactory::create($invoice->company_id, $invoice->user_id);
             $design->name = Str::random(16);
             $dd = $design->design;
             $dd->body = file_get_contents(resource_path($template));
@@ -196,22 +194,21 @@ class PdfServiceTest extends TestCase
             $client = $invoice->client;
             $client = $client->load('invoices');
 
-
-            $statement = (new \App\Services\Client\Statement($client, [
-                            'start_date' => '1970-01-01',
-                            'end_date' => '2045-01-01',
-                            'show_payments_table' => true,
-                            'show_aging_table' => true,
-                            'show_credits_table' => true,
-                            'template' => $design->hashed_id,
-                            'status' => 'all',
-                        ]));
+            $statement = (new Statement($client, [
+                'start_date' => '1970-01-01',
+                'end_date' => '2045-01-01',
+                'show_payments_table' => true,
+                'show_aging_table' => true,
+                'show_credits_table' => true,
+                'template' => $design->hashed_id,
+                'status' => 'all',
+            ]));
 
             $pdf = $statement->run();
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/template_statements_' . basename($template). '.pdf', $pdf);
+            Storage::put('/pdf/template_statements_' . basename($template) . '.pdf', $pdf);
 
             $design->forceDelete();
             $company->forceDelete();
@@ -219,7 +216,7 @@ class PdfServiceTest extends TestCase
 
     }
 
-    public function testTemplatePaymentGeneration()
+    public function test_template_payment_generation()
     {
 
         $invoice = $this->stubInvoice(CompanySettings::defaults());
@@ -228,7 +225,7 @@ class PdfServiceTest extends TestCase
         $payment = $invoice->fresh()->payments()->first();
         $payment->load('invoices');
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         foreach ($this->template_designs['payments'] as $template) {
 
@@ -242,13 +239,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/template_payments_' . basename($template). '.pdf', $pdf);
+            Storage::put('/pdf/template_payments_' . basename($template) . '.pdf', $pdf);
 
         }
 
     }
 
-    public function testTemplateDeliveryNoteGeneration()
+    public function test_template_delivery_note_generation()
     {
         $invoice = $this->stubInvoice(CompanySettings::defaults());
 
@@ -256,26 +253,25 @@ class PdfServiceTest extends TestCase
             'invoices' => collect($invoice),
         ];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         foreach ($this->template_designs['delivery_notes'] as $template) {
 
-
             $pdf = $ts->setCompany($invoice->company)
-            ->setRawTemplate(file_get_contents(resource_path($template)))
-            ->build([
-                'invoices' => collect([$this->invoice]),
-            ])->getPdf();
+                ->setRawTemplate(file_get_contents(resource_path($template)))
+                ->build([
+                    'invoices' => collect([$this->invoice]),
+                ])->getPdf();
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/template_delivery_note_' . basename($template). '.pdf', $pdf);
+            Storage::put('/pdf/template_delivery_note_' . basename($template) . '.pdf', $pdf);
 
         }
 
     }
 
-    public function testPurchaseOrderGeneration()
+    public function test_purchase_order_generation()
     {
 
         $settings = CompanySettings::defaults();
@@ -319,10 +315,9 @@ class PdfServiceTest extends TestCase
         $po->line_items = $items;
         $po->calc()->getPurchaseOrder();
 
-
         $this->assertGreaterThan(0, $po->invitations()->count());
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) use ($po) {
+        Design::where('is_custom', false)->cursor()->each(function ($design) use ($po) {
 
             $po->design_id = $design->id;
             $po->save();
@@ -333,13 +328,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/po_' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/po_' . $design->name . '.pdf', $pdf);
 
         });
 
     }
 
-    public function testMarkdownEnabled()
+    public function test_markdown_enabled()
     {
 
         $settings = CompanySettings::defaults();
@@ -383,10 +378,9 @@ class PdfServiceTest extends TestCase
         $invoice->line_items = $items;
         $invoice->calc()->getInvoice();
 
-
         $this->assertGreaterThan(0, $invoice->invitations()->count());
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
+        Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
 
             $invoice->design_id = $design->id;
             $invoice->save();
@@ -397,15 +391,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/markdown_' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/markdown_' . $design->name . '.pdf', $pdf);
 
         });
 
     }
 
-
-
-    public function testLargeDescriptionField()
+    public function test_large_description_field()
     {
 
         $settings = CompanySettings::defaults();
@@ -439,7 +431,7 @@ class PdfServiceTest extends TestCase
 
         $this->assertGreaterThan(0, $invoice->invitations()->count());
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
+        Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
 
             $invoice->design_id = $design->id;
             $invoice->save();
@@ -450,15 +442,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/desc_' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/desc_' . $design->name . '.pdf', $pdf);
 
         });
 
     }
 
-
-
-    public function testMaxInvoiceFields()
+    public function test_max_invoice_fields()
     {
 
         $settings = CompanySettings::defaults();
@@ -485,7 +475,7 @@ class PdfServiceTest extends TestCase
 
         $this->assertGreaterThan(0, $invoice->invitations()->count());
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
+        Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
 
             $invoice->design_id = $design->id;
             $invoice->save();
@@ -496,13 +486,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/max_fields_' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/max_fields_' . $design->name . '.pdf', $pdf);
 
         });
 
     }
 
-    public function testMinInvoiceFields()
+    public function test_min_invoice_fields()
     {
 
         $settings = CompanySettings::defaults();
@@ -527,7 +517,7 @@ class PdfServiceTest extends TestCase
 
         $invoice = $this->stubInvoice($settings);
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
+        Design::where('is_custom', false)->cursor()->each(function ($design) use ($invoice) {
 
             $invoice->design_id = $design->id;
             $invoice->save();
@@ -538,14 +528,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/min_fields_' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/min_fields_' . $design->name . '.pdf', $pdf);
 
         });
 
     }
 
-
-    public function testStatementPdfGeneration()
+    public function test_statement_pdf_generation()
     {
 
         $pdf = $this->client->service()->statement([
@@ -554,25 +543,23 @@ class PdfServiceTest extends TestCase
             'end_date' => '2023-01-01',
             'show_aging_table' => true,
             'show_payments_table' => true,
-            'status' => 'all'
+            'status' => 'all',
         ]);
-
 
         $this->assertNotNull($pdf);
 
-        \Illuminate\Support\Facades\Storage::put('/pdf/statement.pdf', $pdf);
-
+        Storage::put('/pdf/statement.pdf', $pdf);
 
     }
 
-    public function testMultiDesignGeneration()
+    public function test_multi_design_generation()
     {
 
         if (config('ninja.testvars.travis')) {
             $this->markTestSkipped();
         }
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) {
+        Design::where('is_custom', false)->cursor()->each(function ($design) {
 
             $this->invoice->design_id = $design->id;
             $this->invoice->save();
@@ -585,12 +572,11 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/' . $design->name . '.pdf', $pdf);
 
         });
 
-        \App\Models\Design::where('is_custom', false)->cursor()->each(function ($design) {
-
+        Design::where('is_custom', false)->cursor()->each(function ($design) {
 
             $this->invoice->design_id = $design->id;
             $this->invoice->save();
@@ -603,13 +589,13 @@ class PdfServiceTest extends TestCase
 
             $this->assertNotNull($pdf);
 
-            \Illuminate\Support\Facades\Storage::put('/pdf/dn_' . $design->name.'.pdf', $pdf);
+            Storage::put('/pdf/dn_' . $design->name . '.pdf', $pdf);
 
         });
 
     }
 
-    public function testPdfGeneration()
+    public function test_pdf_generation()
     {
 
         if (config('ninja.testvars.travis')) {
@@ -624,7 +610,7 @@ class PdfServiceTest extends TestCase
 
     }
 
-    public function testHtmlGeneration()
+    public function test_html_generation()
     {
 
         $invitation = $this->invoice->invitations->first();
@@ -635,7 +621,7 @@ class PdfServiceTest extends TestCase
 
     }
 
-    public function testInitOfClass()
+    public function test_init_of_class()
     {
 
         $invitation = $this->invoice->invitations->first();
@@ -646,7 +632,7 @@ class PdfServiceTest extends TestCase
 
     }
 
-    public function testEntityResolution()
+    public function test_entity_resolution()
     {
 
         $invitation = $this->invoice->invitations->first();
@@ -655,10 +641,9 @@ class PdfServiceTest extends TestCase
 
         $this->assertInstanceOf(PdfConfiguration::class, $service->config);
 
-
     }
 
-    public function testDefaultDesign()
+    public function test_default_design()
     {
         $invitation = $this->invoice->invitations->first();
 
@@ -668,7 +653,7 @@ class PdfServiceTest extends TestCase
 
     }
 
-    public function testHtmlIsArray()
+    public function test_html_is_array()
     {
         $invitation = $this->invoice->invitations->first();
 
@@ -678,7 +663,7 @@ class PdfServiceTest extends TestCase
 
     }
 
-    public function testTemplateResolution()
+    public function test_template_resolution()
     {
         $invitation = $this->invoice->invitations->first();
 
@@ -687,5 +672,4 @@ class PdfServiceTest extends TestCase
         $this->assertIsString($service->designer->template);
 
     }
-
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,12 +15,13 @@ use App\Export\Decorators\Decorator;
 use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Invoice;
+use App\Models\Product;
 use App\Transformers\InvoiceTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
-use App\Models\Product;
 
 class InvoiceItemExport extends BaseExport
 {
@@ -49,8 +49,8 @@ class InvoiceItemExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->invoice_transformer = new InvoiceTransformer();
-        $this->decorator = new Decorator();
+        $this->invoice_transformer = new InvoiceTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -70,12 +70,12 @@ class InvoiceItemExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = Invoice::query()
-                        ->withTrashed()
-                        ->with('client')
-                        ->whereHas('client', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->with('client')
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {// @phpstan-ignore-line
             $query->where('is_deleted', 0);
@@ -118,7 +118,7 @@ class InvoiceItemExport extends BaseExport
         $query->cursor()
             ->each(function ($resource) {
 
-                /** @var \App\Models\Invoice $resource */
+                /** @var Invoice $resource */
                 $this->iterateItems($resource);
 
                 foreach ($this->storage_array as $row) {
@@ -133,22 +133,21 @@ class InvoiceItemExport extends BaseExport
 
     }
 
-
     public function run()
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($invoice) {
 
-                /** @var \App\Models\Invoice $invoice */
+                /** @var Invoice $invoice */
                 $this->iterateItems($invoice);
             });
 
@@ -160,7 +159,7 @@ class InvoiceItemExport extends BaseExport
     private function filterItems(array $items): array
     {
 
-        //if we have product filters in place, we will also need to filter the items at this level:
+        // if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
 
             $products = str_getcsv($this->input['product_key'], ',', "'");
@@ -186,11 +185,11 @@ class InvoiceItemExport extends BaseExport
         foreach ($this->filterItems($invoice->line_items) as $item) {
             $item_array = [];
 
-            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { //items iterator produces item array
+            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { // items iterator produces item array
 
-                if (str_contains($key, "item.")) {
+                if (str_contains($key, 'item.')) {
 
-                    $tmp_key = str_replace("item.", "", $key);
+                    $tmp_key = str_replace('item.', '', $key);
 
                     if ($tmp_key == 'tax_id') {
 
@@ -239,7 +238,6 @@ class InvoiceItemExport extends BaseExport
 
         $entity = [];
 
-
         foreach (array_values($this->input['report_keys']) as $key) {
 
             $parts = explode('.', $key);
@@ -258,6 +256,7 @@ class InvoiceItemExport extends BaseExport
         }
 
         $entity = $this->decorateAdvancedFields($invoice, $entity);
+
         return $entity;
     }
 
@@ -273,19 +272,17 @@ class InvoiceItemExport extends BaseExport
         }
 
         if (in_array('invoice.user_id', $this->input['report_keys'])) {
-            $entity['invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : '';// @phpstan-ignore-line
+            $entity['invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : ''; // @phpstan-ignore-line
         }
 
         if (in_array('invoice.project', $this->input['report_keys'])) {
-            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : '';// @phpstan-ignore-line
+            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : ''; // @phpstan-ignore-line
         }
 
         if (in_array('invoice.subtotal', $this->input['report_keys'])) {
             $entity['invoice.subtotal'] = $invoice->calc()->getSubTotal();
         }
 
-
         return $entity;
     }
-
 }

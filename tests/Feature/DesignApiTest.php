@@ -6,38 +6,35 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Quote;
+use App\DataMapper\ClientSettings;
+use App\Factory\DesignFactory;
+use App\Factory\GroupSettingFactory;
 use App\Models\Client;
 use App\Models\Credit;
 use App\Models\Design;
 use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Factory\DesignFactory;
+use App\Models\Quote;
 use App\Utils\Traits\MakesHash;
-use App\DataMapper\ClientSettings;
-use App\Factory\GroupSettingFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\DesignController
  */
 class DesignApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     public $id;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,9 +42,9 @@ class DesignApiTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testCloneDesign()
+    public function test_clone_design()
     {
-     
+
         $design = Design::find(2);
 
         $this->assertNotNull($design);
@@ -61,21 +58,18 @@ class DesignApiTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/designs/bulk', $data);
-   
-        
-        $response->assertStatus(204);
 
+        $response->assertStatus(204);
 
         $d = Design::query()->latest()->first();
 
-
         $this->assertEquals($this->user->id, $d->user_id);
         $this->assertEquals($this->company->id, $d->company_id);
-        $this->assertStringContainsString($design->name.' clone ', $d->name);
+        $this->assertStringContainsString($design->name . ' clone ', $d->name);
         // $dsd = Design::all()->pluck('name')->toArray();
     }
 
-    public function testSelectiveDefaultDesignUpdatesInvoice()
+    public function test_selective_default_design_updates_invoice()
     {
         $settings = ClientSettings::defaults();
         $hashed_design_id = $this->encodePrimaryKey(5);
@@ -84,14 +78,14 @@ class DesignApiTest extends TestCase
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
-            'settings' => $settings
+            'settings' => $settings,
         ]);
 
         $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
-            'design_id' => 5
+            'design_id' => 5,
         ]);
 
         $this->assertEquals(5, $i->design_id);
@@ -115,13 +109,13 @@ class DesignApiTest extends TestCase
 
         $this->assertTrue($new_design_truth_test);
 
-        ///Test Client Level
+        // /Test Client Level
 
         $data = [
             'entity' => 'invoice',
             'design_id' => $new_design_hash,
             'settings_level' => 'client',
-            'client_id' => $c->hashed_id
+            'client_id' => $c->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -135,7 +129,7 @@ class DesignApiTest extends TestCase
 
         $this->assertEquals(7, $i->design_id);
 
-        ////////////////////////////////////////////
+        // //////////////////////////////////////////
 
         // Group Settings
 
@@ -143,15 +137,14 @@ class DesignApiTest extends TestCase
         $settings = $gs->settings;
         $settings->invoice_design_id = $this->encodePrimaryKey(4);
         $gs->settings = $settings;
-        $gs->name = "GS Setter";
+        $gs->name = 'GS Setter';
         $gs->save();
 
         $c2 = Client::factory()->create([
-                'company_id' => $this->company->id,
-                'user_id' => $this->user->id,
-                'group_settings_id' => $gs->id,
-            ]);
-
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'group_settings_id' => $gs->id,
+        ]);
 
         $this->assertNotNull($c2->group_settings_id);
 
@@ -159,7 +152,7 @@ class DesignApiTest extends TestCase
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c2->id,
-            'design_id' => 4
+            'design_id' => 4,
         ]);
 
         $new_gs_design_hash = $this->encodePrimaryKey(1);
@@ -168,7 +161,7 @@ class DesignApiTest extends TestCase
             'entity' => 'invoice',
             'design_id' => $new_gs_design_hash,
             'settings_level' => 'group_settings',
-            'group_settings_id' => $gs->hashed_id
+            'group_settings_id' => $gs->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -184,7 +177,7 @@ class DesignApiTest extends TestCase
 
     }
 
-    public function testSelectiveDefaultDesignUpdatesQuote()
+    public function test_selective_default_design_updates_quote()
     {
         $settings = ClientSettings::defaults();
         $hashed_design_id = $this->encodePrimaryKey(5);
@@ -193,14 +186,14 @@ class DesignApiTest extends TestCase
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
-            'settings' => $settings
+            'settings' => $settings,
         ]);
 
-        $i = \App\Models\Quote::factory()->create([
+        $i = Quote::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
-            'design_id' => 5
+            'design_id' => 5,
         ]);
 
         $this->assertEquals(5, $i->design_id);
@@ -224,13 +217,13 @@ class DesignApiTest extends TestCase
 
         $this->assertTrue($new_design_truth_test);
 
-        ///Test Client Level
+        // /Test Client Level
 
         $data = [
             'entity' => 'quote',
             'design_id' => $new_design_hash,
             'settings_level' => 'client',
-            'client_id' => $c->hashed_id
+            'client_id' => $c->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -244,7 +237,7 @@ class DesignApiTest extends TestCase
 
         $this->assertEquals(7, $i->design_id);
 
-        ////////////////////////////////////////////
+        // //////////////////////////////////////////
 
         // Group Settings
 
@@ -252,15 +245,14 @@ class DesignApiTest extends TestCase
         $settings = $gs->settings;
         $settings->quote_design_id = $this->encodePrimaryKey(4);
         $gs->settings = $settings;
-        $gs->name = "GS Setter";
+        $gs->name = 'GS Setter';
         $gs->save();
 
         $c2 = Client::factory()->create([
-                'company_id' => $this->company->id,
-                'user_id' => $this->user->id,
-                'group_settings_id' => $gs->id,
-            ]);
-
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'group_settings_id' => $gs->id,
+        ]);
 
         $this->assertNotNull($c2->group_settings_id);
 
@@ -268,7 +260,7 @@ class DesignApiTest extends TestCase
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c2->id,
-            'design_id' => 4
+            'design_id' => 4,
         ]);
 
         $new_gs_design_hash = $this->encodePrimaryKey(1);
@@ -277,7 +269,7 @@ class DesignApiTest extends TestCase
             'entity' => 'quote',
             'design_id' => $new_gs_design_hash,
             'settings_level' => 'group_settings',
-            'group_settings_id' => $gs->hashed_id
+            'group_settings_id' => $gs->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -293,7 +285,7 @@ class DesignApiTest extends TestCase
 
     }
 
-    public function testSelectiveDefaultDesignUpdatesCredit()
+    public function test_selective_default_design_updates_credit()
     {
         $settings = ClientSettings::defaults();
         $hashed_design_id = $this->encodePrimaryKey(5);
@@ -302,14 +294,14 @@ class DesignApiTest extends TestCase
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
-            'settings' => $settings
+            'settings' => $settings,
         ]);
 
         $i = Credit::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
-            'design_id' => 5
+            'design_id' => 5,
         ]);
 
         $this->assertEquals(5, $i->design_id);
@@ -333,13 +325,13 @@ class DesignApiTest extends TestCase
 
         $this->assertTrue($new_design_truth_test);
 
-        ///Test Client Level
+        // /Test Client Level
 
         $data = [
             'entity' => 'credit',
             'design_id' => $new_design_hash,
             'settings_level' => 'client',
-            'client_id' => $c->hashed_id
+            'client_id' => $c->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -353,7 +345,7 @@ class DesignApiTest extends TestCase
 
         $this->assertEquals(7, $i->design_id);
 
-        ////////////////////////////////////////////
+        // //////////////////////////////////////////
 
         // Group Settings
 
@@ -361,15 +353,14 @@ class DesignApiTest extends TestCase
         $settings = $gs->settings;
         $settings->credit_design_id = $this->encodePrimaryKey(4);
         $gs->settings = $settings;
-        $gs->name = "GS Setter";
+        $gs->name = 'GS Setter';
         $gs->save();
 
         $c2 = Client::factory()->create([
-                'company_id' => $this->company->id,
-                'user_id' => $this->user->id,
-                'group_settings_id' => $gs->id,
-            ]);
-
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'group_settings_id' => $gs->id,
+        ]);
 
         $this->assertNotNull($c2->group_settings_id);
 
@@ -377,7 +368,7 @@ class DesignApiTest extends TestCase
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c2->id,
-            'design_id' => 4
+            'design_id' => 4,
         ]);
 
         $new_gs_design_hash = $this->encodePrimaryKey(1);
@@ -386,7 +377,7 @@ class DesignApiTest extends TestCase
             'entity' => 'credit',
             'design_id' => $new_gs_design_hash,
             'settings_level' => 'group_settings',
-            'group_settings_id' => $gs->hashed_id
+            'group_settings_id' => $gs->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -402,8 +393,7 @@ class DesignApiTest extends TestCase
 
     }
 
-
-    public function testFindInSetQueries()
+    public function test_find_in_set_queries()
     {
 
         $design = DesignFactory::create($this->company->id, $this->user->id);
@@ -415,15 +405,15 @@ class DesignApiTest extends TestCase
         $searchable = 'searchable';
 
         $q = Design::query()
-              ->where('is_template', true)
-              ->where('company_id', $this->company->id)
-              ->whereRaw('FIND_IN_SET( ? ,entities)', [$searchable]);
+            ->where('is_template', true)
+            ->where('company_id', $this->company->id)
+            ->whereRaw('FIND_IN_SET( ? ,entities)', [$searchable]);
 
         $this->assertEquals(1, $q->count());
 
         $response = $this->withHeaders([
-        'X-API-SECRET' => config('ninja.api_secret'),
-        'X-API-TOKEN' => $this->token,
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/designs?entities=payment');
 
         $response->assertStatus(200);
@@ -432,8 +422,8 @@ class DesignApiTest extends TestCase
         $this->assertCount(1, $arr['data']);
 
         $response = $this->withHeaders([
-        'X-API-SECRET' => config('ninja.api_secret'),
-        'X-API-TOKEN' => $this->token,
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/designs?entities=,,,3,3,3,');
 
         $response->assertStatus(200);
@@ -441,8 +431,8 @@ class DesignApiTest extends TestCase
         $arr = $response->json();
 
         $response = $this->withHeaders([
-        'X-API-SECRET' => config('ninja.api_secret'),
-        'X-API-TOKEN' => $this->token,
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/designs?entities=unsearchable');
 
         $response->assertStatus(200);
@@ -478,11 +468,9 @@ class DesignApiTest extends TestCase
 
         $this->assertEquals(0, $q->count());
 
-
-
     }
 
-    public function testDesignTemplates()
+    public function test_design_templates()
     {
         $design = DesignFactory::create($this->company->id, $this->user->id);
         $design->is_template = true;
@@ -490,9 +478,9 @@ class DesignApiTest extends TestCase
         $design->save();
 
         $response = $this->withHeaders([
-          'X-API-SECRET' => config('ninja.api_secret'),
-          'X-API-TOKEN' => $this->token,
-          ])->get('/api/v1/designs?template=true');
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->get('/api/v1/designs?template=true');
 
         $response->assertStatus(200);
 
@@ -501,7 +489,7 @@ class DesignApiTest extends TestCase
         $this->assertCount(1, $arr['data']);
     }
 
-    public function testDesignTemplatesExcluded()
+    public function test_design_templates_excluded()
     {
         $design = DesignFactory::create($this->company->id, $this->user->id);
         $design->is_template = true;
@@ -509,9 +497,9 @@ class DesignApiTest extends TestCase
         $design->save();
 
         $response = $this->withHeaders([
-          'X-API-SECRET' => config('ninja.api_secret'),
-          'X-API-TOKEN' => $this->token,
-          ])->get('/api/v1/designs?template=false');
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->get('/api/v1/designs?template=false');
 
         $response->assertStatus(200);
 
@@ -520,9 +508,9 @@ class DesignApiTest extends TestCase
         $this->assertCount(11, $arr['data']);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-                ])->get('/api/v1/designs');
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->get('/api/v1/designs');
 
         $response->assertStatus(200);
 
@@ -530,11 +518,9 @@ class DesignApiTest extends TestCase
 
         $this->assertCount(12, $arr['data']);
 
-
     }
 
-
-    public function testDesignPost()
+    public function test_design_post()
     {
 
         $design = [
@@ -576,7 +562,7 @@ class DesignApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/designs/'.$this->id);
+        ])->get('/api/v1/designs/' . $this->id);
 
         $response->assertStatus(200);
 
@@ -592,7 +578,7 @@ class DesignApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/designs/'.$this->id, $data);
+        ])->put('/api/v1/designs/' . $this->id, $data);
 
         $response->assertStatus(200);
 
@@ -604,7 +590,7 @@ class DesignApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/designs/'.$this->id, $data);
+        ])->delete('/api/v1/designs/' . $this->id, $data);
 
         $response->assertStatus(200);
 
@@ -616,7 +602,7 @@ class DesignApiTest extends TestCase
         $this->assertGreaterThan(0, $design->deleted_at);
     }
 
-    public function testDesignArchive()
+    public function test_design_archive()
     {
 
         $design = [

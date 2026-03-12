@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,20 +13,21 @@ namespace App\Factory;
 
 use App\DataMapper\ClientSettings;
 use App\Models\Client;
+use App\Models\Company;
 use Illuminate\Support\Str;
 
 class ClientFactory
 {
     public static function create(int $company_id, int $user_id): Client
     {
-        $client = new Client();
+        $client = new Client;
         $client->company_id = $company_id;
         $client->user_id = $user_id;
 
         // Denormalise account_id onto the client so we can query all clients
         // across every company that belongs to the same account in a single
         // index-friendly WHERE clause (no join needed).
-        $company = \App\Models\Company::find($company_id);
+        $company = Company::find($company_id);
         $client->account_id = $company ? $company->account_id : null;
         $client->name = '';
         $client->website = '';

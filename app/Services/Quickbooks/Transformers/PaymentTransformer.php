@@ -6,23 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
+use App\DataMapper\InvoiceItem;
+use App\DataMapper\PaymentSync;
+use App\Factory\CreditFactory;
+use App\Factory\PaymentFactory;
 use App\Models\Credit;
-use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Paymentable;
 use App\Models\PaymentType;
-use App\DataMapper\PaymentSync;
-use App\Factory\PaymentFactory;
 use App\Services\Quickbooks\QuickbooksService;
 
 /**
- *
  * Class PaymentTransformer.
  */
 class PaymentTransformer extends BaseTransformer
@@ -34,10 +34,6 @@ class PaymentTransformer extends BaseTransformer
 
     /**
      * Transform an Invoice Ninja Payment into a QuickBooks Payment payload.
-     *
-     * @param Payment $payment
-     * @param QuickbooksService $qbService
-     * @return array
      */
     public function ninjaToQb(Payment $payment, QuickbooksService $qbService): array
     {
@@ -119,7 +115,6 @@ class PaymentTransformer extends BaseTransformer
      *
      * Uses the cached payment_method_map from QB settings.
      *
-     * @param int|null $type_id
      * @return string|null QB PaymentMethod ID
      */
     private function resolvePaymentMethodRef(?int $type_id): ?string
@@ -193,10 +188,10 @@ class PaymentTransformer extends BaseTransformer
     {
 
         $invoice = Invoice::query()
-                ->withTrashed()
-                ->where('company_id', $this->company->id)
-                ->where('sync->qb_id', data_get($qb_data, 'invoice_id'))
-                ->first();
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('sync->qb_id', data_get($qb_data, 'invoice_id'))
+            ->first();
 
         if (!$invoice) {
             return;
@@ -220,21 +215,21 @@ class PaymentTransformer extends BaseTransformer
 
             if ($tx_type == 'Invoice' && $id == $invoice->sync->qb_id && $amount > 0) {
 
-                $paymentable = new \App\Models\Paymentable();
+                $paymentable = new Paymentable;
                 $paymentable->payment_id = $payment->id;
                 $paymentable->paymentable_id = $invoice->id;
                 $paymentable->paymentable_type = 'invoices';
                 $paymentable->amount = $amount;
-                $paymentable->created_at = $payment->date; //@phpstan-ignore-line
+                $paymentable->created_at = $payment->date; // @phpstan-ignore-line
                 $paymentable->save();
 
                 $invoice->service()->applyPayment($payment, $paymentable->amount);
+
                 return;
             }
         }
 
     }
-
 
     public function buildPayment($qb_data): ?Payment
     {
@@ -250,14 +245,13 @@ class PaymentTransformer extends BaseTransformer
             return $search_payment;
         }
 
-
         if ($ninja_payment_data['client_id']) {
             $payment = PaymentFactory::create($this->company->id, $this->company->owner()->id, $ninja_payment_data['client_id']);
             $payment->amount = $ninja_payment_data['amount'];
             $payment->applied = $ninja_payment_data['applied'];
             $payment->status_id = 4;
 
-            $sync = new PaymentSync();
+            $sync = new PaymentSync;
             $sync->qb_id = $ninja_payment_data['id'];
             $payment->sync = $sync;
 
@@ -267,16 +261,16 @@ class PaymentTransformer extends BaseTransformer
             $payment->client->service()->updatePaidToDate($payment->amount);
 
             if ($payment->amount == 0) {
-                //this is a credit memo, create a stub credit for this.
+                // this is a credit memo, create a stub credit for this.
                 $payment = $this->createCredit($payment, $qb_data);
-                $payment->type_id = \App\Models\PaymentType::CREDIT;
+                $payment->type_id = PaymentType::CREDIT;
                 $payment->save();
             }
-
 
             return $payment;
 
         }
+
         return null;
     }
 
@@ -310,10 +304,10 @@ class PaymentTransformer extends BaseTransformer
             return $payment;
         }
 
-        $credit = \App\Factory\CreditFactory::create($this->company->id, $this->company->owner()->id);
+        $credit = CreditFactory::create($this->company->id, $this->company->owner()->id);
         $credit->client_id = $payment->client_id;
 
-        $line = new \App\DataMapper\InvoiceItem();
+        $line = new InvoiceItem;
         $line->quantity = 1;
         $line->cost = data_get($credit_line, 'Amount', 0);
         $line->product_key = 'CREDITMEMO';
@@ -327,10 +321,10 @@ class PaymentTransformer extends BaseTransformer
         $credit->line_items = [$line];
         $credit->save();
 
-        $paymentable = new \App\Models\Paymentable();
+        $paymentable = new Paymentable;
         $paymentable->payment_id = $payment->id;
         $paymentable->paymentable_id = $credit->id;
-        $paymentable->paymentable_type = \App\Models\Credit::class;
+        $paymentable->paymentable_type = Credit::class;
         $paymentable->amount = $credit->amount;
         $paymentable->created_at = $payment->date;
         $paymentable->save();
@@ -354,5 +348,4 @@ class PaymentTransformer extends BaseTransformer
             'invoice_id' => $invoice_id,
         ]];
     }
-
 }

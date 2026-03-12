@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -38,18 +37,18 @@ class MarkSent
         }
 
         $this->quote
-             ->service()
-             ->setStatus(Quote::STATUS_SENT)
-             ->applyNumber()
-             ->setReminder()
-             ->save();
+            ->service()
+            ->setStatus(Quote::STATUS_SENT)
+            ->applyNumber()
+            ->setReminder()
+            ->save();
 
         event(new QuoteWasMarkedSent($this->quote, $this->quote->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
         if ($first_event) {
 
             event('eloquent.updated: App\Models\Quote', $this->quote);
-            $this->quote->sendEvent(Webhook::EVENT_SENT_QUOTE, "client");
+            $this->quote->sendEvent(Webhook::EVENT_SENT_QUOTE, 'client');
         }
 
         return $this->quote;

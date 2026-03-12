@@ -6,12 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use Awobaz\Compoships\Compoships;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -28,12 +30,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $deleted_at
  * @property bool $is_deleted
  * @property bool $is_system
- * @property-read \App\Models\Account $account
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\CompanyUser|null $company_user
- * @property-read \App\Models\CompanyUser|null $cu
+ * @property-read Account $account
+ * @property-read Company $company
+ * @property-read CompanyUser|null $company_user
+ * @property-read CompanyUser|null $cu
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyToken filter(\App\Filters\QueryFilters $filters)
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyToken newModelQuery()
@@ -43,13 +46,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyToken withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyToken withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class CompanyToken extends BaseModel
 {
-    use SoftDeletes;
+    use Compoships;
     use Filterable;
-    use \Awobaz\Compoships\Compoships;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -67,22 +71,22 @@ class CompanyToken extends BaseModel
         return self::class;
     }
 
-    public function account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function company_user(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function company_user(): HasOne
     {
         return $this->hasOne(CompanyUser::class, ['user_id', 'company_id'], ['user_id', 'company_id']);
     }

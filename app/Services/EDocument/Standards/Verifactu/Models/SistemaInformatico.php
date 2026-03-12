@@ -5,14 +5,23 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class SistemaInformatico extends BaseXmlModel
 {
     protected string $nombreRazon;
+
     protected ?string $nif = null;
+
     protected ?string $idOtro = null;
+
     protected string $nombreSistemaInformatico;
+
     protected string $idSistemaInformatico;
+
     protected string $version;
+
     protected string $numeroInstalacion;
+
     protected string $tipoUsoPosibleSoloVerifactu = 'S';
+
     protected string $tipoUsoPosibleMultiOT = 'S';
+
     protected string $indicadorMultiplesOT = 'S';
 
     public function __construct()
@@ -61,7 +70,7 @@ class SistemaInformatico extends BaseXmlModel
     public static function fromXml($xml): BaseXmlModel
     {
         if (is_string($xml)) {
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             $doc->loadXML($xml);
             $element = $doc->documentElement;
         } else {
@@ -73,7 +82,7 @@ class SistemaInformatico extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $sistemaInformatico = new self();
+        $sistemaInformatico = new self;
 
         // Parse NombreRazon
         $nombreRazonElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'NombreRazon')->item(0);
@@ -139,6 +148,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setNombreRazon(string $nombreRazon): self
     {
         $this->nombreRazon = $nombreRazon;
+
         return $this;
     }
 
@@ -150,6 +160,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setNif(?string $nif): self
     {
         $this->nif = $nif;
+
         return $this;
     }
 
@@ -161,6 +172,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setIdOtro(?string $idOtro): self
     {
         $this->idOtro = $idOtro;
+
         return $this;
     }
 
@@ -172,6 +184,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setNombreSistemaInformatico(string $nombreSistemaInformatico): self
     {
         $this->nombreSistemaInformatico = $nombreSistemaInformatico;
+
         return $this;
     }
 
@@ -183,6 +196,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setIdSistemaInformatico(string $idSistemaInformatico): self
     {
         $this->idSistemaInformatico = $idSistemaInformatico;
+
         return $this;
     }
 
@@ -194,6 +208,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setVersion(string $version): self
     {
         $this->version = $version;
+
         return $this;
     }
 
@@ -205,6 +220,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setNumeroInstalacion(string $numeroInstalacion): self
     {
         $this->numeroInstalacion = $numeroInstalacion;
+
         return $this;
     }
 
@@ -216,6 +232,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setTipoUsoPosibleSoloVerifactu(string $tipoUsoPosibleSoloVerifactu): self
     {
         $this->tipoUsoPosibleSoloVerifactu = $tipoUsoPosibleSoloVerifactu;
+
         return $this;
     }
 
@@ -227,6 +244,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setTipoUsoPosibleMultiOT(string $tipoUsoPosibleMultiOT): self
     {
         $this->tipoUsoPosibleMultiOT = $tipoUsoPosibleMultiOT;
+
         return $this;
     }
 
@@ -238,6 +256,7 @@ class SistemaInformatico extends BaseXmlModel
     public function setIndicadorMultiplesOT(string $indicadorMultiplesOT): self
     {
         $this->indicadorMultiplesOT = $indicadorMultiplesOT;
+
         return $this;
     }
 }

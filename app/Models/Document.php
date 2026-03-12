@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -44,9 +44,10 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int $is_public
- * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $documentable
+ * @property-read Model|\Eloquent $documentable
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\DocumentFactory factory($count = null, $state = [])
@@ -58,12 +59,13 @@ use Illuminate\Support\Facades\Storage;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Document withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Document withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Document extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     public const DOCUMENT_PREVIEW_SIZE = 300; // pixels
 
@@ -195,7 +197,8 @@ class Document extends BaseModel
         try {
             return route('api.documents.show', ['document' => $this->hashed_id]) . '/download';
         } catch (\Exception $e) {
-            nlog("Exception:: Document::" . $e->getMessage());
+            nlog('Exception:: Document::' . $e->getMessage());
+
             return '';
         }
     }
@@ -262,27 +265,25 @@ class Document extends BaseModel
             // $file = base64_encode($image);
             $file = $image;
 
-            $img = new \Imagick(); //@phpstan-ignore-line
+            $img = new \Imagick; // @phpstan-ignore-line
             $img->readImageBlob($file);
-            $img->setImageCompression(true); //@phpstan-ignore-line
+            $img->setImageCompression(true); // @phpstan-ignore-line
             $img->setImageCompressionQuality(40);
             $img->stripImage();
 
             return $img->getImageBlob();
 
         } catch (\Exception $e) {
-            nlog("Exception:: Document::" . $e->getMessage());
+            nlog('Exception:: Document::' . $e->getMessage());
             nlog($e->getMessage());
+
             return $catch_image;
         }
 
     }
 
-
     /**
      * Returns boolean based on checks for image.
-     *
-     * @return bool
      */
     public function isImage(): bool
     {
@@ -292,5 +293,4 @@ class Document extends BaseModel
 
         return false;
     }
-
 }

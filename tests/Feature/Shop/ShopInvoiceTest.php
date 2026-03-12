@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,13 +20,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\Shop\InvoiceController
  */
 class ShopInvoiceTest extends TestCase
 {
     use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,7 +41,7 @@ class ShopInvoiceTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testTokenSuccess()
+    public function test_token_success()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();
@@ -61,7 +60,7 @@ class ShopInvoiceTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testTokenFailure()
+    public function test_token_failure()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();
@@ -76,7 +75,7 @@ class ShopInvoiceTest extends TestCase
         $arr = $response->json();
     }
 
-    public function testCompanyEnableShopApiBooleanWorks()
+    public function test_company_enable_shop_api_boolean_works()
     {
         try {
             $response = $this->withHeaders([
@@ -90,7 +89,7 @@ class ShopInvoiceTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function testGetByProductKey()
+    public function test_get_by_product_key()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();
@@ -105,7 +104,7 @@ class ShopInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-COMPANY-KEY' => $this->company->company_key,
-        ])->get('/api/v1/shop/product/'.$product->product_key);
+        ])->get('/api/v1/shop/product/' . $product->product_key);
 
         $response->assertStatus(200);
 
@@ -114,7 +113,7 @@ class ShopInvoiceTest extends TestCase
         $this->assertEquals($product->hashed_id, $arr['data']['id']);
     }
 
-    public function testGetByClientByContactKey()
+    public function test_get_by_client_by_contact_key()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();
@@ -122,7 +121,7 @@ class ShopInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-COMPANY-KEY' => $this->company->company_key,
-        ])->get('/api/v1/shop/client/'.$this->client->contacts->first()->contact_key);
+        ])->get('/api/v1/shop/client/' . $this->client->contacts->first()->contact_key);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -130,7 +129,7 @@ class ShopInvoiceTest extends TestCase
         $this->assertEquals($this->client->hashed_id, $arr['data']['id']);
     }
 
-    public function testCreateClientOnShopRoute()
+    public function test_create_client_on_shop_route()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();
@@ -150,7 +149,7 @@ class ShopInvoiceTest extends TestCase
         $this->assertEquals('ShopClient', $arr['data']['name']);
     }
 
-    public function testCreateInvoiceOnShopRoute()
+    public function test_create_invoice_on_shop_route()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();

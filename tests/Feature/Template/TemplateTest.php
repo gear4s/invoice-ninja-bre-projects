@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,30 +14,30 @@ namespace Tests\Feature\Template;
 use App\Jobs\Entity\CreateRawPdf;
 use App\Models\Credit;
 use App\Models\Design;
+use App\Models\Expense;
 use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Models\PurchaseOrder;
+use App\Models\Quote;
+use App\Models\Task;
 use App\Services\Template\TemplateMock;
 use App\Services\Template\TemplateService;
-use App\Utils\HtmlEngine;
-use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Support\Facades\App;
 use Tests\MockAccountData;
 use Tests\TestCase;
+use Twig\Error\SyntaxError;
+use Twig\Source;
 
-/**
- *
- *
- */
 class TemplateTest extends TestCase
 {
     use DatabaseTransactions;
-    use MockAccountData;
     use MakesDates;
+    use MockAccountData;
 
     private string $body = '
             
@@ -216,43 +215,43 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testLintingSuccess()
+    public function test_linting_success()
     {
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $twig = $ts->twig;
 
         try {
-            $twig->parse($twig->tokenize(new \Twig\Source($this->payments_body, '')));
+            $twig->parse($twig->tokenize(new Source($this->payments_body, '')));
             $this->assertTrue(true);
             // echo json_encode(['status' => 'ok']);
-        } catch (\Twig\Error\SyntaxError $e) {
+        } catch (SyntaxError $e) {
             // echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
         }
 
     }
 
-    public function testLintingFailure()
+    public function test_linting_failure()
     {
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $twig = $ts->twig;
 
         try {
-            $twig->parse($twig->tokenize(new \Twig\Source($this->broken_twig_template, '')));
+            $twig->parse($twig->tokenize(new Source($this->broken_twig_template, '')));
             // echo json_encode(['status' => 'ok']);
-        } catch (\Twig\Error\SyntaxError $e) {
+        } catch (SyntaxError $e) {
             $this->assertTrue(true);
             // echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
         }
 
     }
 
-    public function testPurchaseOrderDataParse()
+    public function test_purchase_order_data_parse()
     {
         $data = [];
 
-        $p = \App\Models\PurchaseOrder::factory()->create([
+        $p = PurchaseOrder::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'vendor_id' => $this->vendor->id,
@@ -260,18 +259,18 @@ class TemplateTest extends TestCase
 
         $data['purchase_orders'][] = $p;
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $ts->processData($data);
 
         $this->assertNotNull($ts);
         $this->assertIsArray($ts->getData());
     }
 
-    public function testTaskDataParse()
+    public function test_task_data_parse()
     {
         $data = [];
 
-        $p = \App\Models\Task::factory()->create([
+        $p = Task::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -279,24 +278,24 @@ class TemplateTest extends TestCase
 
         $data['tasks'][] = $p;
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $ts->processData($data);
 
         $this->assertNotNull($ts);
         $this->assertIsArray($ts->getData());
     }
 
-    public function testProjectExpenseDataParse()
+    public function test_project_expense_data_parse()
     {
         $data = [];
 
-        $p = \App\Models\Project::factory()->create([
+        $p = Project::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
         ]);
 
-        $e = \App\Models\Expense::factory()->create([
+        $e = Expense::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -305,7 +304,7 @@ class TemplateTest extends TestCase
 
         $data['projects'][] = $p;
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $ts->processData($data);
 
         $this->assertNotNull($ts);
@@ -315,13 +314,11 @@ class TemplateTest extends TestCase
 
     }
 
-
-
-    public function testQuoteDataParse()
+    public function test_quote_data_parse()
     {
         $data = [];
 
-        $p = \App\Models\Quote::factory()->create([
+        $p = Quote::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -329,7 +326,7 @@ class TemplateTest extends TestCase
 
         $data['quotes'][] = $p;
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $ts->processData($data);
 
         $this->assertNotNull($ts);
@@ -337,7 +334,7 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testProjectDataParse()
+    public function test_project_data_parse()
     {
         $data = [];
 
@@ -349,7 +346,7 @@ class TemplateTest extends TestCase
 
         $data['projects'][] = $p;
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $ts->processData($data);
 
         $this->assertNotNull($ts);
@@ -357,9 +354,9 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testNegativeDivAttribute()
+    public function test_negative_div_attribute()
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         @$dom->loadHTML(mb_convert_encoding($this->stack, 'HTML-ENTITIES', 'UTF-8'));
 
         $node = $dom->getElementById('company-details');
@@ -369,10 +366,10 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testStackResolutionWithLabels()
+    public function test_stack_resolution_with_labels()
     {
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         @$dom->loadHTML(mb_convert_encoding($this->stack, 'HTML-ENTITIES', 'UTF-8'));
 
         $node = $dom->getElementById('company-details');
@@ -382,8 +379,7 @@ class TemplateTest extends TestCase
 
     }
 
-
-    public function testStackResolution()
+    public function test_stack_resolution()
     {
 
         $partials['design']['includes'] = '';
@@ -396,7 +392,7 @@ class TemplateTest extends TestCase
 
         $variables = $tm->variables[0];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
         $x = $ts->setTemplate($partials)
             ->setCompany($this->company)
             ->overrideVariables($variables)
@@ -408,7 +404,7 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testDataMaps()
+    public function test_data_maps()
     {
         $start = microtime(true);
 
@@ -448,7 +444,7 @@ class TemplateTest extends TestCase
             'date' => now()->format('Y-m-d'),
             'client_id' => $this->client->hashed_id,
             'transaction_reference' => 'My Batch Payment',
-            'type_id' => "5",
+            'type_id' => '5',
         ];
 
         $response = $this->withHeaders([
@@ -463,16 +459,15 @@ class TemplateTest extends TestCase
         $start = microtime(true);
 
         $p = Payment::with('client', 'invoices', 'paymentables', 'credits')
-        ->where('id', $this->decodePrimaryKey($arr['data']['id']))
-        ->cursor()
-        ->map(function ($payment) {
+            ->where('id', $this->decodePrimaryKey($arr['data']['id']))
+            ->cursor()
+            ->map(function ($payment) {
 
-            $this->transformPayment($payment);
+                $this->transformPayment($payment);
 
-        })->toArray();
+            })->toArray();
 
-
-        nlog("end payments = " . microtime(true) - $start);
+        nlog('end payments = ' . microtime(true) - $start);
 
         $this->assertIsArray($data);
 
@@ -481,74 +476,74 @@ class TemplateTest extends TestCase
         \DB::enableQueryLog();
 
         $invoices = Invoice::with('client', 'payments.client', 'payments.paymentables', 'payments.credits', 'credits.client')
-        ->orderBy('id', 'desc')
-        ->where('client_id', $this->client->id)
-        ->take(10)
-        ->get()
-        ->map(function ($invoice) {
+            ->orderBy('id', 'desc')
+            ->where('client_id', $this->client->id)
+            ->take(10)
+            ->get()
+            ->map(function ($invoice) {
 
-            $payments = [];
-            $payments = $invoice->payments->map(function ($payment) {
-                // nlog(microtime(true));
-                return $this->transformPayment($payment);
-            })->toArray();
+                $payments = [];
+                $payments = $invoice->payments->map(function ($payment) {
+                    // nlog(microtime(true));
+                    return $this->transformPayment($payment);
+                })->toArray();
 
-            return [
-                'amount' => Number::formatMoney($invoice->amount, $invoice->client),
-                'balance' => Number::formatMoney($invoice->balance, $invoice->client),
-                'balance_raw' => $invoice->balance,
-                'number' => $invoice->number ?: '',
-                'discount' => $invoice->discount,
-                'po_number' => $invoice->po_number ?: '',
-                'date' => $this->translateDate($invoice->date, $invoice->client->date_format(), $invoice->client->locale()),
-                'last_sent_date' => $this->translateDate($invoice->last_sent_date, $invoice->client->date_format(), $invoice->client->locale()),
-                'next_send_date' => $this->translateDate($invoice->next_send_date, $invoice->client->date_format(), $invoice->client->locale()),
-                'due_date' => $this->translateDate($invoice->due_date, $invoice->client->date_format(), $invoice->client->locale()),
-                'terms' => $invoice->terms ?: '',
-                'public_notes' => $invoice->public_notes ?: '',
-                'private_notes' => $invoice->private_notes ?: '',
-                'uses_inclusive_taxes' => (bool) $invoice->uses_inclusive_taxes,
-                'tax_name1' => $invoice->tax_name1 ?? '',
-                'tax_rate1' => (float) $invoice->tax_rate1,
-                'tax_name2' => $invoice->tax_name2 ?? '',
-                'tax_rate2' => (float) $invoice->tax_rate2,
-                'tax_name3' => $invoice->tax_name3 ?? '',
-                'tax_rate3' => (float) $invoice->tax_rate3,
-                'total_taxes' => Number::formatMoney($invoice->total_taxes, $invoice->client),
-                'total_taxes_raw' => $invoice->total_taxes,
-                'is_amount_discount' => (bool) $invoice->is_amount_discount ?? false,
-                'footer' => $invoice->footer ?? '',
-                'partial' => $invoice->partial ?? 0,
-                'partial_due_date' => $this->translateDate($invoice->partial_due_date, $invoice->client->date_format(), $invoice->client->locale()),
-                'custom_value1' => (string) $invoice->custom_value1 ?: '',
-                'custom_value2' => (string) $invoice->custom_value2 ?: '',
-                'custom_value3' => (string) $invoice->custom_value3 ?: '',
-                'custom_value4' => (string) $invoice->custom_value4 ?: '',
-                'custom_surcharge1' => (float) $invoice->custom_surcharge1,
-                'custom_surcharge2' => (float) $invoice->custom_surcharge2,
-                'custom_surcharge3' => (float) $invoice->custom_surcharge3,
-                'custom_surcharge4' => (float) $invoice->custom_surcharge4,
-                'exchange_rate' => (float) $invoice->exchange_rate,
-                'custom_surcharge_tax1' => (bool) $invoice->custom_surcharge_tax1,
-                'custom_surcharge_tax2' => (bool) $invoice->custom_surcharge_tax2,
-                'custom_surcharge_tax3' => (bool) $invoice->custom_surcharge_tax3,
-                'custom_surcharge_tax4' => (bool) $invoice->custom_surcharge_tax4,
-                'line_items' => $invoice->line_items ?: (array) [],
-                'reminder1_sent' => $this->translateDate($invoice->reminder1_sent, $invoice->client->date_format(), $invoice->client->locale()),
-                'reminder2_sent' => $this->translateDate($invoice->reminder2_sent, $invoice->client->date_format(), $invoice->client->locale()),
-                'reminder3_sent' => $this->translateDate($invoice->reminder3_sent, $invoice->client->date_format(), $invoice->client->locale()),
-                'reminder_last_sent' => $this->translateDate($invoice->reminder_last_sent, $invoice->client->date_format(), $invoice->client->locale()),
-                'paid_to_date' => Number::formatMoney($invoice->paid_to_date, $invoice->client),
-                'auto_bill_enabled' => (bool) $invoice->auto_bill_enabled,
-                'client' => [
-                    'name' => $invoice->client->present()->name(),
-                    'balance' => $invoice->client->balance,
-                    'payment_balance' => $invoice->client->payment_balance,
-                    'credit_balance' => $invoice->client->credit_balance,
-                ],
-                'payments' => $payments,
-            ];
-        });
+                return [
+                    'amount' => Number::formatMoney($invoice->amount, $invoice->client),
+                    'balance' => Number::formatMoney($invoice->balance, $invoice->client),
+                    'balance_raw' => $invoice->balance,
+                    'number' => $invoice->number ?: '',
+                    'discount' => $invoice->discount,
+                    'po_number' => $invoice->po_number ?: '',
+                    'date' => $this->translateDate($invoice->date, $invoice->client->date_format(), $invoice->client->locale()),
+                    'last_sent_date' => $this->translateDate($invoice->last_sent_date, $invoice->client->date_format(), $invoice->client->locale()),
+                    'next_send_date' => $this->translateDate($invoice->next_send_date, $invoice->client->date_format(), $invoice->client->locale()),
+                    'due_date' => $this->translateDate($invoice->due_date, $invoice->client->date_format(), $invoice->client->locale()),
+                    'terms' => $invoice->terms ?: '',
+                    'public_notes' => $invoice->public_notes ?: '',
+                    'private_notes' => $invoice->private_notes ?: '',
+                    'uses_inclusive_taxes' => (bool) $invoice->uses_inclusive_taxes,
+                    'tax_name1' => $invoice->tax_name1 ?? '',
+                    'tax_rate1' => (float) $invoice->tax_rate1,
+                    'tax_name2' => $invoice->tax_name2 ?? '',
+                    'tax_rate2' => (float) $invoice->tax_rate2,
+                    'tax_name3' => $invoice->tax_name3 ?? '',
+                    'tax_rate3' => (float) $invoice->tax_rate3,
+                    'total_taxes' => Number::formatMoney($invoice->total_taxes, $invoice->client),
+                    'total_taxes_raw' => $invoice->total_taxes,
+                    'is_amount_discount' => (bool) $invoice->is_amount_discount ?? false,
+                    'footer' => $invoice->footer ?? '',
+                    'partial' => $invoice->partial ?? 0,
+                    'partial_due_date' => $this->translateDate($invoice->partial_due_date, $invoice->client->date_format(), $invoice->client->locale()),
+                    'custom_value1' => (string) $invoice->custom_value1 ?: '',
+                    'custom_value2' => (string) $invoice->custom_value2 ?: '',
+                    'custom_value3' => (string) $invoice->custom_value3 ?: '',
+                    'custom_value4' => (string) $invoice->custom_value4 ?: '',
+                    'custom_surcharge1' => (float) $invoice->custom_surcharge1,
+                    'custom_surcharge2' => (float) $invoice->custom_surcharge2,
+                    'custom_surcharge3' => (float) $invoice->custom_surcharge3,
+                    'custom_surcharge4' => (float) $invoice->custom_surcharge4,
+                    'exchange_rate' => (float) $invoice->exchange_rate,
+                    'custom_surcharge_tax1' => (bool) $invoice->custom_surcharge_tax1,
+                    'custom_surcharge_tax2' => (bool) $invoice->custom_surcharge_tax2,
+                    'custom_surcharge_tax3' => (bool) $invoice->custom_surcharge_tax3,
+                    'custom_surcharge_tax4' => (bool) $invoice->custom_surcharge_tax4,
+                    'line_items' => $invoice->line_items ?: (array) [],
+                    'reminder1_sent' => $this->translateDate($invoice->reminder1_sent, $invoice->client->date_format(), $invoice->client->locale()),
+                    'reminder2_sent' => $this->translateDate($invoice->reminder2_sent, $invoice->client->date_format(), $invoice->client->locale()),
+                    'reminder3_sent' => $this->translateDate($invoice->reminder3_sent, $invoice->client->date_format(), $invoice->client->locale()),
+                    'reminder_last_sent' => $this->translateDate($invoice->reminder_last_sent, $invoice->client->date_format(), $invoice->client->locale()),
+                    'paid_to_date' => Number::formatMoney($invoice->paid_to_date, $invoice->client),
+                    'auto_bill_enabled' => (bool) $invoice->auto_bill_enabled,
+                    'client' => [
+                        'name' => $invoice->client->present()->name(),
+                        'balance' => $invoice->client->balance,
+                        'payment_balance' => $invoice->client->payment_balance,
+                        'credit_balance' => $invoice->client->credit_balance,
+                    ],
+                    'payments' => $payments,
+                ];
+            });
 
         $this->assertIsArray($invoices->toArray());
 
@@ -624,12 +619,9 @@ class TemplateTest extends TestCase
 
         return $data;
 
-
-
-
     }
 
-    public function testVariableResolutionViaTransformersForPaymentsInStatements()
+    public function test_variable_resolution_via_transformers_for_payments_in_statements()
     {
         Invoice::factory()->count(20)->create([
             'company_id' => $this->company->id,
@@ -641,26 +633,26 @@ class TemplateTest extends TestCase
         ]);
 
         $i = Invoice::orderBy('id', 'desc')
-                    ->where('client_id', $this->client->id)
-                    ->where('status_id', 2)
-                    ->cursor()
-                    ->each(function ($i) {
-                        $i->service()->applyPaymentAmount(random_int(1, 100));
-                    });
+            ->where('client_id', $this->client->id)
+            ->where('status_id', 2)
+            ->cursor()
+            ->each(function ($i) {
+                $i->service()->applyPaymentAmount(random_int(1, 100));
+            });
 
         $invoices = Invoice::withTrashed()
             ->with('payments.type')
             ->where('is_deleted', false)
             ->where('company_id', $this->client->company_id)
             ->where('client_id', $this->client->id)
-            ->whereIn('status_id', [2,3,4])
+            ->whereIn('status_id', [2, 3, 4])
             ->orderBy('due_date', 'ASC')
             ->orderBy('date', 'ASC')
             ->cursor();
 
         $invoices->each(function ($i) {
 
-            $rand = [1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,24,25,32,49,50];
+            $rand = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 24, 25, 32, 49, 50];
 
             $i->payments()->each(function ($p) use ($rand) {
                 shuffle($rand);
@@ -690,7 +682,7 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testDoubleEntityNestedDataTemplateServiceBuild()
+    public function test_double_entity_nested_data_template_service_build()
     {
         $design_model = Design::find(2);
 
@@ -704,14 +696,14 @@ class TemplateTest extends TestCase
         $replicated_design->save();
 
         $i2 = Invoice::factory()
-        ->for($this->client)
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'status_id' => Invoice::STATUS_SENT,
-            'design_id' => $replicated_design->id,
-            'balance' => 100,
-        ]);
+            ->for($this->client)
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'status_id' => Invoice::STATUS_SENT,
+                'design_id' => $replicated_design->id,
+                'balance' => 100,
+            ]);
 
         $data = [];
         $data['invoices'] = collect([$this->invoice, $i2]);
@@ -723,7 +715,7 @@ class TemplateTest extends TestCase
         $this->assertNotNull($ts->getHtml());
     }
 
-    public function testDoubleEntityTemplateServiceBuild()
+    public function test_double_entity_template_service_build()
     {
         $design_model = Design::find(2);
 
@@ -737,14 +729,14 @@ class TemplateTest extends TestCase
         $replicated_design->save();
 
         $i2 = Invoice::factory()
-        ->for($this->client)
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'status_id' => Invoice::STATUS_SENT,
-            'design_id' => $replicated_design->id,
-            'balance' => 100,
-        ]);
+            ->for($this->client)
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'status_id' => Invoice::STATUS_SENT,
+                'design_id' => $replicated_design->id,
+                'balance' => 100,
+            ]);
 
         $data = [];
         $data['invoices'] = collect([$this->invoice, $i2]);
@@ -756,7 +748,7 @@ class TemplateTest extends TestCase
         $this->assertNotNull($ts->getHtml());
     }
 
-    public function testTemplateServiceBuild()
+    public function test_template_service_build()
     {
         $design_model = Design::find(2);
         $replicated_design = $design_model->replicate();
@@ -778,7 +770,7 @@ class TemplateTest extends TestCase
         $this->assertNotNull($ts->getHtml());
     }
 
-    public function testTemplateService()
+    public function test_template_service()
     {
         $design_model = Design::find(2);
 
@@ -795,7 +787,7 @@ class TemplateTest extends TestCase
         $this->assertInstanceOf(TemplateService::class, $replicated_design->service());
     }
 
-    public function testTimingOnCleanDesign()
+    public function test_timing_on_clean_design()
     {
         $design_model = Design::find(2);
 
@@ -808,7 +800,7 @@ class TemplateTest extends TestCase
         $replicated_design->is_custom = true;
         $replicated_design->save();
 
-        $entity_obj = \App\Models\Invoice::factory()->create([
+        $entity_obj = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
@@ -816,7 +808,7 @@ class TemplateTest extends TestCase
             'design_id' => $replicated_design->id,
         ]);
 
-        $i = \App\Models\InvoiceInvitation::factory()->create([
+        $i = InvoiceInvitation::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'invoice_id' => $entity_obj->id,
@@ -835,7 +827,7 @@ class TemplateTest extends TestCase
 
     }
 
-    public function testStaticPdfGeneration()
+    public function test_static_pdf_generation()
     {
         $start = microtime(true);
 
@@ -847,5 +839,4 @@ class TemplateTest extends TestCase
 
         // nlog("Plain PDF Gen Time: " . $end-$start);
     }
-
 }

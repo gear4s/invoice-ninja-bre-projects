@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -90,24 +89,28 @@ class Encode
         // UTF-32 BE BOM
         if (substr($data, 0, 4) === "\x00\x00\xFE\xFF") {
             $withoutBOM = substr($data, 4);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-32BE');
         }
 
         // UTF-32 LE BOM
         if (substr($data, 0, 4) === "\xFF\xFE\x00\x00") {
             $withoutBOM = substr($data, 4);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-32LE');
         }
 
         // UTF-16 BE BOM
         if (substr($data, 0, 2) === "\xFE\xFF") {
             $withoutBOM = substr($data, 2);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-16BE');
         }
 
         // UTF-16 LE BOM
         if (substr($data, 0, 2) === "\xFF\xFE") {
             $withoutBOM = substr($data, 2);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-16LE');
         }
 
@@ -197,6 +200,7 @@ class Encode
                 return true;
             }
         }
+
         return false;
     }
 
@@ -221,5 +225,4 @@ class Encode
                && !str_contains($data, "\xEF\xBF\xBD")  // UTF-8 replacement character bytes
                && !str_contains($data, 'ï¿½'); // Double-encoded replacement character
     }
-
 }

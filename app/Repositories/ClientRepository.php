@@ -6,21 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Repositories;
 
+use App\Events\Client\ClientWasPurged;
+use App\Factory\ClientFactory;
+use App\Jobs\Client\PurgeClientDocuments;
 use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Company;
 use App\Models\Location;
-use App\Models\ClientContact;
-use App\Factory\ClientFactory;
-use App\Utils\Traits\SavesDocuments;
+use App\Models\User;
+use App\Utils\Ninja;
 use App\Utils\Traits\GeneratesCounter;
+use App\Utils\Traits\SavesDocuments;
 use Illuminate\Database\QueryException;
-use App\Jobs\Client\PurgeClientDocuments;
+use Illuminate\Support\Str;
+use Laracasts\Presenter\Exceptions\PresenterException;
 
 /**
  * ClientRepository.
@@ -39,7 +43,6 @@ class ClientRepository extends BaseRepository
 
     /**
      * ClientController constructor.
-     * @param ClientContactRepository $contact_repo
      */
     public function __construct(ClientContactRepository $contact_repo)
     {
@@ -49,19 +52,18 @@ class ClientRepository extends BaseRepository
     /**
      * Saves the client and its contacts.
      *
-     * @param array $data The data
-     * @param Client $client The client
+     * @param  array  $data  The data
+     * @param  Client  $client  The client
+     * @return Client|Client|null Client Object
      *
-     * @return     Client|Client|null  Client Object
-     *
-     * @throws \Laracasts\Presenter\Exceptions\PresenterException
+     * @throws PresenterException
      */
     public function save(array $data, Client $client): ?Client
     {
         $contact_data = $data;
         unset($data['contacts']);
 
-        /* When uploading documents, only the document array is sent, so we must return early*/
+        /* When uploading documents, only the document array is sent, so we must return early */
         if (
             array_key_exists('documents', $data) &&
             count($data['documents']) >= 1
@@ -83,7 +85,7 @@ class ClientRepository extends BaseRepository
         // Ensure account_id is always denormalised onto the client so that
         // account-wide (cross-company) queries work without a join.
         if (empty($client->account_id)) {
-            /** @var \App\Models\Company $company **/
+            /** @var Company $company * */
             $company = Company::find($client->company_id);
             if ($company) {
                 $client->account_id = $company->account_id;
@@ -91,7 +93,7 @@ class ClientRepository extends BaseRepository
         }
 
         if (!$client->country_id || $client->country_id == 0) {
-            /** @var \App\Models\Company $company **/
+            /** @var Company $company * */
             $company = Company::find($client->company_id);
             $client->country_id = $company->settings->country_id;
         }
@@ -103,7 +105,7 @@ class ClientRepository extends BaseRepository
             empty($client->number) ||
             strlen($client->number ?? '') == 0
         ) {
-            //@phpstan-ignore-line
+            // @phpstan-ignore-line
             $x = 1;
 
             do {
@@ -126,8 +128,8 @@ class ClientRepository extends BaseRepository
             $data['name'] = $client->present()->name();
         }
 
-        //24-01-2023 when a logo is uploaded, no other data is set, so we need to catch here and not update
-        //the contacts array UNLESS there are no contacts and we need to maintain state.
+        // 24-01-2023 when a logo is uploaded, no other data is set, so we need to catch here and not update
+        // the contacts array UNLESS there are no contacts and we need to maintain state.
         if (
             array_key_exists('contacts', $contact_data) ||
             $client->contacts()->count() == 0
@@ -141,12 +143,11 @@ class ClientRepository extends BaseRepository
     /**
      * Store clients in bulk.
      *
-     * @param array $client
-     * @return Client|null
+     * @param  array  $client
      */
     public function create($client): ?Client
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $this->save(
@@ -158,9 +159,8 @@ class ClientRepository extends BaseRepository
     /**
      * Bulk assign clients to a group.
      *
-     * @param  mixed $clients
-     * @param  mixed $group_settings_id
-     * @return void
+     * @param  mixed  $clients
+     * @param  mixed  $group_settings_id
      */
     public function assignGroup($clients, $group_settings_id): void
     {
@@ -178,13 +178,13 @@ class ClientRepository extends BaseRepository
         $user = auth()->user() ?? $client->user;
         $company = $client->company;
 
-        $event_vars = \App\Utils\Ninja::eventVars(
+        $event_vars = Ninja::eventVars(
             auth()->user() ? auth()->user()->id : null,
         );
         $event_vars['client_hash'] = $purged_client_hash;
 
         event(
-            new \App\Events\Client\ClientWasPurged(
+            new ClientWasPurged(
                 $purged_client,
                 $user,
                 $company,
@@ -250,7 +250,6 @@ class ClientRepository extends BaseRepository
     /**
      * clone/duplicate a client
      *
-     * @param  Client $client
      * @return Client
      */
     public function clone(Client $client)
@@ -258,7 +257,7 @@ class ClientRepository extends BaseRepository
         $clone_client = $client->replicate();
         $clone_client->name =
             $clone_client->name . ' clone ' . date('Y-m-d H:i:s');
-        $clone_client->client_hash = \Illuminate\Support\Str::random(40);
+        $clone_client->client_hash = Str::random(40);
         $clone_client->sync = null;
         $clone_client->number = null;
         $clone_client->balance = 0;
@@ -274,7 +273,7 @@ class ClientRepository extends BaseRepository
         ) {
             $clone_contact = $contact->replicate();
             $clone_contact->client_id = $clone_client->id;
-            $clone_contact->contact_key = \Illuminate\Support\Str::random(32);
+            $clone_contact->contact_key = Str::random(32);
             $clone_contact->save();
         });
 

@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -15,12 +16,12 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->mediumText('tax_data')->nullable(); //json object
+            $table->mediumText('tax_data')->nullable(); // json object
         });
 
         Schema::table('companies', function (Blueprint $table) {
-            $table->boolean('calculate_taxes')->default(false); //setting to turn on/off tax calculations
-            $table->boolean('tax_all_products')->default(false); //globally tax all products if none defined
+            $table->boolean('calculate_taxes')->default(false); // setting to turn on/off tax calculations
+            $table->boolean('tax_all_products')->default(false); // globally tax all products if none defined
             $table->boolean('tax_data');
         });
 
@@ -39,7 +40,7 @@ return new class extends Migration {
         Schema::table('schedulers', function (Blueprint $table) {
             $table->string('name', 191)->nullable()->change();
         });
-                    
+
         CompanyUser::query()->where('is_admin', 0)->cursor()->each(function ($cu) {
             $permissions = $cu->permissions;
 
@@ -52,7 +53,7 @@ return new class extends Migration {
 
                 $permissions_array[] = 'view_reports';
 
-                $modified_permissions_string = implode(",", $permissions_array);
+                $modified_permissions_string = implode(',', $permissions_array);
 
                 $cu->permissions = $modified_permissions_string;
                 $cu->save();
@@ -65,10 +66,10 @@ return new class extends Migration {
                 $settings = $company->settings;
 
                 if (!property_exists($settings, 'mailgun_endpoint')) {
-                    $company->saveSettings((array)$company->settings, $company);
+                    $company->saveSettings((array) $company->settings, $company);
                 }
             });
-        
+
     }
 
     /**

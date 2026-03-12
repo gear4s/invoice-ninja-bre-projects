@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,9 +24,10 @@ trait MakesDates
 {
     /**
      * Converts from UTC to client timezone.
-     * @param  datetime 	object 		$utc_date
-     * @param  string 		$timezone 	ie Australia/Sydney
-     * @return Carbon           		Carbon object
+     *
+     * @param  DateTime 	object 		$utc_date
+     * @param  string  $timezone  ie Australia/Sydney
+     * @return Carbon Carbon object
      */
     public function createClientDate($utc_date, $timezone)
     {
@@ -40,8 +40,9 @@ trait MakesDates
 
     /**
      * Converts from client timezone to UTC.
-     * @param datetime    object        $utc_date
-     * @return Carbon                Carbon object
+     *
+     * @param DateTime    object        $utc_date
+     * @return Carbon Carbon object
      */
     public function createUtcDate($client_date)
     {
@@ -54,13 +55,14 @@ trait MakesDates
 
     /**
      * Formats a date.
-     * @param  Carbon|string $date   Carbon object or date string
-     * @param  string $format The date display format
-     * @return string         The formatted date
+     *
+     * @param  Carbon|string  $date  Carbon object or date string
+     * @param  string  $format  The date display format
+     * @return string The formatted date
      */
     public function formatDate($date, string $format): string
     {
-        if (! isset($date)) {
+        if (!isset($date)) {
             return '';
         }
 
@@ -73,9 +75,10 @@ trait MakesDates
 
     /**
      * Formats a datedate.
-     * @param  $date   Carbon object or date string
-     * @param  string $format The date display format
-     * @return string         The formatted date
+     *
+     * @param  $date  Carbon object or date string
+     * @param  string  $format  The date display format
+     * @return string The formatted date
      */
     public function formatDatetime($date, string $format): string
     {
@@ -84,9 +87,10 @@ trait MakesDates
 
     /**
      * Formats a date.
+     *
      * @param  Carbon/String $date   Carbon object or date string
-     * @param  string $format The date display format
-     * @return string         The formatted date
+     * @param  string  $format  The date display format
+     * @return string The formatted date
      */
     public function formatDateTimestamp($timestamp, string $format): string
     {
@@ -123,7 +127,7 @@ trait MakesDates
      */
     public function calculateStartAndEndDates(array $data, ?Company $company = null): array
     {
-        //override for financial years
+        // override for financial years
         if ($data['date_range'] == 'this_year') {
             $first_month_of_year = $company ? $company?->first_month_of_year : 1;
             $fin_year_start = now()->setTimezone($company->timezone()->name ?? 'Pacific/Midway')->createFromDate(now()->year, $first_month_of_year, 1);
@@ -134,7 +138,7 @@ trait MakesDates
 
         }
 
-        //override for financial years
+        // override for financial years
         if ($data['date_range'] == 'last_year') {
             $first_month_of_year = $company ? $company?->first_month_of_year : 1;
             $fin_year_start = now()->createFromDate(now()->year, $first_month_of_year, 1);
@@ -165,7 +169,7 @@ trait MakesDates
     public function calculatePreviousPeriodStartAndEndDates(array $data, ?Company $company = null): array
     {
 
-        //override for financial years
+        // override for financial years
         if ($data['date_range'] == 'this_year') {
 
             $first_month_of_year = $company ? $company?->first_month_of_year : 1;
@@ -194,5 +198,4 @@ trait MakesDates
         };
 
     }
-
 }

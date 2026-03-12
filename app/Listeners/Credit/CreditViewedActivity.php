@@ -6,7 +6,6 @@
  * @link https://github.com/creditninja/creditninja source repository
  *
  * @copyright Copyright (c) 2022. Credit Ninja LLC (https://creditninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,6 @@ class CreditViewedActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -44,7 +41,7 @@ class CreditViewedActivity implements ShouldQueue
 
         $event->invitation->credit->service()->markSent()->save();
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $user_id = $event->event_vars['user_id'] ?? $event->invitation->user_id;
 

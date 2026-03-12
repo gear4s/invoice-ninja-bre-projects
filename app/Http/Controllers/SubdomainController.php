@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,7 +19,6 @@ class SubdomainController extends BaseController
 
     /**
      * Return if a subdomain is available.
-     *
      */
     public function index()
     {
@@ -37,9 +35,8 @@ class SubdomainController extends BaseController
         }
 
         if (!preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?$/', request()->input('subdomain'))) {
-            return response()->json(['message' => "Invalid subdomain format."], 401);
+            return response()->json(['message' => 'Invalid subdomain format.'], 401);
         }
-
 
         return response()->json(['message' => 'Domain available'], 200);
     }

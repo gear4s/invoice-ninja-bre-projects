@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\Utils\Traits\MakesDates;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Traits\MakesDates
  */
 class MakesDatesTest extends TestCase
@@ -29,7 +27,7 @@ class MakesDatesTest extends TestCase
      * work as expected at this point in time.
      */
 
-    public function testConvertClientDateToUTCDateTimeTickOverSameDay()
+    public function test_convert_client_date_to_utc_date_time_tick_over_same_day()
     {
         $date_src = '2007-04-19 23:59';
         $client_timezone = 'Europe/Amsterdam'; // +1 UTC
@@ -40,7 +38,7 @@ class MakesDatesTest extends TestCase
         $this->assertEquals('2007-04-19 21:59', $date_time->format('Y-m-d H:i'));
     }
 
-    public function testConvertClientDateToUTCDateTimeSameDay()
+    public function test_convert_client_date_to_utc_date_time_same_day()
     {
         $date_src = '2007-04-19 21:59';
         $client_timezone = 'Europe/Amsterdam'; // +1 UTC
@@ -51,7 +49,7 @@ class MakesDatesTest extends TestCase
         $this->assertEquals($utc_date->format('Y-m-d'), '2007-04-19');
     }
 
-    public function testConvertClientDateToUTCDateTimeTickOverNextDay()
+    public function test_convert_client_date_to_utc_date_time_tick_over_next_day()
     {
         $date_src = '2007-04-19 23:59';
         $client_timezone = 'Atlantic/Cape_Verde'; // -1 UTC
@@ -62,7 +60,7 @@ class MakesDatesTest extends TestCase
         $this->assertEquals('2007-04-20 00:59', $date_time->format('Y-m-d H:i'));
     }
 
-    public function testConvertClientDateToUTCDateTimeSameDayDiffTimeZone()
+    public function test_convert_client_date_to_utc_date_time_same_day_diff_time_zone()
     {
         $date_src = '2007-04-19 22:59';
         $client_timezone = 'Atlantic/Cape_Verde'; // -1 UTC
@@ -73,7 +71,7 @@ class MakesDatesTest extends TestCase
         $this->assertEquals('2007-04-19 23:59', $date_time->format('Y-m-d H:i'));
     }
 
-    public function testCreateClientDate()
+    public function test_create_client_date()
     {
         $client_date_src = '2007-04-19 22:59';
         $client_timezone = 'Atlantic/Cape_Verde'; // -1 UTC
@@ -85,7 +83,7 @@ class MakesDatesTest extends TestCase
         $this->assertEquals('2007-04-19 22:59', $client_date->format('Y-m-d H:i'));
     }
 
-    public function testCreateClientDateWithFormat()
+    public function test_create_client_date_with_format()
     {
         $client_date_src = '2007-04-19';
         $client_timezone = 'Atlantic/Cape_Verde'; // -1 UTC

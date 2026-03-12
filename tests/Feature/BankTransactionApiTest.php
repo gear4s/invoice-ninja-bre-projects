@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,9 +23,10 @@ use Tests\TestCase;
 
 class BankTransactionApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,7 +37,7 @@ class BankTransactionApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testBankTransactionCreate()
+    public function test_bank_transaction_create()
     {
 
         $response = $this->withHeaders([
@@ -48,28 +48,27 @@ class BankTransactionApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-    public function testBankTransactionGetClientStatus()
+    public function test_bank_transaction_get_client_status()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/bank_transactions?client_status=unmatched'.$this->encodePrimaryKey($this->bank_transaction->id));
+        ])->get('/api/v1/bank_transactions?client_status=unmatched' . $this->encodePrimaryKey($this->bank_transaction->id));
 
         $response->assertStatus(200);
     }
 
-    public function testBankTransactionGet()
+    public function test_bank_transaction_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/bank_transactions/'.$this->encodePrimaryKey($this->bank_transaction->id));
+        ])->get('/api/v1/bank_transactions/' . $this->encodePrimaryKey($this->bank_transaction->id));
 
         $response->assertStatus(200);
     }
 
-    public function testBankTransactionArchived()
+    public function test_bank_transaction_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_transaction->id)],
@@ -85,7 +84,7 @@ class BankTransactionApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testBankTransactionRestored()
+    public function test_bank_transaction_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_transaction->id)],
@@ -101,7 +100,7 @@ class BankTransactionApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testBankTransactionDeleted()
+    public function test_bank_transaction_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_transaction->id)],
@@ -117,7 +116,7 @@ class BankTransactionApiTest extends TestCase
         $this->assertTrue($arr['data'][0]['is_deleted']);
     }
 
-    public function testBankTransactionUnlink()
+    public function test_bank_transaction_unlink()
     {
         BankTransaction::truncate();
 
@@ -159,12 +158,11 @@ class BankTransactionApiTest extends TestCase
         $arr = $response->json();
 
         $this->assertEquals(1, $arr['data'][0]['status_id']);
-        $this->assertEquals("", $arr['data'][0]['payment_id']);
-        $this->assertEquals("", $arr['data'][0]['invoice_ids']);
-        $this->assertEquals("", $arr['data'][0]['expense_id']);
+        $this->assertEquals('', $arr['data'][0]['payment_id']);
+        $this->assertEquals('', $arr['data'][0]['invoice_ids']);
+        $this->assertEquals('', $arr['data'][0]['expense_id']);
 
         $this->assertNull($e->fresh()->transaction_id);
         $this->assertNull($this->expense->fresh()->transaction_id);
     }
-
 }

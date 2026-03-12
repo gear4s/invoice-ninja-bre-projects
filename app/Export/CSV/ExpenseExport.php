@@ -6,7 +6,6 @@
  * @link https://github.com/expenseninja/expenseninja source repository
  *
  * @copyright Copyright (c) 2022. Expense Ninja LLC (https://expenseninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\Transformers\ExpenseTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class ExpenseExport extends BaseExport
@@ -36,10 +36,9 @@ class ExpenseExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->expense_transformer = new ExpenseTransformer();
-        $this->decorator = new Decorator();
+        $this->expense_transformer = new ExpenseTransformer;
+        $this->decorator = new Decorator;
     }
-
 
     public function returnJson()
     {
@@ -52,12 +51,13 @@ class ExpenseExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\Expense $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var Expense $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
@@ -83,10 +83,9 @@ class ExpenseExport extends BaseExport
         $this->input['report_keys'] = array_unique(array_merge($this->input['report_keys'], $tax_keys));
 
         $query = Expense::query()
-                        ->with('client')
-                        ->withTrashed()
-                        ->where('company_id', $this->company->id);
-
+            ->with('client')
+            ->withTrashed()
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) { // @phpstan-ignore-line
             $query->where('is_deleted', 0);
@@ -128,19 +127,19 @@ class ExpenseExport extends BaseExport
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-                ->each(function ($expense) {
+            ->each(function ($expense) {
 
-                    /** @var \App\Models\Expense $expense */
-                    $this->csv->insertOne($this->buildRow($expense));
-                });
+                /** @var Expense $expense */
+                $this->csv->insertOne($this->buildRow($expense));
+            });
 
         return $this->csv->toString();
     }
@@ -148,7 +147,7 @@ class ExpenseExport extends BaseExport
     private function buildRow(Expense $expense): array
     {
         $transformed_expense = $this->expense_transformer->transform($expense);
-        $transformed_expense['currency_id'] =  $expense->currency ? $expense->currency->code : $expense->company->currency()->code;
+        $transformed_expense['currency_id'] = $expense->currency ? $expense->currency->code : $expense->company->currency()->code;
 
         $entity = [];
 
@@ -166,6 +165,7 @@ class ExpenseExport extends BaseExport
         }
 
         $entity = $this->decorateAdvancedFields($expense, $entity);
+
         return $this->convertFloats($entity);
     }
 
@@ -182,16 +182,16 @@ class ExpenseExport extends BaseExport
             if (in_array('logged', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->where('amount', '>', 0)
-                          ->whereNull('invoice_id')
-                          ->whereNull('payment_date')
-                          ->where('should_be_invoiced', false);
+                        ->whereNull('invoice_id')
+                        ->whereNull('payment_date')
+                        ->where('should_be_invoiced', false);
                 });
             }
 
             if (in_array('pending', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->where('should_be_invoiced', true)
-                          ->whereNull('invoice_id');
+                        ->whereNull('invoice_id');
                 });
             }
 

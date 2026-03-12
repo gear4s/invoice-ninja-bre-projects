@@ -6,20 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Models;
 
-use Carbon\Carbon;
-use App\Models\Expense;
 use App\DataMapper\ExpenseSync;
+use App\Enum\SyncDirection;
 use App\Factory\ExpenseFactory;
 use App\Interfaces\SyncInterface;
+use App\Models\Expense;
 use App\Repositories\ExpenseRepository;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\ExpenseTransformer;
+use Carbon\Carbon;
+use QuickBooksOnline\API\Facades\Purchase;
 
 class QbExpense implements SyncInterface
 {
@@ -30,7 +31,7 @@ class QbExpense implements SyncInterface
     public function __construct(public QuickbooksService $service)
     {
         $this->expense_transformer = new ExpenseTransformer($this->service->company);
-        $this->expense_repository = new ExpenseRepository();
+        $this->expense_repository = new ExpenseRepository;
     }
 
     public function find(string $id): mixed
@@ -76,7 +77,6 @@ class QbExpense implements SyncInterface
 
             $ninja_invoice_data = false;
 
-
         }
 
     }
@@ -89,7 +89,7 @@ class QbExpense implements SyncInterface
             }
 
             // Check if sync direction allows push
-            if (!$this->service->syncable('expense', \App\Enum\SyncDirection::PUSH)) {
+            if (!$this->service->syncable('expense', SyncDirection::PUSH)) {
                 continue;
             }
 
@@ -106,7 +106,7 @@ class QbExpense implements SyncInterface
                 }
 
                 // Create or update expense in QuickBooks
-                $qb_expense = \QuickBooksOnline\API\Facades\Purchase::create($qb_expense_data);
+                $qb_expense = Purchase::create($qb_expense_data);
 
                 if (isset($expense->sync->qb_id) && !empty($expense->sync->qb_id)) {
                     // Update existing expense
@@ -117,7 +117,7 @@ class QbExpense implements SyncInterface
                     $result = $this->service->sdk->Add($qb_expense);
 
                     // Store QB ID in expense sync
-                    $sync = new ExpenseSync();
+                    $sync = new ExpenseSync;
                     $sync->qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
                     $expense->sync = $sync;
                     $expense->saveQuietly();
@@ -126,6 +126,7 @@ class QbExpense implements SyncInterface
                 }
             } catch (\Exception $e) {
                 nlog("QuickBooks: Error pushing expense {$expense->id} to QuickBooks: {$e->getMessage()}");
+
                 // Continue with next invoice instead of failing completely
                 continue;
             }
@@ -135,20 +136,20 @@ class QbExpense implements SyncInterface
     private function findExpense(string $id): ?Expense
     {
         $search = Expense::query()
-                            ->withTrashed()
-                            ->where('company_id', $this->service->company->id)
-                            ->where('sync->qb_id', $id);
+            ->withTrashed()
+            ->where('company_id', $this->service->company->id)
+            ->where('sync->qb_id', $id);
 
         if ($search->count() == 0) {
             $expense = ExpenseFactory::create($this->service->company->id, $this->service->company->owner()->id);
 
-            $sync = new ExpenseSync();
+            $sync = new ExpenseSync;
             $sync->qb_id = $id;
             $expense->sync = $sync;
 
             return $expense;
         } elseif ($search->count() == 1) {
-            return $this->service->syncable('expense', \App\Enum\SyncDirection::PULL) ? $search->first() : null;
+            return $this->service->syncable('expense', SyncDirection::PULL) ? $search->first() : null;
         }
 
         return null;
@@ -160,16 +161,16 @@ class QbExpense implements SyncInterface
 
         $qb_record = $this->find($id);
 
-
-        if ($this->service->syncable('expense', \App\Enum\SyncDirection::PULL)) {
+        if ($this->service->syncable('expense', SyncDirection::PULL)) {
 
             $expense = $this->findExpense($id);
 
-            nlog("Comparing QB last updated: " . $last_updated);
-            nlog("Comparing Ninja last updated: " . $expense->updated_at);
+            nlog('Comparing QB last updated: ' . $last_updated);
+            nlog('Comparing Ninja last updated: ' . $expense->updated_at);
 
             if (data_get($qb_record, 'TxnStatus') === 'Voided') {
                 $this->delete($id);
+
                 return;
             }
 
@@ -188,14 +189,13 @@ class QbExpense implements SyncInterface
     /**
      * Deletes the invoice from Ninja and sets the sync to null
      *
-     * @param string $id
-     * @return void
+     * @param  string  $id
      */
     public function delete($id): void
     {
         $qb_record = $this->find($id);
 
-        if ($this->service->syncable('expense', \App\Enum\SyncDirection::PULL) && $expense = $this->findExpense($id)) {
+        if ($this->service->syncable('expense', SyncDirection::PULL) && $expense = $this->findExpense($id)) {
             $expense->sync = null;
             $expense->saveQuietly();
             $this->expense_repository->delete($expense);

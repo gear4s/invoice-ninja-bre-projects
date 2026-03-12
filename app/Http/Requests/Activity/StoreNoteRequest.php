@@ -6,14 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Activity;
 
-use Illuminate\Support\Str;
 use App\Http\Requests\Request;
+use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreNoteRequest extends Request
@@ -22,8 +22,6 @@ class StoreNoteRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -32,12 +30,12 @@ class StoreNoteRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [
             'entity' => 'required|bail|in:invoices,quotes,credits,recurring_invoices,clients,vendors,credits,payments,projects,tasks,expenses,recurring_expenses,bank_transactions,purchase_orders',
-            'entity_id' => ['required','bail', Rule::exists($this->entity, 'id')->where('company_id', $user->company()->id)],
+            'entity_id' => ['required', 'bail', Rule::exists($this->entity, 'id')->where('company_id', $user->company()->id)],
             'notes' => 'required|bail',
         ];
 
@@ -60,7 +58,7 @@ class StoreNoteRequest extends Request
 
         $this->error_message = ctrans('texts.authorization_failure');
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $entity = $this->getEntity();
@@ -75,9 +73,9 @@ class StoreNoteRequest extends Request
             return false;
         }
 
-        $class = "\\App\\Models\\" . ucfirst(Str::camel(rtrim($this->entity, 's')));
+        $class = '\\App\\Models\\' . ucfirst(Str::camel(rtrim($this->entity, 's')));
+
         return $class::withTrashed()->find(is_string($this->entity_id) ? $this->decodePrimaryKey($this->entity_id) : $this->entity_id);
 
     }
-
 }

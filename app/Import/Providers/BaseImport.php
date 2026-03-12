@@ -6,41 +6,40 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Import\Providers;
 
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Models\Quote;
-use League\Csv\Reader;
-use App\Models\Company;
-use App\Models\Invoice;
-use League\Csv\Statement;
-use App\Factory\TaskFactory;
-use App\Factory\QuoteFactory;
 use App\Factory\ClientFactory;
-use Illuminate\Support\Carbon;
 use App\Factory\InvoiceFactory;
 use App\Factory\PaymentFactory;
+use App\Factory\QuoteFactory;
+use App\Factory\RecurringInvoiceFactory;
+use App\Factory\TaskFactory;
+use App\Http\Requests\Quote\StoreQuoteRequest;
 use App\Import\ImportException;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
-use App\Repositories\TaskRepository;
-use App\Utils\Traits\CleanLineItems;
-use App\Repositories\QuoteRepository;
-use Illuminate\Support\Facades\Cache;
-use App\Repositories\ClientRepository;
 use App\Mail\Import\CsvImportCompleted;
+use App\Models\Company;
+use App\Models\Invoice;
+use App\Models\Quote;
+use App\Models\User;
+use App\Notifications\Ninja\GenericNinjaAdminNotification;
+use App\Repositories\ClientRepository;
 use App\Repositories\InvoiceRepository;
 use App\Repositories\PaymentRepository;
-use App\Factory\RecurringInvoiceFactory;
-use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\Quote\StoreQuoteRequest;
+use App\Repositories\QuoteRepository;
 use App\Repositories\RecurringInvoiceRepository;
-use App\Notifications\Ninja\GenericNinjaAdminNotification;
+use App\Repositories\TaskRepository;
+use App\Utils\Ninja;
+use App\Utils\Traits\CleanLineItems;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Validator;
+use League\Csv\Reader;
+use League\Csv\Statement;
 
 class BaseImport
 {
@@ -81,7 +80,7 @@ class BaseImport
         $this->hash = $request['hash'];
         $this->import_type = $request['import_type'];
         $this->skip_header = $request['skip_header'] ?? null;
-        $this->column_map = ! empty($request['column_map'])
+        $this->column_map = !empty($request['column_map'])
             ? array_combine(
                 array_keys($request['column_map']),
                 array_column($request['column_map'], 'mapping')
@@ -90,7 +89,7 @@ class BaseImport
 
         auth()->login($this->company->owner(), false);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $user->setCompany($this->company);
@@ -115,7 +114,7 @@ class BaseImport
         $csvdelimiter = self::detectDelimiter($csv);
 
         $csv->setDelimiter($csvdelimiter);
-        $stmt = new Statement();
+        $stmt = new Statement;
         $data = iterator_to_array($stmt->process($csv));
 
         if (count($data) > 0) {
@@ -174,7 +173,7 @@ class BaseImport
     private function groupTasks($csvData, $key)
     {
 
-        if (! $key || !is_array($csvData) || count($csvData) == 0 || !isset($csvData[0]['task.number']) || empty($csvData[0]['task.number'])) {
+        if (!$key || !is_array($csvData) || count($csvData) == 0 || !isset($csvData[0]['task.number']) || empty($csvData[0]['task.number'])) {
             return $csvData;
         }
 
@@ -194,7 +193,6 @@ class BaseImport
 
         return $grouped;
 
-
     }
 
     public function groupClients($csvData, $key)
@@ -206,6 +204,7 @@ class BaseImport
             foreach ($csvData as $index => $item) {
                 $grouped[$index] = [$item];
             }
+
             return $grouped;
         }
 
@@ -231,7 +230,7 @@ class BaseImport
 
     private function groupInvoices($csvData, $key)
     {
-        if (! $key) {
+        if (!$key) {
             return $csvData;
         }
 
@@ -261,10 +260,9 @@ class BaseImport
         return $this->error_array;
     }
 
-
     private function runValidation($data)
     {
-        $_syn_request_class = new $this->request_name();
+        $_syn_request_class = new $this->request_name;
         $_syn_request_class->setContainer(app());
         $_syn_request_class->initialize($data);
         $_syn_request_class->prepareForValidation();
@@ -429,7 +427,7 @@ class BaseImport
         $client_repository = app()->make(ClientRepository::class);
         $client_repository->import_mode = true;
 
-        $invoice_repository = new RecurringInvoiceRepository();
+        $invoice_repository = new RecurringInvoiceRepository;
         $invoice_repository->import_mode = true;
 
         $invoices = $this->groupInvoices($invoices, $invoice_number_key);
@@ -451,7 +449,7 @@ class BaseImport
                 // If we don't have a client ID, but we do have client data, go ahead and create the client.
                 if (
                     empty($invoice_data['client_id'])
-                    && ! empty($invoice_data['client'])
+                    && !empty($invoice_data['client'])
                 ) {
                     $client_data = $invoice_data['client'];
                     $client_data['user_id'] = $this->getUserIDForRecord(
@@ -481,7 +479,7 @@ class BaseImport
                         $this->company->id,
                         $this->getUserIDForRecord($invoice_data)
                     );
-                    if (! empty($invoice_data['status_id'])) {
+                    if (!empty($invoice_data['status_id'])) {
                         $invoice->status_id = $invoice_data['status_id'];
                     }
                     $invoice_repository->save($invoice_data, $invoice);
@@ -489,7 +487,6 @@ class BaseImport
                     $count++;
                     // If we're doing a generic CSV import, only import payment data if we're not importing a payment CSV.
                     // If we're doing a platform-specific import, trust the platform to only return payment info if there's not a separate payment CSV.
-
 
                 }
             } catch (\Exception $ex) {
@@ -522,7 +519,7 @@ class BaseImport
 
         $task_transformer = $this->transformer;
 
-        $task_repository = new TaskRepository();
+        $task_repository = new TaskRepository;
 
         $tasks = $this->groupTasks($tasks, $task_number_key);
 
@@ -579,8 +576,6 @@ class BaseImport
         return $count;
     }
 
-
-
     public function ingestInvoices($invoices, $invoice_number_key)
     {
         $count = 0;
@@ -595,7 +590,7 @@ class BaseImport
         $client_repository = app()->make(ClientRepository::class);
         $client_repository->import_mode = true;
 
-        $invoice_repository = new InvoiceRepository();
+        $invoice_repository = new InvoiceRepository;
         $invoice_repository->import_mode = true;
 
         $invoices = $this->groupInvoices($invoices, $invoice_number_key);
@@ -617,7 +612,7 @@ class BaseImport
                 // If we don't have a client ID, but we do have client data, go ahead and create the client.
                 if (
                     empty($invoice_data['client_id'])
-                    && ! empty($invoice_data['client'])
+                    && !empty($invoice_data['client'])
                 ) {
                     $client_data = $invoice_data['client'];
                     $client_data['user_id'] = $this->getUserIDForRecord(
@@ -647,7 +642,7 @@ class BaseImport
                         $this->company->id,
                         $this->company->owner()->id
                     );
-                    if (! empty($invoice_data['status_id'])) {
+                    if (!empty($invoice_data['status_id'])) {
                         $invoice->status_id = $invoice_data['status_id'];
                     }
 
@@ -668,16 +663,16 @@ class BaseImport
                         || empty($this->column_map['payment'])
                     ) {
                         // Check for payment columns
-                        if (! empty($invoice_data['payments'])) {
+                        if (!empty($invoice_data['payments'])) {
                             foreach (
                                 $invoice_data['payments'] as $payment_data
                             ) {
 
-                                if ($invoice->status_id == \App\Models\Invoice::STATUS_DRAFT) {
+                                if ($invoice->status_id == Invoice::STATUS_DRAFT) {
                                     continue;
                                 }
 
-                                if ($payment_data['amount'] == 0 && $invoice->status_id == \App\Models\Invoice::STATUS_PAID) {
+                                if ($payment_data['amount'] == 0 && $invoice->status_id == Invoice::STATUS_PAID) {
                                     $payment_data['amount'] = $invoice->amount;
                                 }
 
@@ -691,7 +686,7 @@ class BaseImport
                                     ],
                                 ];
 
-                                /* Make sure we don't apply any payments to invoices with a Zero Amount*/
+                                /* Make sure we don't apply any payments to invoices with a Zero Amount */
                                 // if ($invoice->amount > 0 && $payment_data['amount'] > 0) {
                                 if ($invoice->amount > 0) {
 
@@ -752,12 +747,12 @@ class BaseImport
         $invoice_data,
         $invoice_repository
     ) {
-        if (! empty($invoice_data['archived'])) {
+        if (!empty($invoice_data['archived'])) {
             $invoice_repository->archive($invoice);
             $invoice->fresh();
         }
 
-        if (! empty($invoice_data['viewed'])) {
+        if (!empty($invoice_data['viewed'])) {
             $invoice = $invoice
                 ->service()
                 ->markViewed()
@@ -793,12 +788,12 @@ class BaseImport
         $quote_data,
         $quote_repository
     ) {
-        if (! empty($quote_data['archived'])) {
+        if (!empty($quote_data['archived'])) {
             $quote_repository->archive($quote);
             $quote->fresh();
         }
 
-        if (! empty($quote_data['viewed'])) {
+        if (!empty($quote_data['viewed'])) {
             $quote = $quote
                 ->service()
                 ->markViewed()
@@ -826,7 +821,7 @@ class BaseImport
         $client_repository = app()->make(ClientRepository::class);
         $client_repository->import_mode = true;
 
-        $quote_repository = new QuoteRepository();
+        $quote_repository = new QuoteRepository;
         $quote_repository->import_mode = true;
 
         $quotes = $this->groupInvoices($quotes, $quote_number_key);
@@ -846,7 +841,7 @@ class BaseImport
                 // If we don't have a client ID, but we do have client data, go ahead and create the client.
                 if (
                     empty($quote_data['client_id'])
-                    && ! empty($quote_data['client'])
+                    && !empty($quote_data['client'])
                 ) {
                     $client_data = $quote_data['client'];
                     $client_data['user_id'] = $this->getUserIDForRecord(
@@ -866,7 +861,7 @@ class BaseImport
 
                 $validator = Validator::make(
                     $quote_data,
-                    (new StoreQuoteRequest())->rules()
+                    (new StoreQuoteRequest)->rules()
                 );
                 if ($validator->fails()) {
                     $this->error_array['invoice'][] = [
@@ -878,7 +873,7 @@ class BaseImport
                         $this->company->id,
                         $this->getUserIDForRecord($quote_data)
                     );
-                    if (! empty($quote_data['status_id'])) {
+                    if (!empty($quote_data['status_id'])) {
                         $quote->status_id = $quote_data['status_id'];
                     }
 
@@ -916,7 +911,7 @@ class BaseImport
 
     protected function getUserIDForRecord($record)
     {
-        if (! empty($record['user_id'])) {
+        if (!empty($record['user_id'])) {
             return $this->findUser($record['user_id']);
         } else {
             return $this->company->owner()->id;
@@ -930,9 +925,9 @@ class BaseImport
         if (is_numeric($user_hash)) {
 
             $user = User::query()
-                        ->where('account_id', $this->company->account->id)
-                        ->where('id', $user_hash)
-                        ->first();
+                ->where('account_id', $this->company->account->id)
+                ->where('id', $user_hash)
+                ->first();
 
         }
 
@@ -953,12 +948,12 @@ class BaseImport
     public function finalizeImport()
     {
         $data = [
-            'errors'  => $this->error_array,
+            'errors' => $this->error_array,
             'company' => $this->company,
             'entity_count' => $this->entity_count,
         ];
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new CsvImportCompleted($this->company, $data);
         $nmo->company = $this->company;
         $nmo->settings = $this->company->settings;
@@ -1020,7 +1015,7 @@ class BaseImport
             array_shift($data);
         }
 
-        //sort the array by key
+        // sort the array by key
         $keys = $this->column_map[$entity_type];
         ksort($keys);
 
@@ -1087,5 +1082,4 @@ class BaseImport
 
         return $data;
     }
-
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Models;
 use App\Utils\Ninja;
 use App\Utils\Traits\Inviteable;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -38,13 +38,14 @@ use Illuminate\Support\Str;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property boolean $can_sign
+ * @property bool $can_sign
  * @property string|null $email_status
- * @property \App\Models\Company $company
- * @property \App\Models\VendorContact $contact
+ * @property Company $company
+ * @property VendorContact $contact
  * @property string $hashed_id
- * @property \App\Models\PurchaseOrder $purchase_order
- * @property \App\Models\User $user
+ * @property PurchaseOrder $purchase_order
+ * @property User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\PurchaseOrderInvitationFactory factory($count = null, $state = [])
@@ -73,12 +74,13 @@ use Illuminate\Support\Str;
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrderInvitation whereViewedDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrderInvitation withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrderInvitation withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class PurchaseOrderInvitation extends BaseModel
 {
-    use SoftDeletes;
     use Inviteable;
+    use SoftDeletes;
 
     protected $fillable = [
         'id',
@@ -107,27 +109,27 @@ class PurchaseOrderInvitation extends BaseModel
         return PurchaseOrder::class;
     }
 
-    public function purchase_order(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function purchase_order(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class)->withTrashed();
     }
 
-    public function entity(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function entity(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class)->withTrashed();
     }
 
-    public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function contact(): BelongsTo
     {
         return $this->belongsTo(VendorContact::class, 'vendor_contact_id', 'id')->withTrashed();
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -199,5 +201,4 @@ class PurchaseOrderInvitation extends BaseModel
 
         return config('ninja.react_url') . "/#/{$entity_type}s/{$this->{$entity_type}->hashed_id}/edit";
     }
-
 }

@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organizacja',
     'name' => 'Nazwa',
     'website' => 'Strona internetowa',
@@ -1174,7 +1174,6 @@ Przykłady dynamicznych zmiennych:
     'enterprise_plan_features' => 'Plan Enterprise dodaje obsługę wielu użytkowników i załączników plików, :link aby zobaczyć pełną listę funkcji.',
     'return_to_app' => 'Powrót do aplikacji',
 
-
     // Payment updates
     'refund_payment' => 'Zwrot płatności',
     'refund_max' => 'Max:',
@@ -1703,7 +1702,6 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'lang_Serbian' => 'Serbski',
     'lang_Bulgarian' => 'Bułgarski',
     'lang_Russian (Russia)' => 'Rosyjski (Rosja)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Księgowość i prawo',
@@ -2361,7 +2359,7 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'currency_gold_troy_ounce' => 'uncja złota trojańskiego',
     'currency_nicaraguan_córdoba' => 'Nikaraguańska Kordoba',
     'currency_malagasy_ariary' => 'Ariary po malgasku',
-    "currency_tongan_pa_anga" => "Tonga Pa&#39;anga",
+    'currency_tongan_pa_anga' => 'Tonga Pa&#39;anga',
 
     'review_app_help' => 'Mamy nadzieję, że korzystanie z naszej aplikacji sprawia Ci przyjemność.<br/> Jeśli rozważylibyście :link bylibyśmy bardzo wdzięczni!',
     'writing_a_review' => 'pisanie recenzji',
@@ -4361,7 +4359,7 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'activity_122' => ':user zarchiwizowane wydatki cykliczne :recurring_expense',
     'activity_123' => ':user usunięto cykliczny wydatek :recurring_expense',
     'activity_124' => ':user przywrócił cykliczne wydatki :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Aby wyświetlić :entity należy ustawić hasło.',
     'unsubscribe' => 'Anuluj subskrypcję',
     'unsubscribed' => 'Wypisany',
@@ -4867,7 +4865,7 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Transfer Interac E',
     'xinvoice_payable' => 'Płatne w ciągu :payeddue dni netto do :paydate',
-    'xinvoice_no_buyers_reference' => "Nie podano referencji kupującego",
+    'xinvoice_no_buyers_reference' => 'Nie podano referencji kupującego',
     'xinvoice_online_payment' => 'Fakturę należy opłacić online za pomocą podanego linku',
     'pre_payment' => 'Przedpłata',
     'number_of_payments' => 'Liczba płatności',
@@ -4972,8 +4970,8 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'e_invoice' => 'E-faktura',
     'light_dark_mode' => 'Tryb jasny/ciemny',
     'activities' => 'Działania',
-    'recent_transactions' => "Ostatnie transakcje",
-    'country_Palestine' => "Palestyna",
+    'recent_transactions' => 'Ostatnie transakcje',
+    'country_Palestine' => 'Palestyna',
     'country_Taiwan' => 'Tajwan',
     'duties' => 'Obowiązki',
     'order_number' => 'Numer zamówienia',
@@ -5190,7 +5188,7 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'rff' => 'Formularz wymaganych pól',
     'add_step' => 'Dodaj krok',
     'steps' => 'Kroki',
-    'steps_order_help' =>  'Kolejność kroków jest ważna. Pierwszy krok nie powinien zależeć od żadnego innego. Drugi krok powinien zależeć od pierwszego i tak dalej.',
+    'steps_order_help' => 'Kolejność kroków jest ważna. Pierwszy krok nie powinien zależeć od żadnego innego. Drugi krok powinien zależeć od pierwszego i tak dalej.',
     'other_steps' => 'Inne kroki',
     'use_available_payments' => 'Użyj dostępnych płatności',
     'test_email_sent' => 'Pomyślnie wysłano e-mail',
@@ -5399,7 +5397,7 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'credit_updated' => 'Aktualizacja kredytu',
     'payment_updated' => 'Płatność zaktualizowana',
     'search_placeholder' => 'Znajdź faktury, klientów i więcej',
-    'invalid_vat_number' => "Numer VAT jest nieprawidłowy dla wybranego kraju. Format powinien obejmować kod kraju i sam numer, np. DE123456789.",
+    'invalid_vat_number' => 'Numer VAT jest nieprawidłowy dla wybranego kraju. Format powinien obejmować kod kraju i sam numer, np. DE123456789.',
     'acts_as_sender' => 'Wysyłaj faktury elektroniczne',
     'acts_as_receiver' => 'Otrzymuj e-faktury',
     'peppol_token_generated' => 'Token PEPPOL został pomyślnie wygenerowany.',
@@ -5536,7 +5534,7 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'pro_plan_feature_10' => 'Skonfiguruj automatyczne przypomnienia e-mailowe',
     'pro_plan_feature_11' => 'Automatycznie dołączana faktura PDF do wiadomości e-mail',
     'pro_plan_feature_12' => 'Wyświetlaj podpis elektroniczny klientów na fakturach',
-    'pro_plan_feature_13' => "Włącz pole wyboru „Zatwierdź warunki”",
+    'pro_plan_feature_13' => 'Włącz pole wyboru „Zatwierdź warunki”',
     'pro_plan_feature_14' => 'Raporty: Faktury, Wydatki, Rachunek zysków i strat i więcej',
     'pro_plan_feature_15' => 'Masowe faktury e-mail, wyceny, kredyty',
     'pro_plan_feature_16' => 'Połącz 10 firm za pomocą 1 loginu',
@@ -5911,6 +5909,6 @@ Gdy przelewy zostaną zaksięgowane na Twoim koncie, wróć do tej strony i klik
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Przelew bankowy Stripe',
     'activity_164' => 'Synchronizacja QuickBooks nie powiodła się. :notes',
-);
+];
 
 return $lang;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class ActivityExport extends BaseExport
@@ -56,8 +56,9 @@ class ActivityExport extends BaseExport
 
         $report = $query->cursor()
             ->map(function ($resource) {
-                /** @var \App\Models\Activity $resource */
+                /** @var Activity $resource */
                 $row = $this->buildActivityRow($resource);
+
                 return $this->processMetaData($row, $resource);
             })->toArray();
 
@@ -101,7 +102,7 @@ class ActivityExport extends BaseExport
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        /** @var \App\Models\DateFormat $df */
+        /** @var DateFormat $df */
         $df = DateFormat::query()->find($this->company->settings->date_format_id);
 
         $this->date_format = $df->format;
@@ -111,7 +112,7 @@ class ActivityExport extends BaseExport
         }
 
         $query = Activity::query()
-                        ->where('company_id', $this->company->id);
+            ->where('company_id', $this->company->id);
 
         $query = $this->addDateRange($query, 'activities');
 
@@ -128,19 +129,19 @@ class ActivityExport extends BaseExport
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-              ->each(function ($entity) {
+            ->each(function ($entity) {
 
-                  /** @var \App\Models\Activity $entity */
-                  $this->buildRow($entity);
-              });
+                /** @var Activity $entity */
+                $this->buildRow($entity);
+            });
 
         return $this->csv->toString();
     }
@@ -156,7 +157,6 @@ class ActivityExport extends BaseExport
     // {
     //     return $entity;
     // }
-
 
     public function processMetaData(array $row, $resource): array
     {
@@ -176,5 +176,4 @@ class ActivityExport extends BaseExport
 
         return $clean_row;
     }
-
 }

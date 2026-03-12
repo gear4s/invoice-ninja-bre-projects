@@ -6,26 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Utils\HtmlEngine;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
-use App\Models\PaymentType;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
 use App\Models\ClientGatewayToken;
-use Illuminate\Support\Facades\Http;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\SystemLog;
 use App\PaymentDrivers\CBAPowerBoard\CreditCard;
 use App\PaymentDrivers\CBAPowerBoard\Customer;
 use App\PaymentDrivers\CBAPowerBoard\Settings;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Class CBAPowerBoardPaymentDriver.
@@ -51,6 +48,7 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
     public static $methods = [
         GatewayType::CREDIT_CARD => CreditCard::class,
     ];
+
     /**
      * Returns the gateway types.
      */
@@ -94,8 +92,7 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
     /**
      * Proxy method to pass the data into payment method authorizeView().
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse|mixed
+     * @return RedirectResponse|mixed
      */
     public function authorizeView(array $data)
     {
@@ -107,8 +104,8 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
     /**
      * Processes the gateway response for credit card authorization.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\RedirectResponse|mixed
+     * @param  Request  $request
+     * @return RedirectResponse|mixed
      */
     public function authorizeResponse($request)
     {
@@ -118,7 +115,7 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
     /**
      * View for displaying custom content of the driver.
      *
-     * @param array $data
+     * @param  array  $data
      * @return mixed
      */
     public function processPaymentView($data)
@@ -140,9 +137,6 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
 
     /**
      * Detach payment method from custom payment driver.
-     *
-     * @param ClientGatewayToken $token
-     * @return bool
      */
     public function detach(ClientGatewayToken $token): bool
     {
@@ -191,7 +185,6 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
 
         return 'ok';
 
-
     }
 
     public function gatewayRequest(string $uri, string $verb, array $payload, array $headers = [])
@@ -199,7 +192,7 @@ class CBAPowerBoardPaymentDriver extends BaseDriver
         $this->init();
 
         $r = Http::withHeaders($this->getHeaders($headers))
-                   ->{$verb}($this->api_endpoint . $uri, $payload);
+            ->{$verb}($this->api_endpoint . $uri, $payload);
 
         nlog($r->body());
 

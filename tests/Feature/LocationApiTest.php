@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Invoice;
 use App\Models\Location;
 use App\Utils\HtmlEngine;
-use Tests\MockAccountData;
-use App\Models\ClientContact;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class LocationApiTest extends TestCase
 {
@@ -25,8 +25,7 @@ class LocationApiTest extends TestCase
         Session::start();
     }
 
-
-    public function testResolvingNormalShippingLocationData()
+    public function test_resolving_normal_shipping_location_data()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -99,7 +98,7 @@ class LocationApiTest extends TestCase
 
     }
 
-    public function testResolvingNormalLocationData()
+    public function test_resolving_normal_location_data()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -166,8 +165,7 @@ class LocationApiTest extends TestCase
 
     }
 
-
-    public function testResolvingShippingLocationData()
+    public function test_resolving_shipping_location_data()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -227,7 +225,7 @@ class LocationApiTest extends TestCase
 
     }
 
-    public function testResolvingBusinessLocationData()
+    public function test_resolving_business_location_data()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -286,7 +284,7 @@ class LocationApiTest extends TestCase
 
     }
 
-    public function testLocationPost()
+    public function test_location_post()
     {
         $data = [
             'name' => 'Test Location',
@@ -305,14 +303,14 @@ class LocationApiTest extends TestCase
         $response->assertStatus(422);
 
         $data = [
-           'name' => 'Test Location',
-           'address1' => '123 Test St',
-           'address2' => 'Suite 100',
-           'city' => 'Test City',
-           'state' => 'TS',
-           'postal_code' => '12345',
-           'country_id' => '840', // USA
-           'client_id' => $this->client->id,
+            'name' => 'Test Location',
+            'address1' => '123 Test St',
+            'address2' => 'Suite 100',
+            'city' => 'Test City',
+            'state' => 'TS',
+            'postal_code' => '12345',
+            'country_id' => '840', // USA
+            'client_id' => $this->client->id,
         ];
 
         $response = $this->withHeaders([
@@ -326,7 +324,7 @@ class LocationApiTest extends TestCase
         $this->assertEquals($data['address1'], $arr['data']['address1']);
     }
 
-    public function testLocationGet()
+    public function test_location_get()
     {
         $location = Location::factory()->create([
             'company_id' => $this->company->id,
@@ -344,7 +342,7 @@ class LocationApiTest extends TestCase
         $this->assertEquals($location->name, $arr['data']['name']);
     }
 
-    public function testLocationPut()
+    public function test_location_put()
     {
         $location = Location::factory()->create([
             'company_id' => $this->company->id,
@@ -369,7 +367,7 @@ class LocationApiTest extends TestCase
         $this->assertEquals($data['address1'], $arr['data']['address1']);
     }
 
-    public function testLocationDelete()
+    public function test_location_delete()
     {
         $location = Location::factory()->create([
             'company_id' => $this->company->id,
@@ -383,7 +381,7 @@ class LocationApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testLocationList()
+    public function test_location_list()
     {
         Location::factory()->count(3)->create([
             'company_id' => $this->company->id,
@@ -400,7 +398,7 @@ class LocationApiTest extends TestCase
         $this->assertCount(3, $arr['data']);
     }
 
-    public function testLocationValidation()
+    public function test_location_validation()
     {
         $data = [
             'name' => '', // Required field is empty
@@ -413,7 +411,7 @@ class LocationApiTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function testBulkActions()
+    public function test_bulk_actions()
     {
         $locations = Location::factory()->count(3)->create([
             'company_id' => $this->company->id,
@@ -436,7 +434,7 @@ class LocationApiTest extends TestCase
         }
     }
 
-    public function testLocationRestore()
+    public function test_location_restore()
     {
         $location = Location::factory()->create([
             'company_id' => $this->company->id,

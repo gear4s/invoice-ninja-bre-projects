@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -64,7 +63,7 @@ class CreateInvitations extends AbstractService
                 ->withTrashed()
                 ->first();
 
-            if (! $invitation) {
+            if (!$invitation) {
                 try {
                     $ii = PurchaseOrderInvitationFactory::create($this->purchase_order->company_id, $this->purchase_order->user_id);
                     $ii->key = $this->createDbHash($this->purchase_order->company->db);
@@ -75,7 +74,7 @@ class CreateInvitations extends AbstractService
                 } catch (\Exception $e) {
                     nlog($e->getMessage());
                 }
-            } elseif (! $contact->send_email) {
+            } elseif (!$contact->send_email) {
                 $invitation->delete();
             }
         });
@@ -107,9 +106,9 @@ class CreateInvitations extends AbstractService
             $ii->save();
         }
 
-        if($this->purchase_order->invitations()->where('can_sign', true)->count() == 0){
-            
-            $ii = $this->purchase_order->invitations()->whereHas('contact', function ($q){
+        if ($this->purchase_order->invitations()->where('can_sign', true)->count() == 0) {
+
+            $ii = $this->purchase_order->invitations()->whereHas('contact', function ($q) {
                 $q->where('is_primary', true);
             })->first() ?? $this->purchase_order->invitations()->first();
 

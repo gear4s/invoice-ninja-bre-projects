@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organisation',
     'name' => 'Navn',
     'website' => 'Hjemmeside',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Enterprise Planen tilføjer understøttelse af flere brugere og vedhæftede filer, :link for at se den fulde liste over funktioner.',
     'return_to_app' => 'Vend tilbage til appen',
 
-
     // Payment updates
     'refund_payment' => 'Refunder betaling',
     'refund_max' => 'Max:',
@@ -1704,7 +1703,6 @@ $lang = array(
     'lang_Serbian' => 'Serbisk',
     'lang_Bulgarian' => 'Bulgarsk',
     'lang_Russian (Russia)' => 'Russisk (Rusland)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Regnskab og jura',
@@ -2362,7 +2360,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Guld Troy Ounce',
     'currency_nicaraguan_córdoba' => 'Nicaraguanske Córdoba',
     'currency_malagasy_ariary' => 'Madagaskars ariary',
-    "currency_tongan_pa_anga" => "Tonganske paanga",
+    'currency_tongan_pa_anga' => 'Tonganske paanga',
 
     'review_app_help' => 'Vi håber, du nyder at bruge appen.<br/> Hvis du ville overveje :link ville vi sætte stor pris på det!',
     'writing_a_review' => 'skriv en anmeldelse',
@@ -4362,7 +4360,7 @@ $lang = array(
     'activity_122' => ':user arkiveret Gentagen Udgift :recurring_expense',
     'activity_123' => ':user slettet Gentagen Udgift :recurring_expense',
     'activity_124' => ':user genskabt Gentagen Udgift :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'For at Vis :entity skal du angive en adgangskode.',
     'unsubscribe' => 'Opsige abonnement',
     'unsubscribed' => 'Afmeldt',
@@ -4868,7 +4866,7 @@ $lang = array(
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Betales inden for :payeddue dage netto indtil :paydate',
-    'xinvoice_no_buyers_reference' => "Ingen købers reference angivet",
+    'xinvoice_no_buyers_reference' => 'Ingen købers reference angivet',
     'xinvoice_online_payment' => 'Faktura skal betales online via det angivne link',
     'pre_payment' => 'Forudbetaling',
     'number_of_payments' => 'Antal Betalinger',
@@ -4973,8 +4971,8 @@ $lang = array(
     'e_invoice' => 'E-faktura',
     'light_dark_mode' => 'Lys/Mørk tilstand',
     'activities' => 'Aktiviteter',
-    'recent_transactions' => "Seneste transaktioner",
-    'country_Palestine' => "Palæstina",
+    'recent_transactions' => 'Seneste transaktioner',
+    'country_Palestine' => 'Palæstina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Pligter',
     'order_number' => 'Ordrenummer',
@@ -5191,7 +5189,7 @@ $lang = array(
     'rff' => 'Formular med obligatoriske felter',
     'add_step' => 'Tilføj trin',
     'steps' => 'Trin',
-    'steps_order_help' =>  'Rækkefølgen af trinene er vigtig. Det første trin bør ikke afhænge af noget andet trin. Det andet trin skal afhænge af det første trin og så videre.',
+    'steps_order_help' => 'Rækkefølgen af trinene er vigtig. Det første trin bør ikke afhænge af noget andet trin. Det andet trin skal afhænge af det første trin og så videre.',
     'other_steps' => 'Andre trin',
     'use_available_payments' => 'Brug tilgængelig Betalinger',
     'test_email_sent' => 'Succesfuldt sendt e-mail',
@@ -5400,7 +5398,7 @@ $lang = array(
     'credit_updated' => 'Kredit opdateret',
     'payment_updated' => 'Betaling opdateret',
     'search_placeholder' => 'Find Fakturaer , Kunder , med flere',
-    'invalid_vat_number' => "Momsnummeret er ikke gyldigt for det valgte land. Format skal være landekode kun efterfulgt af nummer, dvs. DE123456789",
+    'invalid_vat_number' => 'Momsnummeret er ikke gyldigt for det valgte land. Format skal være landekode kun efterfulgt af nummer, dvs. DE123456789',
     'acts_as_sender' => 'Send e-fakturaer',
     'acts_as_receiver' => 'Modtag e-fakturaer',
     'peppol_token_generated' => 'PEPPOL-token Succesfuldt genereret.',
@@ -5537,7 +5535,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Opsæt automatiske påmindelsesmails',
     'pro_plan_feature_11' => 'Automatisk vedhæftet Faktura PDF til e-mails',
     'pro_plan_feature_12' => 'Vis Kunder E-Signatur på Fakturaer',
-    'pro_plan_feature_13' => "Aktivér afkrydsningsfeltet &#39;Godkend Betingelser &#39;",
+    'pro_plan_feature_13' => 'Aktivér afkrydsningsfeltet &#39;Godkend Betingelser &#39;',
     'pro_plan_feature_14' => 'Rapporter: Fakturaer , Udgifter, P&amp;L, mere',
     'pro_plan_feature_15' => 'Massefakturaer, tilbud og kreditnota via e-mail',
     'pro_plan_feature_16' => 'Interlink 10 virksomheder med 1 login',
@@ -5912,6 +5910,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bankoverførsel',
     'activity_164' => 'QuickBooks-synkronisering mislykkedes. :notes',
-);
+];
 
 return $lang;

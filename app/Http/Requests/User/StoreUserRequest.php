@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,12 +25,10 @@ class StoreUserRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin();
@@ -45,16 +42,16 @@ class StoreUserRequest extends Request
         $rules['last_name'] = 'required|bail|string|max:100';
 
         if (config('ninja.db.multi_db_enabled')) {
-            $rules['email'] = ['required', 'bail', 'email', new ValidUserForCompany(), new AttachableUser()];
+            $rules['email'] = ['required', 'bail', 'email', new ValidUserForCompany, new AttachableUser];
         } else {
-            $rules['email'] = ['required', 'bail', 'email', new AttachableUser()];
+            $rules['email'] = ['required', 'bail', 'email', new AttachableUser];
         }
 
         if (Ninja::isHosted()) {
-            $rules['id'] = new CanAddUserRule();
+            $rules['id'] = new CanAddUserRule;
 
             if ($this->phone && isset($this->phone)) {
-                $rules['phone'] = ['bail', 'string', 'sometimes', new HasValidPhoneNumber()];
+                $rules['phone'] = ['bail', 'string', 'sometimes', new HasValidPhoneNumber];
             }
         }
 
@@ -70,15 +67,15 @@ class StoreUserRequest extends Request
         }
 
         if (isset($input['company_user'])) {
-            if (! isset($input['company_user']['is_admin'])) {
+            if (!isset($input['company_user']['is_admin'])) {
                 $input['company_user']['is_admin'] = false;
             }
 
-            if (! isset($input['company_user']['permissions'])) {
+            if (!isset($input['company_user']['permissions'])) {
                 $input['company_user']['permissions'] = '';
             }
 
-            if (! isset($input['company_user']['settings'])) {
+            if (!isset($input['company_user']['settings'])) {
                 $input['company_user']['settings'] = null;
             }
         } else {
@@ -101,12 +98,12 @@ class StoreUserRequest extends Request
         $this->replace($input);
     }
 
-    //@todo make sure the user links back to the account ID for this company!!!!!!
+    // @todo make sure the user links back to the account ID for this company!!!!!!
     public function fetchUser(): User
     {
         $user = MultiDB::hasUser(['email' => $this->input('email')]);
 
-        if (! $user) {
+        if (!$user) {
             $user = UserFactory::create(auth()->user()->account->id);
         }
 

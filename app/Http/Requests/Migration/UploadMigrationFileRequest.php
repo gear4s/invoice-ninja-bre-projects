@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Migration;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 
 class UploadMigrationFileRequest extends Request
 {
@@ -23,15 +23,14 @@ class UploadMigrationFileRequest extends Request
      */
     public function authorize()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
+
         return $user->isAdmin();
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {

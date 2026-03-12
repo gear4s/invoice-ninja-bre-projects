@@ -6,14 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Quote;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * QuoteFilters.
@@ -23,8 +25,6 @@ class QuoteFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -33,21 +33,21 @@ class QuoteFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('number', 'like', '%' . $filter . '%')
-                  ->orwhere('custom_value1', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value2', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value3', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value4', 'like', '%' . $filter . '%')
-                  ->orWhereHas('client', function ($q) use ($filter) {
-                      $q->where('name', 'like', '%' . $filter . '%');
-                  })
-                  ->orWhereHas('client.contacts', function ($q) use ($filter) {
-                      $q->where('first_name', 'like', '%' . $filter . '%')
+                ->orwhere('custom_value1', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value2', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value3', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value4', 'like', '%' . $filter . '%')
+                ->orWhereHas('client', function ($q) use ($filter) {
+                    $q->where('name', 'like', '%' . $filter . '%');
+                })
+                ->orWhereHas('client.contacts', function ($q) use ($filter) {
+                    $q->where('first_name', 'like', '%' . $filter . '%')
                         ->orWhere('last_name', 'like', '%' . $filter . '%')
                         ->orWhere('email', 'like', '%' . $filter . '%');
-                  })
-                                            ->orWhereRaw("
+                })
+                ->orWhereRaw("
                             JSON_UNQUOTE(JSON_EXTRACT(
                                 JSON_ARRAY(
                                     JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].notes')), 
@@ -67,8 +67,7 @@ class QuoteFilters extends QueryFilters
      * - paused
      * - completed
      *
-     * @param string $value The invoice status as seen by the client
-     * @return Builder
+     * @param  string  $value  The invoice status as seen by the client
      */
     public function client_status(string $value = ''): Builder
     {
@@ -87,10 +86,10 @@ class QuoteFilters extends QueryFilters
             if (in_array('sent', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                    ->where(function ($q) {
-                        $q->whereNull('due_date')
-                        ->orWhere('due_date', '>=', now()->toDateString());
-                    });
+                        ->where(function ($q) {
+                            $q->whereNull('due_date')
+                                ->orWhere('due_date', '>=', now()->toDateString());
+                        });
                 });
             }
 
@@ -99,7 +98,6 @@ class QuoteFilters extends QueryFilters
             if (in_array('draft', $status_parameters)) {
                 $quote_filters[] = Quote::STATUS_DRAFT;
             }
-
 
             if (in_array('approved', $status_parameters)) {
                 $quote_filters[] = Quote::STATUS_APPROVED;
@@ -112,16 +110,16 @@ class QuoteFilters extends QueryFilters
             if (in_array('expired', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                    ->whereNotNull('due_date')
-                    ->where('due_date', '<=', now()->toDateString());
+                        ->whereNotNull('due_date')
+                        ->where('due_date', '<=', now()->toDateString());
                 });
             }
 
             if (in_array('upcoming', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                      ->where('due_date', '>=', now()->toDateString())
-                      ->orderBy('due_date', 'DESC');
+                        ->where('due_date', '>=', now()->toDateString())
+                        ->orderBy('due_date', 'DESC');
                 });
             }
 
@@ -147,14 +145,13 @@ class QuoteFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || (!in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable())) && !str_starts_with($sort_col[0], 'client.') && !str_starts_with($sort_col[0], 'contact.') && !str_starts_with($sort_col[0], 'documents'))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || (!in_array($sort_col[0], Schema::getColumnListing($this->builder->getModel()->getTable())) && !str_starts_with($sort_col[0], 'client.') && !str_starts_with($sort_col[0], 'contact.') && !str_starts_with($sort_col[0], 'documents'))) {
             return $this->builder;
         }
 
@@ -167,8 +164,8 @@ class QuoteFilters extends QueryFilters
 
         if ($sort_col[0] == 'client_id') {
             return $this->builder
-            ->orderByRaw(
-                "
+                ->orderByRaw(
+                    "
                 CASE 
                     WHEN CHAR_LENGTH((SELECT name FROM clients WHERE clients.id = quotes.client_id LIMIT 1)) > 1 
                         THEN (SELECT name FROM clients WHERE clients.id = quotes.client_id LIMIT 1)
@@ -185,7 +182,7 @@ class QuoteFilters extends QueryFilters
                         THEN (SELECT email FROM client_contacts WHERE client_contacts.client_id = quotes.client_id AND client_contacts.email IS NOT NULL ORDER BY client_contacts.is_primary DESC, client_contacts.id ASC LIMIT 1)
                     ELSE 'No Contact Set'
                 END " . $dir
-            );
+                );
         }
 
         if ($sort_col[0] == 'number') {
@@ -196,45 +193,43 @@ class QuoteFilters extends QueryFilters
             $sort_col[0] = 'due_date';
         }
 
-
         /** Relationship sorting - clients */
-        if(str_starts_with($sort_col[0], 'client.')) {
-            
+        if (str_starts_with($sort_col[0], 'client.')) {
+
             $client_parts = explode('.', $sort_col[0]);
-            
-            if(!isset($client_parts[1]) || !in_array($client_parts[1], \Illuminate\Support\Facades\Schema::getColumnListing('clients'))) {  
+
+            if (!isset($client_parts[1]) || !in_array($client_parts[1], Schema::getColumnListing('clients'))) {
                 return $this->builder;
             }
-            
 
             if ($sort_col[0] === 'client.country_id') {
                 return $this->builder->orderBy(
-                        \App\Models\Client::select('countries.name')
-                            ->join('countries', 'countries.id', '=', 'clients.country_id')
-                            ->whereColumn('clients.id', 'quotes.client_id')
-                            ->limit(1),
-                        $dir
-                    );
+                    Client::select('countries.name')
+                        ->join('countries', 'countries.id', '=', 'clients.country_id')
+                        ->whereColumn('clients.id', 'quotes.client_id')
+                        ->limit(1),
+                    $dir
+                );
             }
 
-            return $this->builder->orderBy(\App\Models\Client::select($client_parts[1])
-                        ->whereColumn('clients.id', 'quotes.client_id')
-                        ->limit(1), $dir);
+            return $this->builder->orderBy(Client::select($client_parts[1])
+                ->whereColumn('clients.id', 'quotes.client_id')
+                ->limit(1), $dir);
 
         }
 
         /** Relationship sorting - contacts */
-        if(str_starts_with($sort_col[0], 'contact.')) {
-        
+        if (str_starts_with($sort_col[0], 'contact.')) {
+
             $client_parts = explode('.', $sort_col[0]);
-            
-            if(!isset($client_parts[1]) || !in_array($client_parts[1], \Illuminate\Support\Facades\Schema::getColumnListing('client_contacts'))) {  
+
+            if (!isset($client_parts[1]) || !in_array($client_parts[1], Schema::getColumnListing('client_contacts'))) {
                 return $this->builder;
             }
-            
-            return $this->builder->orderBy(\App\Models\ClientContact::select($client_parts[1])
-                        ->whereColumn('client_contacts.client_id', 'quotes.client_id')
-                        ->limit(1), $dir);
+
+            return $this->builder->orderBy(ClientContact::select($client_parts[1])
+                ->whereColumn('client_contacts.client_id', 'quotes.client_id')
+                ->limit(1), $dir);
 
         }
 
@@ -243,8 +238,6 @@ class QuoteFilters extends QueryFilters
 
     /**
      * Filters the query by the users company ID.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function entityFilter(): Builder
     {

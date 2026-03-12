@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,18 +16,17 @@ use App\Factory\InvoiceItemFactory;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\CompanyToken;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Services\Report\UserSalesReport;
 use App\Utils\Traits\MakesHash;
+use App\Utils\TruthSource;
+use Faker\Factory;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
-/**
- *
- */
 class UserSalesReportTest extends TestCase
 {
     use MakesHash;
@@ -39,7 +37,7 @@ class UserSalesReportTest extends TestCase
     {
         parent::setUp();
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -89,7 +87,7 @@ class UserSalesReportTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -109,26 +107,25 @@ class UserSalesReportTest extends TestCase
             'is_owner' => 1,
             'is_admin' => 1,
             'is_locked' => 0,
-            'notifications' => \App\DataMapper\CompanySettings::notificationDefaults(),
+            'notifications' => CompanySettings::notificationDefaults(),
             'settings' => null,
         ]);
 
-        $company_token = new \App\Models\CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
         $company_token->name = 'test token';
-        $company_token->token = \Illuminate\Support\Str::random(64);
+        $company_token->token = Str::random(64);
         $company_token->is_system = true;
 
         $company_token->save();
 
-        $truth = app()->make(\App\Utils\TruthSource::class);
+        $truth = app()->make(TruthSource::class);
         $truth->setCompanyUser($this->user->company_users()->first());
         $truth->setCompanyToken($company_token);
         $truth->setUser($this->user);
         $truth->setCompany($this->company);
-
 
         $this->payload = [
             'start_date' => '2000-01-01',
@@ -146,7 +143,7 @@ class UserSalesReportTest extends TestCase
         ]);
     }
 
-    public function testUserSalesInstance()
+    public function test_user_sales_instance()
     {
         $this->buildData();
 
@@ -157,10 +154,9 @@ class UserSalesReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleReport()
+    public function test_simple_report()
     {
         $this->buildData();
-
 
         $this->payload = [
             'start_date' => '2000-01-01',
@@ -202,7 +198,6 @@ class UserSalesReportTest extends TestCase
         $this->account->delete();
     }
 
-
     private function buildLineItems()
     {
         $line_items = [];
@@ -217,7 +212,6 @@ class UserSalesReportTest extends TestCase
 
         $line_items[] = $item;
 
-
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = 10;
@@ -227,7 +221,6 @@ class UserSalesReportTest extends TestCase
         // $item->expense_id = $this->encodePrimaryKey($this->expense->id);
 
         $line_items[] = $item;
-
 
         return $line_items;
     }

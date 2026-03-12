@@ -6,32 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use App\Models\Company;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Invoice;
 
 /**
  * @property int $id
  * @property int $company_id
  * @property int $invoice_id
  * @property string $nif
- * @property \Carbon\Carbon $date
+ * @property Carbon $date
  * @property string $invoice_number
  * @property string $hash
  * @property string $previous_hash
  * @property string $status
  * @property object|null $response
  * @property string $state
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\Invoice $invoice
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property-read Company $company
+ * @property-read Invoice $invoice
  */
 class VerifactuLog extends Model
 {

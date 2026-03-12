@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Utils\Ninja;
+use App\Http\Requests\Search\GenericSearchRequest;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\User;
 use Elastic\Elasticsearch\ClientBuilder;
-use App\Http\Requests\Search\GenericSearchRequest;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 
 class SearchController extends Controller
@@ -53,11 +52,11 @@ class SearchController extends Controller
             try {
                 return $this->search($request->input('search', '*'));
             } catch (\Exception $e) {
-                nlog("elk down?" . $e->getMessage());
+                nlog('elk down?' . $e->getMessage());
             }
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $this->clientMap($user);
@@ -83,7 +82,7 @@ class SearchController extends Controller
 
         $search = trim($search);
 
-        \Illuminate\Support\Facades\App::setLocale($company->locale());
+        App::setLocale($company->locale());
 
         $elastic = ClientBuilder::fromConfig(config('elastic.client.connections.default'));
 
@@ -136,7 +135,6 @@ class SearchController extends Controller
             ],
         ];
 
-
         $results = $elastic->search($params);
 
         // nlog($results['hits']);
@@ -168,7 +166,7 @@ class SearchController extends Controller
             switch (true) {
                 case Str::startsWith($result['_index'], 'clients'):
 
-                    if ($result['_source']['is_deleted']) { //do not return deleted results
+                    if ($result['_source']['is_deleted']) { // do not return deleted results
                         break;
                     }
 
@@ -182,10 +180,9 @@ class SearchController extends Controller
                     break;
                 case Str::startsWith($result['_index'], 'invoices'):
 
-                    if ($result['_source']['is_deleted']) {  //do not return deleted invoices
+                    if ($result['_source']['is_deleted']) {  // do not return deleted invoices
                         break;
                     }
-
 
                     $this->invoices[] = [
                         'name' => $result['_source']['name'],
@@ -347,16 +344,16 @@ class SearchController extends Controller
     private function clientMap(User $user)
     {
 
-        $clients =  Client::query()
-                     ->withTrashed()
-                     ->company()
-                     ->where('is_deleted', 0)
-                     ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_client'), function ($query) use ($user) {
-                         $query->where('user_id', $user->id);
-                     })
-                     ->orderBy('updated_at', 'desc')
-                     ->take(1000)
-                     ->get();
+        $clients = Client::query()
+            ->withTrashed()
+            ->company()
+            ->where('is_deleted', 0)
+            ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_client'), function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->orderBy('updated_at', 'desc')
+            ->take(1000)
+            ->get();
 
         foreach ($clients as $client) {
             $this->clients[] = [
@@ -376,26 +373,25 @@ class SearchController extends Controller
             });
         }
 
-
     }
 
     private function projectMap(User $user)
     {
 
         $projects = Project::query()
-                     ->withTrashed()
-                     ->company()
-                     ->with('client')
-                     ->where('is_deleted', 0)
-                     ->whereHas('client', function ($q) {
-                         $q->where('is_deleted', 0);
-                     })
-                     ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_invoice'), function ($query) use ($user) {
-                         $query->where('projects.user_id', $user->id);
-                     })
-                     ->orderBy('id', 'desc')
-                    ->take(3000)
-                    ->get();
+            ->withTrashed()
+            ->company()
+            ->with('client')
+            ->where('is_deleted', 0)
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', 0);
+            })
+            ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_invoice'), function ($query) use ($user) {
+                $query->where('projects.user_id', $user->id);
+            })
+            ->orderBy('id', 'desc')
+            ->take(3000)
+            ->get();
 
         foreach ($projects as $project) {
             $this->projects[] = [
@@ -412,19 +408,19 @@ class SearchController extends Controller
     {
 
         $invoices = Invoice::query()
-                     ->withTrashed()
-                     ->company()
-                     ->with('client')
-                     ->where('is_deleted', 0)
-                     ->whereHas('client', function ($q) {
-                         $q->where('is_deleted', 0);
-                     })
-                     ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_invoice'), function ($query) use ($user) {
-                         $query->where('invoices.user_id', $user->id);
-                     })
-                     ->orderBy('id', 'desc')
-                    ->take(3000)
-                    ->get();
+            ->withTrashed()
+            ->company()
+            ->with('client')
+            ->where('is_deleted', 0)
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', 0);
+            })
+            ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_invoice'), function ($query) use ($user) {
+                $query->where('invoices.user_id', $user->id);
+            })
+            ->orderBy('id', 'desc')
+            ->take(3000)
+            ->get();
 
         foreach ($invoices as $invoice) {
             $this->invoices[] = [
@@ -515,11 +511,11 @@ class SearchController extends Controller
 
             $translation = '';
 
-            foreach (explode(",", $key) as $transkey) {
-                $translation .= ctrans("texts.{$transkey}") . " ";
+            foreach (explode(',', $key) as $transkey) {
+                $translation .= ctrans("texts.{$transkey}") . ' ';
             }
 
-            $translation = rtrim($translation, " ");
+            $translation = rtrim($translation, ' ');
 
             $data[] = [
                 'id' => $translation,
@@ -533,5 +529,4 @@ class SearchController extends Controller
 
         return $data;
     }
-
 }

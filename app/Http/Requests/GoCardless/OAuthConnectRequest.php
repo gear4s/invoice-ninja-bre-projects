@@ -6,14 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\GoCardless;
 
 use App\Libraries\MultiDB;
+use App\Models\BaseModel;
 use App\Models\Company;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Cache;
 
@@ -25,7 +28,7 @@ class OAuthConnectRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -34,7 +37,7 @@ class OAuthConnectRequest extends FormRequest
         ];
     }
 
-    public function getCompany(): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder|\App\Models\BaseModel
+    public function getCompany(): Model|Builder|BaseModel
     {
         $data = Cache::get(
             key: $this->token,

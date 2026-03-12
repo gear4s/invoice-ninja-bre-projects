@@ -6,14 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
 use App\Libraries\MultiDB;
-use App\Models\Company;
+use App\Models\ClientContact;
 use App\Models\Invoice;
 use App\Utils\Traits\WithSorting;
 use Carbon\Carbon;
@@ -92,12 +91,12 @@ class InvoicesTable extends Component
             ->withTrashed()
             ->paginate($this->per_page);
 
-        /** @var \App\Models\ClientContact $client_contact */
+        /** @var ClientContact $client_contact */
         $client_contact = auth()->user();
 
         return render('components.livewire.invoices-table', [
             'invoices' => $query,
-            'gateway_available' => ! empty($client_contact->client->service()->getPaymentMethods(-1)),
+            'gateway_available' => !empty($client_contact->client->service()->getPaymentMethods(-1)),
         ]);
     }
 }

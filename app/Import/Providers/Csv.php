@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -97,6 +96,7 @@ class Csv extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['bank_transactions'] = 0;
+
             return;
         }
 
@@ -127,6 +127,7 @@ class Csv extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['clients'] = 0;
+
             return;
         }
 
@@ -188,6 +189,7 @@ class Csv extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['recurring_invoices'] = 0;
+
             return;
         }
 
@@ -247,6 +249,7 @@ class Csv extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['quotes'] = 0;
+
             return;
         }
 
@@ -366,6 +369,7 @@ class Csv extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['tasks'] = 0;
+
             return;
         }
 

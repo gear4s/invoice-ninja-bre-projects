@@ -6,22 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Flow2;
 
-use App\Utils\Number;
-use App\Models\Invoice;
-use Livewire\Component;
 use App\Libraries\MultiDB;
-use Livewire\Attributes\On;
+use App\Models\ClientContact;
 use App\Models\CompanyGateway;
-use App\Utils\Traits\MakesHash;
+use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
-use Livewire\Attributes\Computed;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\WithSecureContext;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class InvoicePay extends Component
 {
@@ -95,6 +99,7 @@ class InvoicePay extends Component
     public $required_fields = false;
 
     public $docu_ninja_active = false;
+
     public $docu_ninja_ready = false;
 
     #[On('update.context')]
@@ -116,7 +121,7 @@ class InvoicePay extends Component
     {
 
         $this->signature_accepted = true;
-        $invite = \App\Models\InvoiceInvitation::withTrashed()->find($this->invitation_id);
+        $invite = InvoiceInvitation::withTrashed()->find($this->invitation_id);
         $invite->signature_base64 = $base64;
         $invite->signature_date = now()->addSeconds($invite->contact->client->timezone_offset());
         $this->setContext($invite->key, 'signature', $base64); // $this->context['signature'] = $base64;
@@ -136,13 +141,13 @@ class InvoicePay extends Component
     #[On('docuninja-loader-ready')]
     public function docuninjaLoaderReady()
     {
-        $this->docu_ninja_ready = true;    
+        $this->docu_ninja_ready = true;
     }
 
     #[On('payable-amount')]
     public function payableAmount($payable_amount)
     {
-        $invite = \App\Models\InvoiceInvitation::withTrashed()->find($this->invitation_id);
+        $invite = InvoiceInvitation::withTrashed()->find($this->invitation_id);
         $this->setContext($invite->key, 'amount', $payable_amount);
         $this->under_over_payment = false;
     }
@@ -150,7 +155,7 @@ class InvoicePay extends Component
     #[On('payment-method-selected')]
     public function paymentMethodSelected($company_gateway_id, $gateway_type_id, $amount)
     {
-        $invite = \App\Models\InvoiceInvitation::withTrashed()->find($this->invitation_id);
+        $invite = InvoiceInvitation::withTrashed()->find($this->invitation_id);
 
         $this->bulkSetContext($invite->key, [
             'company_gateway_id' => $company_gateway_id,
@@ -159,7 +164,6 @@ class InvoicePay extends Component
             'pre_payment' => false,
             'is_recurring' => false,
         ]);
-
 
         $this->payment_method_accepted = true;
 
@@ -180,9 +184,9 @@ class InvoicePay extends Component
 
     private function checkRequiredFields(CompanyGateway $company_gateway)
     {
-        $invite = \App\Models\InvoiceInvitation::withTrashed()->find($this->invitation_id);
+        $invite = InvoiceInvitation::withTrashed()->find($this->invitation_id);
 
-        /** @var \App\Models\ClientContact $contact */
+        /** @var ClientContact $contact */
         $contact = $this->getContext($invite->key)['contact'];
 
         $fields = $company_gateway->driver($contact->client)->getClientRequiredFields();
@@ -192,17 +196,17 @@ class InvoicePay extends Component
         foreach ($fields as $index => $field) {
             $_field = $this->mappings[$field['name']];
 
-            if (\Illuminate\Support\Str::startsWith($field['name'], 'client_')) {
+            if (Str::startsWith($field['name'], 'client_')) {
                 if (
                     empty($contact->client->{$_field})
-                    || is_null($contact->client->{$_field}) //@phpstan-ignore-line
+                    || is_null($contact->client->{$_field}) // @phpstan-ignore-line
                 ) {
                     return $this->required_fields = true;
                 }
             }
 
-            if (\Illuminate\Support\Str::startsWith($field['name'], 'contact_')) {
-                if (empty($contact->{$_field}) || is_null($contact->{$_field}) || str_contains($contact->{$_field}, '@example.com')) { //@phpstan-ignore-line
+            if (Str::startsWith($field['name'], 'contact_')) {
+                if (empty($contact->{$_field}) || is_null($contact->{$_field}) || str_contains($contact->{$_field}, '@example.com')) { // @phpstan-ignore-line
                     return $this->required_fields = true;
                 }
             }
@@ -225,14 +229,13 @@ class InvoicePay extends Component
         }
 
         /** Async loading of DocuNinja component needs to be done like this. ie. need full payload prior to passing in. */
-        if($this->docu_ninja_active && !$this->signature_accepted) {
+        if ($this->docu_ninja_active && !$this->signature_accepted) {
             if ($this->docu_ninja_ready) {
-                return \App\Livewire\Flow2\DocuNinja::class;
+                return DocuNinja::class;
             } else {
-                return \App\Livewire\Flow2\DocuNinjaLoader::class;
+                return DocuNinjaLoader::class;
             }
-        }
-        elseif (!$this->signature_accepted && !$this->docu_ninja_active) {
+        } elseif (!$this->signature_accepted && !$this->docu_ninja_active) {
             return Signature::class;
         }
 
@@ -255,7 +258,7 @@ class InvoicePay extends Component
     #[Computed()]
     public function componentUniqueId(): string
     {
-        return "purchase-" . md5(microtime());
+        return 'purchase-' . md5(microtime());
     }
 
     public function mount()
@@ -264,12 +267,12 @@ class InvoicePay extends Component
         MultiDB::setDb($this->db);
 
         // @phpstan-ignore-next-line
-        $invite = \App\Models\InvoiceInvitation::with('contact.client', 'company')->withTrashed()->find($this->invitation_id);
+        $invite = InvoiceInvitation::with('contact.client', 'company')->withTrashed()->find($this->invitation_id);
 
         $client = $invite->contact->client;
         $settings = $client->getMergedSettings();
 
-        $this->docu_ninja_active = $invite->company->docuninjaActive(); //Is the company an Active DocuNinja User - or bypass completely if signed!
+        $this->docu_ninja_active = $invite->company->docuninjaActive(); // Is the company an Active DocuNinja User - or bypass completely if signed!
 
         $this->bulkSetContext($invite->key, [
             'contact' => $invite->contact,
@@ -280,32 +283,32 @@ class InvoicePay extends Component
         ]);
 
         $invoices = Invoice::withTrashed()
-                                    ->whereIn('id', $this->transformKeys($this->invoices))
-                                    ->where('is_deleted', 0)
-                                    ->get()
-                                    ->filter(function ($i) {
-                                        $i = $i->service()
-                                            ->markSent()
-                                            ->removeUnpaidGatewayFees()
-                                            ->save();
+            ->whereIn('id', $this->transformKeys($this->invoices))
+            ->where('is_deleted', 0)
+            ->get()
+            ->filter(function ($i) {
+                $i = $i->service()
+                    ->markSent()
+                    ->removeUnpaidGatewayFees()
+                    ->save();
 
-                                        return $i->isPayable();
-                                    });
+                return $i->isPayable();
+            });
 
-        //under-over / payment
+        // under-over / payment
 
-        //required fields
+        // required fields
         $this->terms_accepted = !$settings->show_accept_invoice_terms;
         $this->signature_accepted = !$settings->require_invoice_signature;
         $this->under_over_payment = $settings->client_portal_allow_over_payment || $settings->client_portal_allow_under_payment;
         $this->required_fields = false;
 
-        if($invite->invoice->sync?->dn_completed === true){
+        if ($invite->invoice->sync?->dn_completed === true) {
             $this->signature_accepted = true;
         }
 
         $payable_invoices = $invoices->map(function ($i) {
-            /** @var \App\Models\Invoice $i */
+            /** @var Invoice $i */
             return [
                 'invoice_id' => $i->hashed_id,
                 'amount' => $i->partial > 0 ? $i->partial : $i->balance,
@@ -330,12 +333,12 @@ class InvoicePay extends Component
 
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+    public function render(): Factory|View
     {
         MultiDB::setDb($this->db);
 
-        //@phpstan-ignore-next-line
-        $invite = \App\Models\InvoiceInvitation::with('contact.client', 'company')->withTrashed()->find($this->invitation_id);
+        // @phpstan-ignore-next-line
+        $invite = InvoiceInvitation::with('contact.client', 'company')->withTrashed()->find($this->invitation_id);
 
         return render('flow2.invoice-pay', ['_key' => $invite->key]);
     }

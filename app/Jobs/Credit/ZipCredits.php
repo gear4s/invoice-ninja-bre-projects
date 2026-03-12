@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Credit;
 
+use App\Jobs\Entity\CreateRawPdf;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
 use App\Jobs\Util\UnlinkFile;
@@ -26,6 +26,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use PhpZip\Exception\ZipException;
+use PhpZip\ZipFile;
 
 class ZipCredits implements ShouldQueue
 {
@@ -50,7 +52,7 @@ class ZipCredits implements ShouldQueue
         MultiDB::setDb($this->company->db);
 
         $settings = $this->company->settings;
-        $zipFile = new \PhpZip\ZipFile();
+        $zipFile = new ZipFile;
         $file_name = now()->addSeconds($this->company->timezone_offset())->format('Y-m-d-h-m-s') . '_' . str_replace(' ', '_', trans('texts.credits')) . '.zip';
 
         nlog($this->credit_ids);
@@ -58,7 +60,8 @@ class ZipCredits implements ShouldQueue
         $invitations = CreditInvitation::query()->with('credit')->whereIn('credit_id', $this->credit_ids)->get();
 
         if ($invitations->count() == 0) {
-            nlog("no Credit Invitations");
+            nlog('no Credit Invitations');
+
             return;
         }
 
@@ -68,13 +71,13 @@ class ZipCredits implements ShouldQueue
 
         try {
             foreach ($invitations as $invitation) {
-                $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
+                $file = (new CreateRawPdf($invitation))->handle();
                 $zipFile->addFromString($invitation->credit->numberFormatter() . '.pdf', $file);
             }
 
             Storage::put($path . $file_name, $zipFile->outputAsString());
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new DownloadCredits(Storage::url($path . $file_name), $this->company);
             $nmo->to_user = $this->user;
             $nmo->settings = $settings;
@@ -83,7 +86,7 @@ class ZipCredits implements ShouldQueue
             NinjaMailerJob::dispatch($nmo);
 
             UnlinkFile::dispatch(config('filesystems.default'), $path . $file_name)->delay(now()->addHours(1));
-        } catch (\PhpZip\Exception\ZipException $e) {
+        } catch (ZipException $e) {
             // handle exception
         } finally {
             $zipFile->close();
@@ -92,7 +95,7 @@ class ZipCredits implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("ZipCredits:: Exception:: => " . $exception->getMessage());
+        nlog('ZipCredits:: Exception:: => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
     }
 }

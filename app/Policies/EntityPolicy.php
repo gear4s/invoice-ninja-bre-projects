@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Policies;
 
 use App\Models\Client;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 /**
  * Class EntityPolicy.
@@ -27,8 +27,7 @@ class EntityPolicy
      *
      * Do not use this function!!!! We MUST also check company_id,
      *
-     * @param User $user
-     * @param  $ability
+     * @param  User  $user
      * @return void /void
      */
     public function before($user, $ability) {}
@@ -39,10 +38,6 @@ class EntityPolicy
      * For Client entities we check that the entity belongs to the same
      * *account* as the user (cross-company global clients).  For every other
      * entity type we still enforce the stricter same-company check.
-     *
-     * @param  User $user
-     * @param  $entity
-     * @return bool
      */
     public function edit(User $user, $entity): bool
     {
@@ -51,7 +46,7 @@ class EntityPolicy
                 ($user->isAdmin() ||
                     $user->hasPermission(
                         'edit_' .
-                            \Illuminate\Support\Str::snake(
+                            Str::snake(
                                 class_basename($entity),
                             ),
                     ) ||
@@ -63,7 +58,7 @@ class EntityPolicy
             $entity->company_id == $user->companyId()) ||
             ($user->hasPermission(
                 'edit_' .
-                    \Illuminate\Support\Str::snake(class_basename($entity)),
+                    Str::snake(class_basename($entity)),
             ) &&
                 $entity->company_id == $user->companyId()) ||
             ($user->owns($entity) &&
@@ -78,10 +73,6 @@ class EntityPolicy
      * For Client entities we check that the entity belongs to the same
      * *account* as the user (cross-company global clients).  For every other
      * entity type we still enforce the stricter same-company check.
-     *
-     * @param  User $user
-     * @param  $entity
-     * @return bool
      */
     public function view(User $user, $entity): bool
     {
@@ -90,7 +81,7 @@ class EntityPolicy
                 ($user->isAdmin() ||
                     $user->hasPermission(
                         'view_' .
-                            \Illuminate\Support\Str::snake(
+                            Str::snake(
                                 class_basename($entity),
                             ),
                     ) ||
@@ -102,7 +93,7 @@ class EntityPolicy
             $entity->company_id == $user->companyId()) ||
             ($user->hasPermission(
                 'view_' .
-                    \Illuminate\Support\Str::snake(class_basename($entity)),
+                    Str::snake(class_basename($entity)),
             ) &&
                 $entity->company_id == $user->companyId()) ||
             ($user->owns($entity) &&
@@ -115,9 +106,7 @@ class EntityPolicy
      * Determines whether the given entity belongs to the same account as the
      * authenticated user.  Used for global (cross-company) client access.
      *
-     * @param  User  $user
-     * @param  mixed $entity
-     * @return bool
+     * @param  mixed  $entity
      */
     protected function entityBelongsToAccount(User $user, $entity): bool
     {

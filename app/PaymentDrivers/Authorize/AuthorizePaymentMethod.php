@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -42,6 +41,7 @@ class AuthorizePaymentMethod
     public function setPaymentMethodId($payment_method_id)
     {
         $this->payment_method_id = $payment_method_id;
+
         return $this;
     }
 
@@ -97,13 +97,11 @@ class AuthorizePaymentMethod
     public function authorizeBankTransfer()
     {
 
-
         $data['gateway'] = $this->authorize;
         $data['public_client_id'] = $this->authorize->init()->getPublicClientKey();
         $data['api_login_id'] = $this->authorize->company_gateway->getConfigField('apiLoginId');
 
         return render('gateways.authorize.ach.authorize', $data);
-
 
     }
 
@@ -129,7 +127,7 @@ class AuthorizePaymentMethod
     {
 
         $client_profile_id = null;
-        $this->payment_method_id = GatewayType::BANK_TRANSFER; //override in case we have come from a payment.
+        $this->payment_method_id = GatewayType::BANK_TRANSFER; // override in case we have come from a payment.
 
         if ($client_gateway_token = $this->authorize->findClientGatewayRecord()) {
             $payment_profile = $this->addPaymentMethodToClient($client_gateway_token->gateway_customer_reference, $data);
@@ -173,7 +171,7 @@ class AuthorizePaymentMethod
             $last4 = (string) $payment_profile->getPaymentProfile()->getPayment()->getCreditCard()->getCardNumber();
         }
 
-        $payment_meta = new stdClass();
+        $payment_meta = new stdClass;
         $payment_meta->exp_month = 'xx';
         $payment_meta->exp_year = 'xx';
         $payment_meta->brand = $brand;
@@ -193,10 +191,10 @@ class AuthorizePaymentMethod
         $refId = 'ref' . time();
 
         // Set the payment data for the payment profile to a token obtained from Accept.js
-        $op = new OpaqueDataType();
+        $op = new OpaqueDataType;
         $op->setDataDescriptor($data['dataDescriptor']);
         $op->setDataValue($data['dataValue']);
-        $paymentOne = new PaymentType();
+        $paymentOne = new PaymentType;
         $paymentOne->setOpaqueData($op);
 
         $contact = $this->authorize->client->primary_contact()->first() ?: $this->authorize->client->contacts()->first();
@@ -205,7 +203,7 @@ class AuthorizePaymentMethod
 
         if ($contact) {
             // Create the Bill To info for new payment type
-            $billto = new CustomerAddressType();
+            $billto = new CustomerAddressType;
             $billto->setFirstName(substr($contact->present()->first_name(), 0, 50));
             $billto->setLastName(substr($contact->present()->last_name(), 0, 50));
             $billto->setCompany(substr($this->authorize->client->present()->name(), 0, 50));
@@ -226,7 +224,7 @@ class AuthorizePaymentMethod
         }
 
         // Create a new Customer Payment Profile object
-        $paymentprofile = new CustomerPaymentProfileType();
+        $paymentprofile = new CustomerPaymentProfileType;
         $paymentprofile->setCustomerType('individual');
 
         if ($billto) {
@@ -237,7 +235,7 @@ class AuthorizePaymentMethod
         $paymentprofile->setDefaultPaymentProfile(true);
 
         // Assemble the complete transaction request
-        $paymentprofilerequest = new CreateCustomerPaymentProfileRequest();
+        $paymentprofilerequest = new CreateCustomerPaymentProfileRequest;
         $paymentprofilerequest->setMerchantAuthentication($this->authorize->merchant_authentication);
 
         // Add an existing profile id to the request
@@ -273,8 +271,8 @@ class AuthorizePaymentMethod
         // Set the transaction's refId
         $refId = 'ref' . time();
 
-        //request requires customerProfileId and customerPaymentProfileId
-        $request = new GetCustomerPaymentProfileRequest();
+        // request requires customerProfileId and customerPaymentProfileId
+        $request = new GetCustomerPaymentProfileRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setRefId($refId);
         $request->setCustomerProfileId($gateway_customer_reference);
@@ -311,7 +309,7 @@ class AuthorizePaymentMethod
 
         // Use an existing payment profile ID for this Merchant name and Transaction key
 
-        $request = new DeleteCustomerPaymentProfileRequest();
+        $request = new DeleteCustomerPaymentProfileRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setCustomerProfileId($gateway_customer_reference);
         $request->setCustomerPaymentProfileId($payment_profile_id);

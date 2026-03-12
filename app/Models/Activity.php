@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,8 @@ namespace App\Models;
 
 use App\Utils\Number;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\Activity
@@ -46,28 +47,29 @@ use App\Utils\Traits\MakesHash;
  * @property int|null $recurring_quote_id
  * @property int|null $purchase_order_id
  * @property int|null $vendor_contact_id
- * @property-read \App\Models\Backup|null $backup
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\ClientContact|null $contact
- * @property-read \App\Models\Credit|null $credit
- * @property-read \App\Models\Expense|null $expense
+ * @property-read Backup|null $backup
+ * @property-read Client|null $client
+ * @property-read Company $company
+ * @property-read ClientContact|null $contact
+ * @property-read Credit|null $credit
+ * @property-read Expense|null $expense
  * @property-read mixed $hashed_id
- * @property-read \App\Models\Backup|null $history
- * @property-read \App\Models\Invoice|null $invoice
- * @property-read \App\Models\Payment|null $payment
- * @property-read \App\Models\PurchaseOrder|null $purchase_order
- * @property-read \App\Models\Quote|null $quote
- * @property-read \App\Models\RecurringExpense|null $recurring_expense
- * @property-read \App\Models\RecurringInvoice|null $recurring_invoice
- * @property-read \App\Models\Subscription|null $subscription
- * @property-read \App\Models\Task|null $task
- * @property-read \App\Models\User|null $user
- * @property-read \App\Models\Vendor|null $vendor
- * @property-read \App\Models\VendorContact|null $vendor_contact
+ * @property-read Backup|null $history
+ * @property-read Invoice|null $invoice
+ * @property-read Payment|null $payment
+ * @property-read PurchaseOrder|null $purchase_order
+ * @property-read Quote|null $quote
+ * @property-read RecurringExpense|null $recurring_expense
+ * @property-read RecurringInvoice|null $recurring_invoice
+ * @property-read Subscription|null $subscription
+ * @property-read Task|null $task
+ * @property-read User|null $user
+ * @property-read Vendor|null $vendor
+ * @property-read VendorContact|null $vendor_contact
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
-
+ *
  * @mixin \Eloquent
  */
 class Activity extends StaticModel
@@ -339,99 +341,97 @@ class Activity extends StaticModel
         return self::class;
     }
 
-    public function backup(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function backup(): HasOne
     {
         return $this->hasOne(Backup::class);
     }
 
-    public function history(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function history(): HasOne
     {
         return $this->hasOne(Backup::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientContact::class, 'client_contact_id', 'id')->withTrashed();
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class)->withTrashed();
     }
 
-
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class)->withTrashed();
     }
 
-
-    public function recurring_invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function recurring_invoice(): BelongsTo
     {
         return $this->belongsTo(RecurringInvoice::class)->withTrashed();
     }
 
-    public function credit(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function credit(): BelongsTo
     {
         return $this->belongsTo(Credit::class)->withTrashed();
     }
 
-    public function quote(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function quote(): BelongsTo
     {
         return $this->belongsTo(Quote::class)->withTrashed();
     }
 
-    public function subscription(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class)->withTrashed();
     }
 
-    public function payment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class)->withTrashed();
     }
 
-    public function expense(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function expense(): BelongsTo
     {
         return $this->belongsTo(Expense::class)->withTrashed();
     }
 
-    public function account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function recurring_expense(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function recurring_expense(): BelongsTo
     {
         return $this->belongsTo(RecurringExpense::class)->withTrashed();
     }
 
-    public function purchase_order(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function purchase_order(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class)->withTrashed();
     }
 
-    public function vendor_contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor_contact(): BelongsTo
     {
         return $this->belongsTo(VendorContact::class)->withTrashed();
     }
 
-    public function task(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class)->withTrashed();
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -461,10 +461,10 @@ class Activity extends StaticModel
             ':adjustment',
         ];
 
-        $found_variables = array_intersect(explode(" ", trans("texts.activity_{$this->activity_type_id}")), $intersect);
+        $found_variables = array_intersect(explode(' ', trans("texts.activity_{$this->activity_type_id}")), $intersect);
 
         if ($this->activity_type_id == 10 && $this->client_contact_id && !$this->token_id) {
-            $found_variables = array_intersect(explode(" ", trans("texts.activity_10_online")), $intersect);
+            $found_variables = array_intersect(explode(' ', trans('texts.activity_10_online')), $intersect);
         }
 
         if ($this->activity_type_id == 54 && !$this->token_id) {
@@ -539,22 +539,22 @@ class Activity extends StaticModel
         $translation = '';
 
         match ($variable) {
-            ':invoice' => $translation = [substr($variable, 1) => [ 'label' => $this?->invoice?->number ?? '', 'hashed_id' => $this->invoice?->hashed_id ?? '']],
-            ':user' => $translation =  [substr($variable, 1) => [ 'label' => $this?->user?->present()->name() ?? $system, 'hashed_id' => $this->user->hashed_id ?? '']],
-            ':quote' => $translation =  [substr($variable, 1) => [ 'label' => $this?->quote?->number ?? '', 'hashed_id' => $this->quote->hashed_id ?? '']],
-            ':credit' => $translation =  [substr($variable, 1) => [ 'label' => $this?->credit?->number ?? '', 'hashed_id' => $this->credit->hashed_id ?? '']],
-            ':payment' => $translation =  [substr($variable, 1) => [ 'label' => $this?->payment?->number ?? '', 'hashed_id' => $this->payment->hashed_id ?? '']],
-            ':task' => $translation =  [substr($variable, 1) => [ 'label' => $this?->task?->number ?? '', 'hashed_id' => $this->task->hashed_id ?? '']],
-            ':expense' => $translation =  [substr($variable, 1) => [ 'label' => $this?->expense?->number ?? '', 'hashed_id' => $this->expense->hashed_id ?? '']],
-            ':purchase_order' => $translation =  [substr($variable, 1) => [ 'label' => $this?->purchase_order?->number ?? '', 'hashed_id' => $this->purchase_order->hashed_id ?? '']],
-            ':subscription' => $translation =  [substr($variable, 1) => [ 'label' => $this?->subscription?->number ?? '', 'hashed_id' => $this->subscription->hashed_id ?? '' ]],
-            ':recurring_invoice' => $translation =  [substr($variable, 1) => [ 'label' =>  $this?->recurring_invoice?->number ?? '', 'hashed_id' => $this->recurring_invoice->hashed_id ?? '']],
-            ':recurring_expense' => $translation =  [substr($variable, 1) => [ 'label' => $this?->recurring_expense?->number ?? '', 'hashed_id' => $this->recurring_expense->hashed_id ?? '']],
-            ':payment_amount' => $translation =  [substr($variable, 1) => [ 'label' =>  Number::formatMoney($this?->payment?->amount, $this?->payment?->client ?? $this->company) ?? '', 'hashed_id' => '']],
-            ':adjustment' => $translation = [substr($variable, 1) => [ 'label' =>  $this->getPaymentAdjustment($this?->payment), 'hashed_id' => '']],
-            ':ip' => $translation = [ 'ip' => $this->ip ?? ''],
+            ':invoice' => $translation = [substr($variable, 1) => ['label' => $this?->invoice?->number ?? '', 'hashed_id' => $this->invoice?->hashed_id ?? '']],
+            ':user' => $translation = [substr($variable, 1) => ['label' => $this?->user?->present()->name() ?? $system, 'hashed_id' => $this->user->hashed_id ?? '']],
+            ':quote' => $translation = [substr($variable, 1) => ['label' => $this?->quote?->number ?? '', 'hashed_id' => $this->quote->hashed_id ?? '']],
+            ':credit' => $translation = [substr($variable, 1) => ['label' => $this?->credit?->number ?? '', 'hashed_id' => $this->credit->hashed_id ?? '']],
+            ':payment' => $translation = [substr($variable, 1) => ['label' => $this?->payment?->number ?? '', 'hashed_id' => $this->payment->hashed_id ?? '']],
+            ':task' => $translation = [substr($variable, 1) => ['label' => $this?->task?->number ?? '', 'hashed_id' => $this->task->hashed_id ?? '']],
+            ':expense' => $translation = [substr($variable, 1) => ['label' => $this?->expense?->number ?? '', 'hashed_id' => $this->expense->hashed_id ?? '']],
+            ':purchase_order' => $translation = [substr($variable, 1) => ['label' => $this?->purchase_order?->number ?? '', 'hashed_id' => $this->purchase_order->hashed_id ?? '']],
+            ':subscription' => $translation = [substr($variable, 1) => ['label' => $this?->subscription?->number ?? '', 'hashed_id' => $this->subscription->hashed_id ?? '']],
+            ':recurring_invoice' => $translation = [substr($variable, 1) => ['label' => $this?->recurring_invoice?->number ?? '', 'hashed_id' => $this->recurring_invoice->hashed_id ?? '']],
+            ':recurring_expense' => $translation = [substr($variable, 1) => ['label' => $this?->recurring_expense?->number ?? '', 'hashed_id' => $this->recurring_expense->hashed_id ?? '']],
+            ':payment_amount' => $translation = [substr($variable, 1) => ['label' => Number::formatMoney($this?->payment?->amount, $this?->payment?->client ?? $this->company) ?? '', 'hashed_id' => '']],
+            ':adjustment' => $translation = [substr($variable, 1) => ['label' => $this->getPaymentAdjustment($this?->payment), 'hashed_id' => '']],
+            ':ip' => $translation = ['ip' => $this->ip ?? ''],
             ':contact' => $translation = $this->resolveContact(),
-            ':notes' => $translation = [ 'notes' => $this->notes ?? ''],
+            ':notes' => $translation = ['notes' => $this->notes ?? ''],
 
             default => $translation = [],
         };
@@ -562,7 +562,7 @@ class Activity extends StaticModel
         return $translation;
     }
 
-    public function getPaymentAdjustment(?\App\Models\Payment $payment): string
+    public function getPaymentAdjustment(?Payment $payment): string
     {
         if (!$payment) {
             return '';
@@ -587,6 +587,6 @@ class Activity extends StaticModel
             return [];
         }
 
-        return ['contact' => [ 'label' => $contact?->present()->name() ?? '', 'hashed_id' => $entity->hashed_id ?? '', 'contact_entity' => $contact_entity]];
+        return ['contact' => ['label' => $contact?->present()->name() ?? '', 'hashed_id' => $entity->hashed_id ?? '', 'contact_entity' => $contact_entity]];
     }
 }

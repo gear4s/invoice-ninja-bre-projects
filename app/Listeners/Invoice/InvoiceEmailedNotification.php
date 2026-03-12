@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -46,7 +45,6 @@ class InvoiceEmailedNotification implements ShouldQueue
         $invoice->last_sent_date = now();
         $invoice->saveQuietly();
 
-
         /* We loop through each user and determine whether they need to be notified */
         foreach ($event->invitation->company->company_users as $company_user) {
             /* The User */
@@ -59,7 +57,7 @@ class InvoiceEmailedNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new EntitySentObject($event->invitation, 'invoice', $event->template, $company_user->portalType()))->build());
                 $nmo->company = $invoice->company;
                 $nmo->settings = $invoice->company->settings;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,8 @@ namespace App\Livewire\Flow2;
 
 use App\Utils\Number;
 use App\Utils\Traits\WithSecureContext;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
 use Livewire\Component;
 
 class UnderOverPayment extends Component
@@ -78,7 +79,7 @@ class UnderOverPayment extends Component
         }
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+    public function render(): Factory|View
     {
         return render('flow2.under-over-payments');
     }

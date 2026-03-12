@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -44,7 +43,7 @@ class ClientContactRepository extends BaseRepository
         });
 
         /* Ensure send_email always exists in at least one contact */
-        if (! $contacts->contains('send_email', true)) {
+        if (!$contacts->contains('send_email', true)) {
             $this->set_send_email_on_contact = true;
         }
 
@@ -63,7 +62,7 @@ class ClientContactRepository extends BaseRepository
             return $contact;
         });
 
-        //loop and update/create contacts
+        // loop and update/create contacts
         $contacts->each(function ($contact) use ($client) {
             $update_contact = null;
 
@@ -71,31 +70,31 @@ class ClientContactRepository extends BaseRepository
                 $update_contact = ClientContact::find($contact['id']);
             }
 
-            if (! $update_contact) {
+            if (!$update_contact) {
                 $update_contact = ClientContactFactory::create($client->company_id, $client->user_id);
             }
 
-            //10-09-2021 - enforce the client->id and remove client_id from fillables
+            // 10-09-2021 - enforce the client->id and remove client_id from fillables
             $update_contact->client_id = $client->id;
 
-            /* We need to set NULL email addresses to blank strings to pass authentication*/
+            /* We need to set NULL email addresses to blank strings to pass authentication */
             if (array_key_exists('email', $contact) && is_null($contact['email'])) {
                 $contact['email'] = '';
             }
 
             $update_contact->fill($contact);
 
-            if (array_key_exists('password', $contact) && strlen($contact['password'] ?? '') > 1 && strlen($update_contact->email ?? '') > 3) { //updating on a blank contact email will cause large table scanning
+            if (array_key_exists('password', $contact) && strlen($contact['password'] ?? '') > 1 && strlen($update_contact->email ?? '') > 3) { // updating on a blank contact email will cause large table scanning
                 $update_contact->password = Hash::make($contact['password']);
 
                 ClientContact::withTrashed()
-                            ->where('company_id', $client->company_id)
-                            ->where('client_id', $client->id)
-                            ->where('email', $update_contact->email)->cursor()
-                                    ->each(function ($saveable_contact) use ($update_contact) {
-                                        $saveable_contact->password = $update_contact->password;
-                                        $saveable_contact->save();
-                                    });
+                    ->where('company_id', $client->company_id)
+                    ->where('client_id', $client->id)
+                    ->where('email', $update_contact->email)->cursor()
+                    ->each(function ($saveable_contact) use ($update_contact) {
+                        $saveable_contact->password = $update_contact->password;
+                        $saveable_contact->save();
+                    });
             }
 
             if (array_key_exists('email', $contact)) {
@@ -105,10 +104,10 @@ class ClientContactRepository extends BaseRepository
             $update_contact->save();
         });
 
-        //need to reload here to shake off stale contacts
+        // need to reload here to shake off stale contacts
         $client->fresh();
 
-        //always made sure we have one blank contact to maintain state
+        // always made sure we have one blank contact to maintain state
         if ($client->contacts()->count() == 0) {
             $new_contact = ClientContactFactory::create($client->company_id, $client->user_id);
             $new_contact->client_id = $client->id;

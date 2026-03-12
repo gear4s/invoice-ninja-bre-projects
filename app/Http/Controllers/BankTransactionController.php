@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,6 +23,7 @@ use App\Http\Requests\BankTransaction\StoreBankTransactionRequest;
 use App\Http\Requests\BankTransaction\UpdateBankTransactionRequest;
 use App\Jobs\Bank\MatchBankTransactions;
 use App\Models\BankTransaction;
+use App\Models\User;
 use App\Repositories\BankTransactionRepository;
 use App\Transformers\BankTransactionTransformer;
 use App\Utils\Traits\MakesHash;
@@ -64,7 +64,7 @@ class BankTransactionController extends BaseController
 
     public function update(UpdateBankTransactionRequest $request, BankTransaction $bank_transaction)
     {
-        //stubs for updating the model
+        // stubs for updating the model
         $bank_transaction = $this->bank_transaction_repo->save($request->all(), $bank_transaction);
 
         return $this->itemResponse($bank_transaction->fresh());
@@ -72,7 +72,7 @@ class BankTransactionController extends BaseController
 
     public function create(CreateBankTransactionRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $bank_transaction = BankTransactionFactory::create($user->company()->id, $user->id);
@@ -82,10 +82,10 @@ class BankTransactionController extends BaseController
 
     public function store(StoreBankTransactionRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        //stub to store the model
+        // stub to store the model
         $bank_transaction = $this->bank_transaction_repo->save($request->all(), BankTransactionFactory::create($user->company()->id, $user->id));
 
         return $this->itemResponse($bank_transaction);
@@ -100,7 +100,7 @@ class BankTransactionController extends BaseController
 
     public function bulk(BulkBankTransactionRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $action = $request->input('action');
@@ -109,7 +109,7 @@ class BankTransactionController extends BaseController
 
         $bank_transactions = BankTransaction::withTrashed()->whereIn('id', $this->transformKeys($ids))->company()->get();
 
-        if ($action == 'convert_matched' && $user->can('edit', $bank_transactions->first())) { //catch this action
+        if ($action == 'convert_matched' && $user->can('edit', $bank_transactions->first())) { // catch this action
             $this->bank_transaction_repo->convert_matched($bank_transactions);
         } else {
             $bank_transactions->each(function ($bank_transaction, $key) use ($action, $user) {
@@ -124,7 +124,7 @@ class BankTransactionController extends BaseController
 
     public function match(MatchBankTransactionRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $bts = (new MatchBankTransactions($user->company()->id, $user->company()->db, $request->all()))->handle();

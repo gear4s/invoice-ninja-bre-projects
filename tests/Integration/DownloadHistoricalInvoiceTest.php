@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration;
 
+use App\Models\Activity;
 use App\Repositories\ActivityRepository;
 use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
@@ -20,14 +20,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ActivityController
-*/
+ */
 class DownloadHistoricalInvoiceTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
     use MakesHash;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -40,7 +39,7 @@ class DownloadHistoricalInvoiceTest extends TestCase
         }
     }
 
-    public function testDownloadInvoiceRoute()
+    public function test_download_invoice_route()
     {
 
         $response = $this->withHeaders([
@@ -53,7 +52,7 @@ class DownloadHistoricalInvoiceTest extends TestCase
 
     }
 
-    public function testDownloadDeliveryRoute()
+    public function test_download_delivery_route()
     {
 
         $response = $this->withHeaders([
@@ -66,7 +65,7 @@ class DownloadHistoricalInvoiceTest extends TestCase
 
     }
 
-    public function testDownloadInvoiceBulkActionRoute()
+    public function test_download_invoice_bulk_action_route()
     {
         $data = [
             'action' => 'download',
@@ -76,14 +75,14 @@ class DownloadHistoricalInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->post("/api/v1/invoices/bulk", $data);
+        ])->post('/api/v1/invoices/bulk', $data);
 
         $response->assertStatus(200);
         $response->assertDownload();
 
     }
 
-    public function testDownloadQuoteRoute()
+    public function test_download_quote_route()
     {
 
         $response = $this->withHeaders([
@@ -96,7 +95,7 @@ class DownloadHistoricalInvoiceTest extends TestCase
 
     }
 
-    public function testDownloadQuoteBulkActionRoute()
+    public function test_download_quote_bulk_action_route()
     {
         $data = [
             'action' => 'download',
@@ -106,7 +105,7 @@ class DownloadHistoricalInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->post("/api/v1/quotes/bulk", $data);
+        ])->post('/api/v1/quotes/bulk', $data);
 
         $response->assertStatus(200);
 
@@ -114,17 +113,17 @@ class DownloadHistoricalInvoiceTest extends TestCase
 
     private function mockActivity()
     {
-        $activity_repo = new ActivityRepository();
+        $activity_repo = new ActivityRepository;
 
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->invoice_id = $this->invoice->id;
         $obj->user_id = $this->invoice->user_id;
         $obj->company_id = $this->company->id;
-        $obj->activity_type_id = \App\Models\Activity::EMAIL_INVOICE;
+        $obj->activity_type_id = Activity::EMAIL_INVOICE;
         $activity_repo->save($obj, $this->invoice, Ninja::eventVars());
     }
 
-    public function testActivityAccessible()
+    public function test_activity_accessible()
     {
         $this->mockActivity();
 

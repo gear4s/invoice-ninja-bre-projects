@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,12 +31,12 @@ class AdminEmailMailable extends Mailable
     /**
      * Get the message envelope.
      *
-     * @return \Illuminate\Mail\Mailables\Envelope
+     * @return Envelope
      */
     public function envelope()
     {
         return new Envelope(
-            subject: str_replace("<br>", "", $this->email_object->subject),
+            subject: str_replace('<br>', '', $this->email_object->subject),
             tags: [$this->email_object->company_key],
             replyTo: $this->email_object->reply_to,
             from: $this->email_object->from,
@@ -50,7 +49,7 @@ class AdminEmailMailable extends Mailable
     /**
      * Get the message content definition.
      *
-     * @return \Illuminate\Mail\Mailables\Content
+     * @return Content
      */
     public function content()
     {
@@ -78,16 +77,16 @@ class AdminEmailMailable extends Mailable
      */
     public function attachments()
     {
-        $attachments  = [];
+        $attachments = [];
 
         $attachments = collect($this->email_object->attachments)->map(function ($file) {
 
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_buffer($finfo, base64_decode($file['file']));
+            $mime = finfo_buffer($finfo, base64_decode($file['file']));
             $mime = $mime ?: 'application/octet-stream';
             finfo_close($finfo);
 
-            return Attachment::fromData(fn() => base64_decode($file['file']), $file['name'])->withMime($mime);
+            return Attachment::fromData(fn () => base64_decode($file['file']), $file['name'])->withMime($mime);
         });
 
         return $attachments->toArray();
@@ -96,7 +95,7 @@ class AdminEmailMailable extends Mailable
     /**
      * Get the message headers.
      *
-     * @return \Illuminate\Mail\Mailables\Headers
+     * @return Headers
      */
     public function headers()
     {

@@ -6,40 +6,38 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Models\Product;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\CompanyToken;
-use App\Models\Subscription;
-use App\Utils\Traits\MakesHash;
-use App\Models\RecurringInvoice;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
+use App\Models\Client;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\RecurringInvoice;
+use App\Models\Subscription;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\SubscriptionController
  */
 class SubscriptionApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -52,15 +50,15 @@ class SubscriptionApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testSubscriptionCronLocalization()
+    public function test_subscription_cron_localization()
     {
 
         $settings = CompanySettings::defaults();
-        $settings->timezone_id = '50'; //europe/vienna
+        $settings->timezone_id = '50'; // europe/vienna
 
         $c2 = Company::factory()->create([
             'account_id' => $this->company->account_id,
-            'settings' => $settings
+            'settings' => $settings,
         ]);
 
         $cu = CompanyUserFactory::create($this->user->id, $c2->id, $this->account->id);
@@ -70,9 +68,9 @@ class SubscriptionApiTest extends TestCase
         $cu->permissions = '["view_client"]';
         $cu->save();
 
-        $different_company_token = \Illuminate\Support\Str::random(64);
+        $different_company_token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $c2->id;
         $company_token->account_id = $c2->account_id;
@@ -80,7 +78,6 @@ class SubscriptionApiTest extends TestCase
         $company_token->token = $different_company_token;
         $company_token->is_system = true;
         $company_token->save();
-
 
         $s = Subscription::factory()->create([
             'company_id' => $c2->id,
@@ -98,11 +95,11 @@ class SubscriptionApiTest extends TestCase
             'subscription_id' => $s->id,
             'due_date' => now()->startOfDay(),
             'client_id' => $client2->id,
-            'status_id' => Invoice::STATUS_SENT
+            'status_id' => Invoice::STATUS_SENT,
         ]);
 
         $settings = CompanySettings::defaults();
-        $settings->timezone_id = '110'; //sydney/australia
+        $settings->timezone_id = '110'; // sydney/australia
 
         $c = Company::factory()->create([
             'account_id' => $this->company->account_id,
@@ -116,9 +113,9 @@ class SubscriptionApiTest extends TestCase
         $cu->permissions = '["view_client"]';
         $cu->save();
 
-        $different_company_token = \Illuminate\Support\Str::random(64);
+        $different_company_token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $c->id;
         $company_token->account_id = $c->account_id;
@@ -132,7 +129,6 @@ class SubscriptionApiTest extends TestCase
             'user_id' => $this->user->id,
         ]);
 
-
         $client = Client::factory()->create([
             'company_id' => $c2->id,
             'user_id' => $this->user->id,
@@ -144,12 +140,12 @@ class SubscriptionApiTest extends TestCase
             'subscription_id' => $s1->id,
             'due_date' => now()->startOfDay(),
             'client_id' => $client->id,
-            'status_id' => Invoice::STATUS_SENT
+            'status_id' => Invoice::STATUS_SENT,
         ]);
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        $company = Company::find($c->id); //sydney
+        $company = Company::find($c->id); // sydney
 
         $timezone_now = now()->setTimezone($company->timezone()->name);
 
@@ -158,41 +154,41 @@ class SubscriptionApiTest extends TestCase
         $this->travelTo($timezone_now->copy()->startOfDay()->subHour());
 
         $i = false;
-        //Capture companies within the window of 00:00 and 00:30
+        // Capture companies within the window of 00:00 and 00:30
         if ($timezone_now->gte($timezone_now->copy()->startOfDay()) && $timezone_now->lt($timezone_now->copy()->startOfDay()->addMinutes(30))) {
 
             $i = Invoice::query()
-                    ->where('company_id', $company->id)
-                    ->whereNull('deleted_at')
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                    ->where('is_proforma', 0)
-                    ->whereNotNull('subscription_id')
-                    ->where('balance', '>', 0)
-                    ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
-                    ->get();
+                ->where('company_id', $company->id)
+                ->whereNull('deleted_at')
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_proforma', 0)
+                ->whereNotNull('subscription_id')
+                ->where('balance', '>', 0)
+                ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
+                ->get();
 
             // nlog($i->count());
             // nlog($i->toArray());
 
             $this->assertCount(0, $i);
-        }
-        else
+        } else {
             $this->assertFalse($i);
+        }
 
         $this->travelTo($timezone_now->copy()->startOfDay());
 
         if (now()->gte($timezone_now->copy()->startOfDay()) && now()->lt($timezone_now->copy()->startOfDay()->addMinutes(30))) {
 
             $i = Invoice::query()
-                    ->where('company_id', $company->id)
-                    ->whereNull('deleted_at')
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                    ->where('is_proforma', 0)
-                    ->whereNotNull('subscription_id')
-                    ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
-                    ->get();
+                ->where('company_id', $company->id)
+                ->whereNull('deleted_at')
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_proforma', 0)
+                ->whereNotNull('subscription_id')
+                ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
+                ->get();
 
         }
 
@@ -205,17 +201,17 @@ class SubscriptionApiTest extends TestCase
         if ($timezone_now->gte($timezone_now->copy()->startOfDay()) && $timezone_now->lt($timezone_now->copy()->startOfDay()->addMinutes(30))) {
 
             $i = Invoice::query()
-                    ->where('company_id', $company->id)
-                    ->whereNull('deleted_at')
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                    ->where('is_proforma', 0)
-                    ->whereNotNull('subscription_id')
-                    ->where('balance', '>', 0)
-                    ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
-                    ->get();
+                ->where('company_id', $company->id)
+                ->whereNull('deleted_at')
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_proforma', 0)
+                ->whereNotNull('subscription_id')
+                ->where('balance', '>', 0)
+                ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
+                ->get();
 
-                     $this->assertCount(0, $i);
+            $this->assertCount(0, $i);
 
         }
 
@@ -224,9 +220,9 @@ class SubscriptionApiTest extends TestCase
         $this->assertEquals(2, $count);
 
         $this->travelBack();
-        //////////////////////////////////////////// vienna //////////////////////////////////////////////////
+        // ////////////////////////////////////////// vienna //////////////////////////////////////////////////
 
-        $company = Company::find($c2->id); //vienna
+        $company = Company::find($c2->id); // vienna
 
         $timezone_now = now()->setTimezone($company->timezone()->name);
 
@@ -236,19 +232,19 @@ class SubscriptionApiTest extends TestCase
 
         $i = false;
 
-        //Capture companies within the window of 00:00 and 00:30
+        // Capture companies within the window of 00:00 and 00:30
         if ($timezone_now->gte($timezone_now->copy()->startOfDay()) && $timezone_now->lt($timezone_now->copy()->startOfDay()->addMinutes(30))) {
 
             $i = Invoice::query()
-                    ->where('company_id', $company->id)
-                    ->whereNull('deleted_at')
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                    ->where('is_proforma', 0)
-                    ->whereNotNull('subscription_id')
-                    ->where('balance', '>', 0)
-                    ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
-                    ->get();
+                ->where('company_id', $company->id)
+                ->whereNull('deleted_at')
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_proforma', 0)
+                ->whereNotNull('subscription_id')
+                ->where('balance', '>', 0)
+                ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
+                ->get();
 
         }
 
@@ -259,14 +255,14 @@ class SubscriptionApiTest extends TestCase
         if (now()->gte($timezone_now->copy()->startOfDay()) && now()->lt($timezone_now->copy()->startOfDay()->addMinutes(30))) {
 
             $i = Invoice::query()
-                    ->where('company_id', $company->id)
-                    ->whereNull('deleted_at')
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                    ->where('is_proforma', 0)
-                    ->whereNotNull('subscription_id')
-                    ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
-                    ->get();
+                ->where('company_id', $company->id)
+                ->whereNull('deleted_at')
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_proforma', 0)
+                ->whereNotNull('subscription_id')
+                ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
+                ->get();
 
         }
 
@@ -279,48 +275,44 @@ class SubscriptionApiTest extends TestCase
         if ($timezone_now->gte($timezone_now->copy()->startOfDay()) && $timezone_now->lt($timezone_now->copy()->startOfDay()->addMinutes(30))) {
 
             $i = Invoice::query()
-                    ->where('company_id', $company->id)
-                    ->whereNull('deleted_at')
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                    ->where('is_proforma', 0)
-                    ->whereNotNull('subscription_id')
-                    ->where('balance', '>', 0)
-                    ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
-                    ->get();
+                ->where('company_id', $company->id)
+                ->whereNull('deleted_at')
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_proforma', 0)
+                ->whereNotNull('subscription_id')
+                ->where('balance', '>', 0)
+                ->whereDate('due_date', '<=', now()->setTimezone($company->timezone()->name)->addDay()->startOfDay())
+                ->get();
 
         }
 
         $this->assertFalse($i);
 
-
-
     }
 
-    public function testAssignInvoice()
+    public function test_assign_invoice()
     {
         $i = Invoice::factory()
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'client_id' => $this->client->id,
-        ]);
-
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'client_id' => $this->client->id,
+            ]);
 
         $s = Subscription::factory()
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
 
-        ]);
+            ]);
 
         $data = [
             'ids' => [$s->hashed_id],
             'entity' => 'invoice',
             'entity_id' => $i->hashed_id,
-            'action' => 'assign_invoice'
+            'action' => 'assign_invoice',
         ];
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -335,30 +327,28 @@ class SubscriptionApiTest extends TestCase
 
     }
 
-    public function testAssignRecurringInvoice()
+    public function test_assign_recurring_invoice()
     {
         $i = RecurringInvoice::factory()
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'client_id' => $this->client->id,
-        ]);
-
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'client_id' => $this->client->id,
+            ]);
 
         $s = Subscription::factory()
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
 
-        ]);
+            ]);
 
         $data = [
             'ids' => [$s->hashed_id],
             'entity' => 'recurring_invoice',
             'entity_id' => $i->hashed_id,
-            'action' => 'assign_invoice'
+            'action' => 'assign_invoice',
         ];
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -373,16 +363,16 @@ class SubscriptionApiTest extends TestCase
 
     }
 
-    public function testSubscriptionFilter()
+    public function test_subscription_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/subscriptions?filter=xx')
-          ->assertStatus(200);
+            ->assertStatus(200);
     }
 
-    public function testSubscriptionsGet()
+    public function test_subscriptions_get()
     {
         $product = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -398,31 +388,30 @@ class SubscriptionApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/subscriptions/'.$this->encodePrimaryKey($billing_subscription->id));
+        ])->get('/api/v1/subscriptions/' . $this->encodePrimaryKey($billing_subscription->id));
 
         // nlog($response);
 
         $response->assertStatus(200);
     }
 
-    public function testSubscriptionsPost()
+    public function test_subscriptions_post()
     {
         $product = Product::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
         ]);
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->post('/api/v1/subscriptions', ['steps' => "cart,auth.login-or-register",'product_ids' => $product->hashed_id, 'allow_cancellation' => true, 'name' => Str::random(5)]);
+        ])->post('/api/v1/subscriptions', ['steps' => 'cart,auth.login-or-register', 'product_ids' => $product->hashed_id, 'allow_cancellation' => true, 'name' => Str::random(5)]);
 
         // nlog($response);
         $response->assertStatus(200);
     }
 
-    public function testSubscriptionPut()
+    public function test_subscription_put()
     {
         $product = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -431,14 +420,14 @@ class SubscriptionApiTest extends TestCase
 
         $response1 = $this
             ->withHeaders(['X-API-SECRET' => config('ninja.api_secret'), 'X-API-TOKEN' => $this->token])
-            ->post('/api/v1/subscriptions', ['steps' => "cart,auth.login-or-register",'product_ids' => $product->hashed_id, 'name' => Str::random(5)])
+            ->post('/api/v1/subscriptions', ['steps' => 'cart,auth.login-or-register', 'product_ids' => $product->hashed_id, 'name' => Str::random(5)])
             ->assertStatus(200)
             ->json();
 
         // try {
         $response2 = $this
             ->withHeaders(['X-API-SECRET' => config('ninja.api_secret'), 'X-API-TOKEN' => $this->token])
-            ->put('/api/v1/subscriptions/'.$response1['data']['id'], ['steps' => "cart,auth.login-or-register",'allow_cancellation' => true])
+            ->put('/api/v1/subscriptions/' . $response1['data']['id'], ['steps' => 'cart,auth.login-or-register', 'allow_cancellation' => true])
             ->assertStatus(200)
             ->json();
         // }catch(ValidationException $e) {
@@ -448,7 +437,7 @@ class SubscriptionApiTest extends TestCase
         $this->assertNotEquals($response1['data']['allow_cancellation'], $response2['data']['allow_cancellation']);
     }
 
-    public function testSubscriptionDeleted()
+    public function test_subscription_deleted()
     {
         $product = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -463,7 +452,7 @@ class SubscriptionApiTest extends TestCase
 
         $response = $this
             ->withHeaders(['X-API-SECRET' => config('ninja.api_secret'), 'X-API-TOKEN' => $this->token])
-            ->delete('/api/v1/subscriptions/'.$this->encodePrimaryKey($billing_subscription->id))
+            ->delete('/api/v1/subscriptions/' . $this->encodePrimaryKey($billing_subscription->id))
             ->assertStatus(200)
             ->json();
     }

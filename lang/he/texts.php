@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'ארגון ',
     'name' => 'שם',
     'website' => 'אתר אינטרנט',
@@ -1174,7 +1174,6 @@ $lang = array(
     'enterprise_plan_features' => 'התוכנית הארגונית מוסיפה תמיכה עבור משתמשים מרובים וקבצים מצורפים, :link כדי לראות את רשימת התכונות המלאה.',
     'return_to_app' => 'Return To App',
 
-
     // Payment updates
     'refund_payment' => 'החזר כספי',
     'refund_max' => 'Max:',
@@ -1703,7 +1702,6 @@ $lang = array(
     'lang_Serbian' => 'סרבית',
     'lang_Bulgarian' => 'בולגרית',
     'lang_Russian (Russia)' => 'Russian (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'ראיית חשבון',
@@ -2361,7 +2359,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'זהב טרוי אונקה',
     'currency_nicaraguan_córdoba' => 'קורדובה ניקרגואה',
     'currency_malagasy_ariary' => 'ארית מלגזית',
-    "currency_tongan_pa_anga" => "פאאנגה טונגנית",
+    'currency_tongan_pa_anga' => 'פאאנגה טונגנית',
 
     'review_app_help' => 'We hope you\'re enjoying using the app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'writing a review',
@@ -4361,7 +4359,7 @@ $lang = array(
     'activity_122' => ':user archived recurring expense :recurring_expense',
     'activity_123' => ':user deleted recurring expense :recurring_expense',
     'activity_124' => ':user restored recurring expense :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'כדי לצפות ב-:entity עליך להגדיר סיסמה.',
     'unsubscribe' => 'בטל את המנוי',
     'unsubscribed' => 'בוטל מנוי',
@@ -4867,7 +4865,7 @@ $lang = array(
     'payment_type_Klarna' => 'קלרנה',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'ניתן לשלם תוך :payeddue ימים נטו עד :paydate',
-    'xinvoice_no_buyers_reference' => "לא ניתנה התייחסות של קונה",
+    'xinvoice_no_buyers_reference' => 'לא ניתנה התייחסות של קונה',
     'xinvoice_online_payment' => 'יש לשלם את החשבונית באופן מקוון באמצעות הקישור המצורף',
     'pre_payment' => 'תשלום מראש',
     'number_of_payments' => 'מספר תשלומים',
@@ -4972,8 +4970,8 @@ $lang = array(
     'e_invoice' => 'חשבונית אלקטרונית',
     'light_dark_mode' => 'מצב אור/כהה',
     'activities' => 'פעילויות',
-    'recent_transactions' => "עסקאות אחרונות",
-    'country_Palestine' => "פלשתינה",
+    'recent_transactions' => 'עסקאות אחרונות',
+    'country_Palestine' => 'פלשתינה',
     'country_Taiwan' => 'טייוואן',
     'duties' => 'חובות',
     'order_number' => 'מספר הזמנה',
@@ -5190,7 +5188,7 @@ $lang = array(
     'rff' => 'טופס שדות חובה',
     'add_step' => 'הוסף שלב',
     'steps' => 'שלבים',
-    'steps_order_help' =>  'סדר השלבים חשוב. הצעד הראשון לא צריך להיות תלוי באף שלב אחר. השלב השני צריך להיות תלוי בצעד הראשון, וכן הלאה.',
+    'steps_order_help' => 'סדר השלבים חשוב. הצעד הראשון לא צריך להיות תלוי באף שלב אחר. השלב השני צריך להיות תלוי בצעד הראשון, וכן הלאה.',
     'other_steps' => 'שלבים אחרים',
     'use_available_payments' => 'השתמש בתשלומים זמינים',
     'test_email_sent' => 'דוא&quot;ל נשלח בהצלחה',
@@ -5399,7 +5397,7 @@ $lang = array(
     'credit_updated' => 'הזיכוי עודכן',
     'payment_updated' => 'התשלום עודכן',
     'search_placeholder' => 'מצא חשבוניות, לקוחות ועוד',
-    'invalid_vat_number' => "מספר המע&quot;מ אינו תקף עבור המדינה שנבחרה. הפורמט צריך להיות קוד מדינה ואחריו מספר בלבד, כלומר DE123456789",
+    'invalid_vat_number' => 'מספר המע&quot;מ אינו תקף עבור המדינה שנבחרה. הפורמט צריך להיות קוד מדינה ואחריו מספר בלבד, כלומר DE123456789',
     'acts_as_sender' => 'שלח חשבוניות אלקטרוניות',
     'acts_as_receiver' => 'קבלת חשבוניות אלקטרוניות',
     'peppol_token_generated' => 'אסימון PEPPOL נוצר בהצלחה.',
@@ -5536,7 +5534,7 @@ $lang = array(
     'pro_plan_feature_10' => 'הגדר תזכורות אוטומטיות בדוא&quot;ל',
     'pro_plan_feature_11' => 'צירוף אוטומטי של קובץ PDF של חשבונית לאימיילים',
     'pro_plan_feature_12' => 'הצגת חתימה אלקטרונית של לקוחות על חשבוניות',
-    'pro_plan_feature_13' => "הפעל תיבת סימון &#39;אשר תנאים&#39;",
+    'pro_plan_feature_13' => 'הפעל תיבת סימון &#39;אשר תנאים&#39;',
     'pro_plan_feature_14' => 'דוחות: חשבוניות, הוצאות, רווח והפסד ועוד',
     'pro_plan_feature_15' => 'חשבוניות דוא&quot;ל בכמות גדולה, הצעות מחיר וזיכויים',
     'pro_plan_feature_16' => 'אינטרלינק 10 חברות עם כניסה אחת',
@@ -5911,6 +5909,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'העברה בנקאית של Stripe',
     'activity_164' => 'סנכרון QuickBooks נכשל. :notes',
-);
+];
 
 return $lang;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,7 +36,7 @@ class AuthorizeTransactions
         // Set the transaction's refId
         $refId = 'ref' . time();
 
-        $request = new GetTransactionDetailsRequest();
+        $request = new GetTransactionDetailsRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setTransId($transactionId);
 

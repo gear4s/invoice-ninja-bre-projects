@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -52,7 +51,7 @@ class InvoiceMigrationRepository extends BaseRepository
             $state['starting_amount'] = $model->amount;
         }
 
-        if (! $model->id) {
+        if (!$model->id) {
             $company_defaults = $client->setCompanyDefaults($data, lcfirst($resource));
             $model->uses_inclusive_taxes = $client->getSetting('inclusive_taxes');
             $data = array_merge($company_defaults, $data);
@@ -128,7 +127,7 @@ class InvoiceMigrationRepository extends BaseRepository
 
         $model->load('invitations');
 
-        /* If no invitations have been created, this is our fail safe to maintain state*/
+        /* If no invitations have been created, this is our fail safe to maintain state */
         if ($model->invitations->count() == 0) {
             $model->service()->createInvitations();
         }
@@ -147,7 +146,7 @@ class InvoiceMigrationRepository extends BaseRepository
             if (($state['finished_amount'] != $state['starting_amount']) && ($model->status_id != Invoice::STATUS_DRAFT)) {
             }
 
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = $this->decodePrimaryKey($client->getSetting('invoice_design_id'));
             }
         }
@@ -155,7 +154,7 @@ class InvoiceMigrationRepository extends BaseRepository
         if ($class->name == Credit::class) {
             $model = $model->calc()->getCredit();
 
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = $this->decodePrimaryKey($client->getSetting('credit_design_id'));
             }
         }
@@ -163,7 +162,7 @@ class InvoiceMigrationRepository extends BaseRepository
         if ($class->name == Quote::class) {
             $model = $model->calc()->getQuote();
 
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = $this->decodePrimaryKey($client->getSetting('quote_design_id'));
             }
         }

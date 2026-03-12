@@ -6,25 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Ninja;
 
-use App\Utils\Ninja;
-use App\Models\Account;
+use App\Jobs\PostMark\ProcessPostmarkWebhook;
 use App\Libraries\MultiDB;
+use App\Models\CreditInvitation;
+use App\Models\InvoiceInvitation;
+use App\Models\PurchaseOrderInvitation;
+use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoiceInvitation;
+use App\Utils\Ninja;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Queue\SerializesModels;
-use Turbo124\Beacon\Facades\LightLogs;
-use App\DataMapper\Analytics\EmailCount;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Postmark\PostmarkClient;
 
 class MailWebhookSync implements ShouldQueue
 {
@@ -55,7 +56,7 @@ class MailWebhookSync implements ShouldQueue
     public function handle()
     {
 
-        if (! Ninja::isHosted()) {
+        if (!Ninja::isHosted()) {
             return;
         }
 
@@ -70,11 +71,11 @@ class MailWebhookSync implements ShouldQueue
     private function scanSentEmails()
     {
         $invitationTypes = [
-            \App\Models\InvoiceInvitation::class,
-            \App\Models\QuoteInvitation::class,
-            \App\Models\RecurringInvoiceInvitation::class,
-            \App\Models\CreditInvitation::class,
-            \App\Models\PurchaseOrderInvitation::class,
+            InvoiceInvitation::class,
+            QuoteInvitation::class,
+            RecurringInvoiceInvitation::class,
+            CreditInvitation::class,
+            PurchaseOrderInvitation::class,
         ];
 
         foreach ($invitationTypes as $model) {
@@ -101,7 +102,6 @@ class MailWebhookSync implements ShouldQueue
 
     //     $this->runIterator($query);
 
-
     //     $query = \App\Models\QuoteInvitation::whereNotNull('message_id')
     //     ->whereNull('email_status')
     //     ->whereHas('company', function ($q) {
@@ -109,7 +109,6 @@ class MailWebhookSync implements ShouldQueue
     //     });
 
     //     $this->runIterator($query);
-
 
     //     $query = \App\Models\RecurringInvoiceInvitation::whereNotNull('message_id')
     //     ->whereNull('email_status')
@@ -119,7 +118,6 @@ class MailWebhookSync implements ShouldQueue
 
     //     $this->runIterator($query);
 
-
     //     $query = \App\Models\CreditInvitation::whereNotNull('message_id')
     //     ->whereNull('email_status')
     //     ->whereHas('company', function ($q) {
@@ -127,7 +125,6 @@ class MailWebhookSync implements ShouldQueue
     //     });
 
     //     $this->runIterator($query);
-
 
     //     $query = \App\Models\PurchaseOrderInvitation::whereNotNull('message_id')
     //     ->whereNull('email_status')
@@ -146,7 +143,7 @@ class MailWebhookSync implements ShouldQueue
         $query->each(function ($invite) {
 
             $token = config('services.postmark.token');
-            $postmark = new \Postmark\PostmarkClient($token);
+            $postmark = new PostmarkClient($token);
 
             $messageDetail = false;
 
@@ -154,7 +151,7 @@ class MailWebhookSync implements ShouldQueue
                 $messageDetail = $postmark->getOutboundMessageDetails($invite->message_id);
             } catch (\Throwable $th) {
                 $token = config('services.postmark-outlook.token');
-                $postmark = new \Postmark\PostmarkClient($token);
+                $postmark = new PostmarkClient($token);
 
                 try {
                     $messageDetail = $postmark->getOutboundMessageDetails($invite->message_id);
@@ -183,7 +180,7 @@ class MailWebhookSync implements ShouldQueue
                     ],
                 ];
 
-                (new \App\Jobs\PostMark\ProcessPostmarkWebhook($data, $token))->handle();
+                (new ProcessPostmarkWebhook($data, $token))->handle();
 
                 $invite->sent_date = now();
                 $invite->save();
@@ -203,7 +200,7 @@ class MailWebhookSync implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("MailWebhookSync:: Exception:: => " . $exception->getMessage());
+        nlog('MailWebhookSync:: Exception:: => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
     }
 }

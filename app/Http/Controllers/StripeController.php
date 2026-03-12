@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Jobs\Util\StripeUpdatePaymentMethods;
 use App\Libraries\MultiDB;
 use App\Models\Client;
 use App\Models\CompanyGateway;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
 
 class StripeController extends BaseController
@@ -27,7 +27,7 @@ class StripeController extends BaseController
 
     public function update()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if ($user->isAdmin()) {
@@ -41,7 +41,7 @@ class StripeController extends BaseController
 
     public function import()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if ($user->isAdmin()) {
@@ -55,19 +55,19 @@ class StripeController extends BaseController
 
     public function verify()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if ($user->isAdmin()) {
             MultiDB::findAndSetDbByCompanyKey($user->company()->company_key);
 
-            /** @var \App\Models\CompanyGateway $company_gateway */
+            /** @var CompanyGateway $company_gateway */
             $company_gateway = CompanyGateway::where('company_id', $user->company()->id)
-                                ->where('is_deleted', 0)
-                                ->whereIn('gateway_key', $this->stripe_keys)
-                                ->first();
+                ->where('is_deleted', 0)
+                ->whereIn('gateway_key', $this->stripe_keys)
+                ->first();
 
-            return $company_gateway->driver(new Client())->verifyConnect();
+            return $company_gateway->driver(new Client)->verifyConnect();
         }
 
         return response()->json(['message' => 'Unauthorized'], 403);
@@ -75,14 +75,14 @@ class StripeController extends BaseController
 
     public function disconnect(string $company_gateway_id)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /** @var \App\Models\CompanyGateway $company_gateway */
+        /** @var CompanyGateway $company_gateway */
         $company_gateway = CompanyGateway::where('company_id', $user->company()->id)
-                                         ->where('id', $this->decodePrimaryKey($company_gateway_id))
-                                         ->whereIn('gateway_key', $this->stripe_keys)
-                                         ->firstOrFail();
+            ->where('id', $this->decodePrimaryKey($company_gateway_id))
+            ->whereIn('gateway_key', $this->stripe_keys)
+            ->firstOrFail();
 
         return $company_gateway->driver()->disconnect();
     }

@@ -6,14 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Repositories;
 
-use App\Utils\Ninja;
 use App\Models\Design;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
@@ -27,7 +26,7 @@ class DesignRepository extends BaseRepository
 
         /** Make sure this design was not a default design - if it is, set the Clean template as the default */
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $company = $user->company();
@@ -58,7 +57,7 @@ class DesignRepository extends BaseRepository
     }
 
     /**
-     * @param $entity
+     * @param  $entity
      */
     public function restore($design)
     {
@@ -86,6 +85,4 @@ class DesignRepository extends BaseRepository
 
         return $new_design;
     }
-
-
 }

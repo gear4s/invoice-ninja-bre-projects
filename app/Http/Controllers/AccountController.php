@@ -6,24 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
-use App\Libraries\MultiDB;
-use App\Utils\TruthSource;
-use App\Models\CompanyUser;
-use Illuminate\Http\Response;
 use App\Helpers\Encrypt\Secure;
-use App\Jobs\Account\CreateAccount;
-use App\Transformers\AccountTransformer;
-use App\Transformers\CompanyUserTransformer;
-use Illuminate\Foundation\Bus\DispatchesJobs;
 use App\Http\Requests\Account\CreateAccountRequest;
 use App\Http\Requests\Account\UpdateAccountRequest;
+use App\Jobs\Account\CreateAccount;
+use App\Libraries\MultiDB;
+use App\Models\Account;
+use App\Models\CompanyUser;
+use App\Transformers\AccountTransformer;
+use App\Transformers\CompanyUserTransformer;
+use App\Utils\TruthSource;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
 
 class AccountController extends BaseController
 {
@@ -61,15 +62,13 @@ class AccountController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param CreateAccountRequest $request
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     *
+     * @return JsonResponse|Response
      */
     public function store(CreateAccountRequest $request)
     {
 
         if ($request->has('cf-turnstile-response') && config('ninja.cloudflare.turnstile.secret')) {
-            $r = \Illuminate\Support\Facades\Http::post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            $r = Http::post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                 'secret' => config('ninja.cloudflare.turnstile.secret'),
                 'response' => $request->input('cf-turnstile-response'),
                 'remoteip' => $request->getClientIp(),
@@ -95,7 +94,7 @@ class AccountController extends BaseController
         }
 
         $account = (new CreateAccount($request->all(), $request->getClientIp()))->handle();
-        if (! ($account instanceof Account)) {
+        if (!($account instanceof Account)) {
             return $account;
         }
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,13 +22,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\PaymentTermController
  */
 class PaymentTermsApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -46,7 +44,7 @@ class PaymentTermsApiTest extends TestCase
         );
     }
 
-    public function testPaymentTermsGetWithFilter()
+    public function test_payment_terms_get_with_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -56,8 +54,7 @@ class PaymentTermsApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-    public function testPaymentTermsGet()
+    public function test_payment_terms_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -67,7 +64,7 @@ class PaymentTermsApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testPaymentTermsGetStatusActive()
+    public function test_payment_terms_get_status_active()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -77,7 +74,7 @@ class PaymentTermsApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testPaymentTermsGetStatusArchived()
+    public function test_payment_terms_get_status_archived()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -87,7 +84,7 @@ class PaymentTermsApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testPaymentTermsGetStatusDeleted()
+    public function test_payment_terms_get_status_deleted()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -97,7 +94,7 @@ class PaymentTermsApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testPostPaymentTerm()
+    public function test_post_payment_term()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -111,7 +108,7 @@ class PaymentTermsApiTest extends TestCase
         $this->hashed_id = $data['data']['id'];
     }
 
-    public function testPutPaymentTerms()
+    public function test_put_payment_terms()
     {
         $payment_term = PaymentTermFactory::create($this->company->id, $this->user->id);
         $payment_term->num_days = 500;
@@ -120,12 +117,12 @@ class PaymentTermsApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/payment_terms/'.$this->encodePrimaryKey($payment_term->id), ['num_days' => 5000]);
+        ])->put('/api/v1/payment_terms/' . $this->encodePrimaryKey($payment_term->id), ['num_days' => 5000]);
 
         $response->assertStatus(200);
     }
 
-    public function testDeletePaymentTerm()
+    public function test_delete_payment_term()
     {
         $payment_term = PaymentTermFactory::create($this->company->id, $this->user->id);
         $payment_term->num_days = 500;
@@ -134,7 +131,7 @@ class PaymentTermsApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/payment_terms/'.$this->encodePrimaryKey($payment_term->id));
+        ])->delete('/api/v1/payment_terms/' . $this->encodePrimaryKey($payment_term->id));
 
         $response->assertStatus(200);
 

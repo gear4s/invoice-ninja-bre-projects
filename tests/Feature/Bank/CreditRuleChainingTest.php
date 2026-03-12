@@ -6,23 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Bank;
 
-use Tests\TestCase;
-use App\Models\Payment;
-use Tests\MockAccountData;
 use App\Models\BankIntegration;
 use App\Models\BankTransaction;
 use App\Models\BankTransactionRule;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Services\Bank\ProcessBankRules;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Str;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
  * Test credit transaction rule chaining - multiple rules with AND/OR logic
@@ -43,7 +42,7 @@ class CreditRuleChainingTest extends TestCase
         );
     }
 
-    public function testMultipleRulesMatchAny()
+    public function test_multiple_rules_match_any()
     {
         // Test "Match ANY" - should match if ANY condition passes
 
@@ -62,7 +61,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $hash,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create rule with TWO conditions, only ONE will match
@@ -80,8 +79,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.amount',
                     'operator' => '=',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create invoice that matches amount but NOT description
@@ -107,7 +106,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($i->hashed_id, $bt->invoice_ids);
     }
 
-    public function testMultipleRulesMatchAll()
+    public function test_multiple_rules_match_all()
     {
         // Test "Match ALL" - should match only if ALL conditions pass
 
@@ -126,7 +125,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $hash,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create rule with TWO conditions, BOTH must match
@@ -144,8 +143,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.amount',
                     'operator' => '=',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create invoice that matches BOTH conditions
@@ -171,7 +170,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($i->hashed_id, $bt->invoice_ids);
     }
 
-    public function testMultipleRulesMatchAllFails()
+    public function test_multiple_rules_match_all_fails()
     {
         // Test "Match ALL" - should NOT match if only some conditions pass
 
@@ -191,7 +190,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $hash,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create rule with TWO conditions, BOTH must match
@@ -209,8 +208,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.amount',
                     'operator' => '=',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create invoice that matches NEITHER condition
@@ -238,7 +237,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertNull($bt->payment_id);
     }
 
-    public function testThreeRulesMatchAll()
+    public function test_three_rules_match_all()
     {
         // Test THREE conditions with "Match ALL"
 
@@ -258,7 +257,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $hash . ' ' . $custom_value,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create rule with THREE conditions
@@ -280,8 +279,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.custom1',
                     'operator' => 'contains',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create invoice that matches ALL THREE conditions
@@ -308,7 +307,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($i->hashed_id, $bt->invoice_ids);
     }
 
-    public function testInvoiceAndClientMatching()
+    public function test_invoice_and_client_matching()
     {
         // Test matching invoice with client constraint
 
@@ -327,7 +326,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $client_id,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create rule matching amount AND client ID
@@ -345,8 +344,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$client.id_number',
                     'operator' => 'is',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Update client with ID number
@@ -375,7 +374,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($i->hashed_id, $bt->invoice_ids);
     }
 
-    public function testPaymentAndClientMatching()
+    public function test_payment_and_client_matching()
     {
         // Test matching payment with client constraint
 
@@ -394,7 +393,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $client_id,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create rule matching payment amount AND client ID
@@ -412,8 +411,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$client.id_number',
                     'operator' => 'is',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Update client with ID number
@@ -440,7 +439,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($p->id, $bt->payment_id);
     }
 
-    public function testCustomFieldMatching()
+    public function test_custom_field_matching()
     {
         // Test matching on invoice custom fields
 
@@ -459,7 +458,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $custom1 . ' ' . $custom2,
             'base_type' => 'CREDIT',
-            'amount' => 1000
+            'amount' => 1000,
         ]);
 
         // Create rule matching TWO custom fields
@@ -477,8 +476,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.custom2',
                     'operator' => 'contains',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create invoice with matching custom fields
@@ -505,7 +504,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($i->hashed_id, $bt->invoice_ids);
     }
 
-    public function testPaymentCustomFieldMatching()
+    public function test_payment_custom_field_matching()
     {
         // Test matching on payment custom fields
 
@@ -523,7 +522,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $custom1,
             'base_type' => 'CREDIT',
-            'amount' => 1000
+            'amount' => 1000,
         ]);
 
         // Create rule matching payment custom field
@@ -537,8 +536,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$payment.custom1',
                     'operator' => 'contains',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create payment with matching custom field
@@ -562,7 +561,7 @@ class CreditRuleChainingTest extends TestCase
         $this->assertEquals($p->id, $bt->payment_id);
     }
 
-    public function testFirstRuleWins()
+    public function test_first_rule_wins()
     {
         // Test that first matching rule wins and stops processing
 
@@ -582,7 +581,7 @@ class CreditRuleChainingTest extends TestCase
             'user_id' => $this->user->id,
             'description' => $custom1 . ' ' . $custom2,
             'base_type' => 'CREDIT',
-            'amount' => $rand_amount
+            'amount' => $rand_amount,
         ]);
 
         // Create FIRST rule that will match on custom1
@@ -596,8 +595,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.custom1',
                     'operator' => 'contains',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create SECOND rule that would also match on custom2
@@ -611,8 +610,8 @@ class CreditRuleChainingTest extends TestCase
                 [
                     'search_key' => '$invoice.custom2',
                     'operator' => 'contains',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         // Create invoice that matches BOTH rules

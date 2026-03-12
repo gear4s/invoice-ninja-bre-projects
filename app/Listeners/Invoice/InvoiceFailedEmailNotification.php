@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\Invoice;
 
-use App\Libraries\MultiDB;
 use App\Jobs\Mail\NinjaMailer;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
-use Illuminate\Support\Facades\Cache;
+use App\Libraries\MultiDB;
 use App\Mail\Admin\EntityFailedSendObject;
 use App\Utils\Traits\Notifications\UserNotifies;
+use Illuminate\Support\Facades\Cache;
 
 class InvoiceFailedEmailNotification
 {
@@ -50,7 +49,7 @@ class InvoiceFailedEmailNotification
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new EntityFailedSendObject($event->invitation->withoutRelations(), 'invoice', $event->template, $event->message, $company_user->portalType()))->build());
                 $nmo->company = $invoice->company->withoutRelations();
                 $nmo->settings = $invoice->company->settings;

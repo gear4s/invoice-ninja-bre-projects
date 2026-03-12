@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,8 +27,8 @@ use Stripe\Customer;
 
 class ImportCustomers
 {
-    use MakesHash;
     use GeneratesCounter;
+    use MakesHash;
 
     /** @var StripePaymentDriver */
     public $stripe;
@@ -74,15 +73,15 @@ class ImportCustomers
     {
         $account = $this->stripe->company_gateway->company->account;
 
-        if (Ninja::isHosted() && ! $account->isPaidHostedClient() && Client::query()->where('company_id', $this->stripe->company_gateway->company_id)->count() > config('ninja.quotas.free.clients')) {
+        if (Ninja::isHosted() && !$account->isPaidHostedClient() && Client::query()->where('company_id', $this->stripe->company_gateway->company_id)->count() > config('ninja.quotas.free.clients')) {
             return;
         }
 
         $existing_customer_token = $this->stripe
-                                  ->company_gateway
-                                  ->client_gateway_tokens()
-                                  ->where('gateway_customer_reference', $customer->id)
-                                  ->first();
+            ->company_gateway
+            ->client_gateway_tokens()
+            ->where('gateway_customer_reference', $customer->id)
+            ->first();
 
         if ($existing_customer_token) {
             nlog("Skipping - Customer exists: {$customer->email} just updating payment methods");
@@ -136,7 +135,7 @@ class ImportCustomers
 
         $client->name = $customer->name ? $customer->name : $customer->email;
 
-        if (! isset($client->number) || empty($client->number)) {
+        if (!isset($client->number) || empty($client->number)) {
             $x = 1;
 
             do {
@@ -179,7 +178,7 @@ class ImportCustomers
 
         $customer = Customer::retrieve($customer_id, $this->stripe->stripe_connect_auth);
 
-        if (! $customer) {
+        if (!$customer) {
             return;
         }
 
@@ -201,7 +200,7 @@ class ImportCustomers
         }
 
         foreach ($this->stripe->company_gateway->company->clients as $client) {
-            $searchResults = \Stripe\Customer::all([
+            $searchResults = Customer::all([
                 'email' => $client->present()->email(),
                 'limit' => 2,
                 'starting_after' => null,
@@ -212,10 +211,10 @@ class ImportCustomers
             if (count($searchResults) == 1) {
                 $cgt = ClientGatewayToken::query()->where('gateway_customer_reference', $searchResults->data[0]->id)->where('company_id', $this->stripe->company_gateway->company->id)->exists();
 
-                if (! $cgt) {
+                if (!$cgt) {
                     nlog('customer ' . $searchResults->data[0]->id . ' does not exist.');
 
-                    $this->update_payment_methods->updateMethods($searchResults->data[0], $client); //@phpstan-ignore-line
+                    $this->update_payment_methods->updateMethods($searchResults->data[0], $client); // @phpstan-ignore-line
                 }
             }
         }

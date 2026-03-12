@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,7 @@ use App\Utils\Number;
 use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
 
-//@deprecated
+// @deprecated
 class EntitySentNotification extends Notification
 {
     /**
@@ -67,7 +66,6 @@ class EntitySentNotification extends Notification
      * Get the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     *
      */
     public function toMail($notifiable) {}
 
@@ -87,24 +85,24 @@ class EntitySentNotification extends Notification
         $logo = $this->invitation->company->present()->logo();
         $amount = Number::formatMoney($this->entity->amount, $this->entity->client);
 
-        return (new SlackMessage())
-                    ->from(ctrans('texts.notification_bot'))
-                    ->success()
-                    ->image('https://app.invoiceninja.com/favicon-v2.png')
-                    ->content(trans(
-                        "texts.notification_{$this->entity_name}_sent_subject",
-                        [
-                            'amount' => $amount,
-                            'client' => $this->contact->client->present()->name(),
-                            'invoice' => $this->entity->number,
-                        ]
-                    ))
-                    ->attachment(function ($attachment) use ($amount) {
-                        $attachment->title(ctrans('texts.invoice_number_placeholder', ['invoice' => $this->entity->number]), $this->invitation->getAdminLink())
-                                   ->fields([
-                                       ctrans('texts.client') => $this->contact->client->present()->name(),
-                                       ctrans('texts.amount') => $amount,
-                                   ]);
-                    });
+        return (new SlackMessage)
+            ->from(ctrans('texts.notification_bot'))
+            ->success()
+            ->image('https://app.invoiceninja.com/favicon-v2.png')
+            ->content(trans(
+                "texts.notification_{$this->entity_name}_sent_subject",
+                [
+                    'amount' => $amount,
+                    'client' => $this->contact->client->present()->name(),
+                    'invoice' => $this->entity->number,
+                ]
+            ))
+            ->attachment(function ($attachment) use ($amount) {
+                $attachment->title(ctrans('texts.invoice_number_placeholder', ['invoice' => $this->entity->number]), $this->invitation->getAdminLink())
+                    ->fields([
+                        ctrans('texts.client') => $this->contact->client->present()->name(),
+                        ctrans('texts.amount') => $amount,
+                    ]);
+            });
     }
 }

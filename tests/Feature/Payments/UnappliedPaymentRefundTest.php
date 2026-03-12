@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,13 +19,10 @@ use Illuminate\Validation\ValidationException;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class UnappliedPaymentRefundTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockUnitData;
 
     protected function setUp(): void
@@ -40,7 +36,7 @@ class UnappliedPaymentRefundTest extends TestCase
         );
     }
 
-    public function testUnappliedPaymentRefund()
+    public function test_unapplied_payment_refund()
     {
         $data = [
             'amount' => 1000,

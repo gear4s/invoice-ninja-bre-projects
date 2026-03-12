@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers\ClientPortal;
 
-use Carbon\Carbon;
-use App\Models\Project;
-use Illuminate\Http\Request;
-use App\Utils\Traits\MakesDates;
 use App\Http\Controllers\Controller;
-use App\Services\Project\ProjectService;
 use App\Http\Requests\ClientPortal\Projects\ShowProjectRequest;
+use App\Models\Project;
+use App\Services\Project\ProjectService;
+use App\Utils\Traits\MakesDates;
+use Carbon\Carbon;
+use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
@@ -35,9 +34,7 @@ class ProjectController extends Controller
     /**
      * Display a specific project with its tasks
      *
-     * @param  ShowProjectRequest  $request
-     * @param  Project  $project
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function show(ShowProjectRequest $request, Project $project)
     {

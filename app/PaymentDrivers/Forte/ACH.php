@@ -6,25 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Forte;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
-use App\Models\PaymentType;
+use App\Exceptions\PaymentFailed;
 use App\Http\Requests\Request;
 use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
 use App\Models\ClientGatewayToken;
-use App\Exceptions\PaymentFailed;
-use Illuminate\Support\Facades\Validator;
-use App\PaymentDrivers\FortePaymentDriver;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\PaymentType;
+use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
+use App\PaymentDrivers\FortePaymentDriver;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Validator;
 
 class ACH implements LivewireMethodInterface
 {
@@ -32,20 +31,25 @@ class ACH implements LivewireMethodInterface
 
     public $forte;
 
-    private $forte_base_uri = "";
-    private $forte_api_access_id = "";
-    private $forte_secure_key = "";
-    private $forte_auth_organization_id = "";
-    private $forte_organization_id = "";
-    private $forte_location_id = "";
+    private $forte_base_uri = '';
+
+    private $forte_api_access_id = '';
+
+    private $forte_secure_key = '';
+
+    private $forte_auth_organization_id = '';
+
+    private $forte_organization_id = '';
+
+    private $forte_location_id = '';
 
     public function __construct(FortePaymentDriver $forte)
     {
         $this->forte = $forte;
 
-        $this->forte_base_uri = "https://sandbox.forte.net/api/v3/";
+        $this->forte_base_uri = 'https://sandbox.forte.net/api/v3/';
         if ($this->forte->company_gateway->getConfigField('testMode') == false) {
-            $this->forte_base_uri = "https://api.forte.net/v3/";
+            $this->forte_base_uri = 'https://api.forte.net/v3/';
         }
         $this->forte_api_access_id = $this->forte->company_gateway->getConfigField('apiAccessId');
         $this->forte_secure_key = $this->forte->company_gateway->getConfigField('secureKey');
@@ -67,23 +71,23 @@ class ACH implements LivewireMethodInterface
         $cst = $this->forte->findOrCreateCustomer();
 
         $data = [
-            "notes" => $payload['account_holder_name'],
-            "echeck" => [
-                "one_time_token" => $payload['one_time_token'],
-                "account_holder" => $payload['account_holder_name'],
-                "account_type" => "checking",
+            'notes' => $payload['account_holder_name'],
+            'echeck' => [
+                'one_time_token' => $payload['one_time_token'],
+                'account_holder' => $payload['account_holder_name'],
+                'account_type' => 'checking',
             ],
         ];
 
         $response = $this->forte
-                        ->stubRequest()
-                        ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/customers/{$cst}/paymethods", $data);
+            ->stubRequest()
+            ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/customers/{$cst}/paymethods", $data);
 
         if ($response->successful()) {
 
             $token = $response->object();
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->exp_month = (string) '';
             $payment_meta->exp_year = (string) '';
             $payment_meta->brand = (string) 'ACH';
@@ -119,10 +123,8 @@ class ACH implements LivewireMethodInterface
             $this->forte->client->company,
         );
 
-        throw new \App\Exceptions\PaymentFailed("Unable to store payment method: {$error->response->response_desc}", 400);
-
+        throw new PaymentFailed("Unable to store payment method: {$error->response->response_desc}", 400);
     }
-
 
     public function authorizeResponse(Request $request)
     {
@@ -151,16 +153,16 @@ class ACH implements LivewireMethodInterface
 
         $payment_hash = PaymentHash::where('hash', $request->input('payment_hash'))->firstOrFail();
 
-        //Handle Token Billing
+        // Handle Token Billing
         if ($request->token && strlen($request->token) > 4) {
 
-            $cgt = \App\Models\ClientGatewayToken::where('token', $request->token)->firstOrFail();
+            $cgt = ClientGatewayToken::where('token', $request->token)->firstOrFail();
             $payment = $this->tokenBilling($cgt, $payment_hash);
 
             return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
         }
 
-        //Handle Storing Payment Method + Token Billing
+        // Handle Storing Payment Method + Token Billing
         if (isset($this->forte->company_gateway->token_billing) && $this->forte->company_gateway->token_billing != 'off') {
 
             $data = [
@@ -191,8 +193,8 @@ class ACH implements LivewireMethodInterface
         ];
 
         $response = $this->forte
-                        ->stubRequest()
-                        ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/transactions", $data);
+            ->stubRequest()
+            ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/transactions", $data);
 
         if ($response->successful()) {
 
@@ -226,7 +228,7 @@ class ACH implements LivewireMethodInterface
             return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
 
         }
-        //Handle Failures.
+        // Handle Failures.
 
         $forte_response = $response->object();
 
@@ -259,26 +261,26 @@ class ACH implements LivewireMethodInterface
         $fee_total = $payment_hash->fee_total;
 
         $data = [
-            "action" => "sale",
-            "authorization_amount" => $amount_with_fee,
-            "paymethod_token" => $cgt->token,
-            "billing_address" => [
-                "first_name" => $this->forte->client->present()->first_name(),
-                "last_name" => $this->forte->client->present()->last_name(),
+            'action' => 'sale',
+            'authorization_amount' => $amount_with_fee,
+            'paymethod_token' => $cgt->token,
+            'billing_address' => [
+                'first_name' => $this->forte->client->present()->first_name(),
+                'last_name' => $this->forte->client->present()->last_name(),
             ],
-            "echeck" => [
-                "sec_code" => "WEB",
+            'echeck' => [
+                'sec_code' => 'WEB',
             ],
 
         ];
 
         if ($fee_total > 0) {
-            $data["service_fee_amount"] = $fee_total;
+            $data['service_fee_amount'] = $fee_total;
         }
 
         $response = $this->forte
-                        ->stubRequest()
-                        ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/transactions", $data);
+            ->stubRequest()
+            ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/transactions", $data);
 
         $forte_response = $response->object();
 
@@ -286,7 +288,7 @@ class ACH implements LivewireMethodInterface
 
             $data = [
                 'payment_method' => $cgt->gateway_type_id,
-                'payment_type' => \App\Models\PaymentType::ACH,
+                'payment_type' => PaymentType::ACH,
                 'amount' => $payment_hash->data->amount_with_fee,
                 'transaction_reference' => $forte_response->transaction_id,
                 'gateway_type_id' => $cgt->gateway_type_id,
@@ -330,11 +332,10 @@ class ACH implements LivewireMethodInterface
         );
 
         throw new PaymentFailed($forte_response->response->response_desc ?? 'Unable to process payment', 500);
-
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -342,7 +343,7 @@ class ACH implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

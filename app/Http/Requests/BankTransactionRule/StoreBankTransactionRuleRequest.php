@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Http\Requests\BankTransactionRule;
 use App\Http\Requests\Request;
 use App\Models\Account;
 use App\Models\BankTransactionRule;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
 
 class StoreBankTransactionRuleRequest extends Request
@@ -23,24 +23,22 @@ class StoreBankTransactionRuleRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', BankTransactionRule::class) && $user->account->hasFeature(Account::FEATURE_API);
-        ;
+
     }
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /* Ensure we have a client name, and that all emails are unique*/
+        /* Ensure we have a client name, and that all emails are unique */
         $rules = [
             'name' => 'bail|required|string',
             'rules' => 'bail|array',

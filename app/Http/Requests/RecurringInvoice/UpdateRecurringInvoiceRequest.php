@@ -6,19 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\RecurringInvoice;
 
 use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
-use App\Utils\Traits\CleanLineItems;
-use App\Utils\Traits\ChecksEntityStatus;
 use App\Http\ValidationRules\EInvoice\ValidInvoiceScheme;
 use App\Http\ValidationRules\Project\ValidProjectForClient;
+use App\Models\User;
+use App\Utils\Traits\ChecksEntityStatus;
+use App\Utils\Traits\CleanLineItems;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 
 class UpdateRecurringInvoiceRequest extends Request
 {
@@ -28,12 +29,10 @@ class UpdateRecurringInvoiceRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User auth()->user() */
+        /** @var User auth()->user() */
         $user = auth()->user();
 
         return $user->can('edit', $this->recurring_invoice);
@@ -41,7 +40,7 @@ class UpdateRecurringInvoiceRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User auth()->user() */
+        /** @var User auth()->user() */
         $user = auth()->user();
 
         $rules = [];
@@ -67,10 +66,10 @@ class UpdateRecurringInvoiceRequest extends Request
         $rules['next_send_date'] = 'bail|required|date|after_or_equal:yesterday';
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
 
-        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidInvoiceScheme()];
+        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidInvoiceScheme];
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->recurring_invoice->client_id)];
-        $rules['vendor_id'] = ['nullable', 'sometimes','bail', Rule::exists('vendors', 'id')->where('company_id', $user->company()->id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->recurring_invoice->client_id)];
+        $rules['vendor_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('vendors', 'id')->where('company_id', $user->company()->id)];
 
         return $rules;
     }
@@ -79,8 +78,7 @@ class UpdateRecurringInvoiceRequest extends Request
     {
         $input = $this->all();
 
-
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -104,11 +102,9 @@ class UpdateRecurringInvoiceRequest extends Request
             $input['client_id'] = $this->decodePrimaryKey($input['client_id']);
         }
 
-
         if (array_key_exists('location_id', $input) && is_string($input['location_id'])) {
             $input['location_id'] = $this->decodePrimaryKey($input['location_id']);
         }
-
 
         if (isset($input['vendor_id'])) {
             $input['vendor_id'] = $this->decodePrimaryKey($input['vendor_id']);
@@ -156,16 +152,16 @@ class UpdateRecurringInvoiceRequest extends Request
         }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
 
         $this->replace($input);
@@ -176,9 +172,7 @@ class UpdateRecurringInvoiceRequest extends Request
      * off / optin / optout will reset the status of this field to off to allow
      * the client to choose whether to auto_bill or not.
      *
-     * @param string $auto_bill off/always/optin/optout
-     *
-     * @return bool
+     * @param  string  $auto_bill  off/always/optin/optout
      */
     private function setAutoBillFlag($auto_bill): bool
     {

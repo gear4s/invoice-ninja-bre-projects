@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,8 +19,8 @@ use Livewire\WithPagination;
 
 class TasksTable extends Component
 {
-    use WithSorting;
     use WithPagination;
+    use WithSorting;
 
     public $per_page = 10;
 
@@ -59,7 +58,7 @@ class TasksTable extends Component
 
         return render('components.livewire.tasks-table', [
             'tasks' => $query,
-            'show_item_description' => auth()->guard('contact')->user()->client->getSetting("show_task_item_description"),
+            'show_item_description' => auth()->guard('contact')->user()->client->getSetting('show_task_item_description'),
         ]);
     }
 }

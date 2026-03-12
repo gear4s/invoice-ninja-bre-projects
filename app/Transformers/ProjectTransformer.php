@@ -6,20 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
-use App\Models\Task;
-use App\Models\Quote;
 use App\Models\Client;
-use App\Models\Project;
 use App\Models\Document;
 use App\Models\Expense;
 use App\Models\Invoice;
+use App\Models\Project;
+use App\Models\Quote;
+use App\Models\Task;
 use App\Utils\Traits\MakesHash;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 
 /**
  * class ProjectTransformer.
@@ -32,9 +33,6 @@ class ProjectTransformer extends EntityTransformer
         'documents',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'client',
         'tasks',
@@ -54,11 +52,12 @@ class ProjectTransformer extends EntityTransformer
         // return null;
     }
 
-    public function includeClient(Project $project): ?\League\Fractal\Resource\Item
+    public function includeClient(Project $project): ?Item
     {
 
         if (!$project->client) {
             nlog("Project {$project->hashed_id} does not have a client attached - this project is in a bad state");
+
             return null;
         }
 
@@ -67,28 +66,28 @@ class ProjectTransformer extends EntityTransformer
         return $this->includeItem($project->client, $transformer, Client::class);
     }
 
-    public function includeTasks(Project $project): \League\Fractal\Resource\Collection
+    public function includeTasks(Project $project): Collection
     {
         $transformer = new TaskTransformer($this->serializer);
 
         return $this->includeCollection($project->tasks, $transformer, Task::class);
     }
 
-    public function includeInvoices(Project $project): \League\Fractal\Resource\Collection
+    public function includeInvoices(Project $project): Collection
     {
         $transformer = new InvoiceTransformer($this->serializer);
 
         return $this->includeCollection($project->invoices, $transformer, Invoice::class);
     }
 
-    public function includeExpenses(Project $project): \League\Fractal\Resource\Collection
+    public function includeExpenses(Project $project): Collection
     {
         $transformer = new ExpenseTransformer($this->serializer);
 
         return $this->includeCollection($project->expenses, $transformer, Expense::class);
     }
 
-    public function includeQuotes(Project $project): \League\Fractal\Resource\Collection
+    public function includeQuotes(Project $project): Collection
     {
         $transformer = new QuoteTransformer($this->serializer);
 

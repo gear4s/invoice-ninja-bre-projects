@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,7 @@ use App\Jobs\Mail\NinjaMailerObject;
 use App\Libraries\MultiDB;
 use App\Mail\Admin\InventoryNotificationObject;
 use App\Models\Company;
+use App\Models\CompanyUser;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Utils\Traits\Notifications\UserNotifies;
@@ -147,15 +147,14 @@ class AdjustProductInventory implements ShouldQueue
 
     private function notifyStocklevels(Product $product, string $notification_level)
     {
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->company = $this->company;
         $nmo->settings = $this->company->settings;
 
-
         $this->company->company_users->each(function ($cu) use ($product, $nmo, $notification_level) {
 
-            /** @var \App\Models\CompanyUser $cu */
-            if ($this->checkNotificationExists($cu, $product, ['inventory_all', 'inventory_user', 'inventory_threshold_all', 'inventory_threshold_user']) && (! in_array($product->id, $this->notified_products))) {
+            /** @var CompanyUser $cu */
+            if ($this->checkNotificationExists($cu, $product, ['inventory_all', 'inventory_user', 'inventory_threshold_all', 'inventory_threshold_user']) && (!in_array($product->id, $this->notified_products))) {
                 $nmo->mailable = new NinjaMailer((new InventoryNotificationObject($product, $notification_level, $cu->portalType()))->build());
                 $nmo->to_user = $cu->user;
                 NinjaMailerJob::dispatch($nmo);

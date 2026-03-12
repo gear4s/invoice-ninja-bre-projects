@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,6 +24,7 @@ class Atomic
             /** @var RedisFactory $redis */
             $redis = app('redis');
             $result = $redis->connection('sentinel-cache')->command('set', [$key, $value, 'EX', $ttl, 'NX']);
+
             return (bool) $result;
         } catch (\Throwable) {
             return Cache::add($key, $value, $new_ttl) ? true : false;
@@ -36,6 +36,7 @@ class Atomic
         try {
             /** @var RedisFactory $redis */
             $redis = app('redis');
+
             return $redis->connection('sentinel-cache')->command('get', [$key]);
         } catch (\Throwable) {
             return Cache::get($key);
@@ -47,6 +48,7 @@ class Atomic
         try {
             /** @var RedisFactory $redis */
             $redis = app('redis');
+
             return $redis->connection('sentinel-cache')->command('del', [$key]);
         } catch (\Throwable) {
             return Cache::forget($key);

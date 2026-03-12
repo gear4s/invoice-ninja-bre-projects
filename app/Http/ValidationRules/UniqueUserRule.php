@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,8 +31,8 @@ class UniqueUserRule implements Rule
     }
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
@@ -43,8 +42,8 @@ class UniqueUserRule implements Rule
         if ($this->user->email == $this->new_email) {
             return true;
         } else {
-            return ! $this->checkIfEmailExists($value);
-        } //if it exists, return false!
+            return !$this->checkIfEmailExists($value);
+        } // if it exists, return false!
     }
 
     /**
@@ -55,10 +54,6 @@ class UniqueUserRule implements Rule
         return ctrans('texts.email_already_register');
     }
 
-    /**
-     * @param $email
-     * @return bool
-     */
     private function checkIfEmailExists($email): bool
     {
         return MultiDB::checkUserEmailExists($email);

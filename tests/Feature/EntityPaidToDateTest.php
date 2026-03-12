@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,13 +22,10 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class EntityPaidToDateTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -47,7 +43,7 @@ class EntityPaidToDateTest extends TestCase
         );
     }
 
-    public function testPaidToDateWithMarkPaidAction()
+    public function test_paid_to_date_with_mark_paid_action()
     {
         $invoice = $this->bootNewInvoice();
 
@@ -63,7 +59,7 @@ class EntityPaidToDateTest extends TestCase
         $this->assertEquals($invoice->paid_to_date, 20);
     }
 
-    public function testPaidToDateWithInvoiceCancellation()
+    public function test_paid_to_date_with_invoice_cancellation()
     {
         $invoice = $this->bootNewInvoice();
 
@@ -96,7 +92,7 @@ class EntityPaidToDateTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 

@@ -6,62 +6,67 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use App\PaymentDrivers\Common\SupportsHeadlessInterface;
-use Exception;
-use Stripe\Stripe;
-use Stripe\Account;
-use Stripe\Customer;
-use App\Models\Client;
-use App\Models\Payment;
-use Stripe\SetupIntent;
-use Stripe\StripeClient;
-use App\Models\SystemLog;
-use Stripe\PaymentIntent;
-use Stripe\PaymentMethod;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
+use App\Exceptions\PaymentFailed;
+use App\Exceptions\StripeConnectFailure;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
 use App\Http\Requests\Request;
 use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use App\Exceptions\PaymentFailed;
+use App\Models\Client;
 use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Common\SupportsHeadlessInterface;
 use App\PaymentDrivers\Stripe\ACH;
+use App\PaymentDrivers\Stripe\ACSS;
+use App\PaymentDrivers\Stripe\Alipay;
+use App\PaymentDrivers\Stripe\BACS;
+use App\PaymentDrivers\Stripe\Bancontact;
+use App\PaymentDrivers\Stripe\BankTransfer;
+use App\PaymentDrivers\Stripe\BECS;
+use App\PaymentDrivers\Stripe\BrowserPay;
+use App\PaymentDrivers\Stripe\Charge;
+use App\PaymentDrivers\Stripe\Connect\Verify;
+use App\PaymentDrivers\Stripe\CreditCard;
 use App\PaymentDrivers\Stripe\EPS;
 use App\PaymentDrivers\Stripe\FPX;
-use App\PaymentDrivers\Stripe\ACSS;
-use App\PaymentDrivers\Stripe\BACS;
-use App\PaymentDrivers\Stripe\BECS;
-use App\PaymentDrivers\Stripe\SEPA;
-use App\PaymentDrivers\Stripe\iDeal;
-use App\PaymentDrivers\Stripe\Alipay;
-use App\PaymentDrivers\Stripe\Charge;
-use App\PaymentDrivers\Stripe\Klarna;
-use App\PaymentDrivers\Stripe\SOFORT;
-use Illuminate\Http\RedirectResponse;
 use App\PaymentDrivers\Stripe\GIROPAY;
-use Stripe\Exception\ApiErrorException;
-use App\Exceptions\StripeConnectFailure;
-use App\PaymentDrivers\Stripe\Utilities;
-use App\PaymentDrivers\Stripe\Bancontact;
-use App\PaymentDrivers\Stripe\BrowserPay;
-use App\PaymentDrivers\Stripe\CreditCard;
-use App\PaymentDrivers\Stripe\PRZELEWY24;
-use App\PaymentDrivers\Stripe\BankTransfer;
-use App\PaymentDrivers\Stripe\Connect\Verify;
+use App\PaymentDrivers\Stripe\iDeal;
 use App\PaymentDrivers\Stripe\ImportCustomers;
 use App\PaymentDrivers\Stripe\Jobs\ChargeRefunded;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
-use Laracasts\Presenter\Exceptions\PresenterException;
-use App\PaymentDrivers\Stripe\Jobs\PaymentIntentWebhook;
 use App\PaymentDrivers\Stripe\Jobs\PaymentIntentFailureWebhook;
-use App\PaymentDrivers\Stripe\Jobs\PaymentIntentProcessingWebhook;
 use App\PaymentDrivers\Stripe\Jobs\PaymentIntentPartiallyFundedWebhook;
+use App\PaymentDrivers\Stripe\Jobs\PaymentIntentProcessingWebhook;
+use App\PaymentDrivers\Stripe\Jobs\PaymentIntentWebhook;
+use App\PaymentDrivers\Stripe\Klarna;
+use App\PaymentDrivers\Stripe\PRZELEWY24;
+use App\PaymentDrivers\Stripe\SEPA;
+use App\PaymentDrivers\Stripe\SOFORT;
+use App\PaymentDrivers\Stripe\Utilities;
+use App\Utils\Traits\MakesHash;
+use Exception;
+use Illuminate\Http\RedirectResponse;
+use Laracasts\Presenter\Exceptions\PresenterException;
+use Stripe\Account;
+use Stripe\ApplePayDomain;
+use Stripe\Balance;
+use Stripe\Customer;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\OAuth;
+use Stripe\PaymentIntent;
+use Stripe\PaymentMethod;
+use Stripe\Refund;
+use Stripe\SetupIntent;
+use Stripe\Stripe;
+use Stripe\StripeClient;
+use Stripe\Webhook;
 
 class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterface
 {
@@ -109,6 +114,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
     /**
      * Initializes the Stripe API.
+     *
      * @return self
      */
     public function init()
@@ -144,7 +150,6 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
         return $this;
     }
-
 
     /**
      * Returns the gateway types.
@@ -257,14 +262,14 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             && $this->client->currency()
             && in_array($this->client->currency()->code, ['EUR', 'DKK', 'GBP', 'NOK', 'SEK', 'AUD', 'NZD', 'CAD', 'PLN', 'CHF'])
             && isset($this->client->country)
-            && in_array($this->client->country->iso_3166_3, ['AUT','BEL','DNK','FIN','FRA','DEU','IRL','ITA','NLD','NOR','ESP','SWE','GBR'])) {
+            && in_array($this->client->country->iso_3166_3, ['AUT', 'BEL', 'DNK', 'FIN', 'FRA', 'DEU', 'IRL', 'ITA', 'NLD', 'NOR', 'ESP', 'SWE', 'GBR'])) {
             $types[] = GatewayType::KLARNA;
         }
         if ($this->client
             && $this->client->currency()
             && in_array($this->client->currency()->code, ['EUR', 'DKK', 'GBP', 'NOK', 'SEK', 'AUD', 'NZD', 'CAD', 'PLN', 'CHF', 'USD'])
             && isset($this->client->country)
-            && in_array($this->client->country->iso_3166_3, ['AUT','BEL','DNK','FIN','FRA','DEU','IRL','ITA','NLD','NOR','ESP','SWE','GBR','USA'])) {
+            && in_array($this->client->country->iso_3166_3, ['AUT', 'BEL', 'DNK', 'FIN', 'FRA', 'DEU', 'IRL', 'ITA', 'NLD', 'NOR', 'ESP', 'SWE', 'GBR', 'USA'])) {
             $types[] = GatewayType::KLARNA;
         }
 
@@ -371,16 +376,13 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             $fields[] = ['name' => 'client_custom_value1', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client1'), 'type' => 'text', 'validation' => 'required'];
         }
 
-
         if ($this->company_gateway->require_custom_value2) {
             $fields[] = ['name' => 'client_custom_value2', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client2'), 'type' => 'text', 'validation' => 'required'];
         }
 
-
         if ($this->company_gateway->require_custom_value3) {
             $fields[] = ['name' => 'client_custom_value3', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client3'), 'type' => 'text', 'validation' => 'required'];
         }
-
 
         if ($this->company_gateway->require_custom_value4) {
             $fields[] = ['name' => 'client_custom_value4', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client4'), 'type' => 'text', 'validation' => 'required'];
@@ -392,8 +394,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     /**
      * Proxy method to pass the data into payment method authorizeView().
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse|mixed
+     * @return RedirectResponse|mixed
      */
     public function authorizeView(array $data)
     {
@@ -403,8 +404,8 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     /**
      * Processes the gateway response for credit card authorization.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\RedirectResponse|mixed
+     * @param  \Illuminate\Http\Request  $request
+     * @return RedirectResponse|mixed
      */
     public function authorizeResponse($request)
     {
@@ -414,8 +415,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     /**
      * Process the payment with gateway.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse|mixed
+     * @return RedirectResponse|mixed
      */
     public function processPaymentView(array $data)
     {
@@ -457,8 +457,9 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     /**
      * Creates a new String Payment Intent.
      *
-     * @param array $data The data array to be passed to Stripe
-     * @return PaymentIntent       The Stripe payment intent object
+     * @param  array  $data  The data array to be passed to Stripe
+     * @return PaymentIntent The Stripe payment intent object
+     *
      * @throws ApiErrorException
      */
     public function createPaymentIntent($data): ?PaymentIntent
@@ -467,7 +468,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
         $meta = $this->stripe_connect_auth;
 
-        return PaymentIntent::create($data, array_merge($meta, ['idempotency_key' => uniqid("st", true)]));
+        return PaymentIntent::create($data, array_merge($meta, ['idempotency_key' => uniqid('st', true)]));
     }
 
     public function getPaymentIntent($payment_intent_id): ?PaymentIntent
@@ -484,7 +485,6 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
      * Returns a setup intent that allows the user
      * to enter card details without initiating a transaction.
      *
-     * @return SetupIntent
      * @throws ApiErrorException
      */
     public function getSetupIntent(): SetupIntent
@@ -494,7 +494,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $params = ['usage' => 'off_session'];
         $meta = $this->stripe_connect_auth;
 
-        return SetupIntent::create($params, array_merge($meta, ['idempotency_key' => uniqid("st", true)]));
+        return SetupIntent::create($params, array_merge($meta, ['idempotency_key' => uniqid('st', true)]));
     }
 
     public function getSetupIntentId(string $id): SetupIntent
@@ -509,6 +509,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
     /**
      * Returns the Stripe publishable key.
+     *
      * @return null|string The stripe publishable key
      */
     public function getPublishableKey(): ?string
@@ -527,6 +528,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
      * Finds or creates a Stripe Customer object.
      *
      * @return null|Customer A Stripe customer object
+     *
      * @throws PresenterException
      * @throws ApiErrorException
      */
@@ -537,11 +539,11 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $this->init();
 
         $client_gateway_token = ClientGatewayToken::query()
-                                                  ->whereClientId($this->client->id)
-                                                  ->whereCompanyGatewayId($this->company_gateway->id)
-                                                  ->first();
+            ->whereClientId($this->client->id)
+            ->whereCompanyGatewayId($this->company_gateway->id)
+            ->first();
 
-        //Search by customer reference
+        // Search by customer reference
         if ($client_gateway_token && $client_gateway_token->gateway_customer_reference) {
             $customer = Customer::retrieve($client_gateway_token->gateway_customer_reference, $this->stripe_connect_auth);
 
@@ -550,8 +552,8 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             }
         }
 
-        //Search by email
-        $searchResults = \Stripe\Customer::all([
+        // Search by email
+        $searchResults = Customer::all([
             'email' => (string) $this->client->present()->email(),
             'limit' => 2,
             // 'starting_after' => null,
@@ -559,11 +561,12 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
         if (count($searchResults) == 1) {
             $customer = $searchResults->data[0];
+
             // $this->updateStripeCustomer($customer);
             return $customer;
         }
 
-        //Else create a new record
+        // Else create a new record
         $data['name'] = $this->client->present()->name();
         $data['phone'] = substr($this->client->present()->phone(), 0, 20);
 
@@ -578,9 +581,9 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $data['address']['state'] = $this->client->state;
         $data['address']['country'] = $this->client->country ? $this->client->country->iso_3166_2 : '';
 
-        $customer = Customer::create($data, array_merge($this->stripe_connect_auth, ['idempotency_key' => uniqid("st", true)]));
+        $customer = Customer::create($data, array_merge($this->stripe_connect_auth, ['idempotency_key' => uniqid('st', true)]));
 
-        if (! $customer) {
+        if (!$customer) {
             throw new Exception('Unable to create gateway customer');
         }
 
@@ -589,7 +592,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
     public function updateStripeCustomer($customer)
     {
-        //Else create a new record
+        // Else create a new record
         $data['name'] = $this->client->present()->name();
         $data['phone'] = substr($this->client->present()->phone(), 0, 20);
 
@@ -605,7 +608,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $data['address']['country'] = $this->client->country ? $this->client->country->iso_3166_2 : '';
 
         try {
-            \Stripe\Customer::update($customer->id, $data, $this->stripe_connect_auth);
+            Customer::update($customer->id, $data, $this->stripe_connect_auth);
         } catch (Exception $e) {
             nlog('unable to update clients in Stripe');
         }
@@ -615,7 +618,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     {
         if ($this->client) {
             $customer = $this->findOrCreateCustomer();
-            //Else create a new record
+            // Else create a new record
             $data['name'] = $this->client->present()->name();
             $data['phone'] = substr($this->client->present()->phone(), 0, 20);
 
@@ -634,7 +637,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             $data['shipping']['address']['state'] = $this->client->shipping_state;
             $data['shipping']['address']['country'] = $this->client->shipping_country ? $this->client->shipping_country->iso_3166_2 : '';
 
-            \Stripe\Customer::update($customer->id, $data, $this->stripe_connect_auth);
+            Customer::update($customer->id, $data, $this->stripe_connect_auth);
         }
     }
 
@@ -648,7 +651,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $response = null;
 
         try {
-            $response = \Stripe\Refund::create([
+            $response = Refund::create([
                 'charge' => $payment->transaction_reference,
                 'amount' => $this->convertToStripeAmount($amount, $this->client->currency()->precision, $this->client->currency()),
             ], $meta);
@@ -705,19 +708,21 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $webhook_secret = $this->company_gateway->getConfigField('webhookSecret');
 
         if ($webhook_secret) {
-            $sig_header = $_SERVER["HTTP_STRIPE_SIGNATURE"] ?? $request->header('Stripe-Signature');
+            $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? $request->header('Stripe-Signature');
             if (!$sig_header) {
-                nlog("Stripe webhook signature verification failed: No signature header");
+                nlog('Stripe webhook signature verification failed: No signature header');
+
                 return response()->json(['error' => 'No signature header'], 403);
             }
             try {
-                \Stripe\Webhook::constructEvent(
+                Webhook::constructEvent(
                     $request->getContent(),
                     $sig_header,
                     $webhook_secret
                 );
-            } catch (\Stripe\Exception\SignatureVerificationException $e) {
-                nlog("Stripe webhook signature verification failed: " . $e->getMessage());
+            } catch (SignatureVerificationException $e) {
+                nlog('Stripe webhook signature verification failed: ' . $e->getMessage());
+
                 return response()->json(['error' => 'Invalid signature'], 403);
             }
         }
@@ -735,10 +740,11 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
         if ($request->type === 'payment_intent.processing') {
             PaymentIntentProcessingWebhook::dispatch($request->data, $request->company_key, $this->company_gateway->id)->delay(now()->addSeconds(5));
+
             return response()->json([], 200);
         }
 
-        //payment_intent.succeeded - this will confirm or cancel the payment
+        // payment_intent.succeeded - this will confirm or cancel the payment
         if ($request->type === 'payment_intent.succeeded') {
             PaymentIntentWebhook::dispatch($request->data, $request->company_key, $this->company_gateway->id)->delay(now()->addSeconds(5));
 
@@ -785,7 +791,6 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                     })
                     ->first();
 
-
                 if ($payment) {
 
                     if (isset($transaction['payment_method_details']['au_becs_debit'])) {
@@ -800,7 +805,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             $this->init();
 
             foreach ($request->data as $transaction) {
-                if (! $request->data['object']['amount'] || empty($request->data['object']['amount'])) {
+                if (!$request->data['object']['amount'] || empty($request->data['object']['amount'])) {
                     continue;
                 }
 
@@ -811,7 +816,6 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                 ], $this->stripe_connect_auth);
 
                 if ($charge->captured) {
-
 
                     $payment = Payment::query()
                         ->where('company_id', $this->company_gateway->company_id)
@@ -832,19 +836,17 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                         })
                         ->first();
 
-
-
                     if ($payment) {
                         $payment->status_id = Payment::STATUS_COMPLETED;
                         $payment->save();
                     }
                 }
             }
-        } elseif ($request->type === "payment_method.automatically_updated") {
+        } elseif ($request->type === 'payment_method.automatically_updated') {
             // Will notify customer on updated information
             return response()->json([], 200);
-        } elseif ($request->type === "mandate.updated") {
-            if ($request->data['object']['status'] == "active") {
+        } elseif ($request->type === 'mandate.updated') {
+            if ($request->data['object']['status'] == 'active') {
                 // Check if payment method existsn
                 $payment_method = (string) $request->data['object']['payment_method'];
 
@@ -860,7 +862,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                 }
 
                 return response()->json([], 200);
-            } elseif ($request->data['object']['status'] == "inactive" && $request->data['object']['payment_method']) {
+            } elseif ($request->data['object']['status'] == 'inactive' && $request->data['object']['payment_method']) {
                 // Delete payment method
                 $clientgateway = ClientGatewayToken::query()
                     ->where('token', $request->data['object']['payment_method'])
@@ -871,7 +873,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                 }
 
                 return response()->json([], 200);
-            } elseif ($request->data['object']['status'] == "pending") {
+            } elseif ($request->data['object']['status'] == 'pending') {
                 return response()->json([], 200);
             }
         }
@@ -887,10 +889,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     /**
      * Attach Stripe payment method to Stripe client.
      *
-     * @param string $payment_method
-     * @param mixed $customer
-     *
-     * @return void
+     * @param  mixed  $customer
      */
     public function attach(string $payment_method, $customer): void
     {
@@ -920,7 +919,6 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
      * Detach payment method from the Stripe.
      * https://stripe.com/docs/api/payment_methods/detach
      *
-     * @param ClientGatewayToken $token
      * @return void
      */
     public function detach(ClientGatewayToken $token)
@@ -955,7 +953,6 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     /**
      * Retrieve payment method from Stripe.
      *
-     * @param string $source
      *
      * @return PaymentMethod|void
      */
@@ -993,7 +990,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     public function importCustomers()
     {
         return (new ImportCustomers($this))->run();
-        //match clients based on the gateway_customer_reference column
+        // match clients based on the gateway_customer_reference column
     }
 
     public function importMatchedClients()
@@ -1015,25 +1012,25 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
     {
         $this->init();
 
-        \Stripe\ApplePayDomain::create([
+        ApplePayDomain::create([
             'domain_name' => $domain,
         ], $this->stripe_connect_auth);
     }
 
     public function disconnect()
     {
-        if (! $this->stripe_connect) {
+        if (!$this->stripe_connect) {
             return true;
         }
 
-        if (! strlen($this->company_gateway->getConfigField('account_id')) > 1) {
+        if (!strlen($this->company_gateway->getConfigField('account_id')) > 1) {
             throw new StripeConnectFailure('Stripe Connect has not been configured');
         }
 
         Stripe::setApiKey(config('ninja.ninja_stripe_key'));
 
         try {
-            \Stripe\OAuth::deauthorize([
+            OAuth::deauthorize([
                 'client_id' => config('ninja.ninja_stripe_client_id'),
                 'stripe_user_id' => $this->company_gateway->getConfigField('account_id'),
             ]);
@@ -1042,7 +1039,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             $config->account_id = '';
             $this->company_gateway->setConfig($config);
             $this->company_gateway->save();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new StripeConnectFailure('Unable to disconnect Stripe Connect');
         }
 
@@ -1075,7 +1072,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                 }
 
                 // Test Connect API access
-                \Stripe\Account::retrieve(
+                Account::retrieve(
                     $this->company_gateway->getConfigField('account_id'),
                     $this->stripe_connect_auth
                 );
@@ -1087,21 +1084,21 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                     return 'error';
                 }
 
-                $b = \Stripe\Balance::retrieve(); // Simple API call to verify credentials
+                $b = Balance::retrieve(); // Simple API call to verify credentials
 
             }
 
             return 'ok';
         } catch (\Throwable $th) {
-            nlog("Stripe auth error: " . $th->getMessage());
+            nlog('Stripe auth error: ' . $th->getMessage());
+
             return 'error';
         }
-
 
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function setHeadless(bool $headless): self
     {

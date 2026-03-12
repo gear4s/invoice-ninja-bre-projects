@@ -6,26 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Subscription;
 
-use App\Models\Client;
-use App\Libraries\MultiDB;
-use App\Models\Subscription;
-use App\Models\RecurringInvoice;
-use App\Services\AbstractService;
 use App\Factory\RecurringInvoiceFactory;
+use App\Libraries\MultiDB;
+use App\Models\Client;
+use App\Models\RecurringInvoice;
+use App\Models\Subscription;
 use App\Repositories\SubscriptionRepository;
+use App\Services\AbstractService;
 
 class InvoiceToRecurring extends AbstractService
 {
-    protected \App\Services\Subscription\SubscriptionStatus $status;
+    protected SubscriptionStatus $status;
 
     public function __construct(protected int $client_id, public Subscription $subscription, public array $bundle = []) {}
-
 
     public function run(): RecurringInvoice
     {
@@ -34,7 +32,7 @@ class InvoiceToRecurring extends AbstractService
 
         $client = Client::withTrashed()->find($this->client_id);
 
-        $subscription_repo = new SubscriptionRepository();
+        $subscription_repo = new SubscriptionRepository;
 
         $line_items = count($this->bundle) > 1 ? $subscription_repo->generateBundleLineItems($this->bundle, true, false) : $subscription_repo->generateLineItems($this->subscription, true, false);
 
@@ -46,11 +44,11 @@ class InvoiceToRecurring extends AbstractService
         $recurring_invoice->date = now();
         $recurring_invoice->remaining_cycles = -1;
         $recurring_invoice->auto_bill = $client->getSetting('auto_bill');
-        $recurring_invoice->auto_bill_enabled =  $this->setAutoBillFlag($recurring_invoice->auto_bill);
+        $recurring_invoice->auto_bill_enabled = $this->setAutoBillFlag($recurring_invoice->auto_bill);
         $recurring_invoice->due_date_days = 'terms';
         $recurring_invoice->next_send_date = now()->format('Y-m-d');
         $recurring_invoice->next_send_date_client = now()->format('Y-m-d');
-        $recurring_invoice->next_send_date =  $recurring_invoice->nextSendDate();
+        $recurring_invoice->next_send_date = $recurring_invoice->nextSendDate();
         $recurring_invoice->next_send_date_client = $recurring_invoice->nextSendDateClient();
 
         return $recurring_invoice;

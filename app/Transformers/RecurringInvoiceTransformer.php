@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,6 +15,7 @@ use App\Models\Activity;
 use App\Models\Backup;
 use App\Models\Client;
 use App\Models\Document;
+use App\Models\Location;
 use App\Models\RecurringInvoice;
 use App\Models\RecurringInvoiceInvitation;
 use App\Utils\Traits\MakesHash;
@@ -43,7 +43,7 @@ class RecurringInvoiceTransformer extends EntityTransformer
             return null;
         }
 
-        return $this->includeItem($invoice->location, $transformer, \App\Models\Location::class);
+        return $this->includeItem($invoice->location, $transformer, Location::class);
     }
 
     public function includeHistory(RecurringInvoice $invoice)
@@ -146,7 +146,7 @@ class RecurringInvoiceTransformer extends EntityTransformer
             'due_date_days' => (string) $invoice->due_date_days ?: '',
             'paid_to_date' => (float) $invoice->paid_to_date,
             'subscription_id' => (string) $this->encodePrimaryKey($invoice->subscription_id),
-            'e_invoice' => $invoice->e_invoice ?: new \stdClass(),
+            'e_invoice' => $invoice->e_invoice ?: new \stdClass,
             'location_id' => $this->encodePrimaryKey($invoice->location_id),
         ];
 

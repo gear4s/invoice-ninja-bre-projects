@@ -8,7 +8,8 @@ use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class TaxesDutiesFees
 {
-    public ?string $country; //need to run postprocessing on this
+    public ?string $country; // need to run postprocessing on this
+
     public ?float $amount;
 
     #[Context(['input_format' => 'float'])]
@@ -63,30 +64,35 @@ class TaxesDutiesFees
     public function setCountry(?string $country): self
     {
         $this->country = $country;
+
         return $this;
     }
 
     public function setAmount(?float $amount): self
     {
         $this->amount = $amount;
+
         return $this;
     }
 
     public function setPercentage(?float $percentage): self
     {
         $this->percentage = $percentage;
+
         return $this;
     }
 
     public function setCategory(?string $category): self
     {
         $this->category = $category;
+
         return $this;
     }
 
     public function setType(?string $type): self
     {
         $this->type = $type;
+
         return $this;
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,7 @@ class BankTransactionFactory
 {
     public static function create(int $company_id, int $user_id): BankTransaction
     {
-        $bank_transaction = new BankTransaction();
+        $bank_transaction = new BankTransaction;
         $bank_transaction->user_id = $user_id;
         $bank_transaction->company_id = $company_id;
 

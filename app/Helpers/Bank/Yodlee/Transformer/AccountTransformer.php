@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -61,8 +60,6 @@ use App\Helpers\Bank\AccountTransformerInterface;
 )
     )
  */
-
-
 class AccountTransformer implements AccountTransformerInterface
 {
     public function transform($yodlee_account)
@@ -104,16 +101,16 @@ class AccountTransformer implements AccountTransformerInterface
             $next_update_scheduled = $dataset->nextUpdateScheduled ?? '';
 
             match ($dataset->additionalStatus ?? '') {
-                'LOGIN_IN_PROGRESS' => $status =  'Data retrieval in progress.',
-                'USER_INPUT_REQUIRED' => $status =  'Please reconnect your account, authentication required.',
-                'ACCOUNT_SUMMARY_RETRIEVED' => $status =  'Account summary retrieval in progress.',
-                'NEVER_INITIATED' => $status =  'Upstream working on connecting to your account.',
-                'LOGIN_FAILED' => $status =  'Authentication failed, please try reauthenticating.',
-                'REQUEST_TIME_OUT' => $status =  'Timeout encountered retrieving data.',
-                'DATA_RETRIEVAL_FAILED' => $status =  'Login successful, but data retrieval failed.',
-                'PARTIAL_DATA_RETRIEVED' => $status =  'Partial data update failed.',
-                'PARTIAL_DATA_RETRIEVED_REM_SCHED' => $status =  'Partial data update failed.',
-                'SUCCESS' => $status =  'All accounts added or updated successfully.',
+                'LOGIN_IN_PROGRESS' => $status = 'Data retrieval in progress.',
+                'USER_INPUT_REQUIRED' => $status = 'Please reconnect your account, authentication required.',
+                'ACCOUNT_SUMMARY_RETRIEVED' => $status = 'Account summary retrieval in progress.',
+                'NEVER_INITIATED' => $status = 'Upstream working on connecting to your account.',
+                'LOGIN_FAILED' => $status = 'Authentication failed, please try reauthenticating.',
+                'REQUEST_TIME_OUT' => $status = 'Timeout encountered retrieving data.',
+                'DATA_RETRIEVAL_FAILED' => $status = 'Login successful, but data retrieval failed.',
+                'PARTIAL_DATA_RETRIEVED' => $status = 'Partial data update failed.',
+                'PARTIAL_DATA_RETRIEVED_REM_SCHED' => $status = 'Partial data update failed.',
+                'SUCCESS' => $status = 'All accounts added or updated successfully.',
                 default => $status = false
             };
 

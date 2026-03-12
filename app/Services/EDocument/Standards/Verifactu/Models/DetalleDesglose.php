@@ -9,6 +9,7 @@ class DetalleDesglose extends BaseXmlModel
     public function setDesgloseIVA(array $desglose): self
     {
         $this->desgloseIVA = $desglose;
+
         return $this;
     }
 
@@ -24,7 +25,7 @@ class DetalleDesglose extends BaseXmlModel
         // Add IVA details directly under DetalleDesglose
         $root->appendChild($this->createElement($doc, 'Impuesto', $this->desgloseIVA['Impuesto']));
 
-        if (isset($this->desgloseIVA['ClaveRegimen']) && in_array($this->desgloseIVA['ClaveRegimen'], ['01','03'])) {
+        if (isset($this->desgloseIVA['ClaveRegimen']) && in_array($this->desgloseIVA['ClaveRegimen'], ['01', '03'])) {
             $root->appendChild($this->createElement($doc, 'ClaveRegimen', $this->desgloseIVA['ClaveRegimen']));
         }
 
@@ -44,7 +45,7 @@ class DetalleDesglose extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $detalleDesglose = new self();
+        $detalleDesglose = new self;
 
         $desglose = [
             'Impuesto' => self::getElementText($element, 'Impuesto'),
@@ -62,6 +63,7 @@ class DetalleDesglose extends BaseXmlModel
     protected static function getElementText(\DOMElement $element, string $tagName): ?string
     {
         $node = $element->getElementsByTagNameNS(self::XML_NAMESPACE, $tagName)->item(0);
+
         return $node ? $node->nodeValue : null;
     }
 }

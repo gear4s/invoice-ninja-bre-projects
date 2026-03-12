@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,8 +36,8 @@ trait GeneratesCounter
 {
     private int $update_counter;
 
-    //todo in the form validation, we need to ensure that if a prefix and pattern is set we throw a validation error,
-    //only one type is allow else this will cause confusion to the end user
+    // todo in the form validation, we need to ensure that if a prefix and pattern is set we throw a validation error,
+    // only one type is allow else this will cause confusion to the end user
 
     public function getPeppolCreditNumber(Client $client, Invoice $invoice)
     {
@@ -79,7 +78,7 @@ trait GeneratesCounter
             $counter_entity = $client->company;
         }
 
-        //If it is a quote - we need to
+        // If it is a quote - we need to
         $pattern = $this->getNumberPattern($entity, $client);
 
         if (strlen($pattern) > 1 && (stripos($pattern, 'counter') === false)) {
@@ -174,10 +173,8 @@ trait GeneratesCounter
     /**
      * Gets the next invoice number.
      *
-     * @param Client $client The client
-     *
-     * @param Invoice|null $invoice
-     * @return     string              The next invoice number.
+     * @param  Client  $client  The client
+     * @return string The next invoice number.
      */
     public function getNextInvoiceNumber(Client $client, ?Invoice $invoice, $is_recurring = false): string
     {
@@ -189,9 +186,8 @@ trait GeneratesCounter
     /**
      * Gets the next credit number.
      *
-     * @param Client $client  The client
-     *
-     * @return     string              The next credit number.
+     * @param  Client  $client  The client
+     * @return string The next credit number.
      */
     public function getNextCreditNumber(Client $client, ?Credit $credit): string
     {
@@ -203,9 +199,8 @@ trait GeneratesCounter
     /**
      * Gets the next quote number.
      *
-     * @param Client $client  The client
-     *
-     * @return     string              The next credit number.
+     * @param  Client  $client  The client
+     * @return string The next credit number.
      */
     public function getNextQuoteNumber(Client $client, ?Quote $quote)
     {
@@ -231,9 +226,8 @@ trait GeneratesCounter
     /**
      * Gets the next Payment number.
      *
-     * @param Client $client  The client
-     *
-     * @return     string              The next payment number.
+     * @param  Client  $client  The client
+     * @return string The next payment number.
      */
     public function getNextPaymentNumber(Client $client, ?Payment $payment): string
     {
@@ -245,14 +239,14 @@ trait GeneratesCounter
     /**
      * Gets the next client number.
      *
-     * @param Client $client The client
+     * @param  Client  $client  The client
+     * @return string The next client number.
      *
-     * @return     string              The next client number.
      * @throws \Exception
      */
     public function getNextClientNumber(Client $client): string
     {
-        //Reset counters if enabled
+        // Reset counters if enabled
         $this->resetCounters($client);
 
         $counter = $client->getSetting('client_number_counter');
@@ -270,8 +264,8 @@ trait GeneratesCounter
     /**
      * Gets the next client number.
      *
-     * @param Vendor $vendor    The vendor
-     * @return     string                         The next vendor number.
+     * @param  Vendor  $vendor  The vendor
+     * @return string The next vendor number.
      */
     public function getNextVendorNumber(Vendor $vendor): string
     {
@@ -291,8 +285,8 @@ trait GeneratesCounter
 
     /**
      * Project Number Generator.
-     * @param  Project $project
-     * @return string  The project number
+     *
+     * @return string The project number
      */
     public function getNextProjectNumber(Project $project): string
     {
@@ -304,8 +298,8 @@ trait GeneratesCounter
     /**
      * Gets the next task number.
      *
-     * @param   Task    $task    The task
-     * @return  string           The next task number.
+     * @param  Task  $task  The task
+     * @return string The next task number.
      */
     public function getNextTaskNumber(Task $task): string
     {
@@ -326,8 +320,8 @@ trait GeneratesCounter
     /**
      * Gets the next expense number.
      *
-     * @param   Expense    $expense    The expense
-     * @return  string                 The next expense number.
+     * @param  Expense  $expense  The expense
+     * @return string The next expense number.
      */
     public function getNextExpenseNumber(Expense $expense): string
     {
@@ -370,15 +364,15 @@ trait GeneratesCounter
     /**
      * Gets the next expense number.
      *
-     * @param   RecurringExpense       $expense    The expense
-     * @return  string                 The next expense number.
+     * @param  RecurringExpense  $expense  The expense
+     * @return string The next expense number.
      */
     public function getNextRecurringExpenseNumber(RecurringExpense $expense): string
     {
         $this->resetCompanyCounters($expense->company);
 
         // - 18/09/21 need to set this property if it doesn't exist. //todo refactor this for other properties
-        if (! property_exists($expense->company->settings, 'recurring_expense_number_counter')) {
+        if (!property_exists($expense->company->settings, 'recurring_expense_number_counter')) {
             $settings = $expense->company->settings;
             $settings->recurring_expense_number_counter = 1;
             $settings->recurring_expense_number_pattern = '';
@@ -401,9 +395,8 @@ trait GeneratesCounter
     /**
      * Determines if it has shared counter.
      *
-     * @param Client $client  The client
-     *
-     * @return     bool             True if has shared counter, False otherwise.
+     * @param  Client  $client  The client
+     * @return bool True if has shared counter, False otherwise.
      */
     public function hasSharedCounter(Client $client, string $type = 'quote'): bool
     {
@@ -411,21 +404,19 @@ trait GeneratesCounter
             return (bool) $client->getSetting('shared_invoice_quote_counter');
         }
 
-        //credit
+        // credit
         return (bool) $client->getSetting('shared_invoice_credit_counter');
     }
 
     /**
      * Checks that the number has not already been used.
      *
-     * @param $class
-     * @param Collection $entity The entity ie App\Models\Client, Invoice, Quote etc
-     * @param int $counter The counter
-     * @param int $padding The padding
-     *
-     * @param      string $pattern
-     * @param      string $prefix
-     * @return     string The padded, prefixed and unique entity number
+     * @param  Collection  $entity  The entity ie App\Models\Client, Invoice, Quote etc
+     * @param  int  $counter  The counter
+     * @param  int  $padding  The padding
+     * @param  string  $pattern
+     * @param  string  $prefix
+     * @return string The padded, prefixed and unique entity number
      */
     private function checkEntityNumber($class, $entity, $counter, $padding, $pattern, $prefix = ''): string
     {
@@ -455,13 +446,12 @@ trait GeneratesCounter
     /**
      * Formats the entity number according to pattern, prefix and padding.
      *
-     * @param mixed $entity The entity ie App\Models\Client, Invoice, Quote etc
-     * @param int $counter The counter
-     * @param int $padding The padding
-     * @param      string $pattern
-     * @param      string $prefix
-     *
-     * @return     string The padded and prefixed entity number
+     * @param  mixed  $entity  The entity ie App\Models\Client, Invoice, Quote etc
+     * @param  int  $counter  The counter
+     * @param  int  $padding  The padding
+     * @param  string  $pattern
+     * @param  string  $prefix
+     * @return string The padded and prefixed entity number
      */
     public function getFormattedEntityNumber($entity, $counter, $padding, $pattern, $prefix = ''): string
     {
@@ -472,7 +462,7 @@ trait GeneratesCounter
         return $this->prefixCounter($number, $prefix);
     }
 
-    /*Check if a number is available for use. */
+    /* Check if a number is available for use. */
     public function checkNumberAvailable($class, $entity, $number): bool
     {
         if ($entity = $class::whereCompanyId($entity->company_id)->whereNumber($number)->withTrashed()->exists()) {
@@ -485,18 +475,17 @@ trait GeneratesCounter
     /**
      * Saves counters at both the company and client level.
      *
-     * @param $entity
-     * @param string $counter_name The counter name
+     * @param  string  $counter_name  The counter name
      */
     private function incrementCounter($entity, string $counter_name): void
     {
         $settings = $entity->settings;
 
-        if ($counter_name == 'invoice_number_counter' && ! property_exists($entity->settings, 'invoice_number_counter')) {
+        if ($counter_name == 'invoice_number_counter' && !property_exists($entity->settings, 'invoice_number_counter')) {
             $settings->invoice_number_counter = 0;
         }
 
-        if (! property_exists($settings, $counter_name)) {
+        if (!property_exists($settings, $counter_name)) {
             $settings->{$counter_name} = 1;
         }
 
@@ -514,16 +503,15 @@ trait GeneratesCounter
             return $counter;
         }
 
-        return  $prefix . $counter;
+        return $prefix . $counter;
     }
 
     /**
      * Pads a number with leading 000000's.
      *
-     * @param      int  $counter  The counter
-     * @param      int  $padding  The padding
-     *
-     * @return     string  the padded counter
+     * @param  int  $counter  The counter
+     * @param  int  $padding  The padding
+     * @return string the padded counter
      */
     private function padCounter($counter, $padding): string
     {
@@ -534,7 +522,7 @@ trait GeneratesCounter
      * If we are using counter reset,
      * check if we need to reset here.
      *
-     * @param Client $client client entity
+     * @param  Client  $client  client entity
      * @return void
      */
     private function resetCounters(Client $client)
@@ -546,7 +534,7 @@ trait GeneratesCounter
         if ($reset_counter_frequency == 0) {
 
             if ($client->getSetting('reset_counter_date')) {
-                $settings->reset_counter_date = "";
+                $settings->reset_counter_date = '';
                 $settings_entity->settings = $settings;
                 $settings_entity->saveQuietly();
             }
@@ -558,7 +546,7 @@ trait GeneratesCounter
 
         $reset_date = Carbon::parse($client->getSetting('reset_counter_date'), $timezone->name);
 
-        if (! $reset_date->lte(now()) || ! $client->getSetting('reset_counter_date')) {
+        if (!$reset_date->lte(now()) || !$client->getSetting('reset_counter_date')) {
             return false;
         }
 
@@ -627,7 +615,7 @@ trait GeneratesCounter
 
         $reset_date = Carbon::parse($company->settings->reset_counter_date, $timezone->name);
 
-        if (! $reset_date->lte(now()) || ! $company->settings->reset_counter_date) {
+        if (!$reset_date->lte(now()) || !$company->settings->reset_counter_date) {
             return false;
         }
 
@@ -637,7 +625,7 @@ trait GeneratesCounter
 
         if ($reset_counter_frequency == 0) {
             if ($settings->reset_counter_date) {
-                $settings->reset_counter_date = "";
+                $settings->reset_counter_date = '';
                 $company->settings = $settings;
                 $company->save();
             }
@@ -704,15 +692,14 @@ trait GeneratesCounter
     /**
      * Formats a entity number by pattern
      *
-     * @param      BaseModel  $entity   The entity object
-     * @param      string                 $counter  The counter
-     * @param      null|string            $pattern  The pattern
-     *
-     * @return     string                The formatted number pattern
+     * @param  BaseModel  $entity  The entity object
+     * @param  string  $counter  The counter
+     * @param  null|string  $pattern  The pattern
+     * @return string The formatted number pattern
      */
     private function applyNumberPattern($entity, string $counter, $pattern): string
     {
-        if (! $pattern) {
+        if (!$pattern) {
             return $counter;
         }
 
@@ -749,7 +736,7 @@ trait GeneratesCounter
             $format = $matches[1];
             $search[] = $matches[0];
 
-            /* The following adjusts for the company timezone - may bork tests depending on the time of day the tests are run!!!!!!*/
+            /* The following adjusts for the company timezone - may bork tests depending on the time of day the tests are run!!!!!! */
             $date = Carbon::now($entity->company->timezone()->name)->format($format);
             $replace[] = str_replace($format, $date, $matches[1]);
         }
@@ -820,7 +807,7 @@ trait GeneratesCounter
 
     private function replaceUserVars($entity, $pattern)
     {
-        if (! $entity) {
+        if (!$entity) {
             return $pattern;
         }
 

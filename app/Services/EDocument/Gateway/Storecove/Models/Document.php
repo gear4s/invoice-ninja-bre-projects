@@ -5,8 +5,11 @@ namespace App\Services\EDocument\Gateway\Storecove\Models;
 class Document
 {
     public ?string $document_type;
+
     public ?string $source;
+
     public ?Invoice $invoice;
+
     public ?Order $order;
 
     public function __construct(
@@ -44,24 +47,28 @@ class Document
     public function setDocumentType(?string $document_type): self
     {
         $this->document_type = $document_type;
+
         return $this;
     }
 
     public function setSource(?string $source): self
     {
         $this->source = $source;
+
         return $this;
     }
 
     public function setInvoice(?Invoice $invoice): self
     {
         $this->invoice = $invoice;
+
         return $this;
     }
 
     public function setOrder(?Order $order): self
     {
         $this->order = $order;
+
         return $this;
     }
 }

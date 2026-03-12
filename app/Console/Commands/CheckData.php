@@ -6,47 +6,46 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Console\Commands;
 
-use App;
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Models\Quote;
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Vendor;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Contact;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Libraries\MultiDB;
-use App\Models\CompanyUser;
-use Illuminate\Support\Str;
-use App\Models\CompanyToken;
-use App\Models\ClientContact;
-use App\Models\CompanyLedger;
-use App\Models\PurchaseOrder;
-use App\Models\VendorContact;
-use App\Models\BankTransaction;
-use App\Models\QuoteInvitation;
-use Illuminate\Console\Command;
-use App\Models\CreditInvitation;
-use App\Models\RecurringInvoice;
-use App\Models\InvoiceInvitation;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use App\Factory\ClientContactFactory;
 use App\Factory\VendorContactFactory;
 use App\Jobs\Company\CreateCompanyToken;
+use App\Libraries\MultiDB;
+use App\Models\Account;
+use App\Models\BankTransaction;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CompanyLedger;
+use App\Models\CompanyToken;
+use App\Models\CompanyUser;
+use App\Models\Contact;
+use App\Models\Credit;
+use App\Models\CreditInvitation;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Models\Payment;
+use App\Models\PurchaseOrder;
+use App\Models\Quote;
+use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoice;
 use App\Models\RecurringInvoiceInvitation;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Models\VendorContact;
 use App\Utils\BcMath;
+use App\Utils\Ninja;
 use App\Utils\Traits\CleanLineItems;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputOption;
 
 /*
@@ -105,13 +104,12 @@ class CheckData extends Command
 
     protected $wrong_paid_status = 0;
 
-
     public function handle()
     {
         $time_start = microtime(true);
 
         $database_connection = $this->option('database') ? $this->option('database') : 'Connected to Default DB';
-        $fix_status = $this->option('fix') ? "Fixing Issues" : "Just checking issues ";
+        $fix_status = $this->option('fix') ? 'Fixing Issues' : 'Just checking issues ';
 
         $this->logMessage(date('Y-m-d h:i:s') . ' Running CheckData... on ' . $database_connection . " Fix Status = {$fix_status}");
 
@@ -144,7 +142,7 @@ class CheckData extends Command
             $this->checkNinjaPortalUrls();
         }
 
-        if (! $this->option('client_id')) {
+        if (!$this->option('client_id')) {
             $this->checkOAuth();
         }
 
@@ -167,11 +165,11 @@ class CheckData extends Command
         if (strlen($errorEmail) > 1) {
             Mail::raw($this->log, function ($message) use ($errorEmail, $database) {
                 $message->to($errorEmail)
-                        ->from(config('mail.from.address'), config('mail.from.name'))
-                        ->subject('Check-Data: ' . strtoupper($this->isValid ? Account::RESULT_SUCCESS : Account::RESULT_FAILURE) . " [{$database}]");
+                    ->from(config('mail.from.address'), config('mail.from.name'))
+                    ->subject('Check-Data: ' . strtoupper($this->isValid ? Account::RESULT_SUCCESS : Account::RESULT_FAILURE) . " [{$database}]");
             });
-        } elseif (! $this->isValid) {
-            new \Exception("Check data failed!!" . $this->log);
+        } elseif (!$this->isValid) {
+            new \Exception('Check data failed!!' . $this->log);
         }
     }
 
@@ -184,7 +182,7 @@ class CheckData extends Command
 
     private function checkTaskTimeLogs()
     {
-        \App\Models\Task::query()->cursor()->each(function ($task) {
+        Task::query()->cursor()->each(function ($task) {
             $time_log = json_decode(($task->time_log ?? ''), true) ?? [];
 
             foreach ($time_log as &$log) {
@@ -218,14 +216,13 @@ class CheckData extends Command
 
             if (CompanyToken::where('user_id', $cu->user_id)->where('company_id', $cu->company_id)->where('is_system', 1)->doesntExist()) {
 
-
                 if ($cu->company && $cu->user) {
                     $this->logMessage("Creating missing company token for user # {$cu->user_id} for company id # {$cu->company_id}");
                     (new CreateCompanyToken($cu->company, $cu->user, 'System'))->handle();
                 }
 
                 if (!$cu->user) {
-                    $this->logMessage("No user found for company user - removing company user");
+                    $this->logMessage('No user found for company user - removing company user');
                     $cu->forceDelete();
                 }
 
@@ -259,15 +256,14 @@ class CheckData extends Command
         }
     }
 
-
     private function checkOAuth()
     {
         // check for duplicate oauth ids
         $users = DB::table('users')
-                    ->whereNotNull('oauth_user_id')
-                    ->groupBy('users.oauth_user_id')
-                    ->havingRaw('count(users.id) > 1')
-                    ->get(['users.oauth_user_id']);
+            ->whereNotNull('oauth_user_id')
+            ->groupBy('users.oauth_user_id')
+            ->havingRaw('count(users.id) > 1')
+            ->get(['users.oauth_user_id']);
 
         $this->logMessage($users->count() . ' users with duplicate oauth ids');
 
@@ -280,14 +276,15 @@ class CheckData extends Command
                 $first = true;
                 $this->logMessage('checking ' . $user->oauth_user_id);
                 $matches = DB::table('users')
-                            ->where('oauth_user_id', '=', $user->oauth_user_id)
-                            ->orderBy('id')
-                            ->get(['id']);
+                    ->where('oauth_user_id', '=', $user->oauth_user_id)
+                    ->orderBy('id')
+                    ->get(['id']);
 
                 foreach ($matches as $match) {
                     if ($first) {
                         $this->logMessage('skipping ' . $match->id);
                         $first = false;
+
                         continue;
                     }
                     $this->logMessage('updating ' . $match->id);
@@ -308,9 +305,9 @@ class CheckData extends Command
     {
         // check for contacts with the contact_key value set
         $contacts = DB::table('client_contacts')
-                        ->whereNull('contact_key')
-                        ->orderBy('id')
-                        ->get(['id']);
+            ->whereNull('contact_key')
+            ->orderBy('id')
+            ->get(['id']);
         $this->logMessage($contacts->count() . ' contacts without a contact_key');
 
         if ($contacts->count() > 0) {
@@ -330,12 +327,12 @@ class CheckData extends Command
 
         // check for missing contacts
         $clients = DB::table('clients')
-                    ->leftJoin('client_contacts', function ($join) {
-                        $join->on('client_contacts.client_id', '=', 'clients.id')
-                            ->whereNull('client_contacts.deleted_at');
-                    })
-                    ->groupBy('clients.id', 'clients.user_id', 'clients.company_id')
-                    ->havingRaw('count(client_contacts.id) = 0');
+            ->leftJoin('client_contacts', function ($join) {
+                $join->on('client_contacts.client_id', '=', 'clients.id')
+                    ->whereNull('client_contacts.deleted_at');
+            })
+            ->groupBy('clients.id', 'clients.user_id', 'clients.company_id')
+            ->havingRaw('count(client_contacts.id) = 0');
 
         if ($this->option('client_id')) {
             $clients->where('clients.id', '=', $this->option('client_id'));
@@ -365,9 +362,9 @@ class CheckData extends Command
     {
         // check for contacts with the contact_key value set
         $contacts = DB::table('vendor_contacts')
-                        ->whereNull('contact_key')
-                        ->orderBy('id')
-                        ->get(['id']);
+            ->whereNull('contact_key')
+            ->orderBy('id')
+            ->get(['id']);
 
         $this->logMessage($contacts->count() . ' contacts without a contact_key');
 
@@ -412,13 +409,13 @@ class CheckData extends Command
     private function checkInvitations()
     {
         $invoices = DB::table('invoices')
-                    ->leftJoin('invoice_invitations', function ($join) {
-                        $join->on('invoice_invitations.invoice_id', '=', 'invoices.id')
-                             ->whereNull('invoice_invitations.deleted_at');
-                    })
-                    ->groupBy('invoices.id', 'invoices.user_id', 'invoices.company_id', 'invoices.client_id')
-                    ->havingRaw('count(invoice_invitations.id) = 0')
-                    ->get(['invoices.id', 'invoices.user_id', 'invoices.company_id', 'invoices.client_id']);
+            ->leftJoin('invoice_invitations', function ($join) {
+                $join->on('invoice_invitations.invoice_id', '=', 'invoices.id')
+                    ->whereNull('invoice_invitations.deleted_at');
+            })
+            ->groupBy('invoices.id', 'invoices.user_id', 'invoices.company_id', 'invoices.client_id')
+            ->havingRaw('count(invoice_invitations.id) = 0')
+            ->get(['invoices.id', 'invoices.user_id', 'invoices.company_id', 'invoices.client_id']);
 
         $this->logMessage($invoices->count() . ' invoices without any invitations');
 
@@ -428,7 +425,7 @@ class CheckData extends Command
 
         if ($this->option('fix') == 'true') {
             foreach ($invoices as $invoice) {
-                $invitation = new InvoiceInvitation();
+                $invitation = new InvoiceInvitation;
                 $invitation->company_id = $invoice->company_id;
                 $invitation->user_id = $invoice->user_id;
                 $invitation->invoice_id = $invoice->id;
@@ -452,10 +449,10 @@ class CheckData extends Command
     private function checkEntityInvitations()
     {
 
-        RecurringInvoiceInvitation::where('deleted_at', "0000-00-00 00:00:00.000000")->withTrashed()->update(['deleted_at' => null]);
-        InvoiceInvitation::where('deleted_at', "0000-00-00 00:00:00.000000")->withTrashed()->update(['deleted_at' => null]);
-        QuoteInvitation::where('deleted_at', "0000-00-00 00:00:00.000000")->withTrashed()->update(['deleted_at' => null]);
-        CreditInvitation::where('deleted_at', "0000-00-00 00:00:00.000000")->withTrashed()->update(['deleted_at' => null]);
+        RecurringInvoiceInvitation::where('deleted_at', '0000-00-00 00:00:00.000000')->withTrashed()->update(['deleted_at' => null]);
+        InvoiceInvitation::where('deleted_at', '0000-00-00 00:00:00.000000')->withTrashed()->update(['deleted_at' => null]);
+        QuoteInvitation::where('deleted_at', '0000-00-00 00:00:00.000000')->withTrashed()->update(['deleted_at' => null]);
+        CreditInvitation::where('deleted_at', '0000-00-00 00:00:00.000000')->withTrashed()->update(['deleted_at' => null]);
 
         InvoiceInvitation::where('sent_date', '0000-00-00 00:00:00')->cursor()->each(function ($ii) {
             $ii->sent_date = null;
@@ -491,7 +488,7 @@ class CheckData extends Command
                     $contact_id = 'client_contact_id';
                     $contact_class = ClientContact::class;
 
-                    $entity_key = \Illuminate\Support\Str::of(class_basename($entity))->snake()->append('_id')->toString();
+                    $entity_key = Str::of(class_basename($entity))->snake()->append('_id')->toString();
                     $entity_obj = get_class($entity) . 'Invitation';
 
                     if ($entity instanceof PurchaseOrder) {
@@ -502,17 +499,17 @@ class CheckData extends Command
 
                     $invitation = false;
 
-                    //check contact exists!
+                    // check contact exists!
                     if ($contact_class::where('company_id', $entity->company_id)->where($client_vendor_key, $entity->{$client_vendor_key})->exists()) {
                         $contact = $contact_class::where('company_id', $entity->company_id)->where($client_vendor_key, $entity->{$client_vendor_key})->first();
 
-                        //double check if an archived invite exists
+                        // double check if an archived invite exists
                         if ($contact && $entity_obj::withTrashed()->where($entity_key, $entity->id)->where($contact_id, $contact->id)->count() != 0) {
                             $i = $entity_obj::withTrashed()->where($entity_key, $entity->id)->where($contact_id, $contact->id)->first();
                             $i->restore();
                             $this->logMessage("Found a valid contact and invitation restoring for {$entity_key} - {$entity->id}");
                         } else {
-                            $invitation = new $entity_obj();
+                            $invitation = new $entity_obj;
                             $invitation->company_id = $entity->company_id;
                             $invitation->user_id = $entity->user_id;
                             $invitation->{$entity_key} = $entity->id;
@@ -522,7 +519,6 @@ class CheckData extends Command
                         }
                     } else {
                         $this->logMessage("No contact present ( ? vendor not present ?? ), so cannot add invitation for {$entity_key} - {$entity->id}");
-
 
                         try {
                             $entity->service()->createInvitations()->save();
@@ -552,7 +548,7 @@ class CheckData extends Command
         $entity_obj = 'App\Models\\' . ucfirst(Str::camel($entity)) . 'Invitation';
 
         foreach ($entities as $entity) {
-            $invitation = new $entity_obj();
+            $invitation = new $entity_obj;
             $invitation->company_id = $entity->company_id;
             $invitation->user_id = $entity->user_id;
             $invitation->{$entity_key} = $entity->id;
@@ -569,7 +565,7 @@ class CheckData extends Command
 
     private function clientPaidToDateQuery()
     {
-        $results = \DB::select("
+        $results = \DB::select('
          SELECT 
          clients.id as client_id, 
          clients.paid_to_date as client_paid_to_date,
@@ -584,7 +580,7 @@ class CheckData extends Command
          GROUP BY clients.id
          HAVING payments_applied != client_paid_to_date
          ORDER BY clients.id;
-        ");
+        ');
 
         return $results;
     }
@@ -602,10 +598,10 @@ class CheckData extends Command
             });
     }
 
-    //@deprecated
+    // @deprecated
     private function clientCreditPaymentables($client)
     {
-        $results = \DB::select("
+        $results = \DB::select('
         SELECT 
         SUM(paymentables.amount - paymentables.refunded) as credit_payment
         FROM payments
@@ -617,7 +613,7 @@ class CheckData extends Command
         AND paymentables.amount > 0
         AND payments.is_deleted = 0
         AND payments.client_id = ?;
-        ", [App\Models\Credit::class, $client->id]);
+        ', [Credit::class, $client->id]);
 
         return $results;
     }
@@ -641,7 +637,6 @@ class CheckData extends Command
 
         return $results;
 
-
     }
 
     private function checkPaidToDatesNew()
@@ -658,7 +653,7 @@ class CheckData extends Command
             $credits_used_for_payments = $this->clientCreditPaymentables($client);
             $total_paid_to_date = $_client->payments_applied + $credits_used_for_payments[0]->credit_payment - $credits_from_reversal;
 
-            //2025-03-06 - new method
+            // 2025-03-06 - new method
             // $credits_used_for_payments = $this->clientCreditPaymentablesNew($client);
             // $total_paid_to_date = $credits_used_for_payments[0]->credit_payment;
 
@@ -682,7 +677,7 @@ class CheckData extends Command
 
     private function clientBalanceQuery()
     {
-        $results = \DB::select("
+        $results = \DB::select('
         SELECT         
         SUM(invoices.balance) as invoice_balance, 
         clients.id as client_id, 
@@ -696,7 +691,7 @@ class CheckData extends Command
         GROUP BY clients.id
         HAVING invoice_balance != clients.balance
         ORDER BY clients.id;
-        ");
+        ');
 
         return $results;
     }
@@ -716,7 +711,7 @@ class CheckData extends Command
 
                 $client_object = Client::withTrashed()->find($client['client_id']);
 
-                $this->logMessage($client_object->present()->name() . ' - ' . $client_object->id . " - calculated client balances do not match Invoice Balances = " . $client['invoice_balance'] . " - Client Balance = " . rtrim($client['client_balance'], '0'));
+                $this->logMessage($client_object->present()->name() . ' - ' . $client_object->id . ' - calculated client balances do not match Invoice Balances = ' . $client['invoice_balance'] . ' - Client Balance = ' . rtrim($client['client_balance'], '0'));
 
                 if ($this->option('client_balance')) {
                     $this->logMessage("# {$client_object->id} " . $client_object->present()->name() . ' - ' . $client_object->number . " Fixing {$client_object->balance} to " . $client['invoice_balance']);
@@ -734,48 +729,47 @@ class CheckData extends Command
     private function checkClientBalanceEdgeCases()
     {
         Client::query()
-              ->where('is_deleted', false)
-              ->where('balance', '!=', 0)
-              ->cursor()
-              ->each(function ($client) {
-                  $count = Invoice::withTrashed()
-                              ->where('client_id', $client->id)
-                              ->where('is_deleted', false)
-                              ->whereIn('status_id', [2,3])
-                              ->count();
+            ->where('is_deleted', false)
+            ->where('balance', '!=', 0)
+            ->cursor()
+            ->each(function ($client) {
+                $count = Invoice::withTrashed()
+                    ->where('client_id', $client->id)
+                    ->where('is_deleted', false)
+                    ->whereIn('status_id', [2, 3])
+                    ->count();
 
-                  if ($count == 0) {
-                      $this->isValid = false;
+                if ($count == 0) {
+                    $this->isValid = false;
 
-                      //factor in over payments to the client balance
-                      $over_payment = Payment::where('client_id', $client->id)
-                                              ->where('is_deleted', 0)
-                                              ->whereIn('status_id', [1,4])
-                                              ->selectRaw('sum(amount - applied) as p')
-                                              ->pluck('p')
-                                              ->first();
+                    // factor in over payments to the client balance
+                    $over_payment = Payment::where('client_id', $client->id)
+                        ->where('is_deleted', 0)
+                        ->whereIn('status_id', [1, 4])
+                        ->selectRaw('sum(amount - applied) as p')
+                        ->pluck('p')
+                        ->first();
 
-                      $over_payment = $over_payment * -1;
+                    $over_payment = $over_payment * -1;
 
-                      if (BcMath::equal($over_payment, $client->balance)) {
-                      } else {
-                          $this->logMessage("# {$client->id} # {$client->name} {$client->balance} is invalid should be {$over_payment}");
-                      }
+                    if (BcMath::equal($over_payment, $client->balance)) {
+                    } else {
+                        $this->logMessage("# {$client->id} # {$client->name} {$client->balance} is invalid should be {$over_payment}");
+                    }
 
+                    if ($this->option('client_balance') && (floatval($over_payment) != floatval($client->balance))) {
+                        $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->balance} to 0");
 
-                      if ($this->option('client_balance') && (floatval($over_payment) != floatval($client->balance))) {
-                          $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->balance} to 0");
-
-                          $client->balance = $over_payment;
-                          $client->saveQuietly();
-                      }
-                  }
-              });
+                        $client->balance = $over_payment;
+                        $client->saveQuietly();
+                    }
+                }
+            });
     }
 
     private function invoiceBalanceQuery()
     {
-        $results = \DB::select("
+        $results = \DB::select('
         SELECT 
         clients.id,
         clients.balance,
@@ -789,7 +783,7 @@ class CheckData extends Command
         GROUP BY clients.id
         HAVING(invoices_balance != clients.balance)
         ORDER BY clients.id;
-        ");
+        ');
 
         return $results;
     }
@@ -804,7 +798,7 @@ class CheckData extends Command
         foreach ($_clients as $_client) {
             $client = Client::withTrashed()->find($_client->id);
 
-            $invoice_balance = $client->invoices()->where('is_deleted', false)->whereIn('status_id', [2,3])->sum('balance');
+            $invoice_balance = $client->invoices()->where('is_deleted', false)->whereIn('status_id', [2, 3])->sum('balance');
 
             $ledger = CompanyLedger::where('client_id', $client->id)->orderBy('id', 'DESC')->first();
 
@@ -842,7 +836,7 @@ class CheckData extends Command
         $this->wrong_paid_to_dates = 0;
 
         foreach (Client::query()->where('is_deleted', 0)->where('clients.updated_at', '>', now()->subDays(2))->cursor() as $client) {
-            $invoice_balance = $client->invoices()->where('is_deleted', false)->whereIn('status_id', [2,3])->sum('balance');
+            $invoice_balance = $client->invoices()->where('is_deleted', false)->whereIn('status_id', [2, 3])->sum('balance');
             $ledger = CompanyLedger::where('client_id', $client->id)->orderBy('id', 'DESC')->first();
 
             if ($ledger && number_format($ledger->balance, 4) != number_format($client->balance, 4)) {
@@ -850,7 +844,6 @@ class CheckData extends Command
                 $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " - Balance Failure - Client Balance = {$client->balance} Ledger Balance = {$ledger->balance}");
 
                 $this->isValid = false;
-
 
                 if ($this->option('ledger_balance')) {
                     $this->logMessage("# {$client->id} " . $client->present()->name() . ' - ' . $client->number . " Fixing {$client->balance} to {$invoice_balance}");
@@ -922,9 +915,9 @@ class CheckData extends Command
                     $company_id = 'company_id';
                 }
                 $records = DB::table($table)
-                                ->join($tableName, "{$tableName}.id", '=', "{$table}.{$field}_id")
-                                ->whereRaw("{$table}.{$company_id} != {$tableName}.company_id")
-                                ->get(["{$table}.id"]);
+                    ->join($tableName, "{$tableName}.id", '=', "{$table}.{$field}_id")
+                    ->whereRaw("{$table}.{$company_id} != {$tableName}.company_id")
+                    ->get(["{$table}.id"]);
 
                 if ($records->count()) {
                     $this->isValid = false;
@@ -951,10 +944,10 @@ class CheckData extends Command
 
             if ($client) {
                 $payment = Payment::on('db-ninja-01')
-                              ->where('company_id', config('ninja.ninja_default_company_id'))
-                              ->where('client_id', $client->id)
-                              ->where('date', '>=', now()->subDays(2))
-                              ->exists();
+                    ->where('company_id', config('ninja.ninja_default_company_id'))
+                    ->where('client_id', $client->id)
+                    ->where('date', '>=', now()->subDays(2))
+                    ->exists();
 
                 if ($payment) {
                     $this->isValid = false;
@@ -964,7 +957,6 @@ class CheckData extends Command
             }
         });
     }
-
 
     public function checkClientSettings()
     {
@@ -976,7 +968,7 @@ class CheckData extends Command
                 $this->logMessage("Fixing country for # {$client->id}");
             });
 
-            Client::query()->withTrashed()->whereNull("settings->currency_id")->orWhereJsonContains('settings', ['currency_id' => ''])->cursor()->each(function ($client) {
+            Client::query()->withTrashed()->whereNull('settings->currency_id')->orWhereJsonContains('settings', ['currency_id' => ''])->cursor()->each(function ($client) {
                 $settings = $client->settings;
                 $settings->currency_id = (string) $client->company->settings->currency_id;
                 $client->settings = $settings;
@@ -994,80 +986,76 @@ class CheckData extends Command
             });
 
             Payment::withTrashed()
-            ->whereHas("client", function ($query) {
-                $query->whereColumn("settings->currency_id", "!=", "payments.currency_id");
-            })
-            ->cursor()
-            ->each(function ($p) {
-                $p->currency_id = $p->client->settings->currency_id ?? $p->company->settings->currency_id;
-                $p->saveQuietly();
+                ->whereHas('client', function ($query) {
+                    $query->whereColumn('settings->currency_id', '!=', 'payments.currency_id');
+                })
+                ->cursor()
+                ->each(function ($p) {
+                    $p->currency_id = $p->client->settings->currency_id ?? $p->company->settings->currency_id;
+                    $p->saveQuietly();
 
+                    $this->logMessage("Fixing currency for # {$p->id} with new currency {$p->currency_id}");
 
-                $this->logMessage("Fixing currency for # {$p->id} with new currency {$p->currency_id}");
+                });
 
-            });
+            Company::whereNull('subdomain')
+                ->cursor()
+                ->when(Ninja::isHosted())
+                ->each(function ($c) {
+                    $c->subdomain = MultiDB::randomSubdomainGenerator();
+                    $c->save();
 
-            Company::whereNull("subdomain")
-            ->cursor()
-            ->when(Ninja::isHosted())
-            ->each(function ($c) {
-                $c->subdomain = MultiDB::randomSubdomainGenerator();
-                $c->save();
+                    $this->logMessage("Fixing subdomain for # {$c->id} with new subdomain {$c->subdomain}");
 
-                $this->logMessage("Fixing subdomain for # {$c->id} with new subdomain {$c->subdomain}");
-
-            });
+                });
 
             Invoice::withTrashed()
-            ->where("partial", 0)
-            ->whereNotNull("partial_due_date")
-            ->cursor()
-            ->each(function ($i) {
-                $i->partial_due_date = null;
-                $i->saveQuietly();
+                ->where('partial', 0)
+                ->whereNotNull('partial_due_date')
+                ->cursor()
+                ->each(function ($i) {
+                    $i->partial_due_date = null;
+                    $i->saveQuietly();
 
+                    $this->logMessage("Fixing partial due date for # {$i->id}");
 
-                $this->logMessage("Fixing partial due date for # {$i->id}");
-
-            });
+                });
 
             Company::whereDoesntHave('company_users', function ($query) {
                 $query->where('is_owner', 1);
             })
-            ->cursor()
-            ->when(Ninja::isHosted())
-            ->each(function ($c) {
+                ->cursor()
+                ->when(Ninja::isHosted())
+                ->each(function ($c) {
 
-                $this->logMessage("Orphan Account # {$c->account_id}");
+                    $this->logMessage("Orphan Account # {$c->account_id}");
 
-            });
+                });
 
             CompanyUser::whereDoesntHave('tokens')
-            ->cursor()
-            ->when(Ninja::isHosted())
-            ->each(function ($cu) {
+                ->cursor()
+                ->when(Ninja::isHosted())
+                ->each(function ($cu) {
 
-                $this->logMessage("Missing tokens for Company User # {$cu->id}");
+                    $this->logMessage("Missing tokens for Company User # {$cu->id}");
 
-            });
+                });
 
             CompanyUser::whereDoesntHave('user')
-            ->cursor()
-            ->when(Ninja::isHosted())
-            ->each(function ($cu) {
+                ->cursor()
+                ->when(Ninja::isHosted())
+                ->each(function ($cu) {
 
-                $this->logMessage("Missing user for Company User # {$cu->id}");
+                    $this->logMessage("Missing user for Company User # {$cu->id}");
 
-            });
+                });
 
             $cus = CompanyUser::withTrashed()
-            ->whereHas("user", function ($query) {
-                $query->whereColumn("users.account_id", "!=", "company_user.account_id");
-            })->pluck('id')->implode(",");
-
+                ->whereHas('user', function ($query) {
+                    $query->whereColumn('users.account_id', '!=', 'company_user.account_id');
+                })->pluck('id')->implode(',');
 
             $this->logMessage("Cross Linked CompanyUser ids # {$cus}");
-
 
         }
     }
@@ -1083,8 +1071,6 @@ class CheckData extends Command
             });
         }
     }
-
-
 
     public function checkBalanceVsPaidStatus()
     {
@@ -1114,12 +1100,11 @@ class CheckData extends Command
                     $pivot->save();
                 }
 
-
                 $this->logMessage("Fixing {$invoice->id} settings payment to {$val}");
             }
         }
 
-        $this->logMessage($this->wrong_paid_status . " wrong invoices with bad balance state");
+        $this->logMessage($this->wrong_paid_status . ' wrong invoices with bad balance state');
     }
 
     public function checkNinjaPortalUrls()
@@ -1143,7 +1128,7 @@ class CheckData extends Command
 
                 $this->logMessage("Fixing - {$ninja_portal_url}");
             } else {
-                $c =  Client::on('db-ninja-01')->where("company_id", config('ninja.ninja_default_company_id'))->where('custom_value2', $cu->account->key)->first();
+                $c = Client::on('db-ninja-01')->where('company_id', config('ninja.ninja_default_company_id'))->where('custom_value2', $cu->account->key)->first();
 
                 if ($c) {
                     $cc = $c->contacts()->first();
@@ -1163,7 +1148,7 @@ class CheckData extends Command
 
     public function fixBankTransactions()
     {
-        $this->logMessage("checking bank transactions");
+        $this->logMessage('checking bank transactions');
 
         BankTransaction::with('payment')->withTrashed()->where('invoice_ids', ',,,,,,,,')->cursor()->each(function ($bt) {
 
@@ -1184,9 +1169,9 @@ class CheckData extends Command
     public function checkContactEmailAndSendEmailStatus()
     {
         $q = ClientContact::whereNull('email')
-                     ->where('send_email', true);
+            ->where('send_email', true);
 
-        $this->logMessage($q->count() . " Contacts with Send Email = true but no email address");
+        $this->logMessage($q->count() . ' Contacts with Send Email = true but no email address');
 
         if ($this->option('fix') == 'true') {
 
@@ -1207,25 +1192,25 @@ class CheckData extends Command
         }
 
         Company::query()
-        ->whereNull('subdomain')
-        ->orWhere('subdomain', '')
-        ->cursor()
-        ->each(function ($c) {
+            ->whereNull('subdomain')
+            ->orWhere('subdomain', '')
+            ->cursor()
+            ->each(function ($c) {
 
-            $c->subdomain = MultiDB::randomSubdomainGenerator();
-            $c->save();
+                $c->subdomain = MultiDB::randomSubdomainGenerator();
+                $c->save();
 
-        });
+            });
     }
 
     public function checkPaymentCurrency()
     {
         $p = Payment::with('company', 'client')
-                ->withTrashed()
-                ->where('currency_id', '')
-                ->orWhereNull('currency_id');
+            ->withTrashed()
+            ->where('currency_id', '')
+            ->orWhereNull('currency_id');
 
-        $this->logMessage($p->count() . " Payments with No currency set");
+        $this->logMessage($p->count() . ' Payments with No currency set');
 
         if ($p->count() != 0) {
             $this->isValid = false;
@@ -1246,17 +1231,17 @@ class CheckData extends Command
     public function checkExpenseCurrency()
     {
         Expense::with('company')
-                ->withTrashed()
-                ->whereNull('exchange_rate')
-                ->orWhere('exchange_rate', 0)
-                ->cursor()
-                ->each(function ($expense) {
-                    $expense->exchange_rate = 1;
-                    $expense->saveQuietly();
+            ->withTrashed()
+            ->whereNull('exchange_rate')
+            ->orWhere('exchange_rate', 0)
+            ->cursor()
+            ->each(function ($expense) {
+                $expense->exchange_rate = 1;
+                $expense->saveQuietly();
 
-                    $this->logMessage("Fixing - exchange rate for expense :: {$expense->id}");
+                $this->logMessage("Fixing - exchange rate for expense :: {$expense->id}");
 
-                });
+            });
     }
 
     public function cleanInvoiceLineItems()
@@ -1271,8 +1256,5 @@ class CheckData extends Command
             $invoice->saveQuietly();
         });
 
-
     }
-
-
 }

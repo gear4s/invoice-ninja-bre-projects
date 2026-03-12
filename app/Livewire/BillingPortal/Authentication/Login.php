@@ -6,21 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal\Authentication;
 
-use Livewire\Component;
-use App\Models\Subscription;
-use App\Models\ClientContact;
-use App\Utils\Traits\MakesHash;
 use App\Jobs\Mail\NinjaMailerJob;
-use Livewire\Attributes\Computed;
-use App\Mail\Subscription\OtpCode;
 use App\Jobs\Mail\NinjaMailerObject;
+use App\Mail\Subscription\OtpCode;
+use App\Models\ClientContact;
+use App\Models\Subscription;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class Login extends Component
 {
@@ -100,10 +100,10 @@ class Login extends Component
 
         Cache::put($email_hash, $code, 600);
 
-        $cc = new ClientContact();
+        $cc = new ClientContact;
         $cc->email = $this->email;
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new OtpCode($this->subscription()->company, $contact ?? null, $code);
         $nmo->company = $this->subscription()->company;
         $nmo->settings = $this->subscription()->company->settings;
@@ -127,7 +127,7 @@ class Login extends Component
 
         $code = Cache::get("subscriptions:otp:{$this->email}");
 
-        if ($this->otp != $code) { //loose comparison prevents edge cases
+        if ($this->otp != $code) { // loose comparison prevents edge cases
             $errors = $this->getErrorBag();
             $errors->add('otp', ctrans('texts.invalid_code'));
 
@@ -179,7 +179,7 @@ class Login extends Component
 
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('billing-portal.v3.authentication.login');
     }

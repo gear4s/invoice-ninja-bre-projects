@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Services\Invoice\GetInvoicePdf
  */
 class InvoiceUploadTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -32,7 +30,7 @@ class InvoiceUploadTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testInvoiceUploadWorks()
+    public function test_invoice_upload_works()
     {
         $this->invoice->load('invitations', 'client.contacts', 'client.company');
         $this->assertNotNull($this->invoice->service()->getInvoicePdf($this->invoice->client->primary_contact()->first()));

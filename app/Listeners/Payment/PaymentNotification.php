@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -39,7 +38,7 @@ class PaymentNotification implements ShouldQueue
     /**
      * Handle the event.
      *
-     * @param object $event
+     * @param  object  $event
      */
     public function handle($event)
     {
@@ -51,8 +50,7 @@ class PaymentNotification implements ShouldQueue
 
         $payment = $event->payment;
 
-
-        /*Google Analytics Track Revenue*/
+        /* Google Analytics Track Revenue */
         if (isset($payment->company->google_analytics_key)) {
             $this->trackRevenue($event);
         }
@@ -76,7 +74,7 @@ class PaymentNotification implements ShouldQueue
                 if (($key = array_search('mail', $methods)) !== false) {
                     unset($methods[$key]);
 
-                    $nmo = new NinjaMailerObject();
+                    $nmo = new NinjaMailerObject;
                     $nmo->mailable = new NinjaMailer((new EntityPaidObject($payment, $company_user->portalType()))->build());
                     $nmo->company = $event->company;
                     $nmo->settings = $event->company->settings;
@@ -91,7 +89,7 @@ class PaymentNotification implements ShouldQueue
             return;
         }
 
-        /*User notifications*/
+        /* User notifications */
         foreach ($payment->company->company_users as $company_user) {
             $user = $company_user->user;
 
@@ -108,7 +106,7 @@ class PaymentNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                //new check, IF the payment is on a recurring invoice AND the user had notifications disabled for recurring invoices. then we disable the notification for this payment.
+                // new check, IF the payment is on a recurring invoice AND the user had notifications disabled for recurring invoices. then we disable the notification for this payment.
                 $disabled_recurring_invoice_notifications = $this->findUserEntityNotificationType($payment, $company_user, ['disable_recurring_payment_notification']);
 
                 $invoice = $payment->invoices->first();
@@ -117,7 +115,7 @@ class PaymentNotification implements ShouldQueue
                     continue;
                 }
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new EntityPaidObject($payment, $company_user->portalType()))->build());
                 $nmo->company = $event->company;
                 $nmo->settings = $event->company->settings;
@@ -139,7 +137,7 @@ class PaymentNotification implements ShouldQueue
 
         $analytics_id = $company->google_analytics_key;
 
-        if (! strlen($analytics_id) > 2) {
+        if (!strlen($analytics_id) > 2) {
             return;
         }
 
@@ -180,7 +178,7 @@ class PaymentNotification implements ShouldQueue
     }
 
     /**
-     * @param string $url
+     * @param  string  $url
      */
     private function sendAnalytics($url)
     {

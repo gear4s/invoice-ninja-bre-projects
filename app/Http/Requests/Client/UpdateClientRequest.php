@@ -6,34 +6,35 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Client;
 
-use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
 use App\DataMapper\CompanySettings;
-use Illuminate\Support\Facades\Cache;
-use App\Utils\Traits\ChecksEntityStatus;
+use App\Http\Requests\Request;
 use App\Http\ValidationRules\EInvoice\ValidClientScheme;
 use App\Http\ValidationRules\ValidClientGroupSettingsRule;
+use App\Models\Country;
+use App\Models\Language;
+use App\Models\User;
+use App\Utils\Traits\ChecksEntityStatus;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class UpdateClientRequest extends Request
 {
-    use MakesHash;
     use ChecksEntityStatus;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->client);
@@ -41,8 +42,8 @@ class UpdateClientRequest extends Request
 
     public function rules()
     {
-        /* Ensure we have a client name, and that all emails are unique*/
-        /** @var  \App\Models\User $user */
+        /* Ensure we have a client name, and that all emails are unique */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules['file'] = 'bail|sometimes|array';
@@ -78,10 +79,10 @@ class UpdateClientRequest extends Request
         $rules['e_invoice'] = [
             'sometimes',
             'nullable',
-            new ValidClientScheme(),
+            new ValidClientScheme,
         ];
 
-        $rules['settings'] = new ValidClientGroupSettingsRule();
+        $rules['settings'] = new ValidClientGroupSettingsRule;
         $rules['contacts'] = 'array';
         $rules['contacts.*.email'] = 'bail|nullable|distinct|sometimes|email';
         $rules['contacts.*.password'] = [
@@ -92,7 +93,7 @@ class UpdateClientRequest extends Request
             'regex:/[a-z]/', // must contain at least one lowercase letter
             'regex:/[A-Z]/', // must contain at least one uppercase letter
             'regex:/[0-9]/', // must contain at least one digit
-            //'regex:/[@$!%*#?&.]/', // must contain a special character
+            // 'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
         $rules['custom_value1'] = [
@@ -182,10 +183,10 @@ class UpdateClientRequest extends Request
     {
         $input = $this->all();
 
-        /** @var  \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -231,7 +232,7 @@ class UpdateClientRequest extends Request
         }
 
         if (isset($input['e_invoice']) && is_array($input['e_invoice'])) {
-            //ensure it is normalized first!
+            // ensure it is normalized first!
             $input['e_invoice'] = $this->client->filterNullsRecursive(
                 $input['e_invoice'],
             );
@@ -257,7 +258,7 @@ class UpdateClientRequest extends Request
 
     private function getCountryCode($country_code)
     {
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $country = $countries->first(function ($item) use ($country_code) {
@@ -270,7 +271,7 @@ class UpdateClientRequest extends Request
 
     private function getLanguageId($language_code)
     {
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+        /** @var Collection<Language> */
         $languages = app('languages');
 
         $language = $languages->first(function ($item) use ($language_code) {
@@ -287,7 +288,7 @@ class UpdateClientRequest extends Request
      * down to the free plan setting properties which
      * are saveable
      *
-     * @param  mixed $settings
+     * @param  mixed  $settings
      * @return \stdClass $settings
      */
     private function filterSaveableSettings($settings)
@@ -308,7 +309,7 @@ class UpdateClientRequest extends Request
                 unset($settings->{$key});
             }
 
-            //26-04-2022 - In case settings are returned as array instead of object
+            // 26-04-2022 - In case settings are returned as array instead of object
             if ($key == 'default_task_rate' && is_array($settings)) {
                 $settings['default_task_rate'] = floatval($value);
             } elseif ($key == 'default_task_rate' && is_object($settings)) {

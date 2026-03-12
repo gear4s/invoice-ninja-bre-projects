@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,8 +13,10 @@ namespace App\PaymentDrivers\PayFast;
 
 use App\Exceptions\PaymentFailed;
 use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
 use App\Models\Payment;
+use App\Models\PaymentHash;
 use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
@@ -143,7 +144,7 @@ class CreditCard implements LivewireMethodInterface
         $cgt['token'] = $data['token'];
         $cgt['payment_method_id'] = GatewayType::CREDIT_CARD;
 
-        $payment_meta = new \stdClass();
+        $payment_meta = new \stdClass;
         $payment_meta->exp_month = 'xx';
         $payment_meta->exp_year = 'xx';
         $payment_meta->brand = 'CC';
@@ -221,20 +222,19 @@ class CreditCard implements LivewireMethodInterface
         }
     }
 
-
     private function processTokenPayment(string $token, string $payment_hash)
     {
 
-        $client_gateway_token = \App\Models\ClientGatewayToken::query()
+        $client_gateway_token = ClientGatewayToken::query()
             ->where('token', $token)
             ->where('company_id', auth()->guard('contact')->user()->client->company_id)
             ->first();
 
-        if (! $client_gateway_token) {
-            throw new \App\Exceptions\PaymentFailed(ctrans('texts.payment_token_not_found'), 401);
+        if (!$client_gateway_token) {
+            throw new PaymentFailed(ctrans('texts.payment_token_not_found'), 401);
         }
 
-        $payment_hash = \App\Models\PaymentHash::with('fee_invoice')->where('hash', $payment_hash)->firstOrFail();
+        $payment_hash = PaymentHash::with('fee_invoice')->where('hash', $payment_hash)->firstOrFail();
 
         $payment = $this->payfast->tokenBilling($client_gateway_token, $payment_hash);
 
@@ -275,8 +275,9 @@ class CreditCard implements LivewireMethodInterface
 
         throw new PaymentFailed('Failed to process the payment.', 500);
     }
+
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -284,15 +285,15 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {
         $payfast_data = [
             'merchant_id' => $this->payfast->company_gateway->getConfigField('merchantId'),
             'merchant_key' => $this->payfast->company_gateway->getConfigField('merchantKey'),
-            'return_url' => route('client.invoice.show', ['invoice' => $this->payfast->payment_hash->fee_invoice->hashed_id]), //route('client.payments.index'),
-            'cancel_url' => route('client.invoice.show', ['invoice' => $this->payfast->payment_hash->fee_invoice->hashed_id]), //route('client.payment_methods.index'),
+            'return_url' => route('client.invoice.show', ['invoice' => $this->payfast->payment_hash->fee_invoice->hashed_id]), // route('client.payments.index'),
+            'cancel_url' => route('client.invoice.show', ['invoice' => $this->payfast->payment_hash->fee_invoice->hashed_id]), // route('client.payment_methods.index'),
             'notify_url' => $this->payfast->genericWebhookUrl(),
             'm_payment_id' => $data['payment_hash'],
             'amount' => $data['amount_with_fee'],

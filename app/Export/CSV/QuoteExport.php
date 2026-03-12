@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\Transformers\QuoteTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class QuoteExport extends BaseExport
@@ -36,8 +36,8 @@ class QuoteExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->quote_transformer = new QuoteTransformer();
-        $this->decorator = new Decorator();
+        $this->quote_transformer = new QuoteTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -49,7 +49,6 @@ class QuoteExport extends BaseExport
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = array_values($this->quote_report_keys);
         }
@@ -57,12 +56,12 @@ class QuoteExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = Quote::query()
-                        ->withTrashed()
-                        ->with('client')
-                        ->whereHas('client', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->with('client')
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -103,33 +102,33 @@ class QuoteExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\Quote $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var Quote $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
-
 
     }
 
     public function run()
     {
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = $this->init();
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($quote) {
 
-                /** @var \App\Models\Quote $quote */
+                /** @var Quote $quote */
                 $this->csv->insertOne($this->buildRow($quote));
             });
 
@@ -155,8 +154,8 @@ class QuoteExport extends BaseExport
         }
 
         $entity = $this->decorateAdvancedFields($quote, $entity);
-        return $this->convertFloats($entity);
 
+        return $this->convertFloats($entity);
 
     }
 

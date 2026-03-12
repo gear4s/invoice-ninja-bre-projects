@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,7 +22,7 @@ class FeesAndLimitsTest extends TestCase
         parent::setUp();
     }
 
-    public function testFeesAndLimitsFunctionWorks()
+    public function test_fees_and_limits_function_works()
     {
         $data = [];
         $data['min_limit'] = 234;
@@ -51,7 +50,7 @@ class FeesAndLimitsTest extends TestCase
         $new_arr = [];
 
         foreach ($fees_and_limits as $key => $value) {
-            $fal = new FeesAndLimits();
+            $fal = new FeesAndLimits;
             // $fal->{$key} = $value;
 
             foreach ($value as $k => $v) {

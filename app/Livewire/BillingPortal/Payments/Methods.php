@@ -6,16 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal\Payments;
 
-use Livewire\Component;
+use App\Models\ClientContact;
 use App\Models\Subscription;
+use App\Utils\Number;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Component;
 
 class Methods extends Component
 {
@@ -31,7 +32,7 @@ class Methods extends Component
     {
         $total = collect($this->context['products'])->sum('total_raw');
 
-        $methods = auth()->guard('contact')->user()->client->service()->getPaymentMethods($total); //@todo this breaks down when the cart is in front of the login - we have no context on the user - nor their country/currency()
+        $methods = auth()->guard('contact')->user()->client->service()->getPaymentMethods($total); // @todo this breaks down when the cart is in front of the login - we have no context on the user - nor their country/currency()
 
         $this->methods = $methods;
 
@@ -39,7 +40,7 @@ class Methods extends Component
 
     public function handleSelect(string $company_gateway_id, string $gateway_type_id)
     {
-        /** @var \App\Models\ClientContact $contact */
+        /** @var ClientContact $contact */
         $contact = auth()->guard('contact')->user();
 
         $sub = Subscription::find($this->decodePrimaryKey($this->subscription_id));
@@ -68,8 +69,8 @@ class Methods extends Component
         ], now()->addMinutes(60));
 
         $payable_amount = $invoice->partial > 0
-            ? \App\Utils\Number::formatValue($invoice->partial, $invoice->client->currency())
-            : \App\Utils\Number::formatValue($invoice->balance, $invoice->client->currency());
+            ? Number::formatValue($invoice->partial, $invoice->client->currency())
+            : Number::formatValue($invoice->balance, $invoice->client->currency());
 
         $this->dispatch('purchase.context', property: 'form.company_gateway_id', value: $company_gateway_id);
         $this->dispatch('purchase.context', property: 'form.payment_method_id', value: $gateway_type_id);

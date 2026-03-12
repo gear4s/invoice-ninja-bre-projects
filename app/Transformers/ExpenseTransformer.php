@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,9 +34,6 @@ class ExpenseTransformer extends EntityTransformer
         'documents',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'client',
         'vendor',
@@ -109,8 +105,6 @@ class ExpenseTransformer extends EntityTransformer
     }
 
     /**
-     * @param Expense $expense
-     *
      * @return array
      */
     public function transform(Expense $expense)
@@ -124,7 +118,7 @@ class ExpenseTransformer extends EntityTransformer
             'client_id' => $this->encodePrimaryKey($expense->client_id),
             'bank_id' => (string) $expense->bank_id ?: '',
             'invoice_currency_id' => (string) $expense->invoice_currency_id ?: '',
-            'expense_currency_id' => '', //todo remove redundant in 5.0.25
+            'expense_currency_id' => '', // todo remove redundant in 5.0.25
             'currency_id' => (string) $expense->currency_id ?: '',
             'category_id' => $this->encodePrimaryKey($expense->category_id),
             'payment_type_id' => (string) $expense->payment_type_id ?: '',
@@ -162,7 +156,7 @@ class ExpenseTransformer extends EntityTransformer
             'uses_inclusive_taxes' => (bool) $expense->uses_inclusive_taxes,
             'calculate_tax_by_amount' => (bool) $expense->calculate_tax_by_amount,
             'entity_type' => 'expense',
-            'e_invoice' => $expense->e_invoice ?: new \stdClass(),
+            'e_invoice' => $expense->e_invoice ?: new \stdClass,
 
         ];
     }

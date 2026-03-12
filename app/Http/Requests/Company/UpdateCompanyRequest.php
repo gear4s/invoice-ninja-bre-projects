@@ -6,23 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Company;
 
-use App\Utils\Ninja;
-use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
 use App\DataMapper\CompanySettings;
 use App\Http\Requests\EInvoice\Peppol\AddTaxIdentifierRequest;
-use App\Http\ValidationRules\ValidSettingsRule;
-use App\Http\ValidationRules\Company\ValidSubdomain;
+use App\Http\Requests\Request;
 use App\Http\ValidationRules\Company\ValidExpenseMailbox;
+use App\Http\ValidationRules\Company\ValidSubdomain;
 use App\Http\ValidationRules\EInvoice\ValidCompanyScheme;
+use App\Http\ValidationRules\ValidSettingsRule;
+use App\Models\Company;
+use App\Models\User;
 use App\Rules\CommaSeparatedEmails;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Validation\Rule;
 
 class UpdateCompanyRequest extends Request
 {
@@ -38,20 +39,19 @@ class UpdateCompanyRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
+
         return $user->can('edit', $this->company);
     }
 
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
@@ -59,7 +59,7 @@ class UpdateCompanyRequest extends Request
         $rules = [];
 
         $rules['company_logo'] = 'mimes:jpeg,jpg,png,gif|max:10000'; // max 10000kb
-        $rules['settings'] = new ValidSettingsRule();
+        $rules['settings'] = new ValidSettingsRule;
         $rules['industry_id'] = 'integer|nullable';
         $rules['size_id'] = 'integer|nullable';
         $rules['country_id'] = 'integer|nullable';
@@ -74,22 +74,22 @@ class UpdateCompanyRequest extends Request
         $rules['smtp_local_domain'] = 'sometimes|string|nullable';
         // $rules['smtp_verify_peer'] = 'sometimes|string';
 
-        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidCompanyScheme()];
+        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidCompanyScheme];
 
         if (isset($input['portal_mode']) && ($input['portal_mode'] == 'domain' || $input['portal_mode'] == 'iframe')) {
             $rules['portal_domain'] = 'bail|nullable|sometimes|url';
         }
 
         if (Ninja::isHosted()) {
-            $rules['subdomain'] = ['nullable', 'regex:/^[a-zA-Z0-9-]+[a-zA-Z0-9]$/', new ValidSubdomain()];
+            $rules['subdomain'] = ['nullable', 'regex:/^[a-zA-Z0-9-]+[a-zA-Z0-9]$/', new ValidSubdomain];
         }
 
-        $rules['expense_mailbox'] = ['sometimes','email', 'nullable', new ValidExpenseMailbox(), Rule::unique('companies')->ignore($this->company->id)];
-        $rules['expense_mailbox_active'] = ['sometimes','boolean'];
-        $rules['inbound_mailbox_allow_company_users'] = ['sometimes','boolean'];
-        $rules['inbound_mailbox_allow_vendors'] = ['sometimes','boolean'];
-        $rules['inbound_mailbox_allow_clients'] = ['sometimes','boolean'];
-        $rules['inbound_mailbox_allow_unknown'] = ['sometimes','boolean'];
+        $rules['expense_mailbox'] = ['sometimes', 'email', 'nullable', new ValidExpenseMailbox, Rule::unique('companies')->ignore($this->company->id)];
+        $rules['expense_mailbox_active'] = ['sometimes', 'boolean'];
+        $rules['inbound_mailbox_allow_company_users'] = ['sometimes', 'boolean'];
+        $rules['inbound_mailbox_allow_vendors'] = ['sometimes', 'boolean'];
+        $rules['inbound_mailbox_allow_clients'] = ['sometimes', 'boolean'];
+        $rules['inbound_mailbox_allow_unknown'] = ['sometimes', 'boolean'];
         $rules['inbound_mailbox_whitelist'] = ['sometimes', 'string', 'nullable', 'regex:/^[\w\-\.\+]+@([\w-]+\.)+[\w-]{2,4}(,[\w\-\.\+]+@([\w-]+\.)+[\w-]{2,4})*$/'];
         $rules['inbound_mailbox_blacklist'] = ['sometimes', 'string', 'nullable', 'regex:/^[\w\-\.\+]+@([\w-]+\.)+[\w-]{2,4}(,[\w\-\.\+]+@([\w-]+\.)+[\w-]{2,4})*$/'];
 
@@ -111,12 +111,12 @@ class UpdateCompanyRequest extends Request
         //         },
         //     ];
 
-        $rules['settings.ses_secret_key'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
-        $rules['settings.ses_access_key'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
-        $rules['settings.ses_region'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
-        $rules['settings.ses_from_address'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
+        $rules['settings.ses_secret_key'] = 'required_if:settings.email_sending_method,client_ses'; // ses specific rules
+        $rules['settings.ses_access_key'] = 'required_if:settings.email_sending_method,client_ses'; // ses specific rules
+        $rules['settings.ses_region'] = 'required_if:settings.email_sending_method,client_ses'; // ses specific rules
+        $rules['settings.ses_from_address'] = 'required_if:settings.email_sending_method,client_ses'; // ses specific rules
         $rules['settings.reply_to_email'] = 'sometimes|nullable|email'; // ensures that the reply to email address is a valid email address
-        $rules['settings.bcc_email'] = ['sometimes', 'nullable', new \App\Rules\CommaSeparatedEmails()]; //ensure that the BCC's are valid comma separated emails
+        $rules['settings.bcc_email'] = ['sometimes', 'nullable', new CommaSeparatedEmails]; // ensure that the BCC's are valid comma separated emails
 
         return $rules;
     }
@@ -127,22 +127,20 @@ class UpdateCompanyRequest extends Request
 
         if (isset($input['portal_domain']) && strlen($input['portal_domain']) > 1) {
             $input['portal_domain'] = $this->addScheme($input['portal_domain']);
-            $input['portal_domain'] = rtrim(strtolower($input['portal_domain']), "/");
+            $input['portal_domain'] = rtrim(strtolower($input['portal_domain']), '/');
         }
-
-
 
         if (isset($input['settings'])) {
             $input['settings'] = (array) $this->filterSaveableSettings($input['settings']);
         }
 
         /**
-         * @var \App\Models\User $user
+         * @var User $user
          */
         $user = auth()->user();
 
         /**
-         * @var \App\Models\Company $company
+         * @var Company $company
          */
         $company = $user->company();
 
@@ -158,11 +156,11 @@ class UpdateCompanyRequest extends Request
             unset($input['e_invoice_certificate_passphrase']);
         }
 
-        if (isset($input['smtp_username']) && strlen(str_replace("*", "", $input['smtp_username'])) < 2) {
+        if (isset($input['smtp_username']) && strlen(str_replace('*', '', $input['smtp_username'])) < 2) {
             unset($input['smtp_username']);
         }
 
-        if (isset($input['smtp_password']) && strlen(str_replace("*", "", $input['smtp_password'])) < 2) {
+        if (isset($input['smtp_password']) && strlen(str_replace('*', '', $input['smtp_password'])) < 2) {
             unset($input['smtp_password']);
         }
 
@@ -175,7 +173,7 @@ class UpdateCompanyRequest extends Request
         }
 
         if (isset($input['e_invoice']) && is_array($input['e_invoice'])) {
-            //ensure it is normalized first!
+            // ensure it is normalized first!
             $input['e_invoice'] = $this->company->filterNullsRecursive($input['e_invoice']);
         }
 
@@ -201,7 +199,6 @@ class UpdateCompanyRequest extends Request
         $this->replace($input);
     }
 
-
     // private function getCountryCode()
     // {
     //     return auth()->user()->company()->country()->iso_3166_2;
@@ -214,7 +211,7 @@ class UpdateCompanyRequest extends Request
      * down to the free plan setting properties which
      * are saveable
      *
-     * @param  object $settings
+     * @param  object  $settings
      * @return \stdClass $settings
      */
     private function filterSaveableSettings($settings)
@@ -225,7 +222,7 @@ class UpdateCompanyRequest extends Request
             foreach ($this->protected_input as $protected_var) {
 
                 if (isset($settings[$protected_var])) {
-                    $settings[$protected_var] = str_replace("script", "", $settings[$protected_var]);
+                    $settings[$protected_var] = str_replace('script', '', $settings[$protected_var]);
                 }
             }
 
@@ -262,12 +259,8 @@ class UpdateCompanyRequest extends Request
         return $settings;
     }
 
-
     /**
      * forceScheme
-     *
-     * @param  string $url
-     * @return string
      */
     private function forceScheme(string $url): string
     {
@@ -277,9 +270,7 @@ class UpdateCompanyRequest extends Request
     /**
      * addScheme
      *
-     * @param  string $url
-     * @param  string $scheme
-     * @return string
+     * @param  string  $scheme
      */
     private function addScheme(string $url, $scheme = 'https://'): string
     {

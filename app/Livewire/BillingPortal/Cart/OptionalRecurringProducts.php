@@ -1,21 +1,21 @@
 <?php
 
 /**
-* Invoice Ninja (https://invoiceninja.com).
-*
-* @link https://github.com/invoiceninja/invoiceninja source repository
-*
-* @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
-*
-* @license https://www.elastic.co/licensing/elastic-license
-*/
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
 
 namespace App\Livewire\BillingPortal\Cart;
 
-use Livewire\Component;
 use App\Models\Subscription;
 use App\Utils\Traits\MakesHash;
+use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class OptionalRecurringProducts extends Component
 {
@@ -28,7 +28,7 @@ class OptionalRecurringProducts extends Component
     #[Computed()]
     public function subscription()
     {
-        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration','steps']);
+        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration', 'steps']);
     }
 
     public function quantity($id, $value): void
@@ -38,7 +38,7 @@ class OptionalRecurringProducts extends Component
 
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('billing-portal.v3.cart.optional-recurring-products');
     }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,17 +27,17 @@ class GoCardlessOAuthWebhookController extends Controller
     public function __invoke(WebhookRequest $request)
     {
         foreach ($request->events as $event) {
-            nlog("GoCardless OAuth Webhook: " . $event['action']);
+            nlog('GoCardless OAuth Webhook: ' . $event['action']);
 
             $e = Arr::dot($event);
 
             if ($event['action'] === 'disconnected') {
-                /** @var \App\Models\CompanyGateway $company_gateway */
+                /** @var CompanyGateway $company_gateway */
                 $company_gateway = null;
 
                 foreach (MultiDB::$dbs as $db) {
                     if (
-                        /** @var \App\Models\CompanyGateway $company_gateway */
+                        /** @var CompanyGateway $company_gateway */
                         $cg = CompanyGateway::on($db)
                             ->where('settings->organisation_id', $e['links.organisation'])
                             ->first()
@@ -49,7 +48,7 @@ class GoCardlessOAuthWebhookController extends Controller
                     }
                 }
 
-                if ($company_gateway === null) { //@phpstan-ignore-line
+                if ($company_gateway === null) { // @phpstan-ignore-line
                     return abort(404);
                 }
 

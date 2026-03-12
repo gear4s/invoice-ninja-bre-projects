@@ -6,40 +6,39 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
+use App\DataMapper\InvoiceItem;
+use App\Factory\ClientFactory;
+use App\Factory\CreditFactory;
+use App\Factory\InvoiceFactory;
+use App\Helpers\Invoice\InvoiceSum;
 use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
-use Tests\MockAccountData;
-use App\Models\ClientContact;
-use App\Factory\ClientFactory;
-use App\Factory\CreditFactory;
-use App\DataMapper\InvoiceItem;
-use App\Factory\InvoiceFactory;
 use App\Utils\Traits\MakesHash;
-use App\Helpers\Invoice\InvoiceSum;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Utils\Traits\Payment\Refundable
  */
 class RefundTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -56,7 +55,7 @@ class RefundTest extends TestCase
         // $this->withoutExceptionHandling();
     }
 
-    public function testRefundAndAppliedAmounts()
+    public function test_refund_and_applied_amounts()
     {
 
         $data = [
@@ -77,24 +76,24 @@ class RefundTest extends TestCase
 
         $payment_id = $arr['data']['id'];
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 300;
         $item->quantity = 1;
 
         $i = Invoice::factory()
-        ->create([
-            'user_id' => $this->user->id,
-            'company_id' => $this->company->id,
-            'client_id' => $this->client->id,
-            'line_items' => [$item],
-            'discount' => 0,
-            'tax_name1' => '',
-            'tax_name2' => '',
-            'tax_name3' => '',
-            'tax_rate1' => 0,
-            'tax_rate2' => 0,
-            'tax_rate3' => 0,
-        ]);
+            ->create([
+                'user_id' => $this->user->id,
+                'company_id' => $this->company->id,
+                'client_id' => $this->client->id,
+                'line_items' => [$item],
+                'discount' => 0,
+                'tax_name1' => '',
+                'tax_name2' => '',
+                'tax_name3' => '',
+                'tax_rate1' => 0,
+                'tax_rate2' => 0,
+                'tax_rate3' => 0,
+            ]);
 
         $i->calc()->getInvoice();
         $i->service()->markSent()->save();
@@ -105,16 +104,16 @@ class RefundTest extends TestCase
             'client_id' => $this->client->hashed_id,
             'invoices' => [
                 [
-                'invoice_id' => $i->hashed_id,
-                'amount' => 300
+                    'invoice_id' => $i->hashed_id,
+                    'amount' => 300,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/payments/'.$payment_id, $data);
+        ])->putJson('/api/v1/payments/' . $payment_id, $data);
 
         $response->assertStatus(200);
 
@@ -154,21 +153,20 @@ class RefundTest extends TestCase
         $this->assertEquals(300, $i->balance);
         $this->assertEquals(2, $i->status_id);
 
-
         $data = [
             'client_id' => $this->client->hashed_id,
             'invoices' => [
                 [
-                'invoice_id' => $i->hashed_id,
-                'amount' => 200
+                    'invoice_id' => $i->hashed_id,
+                    'amount' => 200,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/payments/'.$payment_id, $data);
+        ])->putJson('/api/v1/payments/' . $payment_id, $data);
 
         $response->assertStatus(200);
 
@@ -186,7 +184,7 @@ class RefundTest extends TestCase
      * Test that a simple payment of $50
      * is able to be refunded.
      */
-    public function testBasicRefundValidation()
+    public function test_basic_refund_validation()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
         $client->save();
@@ -199,7 +197,7 @@ class RefundTest extends TestCase
             'send_email' => true,
         ]);
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->status_id = Invoice::STATUS_SENT;
 
@@ -245,12 +243,10 @@ class RefundTest extends TestCase
 
         $response = false;
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/payments/refund', $data);
-
 
         $arr = $response->json();
 
@@ -268,7 +264,7 @@ class RefundTest extends TestCase
      * Should produce a validation error if
      * no invoices are specified in the refund
      */
-    public function testRefundValidationNoInvoicesProvided()
+    public function test_refund_validation_no_invoices_provided()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
         $client->save();
@@ -281,7 +277,7 @@ class RefundTest extends TestCase
             'send_email' => true,
         ]);
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->status_id = Invoice::STATUS_SENT;
 
@@ -354,7 +350,7 @@ class RefundTest extends TestCase
      * Test that a refund with invoices provided
      * passes.
      */
-    public function testRefundValidationWithValidInvoiceProvided()
+    public function test_refund_validation_with_valid_invoice_provided()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
         $client->save();
@@ -367,7 +363,7 @@ class RefundTest extends TestCase
             'send_email' => true,
         ]);
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->status_id = Invoice::STATUS_SENT;
 
@@ -413,7 +409,6 @@ class RefundTest extends TestCase
         $this->assertNotNull($payment->invoices());
         $this->assertEquals(1, $payment->invoices()->count());
 
-
         $i = $this->invoice->fresh();
 
         $this->assertEquals(0, $i->balance);
@@ -450,7 +445,7 @@ class RefundTest extends TestCase
     /**
      * Test Validation with incorrect invoice refund amounts.
      */
-    public function testRefundValidationWithInValidInvoiceRefundedAmount()
+    public function test_refund_validation_with_in_valid_invoice_refunded_amount()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
         $client->save();
@@ -463,7 +458,7 @@ class RefundTest extends TestCase
             'send_email' => true,
         ]);
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->status_id = Invoice::STATUS_SENT;
 
@@ -543,7 +538,7 @@ class RefundTest extends TestCase
      * Tests refund when providing an invoice
      * not related to the payment.
      */
-    public function testRefundValidationWithInValidInvoiceProvided()
+    public function test_refund_validation_with_in_valid_invoice_provided()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
         $client->save();
@@ -556,7 +551,7 @@ class RefundTest extends TestCase
             'send_email' => true,
         ]);
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->status_id = Invoice::STATUS_SENT;
 
@@ -602,7 +597,7 @@ class RefundTest extends TestCase
         $this->assertNotNull($payment->invoices());
         $this->assertEquals(1, $payment->invoices()->count());
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->status_id = Invoice::STATUS_SENT;
 
@@ -660,7 +655,7 @@ class RefundTest extends TestCase
      * payment.applied = 10
      * credit.balance = 0
      */
-    public function testRefundWhereCreditsArePresent()
+    public function test_refund_where_credits_are_present()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
         $client->save();
@@ -673,7 +668,7 @@ class RefundTest extends TestCase
             'send_email' => true,
         ]);
 
-        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); //stub the company and user_id
+        $this->invoice = InvoiceFactory::create($this->company->id, $this->user->id); // stub the company and user_id
         $this->invoice->client_id = $client->id;
         $this->invoice->line_items = $this->buildLineItems();
         $this->invoice->uses_inclusive_taxes = false;
@@ -768,15 +763,14 @@ class RefundTest extends TestCase
         $payment = Payment::find($this->decodePrimaryKey($arr['data']['id']));
     }
 
-    /*Additional scenarios*/
+    /* Additional scenarios */
 
-    public function testRefundsWhenCreditsArePresent()
+    public function test_refunds_when_credits_are_present()
     {
         $cl = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
         ]);
-
 
         $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -787,7 +781,7 @@ class RefundTest extends TestCase
             'balance' => 1000,
         ]);
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 1000;
         $item->quantity = 1;
 
@@ -808,7 +802,7 @@ class RefundTest extends TestCase
             'due_date' => now()->addMonth()->format('Y-m-d'),
         ]);
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 100;
         $item->quantity = 1;
 
@@ -865,7 +859,7 @@ class RefundTest extends TestCase
                     'invoice_id' => $i->hashed_id,
                     'amount' => 10,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->withHeaders([
@@ -884,7 +878,7 @@ class RefundTest extends TestCase
 
     }
 
-    public function testRefundsWithSplitCreditAndPaymentRefund()
+    public function test_refunds_with_split_credit_and_payment_refund()
     {
         $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -949,7 +943,7 @@ class RefundTest extends TestCase
                     'invoice_id' => $i->hashed_id,
                     'amount' => 200,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->withHeaders([
@@ -971,5 +965,4 @@ class RefundTest extends TestCase
         $this->assertEquals(100, $payment->fresh()->refunded);
 
     }
-
 }

@@ -8,7 +8,7 @@ class Google implements ProviderInterface
 {
     public function getTokenResponse($token)
     {
-        $client = new Google_Client();
+        $client = new Google_Client;
 
         return $client->verifyIdToken($token);
     }
@@ -30,7 +30,7 @@ class Google implements ProviderInterface
 
     public function harvestUser($access_token)
     {
-        $client = new Google_Client();
+        $client = new Google_Client;
         $client->setClientId(config('ninja.auth.google.client_id'));
         $client->setClientSecret(config('ninja.auth.google.client_secret'));
         $client->setAccessToken($access_token);

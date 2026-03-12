@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -61,11 +60,11 @@ class VendorLocale
         'fr_CH',
         'lo_LA',
     ];
+
     /**
      * Handle an incoming request.
      *
      * @param  Request  $request
-     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -75,7 +74,7 @@ class VendorLocale
             $request->session()->invalidate();
         }
 
-        /*LOCALE SET */
+        /* LOCALE SET */
         if ($request->has('lang') && in_array($request->input('lang', 'en'), $this->locales)) {
             $locale = $request->input('lang');
             App::setLocale($locale);

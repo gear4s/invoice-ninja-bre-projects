@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,9 +22,9 @@ use Illuminate\Support\Facades\Storage;
 
 class SelfUpdateController extends BaseController
 {
-    use DispatchesJobs;
-    use ClientGroupSettingsSaver;
     use AppSetup;
+    use ClientGroupSettingsSaver;
+    use DispatchesJobs;
 
     private string $filename = 'invoiceninja.tar';
 
@@ -64,21 +63,23 @@ class SelfUpdateController extends BaseController
 
         $file_headers = @get_headers($this->getDownloadUrl());
 
-        nlog("Download URL");
+        nlog('Download URL');
         nlog($this->getDownloadUrl());
 
         if (strlen($this->version) == 1) {
-            nlog("version server down, trying github");
+            nlog('version server down, trying github');
             $this->version = trim(file_get_contents('https://raw.githubusercontent.com/invoiceninja/invoiceninja/refs/heads/v5-develop/VERSION.txt'));
         }
 
         if (!is_array($file_headers)) {
             nlog($file_headers);
+
             return response()->json(['message' => 'There was a problem reaching the update server, please try again in a little while.'], 410);
         }
 
-        if (stripos($file_headers[0], "404 Not Found") > 0  || (stripos($file_headers[0], "302 Found") > 0 && stripos($file_headers[7], "404 Not Found") > 0)) {
+        if (stripos($file_headers[0], '404 Not Found') > 0 || (stripos($file_headers[0], '302 Found') > 0 && stripos($file_headers[7], '404 Not Found') > 0)) {
             nlog($file_headers);
+
             return response()->json(['message' => 'Download not yet available. Please try again shortly.'], 410);
         }
 
@@ -88,6 +89,7 @@ class SelfUpdateController extends BaseController
             }
         } catch (\Exception $e) {
             nlog($e->getMessage());
+
             return response()->json(['message' => 'File exists on the server, however there was a problem downloading and copying to the local filesystem'], 500);
         }
 
@@ -174,11 +176,10 @@ class SelfUpdateController extends BaseController
                 continue;
             }
 
-            if ($file->isFile() && ! $file->isWritable()) {
+            if ($file->isFile() && !$file->isWritable()) {
 
                 nlog("Cannot update system because {$file->getFileName()} is not writable");
                 throw new FilePermissionsFailure("Cannot update system because {$file->getFileName()} is not writable");
-
             }
 
             $file = null;

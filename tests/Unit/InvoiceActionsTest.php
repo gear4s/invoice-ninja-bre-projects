@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,14 +18,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Traits\Invoice\ActionsInvoice
  */
 class InvoiceActionsTest extends TestCase
 {
-    use MockAccountData;
-    use DatabaseTransactions;
     use ActionsInvoice;
+    use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -35,7 +33,7 @@ class InvoiceActionsTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testInvoiceIsDeletable()
+    public function test_invoice_is_deletable()
     {
 
         $this->assertTrue($this->invoiceDeletable($this->invoice));
@@ -43,7 +41,7 @@ class InvoiceActionsTest extends TestCase
         $this->assertTrue($this->invoiceCancellable($this->invoice));
     }
 
-    public function testInvoiceIsReversable()
+    public function test_invoice_is_reversable()
     {
 
         $this->invoice = $this->invoice->service()->markPaid()->save();
@@ -53,7 +51,7 @@ class InvoiceActionsTest extends TestCase
         $this->assertFalse($this->invoiceCancellable($this->invoice));
     }
 
-    public function testInvoiceIsCancellable()
+    public function test_invoice_is_cancellable()
     {
 
         $payment = PaymentFactory::create($this->invoice->company_id, $this->invoice->user_id);
@@ -71,7 +69,7 @@ class InvoiceActionsTest extends TestCase
         $this->assertTrue($this->invoiceCancellable($this->invoice));
     }
 
-    public function testInvoiceUnactionable()
+    public function test_invoice_unactionable()
     {
 
         $this->invoice->delete();

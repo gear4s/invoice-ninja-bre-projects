@@ -6,23 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Invoice;
 
+use App\Libraries\MultiDB;
 use App\Models\Invoice;
 use App\Models\Webhook;
 use App\Services\Email\Email;
-use Illuminate\Bus\Queueable;
-use App\Jobs\Entity\EmailEntity;
-use App\Libraries\MultiDB;
 use App\Services\Email\EmailObject;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class BulkInvoiceJob implements ShouldQueue
 {
@@ -72,51 +70,52 @@ class BulkInvoiceJob implements ShouldQueue
             'invitations.invoice.client.country',
             'invitations.invoice.company',
         ])
-                ->withTrashed()
-                ->whereIn('id', $this->invoice_ids)
-                ->cursor()
-                ->each(function ($invoice) {
+            ->withTrashed()
+            ->whereIn('id', $this->invoice_ids)
+            ->cursor()
+            ->each(function ($invoice) {
 
-                    $invoice->service()->markSent()->save();
+                $invoice->service()->markSent()->save();
 
-                    if ($invoice->company->verifactuEnabled() && !$invoice->hasSentAeat()) {
-                        $invoice->invitations()->update(['email_error' => 'primed']); // Flag the invitations as primed for AEAT submission
-                        $invoice->service()->sendVerifactu();
-                        return false;
+                if ($invoice->company->verifactuEnabled() && !$invoice->hasSentAeat()) {
+                    $invoice->invitations()->update(['email_error' => 'primed']); // Flag the invitations as primed for AEAT submission
+                    $invoice->service()->sendVerifactu();
+
+                    return false;
+                }
+
+                $invoice->invitations->each(function ($invitation) {
+
+                    $template = $this->resolveTemplateString($this->reminder_template);
+
+                    if ($invitation->contact->email && !$invitation->contact->is_locked) {
+                        $this->contact_has_email = true;
+
+                        $mo = new EmailObject;
+                        $mo->entity_id = $invitation->invoice_id;
+                        $mo->template = $template; // full template name in use
+                        $mo->email_template_body = $template;
+                        $mo->email_template_subject = str_replace('template', 'subject', $template);
+
+                        $mo->entity_class = get_class($invitation->invoice);
+                        $mo->invitation_id = $invitation->id;
+                        $mo->client_id = $invitation->contact->client_id ?? null;
+                        $mo->vendor_id = $invitation->contact->vendor_id ?? null;
+
+                        Email::dispatch($mo, $invitation->company->withoutRelations());
+
+                        sleep(1); // this is needed to slow down the amount of data that is pushed into cache
                     }
-
-                    $invoice->invitations->each(function ($invitation) {
-
-                        $template = $this->resolveTemplateString($this->reminder_template);
-
-                        if ($invitation->contact->email && !$invitation->contact->is_locked) {
-                            $this->contact_has_email = true;
-
-                            $mo = new EmailObject();
-                            $mo->entity_id = $invitation->invoice_id;
-                            $mo->template = $template; //full template name in use
-                            $mo->email_template_body = $template;
-                            $mo->email_template_subject = str_replace("template", "subject", $template);
-
-                            $mo->entity_class = get_class($invitation->invoice);
-                            $mo->invitation_id = $invitation->id;
-                            $mo->client_id = $invitation->contact->client_id ?? null;
-                            $mo->vendor_id = $invitation->contact->vendor_id ?? null;
-
-                            Email::dispatch($mo, $invitation->company->withoutRelations());
-
-                            sleep(1); // this is needed to slow down the amount of data that is pushed into cache
-                        }
-                    });
-
-                    if ($invoice->invitations->count() >= 1 && $this->contact_has_email) {
-                        $invoice->entityEmailEvent($invoice->invitations->first(), 'invoice', $this->reminder_template);
-                        $invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
-                    }
-
-                    sleep(1); // this is needed to slow down the amount of data that is pushed into cache
-                    $this->contact_has_email = false;
                 });
+
+                if ($invoice->invitations->count() >= 1 && $this->contact_has_email) {
+                    $invoice->entityEmailEvent($invoice->invitations->first(), 'invoice', $this->reminder_template);
+                    $invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, 'client');
+                }
+
+                sleep(1); // this is needed to slow down the amount of data that is pushed into cache
+                $this->contact_has_email = false;
+            });
     }
 
     private function resolveTemplateString(string $template): string

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ActivityController
  */
 class SearchApiTest extends TestCase
@@ -40,7 +38,7 @@ class SearchApiTest extends TestCase
 
     }
 
-    public function testActivityEntity()
+    public function test_activity_entity()
     {
 
         $response = false;
@@ -57,5 +55,4 @@ class SearchApiTest extends TestCase
         nlog($response->json());
 
     }
-
 }

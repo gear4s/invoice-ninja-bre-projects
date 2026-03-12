@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,7 +23,6 @@ class StripeConnectFailureListener implements ShouldQueue
 {
     /**
      * Create the event listener.
-     *
      */
     public function __construct() {}
 
@@ -40,7 +38,7 @@ class StripeConnectFailureListener implements ShouldQueue
 
         if (Ninja::isHosted() && is_null(Cache::get("stripe_connect_notification:{$event->company->company_key}"))) {
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new StripeConnectFailed($event->company->owner(), $event->company);
             $nmo->company = $event->company;
             $nmo->settings = $event->company->settings;

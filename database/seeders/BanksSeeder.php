@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34,8 +34,8 @@ class BanksSeeder extends Seeder
         $banks = json_decode($banks);
 
         foreach ($banks as $bank) {
-            if (! \DB::table('banks')->where('remote_id', '=', $bank->id)->count()) {
-                if (! isset($bank->fid) || ! isset($bank->org)) {
+            if (!\DB::table('banks')->where('remote_id', '=', $bank->id)->count()) {
+                if (!isset($bank->fid) || !isset($bank->org)) {
                     continue;
                 }
 

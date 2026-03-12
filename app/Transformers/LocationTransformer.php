@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,15 +26,10 @@ class LocationTransformer extends EntityTransformer
     protected array $defaultIncludes = [
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
     ];
 
     /**
-     * @param Location $location
-     *
      * @return array
      */
     public function transform(Location $location)
@@ -59,7 +53,7 @@ class LocationTransformer extends EntityTransformer
             'custom_value4' => $location->custom_value4 ?: '',
             'is_deleted' => (bool) $location->is_deleted,
             'is_shipping_location' => (bool) $location->is_shipping_location,
-            'tax_data' => $location->tax_data ?: new \stdClass(),
+            'tax_data' => $location->tax_data ?: new \stdClass,
             'updated_at' => (int) $location->updated_at,
             'archived_at' => (int) $location->deleted_at,
             'created_at' => (int) $location->created_at,

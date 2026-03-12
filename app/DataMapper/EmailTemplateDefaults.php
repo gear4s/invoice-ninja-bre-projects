@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -301,7 +300,7 @@ class EmailTemplateDefaults
 
     private static function transformText($string)
     {
-        //preformat the string, removing trailing colons.
+        // preformat the string, removing trailing colons.
 
         return str_replace(':', '$', rtrim(ctrans('texts.' . $string), ':'));
     }

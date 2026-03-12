@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -33,26 +32,34 @@ class BrevoController extends BaseController
      *      tags={"brevo"},
      *      summary="Processing webhooks from Brevo",
      *      description="Adds an credit to the system",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved credit object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Credit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -68,7 +75,6 @@ class BrevoController extends BaseController
         return response()->json(['message' => 'Unauthorized'], 403);
     }
 
-
     /**
      * Process Brevo Inbound Webhook.
      *
@@ -82,26 +88,34 @@ class BrevoController extends BaseController
      *      tags={"brevo"},
      *      summary="Processing inbound webhooks from Brevo",
      *      description="Adds an credit to the system",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved credit object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Credit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -190,13 +204,15 @@ class BrevoController extends BaseController
 
         if (!array_key_exists('items', $input)) {
             nlog('Failed: Message could not be parsed, because required parameters are missing.');
+
             return response()->json(['message' => 'Failed. Invalid Parameters.'], 400);
         }
 
-        foreach ($input["items"] as $item) {
+        foreach ($input['items'] as $item) {
 
             if (!array_key_exists('Recipients', $item) || !array_key_exists('MessageId', $item)) {
                 nlog('Failed: Message could not be parsed, because required parameters are missing. At least one item was invalid.');
+
                 return response()->json(['message' => 'Failed. Invalid Parameters. At least one item was invalid.'], 400);
             }
 

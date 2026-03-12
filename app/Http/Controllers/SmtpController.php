@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Smtp\CheckSmtpRequest;
 use App\Mail\TestMailServer;
-use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Mail\MailServiceProvider;
 use Illuminate\Support\Facades\Mail;
 
 class SmtpController extends BaseController
@@ -26,7 +26,7 @@ class SmtpController extends BaseController
 
     public function check(CheckSmtpRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
         $company = $user->company();
 
@@ -52,11 +52,11 @@ class SmtpController extends BaseController
             ],
         ]);
 
-        (new \Illuminate\Mail\MailServiceProvider(app()))->register();
+        (new MailServiceProvider(app()))->register();
 
         try {
 
-            $sending_email = (isset($company->settings->custom_sending_email) && stripos($company->settings->custom_sending_email, "@")) ? $company->settings->custom_sending_email : $user->email;
+            $sending_email = (isset($company->settings->custom_sending_email) && stripos($company->settings->custom_sending_email, '@')) ? $company->settings->custom_sending_email : $user->email;
             $sending_user = (isset($company->settings->email_from_name) && strlen($company->settings->email_from_name) > 2) ? $company->settings->email_from_name : $user->name();
 
             $mailable = new TestMailServer('Email Server Works!', $sending_email);
@@ -68,6 +68,7 @@ class SmtpController extends BaseController
 
         } catch (\Exception $e) {
             app('mail.manager')->forgetMailers();
+
             return response()->json(['message' => $e->getMessage()], 400);
         }
 
@@ -76,5 +77,4 @@ class SmtpController extends BaseController
         return response()->json(['message' => 'Ok'], 200);
 
     }
-
 }

@@ -6,17 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Payments;
 
 use App\DataMapper\ClientSettings;
-use App\Factory\InvoiceFactory;
-use App\Helpers\Invoice\InvoiceSum;
 use App\Models\Client;
-use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Utils\Traits\MakesHash;
@@ -24,17 +20,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class AutoUnappliedPaymentTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockUnitData;
 
     protected function setUp(): void
@@ -52,7 +44,7 @@ class AutoUnappliedPaymentTest extends TestCase
         );
     }
 
-    public function testUnappliedPaymentsAreEnabled()
+    public function test_unapplied_payments_are_enabled()
     {
 
         $settings = ClientSettings::defaults();
@@ -73,7 +65,7 @@ class AutoUnappliedPaymentTest extends TestCase
             'client_id' => $client->id,
         ]);
 
-        $invoice  = $invoice->calc()->getInvoice();
+        $invoice = $invoice->calc()->getInvoice();
 
         $payment = Payment::factory()->for($client)->create([
             'company_id' => $this->company->id,
@@ -113,8 +105,7 @@ class AutoUnappliedPaymentTest extends TestCase
 
     }
 
-
-    public function testUnappliedPaymentsAreDisabled()
+    public function test_unapplied_payments_are_disabled()
     {
 
         $settings = ClientSettings::defaults();
@@ -133,9 +124,9 @@ class AutoUnappliedPaymentTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $client->id,
             'auto_bill_enabled' => true,
-            'status_id' => 2
+            'status_id' => 2,
         ]);
-        $invoice  = $invoice->calc()->getInvoice();
+        $invoice = $invoice->calc()->getInvoice();
         $invoice_balance = $invoice->balance;
 
         $payment = Payment::factory()->create([
@@ -145,7 +136,7 @@ class AutoUnappliedPaymentTest extends TestCase
             'amount' => 100,
             'applied' => 0,
             'refunded' => 0,
-            'status_id' => Payment::STATUS_COMPLETED
+            'status_id' => Payment::STATUS_COMPLETED,
         ]);
 
         $invoice->service()->markSent()->save();
@@ -170,7 +161,5 @@ class AutoUnappliedPaymentTest extends TestCase
         // $this->assertEquals($payment->applied, $invoice->paid_to_date);
         // $this->assertEquals(2, $invoice->status_id);
 
-
     }
-
 }

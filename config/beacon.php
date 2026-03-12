@@ -5,7 +5,7 @@ return [
     /*
      * Enable or disable the beacon
      */
-    'enabled'   =>   env('BEACON_ENABLED', false),
+    'enabled' => env('BEACON_ENABLED', false),
 
     /*
      * The API endpoint for logs
@@ -14,14 +14,14 @@ return [
     /*
      * Your API key
      */
-    'api_key'   => env('BEACON_API_KEY', ''),
+    'api_key' => env('BEACON_API_KEY', ''),
 
     /*
      * Should batch requests
      */
-    'batch'     => true,
+    'batch' => true,
 
-   'cache_connection' => 'sentinel-cache',
+    'cache_connection' => 'sentinel-cache',
     // 'cache_connection' => 'cache',
     /*
      * The default key used to store

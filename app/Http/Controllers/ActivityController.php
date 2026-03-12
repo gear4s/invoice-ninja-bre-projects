@@ -6,44 +6,44 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use stdClass;
-use App\Models\Task;
-use App\Utils\Ninja;
-use App\Models\Quote;
+use App\Http\Requests\Activity\DownloadHistoricalEntityRequest;
+use App\Http\Requests\Activity\ShowActivityRequest;
+use App\Http\Requests\Activity\StoreNoteRequest;
+use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Credit;
-use App\Models\Vendor;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Project;
-use App\Models\Activity;
-use Illuminate\Http\Request;
 use App\Models\PurchaseOrder;
-use App\Utils\Traits\MakesHash;
+use App\Models\Quote;
 use App\Models\RecurringExpense;
 use App\Models\RecurringInvoice;
-use App\Utils\PhantomJS\Phantom;
-use App\Utils\HostedPDF\NinjaPdf;
-use App\Utils\Traits\Pdf\PdfMaker;
-use App\Utils\Traits\Pdf\PageNumbering;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Vendor;
 use App\Transformers\ActivityTransformer;
-use App\Http\Requests\Activity\StoreNoteRequest;
-use App\Http\Requests\Activity\ShowActivityRequest;
-use App\Http\Requests\Activity\DownloadHistoricalEntityRequest;
+use App\Utils\HostedPDF\NinjaPdf;
+use App\Utils\PhantomJS\Phantom;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\Pdf\PageNumbering;
+use App\Utils\Traits\Pdf\PdfMaker;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use stdClass;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ActivityController extends BaseController
 {
-    use PdfMaker;
-    use PageNumbering;
     use MakesHash;
+    use PageNumbering;
+    use PdfMaker;
 
     protected $entity_type = Activity::class;
 
@@ -60,13 +60,13 @@ class ActivityController extends BaseController
 
         /* @var App\Models\Activity[] $activities */
         $activities = Activity::with('user')
-                                ->orderBy('created_at', 'DESC')
-                                ->company()
-                                ->take($default_activities);
+            ->orderBy('created_at', 'DESC')
+            ->company()
+            ->take($default_activities);
 
         if ($request->has('reactv2')) {
 
-            /** @var \App\Models\User auth()->user() */
+            /** @var User auth()->user() */
             $user = auth()->user();
 
             if (!$user->isAdmin()) {
@@ -77,7 +77,7 @@ class ActivityController extends BaseController
 
             $data = $activities->cursor()->map(function ($activity) {
 
-                /** @var \App\Models\Activity $activity */
+                /** @var Activity $activity */
                 return $activity->activity_string();
 
             });
@@ -94,12 +94,12 @@ class ActivityController extends BaseController
         $default_activities = request()->has('rows') ? request()->input('rows') : 75;
 
         $activities = Activity::with('user')
-                                ->orderBy('created_at', 'DESC')
-                                ->company()
-                                ->where("{$request->entity}_id", $request->entity_id)
-                                ->take($default_activities);
+            ->orderBy('created_at', 'DESC')
+            ->company()
+            ->where("{$request->entity}_id", $request->entity_id)
+            ->take($default_activities);
 
-        /** @var \App\Models\User auth()->user() */
+        /** @var User auth()->user() */
         $user = auth()->user();
 
         $entity = $request->getEntity();
@@ -112,7 +112,7 @@ class ActivityController extends BaseController
 
         $data = $activities->cursor()->map(function ($activity) {
 
-            /** @var \App\Models\Activity $activity */
+            /** @var Activity $activity */
             return $activity->activity_string();
 
         });
@@ -121,22 +121,18 @@ class ActivityController extends BaseController
 
     }
 
-
     /**
      * downloadHistoricalEntity
      *
-     * @param  DownloadHistoricalEntityRequest $request
-     * @param  Activity $activity
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse | \Illuminate\Http\JsonResponse
+     * @return StreamedResponse | JsonResponse
      */
     public function downloadHistoricalEntity(DownloadHistoricalEntityRequest $request, Activity $activity)
     {
         $backup = $activity->backup;
         $html_backup = '';
 
-
         if (!$activity->backup) {
-            return response()->json(['message' => ctrans('texts.no_backup_exists'), 'errors' => new stdClass()], 404);
+            return response()->json(['message' => ctrans('texts.no_backup_exists'), 'errors' => new stdClass], 404);
         }
 
         $file = $backup->getFile();
@@ -144,11 +140,11 @@ class ActivityController extends BaseController
         $html_backup = $file;
 
         if (!$file) {
-            return response()->json(['message' => ctrans('texts.no_backup_exists'), 'errors' => new stdClass()], 404);
+            return response()->json(['message' => ctrans('texts.no_backup_exists'), 'errors' => new stdClass], 404);
         }
 
         if (config('ninja.phantomjs_pdf_generation') || config('ninja.pdf_generator') == 'phantom') {
-            $pdf = (new Phantom())->convertHtmlToPdf($html_backup);
+            $pdf = (new Phantom)->convertHtmlToPdf($html_backup);
 
             $numbered_pdf = $this->pageNumbering($pdf, $activity->company);
 
@@ -156,7 +152,7 @@ class ActivityController extends BaseController
                 $pdf = $numbered_pdf;
             }
         } elseif (config('ninja.invoiceninja_hosted_pdf_generation') || config('ninja.pdf_generator') == 'hosted_ninja') {
-            $pdf = (new NinjaPdf())->build($html_backup);
+            $pdf = (new NinjaPdf)->build($html_backup);
 
             $numbered_pdf = $this->pageNumbering($pdf, $activity->company);
 
@@ -192,12 +188,12 @@ class ActivityController extends BaseController
 
     public function note(StoreNoteRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $entity = $request->getEntity();
 
-        $activity = new Activity();
+        $activity = new Activity;
         $activity->account_id = $user->account_id;
         $activity->company_id = $user->company()->id;
         $activity->notes = $request->notes;
@@ -213,6 +209,7 @@ class ActivityController extends BaseController
                 $activity->vendor_id = $entity->vendor_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
 
             case Credit::class:
@@ -223,12 +220,14 @@ class ActivityController extends BaseController
                 $activity->invoice_id = $entity->invoice_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
 
             case Client::class:
                 $activity->client_id = $entity->id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
 
             case Quote::class:
@@ -238,6 +237,7 @@ class ActivityController extends BaseController
                 $activity->vendor_id = $entity->vendor_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
 
             case RecurringInvoice::class:
@@ -245,6 +245,7 @@ class ActivityController extends BaseController
                 $activity->client_id = $entity->client_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
 
             case Expense::class:
@@ -254,6 +255,7 @@ class ActivityController extends BaseController
                 $activity->vendor_id = $entity->vendor_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
             case RecurringExpense::class:
                 $activity->recurring_expense_id = $entity->id;
@@ -263,6 +265,7 @@ class ActivityController extends BaseController
                 $activity->vendor_id = $entity->vendor_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
             case Vendor::class:
                 $activity->vendor_id = $entity->id;
@@ -295,6 +298,7 @@ class ActivityController extends BaseController
                 $activity->project_id = $entity->project_id;
 
                 $activity->save();
+
                 return $this->itemResponse($activity);
 
             case Project::class:
@@ -303,10 +307,9 @@ class ActivityController extends BaseController
 
                 return $this->itemResponse($activity);
             default:
-                # code...
+                // code...
                 break;
         }
-
 
     }
 }

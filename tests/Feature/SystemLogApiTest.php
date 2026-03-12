@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,13 +18,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\SystemLogController
  */
 class SystemLogApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -35,18 +33,17 @@ class SystemLogApiTest extends TestCase
         $this->makeTestData();
     }
 
-
-    public function testFilters()
+    public function test_filters()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/system_logs?type_id=3')
-        ->assertStatus(200);
-        ;
+            ->assertStatus(200);
+
     }
 
-    public function testSystemLogRoutes()
+    public function test_system_log_routes()
     {
         $sl = [
             'client_id' => $this->client->id,
@@ -76,7 +73,7 @@ class SystemLogApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/system_logs/'.$hashed_id);
+        ])->get('/api/v1/system_logs/' . $hashed_id);
 
         $response->assertStatus(200);
 
@@ -87,15 +84,15 @@ class SystemLogApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/system_logs/'.$hashed_id, $sl)->assertStatus(400);
+        ])->put('/api/v1/system_logs/' . $hashed_id, $sl)->assertStatus(400);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/system_logs/'.$hashed_id)->assertStatus(400);
+        ])->delete('/api/v1/system_logs/' . $hashed_id)->assertStatus(400);
     }
 
-    public function testStoreRouteFails()
+    public function test_store_route_fails()
     {
         $sl = [
             'client_id' => $this->client->id,
@@ -113,7 +110,7 @@ class SystemLogApiTest extends TestCase
         ])->post('/api/v1/system_logs', $sl)->assertStatus(400);
     }
 
-    public function testCreateRouteFails()
+    public function test_create_route_fails()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),

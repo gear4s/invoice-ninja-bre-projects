@@ -6,24 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quote;
 
-use App\Utils\Ninja;
-use App\Models\Quote;
-use App\Models\Project;
-use App\Utils\Traits\MakesHash;
-use App\Exceptions\QuoteConversion;
-use App\Repositories\QuoteRepository;
 use App\Events\Quote\QuoteWasApproved;
 use App\Events\Quote\QuoteWasRejected;
-use App\Services\Invoice\LocationData;
-use App\Services\Quote\UpdateReminder;
+use App\Exceptions\QuoteConversion;
 use App\Jobs\EDocument\CreateEDocument;
+use App\Models\Project;
+use App\Models\Quote;
+use App\Models\QuoteInvitation;
+use App\Repositories\QuoteRepository;
+use App\Services\Invoice\LocationData;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Storage;
+use InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja;
 
 class QuoteService
 {
@@ -60,7 +60,7 @@ class QuoteService
     public function convert(): self
     {
         if ($this->quote->invoice_id) {
-            throw new QuoteConversion();
+            throw new QuoteConversion;
         }
 
         $convert_quote = (new ConvertQuote($this->quote->client))->run($this->quote);
@@ -70,7 +70,7 @@ class QuoteService
         $this->quote->fresh();
 
         if ($this->quote->client->getSetting('auto_archive_quote')) {
-            $quote_repo = new QuoteRepository();
+            $quote_repo = new QuoteRepository;
             $quote_repo->archive($this->quote);
         }
 
@@ -101,6 +101,7 @@ class QuoteService
 
     /**
      * Applies the invoice number.
+     *
      * @return $this InvoiceService object
      */
     public function applyNumber(): self
@@ -130,7 +131,7 @@ class QuoteService
     {
         $this->setStatus(Quote::STATUS_APPROVED)->save();
 
-        if (! $contact) {
+        if (!$contact) {
             $contact = $this->quote->invitations->first()->contact;
         }
 
@@ -138,16 +139,15 @@ class QuoteService
             $this->convertToInvoice();
 
             $this->invoice
-                 ->service()
-                 ->markSent()
-                 ->save();
+                ->service()
+                ->markSent()
+                ->save();
         }
 
         event(new QuoteWasApproved($contact, $this->quote, $this->quote->company, Ninja::eventVars()));
 
         return $this;
     }
-
 
     public function reject($contact = null, ?string $notes = null): self
     {
@@ -158,7 +158,7 @@ class QuoteService
 
         $this->setStatus(Quote::STATUS_REJECTED)->save();
 
-        if (! $contact) {
+        if (!$contact) {
             $contact = $this->quote->invitations->first()->contact;
         }
 
@@ -167,12 +167,11 @@ class QuoteService
         return $this;
     }
 
-
     public function approveWithNoCoversion($contact = null): self
     {
         $this->setStatus(Quote::STATUS_APPROVED)->save();
 
-        if (! $contact) {
+        if (!$contact) {
             $contact = $this->quote->invitations->first()->contact;
         }
 
@@ -186,7 +185,6 @@ class QuoteService
      *
      * @NOTE - this method will force the quote to include all invitations for the
      * client where ADD TO INVOICE = true
-     *
      */
     public function convertToInvoice()
     {
@@ -214,24 +212,24 @@ class QuoteService
     {
         $settings = $this->quote->client->getMergedSettings();
 
-        if (! $this->quote->design_id) {
+        if (!$this->quote->design_id) {
             $this->quote->design_id = $this->decodePrimaryKey($settings->quote_design_id);
         }
 
-        if (! isset($this->quote->footer)) {
+        if (!isset($this->quote->footer)) {
             $this->quote->footer = $settings->quote_footer;
         }
 
-        if (! isset($this->quote->terms)) {
+        if (!isset($this->quote->terms)) {
             $this->quote->terms = $settings->quote_terms;
         }
 
-        /* If client currency differs from the company default currency, then insert the client exchange rate on the model.*/
-        if (! isset($this->quote->exchange_rate) && $this->quote->client->currency()->id != (int) $this->quote->company->settings->currency_id) {
+        /* If client currency differs from the company default currency, then insert the client exchange rate on the model. */
+        if (!isset($this->quote->exchange_rate) && $this->quote->client->currency()->id != (int) $this->quote->company->settings->currency_id) {
             $this->quote->exchange_rate = $this->quote->client->currency()->exchange_rate;
         }
 
-        if (! isset($this->quote->public_notes)) {
+        if (!isset($this->quote->public_notes)) {
             $this->quote->public_notes = $this->quote->client->public_notes;
         }
 
@@ -250,7 +248,7 @@ class QuoteService
         $this->quote->invitations->each(function ($invitation) {
             // (new UnlinkFile(config('filesystems.default'), $this->quote->client->quote_filepath($invitation).$this->quote->numberFormatter().'.pdf'))->handle();
 
-            //30-06-2023
+            // 30-06-2023
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->invoice_filepath($invitation).$this->invoice->numberFormatter().'.pdf')) {
                 Storage::disk(config('filesystems.default'))->delete($this->quote->client->quote_filepath($invitation) . $this->quote->numberFormatter() . '.pdf');
@@ -268,6 +266,7 @@ class QuoteService
 
         return $this;
     }
+
     public function deleteEQuote()
     {
         $this->quote->load('invitations');
@@ -275,12 +274,12 @@ class QuoteService
         $this->quote->invitations->each(function ($invitation) {
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
-                Storage::disk(config('filesystems.default'))->delete($this->quote->client->e_document_filepath($invitation) . $this->quote->getFileName("xml"));
+                Storage::disk(config('filesystems.default'))->delete($this->quote->client->e_document_filepath($invitation) . $this->quote->getFileName('xml'));
                 // }
 
                 // if (Ninja::isHosted() && Storage::disk('public')->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
                 if (Ninja::isHosted()) {
-                    Storage::disk('public')->delete($this->quote->client->e_document_filepath($invitation) . $this->quote->getFileName("xml"));
+                    Storage::disk('public')->delete($this->quote->client->e_document_filepath($invitation) . $this->quote->getFileName('xml'));
                 }
             } catch (\Exception $e) {
                 nlog($e->getMessage());
@@ -297,8 +296,7 @@ class QuoteService
         return $this;
     }
 
-
-    /*When a reminder is sent we want to touch the dates they were sent*/
+    /* When a reminder is sent we want to touch the dates they were sent */
     public function touchReminder(string $reminder_template)
     {
         nrlog(now()->format('Y-m-d h:i:s') . " INV #{$this->quote->number} : Touching Reminder => {$reminder_template}");
@@ -332,20 +330,19 @@ class QuoteService
         return $this;
     }
 
-    public function getDocuNinjaSignable(?\App\Models\QuoteInvitation $invite = null)
+    public function getDocuNinjaSignable(?QuoteInvitation $invite = null)
     {
 
-        if (class_exists(\InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
-        {
+        if (class_exists(DocuNinja::class)) {
             $invite = $invite ?: $this->quote->invitations->first();
-            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($invite);
+
+            return (new DocuNinja)->signable->get($invite);
         }
-        
+
     }
 
     /**
      * Saves the quote.
-     * @return Quote|null
      */
     public function save(): ?Quote
     {

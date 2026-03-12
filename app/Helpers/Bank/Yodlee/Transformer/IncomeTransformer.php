@@ -6,15 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Helpers\Bank\Yodlee\Transformer;
 
 use App\Helpers\Bank\BankRevenueInterface;
+use App\Models\Currency;
 use App\Utils\Traits\AppSetup;
-use Illuminate\Support\Facades\Cache;
 
 /**
 "date": "string",
@@ -112,8 +111,7 @@ use Illuminate\Support\Facades\Cache;
 
 [checkNumber] => 998
 )
-*/
-
+ */
 class IncomeTransformer implements BankRevenueInterface
 {
     use AppSetup;
@@ -127,12 +125,12 @@ class IncomeTransformer implements BankRevenueInterface
         }
 
         foreach ($transaction->transaction as $transaction) {
-            //do not store duplicate / pending transactions
+            // do not store duplicate / pending transactions
             if (property_exists($transaction, 'status') && $transaction->status == 'PENDING') {
                 continue;
             }
 
-            //some object do no store amounts ignore these
+            // some object do no store amounts ignore these
             if (!property_exists($transaction, 'amount')) {
                 continue;
             }
@@ -161,7 +159,7 @@ class IncomeTransformer implements BankRevenueInterface
 
     private function calculateBaseType($transaction)
     {
-        //CREDIT / DEBIT
+        // CREDIT / DEBIT
 
         if (property_exists($transaction, 'highLevelCategoryId') && $transaction->highLevelCategoryId == 10000012) {
             return 'CREDIT';
@@ -176,12 +174,12 @@ class IncomeTransformer implements BankRevenueInterface
         $currencies = app('currencies');
 
         $currency = $currencies->first(function ($item) use ($code) {
-            /** @var \App\Models\Currency $item */
+            /** @var Currency $item */
             return $item->code == $code;
         });
 
-        /** @var \App\Models\Currency $currency */
-        return $currency ? $currency->id : 1; //@phpstan-ignore-line
+        /** @var Currency $currency */
+        return $currency ? $currency->id : 1; // @phpstan-ignore-line
 
     }
 }

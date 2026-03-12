@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,11 +20,13 @@ use App\Http\Requests\Token\ShowTokenRequest;
 use App\Http\Requests\Token\StoreTokenRequest;
 use App\Http\Requests\Token\UpdateTokenRequest;
 use App\Models\CompanyToken;
+use App\Models\User;
 use App\Repositories\TokenRepository;
 use App\Transformers\CompanyTokenHashedTransformer;
 use App\Transformers\CompanyTokenTransformer;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 /**
@@ -33,8 +34,8 @@ use Illuminate\Http\Response;
  */
 class TokenController extends BaseController
 {
-    use MakesHash;
     use ChecksEntityStatus;
+    use MakesHash;
 
     protected $entity_type = CompanyToken::class;
 
@@ -44,7 +45,6 @@ class TokenController extends BaseController
 
     /**
      * TokenController constructor.
-     * @param TokenRepository $token_repo
      */
     public function __construct(TokenRepository $token_repo)
     {
@@ -64,31 +64,39 @@ class TokenController extends BaseController
      *      description="Lists company tokens.
      *
      *   Query parameters can be added to performed more fine grained filtering of the tokens, these are handled by the TokenFilters class which defines the methods available",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of tokens",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param TokenFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function index(TokenFilters $filters)
     {
@@ -102,10 +110,7 @@ class TokenController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowTokenRequest $request
-     * @param CompanyToken $token
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/tokens/{id}",
@@ -113,6 +118,7 @@ class TokenController extends BaseController
      *      tags={"tokens"},
      *      summary="Shows a token",
      *      description="Displays a token by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -122,28 +128,36 @@ class TokenController extends BaseController
      *          description="The Token Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the token object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -156,10 +170,7 @@ class TokenController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditTokenRequest $request
-     * @param CompanyToken $token
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/tokens/{id}/edit",
@@ -167,6 +178,7 @@ class TokenController extends BaseController
      *      tags={"tokens"},
      *      summary="Shows a token for editting",
      *      description="Displays a token by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -176,28 +188,36 @@ class TokenController extends BaseController
      *          description="The Token Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the token object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -212,11 +232,7 @@ class TokenController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateTokenRequest $request
-     * @param CompanyToken $token
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/tokens/{id}",
@@ -224,6 +240,7 @@ class TokenController extends BaseController
      *      tags={"tokens"},
      *      summary="Updates a token",
      *      description="Handles the updating of a token by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -233,28 +250,36 @@ class TokenController extends BaseController
      *          description="The Token Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the token object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -275,10 +300,7 @@ class TokenController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateTokenRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/tokens/create",
@@ -286,26 +308,34 @@ class TokenController extends BaseController
      *      tags={"tokens"},
      *      summary="Gets a new blank token object",
      *      description="Returns a blank object with default values",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A blank token object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -313,7 +343,7 @@ class TokenController extends BaseController
     public function create(CreateTokenRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $token = CompanyTokenFactory::create($user->company()->id, auth()->user()->id, auth()->user()->account_id);
@@ -324,10 +354,7 @@ class TokenController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreTokenRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/tokens",
@@ -335,26 +362,34 @@ class TokenController extends BaseController
      *      tags={"tokens"},
      *      summary="Adds a token",
      *      description="Adds an token to a company",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved token object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -362,7 +397,7 @@ class TokenController extends BaseController
     public function store(StoreTokenRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $company_token = CompanyTokenFactory::create($user->company()->id, auth()->user()->id, auth()->user()->account_id);
@@ -375,18 +410,17 @@ class TokenController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyTokenRequest $request
-     * @param CompanyToken $token
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @throws \Exception
+     *
      * @OA\Delete(
      *      path="/api/v1/tokens/{id}",
      *      operationId="deleteToken",
      *      tags={"tokens"},
      *      summary="Deletes a token",
      *      description="Handles the deletion of a token by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -396,34 +430,41 @@ class TokenController extends BaseController
      *          description="The Token Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function destroy(DestroyTokenRequest $request, CompanyToken $token)
     {
-        //may not need these destroy routes as we are using actions to 'archive/delete'
+        // may not need these destroy routes as we are using actions to 'archive/delete'
         $token->delete();
 
         $this->entity_transformer = CompanyTokenHashedTransformer::class;
@@ -434,8 +475,7 @@ class TokenController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/tokens/bulk",
@@ -443,16 +483,21 @@ class TokenController extends BaseController
      *      tags={"tokens"},
      *      summary="Performs bulk actions on an array of tokens",
      *      description="",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\RequestBody(
      *         description="Token ids",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="integer",
      *                     description="Array of hashed IDs to be bulk 'actioned",
@@ -461,22 +506,29 @@ class TokenController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The Token response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/CompanyToken"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -485,7 +537,7 @@ class TokenController extends BaseController
     {
         $this->entity_transformer = CompanyTokenHashedTransformer::class;
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $action = request()->input('action');

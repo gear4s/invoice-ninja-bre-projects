@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Credit Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -41,11 +40,11 @@ use Illuminate\Support\Facades\Cache;
 class MatchBankTransactions implements ShouldQueue
 {
     use Dispatchable;
+    use GeneratesCounter;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use GeneratesCounter;
-    use MakesHash;
 
     private int $company_id;
 
@@ -53,12 +52,10 @@ class MatchBankTransactions implements ShouldQueue
 
     private array $input;
 
-    /** @var \App\Models\Company */
     protected ?Company $company;
 
     public Invoice $invoice;
 
-    /** @var \App\Models\BankTransaction $bt */
     private ?BankTransaction $bt;
 
     private $categories;
@@ -85,7 +82,6 @@ class MatchBankTransactions implements ShouldQueue
 
     /**
      * Execute the job.
-     *
      */
     public function handle()
     {
@@ -128,7 +124,7 @@ class MatchBankTransactions implements ShouldQueue
         $collection = collect();
 
         /** @array $invoices */
-        $invoices = explode(",", $invoice_hashed_ids);
+        $invoices = explode(',', $invoice_hashed_ids);
 
         foreach ($invoices as $invoice) {
             if (is_string($invoice) && strlen($invoice) > 1) {
@@ -160,7 +156,7 @@ class MatchBankTransactions implements ShouldQueue
             return $this;
         }
 
-        $_expenses = explode(",", $input['expense_id']);
+        $_expenses = explode(',', $input['expense_id']);
 
         foreach ($_expenses as $_expense) {
 
@@ -199,7 +195,7 @@ class MatchBankTransactions implements ShouldQueue
             return $expense;
         }
 
-        return collect(explode(",", $this->bt->expense_id))->push($expense)->implode(",");
+        return collect(explode(',', $this->bt->expense_id))->push($expense)->implode(',');
 
     }
 
@@ -256,7 +252,7 @@ class MatchBankTransactions implements ShouldQueue
 
     private function matchExpense($input): self
     {
-        //if there is a category id, pull it from Yodlee and insert - or just reuse!!
+        // if there is a category id, pull it from Yodlee and insert - or just reuse!!
         $this->bt = BankTransaction::query()->withTrashed()->find($input['id']);
 
         if (!$this->bt || $this->bt->status_id == BankTransaction::STATUS_CONVERTED) {
@@ -331,7 +327,6 @@ class MatchBankTransactions implements ShouldQueue
                         ->setCalculatedStatus()
                         ->save();
 
-
                     event('eloquent.updated: App\Models\Invoice', $this->invoice);
                 }
             });
@@ -342,8 +337,7 @@ class MatchBankTransactions implements ShouldQueue
             return;
         }
 
-
-        nlog("post");
+        nlog('post');
 
         /* Create Payment */
         $payment = PaymentFactory::create($this->invoice->company_id, $this->invoice->user_id);
@@ -358,7 +352,6 @@ class MatchBankTransactions implements ShouldQueue
         $payment->currency_id = $this->bt->currency_id;
         $payment->is_manual = false;
         $payment->date = $this->bt->date ? Carbon::parse($this->bt->date) : now();
-
 
         /* Bank Transfer! */
         $payment_type_id = 1;
@@ -402,11 +395,11 @@ class MatchBankTransactions implements ShouldQueue
 
         $hashed_keys = [];
 
-        foreach ($this->attachable_invoices as $attachable_invoice) { //@phpstan-ignore-line
+        foreach ($this->attachable_invoices as $attachable_invoice) { // @phpstan-ignore-line
             $hashed_keys[] = $this->encodePrimaryKey($attachable_invoice['id']);
         }
 
-        $this->bt->invoice_ids = implode(",", $hashed_keys);
+        $this->bt->invoice_ids = implode(',', $hashed_keys);
         $this->bt->status_id = BankTransaction::STATUS_CONVERTED;
         $this->bt->payment_id = $payment->id;
         $this->bt->save();
@@ -441,7 +434,6 @@ class MatchBankTransactions implements ShouldQueue
             return $ec->id;
         }
 
-
         return null;
     }
 
@@ -455,7 +447,7 @@ class MatchBankTransactions implements ShouldQueue
         $company_currency = $payment->client->company->settings->currency_id;
 
         if ($company_currency != $client_currency) {
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $payment->exchange_rate = $exchange_rate->exchangeRate($client_currency, $company_currency, Carbon::parse($payment->date));
             $payment->exchange_currency_id = $company_currency;

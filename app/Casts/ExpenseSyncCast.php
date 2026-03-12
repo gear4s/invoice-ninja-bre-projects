@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,7 +28,7 @@ class ExpenseSyncCast implements CastsAttributes
             return null;
         }
 
-        $es = new ExpenseSync();
+        $es = new ExpenseSync;
         $es->qb_id = $data['qb_id'];
 
         return $es;

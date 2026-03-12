@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\Currency;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
@@ -12,7 +10,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if(Currency::find(11)){
+        if (Currency::find(11)) {
             $currency = Currency::find(11);
             $currency->symbol = '₹';
             $currency->save();

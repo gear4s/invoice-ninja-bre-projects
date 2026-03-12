@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Models\Account;
 use App\Models\Subscription;
 use App\Rules\Subscriptions\Steps;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreSubscriptionRequest extends Request
 {
@@ -39,8 +39,8 @@ class StoreSubscriptionRequest extends Request
     {
         $rules = [
             'name' => ['required', Rule::unique('subscriptions')->where('company_id', auth()->user()->company()->id)],
-            'group_id' => ['bail','sometimes', 'nullable', Rule::exists('group_settings', 'id')->where('company_id', auth()->user()->company()->id)],
-            'assigned_user_id' => ['bail','sometimes', 'nullable', Rule::exists('users', 'id')->where('account_id', auth()->user()->account_id)],
+            'group_id' => ['bail', 'sometimes', 'nullable', Rule::exists('group_settings', 'id')->where('company_id', auth()->user()->company()->id)],
+            'assigned_user_id' => ['bail', 'sometimes', 'nullable', Rule::exists('users', 'id')->where('account_id', auth()->user()->account_id)],
             'product_ids' => 'bail|sometimes|nullable|string',
             'recurring_product_ids' => 'bail|sometimes|nullable|string',
             'is_recurring' => 'bail|sometimes|bool',
@@ -66,17 +66,13 @@ class StoreSubscriptionRequest extends Request
             'optional_recurring_product_ids' => 'bail|sometimes|nullable|string',
             'optional_product_ids' => 'bail|sometimes|nullable|string',
             'use_inventory_management' => 'bail|sometimes|bool',
-            'steps' => ['required', new Steps()],
+            'steps' => ['required', new Steps],
         ];
 
         return $this->globalRules($rules);
     }
 
-    /**
-     * @param \Illuminate\Validation\Validator $validator
-     * @return void
-     */
-    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             $this->validateWebhookUrl($validator, 'webhook_configuration.post_purchase_url');
@@ -85,12 +81,8 @@ class StoreSubscriptionRequest extends Request
 
     /**
      * Validate that a URL doesn't point to internal/private IP addresses.
-     *
-     * @param \Illuminate\Validation\Validator $validator
-     * @param string $field
-     * @return void
      */
-    private function validateWebhookUrl(\Illuminate\Validation\Validator $validator, string $field): void
+    private function validateWebhookUrl(Validator $validator, string $field): void
     {
         $url = $this->input($field);
 
@@ -101,6 +93,7 @@ class StoreSubscriptionRequest extends Request
         // Validate URL format
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             $validator->errors()->add($field, ctrans('texts.invalid_url'));
+
             return;
         }
 
@@ -110,12 +103,14 @@ class StoreSubscriptionRequest extends Request
         $scheme = $parsed['scheme'] ?? '';
         if (!in_array(strtolower($scheme), ['http', 'https'])) {
             $validator->errors()->add($field, ctrans('texts.invalid_url'));
+
             return;
         }
 
         $host = $parsed['host'] ?? '';
         if (empty($host)) {
             $validator->errors()->add($field, ctrans('texts.invalid_url'));
+
             return;
         }
 

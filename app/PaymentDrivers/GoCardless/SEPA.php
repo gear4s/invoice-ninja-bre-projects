@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,11 +28,12 @@ use App\PaymentDrivers\GoCardlessPaymentDriver;
 use App\Utils\Traits\MakesHash;
 use Exception;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\RedirectResponseor;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-class SEPA implements MethodInterface, LivewireMethodInterface
+class SEPA implements LivewireMethodInterface, MethodInterface
 {
     use MakesHash;
 
@@ -49,12 +49,11 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization for SEPA.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponseor|RedirectResponse|void
+     * @return RedirectResponseor|RedirectResponse|void
      */
     public function authorizeView(array $data)
     {
-        $session_token = \Illuminate\Support\Str::uuid()->toString();
+        $session_token = Str::uuid()->toString();
 
         try {
             $redirect = $this->go_cardless->gateway->redirectFlows()->create([
@@ -81,16 +80,13 @@ class SEPA implements MethodInterface, LivewireMethodInterface
             return redirect(
                 $redirect->redirect_url
             );
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return $this->processUnsuccessfulAuthorization($exception);
         }
     }
 
     /**
      * Handle unsuccessful authorization for SEPA.
-     *
-     * @param Exception $exception
-     * @return void
      */
     public function processUnsuccessfulAuthorization(Exception $exception): void
     {
@@ -111,8 +107,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization response for SEPA.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse|void
+     * @return RedirectResponse|void
      */
     public function authorizeResponse(Request $request)
     {
@@ -124,7 +119,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
                 ]],
             );
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = ctrans('texts.sepa');
             $payment_meta->type = GatewayType::SEPA;
             $payment_meta->state = 'authorized';
@@ -141,11 +136,11 @@ class SEPA implements MethodInterface, LivewireMethodInterface
                 $this->go_cardless->payment_hash = PaymentHash::where('hash', $request->payment_hash)->firstOrFail();
 
                 $data = [
-                    'invoices' => collect($this->go_cardless->payment_hash->data->invoices)->map(fn($invoice) => $invoice->invoice_id)->toArray(),
+                    'invoices' => collect($this->go_cardless->payment_hash->data->invoices)->map(fn ($invoice) => $invoice->invoice_id)->toArray(),
                     'action' => 'payment',
                 ];
 
-                $request = new ProcessInvoicesInBulkRequest();
+                $request = new ProcessInvoicesInBulkRequest;
                 $request->replace($data);
 
                 session()->flash('message', ctrans('texts.payment_method_added'));
@@ -154,16 +149,13 @@ class SEPA implements MethodInterface, LivewireMethodInterface
             }
 
             return redirect()->route('client.payment_methods.show', $payment_method->hashed_id);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return $this->processUnsuccessfulAuthorization($exception);
         }
     }
 
     /**
      * Payment view for SEPA.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function paymentView(array $data): View
     {
@@ -175,16 +167,15 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     /**
      * Handle the payment page for SEPA.
      *
-     * @param PaymentResponseRequest $request
-     * @return \Illuminate\Http\RedirectResponse|App\PaymentDrivers\GoCardless\never|void
+     * @return RedirectResponse|App\PaymentDrivers\GoCardless\never|void
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
         $this->go_cardless->ensureMandateIsReady($request->source);
 
         $invoice = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->go_cardless->payment_hash->invoices(), 'invoice_id')))
-                          ->withTrashed()
-                          ->first();
+            ->withTrashed()
+            ->first();
 
         if ($invoice) {
             $description = "Invoice {$invoice->number} for {$request->amount} for client {$this->go_cardless->client->present()->name()}";
@@ -214,7 +205,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
             }
 
             return $this->processUnsuccessfulPayment($payment);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             throw new PaymentFailed($exception->getMessage(), $exception->getCode());
         }
     }
@@ -222,9 +213,8 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     /**
      * Handle pending payments for Direct Debit.
      *
-     * @param ResourcesPayment $payment
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  ResourcesPayment  $payment
+     * @return RedirectResponse
      */
     public function processPendingPayment(\GoCardlessPro\Resources\Payment $payment, array $data = [])
     {
@@ -252,7 +242,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     /**
      * Process unsuccessful payments for Direct Debit.
      *
-     * @param ResourcesPayment $payment
+     * @param  ResourcesPayment  $payment
      * @return never
      */
     public function processUnsuccessfulPayment(\GoCardlessPro\Resources\Payment $payment)
@@ -279,7 +269,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -287,7 +277,7 @@ class SEPA implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

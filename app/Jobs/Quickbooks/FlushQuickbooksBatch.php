@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,10 +34,10 @@ class FlushQuickbooksBatch implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $entityType Entity type: 'client', 'invoice', etc.
-     * @param string $db The database name
-     * @param int $companyId The company ID
-     * @param string $priority Priority level
+     * @param  string  $entityType  Entity type: 'client', 'invoice', etc.
+     * @param  string  $db  The database name
+     * @param  int  $companyId  The company ID
+     * @param  string  $priority  Priority level
      */
     public function __construct(
         private string $entityType,

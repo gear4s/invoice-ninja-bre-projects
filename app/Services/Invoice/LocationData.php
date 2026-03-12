@@ -6,17 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Models\Quote;
-use App\Models\Credit;
 use App\Models\Country;
+use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Location;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
 use App\Services\AbstractService;
 

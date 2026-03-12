@@ -6,55 +6,55 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\PaymentDrivers;
 
-use App\Models\Client;
-use App\Models\Gateway;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
-use App\Models\PaymentType;
-use App\Utils\Traits\MakesHash;
 use App\Exceptions\PaymentFailed;
-use Illuminate\Support\Facades\Http;
-use App\PaymentDrivers\Blockonomics\Blockonomics;
 use App\Http\Requests\Payments\PaymentWebhookRequest;
+use App\Models\Gateway;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Blockonomics\Blockonomics;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Http;
 
 class BlockonomicsPaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = false; //does this gateway support refunds?
+    public $refundable = false; // does this gateway support refunds?
 
-    public $token_billing = false; //does this gateway support token billing?
+    public $token_billing = false; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = false; //does this gateway support authorizations?
+    public $can_authorise_credit_card = false; // does this gateway support authorizations?
 
-    public $gateway; //initialized gateway
+    public $gateway; // initialized gateway
 
-    public $payment_method; //initialized payment method
+    public $payment_method; // initialized payment method
 
     public static $methods = [
-        GatewayType::CRYPTO => Blockonomics::class, //maps GatewayType => Implementation class
+        GatewayType::CRYPTO => Blockonomics::class, // maps GatewayType => Implementation class
     ];
 
-    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_BLOCKONOMICS; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_BLOCKONOMICS; // define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
 
     public $BASE_URL = 'https://www.blockonomics.co';
+
     public $NEW_ADDRESS_URL = 'https://www.blockonomics.co/api/new_address';
+
     public $PRICE_URL = 'https://www.blockonomics.co/api/price';
+
     public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores';
+
     private string $test_txid = 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction';
 
     public function init()
     {
-        return $this; /* This is where you boot the gateway with your auth credentials*/
+        return $this; /* This is where you boot the gateway with your auth credentials */
     }
 
     /* Returns an array of gateway types for the payment gateway */
@@ -71,6 +71,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
     {
         $class = self::$methods[$payment_method_id];
         $this->payment_method = new $class($this);
+
         return $this;
     }
 
@@ -78,7 +79,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
     {
         $this->init();
 
-        return $this->payment_method->paymentView($data);  //this is your custom implementation from here
+        return $this->payment_method->paymentView($data);  // this is your custom implementation from here
     }
 
     public function processPaymentResponse($request)
@@ -101,10 +102,10 @@ class BlockonomicsPaymentDriver extends BaseDriver
         //     throw new PaymentFailed('Secret does not match');
         // }
 
-        $txid   = $request->txid;
-        $value  = $request->value;
+        $txid = $request->txid;
+        $value = $request->value;
         $status = $request->status;
-        $addr   = $request->addr;
+        $addr = $request->addr;
 
         $payment = ($txid === $this->test_txid)
             ? Payment::query()
@@ -145,7 +146,8 @@ class BlockonomicsPaymentDriver extends BaseDriver
     public function refund(Payment $payment, $amount, $return_client_response = false)
     {
         $this->setPaymentMethod(GatewayType::CRYPTO);
-        return $this->payment_method->refund($payment, $amount); //this is your custom implementation from here
+
+        return $this->payment_method->refund($payment, $amount); // this is your custom implementation from here
     }
 
     public function checkStores($stores): string
@@ -167,6 +169,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
             }
             if (empty($store['http_callback'])) {
                 $store_without_callback = $store;
+
                 continue;
             }
             // Check for partial match - only secret or protocol differs
@@ -182,9 +185,11 @@ class BlockonomicsPaymentDriver extends BaseDriver
             if (empty($matching_store_wallet)) {
                 return 'Please add a wallet to your Blockonomics store';
             }
+
             return 'ok';
         }
-        return "Copy your Invoice Ninja Webhook URL and set it as your callback URL in Blockonomics";
+
+        return 'Copy your Invoice Ninja Webhook URL and set it as your callback URL in Blockonomics';
     }
 
     public function auth(): string
@@ -202,7 +207,6 @@ class BlockonomicsPaymentDriver extends BaseDriver
             if ($get_stores_response_status == 401) {
                 return 'API Key is incorrect';
             }
-
 
             if (!$get_stores_response || $get_stores_response_status !== 200) {
                 return 'Could not connect to Blockonomics API';

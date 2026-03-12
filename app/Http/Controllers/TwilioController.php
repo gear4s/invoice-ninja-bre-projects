@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,7 @@ use App\Http\Requests\Twilio\Generate2faRequest;
 use App\Http\Requests\Twilio\GenerateSmsRequest;
 use App\Libraries\MultiDB;
 use App\Models\User;
+use Modules\Admin\Jobs\Account\UserQualityCheck;
 use Twilio\Rest\Client;
 
 class TwilioController extends BaseController
@@ -46,7 +46,7 @@ class TwilioController extends BaseController
         nlog('generateSmsResetCode');
         nlog($request->all());
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if (!$user->email_verified_at) {
@@ -68,13 +68,12 @@ class TwilioController extends BaseController
 
         $twilio = new Client($sid, $token);
 
-
         try {
             $verification = $twilio->verify
-                                   ->v2
-                                   ->services(config('ninja.twilio_verify_sid'))
-                                   ->verifications
-                                   ->create($request->phone, "sms");
+                ->v2
+                ->services(config('ninja.twilio_verify_sid'))
+                ->verifications
+                ->create($request->phone, 'sms');
         } catch (\Exception $e) {
             return response()->json(['message' => 'Invalid phone number please use + country code + number ie. +15552343334'], 400);
         }
@@ -106,7 +105,7 @@ class TwilioController extends BaseController
      */
     public function confirm(ConfirmSmsRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $account = $user->company()->account;
@@ -117,33 +116,31 @@ class TwilioController extends BaseController
         $twilio = new Client($sid, $token);
 
         $verification_check = $twilio->verify
-                                     ->v2
-                                     ->services(config('ninja.twilio_verify_sid'))
-                                     ->verificationChecks
-                                     ->create([
-                                         "to" => $account->account_sms_verification_number,
-                                         "code" => $request->code,
-                                     ]);
-
+            ->v2
+            ->services(config('ninja.twilio_verify_sid'))
+            ->verificationChecks
+            ->create([
+                'to' => $account->account_sms_verification_number,
+                'code' => $request->code,
+            ]);
 
         if ($verification_check->status == 'approved') {
             $account->account_sms_verified = true;
             $account->save();
 
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = auth()->user();
 
             $user->phone = $account->account_sms_verification_number;
             $user->verified_phone_number = true;
             $user->save();
 
-            if (class_exists(\Modules\Admin\Jobs\Account\UserQualityCheck::class)) {
-                \Modules\Admin\Jobs\Account\UserQualityCheck::dispatch($user, $user->company()->db);
+            if (class_exists(UserQualityCheck::class)) {
+                UserQualityCheck::dispatch($user, $user->company()->db);
             }
 
             return response()->json(['message' => 'SMS verified'], 200);
         }
-
 
         return response()->json(['message' => 'SMS not verified'], 400);
     }
@@ -168,7 +165,6 @@ class TwilioController extends BaseController
             return response()->json(['message' => 'Please verify your email address before verifying your phone number'], 400);
         }
 
-
         if (!$user->first_name || !$user->last_name) {
             return response()->json(['message' => 'Please update your first and/or last name in the User Details before verifying your number.'], 400);
         }
@@ -184,10 +180,10 @@ class TwilioController extends BaseController
 
         try {
             $verification = $twilio->verify
-                                   ->v2
-                                   ->services(config('ninja.twilio_verify_sid'))
-                                   ->verifications
-                                   ->create($user->phone, "sms");
+                ->v2
+                ->services(config('ninja.twilio_verify_sid'))
+                ->verifications
+                ->create($user->phone, 'sms');
         } catch (\Exception $e) {
             return response()->json(['message' => 'Invalid phone number on file, we are unable to reset. Please contact support.'], 400);
         }
@@ -201,7 +197,6 @@ class TwilioController extends BaseController
     /**
      * confirm2faResetCode
      *
-     * @param  Confirm2faRequest $request
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response;
      */
     public function confirm2faResetCode(Confirm2faRequest $request)
@@ -218,18 +213,19 @@ class TwilioController extends BaseController
         $twilio = new Client($sid, $token);
 
         $verification_check = $twilio->verify
-                                     ->v2
-                                     ->services(config('ninja.twilio_verify_sid'))
-                                     ->verificationChecks
-                                     ->create([
-                                         "to" => $user->phone,
-                                         "code" => $request->code,
-                                     ]);
+            ->v2
+            ->services(config('ninja.twilio_verify_sid'))
+            ->verificationChecks
+            ->create([
+                'to' => $user->phone,
+                'code' => $request->code,
+            ]);
 
         if ($verification_check->status == 'approved') {
             if ($request->query('validate_only') == 'true') {
                 $user->verified_phone_number = true;
                 $user->save();
+
                 return response()->json(['message' => 'SMS verified'], 200);
             }
 

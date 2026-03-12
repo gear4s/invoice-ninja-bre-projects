@@ -2,23 +2,26 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Http\Controllers\ImportController;
 use ReflectionClass;
 use ReflectionMethod;
+use Tests\TestCase;
 
 class ImportUnicodeEncodingTest extends TestCase
 {
     private ImportController $controller;
+
     private ReflectionMethod $readFileMethod;
+
     private ReflectionMethod $isValidConversionMethod;
+
     private ReflectionMethod $removeBOMMethod;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->controller = new ImportController();
+        $this->controller = new ImportController;
 
         // Use reflection to access private methods
         $reflection = new ReflectionClass($this->controller);
@@ -37,43 +40,43 @@ class ImportUnicodeEncodingTest extends TestCase
         return [
             // Basic Latin and Latin Extended
             'latin_basic' => "Hello World! Company's data",
-            'latin_extended' => "Café résumé naïve piñata façade",
+            'latin_extended' => 'Café résumé naïve piñata façade',
 
             // Greek
-            'greek' => "Καλημέρα κόσμε! Ελληνικά γράμματα",
+            'greek' => 'Καλημέρα κόσμε! Ελληνικά γράμματα',
 
             // Cyrillic
-            'cyrillic' => "Привет мир! Русский текст",
+            'cyrillic' => 'Привет мир! Русский текст',
 
             // Arabic (RTL)
-            'arabic' => "مرحبا بالعالم! النص العربي",
+            'arabic' => 'مرحبا بالعالم! النص العربي',
 
             // Hebrew (RTL)
-            'hebrew' => "שלום עולם! טקסט עברי",
+            'hebrew' => 'שלום עולם! טקסט עברי',
 
             // Chinese Simplified
-            'chinese_simplified' => "你好世界！简体中文",
+            'chinese_simplified' => '你好世界！简体中文',
 
             // Chinese Traditional
-            'chinese_traditional' => "你好世界！繁體中文",
+            'chinese_traditional' => '你好世界！繁體中文',
 
             // Japanese (Hiragana, Katakana, Kanji)
-            'japanese' => "こんにちは世界！ひらがな・カタカナ・漢字",
+            'japanese' => 'こんにちは世界！ひらがな・カタカナ・漢字',
 
             // Korean
-            'korean' => "안녕하세요 세계! 한국어 텍스트",
+            'korean' => '안녕하세요 세계! 한국어 텍스트',
 
             // Mathematical symbols
-            'mathematical' => "∑∫∞±≤≥≠√∂∇∆",
+            'mathematical' => '∑∫∞±≤≥≠√∂∇∆',
 
             // Currency symbols
-            'currency' => "€£¥₹₽₨₩₪₦₡₸",
+            'currency' => '€£¥₹₽₨₩₪₦₡₸',
 
             // Emoji and symbols
-            'emoji' => "😀🌍🚀💻📊✨🎉🔥💡⭐",
+            'emoji' => '😀🌍🚀💻📊✨🎉🔥💡⭐',
 
             // Mixed scripts
-            'mixed_scripts' => "Hello мир 世界 🌍 café résumé",
+            'mixed_scripts' => 'Hello мир 世界 🌍 café résumé',
 
             // Special Unicode cases
             'zero_width' => "Text\u{200B}with\u{FEFF}zero\u{200C}width\u{200D}chars",
@@ -164,7 +167,7 @@ class ImportUnicodeEncodingTest extends TestCase
 
                     $encoded = mb_convert_encoding($content, $encoding, 'UTF-8');
                     file_put_contents($tempFile, $encoded);
-                } catch (Exception | ValueError $e) {
+                } catch (Exception|ValueError $e) {
                     // If conversion fails, use UTF-8 fallback
                     file_put_contents($tempFile, $content);
                 }
@@ -177,7 +180,7 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 1: Unicode content preservation across different UTF encodings
      */
-    public function testUnicodeContentPreservation()
+    public function test_unicode_content_preservation()
     {
         $unicodeEncodings = ['UTF-8', 'UTF-8-BOM', 'UTF-16BE', 'UTF-16LE', 'UTF-32BE', 'UTF-32LE'];
 
@@ -206,9 +209,9 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 2: BOM handling for different UTF variants
      */
-    public function testBOMHandlingForAllUTF()
+    public function test_bom_handling_for_all_utf()
     {
-        $testContent = "Hello 世界! Тест العالم";
+        $testContent = 'Hello 世界! Тест العالم';
 
         $bomTests = [
             'UTF-8' => "\xEF\xBB\xBF",
@@ -246,18 +249,18 @@ class ImportUnicodeEncodingTest extends TestCase
         $this->assertEquals(
             $testContent,
             $result,
-            "UTF-8 BOM removal failed"
+            'UTF-8 BOM removal failed'
         );
     }
 
     /**
      * Test 3: Extended encoding compatibility
      */
-    public function testExtendedEncodingCompatibility()
+    public function test_extended_encoding_compatibility()
     {
         // Use content that's compatible with most encodings
-        $basicContent = "Company data with special chars";
-        $accentContent = "Cafe resume naive facade"; // Without actual accents for broader compatibility
+        $basicContent = 'Company data with special chars';
+        $accentContent = 'Cafe resume naive facade'; // Without actual accents for broader compatibility
 
         foreach ($this->getExtendedEncodings() as $encoding) {
             // Skip encodings that are known to not support certain characters
@@ -291,12 +294,12 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 4: Right-to-left (RTL) text handling
      */
-    public function testRightToLeftTextHandling()
+    public function test_right_to_left_text_handling()
     {
         $rtlContent = [
-            'arabic' => "مرحبا بالعالم! شركة البيانات",
-            'hebrew' => "שלום עולם! חברת הנתונים",
-            'mixed_rtl' => "Hello مرحبا World עולם!",
+            'arabic' => 'مرحبا بالعالم! شركة البيانات',
+            'hebrew' => 'שלום עולם! חברת הנתונים',
+            'mixed_rtl' => 'Hello مرحبا World עולם!',
         ];
 
         foreach ($rtlContent as $name => $content) {
@@ -317,16 +320,16 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 5: Asian character sets (CJK)
      */
-    public function testAsianCharacterSets()
+    public function test_asian_character_sets()
     {
         $cjkContent = [
-            'chinese_simplified' => "公司数据处理系统",
-            'chinese_traditional' => "公司資料處理系統",
-            'japanese_hiragana' => "かいしゃのでーたしすてむ",
-            'japanese_katakana' => "カイシャノデータシステム",
-            'japanese_kanji' => "会社のデータシステム",
-            'korean' => "회사 데이터 시스템",
-            'mixed_cjk' => "Company 公司 会社 회사 Data",
+            'chinese_simplified' => '公司数据处理系统',
+            'chinese_traditional' => '公司資料處理系統',
+            'japanese_hiragana' => 'かいしゃのでーたしすてむ',
+            'japanese_katakana' => 'カイシャノデータシステム',
+            'japanese_kanji' => '会社のデータシステム',
+            'korean' => '회사 데이터 시스템',
+            'mixed_cjk' => 'Company 公司 会社 회사 Data',
         ];
 
         foreach ($cjkContent as $name => $content) {
@@ -347,15 +350,15 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 6: Emoji and symbol handling
      */
-    public function testEmojiAndSymbolHandling()
+    public function test_emoji_and_symbol_handling()
     {
         $symbolContent = [
-            'basic_emoji' => "Data 📊 Reports 📈 Analysis 🔍",
-            'complex_emoji' => "👨‍💻👩‍💼🏢💼📋📊📈📉",
-            'mathematical' => "∑(x²) ∫f(x)dx ∞ ≠ ≤ ≥ ± √",
-            'currency_symbols' => "Price: €100 £80 ¥1000 $75",
-            'technical_symbols' => "® © ™ § ¶ † ‡ • ‰ ‱",
-            'arrows_symbols' => "← → ↑ ↓ ↔ ↕ ⇐ ⇒ ⇔",
+            'basic_emoji' => 'Data 📊 Reports 📈 Analysis 🔍',
+            'complex_emoji' => '👨‍💻👩‍💼🏢💼📋📊📈📉',
+            'mathematical' => '∑(x²) ∫f(x)dx ∞ ≠ ≤ ≥ ± √',
+            'currency_symbols' => 'Price: €100 £80 ¥1000 $75',
+            'technical_symbols' => '® © ™ § ¶ † ‡ • ‰ ‱',
+            'arrows_symbols' => '← → ↑ ↓ ↔ ↕ ⇐ ⇒ ⇔',
         ];
 
         foreach ($symbolContent as $name => $content) {
@@ -376,10 +379,10 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 7: Combining characters and normalization
      */
-    public function testCombiningCharacters()
+    public function test_combining_characters()
     {
         $combiningContent = [
-            'accents_composed' => "café résumé naïve",
+            'accents_composed' => 'café résumé naïve',
             'accents_decomposed' => "cafe\u{0301} re\u{0301}sume\u{0301} nai\u{0308}ve",
             'mixed_normalization' => "café cafe\u{0301} résumé re\u{0301}sume\u{0301}",
         ];
@@ -406,9 +409,9 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 8: Large Unicode content performance
      */
-    public function testLargeUnicodeContentPerformance()
+    public function test_large_unicode_content_performance()
     {
-        $unicodePattern = "🌍 Hello 世界 مرحبا Здравствуй שלום こんにちは 안녕하세요 ";
+        $unicodePattern = '🌍 Hello 世界 مرحبا Здравствуй שלום こんにちは 안녕하세요 ';
         $largeContent = str_repeat($unicodePattern, 1000); // ~50KB of Unicode content
 
         $tempFile = $this->createTestFile($largeContent, 'UTF-8');
@@ -419,11 +422,11 @@ class ImportUnicodeEncodingTest extends TestCase
 
         $processingTime = $endTime - $startTime;
 
-        $this->assertLessThan(2.0, $processingTime, "Large Unicode content processing should be fast");
-        $this->assertEquals($largeContent, $result, "Large Unicode content should be preserved");
+        $this->assertLessThan(2.0, $processingTime, 'Large Unicode content processing should be fast');
+        $this->assertEquals($largeContent, $result, 'Large Unicode content should be preserved');
         $this->assertTrue(
             $this->isValidConversionMethod->invoke($this->controller, $result),
-            "Large Unicode content validation failed"
+            'Large Unicode content validation failed'
         );
 
         unlink($tempFile);
@@ -432,11 +435,11 @@ class ImportUnicodeEncodingTest extends TestCase
     /**
      * Test 9: Mixed encoding scenarios
      */
-    public function testMixedEncodingScenarios()
+    public function test_mixed_encoding_scenarios()
     {
         // Simulate files that might have mixed encoding issues
         $scenarios = [
-            'mostly_ascii_with_unicode' => "Regular text with émojis 😀 and symbols ™",
+            'mostly_ascii_with_unicode' => 'Regular text with émojis 😀 and symbols ™',
             'csv_with_international' => "Name,Company,Location\n\"José García\",\"Café España\",\"São Paulo\"",
             'business_names' => "McDonald's, L'Oréal, Nestlé, Björk & Co, Müller GmbH",
         ];
@@ -470,20 +473,21 @@ class ImportUnicodeEncodingTest extends TestCase
     private function isAsciiCompatibleEncoding(string $encoding): bool
     {
         $asciiOnlyEncodings = ['ASCII', 'US-ASCII'];
+
         return in_array($encoding, $asciiOnlyEncodings);
     }
 
     /**
      * Test 10: CSV data with international content
      */
-    public function testCSVWithInternationalContent()
+    public function test_csv_with_international_content()
     {
         $csvContent = "Name,Company,City,Country,Notes\n" .
                      "\"José García\",\"Café España\",\"São Paulo\",\"Brasil\",\"Açaí supplier\"\n" .
                      "\"李小明\",\"北京科技公司\",\"北京\",\"中国\",\"Technology partner\"\n" .
                      "\"Müller\",\"Bäckerei München\",\"München\",\"Deutschland\",\"Café & Bäckerei\"\n" .
                      "\"Иванов\",\"Москва ООО\",\"Москва\",\"Россия\",\"Software development\"\n" .
-                     "\"محمد أحمد\",\"شركة الرياض\",\"الرياض\",\"السعودية\",\"Trading company\"";
+                     '"محمد أحمد","شركة الرياض","الرياض","السعودية","Trading company"';
 
         $encodings = ['UTF-8', 'UTF-8-BOM', 'WINDOWS-1252'];
 
@@ -498,9 +502,9 @@ class ImportUnicodeEncodingTest extends TestCase
             );
 
             // Check that it contains expected international content
-            $this->assertStringContainsString("José García", $result, "Should contain Spanish names");
-            $this->assertStringContainsString("李小明", $result, "Should contain Chinese names");
-            $this->assertStringContainsString("Müller", $result, "Should contain German names");
+            $this->assertStringContainsString('José García', $result, 'Should contain Spanish names');
+            $this->assertStringContainsString('李小明', $result, 'Should contain Chinese names');
+            $this->assertStringContainsString('Müller', $result, 'Should contain German names');
 
             unlink($tempFile);
         }

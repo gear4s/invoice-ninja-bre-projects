@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,8 +18,8 @@ use Tests\TestCase;
 
 class ParseCsvWithNestedCsvTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     private InvoiceTransformer $transformer;
 
@@ -39,7 +38,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * A well-formed Items string with a single line item and nested tax data
      * should parse into an associative array with the tax field expanded.
      */
-    public function testParsesNestedTaxFieldCorrectly(): void
+    public function test_parses_nested_tax_field_correctly(): void
     {
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,Widget,2,parts,false,"rate,tax_id;10,abc-123",50,0,no_discount,0';
 
@@ -58,7 +57,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
     /**
      * Multiple line items should each get their nested tax fields parsed independently.
      */
-    public function testParsesMultipleLineItemsWithTaxes(): void
+    public function test_parses_multiple_line_items_with_taxes(): void
     {
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,First Item,1,parts,false,"rate,tax_id;17,tax-001",35,0,no_discount,0;,Second Item,3,parts,false,"rate,tax_id;8,tax-002",65,0,no_discount,0';
 
@@ -79,7 +78,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * A line item with no nested tax data (plain string in the applied_taxes column)
      * should pass through as a string — no array conversion.
      */
-    public function testHandlesPlainStringTaxField(): void
+    public function test_handles_plain_string_tax_field(): void
     {
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,No Tax Item,1,parts,false,,100,0,no_discount,0';
 
@@ -95,7 +94,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * Rows with fewer fields than expected should not throw
      * undefined offset errors on index 5 or index 1.
      */
-    public function testHandlesShortRowWithoutCrashing(): void
+    public function test_handles_short_row_without_crashing(): void
     {
         // Header has 10 columns but data row only has 4
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,Short Row,1,parts';
@@ -114,7 +113,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * When the nested CSV in the tax column is malformed (e.g. mismatched
      * key/value counts), it should fall back to an empty string.
      */
-    public function testHandlesMismatchedKeyValueCountInTaxField(): void
+    public function test_handles_mismatched_key_value_count_in_tax_field(): void
     {
         // 3 keys but only 2 values
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,Bad Tax,1,parts,false,"rate,tax_id,extra;10,abc-123",50,0,no_discount,0';
@@ -131,7 +130,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * A nested CSV in the tax column with no semicolon separator
      * (i.e. only keys, no values row) should fall back gracefully.
      */
-    public function testHandlesTaxFieldWithNoValueRow(): void
+    public function test_handles_tax_field_with_no_value_row(): void
     {
         // Nested CSV has only a header row, no value row after semicolon
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,No Values,1,parts,false,"rate,tax_id",50,0,no_discount,0';
@@ -147,7 +146,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
     /**
      * Test parsing with real Invoice2Go CSV data from the fixtures.
      */
-    public function testParsesRealInvoice2GoItemsData(): void
+    public function test_parses_real_invoice2_go_items_data(): void
     {
         $itemsCsv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,Bumper paint touch up,4,parts,false,"rate,tax_id;17,d4037c01-b719-4e89-a1f4-91c0daf3ee34",35,0,no_discount,0;,Wood Hammer Mallets,10,parts,false,"rate,tax_id;17,d4037c01-b719-4e89-a1f4-91c0daf3ee34",2.5,0,no_discount,0;,Monthly Lawn Service 2 Hours Weekly,4,parts,false,"rate,tax_id;17,d4037c01-b719-4e89-a1f4-91c0daf3ee34",65,0,no_discount,0;,Internal Hardware Repair,6,parts,false,"rate,tax_id;17,d4037c01-b719-4e89-a1f4-91c0daf3ee34",65,0,no_discount,0';
 
@@ -176,7 +175,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * A description with commas inside quotes should survive parsing
      * without corrupting the row structure.
      */
-    public function testDescriptionWithCommasInQuotes(): void
+    public function test_description_with_commas_in_quotes(): void
     {
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount;,Service A,1,parts,false,,100,0,no_discount,0';
 
@@ -192,7 +191,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
      * An entirely empty Items string should not throw and should return
      * an empty array (header row is removed).
      */
-    public function testHandlesEmptyString(): void
+    public function test_handles_empty_string(): void
     {
         $result = $this->transformer->parseCsvWithNestedCsv('');
 
@@ -202,7 +201,7 @@ class ParseCsvWithNestedCsvTest extends TestCase
     /**
      * A single header row with no data rows should return an empty array.
      */
-    public function testHandlesHeaderOnlyWithNoDataRows(): void
+    public function test_handles_header_only_with_no_data_rows(): void
     {
         $csv = 'code,description,qty,unit_type,withholding_tax_applies,applied_taxes,unit_price,discount_percentage,discount_type,discount_amount';
 

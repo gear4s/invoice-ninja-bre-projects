@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,7 +22,7 @@ class BankIntegrationRepository extends BaseRepository
 {
     public function save($data, BankIntegration $bank_integration)
     {
-        //stub to store
+        // stub to store
         $bank_integration->fill($data);
 
         $bank_integration->save();
@@ -32,12 +31,11 @@ class BankIntegrationRepository extends BaseRepository
     }
 
     /**
-    * Removes the bank integration from Yodlee
-    *
-    * @param BankIntegration $bank_integration
-    *
-    * @return BankIntegration $bank_integration
-    */
+     * Removes the bank integration from Yodlee
+     *
+     * @param  BankIntegration  $bank_integration
+     * @return BankIntegration $bank_integration
+     */
     public function delete($bank_integration): BankIntegration
     {
         if ($bank_integration->is_deleted) {
@@ -64,5 +62,4 @@ class BankIntegrationRepository extends BaseRepository
 
         return $bank_integration;
     }
-
 }

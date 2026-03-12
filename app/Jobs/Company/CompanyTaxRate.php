@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,8 +34,6 @@ class CompanyTaxRate implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
-     * @param Company $company
      */
     public function __construct(public Company $company) {}
 
@@ -60,11 +57,11 @@ class CompanyTaxRate implements ShouldQueue
                 try {
                     $calculated_state = USStates::getState($this->company->settings->postal_code);
                 } catch (\Exception $e) {
-                    nlog("Exception:: CompanyTaxRate::" . $e->getMessage());
+                    nlog('Exception:: CompanyTaxRate::' . $e->getMessage());
                     nlog("could not calculate state from postal code => {$this->company->settings->postal_code} or from state {$this->company->settings->state}");
                 }
 
-                if (!$calculated_state && $this->company->tax_data?->seller_subregion) { //@phpstan-ignore-line
+                if (!$calculated_state && $this->company->tax_data?->seller_subregion) { // @phpstan-ignore-line
                     $calculated_state = $this->company->tax_data->seller_subregion;
                 }
 

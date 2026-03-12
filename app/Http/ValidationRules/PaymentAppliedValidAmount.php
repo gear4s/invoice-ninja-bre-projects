@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,9 +29,10 @@ class PaymentAppliedValidAmount implements Rule
     {
         $this->input = $input;
     }
+
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
@@ -55,7 +55,7 @@ class PaymentAppliedValidAmount implements Rule
         $payment = Payment::withTrashed()->whereId($this->decodePrimaryKey(request()->segment(4)))->company()->first();
         $inv_collection = Invoice::withTrashed()->whereIn('id', array_column($this->input['invoices'], 'invoice_id'))->get();
 
-        if (! $payment) {
+        if (!$payment) {
             return false;
         }
 
@@ -64,7 +64,7 @@ class PaymentAppliedValidAmount implements Rule
 
         // $payment_amounts = $payment->amount - $payment->refunded - $payment->applied;
 
-        //20-03-2024 - applied amounts are never tainted by refunded amount.
+        // 20-03-2024 - applied amounts are never tainted by refunded amount.
         $payment_amounts = $payment->amount - $payment->applied;
 
         if (request()->has('credits')
@@ -99,6 +99,7 @@ class PaymentAppliedValidAmount implements Rule
 
             if (count($this->input['invoices']) >= 1 && $payment->status_id == Payment::STATUS_PENDING) {
                 $this->message = 'Cannot apply a payment until the status is completed.';
+
                 return false;
             }
 

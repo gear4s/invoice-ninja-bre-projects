@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,11 +28,11 @@ class HandleReversal extends AbstractService
     public function run()
     {
         /* Check again!! */
-        if (! $this->invoice->invoiceReversable($this->invoice)) {
+        if (!$this->invoice->invoiceReversable($this->invoice)) {
             return $this->invoice;
         }
 
-        /* If the invoice has been cancelled - we need to unwind the cancellation before reversing*/
+        /* If the invoice has been cancelled - we need to unwind the cancellation before reversing */
         if ($this->invoice->status_id == Invoice::STATUS_CANCELLED) {
             $this->invoice = $this->invoice->service()->reverseCancellation()->save();
         }
@@ -42,13 +41,13 @@ class HandleReversal extends AbstractService
 
         $total_paid = $this->invoice->amount - $this->invoice->balance;
 
-        /*Adjust payment applied and the paymentables to the correct amount */
+        /* Adjust payment applied and the paymentables to the correct amount */
         $paymentables = Paymentable::query()->wherePaymentableType('invoices')
-                                    ->wherePaymentableId($this->invoice->id)
-                                    ->get();
+            ->wherePaymentableId($this->invoice->id)
+            ->get();
 
         $paymentables->each(function ($paymentable) use ($total_paid) {
-            //new concept - when reversing, we unwind the payments
+            // new concept - when reversing, we unwind the payments
             $payment = Payment::withTrashed()->find($paymentable->payment_id);
 
             $reversable_amount = $paymentable->amount - $paymentable->refunded;
@@ -72,7 +71,7 @@ class HandleReversal extends AbstractService
         $this->invoice->balance = 0;
         $this->invoice->paid_to_date = 0;
 
-        /* Set invoice status to reversed... somehow*/
+        /* Set invoice status to reversed... somehow */
         $this->invoice->service()->setStatus(Invoice::STATUS_REVERSED)->save();
 
         /* Reduce client.paid_to_date by $total_paid amount */

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  \App\Http\Controllers\Shop\ProfileController
  */
 class ShopProfileTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,10 +32,10 @@ class ShopProfileTest extends TestCase
 
         $this->makeTestData();
 
-        $this->markTestSkipped("redundant test");
+        $this->markTestSkipped('redundant test');
     }
 
-    public function testProfileDisplays()
+    public function test_profile_displays()
     {
         $this->company->enable_shop_api = true;
         $this->company->save();
@@ -54,16 +53,16 @@ class ShopProfileTest extends TestCase
         $this->assertEquals($this->company->company_key, $arr['data']['company_key']);
     }
 
-    public function testProfileSettingsUpdate()
+    public function test_profile_settings_update()
     {
 
         $this->company->enable_shop_api = true;
 
         $settings = $this->company->settings;
 
-        $trans = new \stdClass();
-        $trans->product = "Service";
-        $trans->products = "Services";
+        $trans = new \stdClass;
+        $trans->product = 'Service';
+        $trans->products = 'Services';
 
         $settings->translations = $trans;
         $this->company->settings = $settings;
@@ -75,17 +74,16 @@ class ShopProfileTest extends TestCase
             'X-API-COMPANY-KEY' => $this->company->company_key,
         ])->getJson('/api/v1/shop/profile');
 
-
         $response->assertStatus(200);
 
         $arr = $response->json();
 
-        $this->assertEquals("Service", $arr['data']['settings']['product']);
-        $this->assertEquals("Services", $arr['data']['settings']['products']);
+        $this->assertEquals('Service', $arr['data']['settings']['product']);
+        $this->assertEquals('Services', $arr['data']['settings']['products']);
 
     }
 
-    public function testProfileSettingsUpdate2()
+    public function test_profile_settings_update2()
     {
 
         $this->company->enable_shop_api = true;
@@ -97,16 +95,13 @@ class ShopProfileTest extends TestCase
             'X-API-COMPANY-KEY' => $this->company->company_key,
         ])->getJson('/api/v1/shop/profile');
 
-
         $response->assertStatus(200);
 
         $arr = $response->json();
 
-        $this->assertEquals("Product", $arr['data']['settings']['product']);
-        $this->assertEquals("Products", $arr['data']['settings']['products']);
+        $this->assertEquals('Product', $arr['data']['settings']['product']);
+        $this->assertEquals('Products', $arr['data']['settings']['products']);
         $this->assertIsArray($arr['data']['settings']['client_registration_fields']);
 
     }
-
-
 }

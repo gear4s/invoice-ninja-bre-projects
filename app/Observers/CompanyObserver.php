@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,13 +14,14 @@ namespace App\Observers;
 use App\Events\Company\CompanyDocumentsDeleted;
 use App\Models\Company;
 use App\Utils\Ninja;
+use Modules\Admin\Jobs\Account\FieldQuality;
+use Modules\Admin\Jobs\Domain\CustomDomain;
 
 class CompanyObserver
 {
     /**
      * Handle the company "created" event.
      *
-     * @param Company $company
      * @return void
      */
     public function created(Company $company)
@@ -32,13 +32,12 @@ class CompanyObserver
     /**
      * Handle the company "updated" event.
      *
-     * @param Company $company
      * @return void
      */
     public function updated(Company $company)
     {
         if (Ninja::isHosted() && $company->portal_mode == 'domain' && $company->isDirty('portal_domain')) {
-            \Modules\Admin\Jobs\Domain\CustomDomain::dispatch($company->getOriginal('portal_domain'), $company);
+            CustomDomain::dispatch($company->getOriginal('portal_domain'), $company);
         }
 
         if (Ninja::isHosted()) {
@@ -49,12 +48,12 @@ class CompanyObserver
 
             if ($original !== $current) {
                 try {
-                    (new \Modules\Admin\Jobs\Account\FieldQuality())->checkCompanyName($current, $company);
+                    (new FieldQuality)->checkCompanyName($current, $company);
                 } catch (\Throwable $e) {
                     nlog(['company_name_check', $e->getMessage()]);
                 }
             }
-            
+
         }
 
     }
@@ -62,7 +61,6 @@ class CompanyObserver
     /**
      * Handle the company "deleted" event.
      *
-     * @param Company $company
      * @return void
      */
     public function deleted(Company $company)
@@ -73,7 +71,6 @@ class CompanyObserver
     /**
      * Handle the company "restored" event.
      *
-     * @param Company $company
      * @return void
      */
     public function restored(Company $company)
@@ -84,7 +81,6 @@ class CompanyObserver
     /**
      * Handle the company "force deleted" event.
      *
-     * @param Company $company
      * @return void
      */
     public function forceDeleted(Company $company)

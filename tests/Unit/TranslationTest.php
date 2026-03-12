@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,9 +14,6 @@ namespace Tests\Unit;
 use Illuminate\Support\Facades\Lang;
 use Tests\TestCase;
 
-/**
- *
- */
 class TranslationTest extends TestCase
 {
     protected function setUp(): void
@@ -25,21 +21,21 @@ class TranslationTest extends TestCase
         parent::setUp();
     }
 
-    public function testAddTranslation()
+    public function test_add_translation()
     {
         Lang::set('texts.test_translation_string', 'test');
 
         $this->assertEquals('test', trans('texts.test_translation_string'));
     }
 
-    public function testReplaceTranslation()
+    public function test_replace_translation()
     {
         Lang::set('texts.invoice_number', 'test');
 
         $this->assertEquals('test', trans('texts.invoice_number'));
     }
 
-    public function testReplaceArray()
+    public function test_replace_array()
     {
         $data = [
             'texts.invoice_number' => 'test',

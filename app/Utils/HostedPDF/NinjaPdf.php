@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils\HostedPDF;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 
 class NinjaPdf
@@ -20,7 +20,7 @@ class NinjaPdf
 
     public function build($html)
     {
-        $client = new \GuzzleHttp\Client(['headers' => [
+        $client = new Client(['headers' => [
             'X-Ninja-Token' => 'test_token_for_now',
             'X-URL' => config('ninja.app_url'),
         ],
@@ -30,8 +30,6 @@ class NinjaPdf
             RequestOptions::JSON => ['html' => $html],
         ]);
 
-
         return $response->getBody()->getContents();
     }
-
 }

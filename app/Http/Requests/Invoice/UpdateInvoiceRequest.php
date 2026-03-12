@@ -6,35 +6,37 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Invoice;
 
 use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
-use App\Utils\Traits\CleanLineItems;
-use App\Utils\Traits\ChecksEntityStatus;
 use App\Http\ValidationRules\EInvoice\ValidInvoiceScheme;
 use App\Http\ValidationRules\Project\ValidProjectForClient;
+use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\User;
 use App\Utils\BcMath;
+use App\Utils\Traits\ChecksEntityStatus;
+use App\Utils\Traits\CleanLineItems;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class UpdateInvoiceRequest extends Request
 {
-    use MakesHash;
-    use CleanLineItems;
     use ChecksEntityStatus;
+    use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->invoice);
@@ -42,7 +44,7 @@ class UpdateInvoiceRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -89,11 +91,11 @@ class UpdateInvoiceRequest extends Request
         $rules['date'] = 'bail|sometimes|date:Y-m-d';
 
         $rules['partial_due_date'] = ['bail', 'sometimes', 'nullable', 'exclude_if:partial,0', 'date', 'before:due_date', 'after_or_equal:date'];
-        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', 'after_or_equal:date', Rule::requiredIf(fn() => strlen($this->partial_due_date ?? '') > 1), 'date'];
+        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', 'after_or_equal:date', Rule::requiredIf(fn () => strlen($this->partial_due_date ?? '') > 1), 'date'];
 
-        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidInvoiceScheme()];
+        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidInvoiceScheme];
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->invoice->client_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->invoice->client_id)];
 
         $rules['paid_to_date'] = [
             'bail',
@@ -115,14 +117,13 @@ class UpdateInvoiceRequest extends Request
         $validator->after(function ($validator) {
 
             if (request()->input('paid') == 'true') {
-            } elseif ($this->invoice->company->verifactuEnabled() && $this->invoice->status_id !== \App\Models\Invoice::STATUS_DRAFT) {
+            } elseif ($this->invoice->company->verifactuEnabled() && $this->invoice->status_id !== Invoice::STATUS_DRAFT) {
                 $validator->errors()->add('status_id', ctrans('texts.locked_invoice'));
             }
 
         });
 
     }
-
 
     public function prepareForValidation()
     {
@@ -137,7 +138,7 @@ class UpdateInvoiceRequest extends Request
 
         $input['id'] = $this->invoice->id;
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -158,28 +159,28 @@ class UpdateInvoiceRequest extends Request
             $input['exchange_rate'] = 1;
         }
 
-        //handles edge case where we need for force set the due date of the invoice.
+        // handles edge case where we need for force set the due date of the invoice.
         if ((isset($input['partial_due_date']) && strlen($input['partial_due_date']) > 1) && (!array_key_exists('due_date', $input) || (empty($input['due_date']) && empty($this->invoice->due_date)))) {
-            $client = \App\Models\Client::withTrashed()->find($input['client_id']);
-            $input['due_date'] = \Illuminate\Support\Carbon::parse($input['date'])->addDays((int) $client->getSetting('payment_terms'))->format('Y-m-d');
+            $client = Client::withTrashed()->find($input['client_id']);
+            $input['due_date'] = Carbon::parse($input['date'])->addDays((int) $client->getSetting('payment_terms'))->format('Y-m-d');
         }
 
         if (isset($input['e_invoice']) && is_array($input['e_invoice'])) {
-            //ensure it is normalized first!
+            // ensure it is normalized first!
             $input['e_invoice'] = $this->invoice->filterNullsRecursive($input['e_invoice']);
         }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
 
         $this->replace($input);

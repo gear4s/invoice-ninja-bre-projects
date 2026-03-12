@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,15 +18,9 @@ class SubscriptionTransformer extends EntityTransformer
 {
     use MakesHash;
 
-    /**
-     * @var array
-     */
     protected array $defaultIncludes = [
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
     ];
 
@@ -61,13 +54,13 @@ class SubscriptionTransformer extends EntityTransformer
             'refund_period' => (int) $subscription->refund_period,
             'webhook_configuration' => $subscription->webhook_configuration ?: [],
             'purchase_page' => (string) $company->domain() . "/client/subscriptions/{$subscription->hashed_id}/purchase",
-            //'purchase_page' => (string)route('client.subscription.purchase', $subscription->hashed_id),
+            // 'purchase_page' => (string)route('client.subscription.purchase', $subscription->hashed_id),
             'currency_id' => (string) $subscription->currency_id,
             'is_deleted' => (bool) $subscription->is_deleted,
             'created_at' => (int) $subscription->created_at,
             'updated_at' => (int) $subscription->updated_at,
             'archived_at' => (int) $subscription->deleted_at,
-            'plan_map' => '', //@deprecated 03/04/2021
+            'plan_map' => '', // @deprecated 03/04/2021
             'use_inventory_management' => (bool) $subscription->use_inventory_management,
             'optional_recurring_product_ids' => (string) $subscription->optional_recurring_product_ids,
             'optional_product_ids' => (string) $subscription->optional_product_ids,

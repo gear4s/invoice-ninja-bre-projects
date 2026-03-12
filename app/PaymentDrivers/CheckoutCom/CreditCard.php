@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,13 +29,15 @@ use Checkout\Payments\Previous\Source\RequestTokenSource;
 use Checkout\Payments\Request\PaymentRequest;
 use Checkout\Payments\Request\Source\RequestTokenSource as SourceRequestTokenSource;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
-class CreditCard implements MethodInterface, LivewireMethodInterface
+class CreditCard implements LivewireMethodInterface, MethodInterface
 {
-    use Utilities;
     use MakesHash;
+    use Utilities;
 
     /**
      * @var CheckoutComPaymentDriver
@@ -53,27 +54,28 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     /**
      * An authorization view for credit card.
      *
-     * @param mixed $data
+     * @param  mixed  $data
      * @return Factory|View
      */
     public function authorizeView($data)
     {
         $data['gateway'] = $this->checkout;
         $data['cardholder_name'] = auth()->guard('contact')->user()->present()->name() ?? '';
+
         return render('gateways.checkout.credit_card.authorize', $data);
     }
 
     public function bootRequest($token)
     {
         if ($this->checkout->is_four_api) {
-            $token_source = new RequestTokenSource();
+            $token_source = new RequestTokenSource;
             $token_source->token = $token;
-            $request = new PreviousPaymentRequest();
+            $request = new PreviousPaymentRequest;
             $request->source = $token_source;
         } else {
-            $token_source = new SourceRequestTokenSource();
+            $token_source = new SourceRequestTokenSource;
             $token_source->token = $token;
-            $request = new PaymentRequest();
+            $request = new PaymentRequest;
             $request->source = $token_source;
         }
 
@@ -83,8 +85,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization for credit card.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @return Response|RedirectResponse
      */
     public function authorizeResponse(Request $request)
     {
@@ -103,7 +104,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
             $response = $this->checkout->gateway->getPaymentsClient()->requestPayment($request);
 
             if (isset($response['approved']) && $response['status'] === 'Authorized') {
-                $payment_meta = new \stdClass();
+                $payment_meta = new \stdClass;
                 $payment_meta->exp_month = (string) $response['source']['expiry_month'];
                 $payment_meta->exp_year = (string) $response['source']['expiry_year'];
                 $payment_meta->brand = (string) $response['source']['scheme'];
@@ -137,7 +138,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
         } catch (CheckoutAuthorizationException $e) {
             // Bad Invalid authorization
 
-            throw new PaymentFailed("There is a problem with your Checkout Gateway API keys", 401);
+            throw new PaymentFailed('There is a problem with your Checkout Gateway API keys', 401);
         }
     }
 
@@ -188,7 +189,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
         $this->checkout->payment_hash->data = array_merge((array) $this->checkout->payment_hash->data, $state);
         $this->checkout->payment_hash->save();
 
-        if ($request->has('token') && ! is_null($request->token) && ! empty($request->token)) {
+        if ($request->has('token') && !is_null($request->token) && !empty($request->token)) {
             return $this->attemptPaymentUsingToken($request);
         }
 
@@ -202,7 +203,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
             ->where('company_id', auth()->guard('contact')->user()->client->company_id)
             ->first();
 
-        if (! $cgt) {
+        if (!$cgt) {
             throw new PaymentFailed(ctrans('texts.payment_token_not_found'), 401);
         }
 
@@ -273,7 +274,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
             if ($response['status'] == 'Declined') {
                 $this->checkout->unWindGatewayFees($this->checkout->payment_hash);
 
-                //18-10-2022
+                // 18-10-2022
                 SystemLogger::dispatch(
                     $response,
                     SystemLog::CATEGORY_GATEWAY_RESPONSE,
@@ -347,7 +348,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
                 $this->checkout->client->company,
             );
 
-            return new PaymentFailed("There was a problem communicating with the API credentials for Checkout", $e->getCode());
+            return new PaymentFailed('There was a problem communicating with the API credentials for Checkout', $e->getCode());
 
         }
     }

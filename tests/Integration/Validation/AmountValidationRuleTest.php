@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,9 +14,6 @@ namespace Tests\Integration\Validation;
 use App\Http\ValidationRules\ValidAmount;
 use Tests\TestCase;
 
-/**
- *
- */
 class AmountValidationRuleTest extends TestCase
 {
     protected function setUp(): void
@@ -25,10 +21,10 @@ class AmountValidationRuleTest extends TestCase
         parent::setUp();
     }
 
-    public function testSimpleAmountValid()
+    public function test_simple_amount_valid()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
@@ -39,10 +35,10 @@ class AmountValidationRuleTest extends TestCase
         $this->assertTrue($v->passes());
     }
 
-    public function testInvalidAmountValid()
+    public function test_invalid_amount_valid()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
@@ -53,10 +49,10 @@ class AmountValidationRuleTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testIllegalChars()
+    public function test_illegal_chars()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
@@ -67,24 +63,24 @@ class AmountValidationRuleTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testIllegalCharsNaked()
+    public function test_illegal_chars_naked()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
-            'amount' => 5 + 5, //resolves as 10 - but in practice, i believe this amount is wrapped in quotes so interpreted as a string
+            'amount' => 5 + 5, // resolves as 10 - but in practice, i believe this amount is wrapped in quotes so interpreted as a string
         ];
 
         $v = $this->app['validator']->make($data, $rules);
         $this->assertTrue($v->passes());
     }
 
-    public function testinValidScenario1()
+    public function testin_valid_scenario1()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
@@ -95,10 +91,10 @@ class AmountValidationRuleTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testValidScenario2()
+    public function test_valid_scenario2()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
@@ -109,10 +105,10 @@ class AmountValidationRuleTest extends TestCase
         $this->assertTrue($v->passes());
     }
 
-    public function testValidScenario3()
+    public function test_valid_scenario3()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [
@@ -123,10 +119,10 @@ class AmountValidationRuleTest extends TestCase
         $this->assertTrue($v->passes());
     }
 
-    public function testInValidScenario4()
+    public function test_in_valid_scenario4()
     {
         $rules = [
-            'amount' => [new ValidAmount()],
+            'amount' => [new ValidAmount],
         ];
 
         $data = [

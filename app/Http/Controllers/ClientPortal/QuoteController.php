@@ -6,29 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers\ClientPortal;
 
-use App\Utils\Ninja;
-use App\Models\Quote;
-use App\Utils\HtmlEngine;
-use Illuminate\View\View;
-use Illuminate\Http\Request;
-use App\Models\QuoteInvitation;
-use App\Utils\Traits\MakesHash;
+use App\Events\Misc\InvitationWasViewed;
 use App\Events\Quote\QuoteWasViewed;
 use App\Http\Controllers\Controller;
-use App\Jobs\Invoice\InjectSignature;
-use Illuminate\Contracts\View\Factory;
-use App\Events\Misc\InvitationWasViewed;
-use Illuminate\Support\Facades\Cache;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Http\Requests\ClientPortal\Quotes\ProcessQuotesInBulkRequest;
 use App\Http\Requests\ClientPortal\Quotes\ShowQuoteRequest;
 use App\Http\Requests\ClientPortal\Quotes\ShowQuotesRequest;
-use App\Http\Requests\ClientPortal\Quotes\ProcessQuotesInBulkRequest;
+use App\Jobs\Entity\CreateRawPdf;
+use App\Jobs\Invoice\InjectSignature;
+use App\Models\Account;
+use App\Models\ClientContact;
+use App\Models\Quote;
+use App\Models\QuoteInvitation;
+use App\Utils\HtmlEngine;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+use PhpZip\Exception\ZipException;
+use PhpZip\ZipFile;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class QuoteController extends Controller
 {
@@ -47,8 +52,6 @@ class QuoteController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param ShowQuoteRequest $request
-     * @param Quote $quote
      * @return Factory|View|BinaryFileResponse
      */
     public function show(ShowQuoteRequest $request, Quote $quote)
@@ -65,11 +68,11 @@ class QuoteController extends Controller
             '_key' => $invitation ? $invitation->key : false,
             'invitation' => $invitation,
             'variables' => $variables,
-            'requires_signature' => !$signature_accepted && $quote->client->getSetting('require_quote_signature') && $quote->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
+            'requires_signature' => !$signature_accepted && $quote->client->getSetting('require_quote_signature') && $quote->company->account->hasFeature(Account::FEATURE_INVOICE_SETTINGS),
             'docuninja_active' => $docuninja_active && !$signature_accepted && $quote->client->getSetting('require_quote_signature'),
         ];
 
-        if ($invitation && auth()->guard('contact') && ! request()->has('silent') && ! $invitation->viewed_date) {
+        if ($invitation && auth()->guard('contact') && !request()->has('silent') && !$invitation->viewed_date) {
             $invitation->markViewed();
 
             event(new InvitationWasViewed($quote, $invitation, $quote->company, Ninja::eventVars()));
@@ -85,7 +88,7 @@ class QuoteController extends Controller
 
     public function bulk(ProcessQuotesInBulkRequest $request)
     {
-        if($request->has('request_hash')){
+        if ($request->has('request_hash')) {
             $request_hash = $request->input('request_hash');
             $request_array = Cache::get($request_hash);
             $request->merge($request_array);
@@ -99,17 +102,17 @@ class QuoteController extends Controller
 
         if ($request->action == 'approve') {
 
-            if(auth()->guard('contact')->user()->company->docuninjaActive()){
-                $invitations = \App\Models\QuoteInvitation::with('quote')
-                                        ->whereIn('quote_id', $transformed_ids)
-                                        ->where('client_contact_id', auth()->guard('contact')->user()->id)
-                                        ->get()
-                                        ->filter(function ($invitation) {
-                                            return !$invitation->quote->sync?->dn_completed;
-                                        });
-                
-                if($invitations->count() > 0){
-                    $request_hash = \Illuminate\Support\Str::random(64);
+            if (auth()->guard('contact')->user()->company->docuninjaActive()) {
+                $invitations = QuoteInvitation::with('quote')
+                    ->whereIn('quote_id', $transformed_ids)
+                    ->where('client_contact_id', auth()->guard('contact')->user()->id)
+                    ->get()
+                    ->filter(function ($invitation) {
+                        return !$invitation->quote->sync?->dn_completed;
+                    });
+
+                if ($invitations->count() > 0) {
+                    $request_hash = Str::random(64);
                     $request->merge(['entity_type' => 'invoice', 'db' => auth()->guard('contact')->user()->company->db, 'request_hash' => $request_hash]);
 
                     Cache::put($request_hash, $request->all(), 60 * 60 * 24);
@@ -138,14 +141,14 @@ class QuoteController extends Controller
 
     public function downloadQuotes($ids)
     {
-        /** @var \App\Models\ClientContact $client_contact **/
+        /** @var ClientContact $client_contact * */
         $client_contact = auth()->user();
 
         $data['quotes'] = Quote::query()
-                            ->whereIn('id', $ids)
-                            ->where('client_id', $client_contact->client_id)
-                            ->withTrashed()
-                            ->get();
+            ->whereIn('id', $ids)
+            ->where('client_id', $client_contact->client_id)
+            ->withTrashed()
+            ->get();
 
         if (count($data['quotes']) == 0) {
             return back()->with(['message' => ctrans('texts.no_items_selected')]);
@@ -164,7 +167,7 @@ class QuoteController extends Controller
     protected function downloadQuotePdf(array $ids)
     {
 
-        /** @var \App\Models\ClientContact $client_contact **/
+        /** @var ClientContact $client_contact * */
         $client_contact = auth()->user();
 
         $quote_invitations = QuoteInvitation::query()
@@ -174,7 +177,7 @@ class QuoteController extends Controller
             ->withTrashed()
             ->get();
 
-        if (! $quote_invitations || $quote_invitations->count() == 0) {
+        if (!$quote_invitations || $quote_invitations->count() == 0) {
             return redirect()
                 ->route('client.quotes.index')
                 ->with('message', ctrans('texts.no_quotes_available_for_download'));
@@ -182,10 +185,11 @@ class QuoteController extends Controller
 
         if ($quote_invitations->count() == 1) {
             $invitation = $quote_invitations->first();
-            $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
+            $file = (new CreateRawPdf($invitation))->handle();
+
             return response()->streamDownload(function () use ($file) {
                 echo $file;
-            }, $invitation->quote->numberFormatter() . ".pdf", ['Content-Type' => 'application/pdf']);
+            }, $invitation->quote->numberFormatter() . '.pdf', ['Content-Type' => 'application/pdf']);
         }
 
         return $this->buildZip($quote_invitations);
@@ -194,10 +198,10 @@ class QuoteController extends Controller
     private function buildZip($quote_invitations)
     {
         // create new archive
-        $zipFile = new \PhpZip\ZipFile();
+        $zipFile = new ZipFile;
         try {
             foreach ($quote_invitations as $invitation) {
-                $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
+                $file = (new CreateRawPdf($invitation))->handle();
                 $zipFile->addFromString($invitation->quote->numberFormatter() . '.pdf', $file);
             }
 
@@ -205,10 +209,10 @@ class QuoteController extends Controller
             $filepath = sys_get_temp_dir() . '/' . $filename;
 
             $zipFile->saveAsFile($filepath) // save the archive to a file
-                   ->close(); // close archive
+                ->close(); // close archive
 
             return response()->download($filepath, $filename)->deleteFileAfterSend(true);
-        } catch (\PhpZip\Exception\ZipException $e) {
+        } catch (ZipException $e) {
         } finally {
             $zipFile->close();
         }
@@ -224,7 +228,7 @@ class QuoteController extends Controller
             ->withTrashed()
             ->get();
 
-        if (! $quotes || $quotes->count() == 0) {
+        if (!$quotes || $quotes->count() == 0) {
             return redirect()
                 ->route('client.quotes.index')
                 ->with('message', ctrans('texts.quotes_with_status_sent_can_be_rejected'));
@@ -241,7 +245,6 @@ class QuoteController extends Controller
                 ->route('client.quotes.index')
                 ->withSuccess('Quote(s) rejected successfully.');
         }
-
 
         $variables = false;
 
@@ -266,7 +269,7 @@ class QuoteController extends Controller
             ->withTrashed()
             ->get();
 
-        if (! $quotes || $quotes->count() == 0) {
+        if (!$quotes || $quotes->count() == 0) {
             return redirect()
                 ->route('client.quotes.index')
                 ->with('message', ctrans('texts.quotes_with_status_sent_can_be_approved'));
@@ -281,13 +284,13 @@ class QuoteController extends Controller
 
                 $quote->service()->approve(auth()->user())->save();
 
-                if (request()->has('signature') && ! is_null(request()->signature) && ! empty(request()->signature)) {
+                if (request()->has('signature') && !is_null(request()->signature) && !empty(request()->signature)) {
                     InjectSignature::dispatch($quote, auth()->guard('contact')->user()->id, request()->signature, request()->getClientIp());
                 }
             }
 
             if ($quotes->count() == 1) {
-                //forward client to the invoice if it exists
+                // forward client to the invoice if it exists
                 if ($quotes->first()->invoice()->exists()) {
                     return redirect()->route('client.invoice.show', $quotes->first()->invoice->hashed_id);
                 }
@@ -299,7 +302,6 @@ class QuoteController extends Controller
                 ->route('client.quotes.index')
                 ->withSuccess('Quote(s) approved successfully.');
         }
-
 
         $variables = false;
 

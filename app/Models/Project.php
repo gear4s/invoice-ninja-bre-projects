@@ -6,19 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use App\Utils\Number;
-use Illuminate\Support\Facades\App;
-use Elastic\ScoutDriverPlus\Searchable;
 use App\Services\Project\ProjectService;
-use Laracasts\Presenter\PresentableTrait;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\App;
+use Laracasts\Presenter\PresentableTrait;
 
 /**
  * Class Project.
@@ -45,15 +45,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $number
  * @property string $color
  * @property int|null $current_hours
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company $company
+ * @property-read Client|null $client
+ * @property-read Company $company
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
  * @property-read Project|null $project
  * @property-read int|null $tasks_count
- * @property-read \App\Models\User $user
- * @property-read \App\Models\User $assigned_user
- * @property-read \App\Models\Vendor|null $vendor
+ * @property-read User $user
+ * @property-read User $assigned_user
+ * @property-read Vendor|null $vendor
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\ProjectFactory factory($count = null, $state = [])
@@ -65,24 +66,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Project withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Project withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quote> $quotes
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Expense> $expenses
+ *
+ * @property-read Collection<int, Document> $documents
+ * @property-read Collection<int, Task> $tasks
+ * @property-read Collection<int, Invoice> $invoices
+ * @property-read Collection<int, Quote> $quotes
+ * @property-read Collection<int, Expense> $expenses
+ *
  * @mixin \Eloquent
  */
 class Project extends BaseModel
 {
-    use SoftDeletes;
-    use PresentableTrait;
     use Filterable;
+    use PresentableTrait;
     use Searchable;
+    use SoftDeletes;
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -123,8 +124,8 @@ class Project extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => (string) $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.project') . " " . $this->number . ' | ' . $this->name . " | " . $this->client->present()->name(),
+            'id' => (string) $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.project') . ' ' . $this->number . ' | ' . $this->name . ' | ' . $this->client->present()->name(),
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'is_deleted' => $this->is_deleted,
@@ -144,25 +145,25 @@ class Project extends BaseModel
 
     public function getScoutKey()
     {
-        return (string) $this->company->db . ":" . $this->id;
+        return (string) $this->company->db . ':' . $this->id;
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class)->withTrashed();
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(self::class)->withTrashed();
     }
@@ -172,41 +173,39 @@ class Project extends BaseModel
         return $this->morphMany(Document::class, 'documentable');
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
 
-    public function expenses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class)->withTrashed();
     }
 
-    public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class);
     }
 
     /**
-    * Service entry points.
-    *
-    * @return ProjectService
-    */
+     * Service entry points.
+     */
     public function service(): ProjectService
     {
         return new ProjectService($this);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,12 +30,10 @@ namespace App\Services\Pdf;
  */
 class JsonDesignService
 {
-    
     private JsonToSectionsAdapter $adapter;
 
     /**
-     * @param PdfService $pdfService
-     * @param array $jsonDesign Complete JSON design with blocks and pageSettings
+     * @param  array  $jsonDesign  Complete JSON design with blocks and pageSettings
      */
     public function __construct(private PdfService $pdfService, private array $jsonDesign)
     {
@@ -93,14 +90,11 @@ class JsonDesignService
         return $html;
     }
 
-
     /**
      * Generate base HTML template structure for JSON designs
      *
      * Creates a minimal HTML skeleton with placeholders for each
      * JSON block, respecting row grouping for blocks at the same Y position.
-     *
-     * @return string
      */
     private function generateBaseTemplate(): string
     {
@@ -155,9 +149,6 @@ class JsonDesignService
 
     /**
      * Build CSS from page settings
-     *
-     * @param array $pageSettings
-     * @return string
      */
     private function buildPageCSS(array $pageSettings): string
     {
@@ -221,9 +212,6 @@ class JsonDesignService
 
     /**
      * Get CSS page size string based on settings
-     *
-     * @param array $pageSettings
-     * @return string
      */
     private function getPageSizeCSS(array $pageSettings): string
     {
@@ -233,6 +221,7 @@ class JsonDesignService
         if ($pageSize === 'custom') {
             $width = $pageSettings['customWidth'] ?? '210mm';
             $height = $pageSettings['customHeight'] ?? '297mm';
+
             return "{$width} {$height}";
         }
 
@@ -253,9 +242,6 @@ class JsonDesignService
 
     /**
      * Get CSS page margins string based on settings
-     *
-     * @param array $pageSettings
-     * @return string
      */
     private function getPageMarginsCSS(array $pageSettings): string
     {
@@ -269,8 +255,6 @@ class JsonDesignService
 
     /**
      * Get page settings from JSON design
-     *
-     * @return array
      */
     public function getPageSettings(): array
     {
@@ -279,8 +263,6 @@ class JsonDesignService
 
     /**
      * Get blocks from JSON design
-     *
-     * @return array
      */
     public function getBlocks(): array
     {
@@ -289,8 +271,6 @@ class JsonDesignService
 
     /**
      * Validate JSON design structure
-     *
-     * @return bool
      */
     public function isValid(): bool
     {

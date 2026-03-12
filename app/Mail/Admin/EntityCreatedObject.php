@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -44,15 +43,14 @@ class EntityCreatedObject
     }
 
     /**
-     * @return stdClass
      * @throws BindingResolutionException
      */
     public function build(): stdClass
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->entity->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->entity->company->settings));
@@ -62,7 +60,7 @@ class EntityCreatedObject
         if ($this->entity_type == 'purchase_order') {
             $this->entity->load('vendor.company');
 
-            $mail_obj = new stdClass();
+            $mail_obj = new stdClass;
             $mail_obj->amount = Number::formatMoney($this->entity->amount, $this->entity->vendor);
 
             $mail_obj->subject = ctrans(
@@ -94,14 +92,14 @@ class EntityCreatedObject
                 'logo' => $this->company->present()->logo(),
                 'settings' => $this->company->settings,
                 'whitelabel' => $this->company->account->isPaid() ? true : false,
-                'text_body' => str_replace(['$view_button','$viewButton','$viewLink','$view_url'], '$view_url', $content),
+                'text_body' => str_replace(['$view_button', '$viewButton', '$viewLink', '$view_url'], '$view_url', $content),
                 'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
             ];
         } else {
             $this->entity->load('client.country', 'client.company');
             $this->client = $this->entity->client;
 
-            $mail_obj = new stdClass();
+            $mail_obj = new stdClass;
             $mail_obj->amount = $this->getAmount();
             $mail_obj->subject = $this->getSubject();
             $mail_obj->data = $this->getData();
@@ -182,7 +180,7 @@ class EntityCreatedObject
             'logo' => $this->company->present()->logo(),
             'settings' => $settings,
             'whitelabel' => $this->company->account->isPaid() ? true : false,
-            'text_body' => str_replace(['$view_button','$viewButton','$view_link','$view_button'], '$view_url', $content),
+            'text_body' => str_replace(['$view_button', '$viewButton', '$view_link', '$view_button'], '$view_url', $content),
             'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
     }

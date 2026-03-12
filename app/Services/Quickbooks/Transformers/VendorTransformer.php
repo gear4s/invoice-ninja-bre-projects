@@ -6,11 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
+
+use Illuminate\Support\Str;
 
 /**
  * Class VendorTransformer.
@@ -49,14 +50,11 @@ class VendorTransformer extends BaseTransformer
             'currency_id' => $this->resolveCurrency(data_get($data, 'CurrencyRef', '')),
         ];
 
-
         $new_vendor_merge = [
-            'vendor_hash' => data_get($data, 'V4IDPseudonym', \Illuminate\Support\Str::random(32)),
+            'vendor_hash' => data_get($data, 'V4IDPseudonym', Str::random(32)),
         ];
-
 
         return [$vendor, $contact, $new_vendor_merge];
 
     }
-
 }

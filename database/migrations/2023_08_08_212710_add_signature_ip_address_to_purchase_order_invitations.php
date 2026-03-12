@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -16,11 +18,11 @@ return new class extends Migration {
             $table->text('signature_ip')->nullable();
         });
 
-        $xag = \App\Models\Currency::find(116);
+        $xag = Currency::find(116);
 
-        if(!$xag) {
+        if (!$xag) {
 
-            $xag = new \App\Models\Currency();
+            $xag = new Currency;
             $xag->id = 116;
             $xag->code = 'XAG';
             $xag->name = 'Silver Troy Ounce';
@@ -31,11 +33,11 @@ return new class extends Migration {
             $xag->save();
         }
 
-        $xau = \App\Models\Currency::find(117);
+        $xau = Currency::find(117);
 
-        if(!$xau) {
+        if (!$xau) {
 
-            $xau = new \App\Models\Currency();
+            $xau = new Currency;
             $xau->id = 117;
             $xau->code = 'XAU';
             $xau->name = 'Gold Troy Ounce';
@@ -53,7 +55,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use Illuminate\Support\Collection;
  * @property int $id
  * @property string $name
  * @property int|null $gateway_type_id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentType newModelQuery()
@@ -28,6 +28,7 @@ use Illuminate\Support\Collection;
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentType whereGatewayTypeId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentType whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentType whereName($value)
+ *
  * @mixin \Eloquent
  */
 class PaymentType extends StaticModel
@@ -38,57 +39,107 @@ class PaymentType extends StaticModel
     public $timestamps = false;
 
     public const BANK_TRANSFER = 1;
+
     public const CASH = 2;
+
     public const DEBIT = 3;
+
     public const ACH = 4;
+
     public const VISA = 5;
+
     public const MASTERCARD = 6;
+
     public const AMERICAN_EXPRESS = 7;
+
     public const DISCOVER = 8;
+
     public const DINERS = 9;
+
     public const EUROCARD = 10;
+
     public const NOVA = 11;
+
     public const CREDIT_CARD_OTHER = 12;
+
     public const PAYPAL = 13;
+
     public const GOOGLE_WALLET = 14;
+
     public const CHECK = 15;
+
     public const CARTE_BLANCHE = 16;
+
     public const UNIONPAY = 17;
+
     public const JCB = 18;
+
     public const LASER = 19;
+
     public const MAESTRO = 20;
+
     public const SOLO = 21;
+
     public const SWITCH = 22;
+
     public const iZETTLE = 23;
+
     public const SWISH = 24;
+
     public const VENMO = 25;
+
     public const MONEY_ORDER = 26;
+
     public const ALIPAY = 27;
+
     public const SOFORT = 28;
+
     public const SEPA = 29;
+
     public const GOCARDLESS = 30;
+
     public const CRYPTO = 31;
+
     public const CREDIT = 32;
+
     public const ZELLE = 33;
 
     public const MOLLIE_BANK_TRANSFER = 34;
+
     public const KBC = 35;
+
     public const BANCONTACT = 36;
+
     public const IDEAL = 37;
+
     public const HOSTED_PAGE = 38;
+
     public const GIROPAY = 39;
+
     public const PRZELEWY24 = 40;
+
     public const EPS = 41;
+
     public const DIRECT_DEBIT = 42;
+
     public const BECS = 43;
+
     public const ACSS = 44;
+
     public const INSTANT_BANK_PAY = 45;
+
     public const FPX = 46;
+
     public const KLARNA = 47;
+
     public const Interac_E_Transfer = 48;
+
     public const BACS = 49;
+
     public const STRIPE_BANK_TRANSFER = 50;
+
     public const CASH_APP = 51;
+
     public const PAY_LATER = 52;
 
     public array $type_names = [
@@ -143,8 +194,6 @@ class PaymentType extends StaticModel
     /**
      * Default payment types in the shape expected for seeding/API: id, name, gateway_type_id.
      * Returns a Collection of stdClass objects with id, name, gateway_type_id.
-     *
-     * @return Collection
      */
     public static function getDefaultPaymentTypes(): Collection
     {
@@ -227,12 +276,12 @@ class PaymentType extends StaticModel
 
         $cardName = strtolower(str_replace([' ', '-', '_'], '', $cardName));
 
-        if (empty($cardTypes[$cardName]) && 1 == preg_match('/^(' . implode('|', array_keys($cardTypes)) . ')/', $cardName, $matches)) {
+        if (empty($cardTypes[$cardName]) && preg_match('/^(' . implode('|', array_keys($cardTypes)) . ')/', $cardName, $matches) == 1) {
             // Some gateways return extra stuff after the card name
             $cardName = $matches[1];
         }
 
-        if (! empty($cardTypes[$cardName])) {
+        if (!empty($cardTypes[$cardName])) {
             return $cardTypes[$cardName];
         } else {
             return self::CREDIT_CARD_OTHER;
@@ -242,7 +291,7 @@ class PaymentType extends StaticModel
     public function name($id)
     {
         if (isset($this->type_names[$id])) {
-            return ctrans("texts." . $this->type_names[$id]);
+            return ctrans('texts.' . $this->type_names[$id]);
         }
 
         return ctrans('texts.manual_entry');

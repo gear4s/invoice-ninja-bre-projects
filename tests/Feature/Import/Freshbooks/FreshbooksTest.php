@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,14 +24,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Import\Providers\Freshbooks
  */
 class FreshbooksTest extends TestCase
 {
+    use DatabaseTransactions;
     use MakesHash;
     use MockAccountData;
-    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -47,10 +45,10 @@ class FreshbooksTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testClientFreshbooksImport()
+    public function test_client_freshbooks_import()
     {
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/freshbooks_clients.csv'
+            base_path() . '/tests/Feature/Import/freshbooks_clients.csv'
         );
         $hash = Str::random(32);
 
@@ -75,7 +73,7 @@ class FreshbooksTest extends TestCase
             'import_type' => 'freshbooks',
         ];
 
-        Cache::put($hash.'-client', base64_encode($csv), 360);
+        Cache::put($hash . '-client', base64_encode($csv), 360);
 
         $csv_importer = new Freshbooks($data, $this->company);
 
@@ -95,10 +93,10 @@ class FreshbooksTest extends TestCase
         $this->assertEquals('867-5309', $client->phone);
     }
 
-    public function testInvoiceZohoImport()
+    public function test_invoice_zoho_import()
     {
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/freshbooks_clients.csv'
+            base_path() . '/tests/Feature/Import/freshbooks_clients.csv'
         );
         $hash = Str::random(32);
 
@@ -123,7 +121,7 @@ class FreshbooksTest extends TestCase
             'import_type' => 'freshbooks',
         ];
 
-        Cache::put($hash.'-client', base64_encode($csv), 360);
+        Cache::put($hash . '-client', base64_encode($csv), 360);
 
         $csv_importer = new Freshbooks($data, $this->company);
 
@@ -142,10 +140,10 @@ class FreshbooksTest extends TestCase
         $this->assertEquals('840', $client->country_id);
         $this->assertEquals('867-5309', $client->phone);
 
-        //now import the invoices
+        // now import the invoices
 
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/freshbooks_invoices.csv'
+            base_path() . '/tests/Feature/Import/freshbooks_invoices.csv'
         );
         $hash = Str::random(32);
 
@@ -176,7 +174,7 @@ class FreshbooksTest extends TestCase
             'import_type' => 'freshbooks',
         ];
 
-        Cache::put($hash.'-invoice', base64_encode($csv), 360);
+        Cache::put($hash . '-invoice', base64_encode($csv), 360);
 
         $csv_importer = new Freshbooks($data, $this->company);
 

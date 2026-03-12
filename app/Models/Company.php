@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Models;
 use App\Casts\EncryptedCast;
 use App\DataMapper\CompanySettings;
 use App\DataMapper\QuickbooksSettings;
+use App\DataMapper\Tax\TaxModel;
 use App\Models\Presenters\CompanyPresenter;
 use App\Services\Company\CompanyService;
 use App\Services\Notification\NotificationService;
@@ -22,9 +22,13 @@ use App\Utils\Ninja;
 use App\Utils\Traits\AppSetup;
 use App\Utils\Traits\CompanySettingsSaver;
 use App\Utils\Traits\MakesHash;
+use Awobaz\Compoships\Compoships;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Laracasts\Presenter\PresentableTrait;
 
@@ -60,7 +64,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $portal_domain
  * @property bool $enable_modules //alias for DocuNinja is active / available
  * @property object $custom_fields
- * @property \App\DataMapper\CompanySettings|\stdClass $settings
+ * @property CompanySettings|\stdClass $settings
  * @property string $slack_webhook_url
  * @property string $google_analytics_key
  * @property int|null $created_at
@@ -114,7 +118,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property int $notify_vendor_when_paid
  * @property int $invoice_task_hours
  * @property string|null $expense_mailbox
- * @property boolean $expense_mailbox_active
+ * @property bool $expense_mailbox_active
  * @property bool $inbound_mailbox_allow_company_users
  * @property bool $inbound_mailbox_allow_vendors
  * @property bool $inbound_mailbox_allow_clients
@@ -131,124 +135,128 @@ use Laracasts\Presenter\PresentableTrait;
  * @property int|null $smtp_port
  * @property string|null $smtp_encryption
  * @property string|null $smtp_local_domain
- * @property boolean $invoice_task_item_description
- * @property \App\DataMapper\QuickbooksSettings|null $quickbooks
- * @property boolean $smtp_verify_peer
+ * @property bool $invoice_task_item_description
+ * @property QuickbooksSettings|null $quickbooks
+ * @property bool $smtp_verify_peer
  * @property object|null $origin_tax_data
  * @property int|null $legal_entity_id
  * @property bool $invoice_task_item_description
  * @property bool $show_task_item_description
  * @property bool $invoice_task_project_header
- * @property-read \App\Models\Account $account
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VerifactuLog> $verifactu_logs
+ * @property-read Account $account
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Activity> $activities
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Location> $locations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VerifactuLog> $verifactu_logs
  * @property-read int|null $activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $all_activities
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Activity> $all_activities
  * @property-read int|null $all_activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $all_documents
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Document> $all_documents
  * @property-read int|null $all_documents_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankIntegration> $bank_integrations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, BankIntegration> $bank_integrations
  * @property-read int|null $bank_integrations_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankTransactionRule> $bank_transaction_rules
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, BankTransactionRule> $bank_transaction_rules
  * @property-read int|null $bank_transaction_rules_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankTransaction> $bank_transactions
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, BankTransaction> $bank_transactions
  * @property-read int|null $bank_transactions_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClientContact> $client_contacts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ClientContact> $client_contacts
  * @property-read int|null $client_contacts_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClientGatewayToken> $client_gateway_tokens
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ClientGatewayToken> $client_gateway_tokens
  * @property-read int|null $client_gateway_tokens_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Client> $clients
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Client> $clients
  * @property-read int|null $clients_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyGateway> $company_gateways
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CompanyGateway> $company_gateways
  * @property-read int|null $company_gateways_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyUser> $company_users
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CompanyUser> $company_users
  * @property-read int|null $company_users_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClientContact> $contacts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ClientContact> $contacts
  * @property-read int|null $contacts_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Credit> $credits
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Credit> $credits
  * @property-read int|null $credits_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Design> $designs
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Design> $designs
  * @property-read int|null $designs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Document> $documents
  * @property-read int|null $documents_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ExpenseCategory> $expense_categories
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ExpenseCategory> $expense_categories
  * @property-read int|null $expense_categories_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Expense> $expenses
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Expense> $expenses
  * @property-read int|null $expenses_count
  * @property-read mixed $company_id
  * @property-read mixed $hashed_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GroupSetting> $group_settings
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, GroupSetting> $group_settings
  * @property-read int|null $group_settings_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GroupSetting> $groups
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, GroupSetting> $groups
  * @property-read int|null $groups_count
- * @property-read \App\Models\Industry|null $industry
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
+ * @property-read Industry|null $industry
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Invoice> $invoices
  * @property-read int|null $invoices_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $ledger
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CompanyLedger> $ledger
  * @property-read int|null $ledger_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentTerm> $payment_terms
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PaymentTerm> $payment_terms
  * @property-read int|null $payment_terms_count
- * @property-read \App\Models\PaymentType|null $payment_type
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Payment> $payments
+ * @property-read PaymentType|null $payment_type
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Payment> $payments
  * @property-read int|null $payments_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Product> $products
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Product> $products
  * @property-read int|null $products_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Project> $projects
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Project> $projects
  * @property-read int|null $projects_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PurchaseOrder> $purchase_orders
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PurchaseOrder> $purchase_orders
  * @property-read int|null $purchase_orders_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quote> $quotes
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Quote> $quotes
  * @property-read int|null $quotes_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringExpense> $recurring_expenses
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, RecurringExpense> $recurring_expenses
  * @property-read int|null $recurring_expenses_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringInvoice> $recurring_invoices
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, RecurringInvoice> $recurring_invoices
  * @property-read int|null $recurring_invoices_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduler> $schedulers
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Scheduler> $schedulers
  * @property-read int|null $schedulers_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Subscription> $subscriptions
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Subscription> $subscriptions
  * @property-read int|null $subscriptions_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SystemLog> $system_log_relation
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, SystemLog> $system_log_relation
  * @property-read int|null $system_log_relation_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SystemLog> $system_logs
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, SystemLog> $system_logs
  * @property-read int|null $system_logs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduler> $task_schedulers
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Scheduler> $task_schedulers
  * @property-read int|null $task_schedulers_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TaskStatus> $task_statuses
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, TaskStatus> $task_statuses
  * @property-read int|null $task_statuses_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Task> $tasks
  * @property-read int|null $tasks_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TaxRate> $tax_rates
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, TaxRate> $tax_rates
  * @property-read int|null $tax_rates_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CompanyToken> $tokens
  * @property-read int|null $tokens_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens_hashed
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CompanyToken> $tokens_hashed
  * @property-read int|null $tokens_hashed_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Design> $user_designs
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Design> $user_designs
  * @property-read int|null $user_designs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentTerm> $user_payment_terms
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PaymentTerm> $user_payment_terms
  * @property-read int|null $user_payment_terms_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
  * @property-read int|null $users_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Vendor> $vendors
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Vendor> $vendors
  * @property-read int|null $vendors_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Webhook> $webhooks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Location> $locations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Webhook> $webhooks
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Company where($query)
  * @method static \Illuminate\Database\Eloquent\Builder|Company find($query)
+ *
  * @property-read int|null $webhooks_count
  * @property int $calculate_taxes
- * @property \App\DataMapper\Tax\TaxModel $tax_data
+ * @property TaxModel $tax_data
+ *
  * @method \App\Models\User|null owner()
+ *
  * @mixin \Eloquent
  */
 class Company extends BaseModel
 {
-    use PresentableTrait;
-    use MakesHash;
-    use CompanySettingsSaver;
     use AppSetup;
-    use \Awobaz\Compoships\Compoships;
+    use CompanySettingsSaver;
+    use Compoships;
+    use MakesHash;
+    use PresentableTrait;
 
     /** @var CompanyPresenter */
     protected $presenter = CompanyPresenter::class;
@@ -426,7 +434,7 @@ class Company extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function documents()
     {
@@ -483,7 +491,7 @@ class Company extends BaseModel
         return $this->encodePrimaryKey($this->id);
     }
 
-    public function account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
@@ -493,15 +501,12 @@ class Company extends BaseModel
         return $this->hasMany(ClientContact::class)->withTrashed();
     }
 
-    public function locations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function locations(): HasMany
     {
         return $this->hasMany(Location::class)->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
-     */
-    public function users(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function users(): HasManyThrough
     {
         return $this->hasManyThrough(User::class, CompanyUser::class, 'company_id', 'id', 'id', 'user_id')->withTrashed();
     }
@@ -531,9 +536,6 @@ class Company extends BaseModel
         return $this->hasMany(Client::class)->withTrashed();
     }
 
-    /**
-     * @return HasMany
-     */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class)->withTrashed();
@@ -544,31 +546,22 @@ class Company extends BaseModel
         return $this->hasMany(Webhook::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class)->withTrashed();
     }
 
-    /**
-     * @return HasMany
-     */
     public function vendor_contacts(): HasMany
     {
         return $this->hasMany(VendorContact::class)->withTrashed();
     }
 
-    /**
-     * @return HasMany
-     */
     public function vendors(): HasMany
     {
         return $this->hasMany(Vendor::class)->withTrashed();
     }
 
-    public function all_activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function all_activities(): HasMany
     {
         return $this->hasMany(Activity::class);
     }
@@ -591,7 +584,7 @@ class Company extends BaseModel
         return $this->hasMany(GroupSetting::class);
     }
 
-    public function backups(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function backups(): HasManyThrough
     {
         return $this->hasManyThrough(
             Backup::class, // Target model
@@ -671,7 +664,7 @@ class Company extends BaseModel
     {
         return once(function () {
 
-            /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+            /** @var Collection<Country> */
             $countries = app('countries');
             $country_id = $this->getSetting('country_id');
 
@@ -691,7 +684,7 @@ class Company extends BaseModel
     {
         return once(function () {
 
-            /** @var \Illuminate\Support\Collection<\App\Models\TimeZone> */
+            /** @var Collection<TimeZone> */
             $timezones = app('timezones');
 
             return $timezones->first(function ($item) {
@@ -725,7 +718,7 @@ class Company extends BaseModel
     {
         return once(function () {
 
-            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            /** @var Collection<Language> */
             $languages = app('languages');
 
             $language = $languages->first(function ($item) {
@@ -759,7 +752,7 @@ class Company extends BaseModel
 
     public function getSetting($setting)
     {
-        //todo $this->setting ?? false
+        // todo $this->setting ?? false
         if (property_exists($this->settings, $setting) != false) {
             return $this->settings->{$setting};
         }
@@ -776,7 +769,7 @@ class Company extends BaseModel
     public function currency()
     {
         return once(function () {
-            /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+            /** @var Collection<Currency> */
             $currencies = app('currencies');
 
             return $currencies->first(function ($item) {
@@ -801,42 +794,42 @@ class Company extends BaseModel
         return $this->belongsTo(PaymentType::class);
     }
 
-    public function expenses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class)->withTrashed();
     }
 
-    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->withTrashed();
     }
 
-    public function tokens(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tokens(): HasMany
     {
         return $this->hasMany(CompanyToken::class);
     }
 
-    public function client_gateway_tokens(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function client_gateway_tokens(): HasMany
     {
         return $this->hasMany(ClientGatewayToken::class);
     }
 
-    public function system_logs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function system_logs(): HasMany
     {
         return $this->hasMany(SystemLog::class)->orderBy('id', 'DESC')->take(100);
     }
 
-    public function system_log_relation(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function system_log_relation(): HasMany
     {
         return $this->hasMany(SystemLog::class)->orderBy('id', 'DESC');
     }
 
-    public function tokens_hashed(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tokens_hashed(): HasMany
     {
         return $this->hasMany(CompanyToken::class);
     }
 
-    public function company_users(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function company_users(): HasMany
     {
         return $this->hasMany(CompanyUser::class)->withTrashed();
     }
@@ -861,9 +854,6 @@ class Company extends BaseModel
         return $this->hasMany(PurchaseOrderInvitation::class);
     }
 
-    /**
-     * @return \App\Models\User|null
-     */
     public function owner(): ?User
     {
         return $this->company_users()->withTrashed()->where('is_owner', true)->first()?->user;
@@ -910,8 +900,9 @@ class Company extends BaseModel
         try {
             return new NotificationService($this, $notification);
         } catch (\Throwable $th) {
-            nlog("Could not access notification service");
+            nlog('Could not access notification service');
             nlog($th->getMessage());
+
             return null;
         }
     }
@@ -947,11 +938,11 @@ class Company extends BaseModel
 
     private function createRBit($type, $source, $properties)
     {
-        $data = new \stdClass();
+        $data = new \stdClass;
         $data->receive_time = time();
         $data->type = $type;
         $data->source = $source;
-        $data->properties = new \stdClass();
+        $data->properties = new \stdClass;
 
         foreach ($properties as $key => $val) {
             $data->properties->$key = $val;
@@ -966,7 +957,7 @@ class Company extends BaseModel
         $timezone = $this->timezone();
 
         date_default_timezone_set('GMT');
-        $date = new \DateTime("now", new \DateTimeZone($timezone->name ?? 'UTC'));
+        $date = new \DateTime('now', new \DateTimeZone($timezone->name ?? 'UTC'));
         $offset = $date->getOffset();
 
         return $offset;
@@ -985,7 +976,7 @@ class Company extends BaseModel
         $timezone = $this->timezone();
 
         date_default_timezone_set('GMT');
-        $date = new \DateTime("now", new \DateTimeZone($timezone->name ?? 'UTC'));
+        $date = new \DateTime('now', new \DateTimeZone($timezone->name ?? 'UTC'));
         $offset -= $date->getOffset();
 
         $offset += ($entity_send_time * 3600);
@@ -1001,7 +992,7 @@ class Company extends BaseModel
     public function date_format()
     {
         return once(function () {
-            /** @var \Illuminate\Support\Collection<\App\Models\DateFormat> */
+            /** @var Collection<DateFormat> */
             $date_formats = app('date_formats');
             $date_format = $this->getSetting('date_format_id');
 
@@ -1035,13 +1026,10 @@ class Company extends BaseModel
         return Ninja::isHosted() && $this->account->isPaid() && $this->account->isEnterpriseClient() && $this->account->e_invoice_quota > 0 && $this->settings->e_invoice_type == 'PEPPOL' && $this->tax_data->acts_as_sender;
     }
 
-
     /**
      * peppolSendingEnabled
      *
      * Determines the sending status of the company
-     *
-     * @return bool
      */
     public function peppolSendingEnabled(): bool
     {
@@ -1052,8 +1040,6 @@ class Company extends BaseModel
      * verifactuEnabled
      *
      * Returns a flag if the current company is using verifactu as the e-invoice provider
-     *
-     * @return bool
      */
     public function verifactuEnabled(): bool
     {
@@ -1072,8 +1058,7 @@ class Company extends BaseModel
      * determine if a push job should be dispatched, with zero overhead for
      * companies that don't use QuickBooks.
      *
-     * @param string $entity Entity type: 'client', 'invoice', etc.
-     * @return bool
+     * @param  string  $entity  Entity type: 'client', 'invoice', etc.
      */
     public function shouldPushToQuickbooks(string $entity): bool
     {
@@ -1104,10 +1089,10 @@ class Company extends BaseModel
             return $direction === 'push' || $direction === 'bidirectional';
         });
     }
-    
+
     public function docuninjaActive(): bool
     {
-        return (app()->environment('local') || Ninja::isHosted()) && $this->enable_modules && $this->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS);
+        return (app()->environment('local') || Ninja::isHosted()) && $this->enable_modules && $this->account->hasFeature(Account::FEATURE_INVOICE_SETTINGS);
         // return $this->enable_modules && Ninja::isHosted();
     }
 }

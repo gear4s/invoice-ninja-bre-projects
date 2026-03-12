@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -57,7 +56,7 @@ class ClientContactResetPasswordObject
             $email_from_name = $this->company->present()->name();
         }
 
-        $mail_obj = new \stdClass();
+        $mail_obj = new \stdClass;
         $mail_obj->subject = ctrans('texts.your_password_reset_link');
         $mail_obj->data = $data;
         $mail_obj->markdown = 'email.client.generic';

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,8 +16,9 @@ use App\Libraries\MultiDB;
 use App\Services\InboundMail\InboundMail;
 use App\Services\InboundMail\InboundMailEngine;
 use App\Utils\TempFile;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Class PostMarkController.
@@ -37,26 +37,34 @@ class PostMarkController extends BaseController
      *      tags={"postmark"},
      *      summary="Processing webhooks from PostMark",
      *      description="Adds an credit to the system",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved credit object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Credit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -67,7 +75,7 @@ class PostMarkController extends BaseController
             ProcessPostmarkWebhook::dispatch($request->all(), $request->header('X-API-SECURITY'))->delay(15);
 
             return response()->json(['message' => 'Success'], 200);
-        } elseif ($request->header('X-API-SECURITY') && in_array($request->header('X-API-SECURITY'), \Illuminate\Support\Facades\Cache::get('client_postmark_keys'))) {
+        } elseif ($request->header('X-API-SECURITY') && in_array($request->header('X-API-SECURITY'), Cache::get('client_postmark_keys'))) {
             ProcessPostmarkWebhook::dispatch($request->all(), $request->header('X-API-SECURITY'))->delay(15);
 
             return response()->json(['message' => 'Success'], 200);
@@ -89,26 +97,34 @@ class PostMarkController extends BaseController
      *      tags={"postmark"},
      *      summary="Processing inbound webhooks from PostMark",
      *      description="Adds an credit to the system",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved credit object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Credit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -280,23 +296,25 @@ class PostMarkController extends BaseController
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if (!(array_key_exists("MessageStream", $input) && $input["MessageStream"] == "inbound") || !array_key_exists("To", $input) || !array_key_exists("From", $input) || !array_key_exists("MessageID", $input)) {
+        if (!(array_key_exists('MessageStream', $input) && $input['MessageStream'] == 'inbound') || !array_key_exists('To', $input) || !array_key_exists('From', $input) || !array_key_exists('MessageID', $input)) {
             nlog('Failed: Message could not be parsed, because required parameters are missing.');
+
             return response()->json(['message' => 'Failed. Missing/Invalid Parameters.'], 400);
         }
 
-        $inboundEngine = new InboundMailEngine();
+        $inboundEngine = new InboundMailEngine;
 
         // Spam protection
-        if ($inboundEngine->isInvalidOrBlocked($input["From"], $input["ToFull"][0]["Email"])) {
+        if ($inboundEngine->isInvalidOrBlocked($input['From'], $input['ToFull'][0]['Email'])) {
             return;
         }
 
         // match company
-        $company = MultiDB::findAndSetDbByExpenseMailbox($input["ToFull"][0]["Email"]);
+        $company = MultiDB::findAndSetDbByExpenseMailbox($input['ToFull'][0]['Email']);
 
         if (!$company) {
-            nlog('[PostmarkInboundWebhook] unknown Expense Mailbox occured while handling an inbound email from postmark: ' . $input["To"]);
+            nlog('[PostmarkInboundWebhook] unknown Expense Mailbox occured while handling an inbound email from postmark: ' . $input['To']);
+
             return response()->json(['message' => 'Ok'], 200);
         }
 
@@ -305,24 +323,24 @@ class PostMarkController extends BaseController
         try { // important to save meta if something fails here to prevent spam
 
             // prepare data for ingresEngine
-            $inboundMail = new InboundMail();
+            $inboundMail = new InboundMail;
 
-            $inboundMail->from = $input["From"] ?? '';
-            $inboundMail->to = $input["To"]; // usage of data-input, because we need a single email here
-            $inboundMail->subject = $input["Subject"] ?? '';
-            $inboundMail->body = $input["HtmlBody"] ?? '';
-            $inboundMail->text_body = $input["TextBody"] ?? '';
-            $inboundMail->date = Carbon::createFromTimeString($input["Date"]);
+            $inboundMail->from = $input['From'] ?? '';
+            $inboundMail->to = $input['To']; // usage of data-input, because we need a single email here
+            $inboundMail->subject = $input['Subject'] ?? '';
+            $inboundMail->body = $input['HtmlBody'] ?? '';
+            $inboundMail->text_body = $input['TextBody'] ?? '';
+            $inboundMail->date = Carbon::createFromTimeString($input['Date']);
 
             // parse documents as UploadedFile from webhook-data
-            foreach ($input["Attachments"] as $attachment) {
+            foreach ($input['Attachments'] as $attachment) {
 
-                $inboundMail->documents[] = TempFile::UploadedFileFromBase64($attachment["Content"], $attachment["Name"], $attachment["ContentType"]);
+                $inboundMail->documents[] = TempFile::UploadedFileFromBase64($attachment['Content'], $attachment['Name'], $attachment['ContentType']);
 
             }
 
         } catch (\Exception $e) {
-            $inboundEngine->saveMeta($input["From"], $input["To"]); // important to save this, to protect from spam
+            $inboundEngine->saveMeta($input['From'], $input['To']); // important to save this, to protect from spam
             throw $e;
         }
 

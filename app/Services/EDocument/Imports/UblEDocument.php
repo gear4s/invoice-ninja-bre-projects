@@ -6,25 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Imports;
 
-use App\Models\Vendor;
+use App\Factory\ExpenseFactory;
+use App\Factory\VendorContactFactory;
+use App\Factory\VendorFactory;
 use App\Models\Company;
 use App\Models\Country;
-use App\Models\Expense;
-use App\Factory\VendorFactory;
-use App\Factory\ExpenseFactory;
-use App\Services\AbstractService;
-use Illuminate\Http\UploadedFile;
-use InvoiceNinja\EInvoice\EInvoice;
-use App\Utils\Traits\SavesDocuments;
-use App\Factory\VendorContactFactory;
 use App\Models\Currency;
+use App\Models\Expense;
+use App\Models\Vendor;
 use App\Repositories\ExpenseRepository;
+use App\Services\AbstractService;
+use App\Utils\TempFile;
+use App\Utils\Traits\SavesDocuments;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
+use InvoiceNinja\EInvoice\EInvoice;
+use InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
+use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 
 class UblEDocument extends AbstractService
 {
@@ -35,18 +38,19 @@ class UblEDocument extends AbstractService
      */
     public function __construct(public UploadedFile $file, public Company $company)
     {
-        # curl -X POST http://localhost:8000/api/v1/edocument/upload -H "Content-Type: multipart/form-data" -H "X-API-TOKEN: 7tdDdkz987H3AYIWhNGXy8jTjJIoDhkAclCDLE26cTCj1KYX7EBHC66VEitJwWhn" -H "X-Requested-With: XMLHttpRequest" -F _method=PUT -F documents[]=@einvoice.xml
+        // curl -X POST http://localhost:8000/api/v1/edocument/upload -H "Content-Type: multipart/form-data" -H "X-API-TOKEN: 7tdDdkz987H3AYIWhNGXy8jTjJIoDhkAclCDLE26cTCj1KYX7EBHC66VEitJwWhn" -H "X-Requested-With: XMLHttpRequest" -F _method=PUT -F documents[]=@einvoice.xml
     }
 
     /**
      * @throws \Throwable
      */
-    public function run(): \App\Models\Expense
+    public function run(): Expense
     {
 
-        $e = new EInvoice();
+        $e = new EInvoice;
         $xml = $this->extractInvoiceUbl($this->file->get());
         $invoice = $e->decode('Peppol', $xml, 'xml');
+
         return $this->buildAndSaveExpense($invoice);
 
     }
@@ -56,15 +60,12 @@ class UblEDocument extends AbstractService
      *
      * If the <Invoice or <CreditNote object is nested, this method will
      * extract and return only the document.
-     *
-     * @param  string $xml
-     * @return string
      */
     private function extractInvoiceUbl(string $xml): string
     {
         $xml = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $xml);
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->loadXML($xml);
 
         $xpath = new \DOMXPath($dom);
@@ -79,9 +80,10 @@ class UblEDocument extends AbstractService
 
         if ($invoiceNodes !== false && $invoiceNodes->length > 0) {
             $invoiceNode = $invoiceNodes->item(0);
-            $newDom = new \DOMDocument();
+            $newDom = new \DOMDocument;
             $newNode = $newDom->importNode($invoiceNode, true);
             $newDom->appendChild($newNode);
+
             return $newDom->saveXML($newDom->documentElement);
         }
 
@@ -90,9 +92,10 @@ class UblEDocument extends AbstractService
 
         if ($creditNoteNodes !== false && $creditNoteNodes->length > 0) {
             $creditNoteNode = $creditNoteNodes->item(0);
-            $newDom = new \DOMDocument();
+            $newDom = new \DOMDocument;
             $newNode = $newDom->importNode($creditNoteNode, true);
             $newDom->appendChild($newNode);
+
             return $newDom->saveXML($newDom->documentElement);
         }
 
@@ -101,13 +104,10 @@ class UblEDocument extends AbstractService
 
     /**
      * Build and save expense from Peppol Invoice or CreditNote
-     *
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice
-     * @return Expense
      */
-    private function buildAndSaveExpense(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice): Expense
+    private function buildAndSaveExpense(Invoice|CreditNote $invoice): Expense
     {
-        $isCreditNote = $invoice instanceof \InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
+        $isCreditNote = $invoice instanceof CreditNote;
 
         $vendor = $this->findOrCreateVendor($invoice);
 
@@ -131,9 +131,9 @@ class UblEDocument extends AbstractService
         $payment_means[] = data_get($invoice, 'PaymentTerms.0.Note', false);
 
         $private_notes = collect($payment_means)
-                                ->reject(function ($means) {
-                                    return $means === false;
-                                })->implode("\n");
+            ->reject(function ($means) {
+                return $means === false;
+            })->implode("\n");
 
         // Handle both InvoiceLine and CreditNoteLine
         $invoice_items = $isCreditNote
@@ -150,10 +150,10 @@ class UblEDocument extends AbstractService
         $public_notes = collect($items)->reject(function ($item) {
             return $item['name'] === false && $item['description'] === false;
         })->map(function ($item) {
-            return $item['name'] ?? ' ' . ' ## ' . $item['description'] ?? ' '; //@phpstan-ignore-line
+            return $item['name'] ?? ' ' . ' ## ' . $item['description'] ?? ' '; // @phpstan-ignore-line
         })->implode("\n");
 
-        /** @var \App\Models\Expense $expense */
+        /** @var Expense $expense */
         $expense = ExpenseFactory::create($this->company->id, $this->company->owner()->id);
         $expense->vendor_id = $vendor->id;
         $expense->amount = $this->company->expense_inclusive_taxes ? $TaxInclusiveAmount : $TaxExclusiveAmount;
@@ -179,7 +179,7 @@ class UblEDocument extends AbstractService
 
             } else {
                 $expense->calculate_tax_by_amount = true;
-                $expense->{"tax_amount{$tax_level}"} = $amount; //@phpstan-ignore-line
+                $expense->{"tax_amount{$tax_level}"} = $amount; // @phpstan-ignore-line
 
             }
 
@@ -190,21 +190,18 @@ class UblEDocument extends AbstractService
             }
         }
 
-
         $expense->save();
 
-        $repo = new ExpenseRepository();
+        $repo = new ExpenseRepository;
 
         $data = [];
         $data['documents'][] = $this->file;
 
         $expense = $repo->save($data, $expense);
 
-
         // if ($expense->company->account->hasFeature(\App\Models\Account::FEATURE_DOCUMENTS)) {
 
         foreach ($attachments as $attachment) {
-
 
             $a = data_get($attachment, 'Attachment.EmbeddedDocumentBinaryObject', false);
 
@@ -212,12 +209,12 @@ class UblEDocument extends AbstractService
                 continue;
             }
 
-            $doc_name = data_get($a, '@filename', "doc.pdf");
-            $mime_type = data_get($a, '@mimeCode', "application/pdf");
+            $doc_name = data_get($a, '@filename', 'doc.pdf');
+            $mime_type = data_get($a, '@mimeCode', 'application/pdf');
             $document_data = data_get($a, '#', false);
 
             if ($document_data) {
-                $document = \App\Utils\TempFile::UploadedFileFromBase64($document_data, $doc_name, $mime_type);
+                $document = TempFile::UploadedFileFromBase64($document_data, $doc_name, $mime_type);
                 $this->saveDocument($document, $expense, true);
             }
         }
@@ -225,13 +222,12 @@ class UblEDocument extends AbstractService
 
         return $expense;
 
-
     }
 
     private function resolveCurrencyId(string $currency_code): int
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         return $currencies->first(function (Currency $c) use ($currency_code) {
@@ -239,10 +235,7 @@ class UblEDocument extends AbstractService
         })?->id ?? (int) $this->company->settings->currency_id;
     }
 
-    /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice
-     */
-    private function findOrCreateVendor(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice): Vendor
+    private function findOrCreateVendor(Invoice|CreditNote $invoice): Vendor
     {
         $asp = $invoice->AccountingSupplierParty;
 
@@ -252,49 +245,45 @@ class UblEDocument extends AbstractService
         $vendor_name = $this->resolveSupplierName($invoice);
 
         $vendor = Vendor::query()
-                    ->where('company_id', $this->company->id)
-                    ->where(function ($q) use ($vat_number, $routing_id, $id_number, $vendor_name) {
+            ->where('company_id', $this->company->id)
+            ->where(function ($q) use ($vat_number, $routing_id, $id_number, $vendor_name) {
 
-                        $q->when($routing_id, function ($q) use ($routing_id) {
-                            $q->where('routing_id', $routing_id);
-                        })
-                        ->when(strlen($vat_number) > 1, function ($q) use ($vat_number) {
-                            $q->orWhere('vat_number', $vat_number);
-                        })
-                        ->when(strlen($id_number) > 1, function ($q) use ($id_number) {
-                            $q->orWhere('id_number', $id_number);
-                        })
-                        ->when(strlen($vendor_name) > 1, function ($q) use ($vendor_name) {
-                            $q->orWhere('name', $vendor_name);
-                        });
+                $q->when($routing_id, function ($q) use ($routing_id) {
+                    $q->where('routing_id', $routing_id);
+                })
+                    ->when(strlen($vat_number) > 1, function ($q) use ($vat_number) {
+                        $q->orWhere('vat_number', $vat_number);
+                    })
+                    ->when(strlen($id_number) > 1, function ($q) use ($id_number) {
+                        $q->orWhere('id_number', $id_number);
+                    })
+                    ->when(strlen($vendor_name) > 1, function ($q) use ($vendor_name) {
+                        $q->orWhere('name', $vendor_name);
+                    });
 
-                    })->first();
+            })->first();
 
         return $vendor ?? $this->newVendor($invoice);
     }
 
-    /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice
-     */
-    private function resolveSupplierName(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice): string
+    private function resolveSupplierName(Invoice|CreditNote $invoice): string
     {
         if (data_get($invoice, 'AccountingSupplierParty.Party.PartyName', false)) {
             $party_name = data_get($invoice, 'AccountingSupplierParty.Party.PartyName', false);
+
             return data_get($party_name[0], 'Name', '');
         }
 
         if (data_get($invoice, 'AccountingSupplierParty.Party.PartyLegalEntity', false)) {
             $ple = data_get($invoice, 'AccountingSupplierParty.Party.PartyName', false);
+
             return data_get($ple[0], 'RegistrationName', '');
         }
 
         return '';
     }
 
-    /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice
-     */
-    private function resolveVendorIdNumber(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice): string
+    private function resolveVendorIdNumber(Invoice|CreditNote $invoice): string
     {
 
         $pts = data_get($invoice, 'AccountingSupplierParty.Party.PartyIdentification', false);
@@ -303,10 +292,7 @@ class UblEDocument extends AbstractService
 
     }
 
-    /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice
-     */
-    private function resolveVendorVat(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice): string
+    private function resolveVendorVat(Invoice|CreditNote $invoice): string
     {
 
         $pts = data_get($invoice, 'AccountingSupplierParty.Party.PartyTaxScheme', false);
@@ -315,13 +301,9 @@ class UblEDocument extends AbstractService
 
     }
 
-    /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice
-     */
-    private function newVendor(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice): Vendor
+    private function newVendor(Invoice|CreditNote $invoice): Vendor
     {
         $vendor = VendorFactory::create($this->company->id, $this->company->owner()->id);
-
 
         $data = [
             'name' => $this->resolveSupplierName($invoice),
@@ -358,8 +340,8 @@ class UblEDocument extends AbstractService
     private function resolveCountry(?string $iso_country_code): int
     {
         return Country::query()
-                        ->where('iso_3166_2', $iso_country_code)
-                        ->orWhere('iso_3166_3', $iso_country_code)
-                        ->first()?->id ?? (int) $this->company->settings->country_id;
+            ->where('iso_3166_2', $iso_country_code)
+            ->orWhere('iso_3166_3', $iso_country_code)
+            ->first()?->id ?? (int) $this->company->settings->country_id;
     }
 }

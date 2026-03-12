@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 use App\Models\Language;
@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Schema;
 class AddPurchaseOrderToExpense extends Migration
 {
     use AppSetup;
+
     /**
      * Run the migrations.
      *
@@ -44,7 +45,5 @@ class AddPurchaseOrderToExpense extends Migration
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 }

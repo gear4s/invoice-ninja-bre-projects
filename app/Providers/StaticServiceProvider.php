@@ -6,27 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Providers;
 
+use App\DataMapper\EmailTemplateDefaults;
 use App\Models\Bank;
-use App\Models\Size;
 use App\Models\Country;
-use App\Models\Gateway;
 use App\Models\Currency;
+use App\Models\DateFormat;
+use App\Models\DatetimeFormat;
+use App\Models\Gateway;
 use App\Models\Industry;
 use App\Models\Language;
-use App\Models\Timezone;
-use App\Models\DateFormat;
-use App\Models\PaymentTerm;
 use App\Models\PaymentType;
-use App\Models\DatetimeFormat;
+use App\Models\Size;
+use App\Models\Timezone;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
-use App\DataMapper\EmailTemplateDefaults;
 
 class StaticServiceProvider extends ServiceProvider
 {
@@ -37,7 +36,7 @@ class StaticServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        /** @return \Illuminate\Support\Collection<Currency> */
+        /** @return Collection<Currency> */
         app()->singleton('currencies', function ($app) {
 
             if ($resource = Cache::get('currencies')) {
@@ -52,7 +51,7 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<Language> */
+        /** @return Collection<Language> */
         app()->singleton('languages', function ($app) {
 
             if ($resource = Cache::get('languages')) {
@@ -67,7 +66,7 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<Country> */
+        /** @return Collection<Country> */
         app()->singleton('countries', function ($app) {
 
             if ($resource = Cache::get('countries')) {
@@ -82,10 +81,10 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<PaymentType> */
+        /** @return Collection<PaymentType> */
         app()->singleton('payment_types', function ($app) {
 
-            return \App\Models\PaymentType::getDefaultPaymentTypes();
+            return PaymentType::getDefaultPaymentTypes();
             // if ($resource = Cache::get('payment_types')) {
             //     return $resource;
             // }
@@ -98,10 +97,8 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-
-        /** @return \Illuminate\Support\Collection<Bank> */
+        /** @return Collection<Bank> */
         app()->singleton('banks', function ($app) {
-
 
             if ($resource = Cache::get('banks')) {
                 return $resource;
@@ -115,9 +112,8 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<DateFormat> */
+        /** @return Collection<DateFormat> */
         app()->singleton('date_formats', function ($app) {
-
 
             if ($resource = Cache::get('date_formats')) {
                 return $resource;
@@ -131,9 +127,8 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<Timezone> */
+        /** @return Collection<Timezone> */
         app()->singleton('timezones', function ($app) {
-
 
             if ($resource = Cache::get('timezones')) {
                 return $resource;
@@ -147,7 +142,7 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<Gateway> */
+        /** @return Collection<Gateway> */
         app()->singleton('gateways', function ($app) {
 
             if ($resource = Cache::get('gateways')) {
@@ -160,12 +155,10 @@ class StaticServiceProvider extends ServiceProvider
 
             return $resource;
 
-
         });
 
-        /** @return \Illuminate\Support\Collection<Industry> */
+        /** @return Collection<Industry> */
         app()->singleton('industries', function ($app) {
-
 
             if ($resource = Cache::get('industries')) {
                 return $resource;
@@ -179,9 +172,8 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<Size> */
+        /** @return Collection<Size> */
         app()->singleton('sizes', function ($app) {
-
 
             if ($resource = Cache::get('sizes')) {
                 return $resource;
@@ -195,7 +187,7 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
-        /** @return \Illuminate\Support\Collection<DatetimeFormat> */
+        /** @return Collection<DatetimeFormat> */
         app()->singleton('datetime_formats', function ($app) {
 
             if ($resource = Cache::get('datetime_formats')) {

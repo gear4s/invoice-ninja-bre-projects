@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ use Tests\TestCase;
 
 /**
  * Direct comparison test showing the serialization bug and fix.
- * 
+ *
  * This test demonstrates:
  * 1. The old method (get_object_vars) fails to properly serialize nested objects and enums
  * 2. The new method (toArray) correctly serializes everything
@@ -28,12 +27,12 @@ class QuickbooksSettingsSerializationComparisonTest extends TestCase
 {
     /**
      * Test showing that get_object_vars() on an enum returns name/value array.
-     * 
+     *
      * While json_encode() handles this correctly, get_object_vars() on an enum
      * itself returns an array with 'name' and 'value' keys, not just the value.
      * This demonstrates why explicit toArray() is better for control.
      */
-    public function testGetObjectVarsOnEnumReturnsNameValueArray()
+    public function test_get_object_vars_on_enum_returns_name_value_array()
     {
         $syncMap = new QuickbooksSyncMap([
             'direction' => SyncDirection::PULL->value,
@@ -41,24 +40,24 @@ class QuickbooksSettingsSerializationComparisonTest extends TestCase
 
         // get_object_vars on the enum property itself
         $enumVars = get_object_vars($syncMap->direction);
-        
+
         // The enum's internal structure has both name and value
         $this->assertIsArray($enumVars);
         $this->assertArrayHasKey('name', $enumVars);
         $this->assertArrayHasKey('value', $enumVars);
         $this->assertEquals('PULL', $enumVars['name']);
         $this->assertEquals('pull', $enumVars['value']);
-        
+
         // While json_encode handles this, toArray() gives explicit control
         $array = $syncMap->toArray();
-        $this->assertEquals('pull', $array['direction'], 
+        $this->assertEquals('pull', $array['direction'],
             'toArray() explicitly returns just the value string');
     }
 
     /**
      * Test showing that toArray() correctly serializes enums.
      */
-    public function testToArrayCorrectlySerializesEnums()
+    public function test_to_array_correctly_serializes_enums()
     {
         $syncMap = new QuickbooksSyncMap([
             'direction' => SyncDirection::PULL->value,
@@ -70,22 +69,22 @@ class QuickbooksSettingsSerializationComparisonTest extends TestCase
         $decoded = json_decode($json, true);
 
         // The enum IS properly serialized as a string value
-        $this->assertIsString($decoded['direction'], 
+        $this->assertIsString($decoded['direction'],
             'New method: enum is serialized as string');
-        
+
         // The decoded value IS the string 'pull'
-        $this->assertEquals('pull', $decoded['direction'], 
+        $this->assertEquals('pull', $decoded['direction'],
             'New method: enum value is correctly serialized as string');
     }
 
     /**
      * Test showing that get_object_vars() relies on json_encode() for nested objects.
-     * 
+     *
      * While get_object_vars() + json_encode() works, it relies on PHP's automatic
      * serialization. The toArray() method provides explicit, controlled serialization
      * that's more maintainable and testable.
      */
-    public function testGetObjectVarsReliesOnJsonEncodeForNestedObjects()
+    public function test_get_object_vars_relies_on_json_encode_for_nested_objects()
     {
         $settings = new QuickbooksSettings([
             'accessTokenKey' => 'test_token',
@@ -102,19 +101,19 @@ class QuickbooksSettingsSerializationComparisonTest extends TestCase
         $decoded = json_decode($json, true);
 
         // json_encode() does handle this correctly, but it's implicit
-        $this->assertIsArray($decoded['settings'], 
+        $this->assertIsArray($decoded['settings'],
             'json_encode handles nested objects, but implicitly');
-        
+
         // The new method is explicit and controlled
         $array = $settings->toArray();
-        $this->assertIsArray($array['settings'], 
+        $this->assertIsArray($array['settings'],
             'toArray() explicitly converts nested objects');
     }
 
     /**
      * Test showing that toArray() correctly serializes nested objects.
      */
-    public function testToArrayCorrectlySerializesNestedObjects()
+    public function test_to_array_correctly_serializes_nested_objects()
     {
         $settings = new QuickbooksSettings([
             'accessTokenKey' => 'test_token',
@@ -134,30 +133,30 @@ class QuickbooksSettingsSerializationComparisonTest extends TestCase
         $decoded = json_decode($json, true);
 
         // The nested QuickbooksSync object IS properly converted to an array
-        $this->assertIsArray($decoded['settings'], 
+        $this->assertIsArray($decoded['settings'],
             'New method: nested object is converted to array');
-        
+
         // The nested QuickbooksSyncMap objects are also converted
-        $this->assertIsArray($decoded['settings']['client'], 
+        $this->assertIsArray($decoded['settings']['client'],
             'New method: nested sync map is converted to array');
-        
+
         // The enum values are properly serialized as strings
-        $this->assertEquals('pull', $decoded['settings']['client']['direction'], 
+        $this->assertEquals('pull', $decoded['settings']['client']['direction'],
             'New method: nested enum is serialized as string');
-        $this->assertEquals('push', $decoded['settings']['invoice']['direction'], 
+        $this->assertEquals('push', $decoded['settings']['invoice']['direction'],
             'New method: nested enum is serialized as string');
     }
 
     /**
      * Side-by-side comparison: old vs new method.
-     * 
+     *
      * Both methods work, but toArray() provides:
      * 1. Explicit control over serialization
      * 2. Better maintainability
      * 3. Consistency with other DataMapper classes
      * 4. Easier testing and debugging
      */
-    public function testSideBySideComparison()
+    public function test_side_by_side_comparison()
     {
         $settings = new QuickbooksSettings([
             'accessTokenKey' => 'token_123',
@@ -183,7 +182,7 @@ class QuickbooksSettingsSerializationComparisonTest extends TestCase
         // Both methods produce valid results
         $this->assertEquals('token_123', $oldDecoded['accessTokenKey']);
         $this->assertEquals('token_123', $newDecoded['accessTokenKey']);
-        
+
         $this->assertEquals('bidirectional', $oldDecoded['settings']['client']['direction']);
         $this->assertEquals('bidirectional', $newDecoded['settings']['client']['direction']);
 

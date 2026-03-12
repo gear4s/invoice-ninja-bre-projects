@@ -6,20 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use Carbon\CarbonInterval;
-use App\Models\CompanyUser;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Support\Facades\App;
-use Elastic\ScoutDriverPlus\Searchable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Libraries\Currency\Conversion\CurrencyApi;
+use App\Utils\Traits\MakesHash;
+use Carbon\CarbonInterval;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
 
 /**
  * App\Models\Task
@@ -53,16 +53,17 @@ use App\Libraries\Currency\Conversion\CurrencyApi;
  * @property bool $invoice_documents
  * @property int $is_date_based
  * @property int|null $status_order
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company|null $company
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read User|null $assigned_user
+ * @property-read Client|null $client
+ * @property-read Company|null $company
+ * @property-read Collection<int, Document> $documents
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
- * @property-read \App\Models\Invoice|null $invoice
- * @property-read \App\Models\Project|null $project
- * @property-read \App\Models\TaskStatus|null $status
- * @property-read \App\Models\User $user
+ * @property-read Invoice|null $invoice
+ * @property-read Project|null $project
+ * @property-read TaskStatus|null $status
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\TaskFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Task filter(\App\Filters\QueryFilters $filters)
@@ -73,16 +74,17 @@ use App\Libraries\Currency\Conversion\CurrencyApi;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Task withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Task withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ *
+ * @property-read Collection<int, Document> $documents
+ *
  * @mixin \Eloquent
  */
 class Task extends BaseModel
 {
-    use MakesHash;
-    use SoftDeletes;
     use Filterable;
+    use MakesHash;
     use Searchable;
-
+    use SoftDeletes;
 
     public static array $bulk_update_columns = [
         'status_id',
@@ -104,7 +106,7 @@ class Task extends BaseModel
         'is_running',
         'time_log',
         'status_id',
-        'status_sort_order', //deprecated
+        'status_sort_order', // deprecated
         'invoice_documents',
         'rate',
         'number',
@@ -127,8 +129,6 @@ class Task extends BaseModel
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -151,8 +151,8 @@ class Task extends BaseModel
 
         // Get basic data
         $data = [
-            'id' => $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.task') . " " . ($this->number ?? '') . $project . $client,
+            'id' => $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.task') . ' ' . ($this->number ?? '') . $project . $client,
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'description' => (string) $this->description,
@@ -210,15 +210,13 @@ class Task extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
 
     /**
      * Get all of the users that belong to the team.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -229,7 +227,7 @@ class Task extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function assigned_user()
     {
@@ -237,7 +235,7 @@ class Task extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function user()
     {
@@ -245,7 +243,7 @@ class Task extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function client()
     {
@@ -253,7 +251,7 @@ class Task extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function status()
     {
@@ -261,7 +259,7 @@ class Task extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function invoice()
     {
@@ -269,7 +267,7 @@ class Task extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function project()
     {
@@ -283,7 +281,7 @@ class Task extends BaseModel
         }
 
         if ($this->status) {
-            return '<h5><span class="badge badge-primary">' . $this->status?->name ?? ''; //@phpstan-ignore-line
+            return '<h5><span class="badge badge-primary">' . $this->status?->name ?? ''; // @phpstan-ignore-line
         }
 
         return '';
@@ -327,7 +325,7 @@ class Task extends BaseModel
 
             $start_time = $part[0];
 
-            if (count($part) == 1 || ! $part[1]) {
+            if (count($part) == 1 || !$part[1]) {
                 $end_time = time();
             } else {
                 $end_time = $part[1];
@@ -343,7 +341,7 @@ class Task extends BaseModel
     {
         $duration = $this->calcDuration();
 
-        return \Carbon\CarbonInterval::seconds($duration)->locale($this->client->locale())->cascade()->forHumans();
+        return CarbonInterval::seconds($duration)->locale($this->client->locale())->cascade()->forHumans();
     }
 
     public function translate_entity()
@@ -374,7 +372,8 @@ class Task extends BaseModel
         $company_currency = $this->company->getSetting('currency_id');
 
         if ($client_currency != $company_currency) {
-            $converter = new CurrencyApi();
+            $converter = new CurrencyApi;
+
             return $converter->convert($this->taskValue(), $client_currency, $company_currency);
         }
 
@@ -404,7 +403,7 @@ class Task extends BaseModel
 
         $last = end($log);
 
-        return  (is_array($last) && $last[1] === 0);
+        return is_array($last) && $last[1] === 0;
 
     }
 
@@ -433,11 +432,12 @@ class Task extends BaseModel
     public function description(): string
     {
         $parent_entity = $this->client ?? $this->company;
-        $time_format = $parent_entity->getSetting('military_time') ? "H:i:s" : "h:i:s A";
+        $time_format = $parent_entity->getSetting('military_time') ? 'H:i:s' : 'h:i:s A';
 
-        $task_description =  collect(json_decode($this->time_log, true))
+        $task_description = collect(json_decode($this->time_log, true))
             ->filter(function ($log) {
                 $billable = $log[3] ?? false;
+
                 return $billable || $this->company->settings->allow_billable_task_items;
             })
             ->map(function ($log) use ($parent_entity, $time_format) {
@@ -456,10 +456,10 @@ class Task extends BaseModel
                 if ($this->company->invoice_task_timelog) {
                     $date_time[] = Carbon::createFromTimestamp((int) $log[0])
                         ->setTimeZone($this->company->timezone()->name)
-                        ->format($time_format) . " - "
+                        ->format($time_format) . ' - '
                         . Carbon::createFromTimestamp((int) $log[1])
-                        ->setTimeZone($this->company->timezone()->name)
-                        ->format($time_format);
+                            ->setTimeZone($this->company->timezone()->name)
+                            ->format($time_format);
                 }
 
                 if ($this->company->invoice_task_hours) {
@@ -472,26 +472,26 @@ class Task extends BaseModel
                     $date_time[] = "{$duration} {$hours}";
                 }
 
-                $parts[] = implode(" • ", $date_time);
+                $parts[] = implode(' • ', $date_time);
 
                 if ($this->company->invoice_task_item_description && $this->company->settings->show_task_item_description && strlen($interval_description) > 1) {
                     $parts[] = $interval_description;
                 }
 
-                //need to return early if there is nothing, otherwise we end up injecting a blank new line.
+                // need to return early if there is nothing, otherwise we end up injecting a blank new line.
                 if (count($parts) == 1 && empty($parts[0])) {
                     return '';
                 }
 
                 return implode(PHP_EOL, $parts);
             })
-            ->filter()//filters any empty strings.
+            ->filter()// filters any empty strings.
             ->implode(PHP_EOL);
 
         $body = '';
 
         if (strlen($this->description ?? '') > 1) {
-            $body .= $this->description . " ";
+            $body .= $this->description . ' ';
         }
 
         $body .= $task_description;
@@ -529,12 +529,12 @@ class Task extends BaseModel
                 $logged['end_date'] = ctrans('texts.running');
             }
 
-            $logged['description'] =  $log[2] ?? '';
+            $logged['description'] = $log[2] ?? '';
             $logged['billable'] = $log[3] ?? false;
             $logged['duration_raw'] = $duration;
             // $logged['duration'] = gmdate("H:i:s", $duration);
 
-            $logged['duration'] = \Carbon\CarbonInterval::seconds($duration)->locale($locale)->cascade()->forHumans();
+            $logged['duration'] = CarbonInterval::seconds($duration)->locale($locale)->cascade()->forHumans();
 
             return $logged;
 

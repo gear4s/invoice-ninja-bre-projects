@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,6 +31,8 @@ use App\Services\Quickbooks\Transformers\ClientTransformer;
 use App\Services\Quickbooks\Transformers\InvoiceTransformer;
 use App\Services\Quickbooks\Transformers\ProductTransformer;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use QuickBooksOnline\API\Facades\Customer;
+use QuickBooksOnline\API\Facades\Item;
 use Tests\TestCase;
 
 /**
@@ -47,11 +48,15 @@ class QuickbooksCanadaTest extends TestCase
     use DatabaseTransactions;
 
     private ClientTransformer $client_transformer;
+
     private ProductTransformer $product_transformer;
+
     private InvoiceTransformer $invoice_transformer;
+
     private QuickbooksService $qb;
 
     private ?Company $company;
+
     private ?User $user;
 
     /** QB entity IDs created during tests, for cleanup */
@@ -78,8 +83,8 @@ class QuickbooksCanadaTest extends TestCase
     private function configureCanadianCompany(): void
     {
         $this->company = Company::query()
-                        ->where('settings->name', 'QBCA')
-                        ->first();
+            ->where('settings->name', 'QBCA')
+            ->first();
 
         if (!$this->company) {
             $this->markTestSkipped('No Canadian company found');
@@ -541,7 +546,7 @@ class QuickbooksCanadaTest extends TestCase
     //  INVOICE TRANSFORMER TESTS — CANADA TAX HANDLING
     // ──────────────────────────────────────────────────────────────────────
 
-    public function test_invoice_ninjaToQb_uses_numeric_tax_code_for_canada()
+    public function test_invoice_ninja_to_qb_uses_numeric_tax_code_for_canada()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Widget A', 100.00, 'HST ON', 13.0),
@@ -562,7 +567,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($expected, $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_unmatched_rate_falls_back_to_taxable_code()
+    public function test_invoice_ninja_to_qb_unmatched_rate_falls_back_to_taxable_code()
     {
         // GST at 5% is not in the QBCA tax_rate_map, so resolveLineTaxCode
         // won't find a match and falls back to default_taxable_code
@@ -583,11 +588,11 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($expected, $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_each_mapped_tax_rate_resolves()
+    public function test_invoice_ninja_to_qb_each_mapped_tax_rate_resolves()
     {
         // Dynamically test every non-zero rate in the real tax_rate_map
         $map = $this->company->quickbooks->settings->tax_rate_map;
-        $taxable_entries = collect($map)->filter(fn($e) => !empty($e['tax_code_id']) && floatval($e['rate']) > 0);
+        $taxable_entries = collect($map)->filter(fn ($e) => !empty($e['tax_code_id']) && floatval($e['rate']) > 0);
 
         if ($taxable_entries->isEmpty()) {
             $this->markTestSkipped('No taxable rates with tax_code_id in tax_rate_map');
@@ -615,7 +620,7 @@ class QuickbooksCanadaTest extends TestCase
         }
     }
 
-    public function test_invoice_ninjaToQb_exempt_line_item_uses_exempt_code()
+    public function test_invoice_ninja_to_qb_exempt_line_item_uses_exempt_code()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Exempt Item', 30.00, '', 0, '5'), // tax_id=5 = Exempt
@@ -631,7 +636,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($expected_exempt, $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_zero_rated_uses_exempt_code()
+    public function test_invoice_ninja_to_qb_zero_rated_uses_exempt_code()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Zero Rated Export', 500.00, '', 0, '8'), // tax_id=8 = Zero-rated
@@ -647,7 +652,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($expected_exempt, $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_mixed_taxable_and_exempt_lines()
+    public function test_invoice_ninja_to_qb_mixed_taxable_and_exempt_lines()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Taxable Widget', 100.00, 'HST ON', 13.0),
@@ -673,7 +678,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($expected_hst, $qb_data['Line'][2]['SalesItemLineDetail']['TaxCodeRef']['value']);
     }
 
-    public function test_invoice_ninjaToQb_no_txn_tax_detail_for_canada()
+    public function test_invoice_ninja_to_qb_no_txn_tax_detail_for_canada()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
@@ -686,7 +691,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertArrayNotHasKey('TxnTaxDetail', $qb_data);
     }
 
-    public function test_invoice_ninjaToQb_global_tax_calculation_set_correctly()
+    public function test_invoice_ninja_to_qb_global_tax_calculation_set_correctly()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
@@ -698,7 +703,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals('TaxExcluded', $qb_data['GlobalTaxCalculation']);
     }
 
-    public function test_invoice_ninjaToQb_line_item_amounts_correct()
+    public function test_invoice_ninja_to_qb_line_item_amounts_correct()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Item A', 50.00, 'HST ON', 13.0, '1', 3),
@@ -718,7 +723,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(200.00, $qb_data['Line'][1]['Amount']);
     }
 
-    public function test_invoice_ninjaToQb_line_numbers_sequential()
+    public function test_invoice_ninja_to_qb_line_numbers_sequential()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('One', 10.00, 'HST ON', 13.0),
@@ -733,7 +738,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(3, $qb_data['Line'][2]['LineNum']);
     }
 
-    public function test_invoice_ninjaToQb_includes_metadata()
+    public function test_invoice_ninja_to_qb_includes_metadata()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
@@ -759,13 +764,13 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(50.00, $qb_data['Deposit']);
     }
 
-    public function test_invoice_ninjaToQb_includes_qb_id_for_updates()
+    public function test_invoice_ninja_to_qb_includes_qb_id_for_updates()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
         ]);
 
-        $sync = new InvoiceSync();
+        $sync = new InvoiceSync;
         $sync->qb_id = '777';
         $invoice->sync = $sync;
         $invoice->saveQuietly();
@@ -775,7 +780,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals('777', $qb_data['Id']);
     }
 
-    public function test_invoice_ninjaToQb_no_id_for_new_invoice()
+    public function test_invoice_ninja_to_qb_no_id_for_new_invoice()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
@@ -786,7 +791,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertArrayNotHasKey('Id', $qb_data);
     }
 
-    public function test_invoice_ninjaToQb_discount_line()
+    public function test_invoice_ninja_to_qb_discount_line()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
@@ -809,7 +814,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(10.00, $discount_line['Amount']);
     }
 
-    public function test_invoice_ninjaToQb_percentage_discount()
+    public function test_invoice_ninja_to_qb_percentage_discount()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 200.00, 'HST ON', 13.0),
@@ -828,7 +833,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(15.0, $discount_line['DiscountLineDetail']['DiscountPercent']);
     }
 
-    public function test_invoice_ninjaToQb_apply_tax_after_discount()
+    public function test_invoice_ninja_to_qb_apply_tax_after_discount()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('Product', 100.00, 'HST ON', 13.0),
@@ -839,7 +844,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertTrue($qb_data['ApplyTaxAfterDiscount']);
     }
 
-    public function test_invoice_ninjaToQb_empty_lines_throws_exception()
+    public function test_invoice_ninja_to_qb_empty_lines_throws_exception()
     {
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no valid line items');
@@ -858,7 +863,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
     }
 
-    public function test_invoice_ninjaToQb_rate_fallback_to_taxable_code()
+    public function test_invoice_ninja_to_qb_rate_fallback_to_taxable_code()
     {
         // Line item with a tax rate that doesn't match any entry in tax_rate_map
         [$invoice, $qb_service] = $this->createCanadianInvoice([
@@ -875,7 +880,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($expected_taxable, $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_no_tax_uses_exempt_code()
+    public function test_invoice_ninja_to_qb_no_tax_uses_exempt_code()
     {
         [$invoice, $qb_service] = $this->createCanadianInvoice([
             $this->makeLineItem('No Tax Item', 100.00, '', 0),
@@ -1084,7 +1089,7 @@ class QuickbooksCanadaTest extends TestCase
     public function test_client_sync_qb_id_stored_and_retrieved()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = 'QB-CA-CLIENT-123';
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1097,7 +1102,7 @@ class QuickbooksCanadaTest extends TestCase
     {
         $product = ProductFactory::create($this->company->id, $this->user->id);
         $product->product_key = 'test_sync_product';
-        $sync = new ProductSync();
+        $sync = new ProductSync;
         $sync->qb_id = 'QB-CA-PROD-456';
         $product->sync = $sync;
         $product->saveQuietly();
@@ -1112,7 +1117,7 @@ class QuickbooksCanadaTest extends TestCase
 
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $client->id;
-        $sync = new InvoiceSync();
+        $sync = new InvoiceSync;
         $sync->qb_id = 'QB-CA-INV-789';
         $invoice->sync = $sync;
         $invoice->saveQuietly();
@@ -1258,7 +1263,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals(50.00, floatval(data_get($qb_item, 'PurchaseCost')), 'Cost should match');
         $this->assertEquals('Service', data_get($qb_item, 'Type'), 'Type should be Service');
         $this->assertEquals('true', data_get($qb_item, 'Active'), 'Product should be active');
-        
+
         // Verify income account ID matches what was set
         $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
         $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
@@ -1302,7 +1307,7 @@ class QuickbooksCanadaTest extends TestCase
         $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
         $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
         $this->assertEquals($default_income_account_id, $actual_account_id, 'Should use default income account when product has none set');
-        
+
         // Verify other fields
         $this->assertEquals($unique, data_get($qb_item, 'Name'));
         $this->assertEquals('NonInventory', data_get($qb_item, 'Type'), 'Physical product should be NonInventory');
@@ -1337,12 +1342,12 @@ class QuickbooksCanadaTest extends TestCase
 
         // Verify service type
         $this->assertEquals('Service', data_get($qb_item, 'Type'));
-        
+
         // Verify income account
         $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
         $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
         $this->assertEquals($expected_income_account_id, $actual_account_id);
-        
+
         // Verify all fields
         $this->assertEquals($unique, data_get($qb_item, 'Name'));
         $this->assertEquals('Service product with income account', data_get($qb_item, 'Description'));
@@ -1378,12 +1383,12 @@ class QuickbooksCanadaTest extends TestCase
 
         // Verify physical product type
         $this->assertEquals('NonInventory', data_get($qb_item, 'Type'));
-        
+
         // Verify income account
         $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
         $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
         $this->assertEquals($expected_income_account_id, $actual_account_id);
-        
+
         // Verify all fields
         $this->assertEquals($unique, data_get($qb_item, 'Name'));
         $this->assertEquals('Physical product with income account', data_get($qb_item, 'Description'));
@@ -1469,16 +1474,16 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertEquals($original_values['notes'], data_get($qb_item, 'Description'), 'notes → Description');
         $this->assertEquals($original_values['price'], floatval(data_get($qb_item, 'UnitPrice')), 'price → UnitPrice');
         $this->assertEquals($original_values['cost'], floatval(data_get($qb_item, 'PurchaseCost')), 'cost → PurchaseCost');
-        
+
         // Verify type mapping
         $expected_type = $original_values['tax_id'] == Product::PRODUCT_TYPE_SERVICE ? 'Service' : 'NonInventory';
         $this->assertEquals($expected_type, data_get($qb_item, 'Type'), 'tax_id → Type');
-        
+
         // Verify income account
         $income_account_ref = data_get($qb_item, 'IncomeAccountRef');
         $actual_account_id = is_object($income_account_ref) ? data_get($income_account_ref, 'value') : $income_account_ref;
         $this->assertEquals($original_values['income_account_id'], $actual_account_id, 'income_account_id → IncomeAccountRef.value');
-        
+
         // Verify product is active
         $this->assertEquals('true', data_get($qb_item, 'Active'), 'Product should be active');
     }
@@ -1516,7 +1521,7 @@ class QuickbooksCanadaTest extends TestCase
         $product1 = $product1->fresh();
         $this->assertNotNull($product1->sync->qb_id);
         $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product1->sync->qb_id];
-        
+
         $qb_item1 = $this->qb->sdk->FindById('Item', $product1->sync->qb_id);
         $income_account_ref1 = data_get($qb_item1, 'IncomeAccountRef');
         $account_id1 = is_object($income_account_ref1) ? data_get($income_account_ref1, 'value') : $income_account_ref1;
@@ -1526,7 +1531,7 @@ class QuickbooksCanadaTest extends TestCase
         $product2 = $product2->fresh();
         $this->assertNotNull($product2->sync->qb_id);
         $this->qb_cleanup[] = ['type' => 'Item', 'id' => $product2->sync->qb_id];
-        
+
         $qb_item2 = $this->qb->sdk->FindById('Item', $product2->sync->qb_id);
         $income_account_ref2 = data_get($qb_item2, 'IncomeAccountRef');
         $account_id2 = is_object($income_account_ref2) ? data_get($income_account_ref2, 'value') : $income_account_ref2;
@@ -1632,7 +1637,7 @@ class QuickbooksCanadaTest extends TestCase
         $client->city = 'Montreal';
         $client->state = 'QC';
         $client->postal_code = 'H2X 1Y4';
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1678,7 +1683,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $client_qb_id];
 
         // Store the QB ID on the client
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $client_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1729,7 +1734,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($lines);
 
         // Filter to SalesItemLineDetail lines only (QB adds SubTotalLineDetail automatically)
-        $sales_lines = collect($lines)->filter(fn($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
+        $sales_lines = collect($lines)->filter(fn ($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
         $this->assertCount(2, $sales_lines);
 
         // Verify first line: 100 * 2 = 200
@@ -1836,7 +1841,7 @@ class QuickbooksCanadaTest extends TestCase
 
         // 6. Verify the product item ref on the line
         $lines = collect(data_get($qb_inv, 'Line'))
-            ->filter(fn($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
+            ->filter(fn ($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
         $this->assertCount(1, $lines);
 
         $line = $lines->first();
@@ -1889,7 +1894,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($qb_id, "Failed to push client '{$name}' to QuickBooks");
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $qb_id];
 
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1940,7 +1945,7 @@ class QuickbooksCanadaTest extends TestCase
                             }
                         }
 
-                        $update = \QuickBooksOnline\API\Facades\Customer::create($update_data);
+                        $update = Customer::create($update_data);
                         $this->qb->sdk->Update($update);
                     }
                 } elseif ($type === 'Item') {
@@ -1964,7 +1969,7 @@ class QuickbooksCanadaTest extends TestCase
                             $update_data['ExpenseAccountRef'] = $expense_account_ref;
                         }
 
-                        $update = \QuickBooksOnline\API\Facades\Item::create($update_data);
+                        $update = Item::create($update_data);
                         $this->qb->sdk->Update($update);
                     }
                 } elseif ($type === 'Payment') {
@@ -2037,7 +2042,7 @@ class QuickbooksCanadaTest extends TestCase
     /**
      * Create an invoice with line items using the real QuickbooksService.
      *
-     * @param array $line_items Array of stdClass line items
+     * @param  array  $line_items  Array of stdClass line items
      * @return array [Invoice, QuickbooksService]
      */
     private function createCanadianInvoice(array $line_items): array
@@ -2085,14 +2090,13 @@ class QuickbooksCanadaTest extends TestCase
         $contact->saveQuietly();
 
         $client = $client->fresh();
-        
+
         // Push client to QuickBooks to get the actual QB ID
         $actual_qb_id = $this->qb->client->createQbClient($client);
         $this->assertNotEmpty($actual_qb_id, "Failed to push client '{$client->name}' to QuickBooks");
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $actual_qb_id];
 
-        
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $actual_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -2134,7 +2138,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($client_qb_id);
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $client_qb_id];
 
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $client_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -2162,7 +2166,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2277,7 +2281,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2324,7 +2328,7 @@ class QuickbooksCanadaTest extends TestCase
 
         // Verify partial payment mapping
         $this->assertEquals($partial_amount, floatval(data_get($qb_payment, 'TotalAmt')), 'TotalAmt should match partial payment amount');
-        
+
         // Verify payment line item
         $lines = data_get($qb_payment, 'Line', []) ?? [];
         // QB can return a single object or an array; normalize to array
@@ -2384,7 +2388,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2440,14 +2444,14 @@ class QuickbooksCanadaTest extends TestCase
 
         // Refresh payment - QB ID is cleared after successful void
         $payment = $payment->fresh();
-        
+
         // Verify void was successful by checking that sync->qb_id was cleared (happens after successful void)
         $this->assertEmpty($payment->sync->qb_id ?? '', 'Payment QB ID should be cleared after successful void');
-        
+
         // Verify payment is voided in QuickBooks (using stored QB ID since sync->qb_id is cleared)
         $qb_payment = $this->qb->sdk->FindById('Payment', $payment_qb_id);
         $this->assertNotNull($qb_payment, 'Payment should still exist in QuickBooks (voided)');
-        
+
         // QuickBooks SDK may return TxnStatus as object property or nested field
         // Note: Some QuickBooks API versions may not return TxnStatus directly, but the void operation
         // is successful if the payment's sync->qb_id was cleared (which we verified above)
@@ -2504,7 +2508,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2561,14 +2565,14 @@ class QuickbooksCanadaTest extends TestCase
 
         // Refresh payment - QB ID is cleared after successful void
         $payment = $payment->fresh();
-        
+
         // Verify void was successful by checking that sync->qb_id was cleared
         $this->assertEmpty($payment->sync->qb_id ?? '', 'Payment QB ID should be cleared after successful void');
-        
+
         // Verify payment is voided in QuickBooks (using stored QB ID since sync->qb_id is cleared)
         $qb_payment = $this->qb->sdk->FindById('Payment', $payment_qb_id);
         $this->assertNotNull($qb_payment, 'Payment should still exist in QuickBooks (voided)');
-        
+
         // QuickBooks SDK may not always return TxnStatus, but void is verified by sync clearing
         $txn_status = data_get($qb_payment, 'TxnStatus') ?? data_get($qb_payment, 'TxnStatus.value') ?? null;
         if ($txn_status !== null) {
@@ -2613,7 +2617,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2735,7 +2739,7 @@ class QuickbooksCanadaTest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2810,23 +2814,23 @@ class QuickbooksCanadaTest extends TestCase
         // Void the first payment
         $payment1->status_id = Payment::STATUS_CANCELLED;
         $payment1->saveQuietly();
-        
+
         // Store QB ID before voiding (it gets cleared after successful void)
         $payment1_qb_id = $payment1->sync->qb_id;
         $this->assertNotEmpty($payment1_qb_id, 'First payment should have QB ID before voiding');
-        
+
         $this->qb->payment->syncToForeign([$payment1]);
-        
+
         // Refresh payment - QB ID is cleared after successful void
         $payment1 = $payment1->fresh();
-        
+
         // Verify void was successful by checking that sync->qb_id was cleared
         $this->assertEmpty($payment1->sync->qb_id ?? '', 'First payment QB ID should be cleared after successful void');
 
         // Verify first payment is voided in QuickBooks (using stored QB ID)
         $qb_payment1 = $this->qb->sdk->FindById('Payment', $payment1_qb_id);
         $this->assertNotNull($qb_payment1, 'First payment should still exist in QuickBooks (voided)');
-        
+
         // QuickBooks SDK may not always return TxnStatus
         $txn_status1 = data_get($qb_payment1, 'TxnStatus') ?? data_get($qb_payment1, 'TxnStatus.value') ?? null;
         if ($txn_status1 !== null) {

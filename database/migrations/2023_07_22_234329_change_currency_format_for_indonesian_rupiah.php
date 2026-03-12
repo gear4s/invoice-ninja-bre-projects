@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -10,18 +12,18 @@ return new class extends Migration {
      */
     public function up()
     {
-        $ir = \App\Models\Currency::query()->where('code', 'IDR')->first();
+        $ir = Currency::query()->where('code', 'IDR')->first();
 
-        if($ir) {
+        if ($ir) {
             $ir->thousand_separator = '.';
             $ir->decimal_separator = ',';
             $ir->save();
         }
 
-        $ld = \App\Models\Currency::find(115);
+        $ld = Currency::find(115);
 
-        if(!$ld) {
-            $ld = new \App\Models\Currency();
+        if (!$ld) {
+            $ld = new Currency;
             $ld->id = 115;
             $ld->code = 'LYD';
             $ld->name = 'Libyan Dinar';

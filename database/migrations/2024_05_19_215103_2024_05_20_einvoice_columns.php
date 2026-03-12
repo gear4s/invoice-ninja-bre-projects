@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::table('companies', function (Blueprint $table) {
             $table->mediumText('e_invoice')->nullable();
         });
-        
+
         Schema::table('invoices', function (Blueprint $table) {
             $table->mediumText('e_invoice')->nullable();
         });

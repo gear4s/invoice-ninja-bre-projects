@@ -3,7 +3,8 @@
 use App\Models\GatewayType;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -11,7 +12,7 @@ return new class extends Migration {
      */
     public function up()
     {
-        $type = new GatewayType();
+        $type = new GatewayType;
 
         $type->id = 18;
         $type->alias = 'direct_debit';

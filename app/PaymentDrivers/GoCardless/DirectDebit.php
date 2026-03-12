@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,9 +28,11 @@ use App\PaymentDrivers\Common\MethodInterface;
 use App\PaymentDrivers\GoCardlessPaymentDriver;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\RedirectResponseor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
-class DirectDebit implements MethodInterface, LivewireMethodInterface
+class DirectDebit implements LivewireMethodInterface, MethodInterface
 {
     use MakesHash;
 
@@ -47,8 +48,7 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization for Direct Debit.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponseor|RedirectResponse|void
+     * @return RedirectResponseor|RedirectResponse|void
      */
     public function authorizeView(array $data)
     {
@@ -57,41 +57,42 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
 
     public function billingRequestFlows(array $data)
     {
-        $session_token = \Illuminate\Support\Str::uuid()->toString();
+        $session_token = Str::uuid()->toString();
         $exit_uri = route('client.payment_methods.index');
 
         $verify = $this->go_cardless->company_gateway->getConfigField('verifyBankAccount') ? 'recommended' : 'when_available';
 
         try {
             $response = $this->go_cardless->gateway->billingRequests()->create([
-                "params" => [
-                    "mandate_request" => [
-                        "currency" => auth()->guard('contact')->user()->client->currency()->code,
-                        "verify" => $verify,
+                'params' => [
+                    'mandate_request' => [
+                        'currency' => auth()->guard('contact')->user()->client->currency()->code,
+                        'verify' => $verify,
                     ],
                 ],
             ]);
         } catch (\Throwable $e) {
             nlog($e->getMessage());
+
             return $this->processUnsuccessfulAuthorization($e);
         }
 
         try {
             $brf = $this->go_cardless->gateway->billingRequestFlows()->create([
-                "params" => [
-                    "redirect_uri" => route('client.payment_methods.confirm', [
+                'params' => [
+                    'redirect_uri' => route('client.payment_methods.confirm', [
                         'method' => GatewayType::DIRECT_DEBIT,
                         'session_token' => $session_token,
                         'billing_request' => $response->id,
                         'authorize_then_redirect' => true,
                         'payment_hash' => $this->go_cardless->payment_hash->hash ?? '',
                     ]),
-                    "exit_uri" => $exit_uri,
-                    "links" => [
-                        "billing_request" => $response->id,
+                    'exit_uri' => $exit_uri,
+                    'links' => [
+                        'billing_request' => $response->id,
                     ],
-                    "show_redirect_buttons" => true,
-                    "show_success_redirect_button" => true,
+                    'show_redirect_buttons' => true,
+                    'show_success_redirect_button' => true,
                 ],
             ]);
 
@@ -99,16 +100,17 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
 
         } catch (\Exception $exception) {
             nlog($exception->getMessage());
+
             return $this->processUnsuccessfulAuthorization($exception);
         }
 
     }
 
-
     /**
      * Handle unsuccessful authorization.
      *
-     * @param \Exception | \Throwable $exception
+     * @param  \Exception | \Throwable  $exception
+     *
      * @throws PaymentFailed
      */
     public function processUnsuccessfulAuthorization($exception)
@@ -128,8 +130,7 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization response for Direct Debit.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse|void
+     * @return RedirectResponse|void
      */
     public function authorizeResponse(Request $request)
     {
@@ -138,7 +139,7 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
 
             $billing_request = $this->go_cardless->gateway->billingRequests()->get($request->billing_request);
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = $billing_request->resources->customer_bank_account->bank_name;
             $payment_meta->type = $this->resolveScheme($billing_request->mandate_request->scheme);
             $payment_meta->state = 'pending';
@@ -158,11 +159,11 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
                 $this->go_cardless->payment_hash = PaymentHash::where('hash', $request->payment_hash)->firstOrFail();
 
                 $data = [
-                    'invoices' => collect($this->go_cardless->payment_hash->data->invoices)->map(fn($invoice) => $invoice->invoice_id)->toArray(),
+                    'invoices' => collect($this->go_cardless->payment_hash->data->invoices)->map(fn ($invoice) => $invoice->invoice_id)->toArray(),
                     'action' => 'payment',
                 ];
 
-                $request = new ProcessInvoicesInBulkRequest();
+                $request = new ProcessInvoicesInBulkRequest;
                 $request->replace($data);
 
                 session()->flash('message', ctrans('texts.payment_method_added'));
@@ -189,11 +190,8 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
         return $type;
     }
 
-
     /**
      * Payment view for Direct Debit.
-     *
-     * @param array $data
      */
     public function paymentView(array $data)
     {
@@ -211,8 +209,8 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
         $this->go_cardless->ensureMandateIsReady($request->source);
 
         $invoice = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->go_cardless->payment_hash->invoices(), 'invoice_id')))
-                          ->withTrashed()
-                          ->first();
+            ->withTrashed()
+            ->first();
 
         if ($invoice) {
             $description = "Invoice {$invoice->number} for {$request->amount} for client {$this->go_cardless->client->present()->name()}";
@@ -251,9 +249,8 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
     /**
      * Handle pending payments for Direct Debit.
      *
-     * @param ResourcesPayment $payment
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  ResourcesPayment  $payment
+     * @return RedirectResponse
      */
     public function processPendingPayment(\GoCardlessPro\Resources\Payment $payment, array $data = [])
     {
@@ -281,7 +278,7 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
     /**
      * Process unsuccessful payments for Direct Debit.
      *
-     * @param ResourcesPayment $payment
+     * @param  ResourcesPayment  $payment
      * @return never
      */
     public function processUnsuccessfulPayment(\GoCardlessPro\Resources\Payment $payment)
@@ -313,7 +310,7 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -321,7 +318,7 @@ class DirectDebit implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

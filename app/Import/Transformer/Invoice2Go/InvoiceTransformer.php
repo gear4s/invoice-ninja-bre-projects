@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,8 +22,7 @@ use Illuminate\Support\Str;
 class InvoiceTransformer extends BaseTransformer
 {
     /**
-     * @param $line_items_data
-     *
+     * @param  $line_items_data
      * @return bool|array
      */
     private $is_amount_discount = false;
@@ -41,7 +39,7 @@ class InvoiceTransformer extends BaseTransformer
 
         $invoiceStatusMap = [
             'unsent' => Invoice::STATUS_DRAFT,
-            'sent'   => Invoice::STATUS_SENT,
+            'sent' => Invoice::STATUS_SENT,
             'fully_paid' => Invoice::STATUS_PAID,
         ];
 
@@ -50,16 +48,16 @@ class InvoiceTransformer extends BaseTransformer
         $transformed = [
             'is_amount_discount' => $this->is_amount_discount,
             'discount' => $this->getFloat($invoice_data, 'Discount'),
-            'company_id'  => $this->company->id,
-            'number'      => $this->getString($invoice_data, 'DocumentNumber'),
-            'public_notes'       => $this->getString($invoice_data, 'Comment'),
-            'date'        => isset($invoice_data['DocumentDate']) ? $this->parseDate($invoice_data['DocumentDate']) : null,
+            'company_id' => $this->company->id,
+            'number' => $this->getString($invoice_data, 'DocumentNumber'),
+            'public_notes' => $this->getString($invoice_data, 'Comment'),
+            'date' => isset($invoice_data['DocumentDate']) ? $this->parseDate($invoice_data['DocumentDate']) : null,
             // 'currency_id' => $this->getCurrencyByCode( $invoice_data, 'Currency' ),
-            'amount'      => $this->getFloat($invoice_data, 'TotalAmount'),
-            'status_id'   => $invoiceStatusMap[$status
+            'amount' => $this->getFloat($invoice_data, 'TotalAmount'),
+            'status_id' => $invoiceStatusMap[$status
                     = strtolower($this->getString($invoice_data, 'DocumentStatus'))] ?? Invoice::STATUS_SENT,
             // 'viewed'      => $status === 'viewed',
-            'line_items'  => $this->harvestLineItems($invoice_data),
+            'line_items' => $this->harvestLineItems($invoice_data),
         ];
 
         $client_id = null;
@@ -74,17 +72,17 @@ class InvoiceTransformer extends BaseTransformer
             $transformed['client_id'] = $client_id;
         }
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->currency_id = $this->getCurrencyByCode($invoice_data, 'Currency');
 
         $transformed['client'] = [
-            'name'              => $this->getString($invoice_data, 'Name'),
-            'address1'          => $this->getString($invoice_data, 'DocumentRecipientAddress'),
+            'name' => $this->getString($invoice_data, 'Name'),
+            'address1' => $this->getString($invoice_data, 'DocumentRecipientAddress'),
             'shipping_address1' => $this->getString($invoice_data, 'ShipAddress'),
-            'credit_balance'    => 0,
-            'settings'          => $settings,
-            'client_hash'       => Str::random(40),
-            'contacts'          => [
+            'credit_balance' => 0,
+            'settings' => $settings,
+            'client_hash' => Str::random(40),
+            'contacts' => [
                 [
                     'email' => $this->getString($invoice_data, 'EmailRecipient'),
                 ],
@@ -95,17 +93,17 @@ class InvoiceTransformer extends BaseTransformer
 
         $transformed['client'] = array_merge($transformed['client'], $addresses);
 
-        if (! empty($invoice_data['Date Paid'])) {
+        if (!empty($invoice_data['Date Paid'])) {
             $transformed['payments'] = [
                 [
-                    'date'   => $this->parseDate($invoice_data['DatePaid']),
+                    'date' => $this->parseDate($invoice_data['DatePaid']),
                     'amount' => $this->getFloat($invoice_data, 'Payments'),
                 ],
             ];
         } elseif (isset($invoice_data['AmountPaidAmount']) && isset($invoice_data['DatePaid'])) {
             $transformed['payments'] = [
                 [
-                    'date'   => $this->parseDate($invoice_data['DatePaid']),
+                    'date' => $this->parseDate($invoice_data['DatePaid']),
                     'amount' => $this->getFloat($invoice_data, 'AmountPaidAmount'),
                 ],
             ];
@@ -113,7 +111,7 @@ class InvoiceTransformer extends BaseTransformer
 
             $transformed['payments'] = [
                 [
-                    'date'   => isset($invoice_data['DatePaid']) ? $this->parseDate($invoice_data['DatePaid']) : ($this->parseDate($invoice_data['DocumentDate']) ?? now()->format('Y-m-d')),
+                    'date' => isset($invoice_data['DatePaid']) ? $this->parseDate($invoice_data['DatePaid']) : ($this->parseDate($invoice_data['DocumentDate']) ?? now()->format('Y-m-d')),
                     'amount' => $this->getFloat($invoice_data, 'TotalAmount'),
                 ],
             ];
@@ -122,7 +120,6 @@ class InvoiceTransformer extends BaseTransformer
 
         return $transformed;
     }
-
 
     private function harvestAddresses($invoice_data)
     {
@@ -134,7 +131,7 @@ class InvoiceTransformer extends BaseTransformer
         if (count($lines) == 2) {
             $billing_address['address1'] = $lines[0];
 
-            $parts = explode(",", $lines[1]);
+            $parts = explode(',', $lines[1]);
 
             if (count($parts) == 3) {
                 $billing_address['city'] = $parts[0];
@@ -152,7 +149,7 @@ class InvoiceTransformer extends BaseTransformer
         if (count($lines) == 2) {
             $shipping_address['address1'] = $lines[0];
 
-            $parts = explode(",", $lines[1]);
+            $parts = explode(',', $lines[1]);
 
             if (count($parts) == 3) {
                 $shipping_address['shipping_city'] = $parts[0];
@@ -160,13 +157,11 @@ class InvoiceTransformer extends BaseTransformer
                 $shipping_address['shipping_postal_code'] = $parts[2];
             }
 
-
         }
 
         return array_merge($billing_address, $shipping_address);
 
     }
-
 
     /*
 
@@ -184,17 +179,15 @@ class InvoiceTransformer extends BaseTransformer
 
     */
 
-
-
     private function harvestLineItems(array $invoice_data): array
     {
 
         $default_data
             = [
                 [
-                    'cost'             	  => $this->getFloat($invoice_data, 'TotalAmount'),
-                    'quantity'           => 1,
-                    'discount'           => $this->getFloat($invoice_data, 'DiscountValue'),
+                    'cost' => $this->getFloat($invoice_data, 'TotalAmount'),
+                    'quantity' => 1,
+                    'discount' => $this->getFloat($invoice_data, 'DiscountValue'),
                     'is_amount_discount' => false,
                 ],
             ];
@@ -240,16 +233,12 @@ class InvoiceTransformer extends BaseTransformer
 
     }
 
-
     /**
      * Parse a nested tax field from Invoice2Go CSV.
      *
      * The tax column arrives as an array after placeholder replacement,
      * containing a semicolon-separated string like "rate,name;10,GST".
      * This converts it into an associative array: ['rate' => '10', 'name' => 'GST'].
-     *
-     * @param array $field
-     * @return array|string
      */
     private function parseNestedTaxField(array $field): array|string
     {
@@ -257,14 +246,14 @@ class InvoiceTransformer extends BaseTransformer
             return '';
         }
 
-        $csv = str_getcsv($field[0], ";");
+        $csv = str_getcsv($field[0], ';');
 
         if (count($csv) < 2 || empty($csv[0]) || empty($csv[1])) {
             return '';
         }
 
-        $keys = explode(",", $csv[0]);
-        $values = explode(",", $csv[1]);
+        $keys = explode(',', $csv[0]);
+        $values = explode(',', $csv[1]);
 
         if (count($keys) !== count($values)) {
             return '';
@@ -304,7 +293,6 @@ class InvoiceTransformer extends BaseTransformer
             }
         }
 
-
         foreach ($parsedRows as $key => &$row) {
 
             if ($key == 0) {
@@ -328,6 +316,4 @@ class InvoiceTransformer extends BaseTransformer
 
         return $parsedRows;
     }
-
-
 }

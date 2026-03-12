@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,7 +28,7 @@ class ClientStatement extends Mailable
     /**
      * Get the message envelope.
      *
-     * @return \Illuminate\Mail\Mailables\Envelope
+     * @return Envelope
      */
     public function envelope()
     {
@@ -46,7 +45,7 @@ class ClientStatement extends Mailable
     /**
      * Get the message content definition.
      *
-     * @return \Illuminate\Mail\Mailables\Content
+     * @return Content
      */
     public function content()
     {
@@ -77,8 +76,8 @@ class ClientStatement extends Mailable
 
         foreach ($this->data['attachments'] as $attachment) {
             $array_of_attachments[]
-                    = Attachment::fromData(fn() => base64_decode($attachment['file']), $attachment['name'])
-                              ->withMime('application/pdf');
+                    = Attachment::fromData(fn () => base64_decode($attachment['file']), $attachment['name'])
+                        ->withMime('application/pdf');
         }
 
         return $array_of_attachments;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,6 +27,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Square\SquareClient;
 
 class SquareWebhook implements ShouldQueue
 {
@@ -45,7 +45,7 @@ class SquareWebhook implements ShouldQueue
 
     public SquarePaymentDriver $driver;
 
-    public \Square\SquareClient $square;
+    public SquareClient $square;
 
     private array $source_type = [
         'CARD' => PaymentType::CREDIT_CARD_OTHER,
@@ -61,7 +61,7 @@ class SquareWebhook implements ShouldQueue
 
     public function handle()
     {
-        nlog("Square Webhook");
+        nlog('Square Webhook');
 
         MultiDB::findAndSetDbByCompanyKey($this->company_key);
 
@@ -84,7 +84,7 @@ class SquareWebhook implements ShouldQueue
         };
 
         if (!$payment_status) {
-            nlog("Square Webhook - Payment Status Not Found or not worthy of processing");
+            nlog('Square Webhook - Payment Status Not Found or not worthy of processing');
             nlog($this->webhook_array);
         }
 
@@ -117,24 +117,25 @@ class SquareWebhook implements ShouldQueue
 
     }
 
-    private function retrieveOrCreatePayment(?string $payment_reference, int $payment_status): ?\App\Models\Payment
+    private function retrieveOrCreatePayment(?string $payment_reference, int $payment_status): ?Payment
     {
 
         $payment = Payment::withTrashed()->where('transaction_reference', $payment_reference)->first();
 
         if ($payment) {
-            nlog("payment found, returning");
+            nlog('payment found, returning');
+
             return $payment;
         }
 
         /** Handles the edge case where for some reason the payment has not yet been recorded in Invoice Ninja */
         $apiResponse = $this->square->getPaymentsApi()->getPayment($payment_reference);
 
-        nlog("searching square for payment");
+        nlog('searching square for payment');
 
         if ($apiResponse->isSuccess()) {
 
-            nlog("Searching by payment hash");
+            nlog('Searching by payment hash');
 
             $payment_hash_id = $apiResponse->getResult()->getPayment()->getReferenceId() ?? false;
             $square_payment = $apiResponse->getResult()->getPayment()->jsonSerialize();
@@ -155,7 +156,7 @@ class SquareWebhook implements ShouldQueue
 
             $payment = $this->driver->createPayment($data, $payment_status);
 
-            nlog("Creating payment");
+            nlog('Creating payment');
 
             SystemLogger::dispatch(
                 ['response' => $this->webhook_array, 'data' => $square_payment],
@@ -171,6 +172,7 @@ class SquareWebhook implements ShouldQueue
         } else {
             nlog("Square Webhook - Payment not found: {$payment_reference}");
             nlog($apiResponse->getErrors());
+
             return null;
         }
     }

@@ -6,29 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Scheduler;
 
-use Tests\TestCase;
-use App\Models\Scheduler;
-use Tests\MockAccountData;
-use App\Utils\Traits\MakesHash;
 use App\Models\RecurringInvoice;
+use App\Models\Scheduler;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *   App\Services\Scheduler\EmailRecord
  */
 class ScheduleEntityTest extends TestCase
 {
     use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -43,7 +42,7 @@ class ScheduleEntityTest extends TestCase
         );
     }
 
-    public function testEmailRecordSchedulerWithTemplatesNoTemplatePropAsBlank()
+    public function test_email_record_scheduler_with_templates_no_template_prop_as_blank()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -53,7 +52,7 @@ class ScheduleEntityTest extends TestCase
             'parameters' => [
                 'entity' => 'invoice',
                 'entity_id' => $this->invoice->hashed_id,
-                'template' => "",
+                'template' => '',
             ],
         ]);
 
@@ -63,19 +62,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-
-    public function testEmailRecordSchedulerWithTemplatesNoTemplatePropAsNull()
+    public function test_email_record_scheduler_with_templates_no_template_prop_as_null()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -95,18 +93,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-    public function testEmailRecordSchedulerWithTemplatesNoTemplateDefined()
+    public function test_email_record_scheduler_with_templates_no_template_defined()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -125,18 +123,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-    public function testEmailRecordSchedulerWithTemplatesPurchaseOrder()
+    public function test_email_record_scheduler_with_templates_purchase_order()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -156,18 +154,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-    public function testEmailRecordSchedulerWithTemplatesCredit()
+    public function test_email_record_scheduler_with_templates_credit()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -187,18 +185,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-    public function testEmailRecordSchedulerWithTemplatesQuote()
+    public function test_email_record_scheduler_with_templates_quote()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -218,18 +216,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-    public function testEmailRecordSchedulerWithTemplates()
+    public function test_email_record_scheduler_with_templates()
     {
         $scheduler = Scheduler::make([
             'name' => 'A test entity email scheduler',
@@ -249,18 +247,18 @@ class ScheduleEntityTest extends TestCase
 
         $this->assertNotNull($scheduler);
         $this->assertDatabaseHas('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
         $scheduler->service()->runTask();
 
         $this->assertDatabaseMissing('schedulers', [
-            'id' => $scheduler->id
+            'id' => $scheduler->id,
         ]);
 
     }
 
-    public function testSchedulerStoreAndUpdateWithTemplate()
+    public function test_scheduler_store_and_update_with_template()
     {
 
         $data = [
@@ -276,7 +274,7 @@ class ScheduleEntityTest extends TestCase
         ];
 
         $this->assertEquals(5, RecurringInvoice::FREQUENCY_MONTHLY);
-        
+
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -310,7 +308,7 @@ class ScheduleEntityTest extends TestCase
         $this->assertEquals('reminder1', $response->json('data.parameters.template'));
     }
 
-    public function testSchedulerStore()
+    public function test_scheduler_store()
     {
 
         $data = [
@@ -333,8 +331,7 @@ class ScheduleEntityTest extends TestCase
 
     }
 
-
-    public function testSchedulerStore2()
+    public function test_scheduler_store2()
     {
 
         $data = [
@@ -357,7 +354,7 @@ class ScheduleEntityTest extends TestCase
 
     }
 
-    public function testSchedulerStore4()
+    public function test_scheduler_store4()
     {
 
         $data = [
@@ -378,6 +375,4 @@ class ScheduleEntityTest extends TestCase
         $response->assertStatus(200);
 
     }
-
-
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,6 +24,7 @@ use App\Utils\Traits\MakesDates;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Notifications\UserNotifies;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /**
@@ -32,8 +32,8 @@ use Illuminate\View\View;
  */
 class RecurringInvoiceController extends Controller
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
     use UserNotifies;
 
     /**
@@ -49,8 +49,6 @@ class RecurringInvoiceController extends Controller
     /**
      * Display the recurring invoice.
      *
-     * @param ShowRecurringInvoiceRequest $request
-     * @param RecurringInvoice $recurring_invoice
      *
      * @return Factory|View
      */
@@ -64,15 +62,14 @@ class RecurringInvoiceController extends Controller
     /**
      * Handle the request cancellation notification
      *
-     * @param  RequestCancellationRequest $request           [description]
-     * @param  RecurringInvoice           $recurring_invoice [description]
-     *
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     * @param  RequestCancellationRequest  $request  [description]
+     * @param  RecurringInvoice  $recurring_invoice  [description]
+     * @return RedirectResponse|View
      */
     public function requestCancellation(RequestCancellationRequest $request, RecurringInvoice $recurring_invoice)
     {
         if ($recurring_invoice->subscription?->allow_cancellation) {
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = (new NinjaMailer((new ClientContactRequestCancellationObject($recurring_invoice, auth()->user(), false))->build()));
             $nmo->company = $recurring_invoice->company;
             $nmo->settings = $recurring_invoice->company->settings;
@@ -80,7 +77,7 @@ class RecurringInvoiceController extends Controller
             $recurring_invoice->company->company_users->each(function ($company_user) use ($nmo) {
                 $methods = $this->findCompanyUserNotificationType($company_user, ['recurring_cancellation', 'all_notifications']);
 
-                //if mail is a method type -fire mail!!
+                // if mail is a method type -fire mail!!
                 if (($key = array_search('mail', $methods)) !== false) {
                     unset($methods[$key]);
 

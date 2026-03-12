@@ -2,30 +2,11 @@
 
 namespace Tests\Feature\Import\Quickbooks;
 
-use Mockery;
-use Tests\TestCase;
-use ReflectionClass;
-use App\Models\Client;
 use App\Models\Company;
-use App\Models\Invoice;
-use App\Models\Product;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\ClientContact;
-use App\DataMapper\ClientSync;
-use App\DataMapper\InvoiceItem;
-use App\DataMapper\InvoiceSync;
-use App\DataMapper\ProductSync;
-use App\Utils\Traits\MakesHash;
-use App\Import\Providers\Quickbooks;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use QuickBooksOnline\API\Facades\Item;
-use App\Import\Transformer\BaseTransformer;
 use App\Services\Quickbooks\QuickbooksService;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use QuickBooksOnline\API\Facades\Invoice as QbInvoice;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Utils\Traits\MakesHash;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class QuickbooksExportTest extends TestCase
 {
@@ -37,7 +18,6 @@ class QuickbooksExportTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
 
         if (config('ninja.testvars.travis') || !config('services.quickbooks.client_id')) {
             $this->markTestSkipped('No Quickbooks Client ID found');
@@ -52,7 +32,7 @@ class QuickbooksExportTest extends TestCase
         $this->qb = new QuickbooksService($company);
     }
 
-    public function testImportProducts()
+    public function test_import_products()
     {
         $entity = 'Product';
 
@@ -85,8 +65,5 @@ class QuickbooksExportTest extends TestCase
 
         }
 
-
-
     }
-
 }

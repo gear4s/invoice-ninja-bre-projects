@@ -6,27 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Factory\InvoiceItemFactory;
 use App\Factory\CloneQuoteToInvoiceFactory;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Factory\InvoiceItemFactory;
+use App\Models\Invoice;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
-/**
- *
- */
 class CloneQuoteToInvoiceFactoryTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,7 +33,7 @@ class CloneQuoteToInvoiceFactoryTest extends TestCase
         Model::reguard();
     }
 
-    public function testCloneItemSanityInvoice()
+    public function test_clone_item_sanity_invoice()
     {
 
         $line_items = [];
@@ -97,36 +94,33 @@ class CloneQuoteToInvoiceFactoryTest extends TestCase
         $this->assertCount(2, $data['data']['line_items']);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/quotes?mark_sent=true', $dataX);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/quotes?mark_sent=true', $dataX);
 
         $response->assertStatus(200);
 
         $data = $response->json();
 
         $this->assertCount(2, $data['data']['line_items']);
-
-
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/credits?mark_sent=true', $dataX);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/credits?mark_sent=true', $dataX);
 
         $response->assertStatus(200);
 
         $data = $response->json();
 
         $this->assertCount(2, $data['data']['line_items']);
-
 
         $dataX['frequency_id'] = 1;
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/recurring_invoices?mark_sent=true', $dataX);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/recurring_invoices?mark_sent=true', $dataX);
 
         $response->assertStatus(200);
 
@@ -138,9 +132,9 @@ class CloneQuoteToInvoiceFactoryTest extends TestCase
         $dataX['vendor_id'] = $this->vendor->hashed_id;
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/purchase_orders?mark_sent=true', $dataX);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/purchase_orders?mark_sent=true', $dataX);
 
         $response->assertStatus(200);
 
@@ -150,7 +144,7 @@ class CloneQuoteToInvoiceFactoryTest extends TestCase
 
     }
 
-    public function testCloneProperties()
+    public function test_clone_properties()
     {
         $invoice = CloneQuoteToInvoiceFactory::create($this->quote, $this->quote->user_id);
 
@@ -159,7 +153,7 @@ class CloneQuoteToInvoiceFactoryTest extends TestCase
         $this->assertNull($invoice->number);
     }
 
-    public function testQuoteToInvoiceConversionService()
+    public function test_quote_to_invoice_conversion_service()
     {
         $invoice = $this->quote->service()->convertToInvoice();
 

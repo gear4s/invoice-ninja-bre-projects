@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,13 +19,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Models\CompanyGateway
  */
 class CompanyGatewayTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
     // use RefreshDatabase;
 
     protected function setUp(): void
@@ -35,18 +33,18 @@ class CompanyGatewayTest extends TestCase
 
         $this->makeTestData();
 
-        if (! config('ninja.testvars.stripe')) {
+        if (!config('ninja.testvars.stripe')) {
             $this->markTestSkipped('Skip test no company gateways installed');
         }
     }
 
-    public function testGatewayExists()
+    public function test_gateway_exists()
     {
         $company_gateway = CompanyGateway::first();
         $this->assertNotNull($company_gateway);
     }
 
-    public function testSetConfigFields()
+    public function test_set_config_fields()
     {
         $company_gateway = CompanyGateway::first();
 
@@ -62,7 +60,7 @@ class CompanyGatewayTest extends TestCase
 
     }
 
-    public function testFeesAndLimitsExists()
+    public function test_fees_and_limits_exists()
     {
         $data = [];
         $data[1]['min_limit'] = 234;
@@ -79,7 +77,7 @@ class CompanyGatewayTest extends TestCase
         $data[1]['fee_cap'] = 0;
         $data[1]['is_enabled'] = true;
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -98,7 +96,7 @@ class CompanyGatewayTest extends TestCase
 
         $this->assertNotNull($fees_and_limits);
 
-        //confirm amount filtering works
+        // confirm amount filtering works
         $amount = 100;
 
         $this->assertFalse($this->checkSieve($cg, $amount));
@@ -122,10 +120,10 @@ class CompanyGatewayTest extends TestCase
         }
 
         if ((property_exists($fees_and_limits, 'min_limit')) && $fees_and_limits->min_limit !== null && $amount < $fees_and_limits->min_limit) {
-            nlog("amount {$amount} less than ".$fees_and_limits->min_limit);
+            nlog("amount {$amount} less than " . $fees_and_limits->min_limit);
             $passes = false;
         } elseif ((property_exists($fees_and_limits, 'max_limit')) && $fees_and_limits->max_limit !== null && $amount > $fees_and_limits->max_limit) {
-            nlog("amount {$amount} greater than ".$fees_and_limits->max_limit);
+            nlog("amount {$amount} greater than " . $fees_and_limits->max_limit);
             $passes = false;
         } else {
             $passes = true;
@@ -134,7 +132,7 @@ class CompanyGatewayTest extends TestCase
         return $passes;
     }
 
-    public function testFeesAreAppendedToInvoice() //after refactor this may be redundant
+    public function test_fees_are_appended_to_invoice() // after refactor this may be redundant
     {
         $data = [];
         $data[1]['min_limit'] = -1;
@@ -151,7 +149,7 @@ class CompanyGatewayTest extends TestCase
         $data[1]['fee_cap'] = 0;
         $data[1]['is_enabled'] = true;
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -173,7 +171,7 @@ class CompanyGatewayTest extends TestCase
         $this->assertEquals(($balance + 1), $this->invoice->balance);
     }
 
-    public function testGatewayFeesAreClearedAppropriately()
+    public function test_gateway_fees_are_cleared_appropriately()
     {
         $data = [];
         $data[1]['min_limit'] = -1;
@@ -190,7 +188,7 @@ class CompanyGatewayTest extends TestCase
         $data[1]['fee_cap'] = 0;
         $data[1]['is_enabled'] = true;
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -214,7 +212,7 @@ class CompanyGatewayTest extends TestCase
 
     }
 
-    public function testMarkPaidAdjustsGatewayFeeAppropriately()
+    public function test_mark_paid_adjusts_gateway_fee_appropriately()
     {
         $data = [];
         $data[1]['min_limit'] = -1;
@@ -231,7 +229,7 @@ class CompanyGatewayTest extends TestCase
         $data[1]['fee_cap'] = 0;
         $data[1]['is_enabled'] = true;
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -260,9 +258,7 @@ class CompanyGatewayTest extends TestCase
         $this->assertEquals($wiped_balance, $i->amount);
     }
 
-
-
-    public function testProRataGatewayFees()
+    public function test_pro_rata_gateway_fees()
     {
         $data = [];
         $data[1]['min_limit'] = -1;
@@ -279,7 +275,7 @@ class CompanyGatewayTest extends TestCase
         $data[1]['fee_cap'] = 0;
         $data[1]['is_enabled'] = true;
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -297,7 +293,7 @@ class CompanyGatewayTest extends TestCase
 
         $this->assertEquals(1.58, $total_gateway_fee);
 
-        /*simple pro rata*/
+        /* simple pro rata */
         $fees_and_limits = $cg->getFeesAndLimits(GatewayType::CREDIT_CARD);
     }
 }

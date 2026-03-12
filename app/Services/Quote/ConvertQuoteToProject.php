@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -33,7 +32,7 @@ class ConvertQuoteToProject
         });
 
         $project = ProjectFactory::create($this->quote->company_id, $this->quote->user_id);
-        $project->name = ctrans('texts.quote_number_short') . " " . $this->quote->number . " [{$this->quote->client->present()->name()}]";
+        $project->name = ctrans('texts.quote_number_short') . ' ' . $this->quote->number . " [{$this->quote->client->present()->name()}]";
         $project->client_id = $this->quote->client_id;
         $project->public_notes = $this->quote->public_notes;
         $project->private_notes = $this->quote->private_notes;
@@ -47,12 +46,11 @@ class ConvertQuoteToProject
         $this->quote->saveQuietly();
 
         $task_status = $this->quote->company->task_statuses()
-                              ->whereNull('deleted_at')
-                              ->orderBy('id', 'asc')
-                              ->first();
+            ->whereNull('deleted_at')
+            ->orderBy('id', 'asc')
+            ->first();
 
-
-        $task_repo = new TaskRepository();
+        $task_repo = new TaskRepository;
 
         $quote_items->each(function ($item) use ($task_repo, $task_status) {
 

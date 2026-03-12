@@ -1,14 +1,13 @@
 <?php
 
 /**
-* Invoice Ninja (https://invoiceninja.com).
-*
-* @link https://github.com/invoiceninja/invoiceninja source repository
-*
-* @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
-*
-* @license https://www.elastic.co/licensing/elastic-license
-*/
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
 
 namespace App\DataProviders;
 
@@ -93941,7 +93940,6 @@ class SMSNumbers
         return $unique_numbers;
     }
 
-
     /**
      * deDupe
      *
@@ -93960,13 +93958,9 @@ class SMSNumbers
             $output .= "    '" . $number . "',\n";
         }
 
-        $output .= "];";
+        $output .= '];';
 
         echo $output;
 
     }
-
-
-
-
 }

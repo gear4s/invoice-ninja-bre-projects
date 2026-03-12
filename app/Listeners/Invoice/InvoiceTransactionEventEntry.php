@@ -6,17 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\Invoice;
 
-use App\Utils\BcMath;
+use App\DataMapper\TransactionEventMetadata;
 use App\Models\Invoice;
 use App\Models\TransactionEvent;
+use App\Utils\BcMath;
 use Illuminate\Support\Collection;
-use App\DataMapper\TransactionEventMetadata;
 
 /**
  * Handles entries for invoices.
@@ -33,7 +32,6 @@ class InvoiceTransactionEventEntry
     /**
      * Handle the event.
      *
-     * @param  Invoice  $invoice
      * @return void
      */
     public function run(?Invoice $invoice, ?string $force_period = null)
@@ -45,16 +43,15 @@ class InvoiceTransactionEventEntry
 
         $this->setPaidRatio($invoice);
 
-        //Long running tasks may spill over into the next day therefore month!
+        // Long running tasks may spill over into the next day therefore month!
         $period = $force_period ?? now()->endOfMonth()->subHours(5)->format('Y-m-d');
 
         $event = $invoice->transaction_events()
-                        ->where('event_id', TransactionEvent::INVOICE_UPDATED)
-                        ->orderBy('timestamp', 'desc')
-                        ->first();
+            ->where('event_id', TransactionEvent::INVOICE_UPDATED)
+            ->orderBy('timestamp', 'desc')
+            ->first();
 
         if ($event) {
-
 
             $this->entry_type = 'delta';
             // nlog($event->period->format('Y-m-d') . " ". $period);
@@ -74,7 +71,7 @@ class InvoiceTransactionEventEntry
                 // Invoice was previously cancelled, and is still cancelled... return early!!
                 return;
             } elseif (!$invoice->is_deleted && $event->metadata->tax_report->tax_summary->status == 'deleted') {
-                //restored invoice must be reported!!!! _do not return early!!
+                // restored invoice must be reported!!!! _do not return early!!
                 $this->entry_type = 'restored';
             } elseif (in_array($invoice->status_id, [Invoice::STATUS_CANCELLED, Invoice::STATUS_REVERSED])) {
                 // Need to ensure first time cancellations are reported.
@@ -87,13 +84,14 @@ class InvoiceTransactionEventEntry
             /** If the invoice hasn't changed its state... return early!! */ elseif (BcMath::comp($invoice->amount, $event->invoice_amount) == 0 || $event->period->format('Y-m-d') == $period) {
                 nlog("event period => {$period} => " . $event->period->format('Y-m-d'));
                 nlog("invoice amount => {$invoice->amount} => " . $event->invoice_amount);
-                nlog("apparently no change in amount or period");
+                nlog('apparently no change in amount or period');
+
                 return;
             }
 
         } elseif ($invoice->is_deleted) {
             // elseif($invoice->is_deleted && \Carbon\Carbon::parse($invoice->date)->lte(\Carbon\Carbon::parse($period))){
-            //If the invoice was created and deleted in the same period, we don't need to report it!!!
+            // If the invoice was created and deleted in the same period, we don't need to report it!!!
             // return;
 
         }
@@ -132,6 +130,7 @@ class InvoiceTransactionEventEntry
     {
         if ($invoice->amount == 0) {
             $this->paid_ratio = 0;
+
             return $this;
         }
 
@@ -145,8 +144,7 @@ class InvoiceTransactionEventEntry
      *
      * Calculates the differential between this period and the previous period.
      *
-     * @param  mixed $invoice
-     *
+     * @param  mixed  $invoice
      */
     private function calculateDeltaMetaData($invoice)
     {
@@ -158,10 +156,9 @@ class InvoiceTransactionEventEntry
 
         $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
         $previous_transaction_event = TransactionEvent::where('event_id', TransactionEvent::INVOICE_UPDATED)
-                                            ->where('invoice_id', $invoice->id)
-                                            ->orderBy('timestamp', 'desc')
-                                            ->first();
-
+            ->where('invoice_id', $invoice->id)
+            ->orderBy('timestamp', 'desc')
+            ->first();
 
         $previous_tax_details = $previous_transaction_event->metadata->tax_report->tax_details;
 
@@ -187,9 +184,9 @@ class InvoiceTransactionEventEntry
 
         // Calculate cumulative previous tax by summing all previous event tax amounts
         $all_events = TransactionEvent::where('event_id', TransactionEvent::INVOICE_UPDATED)
-                                        ->where('invoice_id', $invoice->id)
-                                        ->orderBy('timestamp', 'asc')
-                                        ->get();
+            ->where('invoice_id', $invoice->id)
+            ->orderBy('timestamp', 'asc')
+            ->get();
 
         $cumulative_tax = 0;
         $cumulative_taxable = 0;
@@ -201,7 +198,7 @@ class InvoiceTransactionEventEntry
         return new TransactionEventMetadata([
             'tax_report' => [
                 'tax_details' => $details,
-                'payment_history' => $this->payments->toArray() ?? [], //@phpstan-ignore-line
+                'payment_history' => $this->payments->toArray() ?? [], // @phpstan-ignore-line
                 'tax_summary' => [
                     'taxable_amount' => $calc->getNetSubtotal() - $cumulative_taxable,
                     'tax_amount' => round($calc->getTotalTaxes() - $cumulative_tax, 2),
@@ -236,11 +233,11 @@ class InvoiceTransactionEventEntry
             $details[] = $tax_detail;
         }
 
-        //@todo what happens if this is triggered in the "NEXT FINANCIAL PERIOD?
+        // @todo what happens if this is triggered in the "NEXT FINANCIAL PERIOD?
         return new TransactionEventMetadata([
             'tax_report' => [
                 'tax_details' => $details,
-                'payment_history' => $this->payments->toArray() ?? [], //@phpstan-ignore-line
+                'payment_history' => $this->payments->toArray() ?? [], // @phpstan-ignore-line
                 'tax_summary' => [
                     'taxable_amount' => $calc->getNetSubtotal() * $this->paid_ratio * -1,
                     'tax_amount' => $calc->getTotalTaxes() * $this->paid_ratio * -1,
@@ -254,7 +251,7 @@ class InvoiceTransactionEventEntry
     /**
      * Existing tax details are not deleted, but pending taxes are set to 0
      *
-     * @param  mixed $invoice
+     * @param  mixed  $invoice
      */
     private function getCancelledMetaData($invoice)
     {
@@ -266,7 +263,6 @@ class InvoiceTransactionEventEntry
         $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
 
         $postal_code = $invoice->client->postal_code;
-
 
         foreach ($taxes as $tax) {
             $tax_detail = [
@@ -281,11 +277,11 @@ class InvoiceTransactionEventEntry
             $details[] = $tax_detail;
         }
 
-        //@todo what happens if this is triggered in the "NEXT FINANCIAL PERIOD?
+        // @todo what happens if this is triggered in the "NEXT FINANCIAL PERIOD?
         return new TransactionEventMetadata([
             'tax_report' => [
                 'tax_details' => $details,
-                'payment_history' => $this->payments->toArray() ?? [], //@phpstan-ignore-line
+                'payment_history' => $this->payments->toArray() ?? [], // @phpstan-ignore-line
                 'tax_summary' => [
                     'taxable_amount' => $calc->getNetSubtotal() * $this->paid_ratio,
                     'tax_amount' => $calc->getTotalTaxes() * $this->paid_ratio,
@@ -299,7 +295,7 @@ class InvoiceTransactionEventEntry
     /**
      * Set all tax details to 0
      *
-     * @param  mixed $invoice
+     * @param  mixed  $invoice
      */
     private function getDeletedMetaData($invoice)
     {
@@ -384,5 +380,4 @@ class InvoiceTransactionEventEntry
         ]);
 
     }
-
 }

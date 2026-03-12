@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,10 @@ use Illuminate\Support\Carbon;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class CheckRemindersTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {

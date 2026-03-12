@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -54,7 +53,7 @@ class SendTestEmails extends Command
 
         $to_user = User::first();
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new TestMailServer('Email Server Works!', config('mail.from.address'));
         $nmo->company = $to_user->account->companies()->first();
         $nmo->settings = $to_user->account->companies()->first()->settings;
@@ -62,15 +61,14 @@ class SendTestEmails extends Command
 
         try {
 
-            Mail::raw("Test Message", function ($message) {
+            Mail::raw('Test Message', function ($message) {
                 $message->to(config('mail.from.address'))
-                        ->from(config('mail.from.address'), config('mail.from.name'))
-                        ->subject('Test Email');
+                    ->from(config('mail.from.address'), config('mail.from.name'))
+                    ->subject('Test Email');
             });
 
-
         } catch (\Exception $e) {
-            $this->info("Error sending email: " . $e->getMessage());
+            $this->info('Error sending email: ' . $e->getMessage());
         }
     }
 }

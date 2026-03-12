@@ -5,7 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-//@deprecated
+// @deprecated
 class ResetPasswordNotification extends Notification
 {
     //    use Queueable;
@@ -14,8 +14,6 @@ class ResetPasswordNotification extends Notification
 
     /**
      * Create a new notification instance.
-     *
-     * @param string $token
      */
     public function __construct(string $token)
     {
@@ -37,7 +35,6 @@ class ResetPasswordNotification extends Notification
      * Get the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     *
      */
     public function toMail($notifiable) {}
 

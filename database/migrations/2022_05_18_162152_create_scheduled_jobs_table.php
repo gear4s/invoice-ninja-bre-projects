@@ -1,19 +1,22 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+use App\Models\Company;
+use App\Models\Scheduler;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -26,8 +29,8 @@ return new class extends Migration {
             $table->string('action_name');
             $table->string('action_class');
             $table->mediumText('parameters')->nullable();
-            $table->foreignIdFor(\App\Models\Company::class);
-            $table->foreignIdFor(\App\Models\Scheduler::class);
+            $table->foreignIdFor(Company::class);
+            $table->foreignIdFor(Scheduler::class);
             $table->timestamps();
             $table->softDeletes();
         });

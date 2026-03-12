@@ -2,8 +2,6 @@
 
 use App\Models\Company;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -20,7 +18,7 @@ return new class extends Migration
         //             {
 
         //                 $company->update(['tax_data' => new \App\DataMapper\Tax\TaxModel($company->tax_data)]);
-                        
+
         //             }
 
         //         });

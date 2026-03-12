@@ -6,14 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Peppol;
 
 use App\Models\Invoice;
-use App\Services\EDocument\Standards\Peppol;
 
 class RO extends BaseCountry
 {
@@ -73,50 +71,49 @@ class RO extends BaseCountry
     ];
 
     protected array $sectorCodes = [
-        'RO-AB'  => 'Manufacturing, Agriculture',
-        'RO-AG'  => 'Manufacturing, Agriculture',
-        'RO-AR'  => 'Manufacturing, Agriculture',
-        'RO-B'  => 'Information Technology (IT), Education, Tourism',
-        'RO-BC'  => 'Manufacturing, Agriculture',
-        'RO-BH'  => 'Agriculture, Manufacturing',
-        'RO-BN'  => 'Agriculture',
-        'RO-BR'  => 'Agriculture',
-        'RO-BT'  => 'Agriculture',
-        'RO-BV'  => 'Tourism, Agriculture',
-        'RO-BZ'  => 'Agriculture',
-        'RO-CJ'  => 'Information Technology (IT), Education, Tourism',
-        'RO-CL'  => 'Agriculture',
-        'RO-CS'  => 'Manufacturing, Agriculture',
-        'RO-CT'  => 'Tourism, Agriculture',
-        'RO-CV'  => 'Agriculture',
-        'RO-DB'  => 'Agriculture',
-        'RO-DJ'  => 'Agriculture',
-        'RO-GJ'  => 'Manufacturing, Agriculture',
-        'RO-GL'  => 'Energy, Manufacturing',
-        'RO-GR'  => 'Agriculture',
-        'RO-HD'  => 'Energy, Manufacturing',
-        'RO-HR'  => 'Agriculture',
-        'RO-IF'  => 'Information Technology (IT), Education',
-        'RO-IL'  => 'Agriculture',
-        'RO-IS'  => 'Information Technology (IT), Education, Agriculture',
-        'RO-MH'  => 'Manufacturing, Agriculture',
-        'RO-MM'  => 'Agriculture',
-        'RO-MS'  => 'Energy, Manufacturing, Agriculture',
-        'RO-NT'  => 'Agriculture',
-        'RO-OT'  => 'Agriculture',
-        'RO-PH'  => 'Energy, Manufacturing',
-        'RO-SB'  => 'Manufacturing, Agriculture',
-        'RO-SJ'  => 'Agriculture',
-        'RO-SM'  => 'Agriculture',
-        'RO-SV'  => 'Agriculture',
-        'RO-TL'  => 'Agriculture',
-        'RO-TM'  => 'Agriculture, Manufacturing',
-        'RO-TR'  => 'Agriculture',
-        'RO-VL'  => 'Agriculture',
-        'RO-VN'  => 'Agriculture',
-        'RO-VS'  => 'Agriculture',
+        'RO-AB' => 'Manufacturing, Agriculture',
+        'RO-AG' => 'Manufacturing, Agriculture',
+        'RO-AR' => 'Manufacturing, Agriculture',
+        'RO-B' => 'Information Technology (IT), Education, Tourism',
+        'RO-BC' => 'Manufacturing, Agriculture',
+        'RO-BH' => 'Agriculture, Manufacturing',
+        'RO-BN' => 'Agriculture',
+        'RO-BR' => 'Agriculture',
+        'RO-BT' => 'Agriculture',
+        'RO-BV' => 'Tourism, Agriculture',
+        'RO-BZ' => 'Agriculture',
+        'RO-CJ' => 'Information Technology (IT), Education, Tourism',
+        'RO-CL' => 'Agriculture',
+        'RO-CS' => 'Manufacturing, Agriculture',
+        'RO-CT' => 'Tourism, Agriculture',
+        'RO-CV' => 'Agriculture',
+        'RO-DB' => 'Agriculture',
+        'RO-DJ' => 'Agriculture',
+        'RO-GJ' => 'Manufacturing, Agriculture',
+        'RO-GL' => 'Energy, Manufacturing',
+        'RO-GR' => 'Agriculture',
+        'RO-HD' => 'Energy, Manufacturing',
+        'RO-HR' => 'Agriculture',
+        'RO-IF' => 'Information Technology (IT), Education',
+        'RO-IL' => 'Agriculture',
+        'RO-IS' => 'Information Technology (IT), Education, Agriculture',
+        'RO-MH' => 'Manufacturing, Agriculture',
+        'RO-MM' => 'Agriculture',
+        'RO-MS' => 'Energy, Manufacturing, Agriculture',
+        'RO-NT' => 'Agriculture',
+        'RO-OT' => 'Agriculture',
+        'RO-PH' => 'Energy, Manufacturing',
+        'RO-SB' => 'Manufacturing, Agriculture',
+        'RO-SJ' => 'Agriculture',
+        'RO-SM' => 'Agriculture',
+        'RO-SV' => 'Agriculture',
+        'RO-TL' => 'Agriculture',
+        'RO-TM' => 'Agriculture, Manufacturing',
+        'RO-TR' => 'Agriculture',
+        'RO-VL' => 'Agriculture',
+        'RO-VN' => 'Agriculture',
+        'RO-VS' => 'Agriculture',
     ];
-
 
     public function __construct(protected Invoice $invoice) {}
 
@@ -124,7 +121,7 @@ class RO extends BaseCountry
     {
         $state_code = strlen($state_code ?? '') > 1 ? $state_code : $this->invoice->client->state;
 
-        //codes are configured by default
+        // codes are configured by default
         if (isset($this->countrySubEntity[$state_code])) {
             return $state_code;
         }
@@ -148,5 +145,4 @@ class RO extends BaseCountry
 
         return $client_sector_code;
     }
-
 }

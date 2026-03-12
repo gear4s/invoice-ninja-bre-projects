@@ -6,14 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\DataMapper;
 
-use Illuminate\Contracts\Database\Eloquent\Castable;
 use App\Casts\QuickbooksSettingsCast;
+use Illuminate\Contracts\Database\Eloquent\Castable;
 
 /**
  * QuickbooksSettings.
@@ -75,14 +74,10 @@ class QuickbooksSettings implements Castable
             'settings' => $this->settings->toArray(),
         ];
     }
-    
+
     /**
-     * 
-     * Patches our settings object with the 
+     * Patches our settings object with the
      * selected changes we authorize.
-     *
-     * @param  array $changes
-     * @return self
      */
     public function with(array $changes): self
     {
@@ -107,7 +102,7 @@ class QuickbooksSettings implements Castable
         ];
 
         $final_settings['settings'] = array_merge($settings, $new_settings);
-        
+
         return new self(array_merge($this->toArray(), $final_settings));
     }
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class CloneInvoiceToQuoteFactory
 {
     public static function create(Invoice $invoice, $user_id): ?Quote
     {
-        $quote = new Quote();
+        $quote = new Quote;
         $quote->discount = $invoice->discount;
         $quote->is_amount_discount = $invoice->is_amount_discount;
         $quote->po_number = $invoice->po_number;
@@ -39,7 +38,7 @@ class CloneInvoiceToQuoteFactory
         $quote->custom_value3 = $invoice->custom_value3;
         $quote->custom_value4 = $invoice->custom_value4;
         $quote->amount = $invoice->amount;
-        //$quote->balance = $invoice->amount;
+        // $quote->balance = $invoice->amount;
         $quote->partial = $invoice->partial;
         $quote->partial_due_date = $invoice->partial_due_date;
         $quote->last_viewed = $invoice->last_viewed;

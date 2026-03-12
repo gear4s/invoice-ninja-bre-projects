@@ -6,30 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Helpers\Invoice;
 
-use App\Models\Quote;
-use App\Utils\Number;
 use App\Models\Client;
 use App\Models\Credit;
-use App\Models\Vendor;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
-use App\Models\RecurringQuote;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use Illuminate\Support\Collection;
+use App\Models\RecurringQuote;
+use App\Models\Vendor;
+use App\Utils\Number;
 use App\Utils\Traits\NumberFormatter;
+use Illuminate\Support\Collection;
 
 class InvoiceSumInclusive
 {
-    use Taxer;
     use CustomValuer;
     use Discounter;
     use NumberFormatter;
+    use Taxer;
 
     protected RecurringInvoice|Invoice|Quote|Credit|PurchaseOrder|RecurringQuote $invoice;
 
@@ -56,10 +55,11 @@ class InvoiceSumInclusive
     private Client|Vendor $client;
 
     public InvoiceItemSumInclusive $invoice_items;
+
     /**
      * Constructs the object with Invoice and Settings object.
      *
-     * @param RecurringInvoice | Invoice | Quote | Credit | PurchaseOrder | RecurringQuote $invoice;
+     * @param  RecurringInvoice | Invoice | Quote | Credit | PurchaseOrder | RecurringQuote  $invoice;
      */
     public function __construct($invoice)
     {
@@ -69,19 +69,19 @@ class InvoiceSumInclusive
         $this->precision = $this->client->currency()->precision;
         $this->rappen_rounding = $this->client->getSetting('enable_rappen_rounding');
 
-        $this->tax_map = new Collection();
+        $this->tax_map = new Collection;
     }
 
     public function build()
     {
         $this->calculateLineItems()
-             ->calculateDiscount()
-             ->calculateInvoiceTaxes()
-             ->calculateCustomValues()
-             ->setTaxMap()
-             ->calculateTotals() //just don't add the taxes!!
-             ->calculateBalance()
-             ->calculatePartial();
+            ->calculateDiscount()
+            ->calculateInvoiceTaxes()
+            ->calculateCustomValues()
+            ->setTaxMap()
+            ->calculateTotals() // just don't add the taxes!!
+            ->calculateBalance()
+            ->calculatePartial();
 
         return $this;
     }
@@ -143,11 +143,11 @@ class InvoiceSumInclusive
             $amount = $this->formatValue(($this->sub_total - $this->invoice->discount), 2);
         }
 
-        if ($this->invoice->discount > 0 && ! $this->invoice->is_amount_discount) {
+        if ($this->invoice->discount > 0 && !$this->invoice->is_amount_discount) {
             $amount = $this->formatValue(($this->sub_total - ($this->sub_total * ($this->invoice->discount / 100))), 2);
         }
 
-        //Handles cases where the surcharge is not taxed
+        // Handles cases where the surcharge is not taxed
         if (is_numeric($this->invoice->custom_surcharge1) && $this->invoice->custom_surcharge1 > 0 && $this->invoice->custom_surcharge_tax1) {
             $amount += $this->invoice->custom_surcharge1;
         }
@@ -189,7 +189,7 @@ class InvoiceSumInclusive
     /**
      * Calculates the balance.
      *
-     * @return     self  The balance.
+     * @return self The balance.
      */
     private function calculateBalance()
     {
@@ -200,7 +200,7 @@ class InvoiceSumInclusive
 
     private function calculatePartial()
     {
-        if (! isset($this->invoice->id) && isset($this->invoice->partial)) {
+        if (!isset($this->invoice->id) && isset($this->invoice->partial)) {
             $this->invoice->partial = max(0, min($this->formatValue($this->invoice->partial, 2), $this->invoice->balance));
         }
 
@@ -247,7 +247,7 @@ class InvoiceSumInclusive
      */
     public function getInvoice()
     {
-        //Build invoice values here and return Invoice
+        // Build invoice values here and return Invoice
         $this->setCalculatedAttributes();
         $this->invoice->saveQuietly();
 
@@ -259,7 +259,7 @@ class InvoiceSumInclusive
      */
     public function getQuote()
     {
-        //Build invoice values here and return Invoice
+        // Build invoice values here and return Invoice
         $this->setCalculatedAttributes();
         $this->invoice->saveQuietly();
 
@@ -271,7 +271,7 @@ class InvoiceSumInclusive
      */
     public function getCredit()
     {
-        //Build invoice values here and return Invoice
+        // Build invoice values here and return Invoice
         $this->setCalculatedAttributes();
         $this->invoice->saveQuietly();
 
@@ -283,7 +283,7 @@ class InvoiceSumInclusive
      */
     public function getPurchaseOrder()
     {
-        //Build invoice values here and return Invoice
+        // Build invoice values here and return Invoice
         $this->setCalculatedAttributes();
         $this->invoice->saveQuietly();
 
@@ -318,7 +318,6 @@ class InvoiceSumInclusive
             $this->total = $this->roundRappen($this->total);
             $this->invoice->total_taxes = $this->roundRappen($this->invoice->total_taxes);
         }
-
 
         return $this;
     }

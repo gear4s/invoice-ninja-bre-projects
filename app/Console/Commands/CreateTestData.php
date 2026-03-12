@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -42,14 +41,13 @@ use App\Utils\Traits\MakesHash;
 use Carbon\Carbon;
 use Faker\Factory;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class CreateTestData extends Command
 {
-    use MakesHash;
     use GeneratesCounter;
+    use MakesHash;
+    use MakesHash;
 
     /**
      * @var string
@@ -80,7 +78,7 @@ class CreateTestData extends Command
             return;
         }
 
-        $this->invoice_repo = new InvoiceRepository();
+        $this->invoice_repo = new InvoiceRepository;
 
         $this->info(date('r') . ' Running CreateTestData...');
         $this->count = $this->argument('count');
@@ -117,7 +115,7 @@ class CreateTestData extends Command
             ]);
         }
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -216,7 +214,7 @@ class CreateTestData extends Command
             ]);
         }
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -317,7 +315,7 @@ class CreateTestData extends Command
             ]);
         }
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -523,7 +521,7 @@ class CreateTestData extends Command
         $invoice = InvoiceFactory::create(
             $client->company->id,
             $client->user->id,
-        ); //stub the company and user_id
+        ); //  stub the company and user_id
         $invoice->client_id = $client->id;
         //        $invoice->date = $faker->date();
         $dateable = Carbon::now()->subDays(rand(0, 90));
@@ -639,7 +637,7 @@ class CreateTestData extends Command
     {
         $faker = Factory::create();
 
-        //$quote = QuoteFactory::create($client->company->id, $client->user->id);//stub the company and user_id
+        //  $quote = QuoteFactory::create($client->company->id, $client->user->id);//stub the company and user_id
         $quote = Quote::factory()->create([
             'user_id' => $client->user->id,
             'company_id' => $client->company->id,
@@ -688,7 +686,7 @@ class CreateTestData extends Command
         for ($x = 0; $x < $count; $x++) {
             $item = InvoiceItemFactory::create();
             $item->quantity = 1;
-            //$item->cost = 10;
+            //  $item->cost = 10;
 
             if (rand(0, 1)) {
                 $item->tax_name1 = 'GST';

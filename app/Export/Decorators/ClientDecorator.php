@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -59,7 +58,7 @@ class ClientDecorator extends Decorator implements DecoratorInterface
 
     public function private_notes(Client $client)
     {
-        return strip_tags($client->private_notes  ?? '');
+        return strip_tags($client->private_notes ?? '');
     }
 
     public function industry_id(Client $client)
@@ -109,5 +108,4 @@ class ClientDecorator extends Decorator implements DecoratorInterface
 
         return ctrans('texts.active');
     }
-
 }

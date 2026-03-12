@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Design;
 
-use Tests\TestCase;
-use Tests\MockAccountData;
-use App\Services\Pdf\PdfService;
 use App\Services\Pdf\JsonDesignService;
 use App\Services\Pdf\JsonToSectionsAdapter;
+use App\Services\Pdf\PdfService;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
  * Test JSON-based visual designer integration with PdfBuilder
@@ -17,6 +17,7 @@ use App\Services\Pdf\JsonToSectionsAdapter;
 class JsonDesignServiceTest extends TestCase
 {
     use MockAccountData;
+
     private array $testDesign;
 
     protected function setUp(): void
@@ -31,7 +32,7 @@ class JsonDesignServiceTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testJsonDesignValidation()
+    public function test_json_design_validation()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -43,7 +44,7 @@ class JsonDesignServiceTest extends TestCase
         $this->assertIsArray($service->getPageSettings());
     }
 
-    public function testInvalidJsonDesign()
+    public function test_invalid_json_design()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -53,7 +54,7 @@ class JsonDesignServiceTest extends TestCase
         $this->assertFalse($service->isValid());
     }
 
-    public function testJsonToSectionsConversion()
+    public function test_json_to_sections_conversion()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -71,7 +72,7 @@ class JsonDesignServiceTest extends TestCase
         }
     }
 
-    public function testBlockTypeConversions()
+    public function test_block_type_conversions()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -117,7 +118,7 @@ class JsonDesignServiceTest extends TestCase
         $this->assertTrue($hasLogoSection || $hasRowSections, 'Should have either block sections or row sections');
     }
 
-    public function testDataRefAttributesPresent()
+    public function test_data_ref_attributes_present()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -141,7 +142,7 @@ class JsonDesignServiceTest extends TestCase
         $this->assertTrue($hasDataRef, 'Sections should contain data-ref attributes for CSS targeting');
     }
 
-    public function testPageSettingsExtraction()
+    public function test_page_settings_extraction()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -157,7 +158,7 @@ class JsonDesignServiceTest extends TestCase
         }
     }
 
-    public function testBlockSorting()
+    public function test_block_sorting()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -196,7 +197,7 @@ class JsonDesignServiceTest extends TestCase
         $this->assertEquals('block-3', $sectionIds[2]);
     }
 
-    public function testStyleGeneration()
+    public function test_style_generation()
     {
         $mockService = $this->createMock(PdfService::class);
 
@@ -230,17 +231,16 @@ class JsonDesignServiceTest extends TestCase
     public function test_json_design_service()
     {
         $this->assertNotNull($this->invoice->invitations()->first());
-        
+
         $designjson = file_get_contents(base_path('tests/Feature/Design/stubs/test_design_1.json'));
         $design = json_decode($designjson, true);
-        
+
         $pdfService = new PdfService($this->invoice->invitations()->first(), 'product');
         $service = new JsonDesignService($pdfService, $design);
-        
+
         $html = $service->build();
-        
+
         $this->assertNotNull($html);
         file_put_contents(base_path('tests/artifacts/json_service_output.html'), $html);
     }
-
 }

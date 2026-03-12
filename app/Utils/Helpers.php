@@ -6,29 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils;
 
 use App\Models\Client;
+use App\Models\Company;
+use App\Models\Vendor;
 use App\Utils\Traits\MakesDates;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use stdClass;
 
-//30-10-2023: due to HTML encoding, need to remove </ from string when searching for matches
+// 30-10-2023: due to HTML encoding, need to remove </ from string when searching for matches
 class Helpers
 {
     use MakesDates;
 
     public static function sharedEmailVariables(?Client $client, ?array $settings = null): array
     {
-        if (! $client) {
+        if (!$client) {
             $elements['signature'] = '';
-            $elements['settings'] = new stdClass();
+            $elements['settings'] = new stdClass;
             $elements['whitelabel'] = true;
             $elements['company'] = '';
 
@@ -48,12 +49,10 @@ class Helpers
     /**
      * A centralised method to format the custom fields content.
      *
-     * @param mixed|null $custom_fields
-     * @param mixed $field
-     * @param mixed $value
-     * @param \App\Models\Client|null $entity
-     *
-     * @return null|string
+     * @param  mixed|null  $custom_fields
+     * @param  mixed  $field
+     * @param  mixed  $value
+     * @param  Client|null  $entity
      */
     public function formatCustomFieldValue($custom_fields, $field, $value, $entity = null): ?string
     {
@@ -81,9 +80,9 @@ class Helpers
             $quote_or_credit_field = true;
 
         } elseif ($custom_fields && stripos($field, 'credit') !== false) {
-            $field = str_replace("credit", "invoice", $field);
+            $field = str_replace('credit', 'invoice', $field);
         } elseif ($custom_fields && stripos($field, 'quote') !== false) {
-            $field = str_replace("quote", "invoice", $field);
+            $field = str_replace('quote', 'invoice', $field);
         }
 
         if (!$quote_or_credit_field && $custom_fields && property_exists($custom_fields, $field)) {
@@ -99,10 +98,8 @@ class Helpers
             case 'date':
                 return is_null($entity) ? $value : $this->translateDate($value, $entity->date_format(), $entity->locale());
 
-
             case 'switch':
                 return trim($value ?? '') == 'yes' ? ctrans('texts.yes') : ctrans('texts.no');
-
 
             default:
                 return is_null($value) ? '' : $this->processReservedKeywords($value, $entity);
@@ -112,10 +109,9 @@ class Helpers
 
     /**
      * A centralised method to make custom field.
-     * @param mixed|null $custom_fields
-     * @param mixed $field
      *
-     * @return string
+     * @param  mixed|null  $custom_fields
+     * @param  mixed  $field
      */
     public function makeCustomField($custom_fields, $field): string
     {
@@ -128,7 +124,7 @@ class Helpers
             return $custom_field_parts[0];
         }
 
-        $field = str_replace(["quote","credit"], ["invoice", "invoice"], $field);
+        $field = str_replace(['quote', 'credit'], ['invoice', 'invoice'], $field);
 
         if ($custom_fields && property_exists($custom_fields, $field)) {
             $custom_field = $custom_fields->{$field};
@@ -144,21 +140,19 @@ class Helpers
     /**
      * Process reserved keywords on PDF.
      *
-     * @param string $value
-     * @param \App\Models\Client|\App\Models\Company|\App\Models\Vendor $entity
-     * @param null|Carbon $currentDateTime
-     * @return null|string
+     * @param  Client|Company|Vendor  $entity
+     * @param  null|Carbon  $currentDateTime
      */
     public static function processReservedKeywords(?string $value, $entity, $currentDateTime = null): ?string
     {
-        if (! $value) {
+        if (!$value) {
             return '';
         }
 
         // 04-10-2022 Return Early if no reserved keywords are present, this is a very expensive process
         $string_hit = false;
 
-        foreach ([':MONTH',':YEAR',':QUARTER',':WEEK', 'MONTHYEAR' ] as $string) {
+        foreach ([':MONTH', ':YEAR', ':QUARTER', ':WEEK', 'MONTHYEAR'] as $string) {
             if (stripos($value, $string) !== false) {
                 $string_hit = true;
                 break;
@@ -250,7 +244,7 @@ class Helpers
         $matches = array_shift($ranges);
 
         foreach ($matches as $match) {
-            if (! Str::contains($match, '|')) {
+            if (!Str::contains($match, '|')) {
                 continue;
             }
 
@@ -261,7 +255,7 @@ class Helpers
             $right = substr($parts[1], 0, -1); // MONTH+2
 
             // If left side is not part of replacements, skip.
-            if (! array_key_exists($left, $replacements['ranges'])) {
+            if (!array_key_exists($left, $replacements['ranges'])) {
                 continue;
             }
 
@@ -269,19 +263,19 @@ class Helpers
             $_right = '';
 
             // If right side doesn't have any calculations, replace with raw ranges keyword.
-            if (! Str::contains(str_replace("</", "", $right), ['-', '+', '/', '*'])) {
+            if (!Str::contains(str_replace('</', '', $right), ['-', '+', '/', '*'])) {
                 $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F Y');
             }
 
             // If right side contains one of math operations, calculate.
-            if (Str::contains(str_replace("</", "", $right), ['+'])) {
+            if (Str::contains(str_replace('</', '', $right), ['+'])) {
                 $operation = preg_match_all('/(?!^-)[+*\/-](\s?-)?/', $right, $_matches);
 
                 $_operation = array_shift($_matches)[0]; // + -
 
                 $_value = explode($_operation, $right); // [MONTHYEAR, 4]
 
-                $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->addMonths((int) $_value[1])->translatedFormat('F Y'); //@phpstan-ignore-line
+                $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->addMonths((int) $_value[1])->translatedFormat('F Y'); // @phpstan-ignore-line
             }
 
             $replacement = sprintf('%s to %s', $_left, $_right);
@@ -309,7 +303,7 @@ class Helpers
                 continue;
             }
 
-            if (! Str::contains(str_replace("</", "", $match), ['-', '+', '/', '*'])) {
+            if (!Str::contains(str_replace('</', '', $match), ['-', '+', '/', '*'])) {
                 $value = preg_replace(
                     sprintf('/%s/', $matches->keys()->first()),
                     $replacements['literal'][$matches->keys()->first()],
@@ -318,7 +312,7 @@ class Helpers
                 );
             }
 
-            if (Str::contains(str_replace("</", "", $match), ['-', '+', '/', '*'])) {
+            if (Str::contains(str_replace('</', '', $match), ['-', '+', '/', '*'])) {
                 $operation = preg_match_all('/(?!^-)[+*\/-](\s?-)?/', $match, $_matches);
 
                 $_operation = array_shift($_matches)[0];
@@ -350,7 +344,7 @@ class Helpers
                 }
 
                 if ($matches->keys()->first() == ':MONTH') {
-                    $output = \Carbon\Carbon::create()->month($output)->translatedFormat('F');
+                    $output = Carbon::create()->month($output)->translatedFormat('F');
                 }
 
                 if ($matches->keys()->first() == ':MONTHYEAR') {
@@ -397,9 +391,6 @@ class Helpers
 
     /**
      * Resolve the font from the supported fonts array.
-     *
-     * @param string $font
-     * @return array
      */
     public static function resolveFont(string $font = 'Arial'): array
     {
@@ -411,9 +402,6 @@ class Helpers
     /**
      * Ensure a value is an array. If it is a JsonResponse, decode and return its data.
      * Use when code may receive either an array or a JsonResponse (e.g. from a controller).
-     *
-     * @param mixed $value
-     * @return array
      */
     public static function responseToArray(mixed $value): array
     {

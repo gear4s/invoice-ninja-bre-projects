@@ -6,17 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Vendor;
 
-use App\Factory\CompanyLedgerFactory;
-use App\Models\Activity;
+use App\Events\Vendor\VendorWasMerged;
 use App\Models\Vendor;
-use App\Models\CompanyLedger;
 use App\Services\AbstractService;
+use App\Utils\Ninja;
 
 class Merge extends AbstractService
 {
@@ -34,7 +32,7 @@ class Merge extends AbstractService
     {
 
         $_mergeable_vendor = $this->mergable_vendor->present()->name();
-        $event_vars = \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
+        $event_vars = Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
         $event_vars['vendor_hash'] = $this->mergable_vendor->vendor_hash;
 
         $this->mergable_vendor->activities()->update(['vendor_id' => $this->vendor->id]);
@@ -60,10 +58,8 @@ class Merge extends AbstractService
 
         $this->mergable_vendor->forceDelete();
 
-        event(new \App\Events\Vendor\VendorWasMerged($_mergeable_vendor, $this->vendor, $this->vendor->company, $event_vars));
+        event(new VendorWasMerged($_mergeable_vendor, $this->vendor, $this->vendor->company, $event_vars));
 
         return $this->vendor;
     }
-
-
 }

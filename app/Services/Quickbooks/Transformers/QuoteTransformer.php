@@ -6,18 +6,14 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
 use App\DataMapper\InvoiceItem;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Quote;
 use App\Models\Product;
-use App\DataMapper\QuoteItem;
+use App\Models\Quote;
 use App\Models\TaxRate;
 
 /**
@@ -83,7 +79,7 @@ class QuoteTransformer extends BaseTransformer
         $tax_rate = 0;
         $tax_name = '';
 
-        if ($total_tax == "0") {
+        if ($total_tax == '0') {
             return [$tax_rate, $tax_name];
         }
 
@@ -105,12 +101,11 @@ class QuoteTransformer extends BaseTransformer
             $totalTaxRate += $taxRate;
         }
 
-
         if ($totalTaxRate > 0) {
             $formattedTaxRate = rtrim(rtrim(number_format($totalTaxRate, 6), '0'), '.');
             $formattedTaxRate = trim($formattedTaxRate);
 
-            $tr = \App\Models\TaxRate::firstOrNew(
+            $tr = TaxRate::firstOrNew(
                 [
                     'company_id' => $this->company->id,
                     'rate' => $formattedTaxRate,
@@ -131,7 +126,6 @@ class QuoteTransformer extends BaseTransformer
         return [$tax_rate, $tax_name];
 
     }
-
 
     // private function getPayments(mixed $qb_data)
     // {
@@ -172,11 +166,11 @@ class QuoteTransformer extends BaseTransformer
 
         if (!empty($qb_items) && !isset($qb_items[0])) {
 
-            //handle weird statement charges
+            // handle weird statement charges
             $tax_rate = (float) data_get($qb_data, 'TxnTaxDetail.TaxLine.TaxLineDetail.TaxPercent', 0);
             $tax_name = $tax_rate > 0 ? "Sales Tax [{$tax_rate}]" : '';
 
-            $item = new InvoiceItem();
+            $item = new InvoiceItem;
             $item->product_key = '';
             $item->notes = 'Recurring Charge';
             $item->quantity = 1;
@@ -198,7 +192,7 @@ class QuoteTransformer extends BaseTransformer
             $taxCodeRef = data_get($qb_item, 'TaxCodeRef', data_get($qb_item, 'SalesItemLineDetail.TaxCodeRef', 'TAX'));
 
             if (data_get($qb_item, 'DetailType') == 'SalesItemLineDetail') {
-                $item = new InvoiceItem();
+                $item = new InvoiceItem;
                 $item->product_key = data_get($qb_item, 'SalesItemLineDetail.ItemRef.name', '');
                 $item->notes = data_get($qb_item, 'Description', '');
                 $item->quantity = (float) (data_get($qb_item, 'SalesItemLineDetail.Qty') ?? 1);
@@ -215,7 +209,7 @@ class QuoteTransformer extends BaseTransformer
 
             if (data_get($qb_item, 'DetailType') == 'DiscountLineDetail' && $include_discount == 'true') {
 
-                $item = new InvoiceItem();
+                $item = new InvoiceItem;
                 $item->product_key = ctrans('texts.discount');
                 $item->notes = ctrans('texts.discount');
                 $item->quantity = 1;
@@ -236,5 +230,4 @@ class QuoteTransformer extends BaseTransformer
         return $items;
 
     }
-
 }

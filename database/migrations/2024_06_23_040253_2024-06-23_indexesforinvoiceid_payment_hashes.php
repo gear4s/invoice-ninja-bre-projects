@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::table('payment_hashes', function (Blueprint $table) {
             $table->unsignedInteger('fee_invoice_id')->nullable()->index()->change();
         });

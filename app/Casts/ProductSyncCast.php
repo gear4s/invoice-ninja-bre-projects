@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,19 +29,18 @@ class ProductSyncCast implements CastsAttributes
             return null;
         }
 
-        $ps = new ProductSync();
-        $ps->qb_id =  $data['qb_id'];
+        $ps = new ProductSync;
+        $ps->qb_id = $data['qb_id'];
+
         return $ps;
     }
 
     public function set($model, string $key, $value, array $attributes)
     {
 
-
         if (is_null($value)) {
             return [$key => null];
         }
-
 
         return [
             $key => json_encode([

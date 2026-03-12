@@ -6,22 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Authorize;
 
 use App\Models\Invoice;
-use App\Utils\Traits\MakesHash;
-use App\PaymentDrivers\Authorize\FDSReview;
-use net\authorize\api\contract\v1\OrderType;
 use App\PaymentDrivers\AuthorizePaymentDriver;
-use net\authorize\api\contract\v1\ExtendedAmountType;
-use net\authorize\api\contract\v1\PaymentProfileType;
-use net\authorize\api\contract\v1\TransactionRequestType;
+use App\Utils\Traits\MakesHash;
 use net\authorize\api\contract\v1\CreateTransactionRequest;
 use net\authorize\api\contract\v1\CustomerProfilePaymentType;
+use net\authorize\api\contract\v1\ExtendedAmountType;
+use net\authorize\api\contract\v1\OrderType;
+use net\authorize\api\contract\v1\PaymentProfileType;
+use net\authorize\api\contract\v1\SolutionType;
+use net\authorize\api\contract\v1\TransactionRequestType;
 use net\authorize\api\controller\CreateTransactionController;
 
 /**
@@ -43,9 +42,9 @@ class ChargePaymentProfile
         // Set the transaction's refId
         $refId = 'ref' . time();
 
-        $profileToCharge = new CustomerProfilePaymentType();
+        $profileToCharge = new CustomerProfilePaymentType;
         $profileToCharge->setCustomerProfileId($profile_id);
-        $paymentProfile = new PaymentProfileType();
+        $paymentProfile = new PaymentProfileType;
         $paymentProfile->setPaymentProfileId($payment_profile_id);
         $profileToCharge->setPaymentProfile($paymentProfile);
 
@@ -74,16 +73,16 @@ class ChargePaymentProfile
 
         $description = "Invoices: {$invoice_numbers} for {$amount} for client {$this->authorize->client->present()->name()}";
 
-        $order = new OrderType();
+        $order = new OrderType;
         $order->setInvoiceNumber(substr($invoice_numbers, 0, 19));
         $order->setDescription(substr($description, 0, 255));
-        $order->setSupplierOrderReference(substr($po_numbers, 0, 19));// 04-03-2023
+        $order->setSupplierOrderReference(substr($po_numbers, 0, 19)); // 04-03-2023
 
-        $tax = new ExtendedAmountType();
+        $tax = new ExtendedAmountType;
         $tax->setName('tax');
         $tax->setAmount($taxAmount);
 
-        $transactionRequestType = new TransactionRequestType();
+        $transactionRequestType = new TransactionRequestType;
         $transactionRequestType->setTransactionType('authCaptureTransaction');
         $transactionRequestType->setAmount($amount);
         $transactionRequestType->setTax($tax);
@@ -92,11 +91,11 @@ class ChargePaymentProfile
         $transactionRequestType->setProfile($profileToCharge);
         $transactionRequestType->setCurrencyCode($this->authorize->client->currency()->code);
 
-        $solution = new \net\authorize\api\contract\v1\SolutionType();
+        $solution = new SolutionType;
         $solution->setId($this->authorize->company_gateway->getConfigField('testMode') ? 'AAA100303' : 'AAA172036');
         $transactionRequestType->setSolution($solution);
 
-        $request = new CreateTransactionRequest();
+        $request = new CreateTransactionRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setRefId($refId);
         $request->setTransactionRequest($transactionRequestType);
@@ -115,8 +114,8 @@ class ChargePaymentProfile
                 nlog(' Description : ' . $tresponse->getMessages()[0]->getDescription());
                 nlog(print_r($tresponse->getMessages()[0], 1));
 
-                if ($tresponse->getResponseCode() == "4" || $tresponse->getMessages()[0]->getCode() == "253") {
-                    //notify user that this transaction is being held under FDS review:
+                if ($tresponse->getResponseCode() == '4' || $tresponse->getMessages()[0]->getCode() == '253') {
+                    // notify user that this transaction is being held under FDS review:
                     FDSReview::dispatch((string) $tresponse->getTransId(), $this->authorize?->payment_hash, $this->authorize->company_gateway->company->db);
                 }
 
@@ -142,10 +141,10 @@ class ChargePaymentProfile
         }
 
         return [
-            'raw_response'       => $response,
-            'response'           => $tresponse,
-            'amount'             => $amount,
-            'profile_id'         => $profile_id,
+            'raw_response' => $response,
+            'response' => $tresponse,
+            'amount' => $amount,
+            'profile_id' => $profile_id,
             'payment_profile_id' => $payment_profile_id,
         ];
     }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,6 @@ class ClientGatewayTokenTransformer extends EntityTransformer
     use MakesHash;
 
     /**
-     * @param ClientGatewayToken $cgt
-     *
      * @return array
      */
     public function transform(ClientGatewayToken $cgt)
@@ -47,7 +44,7 @@ class ClientGatewayTokenTransformer extends EntityTransformer
 
     private function typeCastMeta($meta)
     {
-        $casted = new stdClass();
+        $casted = new stdClass;
 
         if ($exp_month = data_get($meta, 'exp_month')) {
             $casted->exp_month = (string) $exp_month;

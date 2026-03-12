@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,13 +21,13 @@ class GetInvoicePdf extends AbstractService
 
     public function run()
     {
-        if (! $this->contact) {
+        if (!$this->contact) {
             $this->contact = $this->entity->client->primary_contact()->first();
         }
 
         $invitation = $this->entity->invitations->where('client_contact_id', $this->contact->id)->first();
 
-        if (! $invitation) {
+        if (!$invitation) {
             $invitation = $this->entity->invitations->first();
         }
 

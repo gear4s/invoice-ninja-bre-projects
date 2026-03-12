@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,7 +19,6 @@ class VendorContactObserver
     /**
      * Handle the vendor contact "created" event.
      *
-     * @param VendorContact $vendorContact
      * @return void
      */
     public function created(VendorContact $vendorContact)
@@ -31,7 +29,6 @@ class VendorContactObserver
     /**
      * Handle the vendor contact "updated" event.
      *
-     * @param VendorContact $vendorContact
      * @return void
      */
     public function updated(VendorContact $vendorContact)
@@ -42,7 +39,6 @@ class VendorContactObserver
     /**
      * Handle the vendor contact "deleted" event.
      *
-     * @param VendorContact $vendorContact
      * @return void
      */
     public function deleted(VendorContact $vendorContact)
@@ -61,7 +57,6 @@ class VendorContactObserver
     /**
      * Handle the vendor contact "restored" event.
      *
-     * @param VendorContact $vendorContact
      * @return void
      */
     public function restored(VendorContact $vendorContact) {}
@@ -69,7 +64,6 @@ class VendorContactObserver
     /**
      * Handle the vendor contact "force deleted" event.
      *
-     * @param VendorContact $vendorContact
      * @return void
      */
     public function forceDeleted(VendorContact $vendorContact)

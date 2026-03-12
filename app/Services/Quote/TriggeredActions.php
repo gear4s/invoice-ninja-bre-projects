@@ -6,22 +6,18 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quote;
 
-use App\Utils\Ninja;
 use App\Models\Quote;
 use App\Models\Webhook;
-use Illuminate\Http\Request;
-use App\Services\Email\Email;
-use App\Jobs\Entity\EmailEntity;
 use App\Services\AbstractService;
+use App\Services\Email\Email;
 use App\Services\Email\EmailObject;
-use App\Events\Quote\QuoteWasEmailed;
 use App\Utils\Traits\GeneratesCounter;
+use Illuminate\Http\Request;
 
 class TriggeredActions extends AbstractService
 {
@@ -74,8 +70,6 @@ class TriggeredActions extends AbstractService
             $company->save();
         }
 
-
-
         return $this->quote;
     }
 
@@ -94,7 +88,7 @@ class TriggeredActions extends AbstractService
 
         $this->quote->invitations->load('contact.client.country', 'quote.client.country', 'quote.company')->each(function ($invitation) use ($template_body, $subject) {
 
-            $mo = new EmailObject();
+            $mo = new EmailObject;
             $mo->entity_id = $invitation->quote_id;
             $mo->template = $template_body;
             $mo->email_template_body = $template_body;
@@ -111,7 +105,7 @@ class TriggeredActions extends AbstractService
 
         if ($this->quote->invitations->count() > 0) {
             $this->quote->entityEmailEvent($this->quote->invitations->first(), $reminder_template);
-            $this->quote->sendEvent(Webhook::EVENT_SENT_QUOTE, "client");
+            $this->quote->sendEvent(Webhook::EVENT_SENT_QUOTE, 'client');
         }
     }
 }

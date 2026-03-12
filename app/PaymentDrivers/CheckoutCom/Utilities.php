@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,7 +14,10 @@ namespace App\PaymentDrivers\CheckoutCom;
 use App\Exceptions\PaymentFailed;
 use App\Jobs\Util\SystemLogger;
 use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentType;
 use App\Models\SystemLog;
+use App\PaymentDrivers\CheckoutComPaymentDriver;
 use Exception;
 use stdClass;
 
@@ -28,7 +30,7 @@ trait Utilities
 
     public function getParent()
     {
-        return static::class == \App\PaymentDrivers\CheckoutComPaymentDriver::class ? $this : $this->checkout;
+        return static::class == CheckoutComPaymentDriver::class ? $this : $this->checkout;
     }
 
     public function convertToCheckoutAmount($amount, $currency)
@@ -60,13 +62,13 @@ trait Utilities
 
         $data = [
             'payment_method' => $_payment['source']['id'],
-            'payment_type' => \App\Models\PaymentType::CREDIT_CARD_OTHER,
+            'payment_type' => PaymentType::CREDIT_CARD_OTHER,
             'amount' => $this->getParent()->payment_hash->data->raw_value,
             'transaction_reference' => $_payment['id'],
             'gateway_type_id' => GatewayType::CREDIT_CARD,
         ];
 
-        $payment = $this->getParent()->createPayment($data, \App\Models\Payment::STATUS_COMPLETED);
+        $payment = $this->getParent()->createPayment($data, Payment::STATUS_COMPLETED);
 
         SystemLogger::dispatch(
             ['response' => $_payment, 'data' => $data],
@@ -84,7 +86,7 @@ trait Utilities
     {
         $error_message = '';
 
-        nlog("checkout failure");
+        nlog('checkout failure');
         nlog($_payment);
 
         if (is_array($_payment) && array_key_exists('status', $_payment)) {
@@ -97,7 +99,7 @@ trait Utilities
             $error_message = $_payment['actions'][0]['response_summary'];
         }
 
-        //checkout does not return a integer status code as an alias for a http status code.
+        // checkout does not return a integer status code as an alias for a http status code.
         $error_code = 400;
 
         $this->getParent()->sendFailureMail($error_message);
@@ -133,7 +135,7 @@ trait Utilities
     private function storeLocalPaymentMethod($response)
     {
         try {
-            $payment_meta = new stdClass();
+            $payment_meta = new stdClass;
             $payment_meta->exp_month = (string) $response['source']['expiry_month'];
             $payment_meta->exp_year = (string) $response['source']['expiry_year'];
             $payment_meta->brand = (string) $response['source']['scheme'];

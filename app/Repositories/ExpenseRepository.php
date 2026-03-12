@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Jobs\Expense\VendorExpenseNotify;
 use App\Libraries\Currency\Conversion\CurrencyApi;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Models\User;
 use App\Utils\Traits\GeneratesCounter;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Database\Eloquent\Collection;
@@ -33,23 +33,22 @@ class ExpenseRepository extends BaseRepository
     private $completed = true;
 
     private $notify_vendor = false;
+
     /**
      * Saves the expense and its contacts.
      *
-     * @param      array                     $data     The data
-     * @param      \App\Models\Expense       $expense  The expense
-     *
-     * @return     \App\Models\Expense
+     * @param  array  $data  The data
+     * @param  Expense  $expense  The expense
      */
     public function save(array $data, Expense $expense): Expense
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $payment_date = $data['payment_date'] ?? false;
 
         if ($payment_date && $payment_date == $expense->payment_date) {
-            //do nothing
+            // do nothing
         } elseif ($payment_date && strlen($payment_date) > 1 && $user->company()->notify_vendor_when_paid && (isset($data['vendor_id']) || $expense->vendor_id)) {
             $this->notify_vendor = true;
         }
@@ -87,13 +86,11 @@ class ExpenseRepository extends BaseRepository
     /**
      * Store expenses in bulk.
      *
-     * @param array $expense
-     *
-     * @return \App\Models\Expense|null
+     * @param  array  $expense
      */
     public function create($expense): ?Expense
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $this->save(
@@ -103,9 +100,9 @@ class ExpenseRepository extends BaseRepository
     }
 
     /**
-     * @param mixed $data
-     * @param mixed $expense
-     * @return Expense
+     * @param  mixed  $data
+     * @param  mixed  $expense
+     *
      * @throws InvalidFormatException
      */
     public function processExchangeRates($data, $expense): Expense
@@ -118,7 +115,7 @@ class ExpenseRepository extends BaseRepository
         $company_currency = $expense->company->settings->currency_id;
 
         if ($company_currency != $expense_currency) {
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $expense->exchange_rate = $exchange_rate->exchangeRate($expense_currency, $company_currency, Carbon::parse($expense->date));
             $expense->invoice_currency_id = $company_currency;
@@ -128,7 +125,6 @@ class ExpenseRepository extends BaseRepository
 
         return $expense;
     }
-
 
     public function delete($expense): Expense
     {
@@ -157,12 +153,10 @@ class ExpenseRepository extends BaseRepository
         return $expense;
     }
 
-
     /**
      * Handle race conditions when creating expense numbers
      *
-     * @param Expense $expense
-     * @return \App\Models\Expense
+     * @param  Expense  $expense
      */
     private function findAndSaveNumber($expense): Expense
     {
@@ -188,22 +182,17 @@ class ExpenseRepository extends BaseRepository
 
     /**
      * Categorize Expenses in bulk
-     *
-     * @param  Collection $expenses
-     * @param  int $category_id
-     * @return void
      */
     public function categorize(Collection $expenses, int $category_id): void
     {
         $ec = ExpenseCategory::withTrashed()->find($category_id);
 
         $expenses->when($ec)
-                 ->each(function ($expense) use ($ec) {
+            ->each(function ($expense) use ($ec) {
 
-                     $expense->category_id = $ec->id;
-                     $expense->save();
+                $expense->category_id = $ec->id;
+                $expense->save();
 
-                 });
+            });
     }
-
 }

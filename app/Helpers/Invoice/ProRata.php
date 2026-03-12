@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,11 +22,8 @@ class ProRata
      * Returns the amount to refund based on
      * the time interval and the frequency duration
      *
-     * @param float $amount
-     * @param \Illuminate\Support\Carbon | \Carbon\Carbon $from_date
-     * @param \Illuminate\Support\Carbon | \Carbon\Carbon $to_date
-     * @param int $frequency
-     * @return float
+     * @param  Carbon | \Carbon\Carbon  $from_date
+     * @param  Carbon | \Carbon\Carbon  $to_date
      */
     public function refund(float $amount, $from_date, $to_date, int $frequency): float
     {
@@ -41,11 +37,8 @@ class ProRata
      * Returns the amount to charge based on
      * the time interval and the frequency duration
      *
-     * @param float $amount
-     * @param \Illuminate\Support\Carbon | \Carbon\Carbon  $from_date
-     * @param \Illuminate\Support\Carbon | \Carbon\Carbon  $to_date
-     * @param int $frequency
-     * @return float
+     * @param  Carbon | \Carbon\Carbon  $from_date
+     * @param  Carbon | \Carbon\Carbon  $to_date
      */
     public function charge(float $amount, $from_date, $to_date, int $frequency): float
     {
@@ -59,25 +52,24 @@ class ProRata
      * Prepares the line items of an invoice
      * to be pro rata refunded.
      *
-     * @param ?Invoice $invoice
-     * @param bool $is_credit
-     * @return array
+     * @param  bool  $is_credit
+     *
      * @throws Exception
      */
     public function refundItems(?Invoice $invoice, $is_credit = false): array
     {
-        if (! $invoice) {
+        if (!$invoice) {
             return [];
         }
 
-        /** @var \App\Models\RecurringInvoice $recurring_invoice **/
+        /** @var RecurringInvoice $recurring_invoice * */
         $recurring_invoice = RecurringInvoice::find($invoice->recurring_id);
 
-        if (! $recurring_invoice) { // @phpstan-ignore-line
-            throw new \Exception("Invoice isn't attached to a recurring invoice");
+        if (!$recurring_invoice) { // @phpstan-ignore-line
+            throw new Exception("Invoice isn't attached to a recurring invoice");
         }
 
-        /* depending on whether we are creating an invoice or a credit*/
+        /* depending on whether we are creating an invoice or a credit */
         $multiplier = $is_credit ? 1 : -1;
 
         $start_date = Carbon::parse($invoice->date);

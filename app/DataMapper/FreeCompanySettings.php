@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,7 @@ class FreeCompanySettings extends BaseSettings
 {
     use MakesHash;
 
-    /*Group settings based on functionality*/
+    /* Group settings based on functionality */
     public $credit_design_id = 'VolejRejNm';
 
     public $client_number_pattern = '';
@@ -112,7 +111,7 @@ class FreeCompanySettings extends BaseSettings
 
     public $vendor_number_counter = 1;
 
-    /* Company Meta data that we can use to build sub companies*/
+    /* Company Meta data that we can use to build sub companies */
 
     public $address1 = '';
 
@@ -141,54 +140,54 @@ class FreeCompanySettings extends BaseSettings
     public $website = '';
 
     public static $casts = [
-        'portal_design_id'					 => 'string',
-        'task_number_pattern'                => 'string',
-        'task_number_counter'                => 'int',
-        'expense_number_pattern'             => 'string',
-        'expense_number_counter'             => 'int',
-        'vendor_number_pattern'              => 'string',
-        'vendor_number_counter'              => 'int',
-        'ticket_number_pattern'              => 'string',
-        'ticket_number_counter'              => 'int',
-        'payment_number_pattern'             => 'string',
-        'payment_number_counter'             => 'int',
-        'company_gateway_ids'                => 'string',
-        'address1'                           => 'string',
-        'address2'                           => 'string',
-        'city'                               => 'string',
-        'company_logo'                       => 'string',
-        'country_id'                         => 'string',
-        'currency_id'                        => 'string',
-        'custom_value1'                      => 'string',
-        'custom_value2'                      => 'string',
-        'custom_value3'                      => 'string',
-        'custom_value4'                      => 'string',
-        'inclusive_taxes'                    => 'bool',
-        'name'                               => 'string',
-        'payment_terms'                      => 'string',
-        'payment_type_id'                    => 'string',
-        'phone'                              => 'string',
-        'postal_code'                        => 'string',
-        'quote_design_id'                    => 'string',
-        'credit_design_id'                   => 'string',
-        'recurring_number_prefix'            => 'string',
-        'state'                              => 'string',
-        'email'                              => 'string',
-        'vat_number'                         => 'string',
-        'id_number'                          => 'string',
-        'tax_name1'                          => 'string',
-        'tax_name2'                          => 'string',
-        'tax_name3'                          => 'string',
-        'tax_rate1'                          => 'float',
-        'tax_rate2'                          => 'float',
-        'tax_rate3'                          => 'float',
-        'timezone_id'                        => 'string',
-        'date_format_id'                     => 'string',
-        'military_time'                      => 'bool',
-        'language_id'                        => 'string',
-        'show_currency_code'                 => 'bool',
-        'design'                             => 'string',
-        'website'                            => 'string',
+        'portal_design_id' => 'string',
+        'task_number_pattern' => 'string',
+        'task_number_counter' => 'int',
+        'expense_number_pattern' => 'string',
+        'expense_number_counter' => 'int',
+        'vendor_number_pattern' => 'string',
+        'vendor_number_counter' => 'int',
+        'ticket_number_pattern' => 'string',
+        'ticket_number_counter' => 'int',
+        'payment_number_pattern' => 'string',
+        'payment_number_counter' => 'int',
+        'company_gateway_ids' => 'string',
+        'address1' => 'string',
+        'address2' => 'string',
+        'city' => 'string',
+        'company_logo' => 'string',
+        'country_id' => 'string',
+        'currency_id' => 'string',
+        'custom_value1' => 'string',
+        'custom_value2' => 'string',
+        'custom_value3' => 'string',
+        'custom_value4' => 'string',
+        'inclusive_taxes' => 'bool',
+        'name' => 'string',
+        'payment_terms' => 'string',
+        'payment_type_id' => 'string',
+        'phone' => 'string',
+        'postal_code' => 'string',
+        'quote_design_id' => 'string',
+        'credit_design_id' => 'string',
+        'recurring_number_prefix' => 'string',
+        'state' => 'string',
+        'email' => 'string',
+        'vat_number' => 'string',
+        'id_number' => 'string',
+        'tax_name1' => 'string',
+        'tax_name2' => 'string',
+        'tax_name3' => 'string',
+        'tax_rate1' => 'float',
+        'tax_rate2' => 'float',
+        'tax_rate3' => 'float',
+        'timezone_id' => 'string',
+        'date_format_id' => 'string',
+        'military_time' => 'bool',
+        'language_id' => 'string',
+        'show_currency_code' => 'bool',
+        'design' => 'string',
+        'website' => 'string',
     ];
 
     // /**
@@ -204,7 +203,6 @@ class FreeCompanySettings extends BaseSettings
 
     /**
      * Provides class defaults on init.
-     * @return stdClass
      */
     public static function defaults(): stdClass
     {

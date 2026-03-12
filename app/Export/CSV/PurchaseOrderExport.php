@@ -6,21 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2024. PurchaseOrder Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Export\CSV;
 
-use App\Utils\Ninja;
-use League\Csv\Writer;
-use App\Models\Company;
-use App\Libraries\MultiDB;
-use App\Models\PurchaseOrder;
-use Illuminate\Support\Facades\App;
 use App\Export\Decorators\Decorator;
-use Illuminate\Database\Eloquent\Builder;
+use App\Libraries\MultiDB;
+use App\Models\Company;
+use App\Models\PurchaseOrder;
 use App\Transformers\PurchaseOrderTransformer;
+use App\Utils\Ninja;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class PurchaseOrderExport extends BaseExport
 {
@@ -36,10 +36,9 @@ class PurchaseOrderExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->purchase_order_transformer = new PurchaseOrderTransformer();
-        $this->decorator = new Decorator();
+        $this->purchase_order_transformer = new PurchaseOrderTransformer;
+        $this->decorator = new Decorator;
     }
-
 
     public function init(): Builder
     {
@@ -57,19 +56,18 @@ class PurchaseOrderExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_vendor_fields, $this->input['report_keys']));
 
         $query = PurchaseOrder::query()
-                        ->withTrashed()
-                        ->with('vendor')
-                        ->whereHas('vendor', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->with('vendor')
+            ->whereHas('vendor', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) { // @phpstan-ignore-line
             $query->where('is_deleted', 0);
         }
 
         $query = $this->addDateRange($query, 'purchase_orders');
-
 
         $clients = &$this->input['client_id'];
 
@@ -103,32 +101,32 @@ class PurchaseOrderExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\PurchaseOrder $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var PurchaseOrder $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
-
 
     public function run()
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($purchase_order) {
 
-                /** @var \App\Models\PurchaseOrder $purchase_order */
+                /** @var PurchaseOrder $purchase_order */
                 $this->csv->insertOne($this->buildRow($purchase_order));
             });
 
@@ -150,7 +148,6 @@ class PurchaseOrderExport extends BaseExport
             } else {
                 $entity[$key] = $this->decorator->transform($key, $purchase_order);
             }
-
 
         }
 

@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => '組織',
     'name' => '名前',
     'website' => 'WEBサイト',
@@ -1174,7 +1174,6 @@ $lang = array(
     'enterprise_plan_features' => 'エンタープライズ プランでは、複数のユーザーとファイル添付のサポートが追加されます。機能の完全なリストについては、 :linkご覧ください。',
     'return_to_app' => 'Appに戻る',
 
-
     // Payment updates
     'refund_payment' => '返金',
     'refund_max' => '最大:',
@@ -1703,7 +1702,6 @@ $lang = array(
     'lang_Serbian' => 'セルビア語',
     'lang_Bulgarian' => 'ブルガリア語',
     'lang_Russian (Russia)' => 'ロシア語（ロシア）',
-
 
     // Industries
     'industry_Accounting & Legal' => '会計・法務',
@@ -2361,7 +2359,7 @@ $lang = array(
     'currency_gold_troy_ounce' => '金トロイオンス',
     'currency_nicaraguan_córdoba' => 'ニカラグアのコルドバ',
     'currency_malagasy_ariary' => 'マダガスカルのアリアリ',
-    "currency_tongan_pa_anga" => "トンガ語のパアンガ",
+    'currency_tongan_pa_anga' => 'トンガ語のパアンガ',
 
     'review_app_help' => 'アプリをお楽しみいただければ幸いです。<br/> :link をご検討いただければ幸いです。',
     'writing_a_review' => 'レビューを書く',
@@ -4361,7 +4359,7 @@ $lang = array(
     'activity_122' => ':user が定期経費 :recurring_expense をアーカイブしました',
     'activity_123' => ':user が定期経費 :recurring_expense を削除しました',
     'activity_124' => ':user が定期経費 :recurring_expense を復元しました',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => ':entity表示するにはパスワードを設定する必要があります。',
     'unsubscribe' => '購読解除',
     'unsubscribed' => '購読解除',
@@ -4867,7 +4865,7 @@ $lang = array(
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E-Transfer',
     'xinvoice_payable' => ':paydate まで正味 :payeddue 日以内に支払い可能',
-    'xinvoice_no_buyers_reference' => "購入者の参照情報なし",
+    'xinvoice_no_buyers_reference' => '購入者の参照情報なし',
     'xinvoice_online_payment' => '請求書は提供されたリンクを通じてオンラインで支払う必要があります',
     'pre_payment' => '前払い',
     'number_of_payments' => '支払い回数',
@@ -4972,8 +4970,8 @@ $lang = array(
     'e_invoice' => '電子請求書',
     'light_dark_mode' => 'ライト/ダークモード',
     'activities' => '活動',
-    'recent_transactions' => "最近の取引",
-    'country_Palestine' => "パレスチナ",
+    'recent_transactions' => '最近の取引',
+    'country_Palestine' => 'パレスチナ',
     'country_Taiwan' => '台湾',
     'duties' => '職務',
     'order_number' => '注文番号',
@@ -5190,7 +5188,7 @@ $lang = array(
     'rff' => '必須フィールドフォーム',
     'add_step' => 'ステップを追加',
     'steps' => '手順',
-    'steps_order_help' =>  'ステップの順序は重要です。最初のステップは他のステップに依存してはなりません。2番目のステップは最初のステップに依存し、以下同様に続きます。',
+    'steps_order_help' => 'ステップの順序は重要です。最初のステップは他のステップに依存してはなりません。2番目のステップは最初のステップに依存し、以下同様に続きます。',
     'other_steps' => 'その他の手順',
     'use_available_payments' => '利用可能な決済方法を使用する',
     'test_email_sent' => 'メールの送信に成功しました',
@@ -5399,7 +5397,7 @@ $lang = array(
     'credit_updated' => 'クレジット更新',
     'payment_updated' => '支払いが更新されました',
     'search_placeholder' => '請求書、顧客などを見つける',
-    'invalid_vat_number' => "選択した国ではVAT番号が有効ではありません。国番号の後に数字のみを続けて入力してください（例：DE123456789）。",
+    'invalid_vat_number' => '選択した国ではVAT番号が有効ではありません。国番号の後に数字のみを続けて入力してください（例：DE123456789）。',
     'acts_as_sender' => '電子請求書を送信する',
     'acts_as_receiver' => '電子請求書を受け取る',
     'peppol_token_generated' => 'PEPPOL トークンが正常に生成されました。',
@@ -5536,7 +5534,7 @@ $lang = array(
     'pro_plan_feature_10' => '自動リマインダーメールを設定する',
     'pro_plan_feature_11' => '請求書PDFをメールに自動添付',
     'pro_plan_feature_12' => '請求書に顧客の電子署名を表示する',
-    'pro_plan_feature_13' => "「利用規約を承認」チェックボックスを有効にする",
+    'pro_plan_feature_13' => '「利用規約を承認」チェックボックスを有効にする',
     'pro_plan_feature_14' => 'レポート: 請求書、経費、損益計算書など',
     'pro_plan_feature_15' => '請求書、見積書、クレジットを一括メールで送信',
     'pro_plan_feature_16' => '1つのログインで10社を相互リンク',
@@ -5911,6 +5909,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe銀行振込',
     'activity_164' => 'QuickBooks の同期に失敗しました。TXPROTECT :notes',
-);
+];
 
 return $lang;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Import\Transformer\Csv;
 
 use App\Import\Transformer\BaseTransformer;
 use App\Models\TaskStatus;
+use Carbon\Carbon;
 
 /**
  * Class TaskTransformer.
@@ -21,9 +21,9 @@ use App\Models\TaskStatus;
 class TaskTransformer extends BaseTransformer
 {
     private int $stubbed_timestamp = 0;
+
     /**
-     * @param $data
-     *
+     * @param  $data
      * @return bool|array
      */
     public function transform($task_items_data)
@@ -68,14 +68,15 @@ class TaskTransformer extends BaseTransformer
 
         if (count($task_items_data) == count($task_items_data, COUNT_RECURSIVE)) {
             $transformed['time_log'] = $this->parseLog($task_items_data) ? json_encode([$this->parseLog($task_items_data)]) : json_encode([]);
+
             return $transformed;
         }
 
         $time_log = collect($task_items_data)
-                            ->map(function ($item) {
-                                return $this->parseLog($item);
+            ->map(function ($item) {
+                return $this->parseLog($item);
 
-                            })->toJson();
+            })->toJson();
 
         $transformed['time_log'] = $time_log;
 
@@ -103,7 +104,7 @@ class TaskTransformer extends BaseTransformer
         } elseif (isset($item['task.duration'])) {
 
             $starttime = strtotime($item['task.duration']) ? strtotime($item['task.duration']) : strtotime('TODAY');
-            $duration =  $starttime - strtotime('TODAY');
+            $duration = $starttime - strtotime('TODAY');
             $start_date = $this->stubbed_timestamp;
             $end_date = $this->stubbed_timestamp + $duration;
             $this->stubbed_timestamp;
@@ -118,41 +119,38 @@ class TaskTransformer extends BaseTransformer
     {
 
         $stub_start_date = $item['task.start_date'];
-        $stub_start_date .= isset($item['task.start_time']) ? " " . $item['task.start_time'] : '';
+        $stub_start_date .= isset($item['task.start_time']) ? ' ' . $item['task.start_time'] : '';
 
         try {
 
-            $stub_start_date = \Carbon\Carbon::parse($stub_start_date, $this->company->timezone()->name);
+            $stub_start_date = Carbon::parse($stub_start_date, $this->company->timezone()->name);
             $this->stubbed_timestamp = $stub_start_date->timestamp;
 
             return $stub_start_date->timestamp;
         } catch (\Exception $e) {
 
-            nlog("fall back failed too" . $e->getMessage());
+            nlog('fall back failed too' . $e->getMessage());
 
         }
 
-
-
         try {
-            $stub_start_date = \Carbon\Carbon::parse(str_replace('/', '-', $stub_start_date), $this->company->timezone()->name);
+            $stub_start_date = Carbon::parse(str_replace('/', '-', $stub_start_date), $this->company->timezone()->name);
             $this->stubbed_timestamp = $stub_start_date->timestamp;
 
             return $stub_start_date->timestamp;
         } catch (\Exception $e) {
-            nlog("str replace fall back failed too" . $e->getMessage());
+            nlog('str replace fall back failed too' . $e->getMessage());
         }
-
 
         try {
 
-            $stub_start_date = \Carbon\Carbon::createFromFormat($this->company->date_format(), $stub_start_date);
+            $stub_start_date = Carbon::createFromFormat($this->company->date_format(), $stub_start_date);
             $this->stubbed_timestamp = $stub_start_date->timestamp - $this->company->utc_offset();
         } catch (\Exception $e) {
             nlog($e->getMessage());
+
             return $this->stubbed_timestamp;
         }
-
 
     }
 
@@ -160,11 +158,11 @@ class TaskTransformer extends BaseTransformer
     {
 
         $stub_end_date = $item['task.end_date'] ?? $item['task.start_date'];
-        $stub_end_date .= isset($item['task.end_time']) ? " " . $item['task.end_time'] : '';
+        $stub_end_date .= isset($item['task.end_time']) ? ' ' . $item['task.end_time'] : '';
 
         try {
 
-            $stub_end_date = \Carbon\Carbon::parse($stub_end_date, $this->company->timezone()->name);
+            $stub_end_date = Carbon::parse($stub_end_date, $this->company->timezone()->name);
 
             if ($stub_end_date->timestamp == $this->stubbed_timestamp) {
 
@@ -172,6 +170,7 @@ class TaskTransformer extends BaseTransformer
             }
 
             $this->stubbed_timestamp = $stub_end_date->timestamp;
+
             return $stub_end_date->timestamp;
         } catch (\Exception $e) {
             nlog($e->getMessage());
@@ -179,17 +178,16 @@ class TaskTransformer extends BaseTransformer
             // return $this->stubbed_timestamp;
         }
 
-
-
         try {
 
-            $stub_end_date = \Carbon\Carbon::parse(str_replace('/', '-', $stub_end_date), $this->company->timezone()->name);
+            $stub_end_date = Carbon::parse(str_replace('/', '-', $stub_end_date), $this->company->timezone()->name);
 
             if ($stub_end_date->timestamp == $this->stubbed_timestamp) {
                 return $this->stubbed_timestamp;
             }
 
             $this->stubbed_timestamp = $stub_end_date->timestamp;
+
             return $stub_end_date->timestamp;
         } catch (\Exception $e) {
             nlog($e->getMessage());
@@ -197,20 +195,15 @@ class TaskTransformer extends BaseTransformer
             // return $this->stubbed_timestamp;
         }
 
-
-
-
         try {
 
-            $stub_end_date = \Carbon\Carbon::createFromFormat($this->company->date_format(), $stub_end_date);
+            $stub_end_date = Carbon::createFromFormat($this->company->date_format(), $stub_end_date);
             $this->stubbed_timestamp = $stub_end_date->timestamp - $this->company->utc_offset();
         } catch (\Exception $e) {
-            nlog("fall back failed too" . $e->getMessage());
+            nlog('fall back failed too' . $e->getMessage());
+
             return $this->stubbed_timestamp;
         }
-
-
-
 
     }
 
@@ -237,5 +230,4 @@ class TaskTransformer extends BaseTransformer
             ->first()->id ?? null;
 
     }
-
 }

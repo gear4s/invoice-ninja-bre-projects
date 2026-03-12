@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\PaymentDrivers\Forte;
 use App\Exceptions\PaymentFailed;
 use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
 use App\Models\Payment;
 use App\Models\PaymentHash;
@@ -31,20 +31,25 @@ class CreditCard implements LivewireMethodInterface
 
     public $forte;
 
-    private $forte_base_uri = "";
-    private $forte_api_access_id = "";
-    private $forte_secure_key = "";
-    private $forte_auth_organization_id = "";
-    private $forte_organization_id = "";
-    private $forte_location_id = "";
+    private $forte_base_uri = '';
+
+    private $forte_api_access_id = '';
+
+    private $forte_secure_key = '';
+
+    private $forte_auth_organization_id = '';
+
+    private $forte_organization_id = '';
+
+    private $forte_location_id = '';
 
     public function __construct(FortePaymentDriver $forte)
     {
         $this->forte = $forte;
 
-        $this->forte_base_uri = "https://sandbox.forte.net/api/v3/";
+        $this->forte_base_uri = 'https://sandbox.forte.net/api/v3/';
         if ($this->forte->company_gateway->getConfigField('testMode') == false) {
-            $this->forte_base_uri = "https://api.forte.net/v3/";
+            $this->forte_base_uri = 'https://api.forte.net/v3/';
         }
         $this->forte_api_access_id = $this->forte->company_gateway->getConfigField('apiAccessId');
         $this->forte_secure_key = $this->forte->company_gateway->getConfigField('secureKey');
@@ -56,6 +61,7 @@ class CreditCard implements LivewireMethodInterface
     public function authorizeView(array $data)
     {
         $data['gateway'] = $this->forte;
+
         return render('gateways.forte.credit_card.authorize', $data);
     }
 
@@ -64,11 +70,11 @@ class CreditCard implements LivewireMethodInterface
         $cst = $this->forte->findOrCreateCustomer();
 
         $data = [
-            "label" => $request->card_holders_name . " " . $request->card_type,
-            "notes" => $request->card_holders_name . " " . $request->card_type,
-            "card" => [
-                "one_time_token" => $request->one_time_token,
-                "name_on_card" => $request->card_holders_name,
+            'label' => $request->card_holders_name . ' ' . $request->card_type,
+            'notes' => $request->card_holders_name . ' ' . $request->card_type,
+            'card' => [
+                'one_time_token' => $request->one_time_token,
+                'name_on_card' => $request->card_holders_name,
             ],
         ];
 
@@ -79,7 +85,7 @@ class CreditCard implements LivewireMethodInterface
 
             $token = $response->object();
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->exp_month = (string) $request->expire_month;
             $payment_meta->exp_year = (string) $request->expire_year;
             $payment_meta->brand = (string) $request->card_brand;
@@ -114,8 +120,7 @@ class CreditCard implements LivewireMethodInterface
             $this->forte->client->company,
         );
 
-        throw new \App\Exceptions\PaymentFailed("Unable to store payment method: {$error->response->response_desc}", 400);
-
+        throw new PaymentFailed("Unable to store payment method: {$error->response->response_desc}", 400);
     }
 
     private function createPaymentToken($request)
@@ -123,11 +128,11 @@ class CreditCard implements LivewireMethodInterface
         $cst = $this->forte->findOrCreateCustomer();
 
         $data = [
-            "label" => $this->forte->client->present()->name(),
-            "notes" => $this->forte->client->present()->name(),
-            "card" => [
-                "one_time_token" => $request->payment_token,
-                "name_on_card" => $this->forte->client->present()->first_name() . " " . $this->forte->client->present()->last_name(),
+            'label' => $this->forte->client->present()->name(),
+            'notes' => $this->forte->client->present()->name(),
+            'card' => [
+                'one_time_token' => $request->payment_token,
+                'name_on_card' => $this->forte->client->present()->first_name() . ' ' . $this->forte->client->present()->last_name(),
             ],
         ];
 
@@ -138,7 +143,7 @@ class CreditCard implements LivewireMethodInterface
 
             $token = $response->object();
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->exp_month = (string) $request->expire_month;
             $payment_meta->exp_year = (string) $request->expire_year;
             $payment_meta->brand = (string) $request->card_brand;
@@ -170,8 +175,7 @@ class CreditCard implements LivewireMethodInterface
 
         if (strlen($request->token ?? '') > 3) {
 
-
-            $cgt = \App\Models\ClientGatewayToken::find($this->decodePrimaryKey($request->token));
+            $cgt = ClientGatewayToken::find($this->decodePrimaryKey($request->token));
 
             $payment = $this->forte->tokenBilling($cgt, $payment_hash);
 
@@ -188,7 +192,7 @@ class CreditCard implements LivewireMethodInterface
         if (property_exists($fees_and_limits, 'fee_percent') && $fees_and_limits->fee_percent > 0) {
             $fee_total = 0;
 
-            for ($i = ($invoice_totals * 100) ; $i < ($amount_with_fee * 100); $i++) {
+            for ($i = ($invoice_totals * 100); $i < ($amount_with_fee * 100); $i++) {
                 $calculated_fee = (3 * $i) / 100;
                 $calculated_amount_with_fee = round(($i + $calculated_fee) / 100, 2);
                 if ($calculated_amount_with_fee == $amount_with_fee) {
@@ -291,7 +295,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -299,7 +303,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

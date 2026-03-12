@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,6 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 
-/**
- *
- */
 class CentConversionTest extends TestCase
 {
     protected function setUp(): void
@@ -24,7 +20,7 @@ class CentConversionTest extends TestCase
         parent::setUp();
     }
 
-    public function testConversionOfDecimalValues()
+    public function test_conversion_of_decimal_values()
     {
         $precision = 2;
 
@@ -44,7 +40,7 @@ class CentConversionTest extends TestCase
         $this->assertEquals(212, $amount);
     }
 
-    public function testBcMathWay()
+    public function test_bc_math_way()
     {
         $amount = 64.99;
         $amount = bcmul($amount, 100);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Libraries\OAuth;
 
 use App\Libraries\MultiDB;
 use App\Libraries\OAuth\Providers\Google;
+use App\Models\User;
 use Laravel\Socialite\Facades\Socialite;
 
 /**
@@ -45,8 +45,8 @@ class OAuth
     public $provider_id;
 
     /**
-     * @param \Laravel\Socialite\Facades\Socialite $socialite_user
-     * @return bool | \App\Models\User | \App\Models\User | null
+     * @param  Socialite  $socialite_user
+     * @return bool | User | User | null
      */
     public static function handleAuth($socialite_user, $provider)
     {
@@ -125,7 +125,7 @@ class OAuth
     {
         switch ($provider) {
             case 'google':
-                $this->provider_instance = new Google();
+                $this->provider_instance = new Google;
                 $this->provider_id = self::SOCIAL_GOOGLE;
 
                 return $this;

@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\ValidationRules\User;
 
 use Illuminate\Contracts\Validation\Rule;
+use Twilio\Rest\Client;
 
 /**
  * Class HasValidPhoneNumber.
@@ -31,8 +31,8 @@ class HasValidPhoneNumber implements Rule
     }
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
@@ -48,9 +48,9 @@ class HasValidPhoneNumber implements Rule
             return false;
         }
 
-        $twilio = new \Twilio\Rest\Client($sid, $token);
+        $twilio = new Client($sid, $token);
 
-        $country = auth()->user()->account?->companies()?->first()?->country(); //@phpstan-ignore-line
+        $country = auth()->user()->account?->companies()?->first()?->country(); // @phpstan-ignore-line
 
         if (!$country || strlen(auth()->user()->phone) < 2) {
             return true;
@@ -60,11 +60,11 @@ class HasValidPhoneNumber implements Rule
 
         try {
             $phone_number = $twilio->lookups->v1->phoneNumbers($value)
-                                                ->fetch(["countryCode" => $countryCode]);
+                ->fetch(['countryCode' => $countryCode]);
 
             $user = auth()->user();
 
-            request()->merge(['validated_phone' => $phone_number->phoneNumber ]);
+            request()->merge(['validated_phone' => $phone_number->phoneNumber]);
 
             $user->verified_phone_number = false;
             $user->save();

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,8 +28,8 @@ use ZipArchive;
 
 class HostedMigrations extends Command
 {
-    use MakesHash;
     use AppSetup;
+    use MakesHash;
 
     /**
      * The name and signature of the console command.
@@ -64,7 +63,7 @@ class HostedMigrations extends Command
     public function handle()
     {
 
-        if (! MultiDB::userFindAndSetDb($this->option('email'))) {
+        if (!MultiDB::userFindAndSetDb($this->option('email'))) {
             $this->info('Could not find a user with that email address');
 
             return;
@@ -72,7 +71,7 @@ class HostedMigrations extends Command
 
         $user = User::where('email', $this->option('email'))->first();
 
-        if (! $user) {
+        if (!$user) {
             $this->info('There was a problem getting the user, did you set the right DB?');
 
             return;
@@ -88,11 +87,11 @@ class HostedMigrations extends Command
 
                 $this->info('Started processing: ' . $file->getBasename() . ' at ' . now());
 
-                $zip = new ZipArchive();
+                $zip = new ZipArchive;
                 $archive = $zip->open($file->getRealPath());
 
                 try {
-                    if (! $archive) {
+                    if (!$archive) {
                         throw new ProcessingMigrationArchiveFailed('Processing migration archive failed. Migration file is possibly corrupted.');
                     }
 

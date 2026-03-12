@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,7 +26,7 @@ class UpdateBalance extends AbstractService
 
         $this->invoice->increment('balance', floatval($this->balance_adjustment));
 
-        if ($this->invoice->balance == 0 && ! $this->is_draft) {
+        if ($this->invoice->balance == 0 && !$this->is_draft) {
             $this->invoice->status_id = Invoice::STATUS_PAID;
         }
 

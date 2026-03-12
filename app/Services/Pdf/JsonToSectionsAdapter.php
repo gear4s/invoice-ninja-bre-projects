@@ -6,11 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Pdf;
+
+use App\Utils\Helpers;
+use Carbon\Carbon;
 
 /**
  * Converts JSON-based visual designer output to PdfBuilder sections format
@@ -51,8 +53,7 @@ class JsonToSectionsAdapter
     private array $blocksByRow = [];
 
     /**
-     * @param array $jsonDesign Complete JSON design with blocks and pageSettings
-     * @param PdfService $service
+     * @param  array  $jsonDesign  Complete JSON design with blocks and pageSettings
      */
     public function __construct(array $jsonDesign, PdfService $service)
     {
@@ -86,20 +87,16 @@ class JsonToSectionsAdapter
 
     /**
      * Get blocks grouped by row for template generation
-     *
-     * @return array
      */
     public function getRowGroupedBlocks(): array
     {
         $sortedBlocks = $this->sortBlocksByPosition($this->jsonBlocks);
+
         return $this->groupBlocksIntoRows($sortedBlocks);
     }
 
     /**
      * Sort blocks by grid position (Y, then X)
-     *
-     * @param array $blocks
-     * @return array
      */
     private function sortBlocksByPosition(array $blocks): array
     {
@@ -124,7 +121,6 @@ class JsonToSectionsAdapter
      * Group blocks into rows based on similar Y positions
      * Matches InvoiceDesignRenderer logic - blocks within 1 grid unit are considered same row
      *
-     * @param array $blocks
      * @return array Array of rows, each containing array of blocks
      */
     private function groupBlocksIntoRows(array $blocks): array
@@ -158,9 +154,6 @@ class JsonToSectionsAdapter
 
     /**
      * Convert a single JSON block to PdfBuilder section format
-     *
-     * @param array $block
-     * @return array|null
      */
     private function convertBlockToSection(array $block): ?array
     {
@@ -528,11 +521,11 @@ class JsonToSectionsAdapter
     /**
      * Build table body rows using JSON design's custom columns
      *
-     * @param array $columns Column definitions from JSON design
-     * @param string $tableType 'product' or 'task'
-     * @param array $props Table properties for styling
-     * @param array $columnVisibility Which columns are empty
-     * @param bool $hideEmptyColumns Whether to hide empty columns
+     * @param  array  $columns  Column definitions from JSON design
+     * @param  string  $tableType  'product' or 'task'
+     * @param  array  $props  Table properties for styling
+     * @param  array  $columnVisibility  Which columns are empty
+     * @param  bool  $hideEmptyColumns  Whether to hide empty columns
      * @return array Array of row elements
      */
     private function buildTableBodyRows(array $columns, string $tableType, array $props, array $columnVisibility, bool $hideEmptyColumns): array
@@ -584,7 +577,7 @@ class JsonToSectionsAdapter
     /**
      * Get filtered line items by table type
      *
-     * @param string $tableType 'product' or 'task'
+     * @param  string  $tableType  'product' or 'task'
      * @return array Filtered line items
      */
     private function getFilteredLineItems(string $tableType): array
@@ -593,7 +586,7 @@ class JsonToSectionsAdapter
         $filteredItems = [];
 
         foreach ($lineItems as $item) {
-            $itemTypeId = (string)($item->type_id ?? '1');
+            $itemTypeId = (string) ($item->type_id ?? '1');
 
             if ($tableType === 'product') {
                 // Include products (1) and related types (4, 5, 6)
@@ -614,8 +607,8 @@ class JsonToSectionsAdapter
     /**
      * Calculate which columns are empty across all rows
      *
-     * @param array $columns Column definitions
-     * @param array $items Line items to check
+     * @param  array  $columns  Column definitions
+     * @param  array  $items  Line items to check
      * @return array Map of columnId => isEmpty (true if all values empty)
      */
     private function calculateColumnVisibility(array $columns, array $items): array
@@ -646,9 +639,9 @@ class JsonToSectionsAdapter
     /**
      * Get formatted field value from line item
      *
-     * @param object $item Line item object
-     * @param string $field Field reference (e.g., 'item.product_key')
-     * @param string $tableType 'product' or 'task'
+     * @param  object  $item  Line item object
+     * @param  string  $field  Field reference (e.g., 'item.product_key')
+     * @param  string  $tableType  'product' or 'task'
      * @return string Formatted value
      */
     private function getFieldValue($item, string $field, string $tableType): string
@@ -685,9 +678,9 @@ class JsonToSectionsAdapter
     /**
      * Format field value based on type
      *
-     * @param mixed $value Raw value
-     * @param string $fieldName Field name
-     * @param object $item Line item for context
+     * @param  mixed  $value  Raw value
+     * @param  string  $fieldName  Field name
+     * @param  object  $item  Line item for context
      * @return string Formatted value
      */
     private function formatFieldValue($value, string $fieldName, $item): string
@@ -714,25 +707,26 @@ class JsonToSectionsAdapter
                 if (isset($item->is_amount_discount) && $item->is_amount_discount) {
                     return $this->service->config->formatMoney($value);
                 } else {
-                    return $this->service->config->formatValueNoTrailingZeroes((float)$value) . '%';
+                    return $this->service->config->formatValueNoTrailingZeroes((float) $value) . '%';
                 }
 
             case 'tax_rate1':
             case 'tax_rate2':
             case 'tax_rate3':
-                return $this->service->config->formatValueNoTrailingZeroes((float)$value) . '%';
+                return $this->service->config->formatValueNoTrailingZeroes((float) $value) . '%';
 
             case 'notes':
             case 'description':
                 // Process reserved keywords (like :MONTH, :YEAR, etc.)
                 $currentDateTime = null;
                 if (isset($this->service->config->entity->next_send_date)) {
-                    $currentDateTime = \Carbon\Carbon::parse($this->service->config->entity->next_send_date);
+                    $currentDateTime = Carbon::parse($this->service->config->entity->next_send_date);
                 }
-                return \App\Utils\Helpers::processReservedKeywords($value, $this->service->config->currency_entity, $currentDateTime);
+
+                return Helpers::processReservedKeywords($value, $this->service->config->currency_entity, $currentDateTime);
 
             default:
-                return (string)$value;
+                return (string) $value;
         }
     }
 
@@ -903,7 +897,7 @@ class JsonToSectionsAdapter
                     'content' => '{{QR_CODE:' . ($props['data'] ?? '$invoice.public_url') . '}}',
                     'properties' => [
                         'data-ref' => "{$block['id']}-qr",
-                        'style' => "text-align: " . ($props['align'] ?? 'left') . ";",
+                        'style' => 'text-align: ' . ($props['align'] ?? 'left') . ';',
                     ],
                 ],
             ],
@@ -966,7 +960,7 @@ class JsonToSectionsAdapter
             'id' => $block['id'],
             'elements' => $elements,
             'properties' => [
-                'style' => "text-align: " . ($props['align'] ?? 'left') . ";",
+                'style' => 'text-align: ' . ($props['align'] ?? 'left') . ';',
             ],
         ];
     }

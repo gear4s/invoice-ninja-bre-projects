@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,6 @@ class ClientBillingFlag extends Notification
      *
      * @return void
      */
-
     public function __construct(protected string $account_key, protected string $messasge) {}
 
     /**
@@ -62,10 +60,10 @@ class ClientBillingFlag extends Notification
         $content .= "Account: {$this->account_key }\n";
         $content .= "Message: {$this->messasge}\n";
 
-        return (new SlackMessage())
-                ->success()
-                ->from(ctrans('texts.notification_bot'))
-                ->image('https://app.invoiceninja.com/favicon.png')
-                ->content($content);
+        return (new SlackMessage)
+            ->success()
+            ->from(ctrans('texts.notification_bot'))
+            ->image('https://app.invoiceninja.com/favicon.png')
+            ->content($content);
     }
 }

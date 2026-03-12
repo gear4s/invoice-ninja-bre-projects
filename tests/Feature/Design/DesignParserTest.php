@@ -2,26 +2,24 @@
 
 namespace Tests\Feature\Design;
 
-use Tests\TestCase;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Services\Pdf\PdfMock;
-use App\Utils\Traits\MakesHash;
-use App\Services\Pdf\PdfService;
 use App\DataMapper\CompanySettings;
 use App\Factory\InvoiceItemFactory;
 use App\Helpers\Invoice\InvoiceSum;
-use Tests\Feature\Design\InvoiceDesignRenderer;
+use App\Models\Company;
+use App\Models\Invoice;
+use App\Services\Pdf\PdfMock;
+use App\Services\Pdf\PdfService;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class DesignParserTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
-    
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -30,15 +28,14 @@ class DesignParserTest extends TestCase
 
     public function test_design_parser()
     {
-        
+
         $designjson = file_get_contents(base_path('tests/Feature/Design/stubs/test_design_1.json'));
         $design = json_decode($designjson, true);
 
-        $renderer = new InvoiceDesignRenderer();
+        $renderer = new InvoiceDesignRenderer;
         $html = $renderer->render($design['blocks']);
         $this->assertNotNull($html);
         file_put_contents(base_path('tests/Feature/Design/stubs/test_design_1.html'), $html);
-
 
         $design = [
             'body' => $html,
@@ -59,7 +56,6 @@ class DesignParserTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/designs', $data);
 
-
         $arr = $response->json();
         $design_id = $arr['data']['id'];
 
@@ -73,8 +69,6 @@ class DesignParserTest extends TestCase
         // $mock->build();
         // $html = $mock->getHtml();
         // $this->assertNotNull($html);
-        
-
 
         $item = InvoiceItemFactory::create();
         $item->quantity = 1.75;
@@ -92,7 +86,6 @@ class DesignParserTest extends TestCase
         $line_items[] = $item;
         $line_items[] = $item;
         $line_items[] = $item;
-
 
         $i = Invoice::factory()->create([
             'discount' => 0,
@@ -116,11 +109,10 @@ class DesignParserTest extends TestCase
         $ii = $invoice_calc->build()->getInvoice();
         $ii = $ii->service()->createInvitations()->markSent()->save();
 
-
         $ps = new PdfService($ii->invitations()->first(), 'product', [
             'client' => $this->client ?? false,
             'vendor' => false,
-            "invoices" => [$ii],
+            'invoices' => [$ii],
         ]);
 
         $html = $ps->boot()->getHtml();

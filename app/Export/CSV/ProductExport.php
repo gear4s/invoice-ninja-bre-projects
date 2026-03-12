@@ -6,21 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Export\CSV;
 
-use App\Utils\Ninja;
-use League\Csv\Writer;
+use App\Export\Decorators\Decorator;
+use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Product;
-use App\Libraries\MultiDB;
-use Illuminate\Support\Facades\App;
-use App\Export\Decorators\Decorator;
 use App\Transformers\ProductTransformer;
+use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class ProductExport extends BaseExport
 {
@@ -36,8 +36,8 @@ class ProductExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->entity_transformer = new ProductTransformer();
-        $this->decorator = new Decorator();
+        $this->entity_transformer = new ProductTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function returnJson()
@@ -51,12 +51,13 @@ class ProductExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\Product $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var Product $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
@@ -75,10 +76,10 @@ class ProductExport extends BaseExport
         }
 
         $query = Product::query()
-                        ->withTrashed()
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->where('company_id', $this->company->id);
 
-        if (!$this->input['include_deleted'] ?? false) { //@phpstan-ignore-line
+        if (!$this->input['include_deleted'] ?? false) { // @phpstan-ignore-line
             $query->where('is_deleted', 0);
         }
 
@@ -98,19 +99,19 @@ class ProductExport extends BaseExport
 
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-              ->each(function ($entity) {
+            ->each(function ($entity) {
 
-                  /** @var \App\Models\Product $entity */
-                  $this->csv->insertOne($this->buildRow($entity));
-              });
+                /** @var Product $entity */
+                $this->csv->insertOne($this->buildRow($entity));
+            });
 
         return $this->csv->toString();
     }
@@ -133,5 +134,4 @@ class ProductExport extends BaseExport
 
         return $this->convertFloats($entity);
     }
-
 }

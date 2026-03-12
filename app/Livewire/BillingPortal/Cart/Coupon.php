@@ -1,21 +1,21 @@
 <?php
 
 /**
-* Invoice Ninja (https://invoiceninja.com).
-*
-* @link https://github.com/invoiceninja/invoiceninja source repository
-*
-* @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
-*
-* @license https://www.elastic.co/licensing/elastic-license
-*/
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
 
 namespace App\Livewire\BillingPortal\Cart;
 
-use Livewire\Component;
 use App\Models\Subscription;
 use App\Utils\Traits\MakesHash;
+use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class Coupon extends Component
 {
@@ -36,7 +36,7 @@ class Coupon extends Component
 
         if (isset($this->context['request_data']['coupon']) && $this->context['request_data']['coupon'] == $this->subscription()->promo_code) {
             $this->showCouponCode = false;
-            $this->dispatch('purchase.context', property: "valid_coupon", value: $this->context['request_data']['coupon']);
+            $this->dispatch('purchase.context', property: 'valid_coupon', value: $this->context['request_data']['coupon']);
         }
 
     }
@@ -44,7 +44,7 @@ class Coupon extends Component
     #[Computed()]
     public function subscription()
     {
-        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration','steps']);
+        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration', 'steps']);
     }
 
     public function applyCoupon()
@@ -58,7 +58,7 @@ class Coupon extends Component
 
             if ($this->couponCode == $this->subscription()->promo_code) {
                 $this->showCouponCode = false;
-                $this->dispatch('purchase.context', property: "valid_coupon", value: $this->couponCode);
+                $this->dispatch('purchase.context', property: 'valid_coupon', value: $this->couponCode);
                 $this->dispatch('summary.refresh');
             } else {
                 $this->addError('couponCode', ctrans('texts.invalid_coupon'));
@@ -68,10 +68,9 @@ class Coupon extends Component
             $this->addError('couponCode', ctrans('texts.invalid_coupon'));
         }
 
-
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('billing-portal.v3.cart.coupon');
     }

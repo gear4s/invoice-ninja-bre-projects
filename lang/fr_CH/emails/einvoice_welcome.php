@@ -6,23 +6,23 @@ return [
 
     'greeting' => 'Bienvenue à la Facturation Électronique, :name!',
 
-    'intro' => "Ce service vous permet de :",
-    'intro_items' => "
+    'intro' => 'Ce service vous permet de :',
+    'intro_items' => '
         • Envoyer et recevoir des factures électroniquement<br>
         • Garantir la conformité aux réglementations fiscales<br>
         • Accélérer le traitement des paiements<br>
         • Réduire la saisie manuelle et les erreurs<br>
-    ",
+    ',
 
     'requirements_title' => 'Exigences Importantes',
     'requirements_intro' => 'Pour assurer le succès de la facturation électronique, veuillez vérifier ces informations commerciales essentielles :',
-    'requirements_items' => "
+    'requirements_items' => '
             • Raison sociale - Doit correspondre exactement à votre inscription au registre du commerce<br>
             • Numéro TVA - Doit être actuel et validé<br>
             • Identifiants commerciaux (IDE/EORI/GLN) - Doivent être précis et actifs<br>
             • Adresse commerciale - Doit correspondre aux registres officiels<br>
             • Coordonnées - Doivent être à jour et surveillées<br>
-        ",
+        ',
 
     'validation_title' => 'Importance des Informations Exactes',
     'validation_items' => "
@@ -44,7 +44,7 @@ return [
                     Contactez le support : :email<br>
                     Nous vous remercions d'avoir choisi notre service de facturation électronique.<br>
     ",
-    "text" => "
+    'text' => "
     Activation de la Facturation Électronique
 
 Bienvenue à la Facturation Électronique.
@@ -87,6 +87,6 @@ Notre équipe de support est à votre disposition pour toute question concernant
 Contactez le support : contact@invoiceninja.com
 
 Nous vous remercions d'avoir choisi notre service de facturation électronique.
-    "
+    ",
 
 ];

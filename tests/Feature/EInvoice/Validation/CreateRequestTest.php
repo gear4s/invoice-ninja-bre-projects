@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\EInvoice\Validation;
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\EInvoice\Peppol\StoreEntityRequest;
+use Illuminate\Support\Facades\Validator;
+use Tests\TestCase;
 
 class CreateRequestTest extends TestCase
 {
@@ -13,10 +13,10 @@ class CreateRequestTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request = new StoreEntityRequest();
+        $this->request = new StoreEntityRequest;
     }
 
-    public function testValidInput()
+    public function test_valid_input()
     {
         $data = [
             'party_name' => 'Test Company',
@@ -39,7 +39,7 @@ class CreateRequestTest extends TestCase
         $this->assertTrue($validator->passes());
     }
 
-    public function testInvalidCountry()
+    public function test_invalid_country()
     {
         $data = [
             'party_name' => 'Test Company',
@@ -60,7 +60,7 @@ class CreateRequestTest extends TestCase
         $this->assertArrayHasKey('country', $validator->errors()->toArray());
     }
 
-    public function testMissingRequiredFields()
+    public function test_missing_required_fields()
     {
         $data = [
             'line2' => 'Optional line',
@@ -79,7 +79,7 @@ class CreateRequestTest extends TestCase
         $this->assertArrayHasKey('county', $errors);
     }
 
-    public function testOptionalLine2()
+    public function test_optional_line2()
     {
         $data = [
             'party_name' => 'Test Company',
@@ -102,13 +102,13 @@ class CreateRequestTest extends TestCase
         $this->assertTrue($validator->passes());
     }
 
-    public function testCountryPreparation()
+    public function test_country_preparation()
     {
         $data = [
             'country' => '276', // Numeric code for Germany
         ];
 
-        $request = new StoreEntityRequest();
+        $request = new StoreEntityRequest;
         $request->initialize($data);
         $request->prepareForValidation();
 

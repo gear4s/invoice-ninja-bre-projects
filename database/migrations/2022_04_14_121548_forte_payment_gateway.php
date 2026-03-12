@@ -13,14 +13,14 @@ class FortePaymentGateway extends Migration
      */
     public function up()
     {
-        $fields = new \stdClass;
+        $fields = new stdClass;
         $fields->testMode = false;
-        $fields->apiLoginId = "";
-        $fields->apiAccessId = "";
-        $fields->secureKey = "";
-        $fields->authOrganizationId = "";
-        $fields->organizationId = "";
-        $fields->locationId = "";
+        $fields->apiLoginId = '';
+        $fields->apiAccessId = '';
+        $fields->secureKey = '';
+        $fields->authOrganizationId = '';
+        $fields->organizationId = '';
+        $fields->locationId = '';
 
         $forte = new Gateway;
         $forte->id = 59;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www/elastic.co/licensing/elastic-license
  */
 
@@ -20,7 +19,7 @@ class InvoiceBackupCast implements CastsAttributes
     public function get($model, string $key, $value, array $attributes)
     {
         if (is_null($value)) {
-            return new InvoiceBackup();
+            return new InvoiceBackup;
         }
 
         $data = json_decode($value, true) ?? [];
@@ -35,7 +34,7 @@ class InvoiceBackupCast implements CastsAttributes
         }
 
         // Ensure we're dealing with our object type
-        if (! $value instanceof InvoiceBackup) {
+        if (!$value instanceof InvoiceBackup) {
             // Attempt to create the instance from legacy data before throwing
             try {
                 if (is_object($value)) {

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -38,7 +37,7 @@ class ContactRegisterController extends Controller
             $key = request()->session()->has('company_key') ? request()->session()->get('company_key') : $company_key;
         }
 
-        /** @var \App\Models\Company $company **/
+        /** @var Company $company * */
         $company = Company::where('company_key', $key)->firstOrFail();
 
         App::forgetInstance('translator');
@@ -69,7 +68,7 @@ class ContactRegisterController extends Controller
 
         $company = $request->company();
 
-        if (! $company->client_can_register || $company->account->isFreeHostedClient()) {
+        if (!$company->client_can_register || $company->account->isFreeHostedClient()) {
             abort(403, 'This page is restricted');
         }
 

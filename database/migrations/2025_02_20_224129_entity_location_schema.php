@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            
+
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('client_id')->nullable()->index();
             $table->unsignedInteger('vendor_id')->nullable()->index();
@@ -38,13 +38,13 @@ return new class extends Migration
 
             $table->softDeletes('deleted_at', 6);
             $table->timestamps(6);
-        
+
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
         });
 
-        Schema::table('invoices', function (Blueprint $table){
+        Schema::table('invoices', function (Blueprint $table) {
 
             $table->foreignId('location_id')->nullable()->constrained()->cascadeOnDelete();
         });
@@ -66,7 +66,7 @@ return new class extends Migration
         });
 
     }
-    
+
     public function down(): void
     {
         //

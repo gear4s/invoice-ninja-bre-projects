@@ -6,26 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Report;
 
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Utils\Number;
+use App\Export\CSV\BaseExport;
+use App\Libraries\MultiDB;
 use App\Models\Client;
-use League\Csv\Writer;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use App\Export\CSV\BaseExport;
-use App\Utils\Traits\MakesDates;
-use Illuminate\Support\Facades\App;
+use App\Models\User;
 use App\Services\Template\TemplateService;
-use Illuminate\Support\Facades\DB;
+use App\Utils\Ninja;
+use App\Utils\Number;
+use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class ARSummaryReport extends BaseExport
 {
@@ -79,7 +79,7 @@ class ARSummaryReport extends BaseExport
             'clients',
             'client_id',
         ]
-    */
+     */
     public function __construct(public Company $company, public array $input) {}
 
     public function run()
@@ -91,14 +91,14 @@ class ARSummaryReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([ctrans('texts.aged_receivable_summary_report')]);
-        $this->csv->insertOne([ctrans('texts.created_on'),' ',$this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale())]);
+        $this->csv->insertOne([ctrans('texts.created_on'), ' ', $this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale())]);
 
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = $this->report_keys;
@@ -130,7 +130,7 @@ class ARSummaryReport extends BaseExport
         $query->orderBy('balance', 'desc')
             ->cursor()
             ->each(function ($client) {
-                /** @var \App\Models\Client $client */
+                /** @var Client $client */
                 $this->csv->insertOne($this->buildRow($client));
             });
     }
@@ -163,7 +163,7 @@ class ARSummaryReport extends BaseExport
 
                 // Build rows from cached data
                 foreach ($clientChunk as $client) {
-                    /** @var \App\Models\Client $client */
+                    /** @var Client $client */
                     $this->csv->insertOne($this->buildRowOptimized($client, $agingData));
                 }
 
@@ -185,13 +185,13 @@ class ARSummaryReport extends BaseExport
             'created_by' => $user_name,
         ];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         $ts_instance = $ts->setCompany($this->company)
-                    ->setData($data)
-                    ->setRawTemplate(file_get_contents(resource_path($this->template)))
-                    ->parseNinjaBlocks()
-                    ->save();
+            ->setData($data)
+            ->setRawTemplate(file_get_contents(resource_path($this->template)))
+            ->parseNinjaBlocks()
+            ->save();
 
         return $ts_instance->getPdf();
     }
@@ -200,7 +200,7 @@ class ARSummaryReport extends BaseExport
      * Fetch all aging data for multiple clients in a single query.
      * Uses CASE statements to calculate all aging buckets in one pass.
      *
-     * @param array $clientIds Array of client IDs (should be ≤ 1000 from chunking)
+     * @param  array  $clientIds  Array of client IDs (should be ≤ 1000 from chunking)
      * @return Collection Aging data keyed by client_id
      */
     private function getAgingDataOptimized(array $clientIds): Collection
@@ -357,10 +357,11 @@ class ARSummaryReport extends BaseExport
         return Number::formatMoney($amount, $this->client);
 
     }
+
     /**
      * Generate aging amount.
      *
-     * @param mixed $range
+     * @param  mixed  $range
      * @return string
      */
     private function getAgingAmount($range)
@@ -387,7 +388,7 @@ class ARSummaryReport extends BaseExport
     /**
      * Calculate date ranges for aging.
      *
-     * @param mixed $range
+     * @param  mixed  $range
      * @return array
      */
     private function calculateDateRanges($range)
@@ -439,5 +440,4 @@ class ARSummaryReport extends BaseExport
 
         return $header;
     }
-
 }

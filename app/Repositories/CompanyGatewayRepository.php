@@ -6,16 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Repositories;
 
-use App\Utils\Ninja;
-use App\Models\Company;
 use App\Models\CompanyGateway;
-use App\Repositories\BaseRepository;
 
 /**
  * CompanyGatewayRepository.
@@ -58,8 +54,8 @@ class CompanyGatewayRepository extends BaseRepository
 
         if (strlen($company_gateway_ids ?? '') > 2) {
             $transformed_ids = collect(explode(',', $company_gateway_ids))
-                                ->push($company_gateway->hashed_id)
-                                ->implode(",");
+                ->push($company_gateway->hashed_id)
+                ->implode(',');
 
             $company = $company_gateway->company;
             $settings = $company->settings;
@@ -76,10 +72,10 @@ class CompanyGatewayRepository extends BaseRepository
 
         if (strpos($company_gateway_ids, $company_gateway->hashed_id) !== false) {
             $transformed_ids = collect(explode(',', $company_gateway_ids))
-                                ->filter(function ($id) use ($company_gateway) {
-                                    return $id !== $company_gateway->hashed_id;
-                                })
-                                ->implode(",");
+                ->filter(function ($id) use ($company_gateway) {
+                    return $id !== $company_gateway->hashed_id;
+                })
+                ->implode(',');
 
             $company = $company_gateway->company;
             $settings = $company->settings;

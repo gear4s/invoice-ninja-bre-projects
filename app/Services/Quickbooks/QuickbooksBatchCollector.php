@@ -6,14 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks;
 
-use Illuminate\Support\Facades\Cache;
 use App\Jobs\Quickbooks\BatchPushToQuickbooks;
+use App\Jobs\Quickbooks\FlushQuickbooksBatch;
+use App\Jobs\Quickbooks\PushToQuickbooks;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Collects entities for batching before pushing to QuickBooks.
@@ -39,13 +40,16 @@ class QuickbooksBatchCollector
      * whatever has accumulated — even a single entity.
      */
     private const COLLECTION_WINDOW_NORMAL = 10;
+
     private const COLLECTION_WINDOW_LOW = 30;
 
     /**
      * Priority levels
      */
     public const PRIORITY_IMMEDIATE = 'immediate';  // Creates, status changes
+
     public const PRIORITY_NORMAL = 'normal';        // Regular updates
+
     public const PRIORITY_LOW = 'low';              // Bulk/background updates
 
     /**
@@ -60,13 +64,12 @@ class QuickbooksBatchCollector
      * Since each Invoice Ninja company has exactly one QB connection (realm),
      * batching by companyId ensures realm isolation.
      *
-     * @param string $entityType 'client', 'invoice', etc.
-     * @param int $entityId Entity ID
-     * @param string $db Database name
-     * @param int $companyId Company ID (implicitly defines the QB realm)
-     * @param string $priority Priority level (immediate, normal, low)
-     * @param bool $forceImmediate Force immediate dispatch (bypass batching)
-     * @return void
+     * @param  string  $entityType  'client', 'invoice', etc.
+     * @param  int  $entityId  Entity ID
+     * @param  string  $db  Database name
+     * @param  int  $companyId  Company ID (implicitly defines the QB realm)
+     * @param  string  $priority  Priority level (immediate, normal, low)
+     * @param  bool  $forceImmediate  Force immediate dispatch (bypass batching)
      */
     public static function collect(
         string $entityType,
@@ -79,6 +82,7 @@ class QuickbooksBatchCollector
         // Skip collection if we're currently importing from QB (prevent circular sync)
         if (!empty(QuickbooksService::$importing[$companyId])) {
             nlog("QB Batch: Skipping {$entityType} {$entityId} — currently importing from QB for company {$companyId}");
+
             return;
         }
 
@@ -87,7 +91,8 @@ class QuickbooksBatchCollector
         // Force immediate dispatch for high-priority operations
         if ($forceImmediate || $priority === self::PRIORITY_IMMEDIATE) {
             nlog("QB Batch: Immediate dispatch for {$entityType} {$entityId}");
-            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch($entityType, $entityId, $db);
+            PushToQuickbooks::dispatch($entityType, $entityId, $db);
+
             return;
         }
 
@@ -121,11 +126,7 @@ class QuickbooksBatchCollector
     /**
      * Dispatch a batch job immediately
      *
-     * @param string $entityType
-     * @param string $db
-     * @param int $companyId
-     * @param string $priority Priority level
-     * @return void
+     * @param  string  $priority  Priority level
      */
     public static function dispatchBatch(string $entityType, string $db, int $companyId, string $priority = self::PRIORITY_NORMAL): void
     {
@@ -153,12 +154,8 @@ class QuickbooksBatchCollector
     /**
      * Schedule a batch dispatch after collection window expires
      *
-     * @param string $entityType
-     * @param string $db
-     * @param int $companyId
-     * @param string $priority Priority level
-     * @param int $collectionWindow Window in seconds
-     * @return void
+     * @param  string  $priority  Priority level
+     * @param  int  $collectionWindow  Window in seconds
      */
     private static function scheduleDispatch(
         string $entityType,
@@ -178,14 +175,13 @@ class QuickbooksBatchCollector
         Cache::put($scheduleKey, true, now()->addSeconds($collectionWindow + 5));
 
         // Dispatch delayed job to flush the batch
-        \App\Jobs\Quickbooks\FlushQuickbooksBatch::dispatch($entityType, $db, $companyId, $priority)
+        FlushQuickbooksBatch::dispatch($entityType, $db, $companyId, $priority)
             ->delay(now()->addSeconds($collectionWindow));
     }
 
     /**
      * Get collection window based on priority
      *
-     * @param string $priority
      * @return int Seconds
      */
     private static function getCollectionWindow(string $priority): int
@@ -198,14 +194,12 @@ class QuickbooksBatchCollector
 
     /**
      * Force dispatch all pending batches (for shutdown/testing)
-     *
-     * @return void
      */
     public static function flushAll(): void
     {
         // This would require tracking all active batches
         // For now, individual batches are flushed by scheduled jobs
-        nlog("QB Batch Collector: Flush all requested");
+        nlog('QB Batch Collector: Flush all requested');
     }
 
     /**
@@ -221,11 +215,9 @@ class QuickbooksBatchCollector
      * - qb_batch_collector:client:tenant1:100:normal
      * - qb_batch_collector:client:tenant2:100:normal (different batch!)
      *
-     * @param string $entityType
-     * @param string $db Database name (for multi-tenant isolation)
-     * @param int $companyId Company ID within that database
-     * @param string $priority Priority level
-     * @return string
+     * @param  string  $db  Database name (for multi-tenant isolation)
+     * @param  int  $companyId  Company ID within that database
+     * @param  string  $priority  Priority level
      */
     private static function getCacheKey(string $entityType, string $db, int $companyId, string $priority = self::PRIORITY_NORMAL): string
     {
@@ -238,11 +230,9 @@ class QuickbooksBatchCollector
      *
      * Uses same composite db + companyId structure for multi-tenant isolation
      *
-     * @param string $entityType
-     * @param string $db Database name (for multi-tenant isolation)
-     * @param int $companyId Company ID within that database
-     * @param string $priority Priority level
-     * @return string
+     * @param  string  $db  Database name (for multi-tenant isolation)
+     * @param  int  $companyId  Company ID within that database
+     * @param  string  $priority  Priority level
      */
     private static function getScheduleKey(string $entityType, string $db, int $companyId, string $priority = self::PRIORITY_NORMAL): string
     {
@@ -253,11 +243,7 @@ class QuickbooksBatchCollector
     /**
      * Get current batch size
      *
-     * @param string $entityType
-     * @param string $db
-     * @param int $companyId
-     * @param string $priority Priority level
-     * @return int
+     * @param  string  $priority  Priority level
      */
     public static function getBatchSize(string $entityType, string $db, int $companyId, string $priority = self::PRIORITY_NORMAL): int
     {

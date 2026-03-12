@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests;
 
 use App\Http\ValidationRules\User\RelatedUserRule;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,6 +22,7 @@ class Request extends FormRequest
     use RuntimeFormRequest;
 
     protected $file_validation = 'sometimes|file|max:100000|mimes:png,ai,jpeg,tiff,pdf,gif,psd,txt,doc,xls,ppt,xlsx,docx,pptx,webp,xml,zip,csv,ods,odt,odp,txt';
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -35,7 +36,7 @@ class Request extends FormRequest
     public function fileValidation()
     {
         if (config('ninja.upload_extensions')) {
-            return $this->file_validation . "," . config('ninja.upload_extensions');
+            return $this->file_validation . ',' . config('ninja.upload_extensions');
         }
 
         return $this->file_validation;
@@ -57,8 +58,8 @@ class Request extends FormRequest
             }
         }
 
-        //01-02-2022 needed for CSV Imports
-        if (! $merge_rules) {
+        // 01-02-2022 needed for CSV Imports
+        if (!$merge_rules) {
             return $rules;
         }
 
@@ -79,7 +80,7 @@ class Request extends FormRequest
 
     private function invoice_id($rules)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules['invoice_id'] = 'bail|nullable|sometimes|exists:invoices,id,company_id,' . $user->company()->id . ',client_id,' . $this['client_id'];
@@ -89,7 +90,7 @@ class Request extends FormRequest
 
     private function vendor_id($rules)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules['vendor_id'] = 'bail|nullable|sometimes|exists:vendors,id,company_id,' . $user->company()->id;
@@ -161,7 +162,7 @@ class Request extends FormRequest
 
         if (isset($input['client_contacts'])) {
             foreach ($input['client_contacts'] as $key => $contact) {
-                if (! array_key_exists('send_email', $contact) || ! array_key_exists('id', $contact)) {
+                if (!array_key_exists('send_email', $contact) || !array_key_exists('id', $contact)) {
                     unset($input['client_contacts'][$key]);
                 }
             }
@@ -189,7 +190,7 @@ class Request extends FormRequest
 
         if (isset($input['contacts']) && is_array($input['contacts'])) {
             foreach ($input['contacts'] as $key => $contact) {
-                if (! is_array($contact)) {
+                if (!is_array($contact)) {
                     continue;
                 }
 
@@ -199,7 +200,7 @@ class Request extends FormRequest
                     $input['contacts'][$key]['id'] = $this->decodePrimaryKey($contact['id']);
                 }
 
-                //Filter the client contact password - if it is sent with ***** we should ignore it!
+                // Filter the client contact password - if it is sent with ***** we should ignore it!
                 if (isset($contact['password']) && is_string($contact['password'])) {
                     if (strlen($contact['password']) == 0) {
                         $input['contacts'][$key]['password'] = '';
@@ -219,19 +220,19 @@ class Request extends FormRequest
         }
 
         if (isset($input['public_notes'])) {
-            $input['public_notes'] = str_replace("</sc", "<-", $input['public_notes']);
+            $input['public_notes'] = str_replace('</sc', '<-', $input['public_notes']);
         }
 
         if (isset($input['footer'])) {
-            $input['footer'] = str_replace("</sc", "<-", $input['footer']);
+            $input['footer'] = str_replace('</sc', '<-', $input['footer']);
         }
 
         if (isset($input['terms'])) {
-            $input['terms'] = str_replace("</sc", "<-", $input['terms']);
+            $input['terms'] = str_replace('</sc', '<-', $input['terms']);
         }
 
         if (isset($input['private_notes'])) {
-            $input['private_notes'] = str_replace("</sc", "<-", $input['private_notes']);
+            $input['private_notes'] = str_replace('</sc', '<-', $input['private_notes']);
         }
 
         return $input;
@@ -241,9 +242,6 @@ class Request extends FormRequest
 
     /**
      * Convert to boolean
-     *
-     * @param $bool
-     * @return bool
      */
     public function toBoolean($bool): bool
     {
@@ -256,24 +254,24 @@ class Request extends FormRequest
             return true;
         }
 
-        /*Get first value of all arrays*/
+        /* Get first value of all arrays */
         $result = array_column($log, 0);
 
-        /*Sort the array in ascending order*/
+        /* Sort the array in ascending order */
         asort($result);
 
         $new_array = [];
 
-        /*Rebuild the array in order*/
+        /* Rebuild the array in order */
         foreach ($result as $key => $value) {
             $new_array[] = $log[$key];
         }
 
-        /*Iterate through the array and perform checks*/
+        /* Iterate through the array and perform checks */
         foreach ($new_array as $key => $array) {
-            /*Flag which helps us know if there is a NEXT timelog*/
+            /* Flag which helps us know if there is a NEXT timelog */
             $next = false;
-            /* If there are more than 1 time log in the array, ensure the last timestamp is not zero*/
+            /* If there are more than 1 time log in the array, ensure the last timestamp is not zero */
             if (count($new_array) > 1 && $array[1] == 0) {
                 return false;
             }
@@ -294,10 +292,10 @@ class Request extends FormRequest
                 return false;
             }
 
-            /* Get the last row of the timelog*/
+            /* Get the last row of the timelog */
             $last_row = end($new_array);
 
-            /*If the last value is NOT zero, ensure start time is not GREATER than the endtime */
+            /* If the last value is NOT zero, ensure start time is not GREATER than the endtime */
             if ($last_row[1] != 0 && $last_row[0] > $last_row[1]) {
                 return false;
             }

@@ -6,14 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
 use App\Libraries\MultiDB;
-use App\Models\Company;
 use App\Models\Credit;
 use App\Utils\Traits\WithSorting;
 use Livewire\Component;
@@ -34,11 +32,9 @@ class CreditsTable extends Component
     {
         MultiDB::setDb($this->db);
 
-
         $this->sort_asc = false;
 
         $this->sort_field = 'date';
-
 
     }
 
@@ -52,7 +48,7 @@ class CreditsTable extends Component
             ->where('is_deleted', 0)
             ->where(function ($query) {
                 $query->whereDate('due_date', '>=', now())
-                      ->orWhereNull('due_date');
+                    ->orWhereNull('due_date');
             })
             // ->orderBy($this->sort_field, $this->sort_asc ? 'asc' : 'desc')
             ->when($this->sort_field == 'number', function ($q) {

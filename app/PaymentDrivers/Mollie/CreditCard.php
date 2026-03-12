@@ -2,19 +2,21 @@
 
 namespace App\PaymentDrivers\Mollie;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use Illuminate\View\View;
-use App\Models\GatewayType;
-use App\Models\PaymentType;
-use App\Jobs\Util\SystemLogger;
 use App\Exceptions\PaymentFailed;
-use App\Models\ClientGatewayToken;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Contracts\View\Factory;
-use App\PaymentDrivers\MolliePaymentDriver;
-use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentType;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
+use App\PaymentDrivers\MolliePaymentDriver;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Resources\Mandate;
 
 class CreditCard implements LivewireMethodInterface
 {
@@ -33,7 +35,6 @@ class CreditCard implements LivewireMethodInterface
     /**
      * Show the page for credit card payments.
      *
-     * @param array $data
      * @return Factory|View
      */
     public function paymentView(array $data)
@@ -46,7 +47,6 @@ class CreditCard implements LivewireMethodInterface
     /**
      * Create a payment object.
      *
-     * @param PaymentResponseRequest $request
      * @return mixed
      */
     public function paymentResponse(PaymentResponseRequest $request)
@@ -60,7 +60,7 @@ class CreditCard implements LivewireMethodInterface
             ->withData('gateway_type_id', GatewayType::CREDIT_CARD)
             ->withData('client_id', $this->mollie->client->id);
 
-        if (! empty($request->token)) {
+        if (!empty($request->token)) {
             try {
                 $cgt = ClientGatewayToken::where('token', $request->token)->firstOrFail();
 
@@ -74,7 +74,7 @@ class CreditCard implements LivewireMethodInterface
                     'customerId' => $cgt->gateway_customer_reference,
                     'sequenceType' => 'recurring',
                     'description' => $description,
-                    'webhookUrl'  => $this->mollie->company_gateway->webhookUrl(),
+                    'webhookUrl' => $this->mollie->company_gateway->webhookUrl(),
                     // 'idempotencyKey' => uniqid("st", true),
                     'metadata' => [
                         'client_id' => $this->mollie->client->hashed_id,
@@ -121,7 +121,7 @@ class CreditCard implements LivewireMethodInterface
                     'company_gateway_id' => $this->mollie->company_gateway->hashed_id,
                     'hash' => $this->mollie->payment_hash->hash,
                 ]),
-                'webhookUrl'  => $this->mollie->company_gateway->webhookUrl(),
+                'webhookUrl' => $this->mollie->company_gateway->webhookUrl(),
                 'metadata' => [
                     'client_id' => $this->mollie->client->hashed_id,
                     'hash' => $this->mollie->payment_hash->hash,
@@ -183,10 +183,10 @@ class CreditCard implements LivewireMethodInterface
 
         if (property_exists($payment_hash->data, 'shouldStoreToken') && $payment_hash->data->shouldStoreToken) {
             try {
-                /** @var \Mollie\Api\Resources\Mandate[] $mandates */
+                /** @var Mandate[] $mandates */
                 $mandates = \iterator_to_array($this->mollie->gateway->mandates->listForId($payment_hash->data->mollieCustomerId));
 
-            } catch (\Mollie\Api\Exceptions\ApiException $e) {
+            } catch (ApiException $e) {
                 return $this->processUnsuccessfulPayment($e);
             }
 
@@ -194,7 +194,7 @@ class CreditCard implements LivewireMethodInterface
                 return render('gateways.mollie.mollie_placeholder');
             }
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->exp_month = (string) $mandates[0]->details->cardExpiryDate;
             $payment_meta->exp_year = (string) '';
             $payment_meta->brand = (string) $mandates[0]->details->cardLabel;
@@ -204,7 +204,7 @@ class CreditCard implements LivewireMethodInterface
             $this->mollie->storeGatewayToken([
                 'token' => $mandates[0]->id,
                 'payment_method_id' => GatewayType::CREDIT_CARD,
-                'payment_meta' =>  $payment_meta,
+                'payment_meta' => $payment_meta,
             ], ['gateway_customer_reference' => $payment_hash->data->mollieCustomerId]);
         }
 
@@ -248,7 +248,6 @@ class CreditCard implements LivewireMethodInterface
     /**
      * Show authorization page.
      *
-     * @param array $data
      * @return Factory|View
      */
     public function authorizeView(array $data)
@@ -259,8 +258,7 @@ class CreditCard implements LivewireMethodInterface
     /**
      * Handle authorization response.
      *
-     * @param mixed $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  mixed  $request
      */
     public function authorizeResponse($request): RedirectResponse
     {
@@ -268,7 +266,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -276,7 +274,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

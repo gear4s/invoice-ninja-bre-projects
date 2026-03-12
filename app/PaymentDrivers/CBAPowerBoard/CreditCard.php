@@ -6,26 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\CBAPowerBoard;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
+use App\Enum\HttpVerb;
+use App\Exceptions\PaymentFailed;
+use App\Helpers\Sanitizer;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Jobs\Util\SystemLogger;
 use App\Models\GatewayType;
+use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Jobs\Util\SystemLogger;
-use App\Exceptions\PaymentFailed;
-use Illuminate\Http\Client\RequestException;
-use App\PaymentDrivers\CBAPowerBoardPaymentDriver;
+use App\Models\SystemLog;
 use App\PaymentDrivers\CBAPowerBoard\Models\Charge;
-use App\PaymentDrivers\Common\LivewireMethodInterface;
-use App\PaymentDrivers\CBAPowerBoard\Models\PaymentSource;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 use App\PaymentDrivers\CBAPowerBoard\Models\Gateway;
+use App\PaymentDrivers\CBAPowerBoard\Models\Parse;
+use App\PaymentDrivers\CBAPowerBoard\Models\PaymentSource;
+use App\PaymentDrivers\CBAPowerBoardPaymentDriver;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
+use Illuminate\Http\Client\RequestException;
 
 class CreditCard implements LivewireMethodInterface
 {
@@ -52,29 +54,30 @@ class CreditCard implements LivewireMethodInterface
             $browser_details = json_decode($request->browser_details, true);
 
             $payload = [
-                "capture" => false,
-                "amount" => 1,
-                "currency" => $this->powerboard->client->currency()->code,
-                "description" => "Card authorization",
-                "customer" => [
-                    "payment_source" => [
-                        "vault_token" => $payment_source->vault_token,
-                        "gateway_id" => $this->powerboard->settings()->getGatewayId(GatewayType::CREDIT_CARD),
+                'capture' => false,
+                'amount' => 1,
+                'currency' => $this->powerboard->client->currency()->code,
+                'description' => 'Card authorization',
+                'customer' => [
+                    'payment_source' => [
+                        'vault_token' => $payment_source->vault_token,
+                        'gateway_id' => $this->powerboard->settings()->getGatewayId(GatewayType::CREDIT_CARD),
                     ],
                 ],
-                "_3ds" => [
-                    "browser_details" => $browser_details,
+                '_3ds' => [
+                    'browser_details' => $browser_details,
                 ],
             ];
 
             nlog($payload);
 
-            $r = $this->powerboard->gatewayRequest('/v1/charges/3ds', (\App\Enum\HttpVerb::POST)->value, $payload, []);
+            $r = $this->powerboard->gatewayRequest('/v1/charges/3ds', (HttpVerb::POST)->value, $payload, []);
 
             if ($r->failed()) {
 
                 $error_payload = $this->getErrorFromResponse($r);
-                return response()->json(['message' =>  $error_payload[0]], 400);
+
+                return response()->json(['message' => $error_payload[0]], 400);
 
                 // return $this->processUnsuccessfulPayment($r);
             }
@@ -87,32 +90,31 @@ class CreditCard implements LivewireMethodInterface
         } elseif ($request->charge) {
 
             $charge_request = json_decode($request->charge, true);
-            nlog("we have the charge request");
+            nlog('we have the charge request');
             nlog($charge_request);
 
             $payload = [
                 '_3ds' => [
                     'id' => array_key_exists('charge_3ds_id', $charge_request) ? $charge_request['charge_3ds_id'] : $charge_request['_3ds']['id'],
                 ],
-                "capture" => false,
-                "authorization" => true,
-                "amount" => 1,
-                "currency" => $this->powerboard->client->currency()->code,
-                "store_cvv" => true,
+                'capture' => false,
+                'authorization' => true,
+                'amount' => 1,
+                'currency' => $this->powerboard->client->currency()->code,
+                'store_cvv' => true,
             ];
 
             nlog($payload);
 
-            $r = $this->powerboard->gatewayRequest("/v1/charges", (\App\Enum\HttpVerb::POST)->value, $payload, []);
+            $r = $this->powerboard->gatewayRequest('/v1/charges', (HttpVerb::POST)->value, $payload, []);
 
             if ($r->failed()) {
 
                 $error_payload = $this->getErrorFromResponse($r);
                 throw new PaymentFailed($error_payload[0], $error_payload[1]);
-
             }
 
-            $charge = (new \App\PaymentDrivers\CBAPowerBoard\Models\Parse())->encode(Charge::class, $r->object()->resource->data) ?? $r->throw();
+            $charge = (new Parse)->encode(Charge::class, $r->object()->resource->data) ?? $r->throw();
 
             nlog($charge);
 
@@ -123,8 +125,8 @@ class CreditCard implements LivewireMethodInterface
                 $vt = $charge->customer->payment_source->vault_token;
 
                 $data = [
-                    "payment_source" => [
-                        "vault_token" => $vt,
+                    'payment_source' => [
+                        'vault_token' => $vt,
                     ],
                 ];
 
@@ -134,7 +136,6 @@ class CreditCard implements LivewireMethodInterface
                 return redirect()->route('client.payment_methods.show', ['payment_method' => $cgt->hashed_id]);
             }
 
-
         } elseif ($request->charge_no3d) {
             nlog($request->all());
 
@@ -143,8 +144,8 @@ class CreditCard implements LivewireMethodInterface
             nlog($payment_source);
 
             $data = [
-                "payment_source" => [
-                    "vault_token" => $payment_source->vault_token,
+                'payment_source' => [
+                    'vault_token' => $payment_source->vault_token,
                 ],
             ];
 
@@ -178,7 +179,7 @@ class CreditCard implements LivewireMethodInterface
             'address_postcode' => $this->powerboard->client->postal_code ?? '',
         ];
 
-        return \App\Helpers\Sanitizer::removeBlanks($data);
+        return Sanitizer::removeBlanks($data);
 
     }
 
@@ -191,13 +192,13 @@ class CreditCard implements LivewireMethodInterface
 
         $payload = array_merge($this->getCustomer(), [
             'token' => $payment_source,
-            "vault_type" => "permanent",
+            'vault_type' => 'permanent',
             'store_ccv' => true,
         ]);
 
         nlog($payload);
 
-        $r = $this->powerboard->gatewayRequest('/v1/vault/payment_sources', (\App\Enum\HttpVerb::POST)->value, $payload, []);
+        $r = $this->powerboard->gatewayRequest('/v1/vault/payment_sources', (HttpVerb::POST)->value, $payload, []);
 
         if ($r->failed()) {
             return $this->powerboard->processInternallyFailedPayment($this->powerboard, $r->throw());
@@ -205,27 +206,26 @@ class CreditCard implements LivewireMethodInterface
 
         nlog($r->object());
 
-        $source = (new \App\PaymentDrivers\CBAPowerBoard\Models\Parse())->encode(PaymentSource::class, $r->object()->resource->data);
+        $source = (new Parse)->encode(PaymentSource::class, $r->object()->resource->data);
 
         return $source;
 
     }
-
 
     public function paymentData(array $data): array
     {
         $this->powerboard->init();
 
         $available_cards = [
-            "amex",
-            "ausbc",
-            "discover",
-            "japcb",
-            "laser",
-            "mastercard",
-            "solo",
-            "visa",
-            "visa_white",
+            'amex',
+            'ausbc',
+            'discover',
+            'japcb',
+            'laser',
+            'mastercard',
+            'solo',
+            'visa',
+            'visa_white',
         ];
 
         $supported_cards = $this->powerboard->company_gateway->getConfig();
@@ -266,17 +266,17 @@ class CreditCard implements LivewireMethodInterface
     {
 
         $payload = [
-            "amount" => $this->powerboard->payment_hash->data->amount_with_fee,
-            "currency" => $this->powerboard->client->currency()->code,
-            "customer" => [
-                "payment_source" => [
-                    "vault_token" => $cgt->token,
-                    "gateway_id" => $cgt->gateway_customer_reference,
+            'amount' => $this->powerboard->payment_hash->data->amount_with_fee,
+            'currency' => $this->powerboard->client->currency()->code,
+            'customer' => [
+                'payment_source' => [
+                    'vault_token' => $cgt->token,
+                    'gateway_id' => $cgt->gateway_customer_reference,
                 ],
             ],
         ];
 
-        $r = $this->powerboard->gatewayRequest('/v1/charges', (\App\Enum\HttpVerb::POST)->value, $payload, []);
+        $r = $this->powerboard->gatewayRequest('/v1/charges', (HttpVerb::POST)->value, $payload, []);
 
         nlog($r->body());
 
@@ -285,7 +285,7 @@ class CreditCard implements LivewireMethodInterface
             throw new PaymentFailed($error_payload[0], $error_payload[1]);
         }
 
-        $charge = (new \App\PaymentDrivers\CBAPowerBoard\Models\Parse())->encode(Charge::class, $r->object()->resource->data) ?? $r->throw();
+        $charge = (new Parse)->encode(Charge::class, $r->object()->resource->data) ?? $r->throw();
 
         nlog($charge);
 
@@ -302,27 +302,28 @@ class CreditCard implements LivewireMethodInterface
         $browser_details = json_decode($request->browser_details, true);
 
         $payload = [
-            "amount" => $payment_hash->data->amount_with_fee,
-            "currency" => $this->powerboard->client->currency()->code,
-            "description" => $this->powerboard->getDescription(),
-            "customer" => [
-                "payment_source" => [
-                    "vault_token" => $source->vault_token,
-                    "gateway_id" => $this->powerboard->settings()->getGatewayId(GatewayType::CREDIT_CARD),
+            'amount' => $payment_hash->data->amount_with_fee,
+            'currency' => $this->powerboard->client->currency()->code,
+            'description' => $this->powerboard->getDescription(),
+            'customer' => [
+                'payment_source' => [
+                    'vault_token' => $source->vault_token,
+                    'gateway_id' => $this->powerboard->settings()->getGatewayId(GatewayType::CREDIT_CARD),
                 ],
             ],
-            "_3ds" => [
-                "browser_details" => $browser_details,
+            '_3ds' => [
+                'browser_details' => $browser_details,
             ],
         ];
 
         nlog($payload);
 
-        $r = $this->powerboard->gatewayRequest('/v1/charges/3ds', (\App\Enum\HttpVerb::POST)->value, $payload, []);
+        $r = $this->powerboard->gatewayRequest('/v1/charges/3ds', (HttpVerb::POST)->value, $payload, []);
 
         if ($r->failed()) {
             $error_payload = $this->getErrorFromResponse($r);
-            return response()->json(['message' =>  $error_payload[0]], 400);
+
+            return response()->json(['message' => $error_payload[0]], 400);
         }
 
         $charge = $r->json();
@@ -343,11 +344,11 @@ class CreditCard implements LivewireMethodInterface
         /** Token Payment */
         if ($request->input('token', false)) {
             $cgt = $this->powerboard
-                        ->client
-                        ->gateway_tokens()
-                        ->where('company_gateway_id', $this->powerboard->company_gateway->id)
-                        ->where('token', $request->token)
-                        ->first();
+                ->client
+                ->gateway_tokens()
+                ->where('company_gateway_id', $this->powerboard->company_gateway->id)
+                ->where('token', $request->token)
+                ->first();
 
             return $this->tokenBilling($cgt, true);
 
@@ -368,18 +369,18 @@ class CreditCard implements LivewireMethodInterface
                 '_3ds' => [
                     'id' => array_key_exists('charge_3ds_id', $charge_request) ? $charge_request['charge_3ds_id'] : $charge_request['_3ds']['id'],
                 ],
-                "amount" => $this->powerboard->payment_hash->data->amount_with_fee, //@phpstan-ignore-line
-                "currency" => $this->powerboard->client->currency()->code,
-                "store_cvv" => true,
+                'amount' => $this->powerboard->payment_hash->data->amount_with_fee, // @phpstan-ignore-line
+                'currency' => $this->powerboard->client->currency()->code,
+                'store_cvv' => true,
             ];
 
-            $r = $this->powerboard->gatewayRequest("/v1/charges", (\App\Enum\HttpVerb::POST)->value, $payload, []);
+            $r = $this->powerboard->gatewayRequest('/v1/charges', (HttpVerb::POST)->value, $payload, []);
 
             if ($r->failed()) {
                 return $this->processUnsuccessfulPayment($r);
             }
 
-            $charge = (new \App\PaymentDrivers\CBAPowerBoard\Models\Parse())->encode(Charge::class, $r->object()->resource->data) ?? $r->throw();
+            $charge = (new Parse)->encode(Charge::class, $r->object()->resource->data) ?? $r->throw();
 
             nlog($charge);
 
@@ -390,8 +391,8 @@ class CreditCard implements LivewireMethodInterface
 
                 if ($request->store_card) {
                     $data = [
-                        "payment_source" => [
-                            "vault_token" => $vt,
+                        'payment_source' => [
+                            'vault_token' => $vt,
                         ],
                     ];
 
@@ -457,13 +458,13 @@ class CreditCard implements LivewireMethodInterface
 
             $this->powerboard->logUnsuccessfulGatewayResponse($error_object, SystemLog::TYPE_POWERBOARD);
 
-            $error_message = "Unknown error";
+            $error_message = 'Unknown error';
 
             match ($error_object->error->code) {
-                "UnfulfilledCondition" => $error_message = $error_object->error->details->messages[0] ?? $error_object->error->message ?? "Unknown error",
-                "GatewayError" => $error_message = $error_object->error->message,
-                "transaction_declined" => $error_message = $error_object->error->details[0]->status_code_description,
-                default => $error_message = $error_object->error->message ?? "Unknown error",
+                'UnfulfilledCondition' => $error_message = $error_object->error->details->messages[0] ?? $error_object->error->message ?? 'Unknown error',
+                'GatewayError' => $error_message = $error_object->error->message,
+                'transaction_declined' => $error_message = $error_object->error->details[0]->status_code_description,
+                default => $error_message = $error_object->error->message ?? 'Unknown error',
             };
 
             return [$error_message, $exception->getCode()];
@@ -471,6 +472,7 @@ class CreditCard implements LivewireMethodInterface
         }
 
     }
+
     public function processUnsuccessfulPayment($response)
     {
         $error = $this->getErrorFromResponse($response);
@@ -497,5 +499,4 @@ class CreditCard implements LivewireMethodInterface
 
         throw new PaymentFailed('Failed to process the payment.', $error[1]);
     }
-
 }

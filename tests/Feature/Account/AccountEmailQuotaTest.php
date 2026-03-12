@@ -6,21 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Account;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Models\Account;
-use App\Models\Company;
+use App\DataMapper\ClientRegistrationFields;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
+use App\Models\Account;
+use App\Models\Company;
+use App\Models\User;
+use App\Utils\Ninja;
 use Illuminate\Support\Facades\Cache;
-use App\DataMapper\ClientRegistrationFields;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class AccountEmailQuotaTest extends TestCase
 {
@@ -29,11 +29,10 @@ class AccountEmailQuotaTest extends TestCase
         parent::setUp();
     }
 
-
-    public function testIfQuotaBreached()
+    public function test_if_quota_breached()
     {
         config([
-            'ninja.production' => true
+            'ninja.production' => true,
         ]);
 
         $account = Account::factory()->create([
@@ -52,12 +51,12 @@ class AccountEmailQuotaTest extends TestCase
             'account_id' => $account->id,
         ]);
 
-        $hash = \Illuminate\Support\Str::random(32);
+        $hash = Str::random(32);
 
         $user = User::factory()->create([
             'account_id' => $account->id,
             'confirmation_code' => $hash,
-            'email' =>  "{$hash}@example.com",
+            'email' => "{$hash}@example.com",
         ]);
 
         $cu = CompanyUserFactory::create($user->id, $company->id, $account->id);
@@ -93,20 +92,19 @@ class AccountEmailQuotaTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-
-        Cache::put("email_quota".$account->key, 3000);
+        Cache::put('email_quota' . $account->key, 3000);
 
         $this->assertFalse($account->isPaid());
         $this->assertTrue(Ninja::isNinja());
         $this->assertEquals(20, $account->getDailyEmailLimit());
 
-        $this->assertEquals(3000, Cache::get("email_quota".$account->key));
+        $this->assertEquals(3000, Cache::get('email_quota' . $account->key));
         $this->assertTrue($account->emailQuotaExceeded());
 
-        Cache::forget("email_quota".'123ifyouknowwhatimean');
+        Cache::forget('email_quota' . '123ifyouknowwhatimean');
     }
 
-    public function testQuotaValidRule()
+    public function test_quota_valid_rule()
     {
         $account = Account::factory()->create([
             'hosted_client_count' => 1000,
@@ -120,14 +118,14 @@ class AccountEmailQuotaTest extends TestCase
         $account->num_users = 3;
         $account->save();
 
-        Cache::increment("email_quota".$account->key);
+        Cache::increment('email_quota' . $account->key);
 
         $this->assertFalse($account->emailQuotaExceeded());
 
-        Cache::forget("email_quota".'123ifyouknowwhatimean');
+        Cache::forget('email_quota' . '123ifyouknowwhatimean');
     }
 
-    public function testEmailSentCount()
+    public function test_email_sent_count()
     {
         $account = Account::factory()->create([
             'hosted_client_count' => 1000,
@@ -141,13 +139,12 @@ class AccountEmailQuotaTest extends TestCase
         $account->num_users = 3;
         $account->save();
 
-
-        Cache::put("email_quota".$account->key, 3000);
+        Cache::put('email_quota' . $account->key, 3000);
 
         $count = $account->emailsSent();
 
         $this->assertEquals(3000, $count);
 
-        Cache::forget("email_quota".'123ifyouknowwhatimean');
+        Cache::forget('email_quota' . '123ifyouknowwhatimean');
     }
 }

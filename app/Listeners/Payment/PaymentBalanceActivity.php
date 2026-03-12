@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,8 +13,8 @@ namespace App\Listeners\Payment;
 
 use App\Libraries\MultiDB;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class PaymentBalanceActivity implements ShouldQueue
@@ -39,7 +38,7 @@ class PaymentBalanceActivity implements ShouldQueue
     /**
      * Handle the event.
      *
-     * @param object $event
+     * @param  object  $event
      */
     public function handle($event)
     {
@@ -49,7 +48,7 @@ class PaymentBalanceActivity implements ShouldQueue
             $event->payment->client->service()->updatePaymentBalance();
         } catch (\Throwable $e) {
 
-            nlog("PaymentBalanceActivity " . $e->getMessage());
+            nlog('PaymentBalanceActivity ' . $e->getMessage());
         }
     }
 

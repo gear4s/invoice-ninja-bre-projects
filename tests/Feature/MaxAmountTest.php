@@ -6,26 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Quote;
+use App\DataMapper\InvoiceItem;
 use App\Models\Credit;
 use App\Models\Invoice;
-use Tests\MockAccountData;
 use App\Models\PurchaseOrder;
-use App\DataMapper\InvoiceItem;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ActivityController
  */
 class MaxAmountTest extends TestCase
@@ -45,9 +42,9 @@ class MaxAmountTest extends TestCase
 
     }
 
-    public function testInvoiceMaxAmount()
+    public function test_invoice_max_amount()
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 10000000000000000;
         $item->quantity = 100;
 
@@ -55,7 +52,7 @@ class MaxAmountTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
             'company_id' => $this->company->id,
-            'line_items' => [$item]
+            'line_items' => [$item],
         ];
 
         $response = $this->withHeaders([
@@ -75,10 +72,9 @@ class MaxAmountTest extends TestCase
         $response->assertStatus(422);
     }
 
-
-    public function testCreditMaxAmount()
+    public function test_credit_max_amount()
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 10000000000000000;
         $item->quantity = 100;
 
@@ -86,7 +82,7 @@ class MaxAmountTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
             'company_id' => $this->company->id,
-            'line_items' => [$item]
+            'line_items' => [$item],
         ];
 
         $response = $this->withHeaders([
@@ -106,10 +102,9 @@ class MaxAmountTest extends TestCase
         $response->assertStatus(422);
     }
 
-
-    public function testQuoteMaxAmount()
+    public function test_quote_max_amount()
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 10000000000000000;
         $item->quantity = 100;
 
@@ -117,7 +112,7 @@ class MaxAmountTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
             'company_id' => $this->company->id,
-            'line_items' => [$item]
+            'line_items' => [$item],
         ];
 
         $response = $this->withHeaders([
@@ -137,9 +132,9 @@ class MaxAmountTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function testPurchaseOrderMaxAmount()
+    public function test_purchase_order_max_amount()
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 10000000000000000;
         $item->quantity = 100;
 
@@ -147,7 +142,7 @@ class MaxAmountTest extends TestCase
             'user_id' => $this->user->id,
             'vendor_id' => $this->vendor->id,
             'company_id' => $this->company->id,
-            'line_items' => [$item]
+            'line_items' => [$item],
         ];
 
         $response = $this->withHeaders([
@@ -167,9 +162,9 @@ class MaxAmountTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function testRecurringInvoiceMaxAmount()
+    public function test_recurring_invoice_max_amount()
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 10000000000000000;
         $item->quantity = 100;
 
@@ -178,7 +173,7 @@ class MaxAmountTest extends TestCase
             'client_id' => $this->client->id,
             'company_id' => $this->company->id,
             'line_items' => [$item],
-            'frequency_id' => 5
+            'frequency_id' => 5,
         ];
 
         $response = $this->withHeaders([

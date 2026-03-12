@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organizacija',
     'name' => 'Ime',
     'website' => 'Sajt',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'План предузећа додаје подршку за више корисника и прилоге датотека, :link да бисте видели пуну листу функција.',
     'return_to_app' => 'Povratak u aplikaciju',
 
-
     // Payment updates
     'refund_payment' => 'Isplata povraćaja novca',
     'refund_max' => 'Max:',
@@ -1705,7 +1704,6 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'lang_Serbian' => 'Srpski',
     'lang_Bulgarian' => 'Bugarski',
     'lang_Russian (Russia)' => 'Ruski (Rusija)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Računovodstvo i pravo',
@@ -2363,7 +2361,7 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'currency_gold_troy_ounce' => 'Златна тројанска унца',
     'currency_nicaraguan_córdoba' => 'Никарагванска Кордоба',
     'currency_malagasy_ariary' => 'малагашки аријар',
-    "currency_tongan_pa_anga" => "Тонган Па&#39;анга",
+    'currency_tongan_pa_anga' => 'Тонган Па&#39;анга',
 
     'review_app_help' => 'Nadamo se da uživate u korišćenju aplikacije. <br/> Bili bismo veoma zahvalni ako biste razmotrili :link.',
     'writing_a_review' => 'pisanje recenzije',
@@ -4363,7 +4361,7 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'activity_122' => ':user архивирани периодични трошак :recurring_expense',
     'activity_123' => ':user обрисан периодични трошак :recurring_expense',
     'activity_124' => ':user враћени периодични трошак :recurring_expense',
-    'fpx' => "ФПКС",
+    'fpx' => 'ФПКС',
     'to_view_entity_set_password' => 'Да бисте видели :entity потребно је да поставите лозинку.',
     'unsubscribe' => 'Откажи претплату',
     'unsubscribed' => 'Отказано је',
@@ -4869,7 +4867,7 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'payment_type_Klarna' => 'Кларна',
     'payment_type_Interac E Transfer' => 'Интерац Е Трансфер',
     'xinvoice_payable' => 'Плаћа се у року од :payeddue дана нето до :paydate',
-    'xinvoice_no_buyers_reference' => "Није наведена референца купца",
+    'xinvoice_no_buyers_reference' => 'Није наведена референца купца',
     'xinvoice_online_payment' => 'Фактуру је потребно платити онлајн путем датог линка',
     'pre_payment' => 'Плаћање унапред',
     'number_of_payments' => 'Број уплата',
@@ -4974,8 +4972,8 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'e_invoice' => 'Е-рачун',
     'light_dark_mode' => 'Светли/тамни режим',
     'activities' => 'Активности',
-    'recent_transactions' => "Недавне трансакције",
-    'country_Palestine' => "Палестине",
+    'recent_transactions' => 'Недавне трансакције',
+    'country_Palestine' => 'Палестине',
     'country_Taiwan' => 'Тајван',
     'duties' => 'Дужности',
     'order_number' => 'Број наруџбе',
@@ -5192,7 +5190,7 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'rff' => 'Образац за обавезна поља',
     'add_step' => 'Додајте корак',
     'steps' => 'Степс',
-    'steps_order_help' =>  'Редослед корака је важан. Први корак не би требало да зависи од било ког другог корака. Други корак треба да зависи од првог и тако даље.',
+    'steps_order_help' => 'Редослед корака је важан. Први корак не би требало да зависи од било ког другог корака. Други корак треба да зависи од првог и тако даље.',
     'other_steps' => 'Остали кораци',
     'use_available_payments' => 'Користите доступна плаћања',
     'test_email_sent' => 'Е-порука је успешно послата',
@@ -5401,7 +5399,7 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'credit_updated' => 'Кредит је ажуриран',
     'payment_updated' => 'Плаћање ажурирано',
     'search_placeholder' => 'Пронађите фактуре, клијенте и још много тога',
-    'invalid_vat_number' => "ПДВ број није важећи за изабрану земљу. Формат треба да буде код државе праћен само бројем, тј. ДЕ123456789",
+    'invalid_vat_number' => 'ПДВ број није важећи за изабрану земљу. Формат треба да буде код државе праћен само бројем, тј. ДЕ123456789',
     'acts_as_sender' => 'Пошаљите е-рачуне',
     'acts_as_receiver' => 'Примајте е-фактуре',
     'peppol_token_generated' => 'ПЕППОЛ токен је успешно генерисан.',
@@ -5538,7 +5536,7 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'pro_plan_feature_10' => 'Подесите аутоматске подсетнике имејловима',
     'pro_plan_feature_11' => 'Аутоматски прикачени PDF фактуре уз имејлове',
     'pro_plan_feature_12' => 'Прикажите електронски потпис клијентима на фактурама',
-    'pro_plan_feature_13' => "Омогућите поље за потврду „Одобри услове“",
+    'pro_plan_feature_13' => 'Омогућите поље за потврду „Одобри услове“',
     'pro_plan_feature_14' => 'Извештаји: Фактуре, Расходи, Биланс успеха и још много тога',
     'pro_plan_feature_15' => 'Масовно слање фактура, понуда, кредита путем имејла',
     'pro_plan_feature_16' => 'Повежите 10 компанија са 1 пријавом',
@@ -5913,6 +5911,6 @@ Kada budete imali iznose, vratite se na ovu stranicu sa načinima plaćanja i k
     'payment_type_FPX' => 'ФПX',
     'payment_type_Stripe Bank Transfer' => 'Stripe банковни трансфер',
     'activity_164' => 'Синхронизација QuickBooks-а није успела. :notes',
-);
+];
 
 return $lang;

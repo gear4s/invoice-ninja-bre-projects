@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,10 +21,11 @@ use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
+use Illuminate\Http\RedirectResponse;
+use Stripe\PaymentIntent;
 
 class BECS implements LivewireMethodInterface
 {
-    /** @var StripePaymentDriver */
     public StripePaymentDriver $stripe;
 
     public function __construct(StripePaymentDriver $stripe)
@@ -63,7 +63,7 @@ class BECS implements LivewireMethodInterface
         return $this->processUnsuccessfulPayment();
     }
 
-    public function processSuccessfulPayment(string $payment_intent): \Illuminate\Http\RedirectResponse
+    public function processSuccessfulPayment(string $payment_intent): RedirectResponse
     {
         $data = [
             'payment_method' => $payment_intent,
@@ -120,7 +120,7 @@ class BECS implements LivewireMethodInterface
         try {
             $method = $this->stripe->getStripePaymentMethod($intent->payment_method);
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) \sprintf('%s (%s)', $method->au_becs_debit->bank_code, ctrans('texts.becs'));
             $payment_meta->last4 = (string) $method->au_becs_debit->last4;
             $payment_meta->state = 'authorized';
@@ -150,7 +150,7 @@ class BECS implements LivewireMethodInterface
         $data['country'] = $this->stripe->client->country->iso_3166_2;
         $data['payment_hash'] = $this->stripe->payment_hash->hash;
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = PaymentIntent::create([
             'amount' => $data['stripe_amount'],
             'currency' => $this->stripe->client->currency()->code,
             'payment_method_types' => ['au_becs_debit'],
@@ -161,7 +161,7 @@ class BECS implements LivewireMethodInterface
                 'payment_hash' => $this->stripe->payment_hash->hash,
                 'gateway_type_id' => GatewayType::BECS,
             ],
-        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid("st", true)]));
+        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid('st', true)]));
 
         $data['pi_client_secret'] = $intent->client_secret;
 

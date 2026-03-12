@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,6 @@ class AccountObserver
     /**
      * Handle the account "created" event.
      *
-     * @param Account $account
      * @return void
      */
     public function created(Account $account)
@@ -30,7 +28,6 @@ class AccountObserver
     /**
      * Handle the account "updated" event.
      *
-     * @param Account $account
      * @return void
      */
     public function updated(Account $account)
@@ -41,7 +38,6 @@ class AccountObserver
     /**
      * Handle the account "deleted" event.
      *
-     * @param Account $account
      * @return void
      */
     public function deleted(Account $account)
@@ -52,7 +48,6 @@ class AccountObserver
     /**
      * Handle the account "restored" event.
      *
-     * @param Account $account
      * @return void
      */
     public function restored(Account $account)
@@ -63,7 +58,6 @@ class AccountObserver
     /**
      * Handle the account "force deleted" event.
      *
-     * @param Account $account
      * @return void
      */
     public function forceDeleted(Account $account)

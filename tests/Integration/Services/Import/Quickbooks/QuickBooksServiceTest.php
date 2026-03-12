@@ -3,12 +3,12 @@
 namespace Tests\Integration\Services\Import\Quickbooks;
 
 use App\Services\Quickbooks\Contracts\SdkInterface as QuickbooksInterface;
-use App\Services\Quickbooks\Service as QuickbooksService;
 use App\Services\Quickbooks\SdkWrapper as QuickbooksSDK;
-use Illuminate\Support\Collection;
+use App\Services\Quickbooks\Service as QuickbooksService;
 use Illuminate\Support\Arr;
-use Tests\TestCase;
+use Illuminate\Support\Collection;
 use Mockery;
+use Tests\TestCase;
 
 class QuickBooksServiceTest extends TestCase
 {
@@ -17,7 +17,7 @@ class QuickBooksServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->markTestSkipped("no bueno");
+        $this->markTestSkipped('no bueno');
         $data = json_decode(
             file_get_contents(base_path('tests/Mock/Quickbooks/Data/customers.json')),
             true
@@ -37,13 +37,13 @@ class QuickBooksServiceTest extends TestCase
 
     }
 
-    public function testImportCustomers()
+    public function test_import_customers()
     {
         $collection = $this->service->fetchCustomers(4);
 
         $this->assertInstanceOf(Collection::class, $collection);
         $this->assertEquals(4, $collection->count());
-        $this->assertNotNull($item = $collection->whereStrict('CompanyName', "Cool Cars")->first());
-        $this->assertEquals("Grace", $item['GivenName']);
+        $this->assertNotNull($item = $collection->whereStrict('CompanyName', 'Cool Cars')->first());
+        $this->assertEquals('Grace', $item['GivenName']);
     }
 }

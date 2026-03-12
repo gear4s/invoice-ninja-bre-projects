@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,8 +14,6 @@ namespace App\Helpers\Epc;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\RecurringInvoice;
-use App\Utils\Ninja;
-use BaconQrCode\Exception\InvalidArgumentException;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -46,7 +43,7 @@ class EpcQrGenerator
         try {
             $renderer = new ImageRenderer(
                 new RendererStyle(200),
-                new SvgImageBackEnd()
+                new SvgImageBackEnd
             );
             $writer = new Writer($renderer);
 
@@ -56,7 +53,8 @@ class EpcQrGenerator
           <rect x='0' y='0' width='100%'' height='100%' />{$qr}</svg>");
 
         } catch (\Throwable $e) {
-            nlog("EPC QR failure => " . $e->getMessage());
+            nlog('EPC QR failure => ' . $e->getMessage());
+
             return '';
         }
 

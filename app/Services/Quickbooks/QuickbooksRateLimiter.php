@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,7 +29,9 @@ class QuickbooksRateLimiter
      * QuickBooks rate limits
      */
     private const REQUESTS_PER_MINUTE = 500;
+
     private const CONCURRENT_LIMIT = 10;
+
     private const WINDOW_SECONDS = 60;
 
     /**
@@ -42,17 +43,15 @@ class QuickbooksRateLimiter
      * Cache key prefixes
      */
     private const PREFIX_REQUESTS = 'qb_rate_limit';
+
     private const PREFIX_CONCURRENT = 'qb_concurrent';
+
     private const PREFIX_BACKOFF = 'qb_backoff';
 
-    public function __construct(private string $realmId)
-    {
-    }
+    public function __construct(private string $realmId) {}
 
     /**
      * Check if we can make a request without hitting rate limits
-     *
-     * @return bool
      */
     public function canMakeRequest(): bool
     {
@@ -67,6 +66,7 @@ class QuickbooksRateLimiter
 
         if ($requestCount >= $maxRequests) {
             nlog("QB rate limit: {$requestCount}/{$maxRequests} requests used in current window");
+
             return false;
         }
 
@@ -76,6 +76,7 @@ class QuickbooksRateLimiter
 
         if ($concurrentCount >= $maxConcurrent) {
             nlog("QB concurrent limit: {$concurrentCount}/{$maxConcurrent} concurrent requests");
+
             return false;
         }
 
@@ -85,7 +86,7 @@ class QuickbooksRateLimiter
     /**
      * Wait until we can make a request (blocks)
      *
-     * @param int $maxWaitSeconds Maximum seconds to wait
+     * @param  int  $maxWaitSeconds  Maximum seconds to wait
      * @return bool True if can proceed, false if timed out
      */
     public function waitForCapacity(int $maxWaitSeconds = 60): bool
@@ -132,8 +133,6 @@ class QuickbooksRateLimiter
 
     /**
      * Track a request being made
-     *
-     * @return void
      */
     public function trackRequest(): void
     {
@@ -155,7 +154,7 @@ class QuickbooksRateLimiter
         $key = $this->getConcurrentKey();
 
         // Add to concurrent set
-        Cache::remember($key, self::WINDOW_SECONDS, fn() => []);
+        Cache::remember($key, self::WINDOW_SECONDS, fn () => []);
         $concurrent = Cache::get($key, []);
         $concurrent[$token] = time();
         Cache::put($key, $concurrent, self::WINDOW_SECONDS);
@@ -166,8 +165,7 @@ class QuickbooksRateLimiter
     /**
      * Track completion of a concurrent request
      *
-     * @param string $token Token from acquireRequest()
-     * @return void
+     * @param  string  $token  Token from acquireRequest()
      */
     public function releaseRequest(string $token): void
     {
@@ -181,8 +179,7 @@ class QuickbooksRateLimiter
     /**
      * Enter backoff mode due to 429 rate limit response
      *
-     * @param int $backoffSeconds Seconds to backoff (exponential)
-     * @return void
+     * @param  int  $backoffSeconds  Seconds to backoff (exponential)
      */
     public function enterBackoff(int $backoffSeconds = 60): void
     {
@@ -194,8 +191,6 @@ class QuickbooksRateLimiter
 
     /**
      * Check if currently in backoff mode
-     *
-     * @return bool
      */
     public function isInBackoff(): bool
     {
@@ -207,8 +202,6 @@ class QuickbooksRateLimiter
 
     /**
      * Get remaining backoff seconds
-     *
-     * @return int
      */
     public function getBackoffSeconds(): int
     {
@@ -224,8 +217,6 @@ class QuickbooksRateLimiter
 
     /**
      * Get current request count in the window
-     *
-     * @return int
      */
     private function getRequestCount(): int
     {
@@ -234,8 +225,6 @@ class QuickbooksRateLimiter
 
     /**
      * Get current concurrent request count
-     *
-     * @return int
      */
     private function getConcurrentCount(): int
     {
@@ -243,7 +232,7 @@ class QuickbooksRateLimiter
 
         // Clean up stale entries (older than 5 minutes)
         $now = time();
-        $concurrent = array_filter($concurrent, fn($timestamp) => ($now - $timestamp) < 300);
+        $concurrent = array_filter($concurrent, fn ($timestamp) => ($now - $timestamp) < 300);
 
         return count($concurrent);
     }
@@ -263,8 +252,6 @@ class QuickbooksRateLimiter
 
     /**
      * Get cache key for request count
-     *
-     * @return string
      */
     private function getRequestCountKey(): string
     {
@@ -273,8 +260,6 @@ class QuickbooksRateLimiter
 
     /**
      * Get cache key for concurrent requests
-     *
-     * @return string
      */
     private function getConcurrentKey(): string
     {
@@ -283,8 +268,6 @@ class QuickbooksRateLimiter
 
     /**
      * Get cache key for backoff mode
-     *
-     * @return string
      */
     private function getBackoffKey(): string
     {
@@ -293,8 +276,6 @@ class QuickbooksRateLimiter
 
     /**
      * Reset all rate limit tracking (for testing)
-     *
-     * @return void
      */
     public function reset(): void
     {

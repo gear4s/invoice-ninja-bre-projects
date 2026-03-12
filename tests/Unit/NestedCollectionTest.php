@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,13 +14,12 @@ namespace Tests\Unit;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Number
  */
 class NestedCollectionTest extends TestCase
 {
     public $map;
-    
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,17 +43,17 @@ class NestedCollectionTest extends TestCase
         ];
     }
 
-    public function testPerPageAttribute()
+    public function test_per_page_attribute()
     {
         $this->assertEquals($this->map->client->datatable->per_page, 20);
     }
 
-    public function testNameAttributeVisibility()
+    public function test_name_attribute_visibility()
     {
         $this->assertEquals($this->map->client->datatable->column_visibility->name, true);
     }
 
-    public function testStringAsEntityProperty()
+    public function test_string_as_entity_property()
     {
         $entity = 'client';
 

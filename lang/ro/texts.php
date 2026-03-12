@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organizație',
     'name' => 'Nume',
     'website' => 'Site web',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Planul Enterprise adaugă suport pentru mai mulți utilizatori și fișiere atașate, :link pentru a vedea lista completă a caracteristicilor.',
     'return_to_app' => 'Reveniți la aplicație',
 
-
     // Payment updates
     'refund_payment' => 'Rambursare plată',
     'refund_max' => 'Max:',
@@ -1705,7 +1704,6 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'lang_Serbian' => 'Sârbă',
     'lang_Bulgarian' => 'Bulgară',
     'lang_Russian (Russia)' => 'Rusă (Federația Rusă)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Contabilitate & Juridic',
@@ -2363,7 +2361,7 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'currency_gold_troy_ounce' => 'Uncie Troy de aur',
     'currency_nicaraguan_córdoba' => 'Córdoba din Nicaragua',
     'currency_malagasy_ariary' => 'ariar malgaș',
-    "currency_tongan_pa_anga" => "Tongan Pa&#39;anga",
+    'currency_tongan_pa_anga' => 'Tongan Pa&#39;anga',
 
     'review_app_help' => 'Sperăm că vă place aplicația.<br/>Am aprecia dacă :link!',
     'writing_a_review' => 'părerea dumneavoastră',
@@ -4364,7 +4362,7 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'activity_122' => ':user a arhivat cheltuiala recurentă :recurring_expense',
     'activity_123' => ':user a eliminat cheltuiala recurentă :recurring_expense',
     'activity_124' => ':user a restabilit cheltuiala recurentă :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Pentru a vizualiza :entity trebuie să setați o parolă.',
     'unsubscribe' => 'Dezabonați-vă',
     'unsubscribed' => 'Dezabonat',
@@ -4870,7 +4868,7 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Plătibil în termen de :payeddue zile net până la :paydate',
-    'xinvoice_no_buyers_reference' => "Nu s-a oferit nicio referință de cumpărător",
+    'xinvoice_no_buyers_reference' => 'Nu s-a oferit nicio referință de cumpărător',
     'xinvoice_online_payment' => 'Factura trebuie plătită online prin link-ul furnizat',
     'pre_payment' => 'Plată anticipată',
     'number_of_payments' => 'Numărul de plăți',
@@ -4975,8 +4973,8 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'e_invoice' => 'Factură electronică',
     'light_dark_mode' => 'Mod lumină/întuneric',
     'activities' => 'Activități',
-    'recent_transactions' => "Tranzacții recente",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Tranzacții recente',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Atribuțiile',
     'order_number' => 'Număr de ordine',
@@ -5193,7 +5191,7 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'rff' => 'Formular câmpuri obligatorii',
     'add_step' => 'Adăugați pasul',
     'steps' => 'Pași',
-    'steps_order_help' =>  'Ordinea pașilor este importantă. Primul pas nu ar trebui să depindă de niciun alt pas. Al doilea pas ar trebui să depindă de primul pas și așa mai departe.',
+    'steps_order_help' => 'Ordinea pașilor este importantă. Primul pas nu ar trebui să depindă de niciun alt pas. Al doilea pas ar trebui să depindă de primul pas și așa mai departe.',
     'other_steps' => 'Alți pași',
     'use_available_payments' => 'Utilizați plățile disponibile',
     'test_email_sent' => 'E-mail trimis cu succes',
@@ -5402,7 +5400,7 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'credit_updated' => 'Credit actualizat',
     'payment_updated' => 'Plata a fost actualizată',
     'search_placeholder' => 'Găsiți facturi, clienți și multe altele',
-    'invalid_vat_number' => "Numărul de TVA nu este valabil pentru țara selectată. Formatul ar trebui să fie Codul țării urmat doar de un număr, adică DE123456789",
+    'invalid_vat_number' => 'Numărul de TVA nu este valabil pentru țara selectată. Formatul ar trebui să fie Codul țării urmat doar de un număr, adică DE123456789',
     'acts_as_sender' => 'Trimiteți facturi electronice',
     'acts_as_receiver' => 'Primiți facturi electronice',
     'peppol_token_generated' => 'Jetonul PEPPOL a fost generat cu succes.',
@@ -5539,7 +5537,7 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'pro_plan_feature_10' => 'Configurați e-mailuri cu memento automat',
     'pro_plan_feature_11' => 'Factură PDF atașată automat la e-mailuri',
     'pro_plan_feature_12' => 'Afișați semnătura electronică a clienților pe facturi',
-    'pro_plan_feature_13' => "Activați caseta de selectare „Aprobați termenii”",
+    'pro_plan_feature_13' => 'Activați caseta de selectare „Aprobați termenii”',
     'pro_plan_feature_14' => 'Rapoarte: Facturi, Cheltuieli, Cont de profit și pierdere, mai multe',
     'pro_plan_feature_15' => 'Facturi, oferte, credite prin e-mail în bloc',
     'pro_plan_feature_16' => 'Interlink 10 companii cu 1 autentificare',
@@ -5914,6 +5912,6 @@ Odată ce sumele au ajuns la dumneavoastră, reveniți la pagina cu metode de pl
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Transfer bancar Stripe',
     'activity_164' => 'Sincronizarea QuickBooks a eșuat. :notes',
-);
+];
 
 return $lang;

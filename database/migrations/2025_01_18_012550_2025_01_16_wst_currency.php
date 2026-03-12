@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\Currency;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
@@ -15,7 +13,7 @@ return new class extends Migration
 
         $currency = Currency::find(142);
 
-        if(!$currency){
+        if (!$currency) {
             Currency::create([
                 'id' => 142,
                 'name' => 'Samoan Tala',

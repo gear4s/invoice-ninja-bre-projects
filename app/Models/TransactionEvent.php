@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\DataMapper\TransactionEventMetadata;
+use Carbon\Carbon;
 
 /**
  * Class Bank.
@@ -42,9 +42,11 @@ use App\DataMapper\TransactionEventMetadata;
  * @property float $credit_balance
  * @property float $credit_amount
  * @property int|null $credit_status
- * @property \Carbon\Carbon|null $period
+ * @property Carbon|null $period
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
+ *
  * @mixin \Eloquent
  */
 class TransactionEvent extends StaticModel
@@ -67,5 +69,4 @@ class TransactionEvent extends StaticModel
     public const PAYMENT_DELETED = 3;
 
     public const PAYMENT_CASH = 4;
-
 }

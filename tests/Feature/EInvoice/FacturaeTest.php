@@ -6,20 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\EInvoice;
 
+use App\Services\EDocument\Standards\FacturaEInvoice;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class FacturaeTest extends TestCase
 {
     use DatabaseTransactions;
@@ -36,10 +33,10 @@ class FacturaeTest extends TestCase
         );
     }
 
-    public function testInvoiceGeneration()
+    public function test_invoice_generation()
     {
 
-        $f = new \App\Services\EDocument\Standards\FacturaEInvoice($this->invoice, "3.2.2");
+        $f = new FacturaEInvoice($this->invoice, '3.2.2');
         $path = $f->run();
 
         $this->assertNotNull($f->run());
@@ -48,7 +45,6 @@ class FacturaeTest extends TestCase
 
         // $this->assertTrue($this->validateInvoiceXML($path));
     }
-
 
     // protected function validateInvoiceXML($path, $validateSignature=false) {
     //     // Prepare file to upload
@@ -127,7 +123,6 @@ class FacturaeTest extends TestCase
     //     $stringBody = (string) $body;
 
     //     echo print_r($stringBody,1);
-
 
     // }
 

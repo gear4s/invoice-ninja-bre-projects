@@ -6,36 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils;
 
-use Exception;
-use App\Utils\Ninja;
 use App\Models\Account;
 use App\Models\Country;
-use App\Utils\Traits\AppSetup;
-use App\Models\QuoteInvitation;
 use App\Models\CreditInvitation;
-use App\Utils\Traits\MakesDates;
 use App\Models\InvoiceInvitation;
-use Illuminate\Support\Facades\App;
-use App\Utils\Traits\DesignCalculator;
 use App\Models\PurchaseOrderInvitation;
+use App\Models\QuoteInvitation;
 use App\Models\RecurringInvoiceInvitation;
+use App\Utils\Traits\AppSetup;
+use App\Utils\Traits\DesignCalculator;
+use App\Utils\Traits\MakesDates;
+use Exception;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 /**
  * Note the premise used here is that any currencies will be formatted back to the company currency and not
  * use the vendor currency, if we continue to extend on vendor, we will need to relook at this
  */
-
 class VendorHtmlEngine
 {
-    use MakesDates;
     use AppSetup;
     use DesignCalculator;
+    use MakesDates;
 
     public $entity;
 
@@ -80,7 +78,7 @@ class VendorHtmlEngine
 
         $this->entity_calc = $this->entity->calc();
 
-        $this->helpers = new Helpers();
+        $this->helpers = new Helpers;
     }
 
     public function setSettings($settings): self
@@ -90,31 +88,30 @@ class VendorHtmlEngine
         return $this;
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private function resolveEntityString()
     {
         switch ($this->invitation) {
-            case ($this->invitation instanceof InvoiceInvitation):
+            case $this->invitation instanceof InvoiceInvitation:
                 return 'invoice';
-            case ($this->invitation instanceof CreditInvitation):
+            case $this->invitation instanceof CreditInvitation:
                 return 'credit';
-            case ($this->invitation instanceof QuoteInvitation):
+            case $this->invitation instanceof QuoteInvitation:
                 return 'quote';
-            case ($this->invitation instanceof RecurringInvoiceInvitation):
+            case $this->invitation instanceof RecurringInvoiceInvitation:
                 return 'recurring_invoice';
-            case ($this->invitation instanceof PurchaseOrderInvitation):
+            case $this->invitation instanceof PurchaseOrderInvitation:
                 return 'purchase_order';
             default:
-                # code...
+                // code...
                 break;
         }
     }
 
     public function buildEntityDataArray(): array
     {
-        if (! $this->vendor->currency()) {
+        if (!$this->vendor->currency()) {
             throw new Exception(debug_backtrace()[1]['function'], 1);
         }
 
@@ -170,7 +167,7 @@ class VendorHtmlEngine
         $data['$purchase_order.number'] = &$data['$number'];
         $data['$purchase_order.date'] = &$data['$date'];
         $data['$purchase_order.due_date'] = &$data['$due_date'];
-        $data['$entity_issued_to'] = ['value' => '', 'label' => ctrans("texts.purchase_order_issued_to")];
+        $data['$entity_issued_to'] = ['value' => '', 'label' => ctrans('texts.purchase_order_issued_to')];
 
         $data['$portal_url'] = ['value' => $this->invitation->getPortalLink(), 'label' => ''];
 
@@ -196,19 +193,19 @@ class VendorHtmlEngine
 
         if ($this->entity->partial > 0) {
             $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->partial, $this->vendor) ?: '&nbsp;', 'label' => ctrans('texts.partial_due')];
-            $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->partial), 'label' => ctrans('texts.partial_due')];
+            $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->partial), 'label' => ctrans('texts.partial_due')];
             $data['$balance_due_raw'] = ['value' => $this->entity->partial, 'label' => ctrans('texts.partial_due')];
             $data['$amount_raw'] = ['value' => $this->entity->partial, 'label' => ctrans('texts.partial_due')];
             $data['$due_date'] = ['value' => $this->translateDate($this->entity->partial_due_date, $this->company->date_format(), $this->vendor->locale()) ?: '&nbsp;', 'label' => ctrans('texts.' . $this->entity_string . '_due_date')];
         } else {
             if ($this->entity->status_id == 1) {
                 $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->amount, $this->vendor) ?: '&nbsp;', 'label' => ctrans('texts.balance_due')];
-                $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->amount), 'label' => ctrans('texts.balance_due')];
+                $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->amount), 'label' => ctrans('texts.balance_due')];
                 $data['$balance_due_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.balance_due')];
                 $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
             } else {
                 $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->balance, $this->vendor) ?: '&nbsp;', 'label' => ctrans('texts.balance_due')];
-                $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->balance), 'label' => ctrans('texts.balance_due')];
+                $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->balance), 'label' => ctrans('texts.balance_due')];
                 $data['$balance_due_raw'] = ['value' => $this->entity->balance, 'label' => ctrans('texts.balance_due')];
                 $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
             }
@@ -236,7 +233,7 @@ class VendorHtmlEngine
         $data['$created_by_user'] = &$data['$user.name'];
         $data['$assigned_to_user'] = ['value' => $this->entity->assigned_user ? $this->entity->assigned_user->present()->name() : '', 'label' => ctrans('texts.name')];
 
-        $data['$public_notes'] = ['value' => $this->entity->public_notes, 'label' => ctrans("texts.public_notes")];
+        $data['$public_notes'] = ['value' => $this->entity->public_notes, 'label' => ctrans('texts.public_notes')];
         $data['$entity.public_notes'] = &$data['$public_notes'];
         $data['$notes'] = &$data['$public_notes'];
 
@@ -356,7 +353,6 @@ class VendorHtmlEngine
             $logo = $this->company->present()->logo_base64($this->settings);
         }
 
-
         $data['$company.logo'] = ['value' => $logo ?: '&nbsp;', 'label' => ctrans('texts.logo')];
         $data['$company_logo'] = &$data['$company.logo'];
         $data['$company1'] = ['value' => $this->helpers->formatCustomFieldValue($this->company->custom_fields, 'company1', $this->settings->custom_value1, $this->vendor) ?: '&nbsp;', 'label' => $this->helpers->makeCustomField($this->company->custom_fields, 'company1')];
@@ -407,7 +403,6 @@ class VendorHtmlEngine
         $data['$contact.signature_date'] = ['value' => $signature_invite?->signature_date ? $this->translateDate($signature_invite->signature_date, $this->company->date_format(), $this->vendor->locale()) : ' ', 'label' => ctrans('texts.date')];
         $data['$contact.signature_ip'] = ['value' => $signature_invite?->signature_ip ?? '', 'label' => ctrans('texts.address')];
 
-
         $data['$thanks'] = ['value' => '', 'label' => ctrans('texts.thanks')];
         $data['$from'] = ['value' => '', 'label' => ctrans('texts.from')];
         $data['$to'] = ['value' => '', 'label' => ctrans('texts.to')];
@@ -441,7 +436,6 @@ class VendorHtmlEngine
 
         $data['$dir'] = ['value' => in_array(optional($this->company->language())->locale, ['ar', 'he']) ? 'rtl' : 'ltr', 'label' => ''];
         $data['$dir_text_align'] = ['value' => in_array(optional($this->company->language())->locale, ['ar', 'he']) ? 'right' : 'left', 'label' => ''];
-
 
         $data['$payment.date'] = ['value' => '&nbsp;', 'label' => ctrans('texts.payment_date')];
         $data['$method'] = ['value' => '&nbsp;', 'label' => ctrans('texts.method')];
@@ -497,7 +491,6 @@ class VendorHtmlEngine
             // $data['$client.shipping_postal_code'] = ['value' => $locationData['shipping_postal_code'], 'label' => ctrans('texts.shipping_postal_code')];
             // $data['$client.shipping_country'] = ['value' => ctrans('texts.country_' . $locationData['shipping_country_name']), 'label' => ctrans('texts.shipping_country')];
 
-
             $data['$client.address1'] = &$data['$address1'];
             $data['$client.address2'] = &$data['$address2'];
             $data['$client_address'] = ['value' => $this->entity->client->present()->address() ?: '&nbsp;', 'label' => ctrans('texts.address')];
@@ -522,20 +515,17 @@ class VendorHtmlEngine
             $data['$client.billing_postal_code'] = &$data['$client.postal_code'];
             $data['$client.billing_country'] = &$data['$client.country'];
 
-
             $data['$client.id_number'] = &$data['$id_number'];
             $data['$client.vat_number'] = &$data['$vat_number'];
             $data['$client.website'] = &$data['$website'];
             $data['$client.phone'] = &$data['$phone'];
             $data['$client.email'] = &$data['$email'];
 
-
             $data['$client.currency'] = ['value' => $this->entity->client->currency()->code, 'label' => ''];
             $data['$client.lang_2'] = ['value' => optional($this->entity->client->language())->locale, 'label' => ''];
             $data['$client.balance'] = ['value' => Number::formatMoney($this->entity->client->balance, $this->entity->client), 'label' => ctrans('texts.account_balance')];
             $data['$client_balance'] = ['value' => Number::formatMoney($this->entity->client->balance, $this->entity->client), 'label' => ctrans('texts.account_balance')];
         }
-
 
         $arrKeysLength = array_map('strlen', array_keys($data));
         array_multisort($arrKeysLength, SORT_DESC, $data);
@@ -574,7 +564,7 @@ class VendorHtmlEngine
     {
         $data = '';
 
-        if (! $this->entity_calc->getTotalTaxMap()) {
+        if (!$this->entity_calc->getTotalTaxMap()) {
             return $data;
         }
 
@@ -589,7 +579,7 @@ class VendorHtmlEngine
     {
         $data = '';
 
-        if (! $this->entity_calc->getTotalTaxMap()) {
+        if (!$this->entity_calc->getTotalTaxMap()) {
             return $data;
         }
 
@@ -616,7 +606,7 @@ class VendorHtmlEngine
     private function getCountryName(): string
     {
         return once(function () {
-            /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+            /** @var Collection<Country> */
             $countries = app('countries');
 
             $country = $countries->first(function ($item) {
@@ -626,7 +616,6 @@ class VendorHtmlEngine
             return $country ? ctrans('texts.country_' . $country->name) : '&nbsp;';
         });
     }
-
 
     private function getCountryCode(): string
     {
@@ -645,7 +634,7 @@ class VendorHtmlEngine
      * we use this function to format a section of rows.
      *
      * @return string a collection of <tr> rows with line item
-     * aggregate data
+     *                aggregate data
      */
 
     /*
@@ -694,6 +683,7 @@ class VendorHtmlEngine
     /**
      * Builds CSS to assist with the generation
      * of Repeating headers and footers on the PDF.
+     *
      * @return string The css string
 
     private function generateCustomCSS() :string
@@ -787,8 +777,7 @@ html {
 
         return $css;
     }
-*/
-
+     */
     private function lineTaxValues(): string
     {
         $tax_map = $this->entity_calc->getTaxMap();
@@ -807,11 +796,9 @@ html {
     */
     public function generateAppUrl()
     {
-        //return rtrim(config('ninja.app_url'), "/");
+        // return rtrim(config('ninja.app_url'), "/");
         return config('ninja.app_url');
     }
-
-
 
     /**
      * Generate markup for HTML images on entity.
@@ -827,7 +814,7 @@ html {
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
 
-        $container =  $dom->createElement('div');
+        $container = $dom->createElement('div');
         $container->setAttribute('style', 'display:grid; grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr);justify-items: center;');
 
         foreach ($this->entity->documents()->where('is_public', true)->get() as $document) {
@@ -837,7 +824,7 @@ html {
 
             $image = $dom->createElement('img');
 
-            $image->setAttribute('src', "data:image/png;base64," . base64_encode($document->getFile()));
+            $image->setAttribute('src', 'data:image/png;base64,' . base64_encode($document->getFile()));
             $image->setAttribute('style', 'max-width: 50%; margin-top: 20px;');
 
             $container->appendChild($image);
@@ -855,17 +842,12 @@ html {
 
     /**
      * buildViewButton
-     *
-     * @param  string $link
-     * @param  string $text
-     * @return string
      */
     private function buildViewButton(string $link, string $text): string
     {
         if ($this->settings->email_style == 'plain') {
             return '<a href="' . $link . '" target="_blank">' . $text . '</a>';
         }
-
 
         return '
 <div>
@@ -891,7 +873,6 @@ html {
 <![endif]-->
 </div>
         ';
-
 
         // return '
         //     <table border="0" cellspacing="0" cellpadding="0" align="center">

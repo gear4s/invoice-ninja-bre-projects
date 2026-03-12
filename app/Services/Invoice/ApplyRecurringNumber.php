@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,7 +34,7 @@ class ApplyRecurringNumber extends AbstractService
         switch ($this->client->getSetting('counter_number_applied')) {
             case 'when_saved':
                 $this->trySaving();
-                //$this->invoice->number = $this->getNextRecurringInvoiceNumber($this->client, $this->invoice);
+                // $this->invoice->number = $this->getNextRecurringInvoiceNumber($this->client, $this->invoice);
                 break;
             case 'when_sent':
                 if ($this->invoice->status_id == Invoice::STATUS_SENT) {

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,9 +20,6 @@ use Illuminate\Support\Str;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class InventoryManagementTest extends TestCase
 {
     use DatabaseTransactions;
@@ -44,7 +40,7 @@ class InventoryManagementTest extends TestCase
         }
     }
 
-    public function testInventoryMovements()
+    public function test_inventory_movements()
     {
 
         config(['queue.default' => 'sync']);
@@ -66,7 +62,7 @@ class InventoryManagementTest extends TestCase
         $invoice->company->track_inventory = true;
         $invoice->push();
 
-        $invoice_item = new InvoiceItem();
+        $invoice_item = new InvoiceItem;
         $invoice_item->type_id = 1;
         $invoice_item->product_key = $product->product_key;
         $invoice_item->notes = $product->notes;
@@ -86,7 +82,7 @@ class InventoryManagementTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/invoices/', $invoice_array)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $product = $product->fresh();
 

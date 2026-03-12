@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,9 +16,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class ClientCsvTest extends TestCase
 {
     use MakesHash;
@@ -38,7 +34,7 @@ class ClientCsvTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testRecurringInvoiceExportCsv()
+    public function test_recurring_invoice_export_csv()
     {
         $data = [
             'date_range' => 'this_year',
@@ -55,7 +51,7 @@ class ClientCsvTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testVendorExportCsv()
+    public function test_vendor_export_csv()
     {
         $data = [
             'date_range' => 'this_year',
@@ -72,7 +68,7 @@ class ClientCsvTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testPurchaseOrderExportCsv()
+    public function test_purchase_order_export_csv()
     {
         $data = [
             'date_range' => 'this_year',
@@ -89,7 +85,7 @@ class ClientCsvTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testClientExportCsv()
+    public function test_client_export_csv()
     {
         $data = [
             'date_range' => 'this_year',
@@ -106,7 +102,7 @@ class ClientCsvTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testContactExportCsv()
+    public function test_contact_export_csv()
     {
         $data = [
             'date_range' => 'this_year',
@@ -123,7 +119,7 @@ class ClientCsvTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testActivityExportCsv()
+    public function test_activity_export_csv()
     {
         $data = [
             'date_range' => 'this_year',

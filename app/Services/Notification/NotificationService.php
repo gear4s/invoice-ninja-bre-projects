@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,15 +22,15 @@ class NotificationService extends AbstractService
 
     public const ALL_USER = 'all_user_notifications';
 
-    public const PAYMENT_SUCCESS = 'payment_success'; //@todo
+    public const PAYMENT_SUCCESS = 'payment_success'; // @todo
 
-    public const PAYMENT_FAILURE = 'payment_failure'; //@todo
+    public const PAYMENT_FAILURE = 'payment_failure'; // @todo
 
-    public const INVOICE_SENT = 'invoice_sent'; //@todo
+    public const INVOICE_SENT = 'invoice_sent'; // @todo
 
-    public const QUOTE_SENT = 'quote_sent'; //@todo
+    public const QUOTE_SENT = 'quote_sent'; // @todo
 
-    public const CREDIT_SENT = 'credit_sent'; //@todo
+    public const CREDIT_SENT = 'credit_sent'; // @todo
 
     public const QUOTE_VIEWED = 'quote_viewed';
 
@@ -39,7 +38,7 @@ class NotificationService extends AbstractService
 
     public const CREDIT_VIEWED = 'credit_viewed';
 
-    public const QUOTE_APPROVED = 'quote_approved'; //@todo
+    public const QUOTE_APPROVED = 'quote_approved'; // @todo
 
     public $company;
 
@@ -66,6 +65,7 @@ class NotificationService extends AbstractService
 
     /**
      * Hosted notifications.
+     *
      * @return void
      */
     public function ninja()

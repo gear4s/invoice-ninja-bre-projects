@@ -6,33 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks;
 
+use App\DataMapper\QuickbooksSync;
+use App\Enum\SyncDirection;
+use App\Helpers\Cache\Atomic;
 use App\Models\Company;
 use App\Models\TaxRate;
-use App\DataMapper\QuickbooksSync;
-use App\Services\Quickbooks\Models\QbQuote;
+use App\Services\Email\AdminEmail;
+use App\Services\Email\EmailObject;
+use App\Services\Quickbooks\Helpers\Helper;
+use App\Services\Quickbooks\Jobs\QuickbooksImport;
 use App\Services\Quickbooks\Models\QbClient;
-use QuickBooksOnline\API\Core\CoreConstants;
 use App\Services\Quickbooks\Models\QbExpense;
 use App\Services\Quickbooks\Models\QbInvoice;
 use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\Models\QbProduct;
+use App\Services\Quickbooks\Models\QbQuote;
 use App\Services\Quickbooks\Models\QbTaxRate;
-use QuickBooksOnline\API\DataService\DataService;
-use App\Services\Quickbooks\Jobs\QuickbooksImport;
-use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 use App\Services\Quickbooks\Transformers\IncomeAccountTransformer;
-use App\Services\Quickbooks\Helpers\Helper;
-use App\Helpers\Cache\Atomic;
-use App\Services\Email\AdminEmail;
-use App\Services\Email\EmailObject;
+use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 use App\Utils\Ninja;
 use Illuminate\Mail\Mailables\Address;
+use QuickBooksOnline\API\Core\CoreConstants;
+use QuickBooksOnline\API\DataService\DataService;
 
 class QuickbooksService
 {
@@ -75,13 +75,11 @@ class QuickbooksService
     {
         $this->init();
     }
-    
+
     /**
      * init
      *
      * Initializes the Quickbooks service by configuring the SDK and checking the token.
-     * 
-     * @return self
      */
     private function init(): self
     {
@@ -91,7 +89,7 @@ class QuickbooksService
                 'ClientID' => config('services.quickbooks.client_id'),
                 'ClientSecret' => config('services.quickbooks.client_secret'),
                 'auth_mode' => 'oauth2',
-                'scope' => "com.intuit.quickbooks.accounting",
+                'scope' => 'com.intuit.quickbooks.accounting',
                 'RedirectURI' => config('services.quickbooks.redirect'),
                 'baseUrl' => $this->testMode ? CoreConstants::SANDBOX_DEVELOPMENT : CoreConstants::QBO_BASEURL,
             ];
@@ -99,7 +97,7 @@ class QuickbooksService
             // Don't merge expired tokens when reconnection is required
             // This allows getAuthorizationUrl() to work correctly
             $requires_reconnect = $this->company->quickbooks && $this->company->quickbooks->requires_reconnect;
-            
+
             if (!$requires_reconnect) {
                 $config = array_merge($config, $this->ninjaAccessToken());
             }
@@ -107,11 +105,11 @@ class QuickbooksService
             $this->sdk = DataService::Configure($config);
 
             $this->sdk->enableLog();
-            $this->sdk->setMinorVersion("75");
+            $this->sdk->setMinorVersion('75');
             $this->sdk->throwExceptionOnError(true);
 
             if (!$requires_reconnect) {
-            $this->checkToken();
+                $this->checkToken();
             }
         }
 
@@ -140,8 +138,6 @@ class QuickbooksService
      * Refresh the service after OAuth token has been updated.
      * This reloads the company from the database and reinitializes the SDK
      * with the new access token.
-     *
-     * @return self
      */
     public function refresh(): self
     {
@@ -158,8 +154,6 @@ class QuickbooksService
      * checkToken
      *
      * Checks if the Quickbooks token is valid and refreshes it if it is not
-     *
-     * @return self
      */
     private function checkToken(): self
     {
@@ -170,11 +164,11 @@ class QuickbooksService
 
         // Access token is expired, check if we can refresh it
         if ($this->company->quickbooks->accessTokenExpiresAt && $this->company->quickbooks->accessTokenExpiresAt < time() && $this->try_refresh) {
-            
+
             // Check if refresh token is also expired - if so, don't attempt refresh
-            $refresh_token_expired = $this->company->quickbooks->refreshTokenExpiresAt > 0 
+            $refresh_token_expired = $this->company->quickbooks->refreshTokenExpiresAt > 0
                 && $this->company->quickbooks->refreshTokenExpiresAt < time();
-            
+
             if ($refresh_token_expired) {
                 $this->markRequiresReconnect();
                 nlog('Quickbooks tokens expired (both access and refresh) => ' . $this->company->company_key);
@@ -194,14 +188,15 @@ class QuickbooksService
                     $this->markRequiresReconnect();
                     throw new \Exception('Quickbooks refresh token invalid/expired');
                 }
-                
-                nlog("QB: failure to refresh token: " . $error_message);
+
+                nlog('QB: failure to refresh token: ' . $error_message);
                 // Only attempt disconnect if it's not a token expiration issue
                 // Disconnect will try to revoke the token, which will fail if token is expired
                 // So we skip disconnect for token-related errors
                 if (!str_contains($error_message, 'token') && !str_contains($error_message, '401') && !str_contains($error_message, 'AuthenticationFailed')) {
                     $this->disconnect();
                 }
+
                 return $this;
             }
 
@@ -215,7 +210,6 @@ class QuickbooksService
         nlog('Quickbooks token expired and could not be refreshed => ' . $this->company->company_key);
 
         throw new \Exception('Quickbooks token expired and could not be refreshed');
-
     }
 
     private function markRequiresReconnect(): void
@@ -237,7 +231,7 @@ class QuickbooksService
         }
 
         try {
-            $mo = new EmailObject();
+            $mo = new EmailObject;
             $mo->subject = ctrans('texts.quickbooks_requires_reauth');
             $mo->body = ctrans('texts.quickbooks_requires_reauth_body');
             $mo->text_body = ctrans('texts.quickbooks_requires_reauth_body');
@@ -252,14 +246,12 @@ class QuickbooksService
 
             AdminEmail::dispatch($mo, $this->company);
         } catch (\Exception $e) {
-            nlog("Failed to send QuickBooks token expired notification: " . $e->getMessage());
+            nlog('Failed to send QuickBooks token expired notification: ' . $e->getMessage());
         }
     }
 
     /**
      * ninjaAccessToken
-     *
-     * @return array
      */
     private function ninjaAccessToken(): array
     {
@@ -274,8 +266,6 @@ class QuickbooksService
      * sdk
      *
      * Wrapper class for fluent type accessors
-     * 
-     * @return SdkWrapper
      */
     public function sdk(): SdkWrapper
     {
@@ -284,8 +274,6 @@ class QuickbooksService
 
     /**
      * Performs an initial sync of select entities from Quickbooks to Invoice Ninja.
-     *
-     * @return void
      */
     public function syncFromQb(): void
     {
@@ -296,10 +284,6 @@ class QuickbooksService
      * findEntityById
      *
      * Returns a Quickbooks entity by ID.
-     * 
-     * @param  string $entity
-     * @param  string $id
-     * @return mixed
      */
     public function findEntityById(string $entity, string $id): mixed
     {
@@ -310,9 +294,6 @@ class QuickbooksService
      * query
      *
      * Returns an array (or null) of Quickbooks entities.
-     * 
-     * @param  string $query
-     * @return mixed
      */
     public function query(string $query): mixed
     {
@@ -321,16 +302,11 @@ class QuickbooksService
 
     /**
      * Flag to determine if a sync is allowed in either direction
-     *
-     * @param  string $entity
-     * @param  \App\Enum\SyncDirection $direction
-     * @return bool
      */
-    public function syncable(string $entity, \App\Enum\SyncDirection $direction): bool
+    public function syncable(string $entity, SyncDirection $direction): bool
     {
-        return isset($this->settings->{$entity}->direction) && ($this->settings->{$entity}->direction === $direction || $this->settings->{$entity}->direction === \App\Enum\SyncDirection::BIDIRECTIONAL);
+        return isset($this->settings->{$entity}->direction) && ($this->settings->{$entity}->direction === $direction || $this->settings->{$entity}->direction === SyncDirection::BIDIRECTIONAL);
     }
-
 
     // [
     //     QuickBooksOnline\API\Data\IPPAccount {#7706
@@ -392,17 +368,16 @@ class QuickbooksService
             $query = "SELECT * FROM Account WHERE AccountType = 'Income' AND Active = true";
             $accounts = $this->sdk->Query($query);
 
-
-            $iat = new IncomeAccountTransformer();
-            $income_accounts = $iat->transformMany($accounts ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+            $iat = new IncomeAccountTransformer;
+            $income_accounts = $iat->transformMany($accounts ?? []); // @phpstan-ignore-line return type is @array - but they also spec NULL as well
 
             return $income_accounts;
         } catch (\Exception $e) {
             nlog("Error fetching income accounts: {$e->getMessage()}");
+
             return [];
         }
     }
-
 
     // [
     //         QuickBooksOnline\API\Data\IPPAccount {#7709
@@ -464,9 +439,10 @@ class QuickbooksService
             $query = "SELECT * FROM Account WHERE AccountType IN ('Expense', 'Cost of Goods Sold') AND Active = true";
             $accounts = $this->sdk->Query($query);
 
-            return is_array($accounts) ? $accounts : []; //@phpstan-ignore-line return type is @array - but they also spec NULL
+            return is_array($accounts) ? $accounts : []; // @phpstan-ignore-line return type is @array - but they also spec NULL
         } catch (\Exception $e) {
             nlog("Error fetching expense accounts: {$e->getMessage()}");
+
             return [];
         }
     }
@@ -485,16 +461,17 @@ class QuickbooksService
             }
 
             // $query = "SELECT * FROM TaxCode WHERE Active = true";
-            $query = "SELECT * FROM TaxRate WHERE Active = true";
+            $query = 'SELECT * FROM TaxRate WHERE Active = true';
             $tax_rates = $this->sdk->Query($query);
 
-            $tax_rate_transformer = new TaxRateTransformer();
-            $tax_rates = $tax_rate_transformer->transformMany($tax_rates ?? []); //@phpstan-ignore-line return type is @array - but they also spec NULL as well
+            $tax_rate_transformer = new TaxRateTransformer;
+            $tax_rates = $tax_rate_transformer->transformMany($tax_rates ?? []); // @phpstan-ignore-line return type is @array - but they also spec NULL as well
 
             return $tax_rates;
 
         } catch (\Exception $e) {
             nlog("Error fetching tax rates: {$e->getMessage()}");
+
             return [];
         }
     }
@@ -512,26 +489,25 @@ class QuickbooksService
                 return [];
             }
 
-            $query = "SELECT * FROM TaxCode WHERE Active = true";
+            $query = 'SELECT * FROM TaxCode WHERE Active = true';
             $tax_codes = $this->sdk->Query($query);
 
-            return is_array($tax_codes) ? $tax_codes : []; //@phpstan-ignore-line return type is @array - but they also spec NULL
+            return is_array($tax_codes) ? $tax_codes : []; // @phpstan-ignore-line return type is @array - but they also spec NULL
 
         } catch (\Exception $e) {
             nlog("Error fetching tax codes: {$e->getMessage()}");
+
             return [];
         }
     }
 
     /**
      * Load tax codes into memory cache.
-     * 
-     * Called once during initial sync. 
+     *
+     * Called once during initial sync.
      * Tax codes are never persisted.
      *
      * Tax codes allow us to reference exact Tax Rates for a given Tax Code.
-     * 
-     * @return self
      */
     public function loadTaxCodes(): self
     {
@@ -560,12 +536,12 @@ class QuickbooksService
      * Get a TaxCode by ID from the in-memory cache.
      * Returns null if tax codes haven't been loaded or if the ID doesn't exist.
      *
-     * @param string $tax_code_id The QuickBooks TaxCode ID
+     * @param  string  $tax_code_id  The QuickBooks TaxCode ID
      * @return array|null The TaxCode as an array, or null if not found
      */
     public function getTaxCode(?string $tax_code_id): ?array
     {
-        if(!$this->tax_codes_cache) {
+        if (!$this->tax_codes_cache) {
             $this->loadTaxCodes();
         }
 
@@ -585,13 +561,15 @@ class QuickbooksService
     public function isTokenValid(): bool
     {
         try {
-            if (! isset($this->sdk) || ! $this->sdk) {
+            if (!isset($this->sdk) || !$this->sdk) {
                 return false;
             }
             $this->sdk->Query('SELECT Id FROM CompanyInfo MAXRESULTS 1');
+
             return true;
         } catch (\Exception $e) {
             nlog('Quickbooks token validation failed: ' . $e->getMessage());
+
             return false;
         }
     }
@@ -599,7 +577,7 @@ class QuickbooksService
     /**
      * Format accounts for UI dropdown consumption.
      *
-     * @param array $accounts Raw account objects from QuickBooks API
+     * @param  array  $accounts  Raw account objects from QuickBooks API
      * @return array Formatted array with 'value' (ID) and 'label' (Name) for each account
      */
     public function formatAccountsForDropdown(array $accounts): array
@@ -633,8 +611,6 @@ class QuickbooksService
      * syncTaxRates
      *
      * Syncs tax rates from Quickbooks to Invoice Ninja
-     *
-     * @return void
      */
     public function syncTaxRates(): void
     {
@@ -646,7 +622,7 @@ class QuickbooksService
 
         foreach ($tax_rates as $tax_rate) {
             if (TaxRate::where('company_id', $this->company->id)->where('name', $tax_rate['name'])->where('rate', $tax_rate['rate'])->doesntExist()) {
-                $tr = new TaxRate();
+                $tr = new TaxRate;
                 $tr->company_id = $this->company->id;
                 $tr->user_id = $this->company->owner()->id;
                 $tr->name = $tax_rate['name'];
@@ -656,13 +632,11 @@ class QuickbooksService
         }
 
     }
-    
+
     /**
      * getIncomeAccountId
      *
      * Returns the default income account ID from the Quickbooks settings.
-     * 
-     * @return string
      */
     public function getIncomeAccountId(): ?string
     {
@@ -673,8 +647,6 @@ class QuickbooksService
      * disconnect
      *
      * Revokes the current token.
-     * 
-     * @return self
      */
     public function disconnect(): self
     {
@@ -682,7 +654,7 @@ class QuickbooksService
         try {
             $this->sdk()->revokeAccessToken();
         } catch (\Throwable $e) {
-            nlog("QB: failure to revoke token during disconnect:: " . $e->getMessage());
+            nlog('QB: failure to revoke token during disconnect:: ' . $e->getMessage());
         }
 
         $this->company->quickbooks = null;
@@ -691,13 +663,11 @@ class QuickbooksService
         return $this;
 
     }
-    
+
     /**
      * companySync
      *
      * Syncs the company information from Quickbooks to Invoice Ninja
-     *
-     * @return self
      */
     public function companySync(): self
     {
@@ -710,7 +680,7 @@ class QuickbooksService
         $automatic_taxes = data_get($company_preferences, 'TaxPrefs.PartnerTaxEnabled', false);
 
         $default_income_account = strlen($this->company->quickbooks->settings->qb_income_account_id ?? '') >= 1 ? $this->company->quickbooks->settings->qb_income_account_id : ($income_accounts[0]['id'] ?? null);
-        
+
         $this->company->quickbooks->settings->income_account_map = $income_accounts;
         $this->company->quickbooks->settings->qb_income_account_id = $default_income_account;
         $this->company->quickbooks->companyName = $companyInfo->CompanyName ?? '';
@@ -819,16 +789,16 @@ class QuickbooksService
 
         // Iterate through the Quickbooks tax rates and create new Invoice Ninja tax rates
         foreach ($tax_rates as $tax_rate) {
-        
+
             $tr = TaxRate::firstOrNew(
                 ['name' => $tax_rate['name'], 'company_id' => $this->company->id, 'rate' => $tax_rate['rate']],
-            []
+                []
             );
 
             $tr->company_id = $this->company->id;
             $tr->user_id = $this->company->owner()->id;
             $tr->save();
-        
+
         }
 
         return $this;
@@ -847,7 +817,7 @@ class QuickbooksService
                 return [];
             }
 
-            $query = "SELECT * FROM PaymentMethod WHERE Active = true";
+            $query = 'SELECT * FROM PaymentMethod WHERE Active = true';
             $methods = $this->sdk->Query($query);
 
             if (!is_array($methods)) {
@@ -872,6 +842,7 @@ class QuickbooksService
             return $result;
         } catch (\Exception $e) {
             nlog("Error fetching payment methods: {$e->getMessage()}");
+
             return [];
         }
     }
@@ -896,6 +867,7 @@ class QuickbooksService
 
         if ($country_raw === '') {
             nlog("QB companySync: No country found in CompanyInfo, defaulting to 'US'");
+
             return 'US';
         }
 

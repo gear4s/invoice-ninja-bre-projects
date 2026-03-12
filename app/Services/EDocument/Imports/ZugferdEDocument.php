@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,28 +13,28 @@ namespace App\Services\EDocument\Imports;
 
 use App\Factory\ExpenseFactory;
 use App\Factory\VendorFactory;
-use App\Jobs\Util\UploadFile;
+use App\Models\Company;
 use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Expense;
+use App\Models\User;
 use App\Models\Vendor;
-use App\Models\VendorContact;
+use App\Repositories\ExpenseRepository;
+use App\Repositories\VendorContactRepository;
+use App\Repositories\VendorRepository;
 use App\Services\AbstractService;
 use App\Utils\TempFile;
 use App\Utils\Traits\SavesDocuments;
 use Exception;
-use App\Models\Company;
-use App\Repositories\ExpenseRepository;
-use App\Repositories\VendorContactRepository;
-use App\Repositories\VendorRepository;
 use horstoeko\zugferd\ZugferdDocumentReader;
-use horstoeko\zugferdvisualizer\ZugferdVisualizer;
 use horstoeko\zugferdvisualizer\renderer\ZugferdVisualizerLaravelRenderer;
+use horstoeko\zugferdvisualizer\ZugferdVisualizer;
 use Illuminate\Http\UploadedFile;
 
 class ZugferdEDocument extends AbstractService
 {
     use SavesDocuments;
+
     public ZugferdDocumentReader|string $document;
 
     /**
@@ -43,7 +42,7 @@ class ZugferdEDocument extends AbstractService
      */
     public function __construct(public UploadedFile $file, public Company $company)
     {
-        # curl -X POST http://localhost:8000/api/v1/edocument/upload -H "Content-Type: multipart/form-data" -H "X-API-TOKEN: 7tdDdkz987H3AYIWhNGXy8jTjJIoDhkAclCDLE26cTCj1KYX7EBHC66VEitJwWhn" -H "X-Requested-With: XMLHttpRequest" -F _method=PUT -F documents[]=@einvoice.xml
+        // curl -X POST http://localhost:8000/api/v1/edocument/upload -H "Content-Type: multipart/form-data" -H "X-API-TOKEN: 7tdDdkz987H3AYIWhNGXy8jTjJIoDhkAclCDLE26cTCj1KYX7EBHC66VEitJwWhn" -H "X-Requested-With: XMLHttpRequest" -F _method=PUT -F documents[]=@einvoice.xml
     }
 
     /**
@@ -51,22 +50,22 @@ class ZugferdEDocument extends AbstractService
      */
     public function run(): Expense
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = $this->company->owner();
 
         $this->document = ZugferdDocumentReader::readAndGuessFromContent($this->file->get());
         $this->document->getDocumentInformation($documentno, $documenttypecode, $documentdate, $invoiceCurrency, $taxCurrency, $documentname, $documentlanguage, $effectiveSpecifiedPeriod);
         $this->document->getDocumentSummation($grandTotalAmount, $duePayableAmount, $lineTotalAmount, $chargeTotalAmount, $allowanceTotalAmount, $taxBasisTotalAmount, $taxTotalAmount, $roundingAmount, $totalPrepaidAmount);
 
-        /** @var \App\Models\Expense $expense */
-        $expense = Expense::where("company_id", $this->company->id)->where('amount', $grandTotalAmount)->where("transaction_reference", $documentno)->whereDate("date", $documentdate)->first();
+        /** @var Expense $expense */
+        $expense = Expense::where('company_id', $this->company->id)->where('amount', $grandTotalAmount)->where('transaction_reference', $documentno)->whereDate('date', $documentdate)->first();
         if (!$expense) {
             // The document does not exist as an expense
             // Handle accordingly
             $visualizer = new ZugferdVisualizer($this->document);
             $visualizer->setDefaultTemplate();
             $visualizer->setRenderer(app(ZugferdVisualizerLaravelRenderer::class));
-            $visualizer->setPdfFontDefault("arial");
+            $visualizer->setPdfFontDefault('arial');
             $visualizer->setPdfPaperSize('A4-P');
             $visualizer->setTemplate('edocument.xinvoice');
 
@@ -77,15 +76,15 @@ class ZugferdEDocument extends AbstractService
             $expense->save();
 
             $documents = [$this->file];
-            if ($this->file->getExtension() == "xml") {
-                array_push($documents, TempFile::UploadedFileFromRaw($visualizer->renderPdf(), $documentno . "_visualiser.pdf", "application/pdf"));
+            if ($this->file->getExtension() == 'xml') {
+                array_push($documents, TempFile::UploadedFileFromRaw($visualizer->renderPdf(), $documentno . '_visualiser.pdf', 'application/pdf'));
             }
             $this->saveDocuments($documents, $expense);
 
             $expense->save();
 
             if ($taxCurrency && $taxCurrency != $invoiceCurrency) {
-                $expense->private_notes = ctrans("texts.tax_currency_mismatch");
+                $expense->private_notes = ctrans('texts.tax_currency_mismatch');
             }
             $expense->uses_inclusive_taxes = true;
             $expense->amount = $grandTotalAmount;
@@ -105,21 +104,21 @@ class ZugferdEDocument extends AbstractService
             $this->document->getDocumentSellerTaxRegistration($taxtype);
 
             $taxid = null;
-            if (array_key_exists("VA", $taxtype)) {
-                $taxid = $taxtype["VA"];
+            if (array_key_exists('VA', $taxtype)) {
+                $taxid = $taxtype['VA'];
             }
 
             $vendor = Vendor::query()
-                            ->where("company_id", $this->company->id)
-                            ->where(function ($q) use ($taxid, $person_name, $contact_email) {
-                                $q->when(!is_null($taxid), function ($when_query) use ($taxid) {
-                                    $when_query->orWhere('vat_number', $taxid);
-                                })
-                                ->orWhere("name", $person_name)
-                                ->orWhereHas('contacts', function ($qq) use ($contact_email) {
-                                    $qq->where("email", $contact_email);
-                                });
-                            })->first();
+                ->where('company_id', $this->company->id)
+                ->where(function ($q) use ($taxid, $person_name, $contact_email) {
+                    $q->when(!is_null($taxid), function ($when_query) use ($taxid) {
+                        $when_query->orWhere('vat_number', $taxid);
+                    })
+                        ->orWhere('name', $person_name)
+                        ->orWhereHas('contacts', function ($qq) use ($contact_email) {
+                            $qq->where('email', $contact_email);
+                        });
+                })->first();
 
             if ($vendor) {
                 $expense->vendor_id = $vendor->id;
@@ -137,14 +136,14 @@ class ZugferdEDocument extends AbstractService
                 $vendor->postal_code = $postcode;
 
                 $country = app('countries')->first(function ($c) use ($country) {
-                    /** @var \App\Models\Country $c */
+                    /** @var Country $c */
                     return $c->iso_3166_2 == strtoupper($country) || $c->iso_3166_3 == strtoupper($country);
                 });
                 if ($country) {
                     $vendor->country_id = $country->id;
                 }
 
-                $vendor_repo = new VendorRepository(new VendorContactRepository());
+                $vendor_repo = new VendorRepository(new VendorContactRepository);
                 $vendor = $vendor_repo->save([], $vendor);
 
                 $expense->vendor_id = $vendor->id;
@@ -154,10 +153,10 @@ class ZugferdEDocument extends AbstractService
             // The document exists as an expense
             // Handle accordingly
             nlog("Zugferd: Document already exists {$expense->hashed_id}");
-            $expense->private_notes = $expense->private_notes . ctrans("texts.edocument_import_already_exists", ["date" => time()]);
+            $expense->private_notes = $expense->private_notes . ctrans('texts.edocument_import_already_exists', ['date' => time()]);
         }
 
-        $expense_repo = new ExpenseRepository();
+        $expense_repo = new ExpenseRepository;
         $expense = $expense_repo->save([], $expense);
 
         return $expense;

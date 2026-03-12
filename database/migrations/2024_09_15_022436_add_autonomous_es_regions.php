@@ -1,20 +1,20 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 use App\Models\Company;
+use App\Models\Country;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Country;
-use Illuminate\Database\Eloquent\Model;
 
 return new class extends Migration
 {
@@ -23,9 +23,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-    
+
         Schema::table('countries', function (Blueprint $table) {
-            $table->string('iso_3166_2',5)->change();
+            $table->string('iso_3166_2', 5)->change();
             $table->string('country_code', 4)->change();
         });
 
@@ -96,8 +96,7 @@ return new class extends Migration
 
         foreach ($regions as $region) {
 
-            if(!Country::find($region['id']))
-            {
+            if (!Country::find($region['id'])) {
                 Country::create($region);
             }
         }

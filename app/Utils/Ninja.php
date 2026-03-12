@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -90,7 +89,7 @@ class Ninja
 
     public static function registerNinjaUser($user)
     {
-        if (! $user || $user->email == self::TEST_USERNAME || self::isNinjaDev()) {
+        if (!$user || $user->email == self::TEST_USERNAME || self::isNinjaDev()) {
             return false;
         }
 
@@ -215,16 +214,16 @@ class Ninja
     public static function isBase64Encoded(string $s): bool
     {
         // Check if there are valid base64 characters
-        if (! preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $s)) {
+        if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $s)) {
             return false;
         }
         // Decode the string in strict mode and check the results
         $decoded = base64_decode($s, true);
-        if (false === $decoded) {
+        if ($decoded === false) {
             return false;
         }
         // if string returned contains not printable chars
-        if (0 < preg_match('/((?![[:graph:]])(?!\s)(?!\p{L}))./', $decoded, $matched)) {
+        if (preg_match('/((?![[:graph:]])(?!\s)(?!\p{L}))./', $decoded, $matched) > 0) {
             return false;
         }
         // Encode the string again

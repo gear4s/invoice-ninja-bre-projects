@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,14 +13,15 @@ namespace App\Models;
 
 use App\Casts\AsTaxEntityCollection;
 use App\DataMapper\EInvoice\TaxEntity;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 
 /**
  * App\Models\License
  *
  * @property int $id
- * @property \Carbon\Carbon $created_at
+ * @property Carbon $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
  * @property string|null $first_name
@@ -35,8 +35,9 @@ use Illuminate\Database\Eloquent\Casts\AsArrayObject;
  * @property int|null $e_invoice_quota
  * @property bool $is_flagged
  * @property array|null $entities
- * @property-read \App\Models\RecurringInvoice $recurring_invoice
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EInvoiceToken> $e_invoicing_tokens
+ * @property-read RecurringInvoice $recurring_invoice
+ * @property-read Collection<int, EInvoiceToken> $e_invoicing_tokens
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|License newModelQuery()
@@ -57,6 +58,7 @@ use Illuminate\Database\Eloquent\Casts\AsArrayObject;
  * @method static \Illuminate\Database\Eloquent\Builder|License whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|License withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|License withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class License extends StaticModel
@@ -70,8 +72,6 @@ class License extends StaticModel
 
     /**
      * expiry
-     *
-     * @return string
      */
     public function expiry(): string
     {
@@ -80,7 +80,6 @@ class License extends StaticModel
 
     /**
      * recurring_invoice
-     *
      */
     public function recurring_invoice()
     {
@@ -89,7 +88,6 @@ class License extends StaticModel
 
     /**
      * e_invoicing_tokens
-     *
      */
     public function e_invoicing_tokens()
     {
@@ -99,7 +97,6 @@ class License extends StaticModel
     /**
      * addEntity
      *
-     * @param  TaxEntity $entity
      * @return void
      */
     public function addEntity(TaxEntity $entity)
@@ -121,7 +118,6 @@ class License extends StaticModel
     /**
      * removeEntity
      *
-     * @param  TaxEntity $entity
      * @return void
      */
     public function removeEntity(TaxEntity $entity)
@@ -144,7 +140,6 @@ class License extends StaticModel
     /**
      * updateEntity
      *
-     * @param  TaxEntity $entity
      * @return void
      */
     public function updateEntity(TaxEntity $entity, string $search_key = 'legal_entity_id')
@@ -197,8 +192,6 @@ class License extends StaticModel
 
     /**
      * isValid
-     *
-     * @return bool
      */
     public function isValid(): bool
     {

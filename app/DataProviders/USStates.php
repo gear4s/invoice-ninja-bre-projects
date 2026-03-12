@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34008,8 +34007,9 @@ class USStates
 
         $prefix = substr(($zip ?? ''), 0, 3);
         $index = intval($prefix);
+
         /* converts prefix to integer */
-        return $zip_by_state[$index] == "--" ? false : $zip_by_state[$index];
+        return $zip_by_state[$index] == '--' ? false : $zip_by_state[$index];
 
     }
 }

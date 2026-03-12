@@ -6,18 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
-use Illuminate\Support\Carbon;
 use App\DataMapper\ExpenseSync;
+use App\Factory\ExpenseCategoryFactory;
+use App\Models\Currency;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
-use App\Models\Currency;
-use App\Factory\ExpenseCategoryFactory;
+use Illuminate\Support\Carbon;
 
 /**
  * Class ExpenseTransformer.
@@ -59,7 +58,6 @@ class ExpenseTransformer extends BaseTransformer
                 $payload['AccountRef'] = ['value' => $category->sync->qb_id];
             }
         }
-
 
         // Vendors are not syncable - yet -.
         // if ($expense->vendor_id) {
@@ -104,10 +102,9 @@ class ExpenseTransformer extends BaseTransformer
             'category_id' => $this->getCategoryId($data),
         ];
 
-
         $mergeable = $this->resolveAttachedEntity($data);
 
-        $expense =  array_merge($expense, $mergeable);
+        $expense = array_merge($expense, $mergeable);
 
         nlog($expense);
 
@@ -136,9 +133,6 @@ class ExpenseTransformer extends BaseTransformer
      * getCategoryId
      *
      * Gets the category ID based on the QB ID or creates a new category!
-     *
-     * @param  mixed $data
-     * @return int
      */
     private function getCategoryId(mixed $data): int
     {
@@ -148,9 +142,9 @@ class ExpenseTransformer extends BaseTransformer
 
         if ($qb_id) {
             $category = ExpenseCategory::withTrashed()
-                                    ->where('company_id', $this->company->id)
-                                    ->where('sync->qb_id', $qb_id)
-                                    ->first();
+                ->where('company_id', $this->company->id)
+                ->where('sync->qb_id', $qb_id)
+                ->first();
 
             if ($category) {
                 return $category->id;
@@ -160,7 +154,7 @@ class ExpenseTransformer extends BaseTransformer
         $category = ExpenseCategoryFactory::create($this->company->id, $this->company->owner()->id);
         $category->name = $name;
 
-        $sync = new ExpenseSync();
+        $sync = new ExpenseSync;
         $sync->qb_id = $qb_id;
 
         $category->sync = $sync;
@@ -168,5 +162,4 @@ class ExpenseTransformer extends BaseTransformer
 
         return $category->id;
     }
-
 }

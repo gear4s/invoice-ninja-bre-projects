@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,8 +13,10 @@ namespace App\Http\Requests\Payment;
 
 use App\Http\Requests\Request;
 use App\Http\ValidationRules\PaymentAppliedValidAmount;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdatePaymentRequest extends Request
@@ -25,12 +26,10 @@ class UpdatePaymentRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->payment);
@@ -39,16 +38,16 @@ class UpdatePaymentRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [
             'client_id' => ['sometimes', 'bail', Rule::in([$this->payment->client_id])],
             'number' => ['sometimes', 'bail', Rule::unique('payments')->where('company_id', $user->company()->id)->ignore($this->payment->id)],
             'invoices' => ['sometimes', 'bail', 'nullable', 'array', new PaymentAppliedValidAmount($this->all())],
-            'invoices.*.invoice_id' => ['sometimes','distinct',Rule::exists('invoices', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->payment->client_id)],
-            'invoices.*.amount' => ['sometimes','numeric','min:0'],
-            'credits.*.credit_id' => ['sometimes','bail','distinct',Rule::exists('credits', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->payment->client_id)],
+            'invoices.*.invoice_id' => ['sometimes', 'distinct', Rule::exists('invoices', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->payment->client_id)],
+            'invoices.*.amount' => ['sometimes', 'numeric', 'min:0'],
+            'credits.*.credit_id' => ['sometimes', 'bail', 'distinct', Rule::exists('credits', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->payment->client_id)],
             'credits.*.amount' => ['required', 'bail'],
         ];
 
@@ -64,7 +63,7 @@ class UpdatePaymentRequest extends Request
 
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 

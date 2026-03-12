@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,13 +22,13 @@ class GetPurchaseOrderPdf extends AbstractService
 
     public function run()
     {
-        if (! $this->contact) {
+        if (!$this->contact) {
             $this->contact = $this->purchase_order->vendor->contacts()->orderBy('send_email', 'DESC')->first();
         }
 
         $invitation = $this->purchase_order->invitations()->where('vendor_contact_id', $this->contact->id)->first();
 
-        if (! $invitation) {
+        if (!$invitation) {
             $invitation = $this->purchase_order->invitations()->first();
         }
 

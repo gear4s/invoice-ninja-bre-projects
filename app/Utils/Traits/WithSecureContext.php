@@ -6,26 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils\Traits;
 
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 trait WithSecureContext
 {
     public const CONTEXT_UPDATE = 'secureContext.updated';
+
     public const CONTEXT_READY = 'flow2.context.ready';
 
     /**
-     * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function getContext(?string $key): mixed
     {
-        $context = \Illuminate\Support\Facades\Cache::get($key) ?? [];
+        $context = Cache::get($key) ?? [];
 
         return $context;
     }
@@ -36,7 +38,7 @@ trait WithSecureContext
 
         data_set($clone, $property, $value);
 
-        \Illuminate\Support\Facades\Cache::put($key, $clone, now()->addHour());
+        Cache::put($key, $clone, now()->addHour());
 
         $this->dispatch(self::CONTEXT_UPDATE);
 
@@ -49,7 +51,7 @@ trait WithSecureContext
         $clone = $this->getContext($key);
         $clone = array_merge($clone, $data);
 
-        \Illuminate\Support\Facades\Cache::put($key, $clone, now()->addHour());
+        Cache::put($key, $clone, now()->addHour());
 
         $this->dispatch(self::CONTEXT_UPDATE);
 

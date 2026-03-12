@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -40,13 +39,12 @@ class PurchaseOrderAcceptedListener implements ShouldQueue
 
         $purchase_order = $event->purchase_order;
 
-
         /* We loop through each user and determine whether they need to be notified */
         foreach ($event->company->company_users as $company_user) {
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 
@@ -57,7 +55,7 @@ class PurchaseOrderAcceptedListener implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new PurchaseOrderAcceptedObject($purchase_order, $event->company, $company_user->portalType()))->build());
                 $nmo->company = $event->company;
                 $nmo->settings = $event->company->settings;

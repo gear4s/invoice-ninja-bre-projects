@@ -6,33 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\EInvoice\Verifactu;
 
-use Tests\TestCase;
-use App\Services\EDocument\Standards\Verifactu\Models\Cupon;
-use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
-use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
-use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
-use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
-use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
-use App\Services\EDocument\Standards\Verifactu\Models\PrimerRegistroCadena;
-use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\Cupon;
+use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
+use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
+use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
 use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
+use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
+use Tests\TestCase;
 
 class VerifactuModelTest extends TestCase
 {
     public function test_and_create_new_invoice_for_non_spanish_client(): void
     {
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-001')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -47,33 +46,33 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add emitter
-        $emisor = new PersonaFisicaJuridica();
+        $emisor = new PersonaFisicaJuridica;
         $emisor
             ->setNif('B12345678')
             ->setRazonSocial('Empresa Ejemplo SL');
         $invoice->setTercero($emisor);
 
         $destinatarios = [];
-        $destinatario1 = new IDOtro();
+        $destinatario1 = new IDOtro;
         $destinatario1->setNombreRazon('Cliente 1 SL');
         $destinatarios[] = $destinatario1;
 
         $invoice->setDestinatarios($destinatarios);
 
         // Add breakdown
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseFactura([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'BaseImponibleOimporteNoSujeto' => 1000.00,
             'TipoImpositivo' => 21,
-            'CuotaRepercutida' => 210.00
+            'CuotaRepercutida' => 210.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add information system
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -84,12 +83,12 @@ class VerifactuModelTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add chain
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         // Add coupon
-        $cupon = new Cupon();
+        $cupon = new Cupon;
         $cupon
             ->setIdCupon('CUP-001')
             ->setFechaExpedicionCupon('2023-01-01')
@@ -109,9 +108,6 @@ class VerifactuModelTest extends TestCase
         }
 
         $this->assertCount(0, $errors);
-
-
-
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -125,14 +121,13 @@ class VerifactuModelTest extends TestCase
         $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
 
-
-    public function testCreateAndSerializeCompleteInvoice(): void
+    public function test_create_and_serialize_complete_invoice(): void
     {
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-001')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -147,26 +142,26 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add emitter
-        $emisor = new PersonaFisicaJuridica();
+        $emisor = new PersonaFisicaJuridica;
         $emisor
             ->setNif('B12345678')
             ->setRazonSocial('Empresa Ejemplo SL');
         $invoice->setTercero($emisor);
 
         // Add breakdown
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseFactura([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'BaseImponibleOimporteNoSujeto' => 1000.00,
             'TipoImpositivo' => 21,
-            'CuotaRepercutida' => 210.00
+            'CuotaRepercutida' => 210.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add information system
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -177,12 +172,12 @@ class VerifactuModelTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add chain
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         // Add coupon
-        $cupon = new Cupon();
+        $cupon = new Cupon;
         $cupon
             ->setIdCupon('CUP-001')
             ->setFechaExpedicionCupon('2023-01-01')
@@ -203,9 +198,6 @@ class VerifactuModelTest extends TestCase
 
         $this->assertCount(0, $errors);
 
-
-
-
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
         $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
@@ -217,12 +209,12 @@ class VerifactuModelTest extends TestCase
         $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
 
-    public function testCreateAndSerializeSimplifiedInvoice(): void
+    public function test_create_and_serialize_simplified_invoice(): void
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-002')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -237,19 +229,19 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add breakdown
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '02',
             'CalificacionOperacion' => 'S2',
             'BaseImponibleOimporteNoSujeto' => 100.00,
             'TipoImpositivo' => 21,
-            'CuotaRepercutida' => 21.00
+            'CuotaRepercutida' => 21.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add information system
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -263,12 +255,11 @@ class VerifactuModelTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add encadenamiento
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         $xml = $invoice->toXmlString();
-
 
         $xslt = new VerifactuDocumentValidator($xml);
         $xslt->validate();
@@ -289,13 +280,12 @@ class VerifactuModelTest extends TestCase
         $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
     }
 
-
-    public function testCreateAndSerializeInvoiceWithoutRecipient(): void
+    public function test_create_and_serialize_invoice_without_recipient(): void
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-004')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -309,7 +299,7 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add information system
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -320,19 +310,19 @@ class VerifactuModelTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add desglose with correct key names
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '02',
             'CalificacionOperacion' => 'S2',
             'BaseImponibleOimporteNoSujeto' => 100.00,
             'TipoImpositivo' => 21.00,
-            'CuotaRepercutida' => 21.00
+            'CuotaRepercutida' => 21.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add encadenamiento
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
@@ -359,7 +349,7 @@ class VerifactuModelTest extends TestCase
         $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
 
-    public function testInvalidXmlThrowsException(): void
+    public function test_invalid_xml_throws_exception(): void
     {
         $this->expectException(\DOMException::class);
 
@@ -367,25 +357,23 @@ class VerifactuModelTest extends TestCase
         Invoice::fromXml($invalidXml);
     }
 
-    public function testMissingRequiredFieldsThrowsException(): void
+    public function test_missing_required_fields_throws_exception(): void
     {
-        $invoice = new Invoice();
-
+        $invoice = new Invoice;
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing required field: IDVersion');
 
         $invoice->toXmlString();
 
-
     }
 
-    public function testCreateAndSerializeInvoiceWithMultipleRecipients(): void
+    public function test_create_and_serialize_invoice_with_multiple_recipients(): void
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-005')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -400,13 +388,13 @@ class VerifactuModelTest extends TestCase
 
         // Add multiple recipients
         $destinatarios = [];
-        $destinatario1 = new PersonaFisicaJuridica();
+        $destinatario1 = new PersonaFisicaJuridica;
         $destinatario1
             ->setNif('B87654321')
             ->setNombreRazon('Cliente 1 SL');
         $destinatarios[] = $destinatario1;
 
-        $destinatario2 = new PersonaFisicaJuridica();
+        $destinatario2 = new PersonaFisicaJuridica;
         $destinatario2
             ->setPais('FR')
             ->setTipoIdentificacion('02')
@@ -417,24 +405,24 @@ class VerifactuModelTest extends TestCase
         $invoice->setDestinatarios($destinatarios);
 
         // Add desglose with proper structure and correct key names
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'BaseImponibleOimporteNoSujeto' => 200.00,
             'TipoImpositivo' => 21.00,
-            'CuotaRepercutida' => 42.00
+            'CuotaRepercutida' => 42.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add encadenamiento (required)
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         // Add sistema informatico
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -474,12 +462,12 @@ class VerifactuModelTest extends TestCase
 
     }
 
-    public function testCreateAndSerializeInvoiceWithExemptOperation(): void
+    public function test_create_and_serialize_invoice_with_exempt_operation(): void
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-006')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -493,24 +481,24 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add desglose with exempt operation
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'N1',
             'BaseImponibleOimporteNoSujeto' => 100.00,
             'TipoImpositivo' => 0,
-            'CuotaRepercutida' => 0.00
+            'CuotaRepercutida' => 0.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add encadenamiento (required)
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         // Add sistema informatico
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -531,8 +519,6 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
 
-
-
         $xslt = new VerifactuDocumentValidator($xml);
         $xslt->validate();
         $errors = $xslt->getVerifactuErrors();
@@ -544,20 +530,18 @@ class VerifactuModelTest extends TestCase
 
         $this->assertCount(1, $errors);
 
-
-
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
         $this->assertEquals(0.00, $deserialized->getCuotaTotal());
         $this->assertEquals(100.00, $deserialized->getImporteTotal());
     }
 
-    public function testCreateAndSerializeInvoiceWithDifferentTaxRates(): void
+    public function test_create_and_serialize_invoice_with_different_tax_rates(): void
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-007')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -571,7 +555,7 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add desglose with multiple tax rates
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseIVA([
             [
                 'Impuesto' => '01',
@@ -579,7 +563,7 @@ class VerifactuModelTest extends TestCase
                 'CalificacionOperacion' => 'S1',
                 'BaseImponibleOimporteNoSujeto' => 100.00,
                 'TipoImpositivo' => 21.00,
-                'CuotaRepercutida' => 21.00
+                'CuotaRepercutida' => 21.00,
             ],
             [
                 'Impuesto' => '01',
@@ -587,18 +571,18 @@ class VerifactuModelTest extends TestCase
                 'CalificacionOperacion' => 'S1',
                 'BaseImponibleOimporteNoSujeto' => 150.00,
                 'TipoImpositivo' => 7.00,
-                'CuotaRepercutida' => 10.50
-            ]
+                'CuotaRepercutida' => 10.50,
+            ],
         ]);
         $invoice->setDesglose($desglose);
 
         // Add encadenamiento (required)
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         // Add sistema informatico
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -619,7 +603,6 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
 
-
         $xslt = new VerifactuDocumentValidator($xml);
         $xslt->validate();
         $errors = $xslt->getVerifactuErrors();
@@ -631,19 +614,18 @@ class VerifactuModelTest extends TestCase
 
         $this->assertCount(1, $errors);
 
-
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
         $this->assertEquals(31.50, $deserialized->getCuotaTotal());
         $this->assertEquals(250.00, $deserialized->getImporteTotal());
     }
 
-    public function testCreateAndSerializeInvoiceWithSubsequentChain(): void
+    public function test_create_and_serialize_invoice_with_subsequent_chain(): void
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-008')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -657,24 +639,24 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add desglose with proper structure
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'BaseImponible' => 100.00,
             'TipoImpositivo' => 21,
-            'Cuota' => 21.00
+            'Cuota' => 21.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add encadenamiento with subsequent chain
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
         // Add sistema informatico with all required fields
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -695,7 +677,6 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
 
-
         $xslt = new VerifactuDocumentValidator($xml);
         $xslt->validate();
         $errors = $xslt->getVerifactuErrors();
@@ -707,22 +688,20 @@ class VerifactuModelTest extends TestCase
 
         $this->assertCount(1, $errors);
 
-
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
         $this->assertEquals('S', $deserialized->getEncadenamiento()->getPrimerRegistro());
     }
 
-
-    public function testInvalidTipoFacturaThrowsException(): void
+    public function test_invalid_tipo_factura_throws_exception(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid TipoFactura value');
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-016')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -730,14 +709,14 @@ class VerifactuModelTest extends TestCase
             ->setTipoFactura('INVALID'); // This should throw the exception immediately
     }
 
-    public function testInvalidTipoRectificativaThrowsException(): void
+    public function test_invalid_tipo_rectificativa_throws_exception(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-017')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -752,7 +731,7 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add sistema informatico
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -765,15 +744,14 @@ class VerifactuModelTest extends TestCase
         $invoice->toXmlString();
     }
 
-
-    public function testInvalidNIFFormatThrowsException(): void
+    public function test_invalid_nif_format_throws_exception(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-019')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -787,14 +765,14 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add emitter with invalid NIF
-        $emisor = new PersonaFisicaJuridica();
+        $emisor = new PersonaFisicaJuridica;
         $emisor
             ->setNif('INVALID_NIF')
             ->setRazonSocial('Empresa Ejemplo SL');
         $invoice->setTercero($emisor);
 
         // Add sistema informatico
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -807,14 +785,14 @@ class VerifactuModelTest extends TestCase
         $invoice->toXmlString();
     }
 
-    public function testInvalidAmountFormatThrowsException(): void
+    public function test_invalid_amount_format_throws_exception(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('FAC-2023-020')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -828,7 +806,7 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add sistema informatico
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
@@ -841,13 +819,13 @@ class VerifactuModelTest extends TestCase
         $invoice->toXmlString();
     }
 
-    public function testInvalidSchemaThrowsException(): void
+    public function test_invalid_schema_throws_exception(): void
     {
         $this->expectException(\DOMException::class);
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura('B12345678')
                 ->setNumSerieFactura('TEST123')
                 ->setFechaExpedicionFactura('01-01-2023'))
@@ -861,7 +839,7 @@ class VerifactuModelTest extends TestCase
             ->setHuella('abc123...');
 
         // Add required sistema informatico with valid values
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema->setNombreRazon('Test System')
             ->setNif('B12345678')
             ->setNombreSistemaInformatico('Test Software')
@@ -871,20 +849,20 @@ class VerifactuModelTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add required desglose with DetalleDesglose
-        $desglose = new Desglose();
-        $detalleDesglose = new DetalleDesglose();
+        $desglose = new Desglose;
+        $detalleDesglose = new DetalleDesglose;
         $detalleDesglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'BaseImponible' => 100.00,
             'TipoImpositivo' => 21.00,
-            'Cuota' => 21.00
+            'Cuota' => 21.00,
         ]);
         $desglose->setDetalleDesglose($detalleDesglose);
         $invoice->setDesglose($desglose);
 
         // Add required encadenamiento
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
@@ -892,7 +870,7 @@ class VerifactuModelTest extends TestCase
         $validXml = $invoice->toXmlString();
 
         // Create a new document with the valid XML
-        $doc = new \DOMDocument();
+        $doc = new \DOMDocument;
         $doc->loadXML($validXml);
 
         // Add an invalid element to trigger schema validation error
@@ -903,7 +881,7 @@ class VerifactuModelTest extends TestCase
         // Try to validate the invalid XML using our validateXml method
         $reflectionClass = new \ReflectionClass(Invoice::class);
         $validateXmlMethod = $reflectionClass->getMethod('validateXml');
-        $validateXmlMethod->invoke(new Invoice(), $doc);
+        $validateXmlMethod->invoke(new Invoice, $doc);
 
         $xslt = new VerifactuDocumentValidator($validXml);
         $xslt->validate();
@@ -927,13 +905,14 @@ class VerifactuModelTest extends TestCase
         if (!$doc->loadXML($xml)) {
             throw new \DOMException('Failed to load XML in normalizeXml');
         }
+
         return $doc->saveXML();
     }
 
     protected function assertValidatesAgainstXsd(string $xml, string $xsdPath): void
     {
         try {
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             $doc->preserveWhiteSpace = false;
             $doc->formatOutput = true;
             if (!$doc->loadXML($xml, LIBXML_NOBLANKS)) {

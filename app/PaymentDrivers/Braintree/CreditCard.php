@@ -6,27 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Braintree;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentType;
+use App\Exceptions\PaymentFailed;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 use App\Http\Requests\Request;
 use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use App\Exceptions\PaymentFailed;
+use App\Models\GatewayType;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\PaymentType;
+use App\Models\SystemLog;
 use App\PaymentDrivers\BraintreePaymentDriver;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Utils\Traits\MakesHash;
+use Braintree\Exception\Authorization;
+use Illuminate\Http\RedirectResponse;
 
 class CreditCard implements LivewireMethodInterface
 {
     use MakesHash;
+
     /**
      * @var BraintreePaymentDriver
      */
@@ -42,12 +45,12 @@ class CreditCard implements LivewireMethodInterface
     public function authorizeView(array $data)
     {
         $data['gateway'] = $this->braintree;
-        $data['threeds_enable'] = $this->braintree->company_gateway->getConfigField('threeds') ? "true" : "false";
+        $data['threeds_enable'] = $this->braintree->company_gateway->getConfigField('threeds') ? 'true' : 'false';
 
         return render('gateways.braintree.credit_card.authorize', $data);
     }
 
-    public function authorizeResponse($data): \Illuminate\Http\RedirectResponse
+    public function authorizeResponse($data): RedirectResponse
     {
         return back();
     }
@@ -55,10 +58,8 @@ class CreditCard implements LivewireMethodInterface
     /**
      * Credit card payment page.
      *
-     * @param array $data
      * @return array
      */
-
     private function threeDParameters(array $data)
     {
         return [
@@ -87,8 +88,8 @@ class CreditCard implements LivewireMethodInterface
     /**
      * Process the credit card payments.
      *
-     * @param PaymentResponseRequest $request
-     * @return \Illuminate\Http\RedirectResponse|void
+     * @return RedirectResponse|void
+     *
      * @throws PaymentFailed
      */
     public function paymentResponse(PaymentResponseRequest $request)
@@ -110,12 +111,12 @@ class CreditCard implements LivewireMethodInterface
 
         $token = $this->getPaymentToken($request->all(), $customer->id);
 
-        $total_taxes = \App\Models\Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->braintree->payment_hash->invoices(), 'invoice_id')))->withTrashed()->sum('total_taxes');
+        $total_taxes = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->braintree->payment_hash->invoices(), 'invoice_id')))->withTrashed()->sum('total_taxes');
         $invoice = $this->braintree->payment_hash->fee_invoice;
         $po_number = $invoice->po_number ?? $invoice->number ?? '';
 
         $data = [
-            'amount' => $this->braintree->payment_hash->data->amount_with_fee, //@phpstan-ignore-line
+            'amount' => $this->braintree->payment_hash->data->amount_with_fee, // @phpstan-ignore-line
             'paymentMethodToken' => $token,
             'deviceData' => $state['client-data'],
             'options' => [
@@ -143,7 +144,7 @@ class CreditCard implements LivewireMethodInterface
         try {
             $result = $this->braintree->gateway->transaction()->sale($data);
         } catch (\Exception $e) {
-            if ($e instanceof \Braintree\Exception\Authorization) {
+            if ($e instanceof Authorization) {
                 $this->braintree->sendFailureMail(ctrans('texts.generic_gateway_error'));
 
                 throw new PaymentFailed(ctrans('texts.generic_gateway_error'), $e->getCode());
@@ -173,7 +174,7 @@ class CreditCard implements LivewireMethodInterface
 
     private function getPaymentToken(array $data, $customerId): ?string
     {
-        if (array_key_exists('token', $data) && ! is_null($data['token'])) {
+        if (array_key_exists('token', $data) && !is_null($data['token'])) {
             return $data['token'];
         }
 
@@ -262,7 +263,7 @@ class CreditCard implements LivewireMethodInterface
     private function storePaymentMethod($method, $customer_reference)
     {
         try {
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->exp_month = (string) $method->expirationMonth;
             $payment_meta->exp_year = (string) $method->expirationYear;
             $payment_meta->brand = (string) $method->cardType;
@@ -282,7 +283,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -290,14 +291,14 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {
         $data['gateway'] = $this->braintree;
         $data['client_token'] = $this->braintree->gateway->clientToken()->generate();
         $data['threeds'] = $this->threeDParameters($data);
-        $data['threeds_enable'] = $this->braintree->company_gateway->getConfigField('threeds') ? "true" : "false";
+        $data['threeds_enable'] = $this->braintree->company_gateway->getConfigField('threeds') ? 'true' : 'false';
 
         if ($this->braintree->company_gateway->getConfigField('merchantAccountId')) {
             /** https://developer.paypal.com/braintree/docs/reference/request/client-token/generate#merchant_account_id */

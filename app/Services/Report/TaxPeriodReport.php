@@ -6,36 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Report;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Utils\Number;
-use App\Models\Client;
-use League\Csv\Writer;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Libraries\MultiDB;
 use App\Export\CSV\BaseExport;
-use App\Models\TransactionEvent;
-use App\Utils\Traits\MakesDates;
-use Illuminate\Support\Facades\App;
-use Illuminate\Database\Eloquent\Builder;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use App\Services\Template\TemplateService;
+use App\Libraries\MultiDB;
 use App\Listeners\Invoice\InvoiceTransactionEventEntry;
 use App\Listeners\Invoice\InvoiceTransactionEventEntryCash;
-use App\Services\Report\TaxPeriod\TaxSummary;
-use App\Services\Report\TaxPeriod\TaxDetail;
-use App\Services\Report\TaxPeriod\InvoiceReportRow;
+use App\Models\Company;
+use App\Models\Invoice;
+use App\Models\Paymentable;
+use App\Models\TransactionEvent;
 use App\Services\Report\TaxPeriod\InvoiceItemReportRow;
+use App\Services\Report\TaxPeriod\InvoiceReportRow;
 use App\Services\Report\TaxPeriod\RegionalTaxCalculator;
 use App\Services\Report\TaxPeriod\RegionalTaxCalculatorFactory;
+use App\Services\Report\TaxPeriod\TaxDetail;
+use App\Services\Report\TaxPeriod\TaxSummary;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesDates;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\App;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class TaxPeriodReport extends BaseExport
 {
@@ -63,7 +59,7 @@ class TaxPeriodReport extends BaseExport
             'is_income_billed',
         ]
         @param bool $skip_initialization Skip prophylactic transaction event creation (primarily for testing)
-    */
+     */
     public function __construct(public Company $company, public array $input, private bool $skip_initialization = false)
     {
         $this->regional_calculator = RegionalTaxCalculatorFactory::create($company);
@@ -78,7 +74,7 @@ class TaxPeriodReport extends BaseExport
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        $this->spreadsheet = new Spreadsheet();
+        $this->spreadsheet = new Spreadsheet;
 
         return
                 $this->boot()
@@ -90,8 +86,6 @@ class TaxPeriodReport extends BaseExport
     /**
      * boot the main methods
      * that initialize the report
-     *
-     * @return self
      */
     public function boot(): self
     {
@@ -113,8 +107,6 @@ class TaxPeriodReport extends BaseExport
      *
      * When input var is TRUE, this means that we are dealing with accrual accounting.
      * When input var is FALSE, this means that we are dealing with cash accounting.
-     *
-     * @return self
      */
     private function setAccountingType(): self
     {
@@ -128,15 +120,13 @@ class TaxPeriodReport extends BaseExport
      *
      * Ensure our dataset has the appropriate transaction events.
      * This runs prophylactically to ensure all invoices have transaction state.
-     *
-     * @return self
      */
     private function initializeData(): self
     {
 
         $q = Invoice::withTrashed()
             ->where('company_id', $this->company->id)
-            ->whereIn('status_id', [2,3,4,5,6])
+            ->whereIn('status_id', [2, 3, 4, 5, 6])
             ->whereBetween('date', ['1970-01-01', $this->end_date])
             // ->whereDoesntHave('transaction_events'); //filter by no transaction events for THIS month.
             ->whereDoesntHave('transaction_events', function ($query) {
@@ -144,58 +134,57 @@ class TaxPeriodReport extends BaseExport
             });
 
         $q->cursor()
-        ->each(function ($invoice) {
+            ->each(function ($invoice) {
 
-            (new InvoiceTransactionEventEntry())->run($invoice, $this->end_date);
+                (new InvoiceTransactionEventEntry)->run($invoice, $this->end_date);
 
+                if (in_array($invoice->status_id, [Invoice::STATUS_PAID, Invoice::STATUS_PARTIAL])) {
 
-            if (in_array($invoice->status_id, [Invoice::STATUS_PAID, Invoice::STATUS_PARTIAL])) {
+                    // Harvest point in time records for cash payments.
+                    Paymentable::where('paymentable_type', 'invoices')
+                        ->whereIn('payment_id', $invoice->payments->pluck('id'))
+                        ->get()
+                        ->groupBy(function ($paymentable) {
+                            return $paymentable->paymentable_id . '-' . Carbon::parse($paymentable->created_at)->format('Y-m');
+                        })
+                        ->map(function ($group) {
+                            return $group->first();
+                        })->each(function ($pp) {
+                            (new InvoiceTransactionEventEntryCash)->run($pp->paymentable, Carbon::parse($pp->created_at)->startOfMonth()->format('Y-m-d'), Carbon::parse($pp->created_at)->endOfMonth()->format('Y-m-d'));
+                        });
 
-                //Harvest point in time records for cash payments.
-                \App\Models\Paymentable::where('paymentable_type', 'invoices')
-                    ->whereIn('payment_id', $invoice->payments->pluck('id'))
-                    ->get()
-                    ->groupBy(function ($paymentable) {
-                        return $paymentable->paymentable_id . '-' . \Carbon\Carbon::parse($paymentable->created_at)->format('Y-m');
-                    })
-                    ->map(function ($group) {
-                        return $group->first();
-                    })->each(function ($pp) {
-                        (new InvoiceTransactionEventEntryCash())->run($pp->paymentable, \Carbon\Carbon::parse($pp->created_at)->startOfMonth()->format('Y-m-d'), \Carbon\Carbon::parse($pp->created_at)->endOfMonth()->format('Y-m-d'));
-                    });
-
-            }
-        });
+                }
+            });
 
         $ii = Invoice::withTrashed()
-                ->whereHas('transaction_events', function ($query) {
-                    $query->where('period', '<=', $this->end_date);
-                })
-                ->where(function ($q) {
-                    $q->whereIn('status_id', [Invoice::STATUS_CANCELLED, Invoice::STATUS_REVERSED])
+            ->whereHas('transaction_events', function ($query) {
+                $query->where('period', '<=', $this->end_date);
+            })
+            ->where(function ($q) {
+                $q->whereIn('status_id', [Invoice::STATUS_CANCELLED, Invoice::STATUS_REVERSED])
                     ->orWhere('is_deleted', true);
-                })
-                ->whereDoesntHave('transaction_events', function ($query) {
-                    $query->where('period', $this->end_date)
-                        ->whereIn('metadata->tax_report->tax_summary->status', ['cancelled', 'deleted']);
-                });
+            })
+            ->whereDoesntHave('transaction_events', function ($query) {
+                $query->where('period', $this->end_date)
+                    ->whereIn('metadata->tax_report->tax_summary->status', ['cancelled', 'deleted']);
+            });
 
         $ii->cursor()
-        ->each(function ($invoice) {
+            ->each(function ($invoice) {
 
-            // Iterate through each month between start_date and end_date
-            // $current_date = Carbon::parse($this->start_date);
-            // $end_date_carbon = Carbon::parse($this->end_date);
+                // Iterate through each month between start_date and end_date
+                // $current_date = Carbon::parse($this->start_date);
+                // $end_date_carbon = Carbon::parse($this->end_date);
 
-            // while ($current_date->lte($end_date_carbon)) {
-            //     $last_day_of_month = $current_date->copy()->endOfMonth()->format('Y-m-d');
-            //     (new InvoiceTransactionEventEntry())->run($invoice, $last_day_of_month);
-            //     $current_date->addMonth();
-            // }
+                // while ($current_date->lte($end_date_carbon)) {
+                //     $last_day_of_month = $current_date->copy()->endOfMonth()->format('Y-m-d');
+                //     (new InvoiceTransactionEventEntry())->run($invoice, $last_day_of_month);
+                //     $current_date->addMonth();
+                // }
 
-            (new InvoiceTransactionEventEntry())->run($invoice, $this->end_date);
+                (new InvoiceTransactionEventEntry)->run($invoice, $this->end_date);
 
-        });
+            });
 
         return $this;
     }
@@ -211,9 +200,9 @@ class TaxPeriodReport extends BaseExport
             ->with('transaction_events')
             ->where('company_id', $this->company->id);
 
-        if ($this->cash_accounting) { //cash
+        if ($this->cash_accounting) { // cash
 
-            $query->whereIn('status_id', [2,3,4,5,6])
+            $query->whereIn('status_id', [2, 3, 4, 5, 6])
                 ->whereHas('transaction_events', function ($query) {
                     $query->where(function ($sub_q) {
                         $sub_q->where('event_id', '!=', TransactionEvent::INVOICE_UPDATED)
@@ -222,9 +211,9 @@ class TaxPeriodReport extends BaseExport
                     })->whereBetween('period', [$this->start_date, $this->end_date]);
                 });
 
-        } else { //accrual
+        } else { // accrual
 
-            $query->whereIn('status_id', [2,3,4,5])
+            $query->whereIn('status_id', [2, 3, 4, 5])
                 ->whereHas('transaction_events', function ($query) {
                     $query->where('event_id', TransactionEvent::INVOICE_UPDATED)
                         ->whereBetween('period', [$this->start_date, $this->end_date]);
@@ -241,7 +230,6 @@ class TaxPeriodReport extends BaseExport
      * calculateDateRange
      *
      * We only support dates as of the end of the last month.
-     * @return self
      */
     private function calculateDateRange(): self
     {
@@ -255,12 +243,12 @@ class TaxPeriodReport extends BaseExport
                 $this->end_date = now()->startOfMonth()->subMonth()->endOfMonth()->format('Y-m-d');
                 break;
             case 'this_quarter':
-                $this->start_date = (new \Carbon\Carbon('0 months'))->startOfQuarter()->format('Y-m-d');
-                $this->end_date = (new \Carbon\Carbon('0 months'))->endOfQuarter()->format('Y-m-d');
+                $this->start_date = (new Carbon('0 months'))->startOfQuarter()->format('Y-m-d');
+                $this->end_date = (new Carbon('0 months'))->endOfQuarter()->format('Y-m-d');
                 break;
             case 'last_quarter':
-                $this->start_date = (new \Carbon\Carbon('-3 months'))->startOfQuarter()->format('Y-m-d');
-                $this->end_date = (new \Carbon\Carbon('-3 months'))->endOfQuarter()->format('Y-m-d');
+                $this->start_date = (new Carbon('-3 months'))->startOfQuarter()->format('Y-m-d');
+                $this->end_date = (new Carbon('-3 months'))->endOfQuarter()->format('Y-m-d');
                 break;
             case 'last365_days':
                 $this->start_date = now()->startOfDay()->subDays(365)->format('Y-m-d');
@@ -328,7 +316,6 @@ class TaxPeriodReport extends BaseExport
         return $this;
     }
 
-
     private function writeToSpreadsheet()
     {
         $this->createSummarySheet()
@@ -359,7 +346,7 @@ class TaxPeriodReport extends BaseExport
         $worksheet_title = $this->cash_accounting ? ctrans('texts.cash_accounting') : ctrans('texts.accrual_accounting');
 
         $worksheet = $this->spreadsheet->createSheet();
-        $worksheet->setTitle(substr(ctrans('texts.invoice') . " " . $worksheet_title, 0, 30));
+        $worksheet->setTitle(substr(ctrans('texts.invoice') . ' ' . $worksheet_title, 0, 30));
         $worksheet->fromArray($this->data['invoices'], null, 'A1');
 
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format());
@@ -379,7 +366,7 @@ class TaxPeriodReport extends BaseExport
         $worksheet_title = $this->cash_accounting ? ctrans('texts.cash_accounting') : ctrans('texts.accrual_accounting');
 
         $worksheet = $this->spreadsheet->createSheet();
-        $worksheet->setTitle(substr(ctrans('texts.invoice_item') . " " . $worksheet_title, 0, 30));
+        $worksheet->setTitle(substr(ctrans('texts.invoice_item') . ' ' . $worksheet_title, 0, 30));
         $worksheet->fromArray($this->data['invoice_items'], null, 'A1');
 
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format());
@@ -389,7 +376,6 @@ class TaxPeriodReport extends BaseExport
 
         return $this;
     }
-
 
     /**
      * Build report data from transaction events
@@ -406,27 +392,27 @@ class TaxPeriodReport extends BaseExport
         $query->cursor()->each(function ($invoice) {
 
             $invoice->transaction_events()
-            ->when(!$this->cash_accounting, function ($query) {
-                $query->where('event_id', TransactionEvent::INVOICE_UPDATED);
-            })
-            ->when($this->cash_accounting, function ($query) {
-                $query->where(function ($sub_q) {
-                    $sub_q->where('event_id', '!=', TransactionEvent::INVOICE_UPDATED)
-                        ->orWhere('metadata->tax_report->tax_summary->status', 'reversed');
+                ->when(!$this->cash_accounting, function ($query) {
+                    $query->where('event_id', TransactionEvent::INVOICE_UPDATED);
+                })
+                ->when($this->cash_accounting, function ($query) {
+                    $query->where(function ($sub_q) {
+                        $sub_q->where('event_id', '!=', TransactionEvent::INVOICE_UPDATED)
+                            ->orWhere('metadata->tax_report->tax_summary->status', 'reversed');
+
+                    });
+
+                    // $query->where('event_id', '!=', TransactionEvent::INVOICE_UPDATED);
+                })
+                ->whereBetween('period', [$this->start_date, $this->end_date])
+                ->orderBy('timestamp', 'desc')
+                ->cursor()
+                ->each(function ($event) use ($invoice) {
+
+                    /** @var Invoice $invoice */
+                    $this->processTransactionEvent($event, $invoice);
 
                 });
-
-                // $query->where('event_id', '!=', TransactionEvent::INVOICE_UPDATED);
-            })
-            ->whereBetween('period', [$this->start_date, $this->end_date])
-            ->orderBy('timestamp', 'desc')
-            ->cursor()
-            ->each(function ($event) use ($invoice) {
-
-                /** @var Invoice $invoice */
-                $this->processTransactionEvent($event, $invoice);
-
-            });
         });
 
         return $this;
@@ -474,7 +460,7 @@ class TaxPeriodReport extends BaseExport
 
         $tempFile = tempnam(sys_get_temp_dir(), 'tax_report_');
 
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet);
+        $writer = new Xlsx($this->spreadsheet);
         $writer->save($tempFile);
 
         $fileContent = file_get_contents($tempFile);
@@ -484,5 +470,4 @@ class TaxPeriodReport extends BaseExport
         return $fileContent;
 
     }
-
 }

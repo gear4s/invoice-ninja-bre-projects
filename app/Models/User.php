@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,11 +23,19 @@ use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\UserSessionAttributes;
 use App\Utils\Traits\UserSettings;
 use App\Utils\TruthSource;
+use Awobaz\Compoships\Compoships;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
@@ -82,14 +89,15 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $sms_verification_code
  * @property bool $verified_phone_number
  * @property array|null $referral_earnings
- * @property-read \App\Models\Account $account
- * @property-read \App\Models\Company $company
+ * @property-read Account $account
+ * @property-read Company $company
  * @property-read mixed $hashed_id
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
+ * @property-read Collection<int, CompanyToken> $tokens
  * @property-read int|null $tokens_count
- * @property \App\Models\CompanyToken $token
+ * @property CompanyToken $token
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|User filter(\App\Filters\QueryFilters $filters)
  * @method static \Illuminate\Database\Eloquent\Builder|User newModelQuery()
@@ -99,10 +107,12 @@ use Laracasts\Presenter\PresentableTrait;
  * @method static \Illuminate\Database\Eloquent\Builder|User where($column, $value)
  * @method static \Illuminate\Database\Eloquent\Builder|User withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyUser> $company_users
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Company> $companies
+ *
+ * @property-read Collection<int, CompanyUser> $company_users
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read Collection<int, CompanyToken> $tokens
+ * @property-read Collection<int, Company> $companies
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel companies()
  * @method bool hasPermissionTo(string $permission)
  * @method \App\Models\Company getCompany()
@@ -113,19 +123,20 @@ use Laracasts\Presenter\PresentableTrait;
  * @method bool hasIntersectPermissions(array $permissions)
  * @method int companyId()
  * @method bool isOwner()
+ *
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use Notifiable;
-    use SoftDeletes;
-    use PresentableTrait;
-    use MakesHash;
-    use UserSessionAttributes;
-    use UserSettings;
+    use Compoships;
     use Filterable;
     use HasFactory;
-    use \Awobaz\Compoships\Compoships;
+    use MakesHash;
+    use Notifiable;
+    use PresentableTrait;
+    use SoftDeletes;
+    use UserSessionAttributes;
+    use UserSettings;
 
     protected $guard = 'user';
 
@@ -143,7 +154,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * The attributes that are mass assignable.
-     *
      */
     protected $fillable = [
         'user_logged_in_notification',
@@ -169,7 +179,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * The attributes that should be hidden for arrays.
-     *
      */
     protected $hidden = [
         'remember_token',
@@ -182,10 +191,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'oauth_user_token' => 'object',
-        'settings'         => 'object',
-        'updated_at'       => 'timestamp',
-        'created_at'       => 'timestamp',
-        'deleted_at'       => 'timestamp',
+        'settings' => 'object',
+        'updated_at' => 'timestamp',
+        'created_at' => 'timestamp',
+        'deleted_at' => 'timestamp',
         'oauth_user_token_expiry' => 'datetime',
         'referral_meta' => 'object',
         'referral_earnings' => AsReferralEarningCollection::class,
@@ -209,7 +218,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Returns a account.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function account()
     {
@@ -219,7 +228,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Returns all company tokens.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function tokens()
     {
@@ -248,10 +257,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns all companies a user has access to.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function companies(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function companies(): BelongsToMany
     {
         return $this->belongsToMany(Company::class)->using(CompanyUser::class)->withPivot('permissions', 'settings', 'is_admin', 'is_owner', 'is_locked')->withTimestamps();
     }
@@ -260,7 +267,6 @@ class User extends Authenticatable implements MustVerifyEmail
      * As we are authenticating on CompanyToken,
      * we need to link the company to the user manually. This allows
      * us to decouple a $user and their attached companies.
-     * @param $company
      */
     public function setCompany($company)
     {
@@ -283,6 +289,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return $truth->getCompany();
         } elseif (request()->header('X-API-TOKEN')) {
             $company_token = CompanyToken::with('company')->where('token', request()->header('X-API-TOKEN'))->first();
+
             return $company_token->company;
         }
 
@@ -297,14 +304,14 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Returns the current company.
      *
-     * @return \App\Models\Company $company
+     * @return Company $company
      */
-    public function company(): \App\Models\Company
+    public function company(): Company
     {
         return $this->getCompany();
     }
 
-    public function company_users(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function company_users(): HasMany
     {
         return $this->hasMany(CompanyUser::class)->withTrashed();
     }
@@ -338,205 +345,203 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns the currently set company id for the user.
-     *
-     * @return int
      */
     public function companyId(): int
     {
         return $this->company()->id;
     }
 
-    public function clients(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
     }
 
-    public function bank_integrations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bank_integrations(): HasMany
     {
         return $this->hasMany(BankIntegration::class)->withTrashed();
     }
 
-    public function bank_transaction_rules(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bank_transaction_rules(): HasMany
     {
         return $this->hasMany(BankTransactionRule::class)->withTrashed();
     }
 
-    public function bank_transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bank_transactions(): HasMany
     {
         return $this->hasMany(BankTransaction::class)->withTrashed();
     }
 
-    public function client_contacts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function client_contacts(): HasMany
     {
         return $this->hasMany(ClientContact::class)->withTrashed();
     }
 
-    public function company_gateways(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function company_gateways(): HasMany
     {
         return $this->hasMany(CompanyGateway::class)->withTrashed();
     }
 
-    public function company_ledgers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function company_ledgers(): HasMany
     {
         return $this->hasMany(CompanyLedger::class);
     }
 
-    public function company_tokens(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function company_tokens(): HasMany
     {
         return $this->hasMany(CompanyToken::class)->withTrashed();
     }
 
-    public function credit_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function credit_invitations(): HasMany
     {
         return $this->hasMany(CreditInvitation::class)->withTrashed();
     }
 
-    public function credits(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function credits(): HasMany
     {
         return $this->hasMany(Credit::class)->withTrashed();
     }
 
-    public function designs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function designs(): HasMany
     {
         return $this->hasMany(Design::class)->withTrashed();
     }
 
-    public function expense_categories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expense_categories(): HasMany
     {
         return $this->hasMany(ExpenseCategory::class)->withTrashed();
     }
 
-    public function expenses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class)->withTrashed();
     }
 
-    public function group_settings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function group_settings(): HasMany
     {
         return $this->hasMany(GroupSetting::class)->withTrashed();
     }
 
-    public function invoice_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invoice_invitations(): HasMany
     {
         return $this->hasMany(InvoiceInvitation::class)->withTrashed();
     }
 
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class)->withTrashed();
     }
 
-    public function locations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function locations(): HasMany
     {
         return $this->hasMany(Location::class)->withTrashed();
     }
 
-    public function payment_terms(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payment_terms(): HasMany
     {
         return $this->hasMany(PaymentTerm::class)->withTrashed();
     }
 
-    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->withTrashed();
     }
 
-    public function products(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function products(): HasMany
     {
         return $this->hasMany(Product::class)->withTrashed();
     }
 
-    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function projects(): HasMany
     {
         return $this->hasMany(Project::class)->withTrashed();
     }
 
-    public function purchase_order_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function purchase_order_invitations(): HasMany
     {
         return $this->hasMany(PurchaseOrderInvitation::class)->withTrashed();
     }
 
-    public function purchase_orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function purchase_orders(): HasMany
     {
         return $this->hasMany(PurchaseOrder::class)->withTrashed();
     }
 
-    public function quote_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function quote_invitations(): HasMany
     {
         return $this->hasMany(QuoteInvitation::class)->withTrashed();
     }
 
-    public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class)->withTrashed();
     }
 
-    public function recurring_expenses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function recurring_expenses(): HasMany
     {
         return $this->hasMany(RecurringExpense::class)->withTrashed();
     }
 
-    public function recurring_invoice_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function recurring_invoice_invitations(): HasMany
     {
         return $this->hasMany(RecurringInvoiceInvitation::class)->withTrashed();
     }
 
-    public function recurring_invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function recurring_invoices(): HasMany
     {
         return $this->hasMany(RecurringInvoice::class)->withTrashed();
     }
 
-    public function recurring_quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function recurring_quotes(): HasMany
     {
         return $this->hasMany(RecurringQuote::class)->withTrashed();
     }
 
-    public function recurring_quote_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function recurring_quote_invitations(): HasMany
     {
         return $this->hasMany(RecurringQuoteInvitation::class)->withTrashed();
     }
 
-    public function schedules(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function schedules(): HasMany
     {
         return $this->hasMany(Scheduler::class)->withTrashed();
     }
 
-    public function system_logs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function system_logs(): HasMany
     {
         return $this->hasMany(SystemLog::class)->withTrashed();
     }
 
-    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tasks(): HasMany
     {
         return $this->hasMany(Task::class)->withTrashed();
     }
 
-    public function task_statuses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function task_statuses(): HasMany
     {
         return $this->hasMany(TaskStatus::class)->withTrashed();
     }
 
-    public function tax_rates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tax_rates(): HasMany
     {
         return $this->hasMany(TaxRate::class)->withTrashed();
     }
 
-    public function vendor_contacts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function vendor_contacts(): HasMany
     {
         return $this->hasMany(VendorContact::class)->withTrashed();
     }
 
-    public function vendors(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function vendors(): HasMany
     {
         return $this->hasMany(Vendor::class)->withTrashed();
     }
 
-    public function webhooks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function webhooks(): HasMany
     {
         return $this->hasMany(Webhook::class)->withTrashed();
     }
@@ -565,8 +570,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns a boolean of the administrator status of the user.
-     *
-     * @return bool
      */
     public function isAdmin(): bool
     {
@@ -583,10 +586,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->company_users()->where('is_owner', true)->exists();
     }
+
     /**
      * Returns true is user is an admin _or_ owner
-     *
-     * @return boolean
      */
     public function isSuperUser(): bool
     {
@@ -595,10 +597,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Returns all user created contacts.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function contacts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function contacts(): HasMany
     {
         return $this->hasMany(ClientContact::class);
     }
@@ -606,30 +606,27 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Returns a boolean value if the user owns the current Entity.
      *
-     * @param  mixed $entity
-     * @return bool
+     * @param  mixed  $entity
      */
     public function owns($entity): bool
     {
-        return ! empty($entity->user_id) && $entity->user_id == $this->id;
+        return !empty($entity->user_id) && $entity->user_id == $this->id;
     }
 
     /**
      * Returns a boolean value if the user is assigned to the current Entity.
      *
-     * @param  mixed $entity
-     * @return bool
+     * @param  mixed  $entity
      */
     public function assigned($entity): bool
     {
-        return ! empty($entity->assigned_user_id) && $entity->assigned_user_id == $this->id;
+        return !empty($entity->assigned_user_id) && $entity->assigned_user_id == $this->id;
     }
 
     /**
      * Returns true if permissions exist in the map.
      *
-     * @param  string $permission
-     * @return bool
+     * @param  string  $permission
      */
     public function hasPermission($permission): bool
     {
@@ -642,7 +639,6 @@ class User extends Authenticatable implements MustVerifyEmail
          * leak permissions for other recurring_* entities
          *
          * The solution here will split the word - consistently - into view _ {entity} and edit _ {entity}
-         *
          */
         $parts = explode('_', $permission, 2);
         $all_permission = '____';
@@ -653,14 +649,14 @@ class User extends Authenticatable implements MustVerifyEmail
         if (count($parts) > 1) {
             $all_permission = $parts[0] . '_all';
 
-            /*If this is a view search, make sure we add in the edit_{entity} AND edit_all permission into the checks*/
+            /* If this is a view search, make sure we add in the edit_{entity} AND edit_all permission into the checks */
             if ($parts[0] == 'view') {
                 $edit_all = 'edit_all';
                 $edit_entity = "edit_{$parts[1]}";
             }
         }
 
-        return  $this->isSuperUser()
+        return $this->isSuperUser()
                 || (stripos($this->token()->cu->permissions ?? '', $permission) !== false)
                 || (stripos($this->token()->cu->permissions ?? '', $all_permission) !== false)
                 || (stripos($this->token()->cu->permissions ?? '', $edit_all) !== false)
@@ -674,8 +670,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * This method is used when we need to scope down the query
      * and display a limited subset.
      *
-     * @param  string  $permission '["view_all"]'
-     * @return boolean
+     * @param  string  $permission  '["view_all"]'
      */
     public function hasExactPermissionAndAll(string $permission = '___'): bool
     {
@@ -686,7 +681,7 @@ class User extends Authenticatable implements MustVerifyEmail
             $all_permission = $parts[0] . '_all';
         }
 
-        return  (stripos($this->token()->cu->permissions, $all_permission) !== false)
+        return (stripos($this->token()->cu->permissions, $all_permission) !== false)
                 || (stripos($this->token()->cu->permissions, $permission) !== false);
     }
 
@@ -696,9 +691,6 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * This method is used when we need to scope down the query
      * and display a limited subset.
-     *
-     * @param  array  $permissions
-     * @return boolean
      */
     public function hasIntersectPermissions(array $permissions = []): bool
     {
@@ -718,14 +710,12 @@ class User extends Authenticatable implements MustVerifyEmail
      * This method is used when we need to scope down the query
      * and display a limited subset.
      *
-     * @param  string  $permission '["view_all"]'
-     * @return boolean
+     * @param  string  $permission  '["view_all"]'
      */
     public function hasExactPermission(string $permission = '___'): bool
     {
-        return  (stripos($this->token()->cu->permissions ?? '', $permission) !== false);
+        return stripos($this->token()->cu->permissions ?? '', $permission) !== false;
     }
-
 
     /**
      * Used when we need to match a range of permissions
@@ -733,9 +723,6 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * This method is used when we need to scope down the query
      * and display a limited subset.
-     *
-     * @param  array  $permissions
-     * @return boolean
      */
     public function hasIntersectPermissionsOrAdmin(array $permissions = []): bool
     {
@@ -765,9 +752,8 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * Note, returning FALSE here means the user does NOT have the permission we want to exclude
      *
-     * @param  array $matched_permission = []
-     * @param  array $excluded_permissions = []
-     * @return bool
+     * @param  array  $matched_permission  = []
+     * @param  array  $excluded_permissions  = []
      */
     public function hasExcludedPermissions(array $matched_permission = [], array $excluded_permissions = []): bool
     {
@@ -790,7 +776,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return false;
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
@@ -824,8 +810,8 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Retrieve the model for a bound value.
      *
-     * @param mixed $value
-     * @param null $field
+     * @param  mixed  $value
+     * @param  null  $field
      * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)
@@ -847,7 +833,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $is_react = request()->has('react') || request()->hasHeader('X-React') ? true : false;
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new NinjaMailer((new ResetPasswordObject($token, $this, $this->account->default_company, $is_react))->build());
         $nmo->to_user = $this;
         $nmo->settings = $this->account->default_company->settings;
@@ -883,16 +869,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return ctrans('texts.user');
     }
 
-
-
-    ////////////////////// Referral earnings ////////////////////////////////////
-
-
+    // //////////////////// Referral earnings ////////////////////////////////////
 
     /**
      * addEntity
      *
-     * @param  ReferralEarning $entity
      * @return void
      */
     public function addReferral(ReferralEarning $entity)
@@ -915,11 +896,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
 
         return collect($this->referral_earnings)
-                    ->filter(function ($earning) use ($account_key) {
-                        return $earning->account_key === $account_key;
-                    })
-                    ->sortByDesc('period_ending')
-                    ->first();
+            ->filter(function ($earning) use ($account_key) {
+                return $earning->account_key === $account_key;
+            })
+            ->sortByDesc('period_ending')
+            ->first();
 
     }
 
@@ -942,5 +923,4 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->save();
 
     }
-
 }

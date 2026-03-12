@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Entreprise',
     'name' => 'Nom',
     'website' => 'Site web',
@@ -1173,7 +1173,6 @@ $lang = array(
     'enterprise_plan_features' => 'Le Plan entreprise offre le support pour de multiple utilisateurs ainsi que l\'ajout de pièces jointes, :link pour voir la liste complète des fonctionnalités.',
     'return_to_app' => 'Retour à l\'app',
 
-
     // Payment updates
     'refund_payment' => 'Remboursement',
     'refund_max' => 'Max:',
@@ -1702,7 +1701,6 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'lang_Serbian' => 'Serbe',
     'lang_Bulgarian' => 'Bulgare',
     'lang_Russian (Russia)' => 'Russe (Russie)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Administration',
@@ -2360,7 +2358,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'currency_gold_troy_ounce' => 'Once troy d\'or',
     'currency_nicaraguan_córdoba' => 'Cordoba nicaraguayen',
     'currency_malagasy_ariary' => 'Ariary malgache',
-    "currency_tongan_pa_anga" => "Pa'anga tongien",
+    'currency_tongan_pa_anga' => "Pa'anga tongien",
 
     'review_app_help' => 'Nous espérons que votre utilisation de cette application vous est agréable.<br/>Un commentaire de votre part serait grandement apprécié!',
     'writing_a_review' => 'rédiger un commentaire',
@@ -4360,7 +4358,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'activity_122' => ':user a archivé la dépense récurrente :recurring_expense',
     'activity_123' => ':user a supprimé la dépense récurrente :recurring_expense',
     'activity_124' => ':user a restauré la dépense récurrente :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Pour voir :entity, vous devez spécifier un mot de passe.',
     'unsubscribe' => 'Se désabonner',
     'unsubscribed' => 'Désabonné',
@@ -4971,8 +4969,8 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'e_invoice' => 'Facture électronique',
     'light_dark_mode' => 'Mode clair/sombre',
     'activities' => 'Activités',
-    'recent_transactions' => "Transactions récentes",
-    'country_Palestine' => "Palestine",
+    'recent_transactions' => 'Transactions récentes',
+    'country_Palestine' => 'Palestine',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Droits',
     'order_number' => 'Numéro de commande',
@@ -5189,7 +5187,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'rff' => 'Champs requis',
     'add_step' => 'Ajouter un étape',
     'steps' => 'Étapes',
-    'steps_order_help' =>  'L\'ordre des étapes est important. La première étape ne devrait pas dépendre d\'une autre étape. La deuxième étape devrait dépendre de la première, et ainsi de suite.',
+    'steps_order_help' => 'L\'ordre des étapes est important. La première étape ne devrait pas dépendre d\'une autre étape. La deuxième étape devrait dépendre de la première, et ainsi de suite.',
     'other_steps' => 'Autres étapes',
     'use_available_payments' => 'Utilisez les paiements disponibles',
     'test_email_sent' => 'Le courriel a été envoyé',
@@ -5914,6 +5912,6 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'activity_164' => 'La synchronisation QuickBooks a échoué. :notes',
     'activity_166' => 'L\'utilisateur :notes a été purgé par :user',
     'purged_user' => 'L\'utilisateur a été purgé',
-);
+];
 
 return $lang;

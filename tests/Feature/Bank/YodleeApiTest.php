@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,7 +16,6 @@ use App\Factory\BankTransactionFactory;
 use App\Helpers\Bank\Yodlee\Yodlee;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Jobs\Bank\MatchBankTransactions;
-use App\Jobs\Bank\ProcessBankTransactionsYodlee;
 use App\Models\BankIntegration;
 use App\Models\BankTransaction;
 use App\Models\Expense;
@@ -43,7 +41,7 @@ class YodleeApiTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testExpenseGenerationFromBankFeed()
+    public function test_expense_generation_from_bank_feed()
     {
         $bi = BankIntegrationFactory::create($this->company->id, $this->user->id, $this->account->id);
         $bi->save();
@@ -73,7 +71,7 @@ class YodleeApiTest extends TestCase
         $this->assertEquals(10, (int) $expense->amount);
     }
 
-    public function testIncomeMatchingAndPaymentGeneration()
+    public function test_income_matching_and_payment_generation()
     {
         $this->account->bank_integration_account_id = 'sbMem62e1e69547bfb2';
         $this->account->save();
@@ -117,7 +115,7 @@ class YodleeApiTest extends TestCase
 
         $data['transactions'][] = [
             'id' => $bt->id,
-            'invoice_ids' => $invoice->hashed_id
+            'invoice_ids' => $invoice->hashed_id,
         ];
 
         MatchBankTransactions::dispatchSync($this->company->id, $this->company->db, $data);
@@ -138,8 +136,7 @@ class YodleeApiTest extends TestCase
         $this->assertEquals(1, $payment_count);
     }
 
-
-    public function testCategoryPropertyExists()
+    public function test_category_property_exists()
     {
         $yodlee = new Yodlee('sbMem62e1e69547bfb2');
 
@@ -209,15 +206,14 @@ class YodleeApiTest extends TestCase
 
     //     }
 
-
-    public function testDataMatching()
+    public function test_data_matching()
     {
         $transaction = collect([
             (object) [
-                'description' => 'tinkertonkton'
+                'description' => 'tinkertonkton',
             ],
             (object) [
-                'description' => 'spud'
+                'description' => 'spud',
             ],
         ]);
 
@@ -235,20 +231,18 @@ class YodleeApiTest extends TestCase
 
         $this->assertTrue($hit);
 
-
         $transaction = collect([
             (object) [
-                'description' => 'tinker and spice'
+                'description' => 'tinker and spice',
             ],
             (object) [
-                'description' => 'spud with water'
+                'description' => 'spud with water',
             ],
         ]);
 
         $hit = $transaction->contains('description', 'tinker and spice');
 
         $this->assertTrue($hit);
-
 
         $invoice = $transaction->first(function ($value, $key) {
             return str_contains($value->description, 'tinker');
@@ -257,16 +251,16 @@ class YodleeApiTest extends TestCase
         $this->assertNotNull($invoice);
     }
 
-    public function testYodleeInstance()
+    public function test_yodlee_instance()
     {
-        $yodlee = new Yodlee();
+        $yodlee = new Yodlee;
 
         $this->assertNotNull($yodlee);
 
         $this->assertInstanceOf(Yodlee::class, $yodlee);
     }
 
-    public function testAccessTokenGeneration()
+    public function test_access_token_generation()
     {
         $yodlee = new Yodlee('sbMem62e1e69547bfb1');
 
@@ -276,7 +270,6 @@ class YodleeApiTest extends TestCase
     }
 
     /**
-
        [transactionCategory] => Array
             (
                 [0] => stdClass Object
@@ -446,11 +439,8 @@ class YodleeApiTest extends TestCase
                         [defaultCategoryName] => Automotive Expenses
                         [defaultHighLevelCategoryName] => Automotive Expenses
                     )
-
-    */
-
-
-    public function testGetCategories()
+     */
+    public function test_get_categories()
     {
         $yodlee = new Yodlee('sbMem62e1e69547bfb2');
 
@@ -458,7 +448,6 @@ class YodleeApiTest extends TestCase
 
         $this->assertIsArray($transactions->transactionCategory);
     }
-
 
     /**
     [2022-08-05 01:29:45] local.INFO: stdClass Object
@@ -560,8 +549,8 @@ class YodleeApiTest extends TestCase
                             )
 
                     )
-    */
-    public function testGetAccounts()
+     */
+    public function test_get_accounts()
     {
         $yodlee = new Yodlee('sbMem62e1e69547bfb1');
 
@@ -569,7 +558,6 @@ class YodleeApiTest extends TestCase
 
         $this->assertIsArray($accounts);
     }
-
 
     /**
     [2022-08-05 01:36:34] local.INFO: stdClass Object
@@ -613,11 +601,8 @@ class YodleeApiTest extends TestCase
 
                         [checkNumber] => 998
                     )
-
-
      */
-
-    public function testGetTransactions()
+    public function test_get_transactions()
     {
         $yodlee = new Yodlee('sbMem62e1e69547bfb1');
 
@@ -626,15 +611,15 @@ class YodleeApiTest extends TestCase
         $this->assertIsArray($transactions);
     }
 
-    public function testGetTransactionsWithParams()
+    public function test_get_transactions_with_params()
     {
         $yodlee = new Yodlee('sbMem62e1e69547bfb1');
 
         $data = [
-            'basetype' => 'DEBIT', //CREDIT
+            'basetype' => 'DEBIT', // CREDIT
             'CONTAINER' => 'bank',
             'top' => 500,
-            'fromDate' => '2000-10-10', /// YYYY-MM-DD
+            'fromDate' => '2000-10-10', // / YYYY-MM-DD
         ];
 
         $accounts = $yodlee->getTransactions($data);

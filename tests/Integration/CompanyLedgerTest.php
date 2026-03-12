@@ -6,38 +6,37 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
+use App\DataMapper\CompanySettings;
+use App\DataMapper\InvoiceItem;
+use App\Factory\CompanyUserFactory;
+use App\Jobs\Ledger\UpdateLedger;
 use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Company;
+use App\Models\CompanyLedger;
+use App\Models\CompanyToken;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\CompanyToken;
-use App\Models\ClientContact;
-use App\Models\CompanyLedger;
+use App\Models\User;
 use App\Utils\Traits\AppSetup;
-use App\DataMapper\InvoiceItem;
 use App\Utils\Traits\MakesHash;
-use App\Jobs\Ledger\UpdateLedger;
-use App\DataMapper\CompanySettings;
-use App\Factory\CompanyUserFactory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Faker\Factory;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
-/** */
 class CompanyLedgerTest extends TestCase
 {
+    use AppSetup;
     use DatabaseTransactions;
     use MakesHash;
-    use AppSetup;
 
     public $company;
 
@@ -59,7 +58,7 @@ class CompanyLedgerTest extends TestCase
 
         $this->artisan('db:seed --force');
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
         $fake_email = $this->faker->email();
 
         $this->account = Account::factory()->create();
@@ -90,10 +89,9 @@ class CompanyLedgerTest extends TestCase
         $this->account->default_company_id = $this->company->id;
         $this->account->save();
 
-
         $user = User::whereEmail($fake_email)->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'email' => $fake_email,
                 'account_id' => $this->account->id,
@@ -108,9 +106,9 @@ class CompanyLedgerTest extends TestCase
         $cu->is_admin = true;
         $cu->save();
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
@@ -133,13 +131,13 @@ class CompanyLedgerTest extends TestCase
         ]);
     }
 
-    public function testLedgerAdjustments()
+    public function test_ledger_adjustments()
     {
         $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'balance' => 0,
-            'paid_to_date' => 0
+            'paid_to_date' => 0,
         ]);
 
         $i = Invoice::factory()->create([
@@ -156,7 +154,7 @@ class CompanyLedgerTest extends TestCase
             'discount' => 0,
         ]);
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = 10;
         $item->quantity = 10;
 
@@ -201,18 +199,16 @@ class CompanyLedgerTest extends TestCase
         // $this->assertEquals(-40, $cl->adjustment);
         // $this->assertEquals(60, $cl->balance);
 
-
-
     }
 
-    public function testBaseLine()
+    public function test_base_line()
     {
         $this->assertEquals($this->company->invoices->count(), 0);
         $this->assertEquals($this->company->clients->count(), 1);
         $this->assertEquals($this->client->balance, 0);
     }
 
-    public function testLedger()
+    public function test_ledger()
     {
         $this->markTestSkipped();
 
@@ -235,13 +231,13 @@ class CompanyLedgerTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/invoices/', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $acc = $response->json();
 
         $invoice = Invoice::find($this->decodePrimaryKey($acc['data']['id']));
 
-        //client->balance should = 10
+        // client->balance should = 10
         $invoice->service()->markSent()->save();
 
         $this->client = Client::find($this->client->id);
@@ -257,14 +253,14 @@ class CompanyLedgerTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/invoices/', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $acc = $response->json();
 
         $invoice = Invoice::find($this->decodePrimaryKey($acc['data']['id']));
         $invoice->service()->markSent()->save();
 
-        //client balance should = 20
+        // client balance should = 20
         $this->assertEquals($this->client->fresh()->balance, 20);
         $invoice_ledger = $invoice->company_ledger->sortByDesc('id')->first();
 
@@ -296,7 +292,7 @@ class CompanyLedgerTest extends TestCase
 
         $payment_ledger = $payment->company_ledger->sortByDesc('id')->first();
 
-        //nlog($payment->client->balance);
+        // nlog($payment->client->balance);
 
         $this->assertEquals($payment->client->balance, $payment_ledger->balance);
         $this->assertEquals($payment->client->paid_to_date, 10);

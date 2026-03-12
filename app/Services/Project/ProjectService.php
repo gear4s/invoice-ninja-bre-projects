@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,21 +29,20 @@ class ProjectService
         $average_daily_hours = $budgeted_hours / $project_duration;
 
         $task_query = $this->project
-                            ->tasks()
-                            ->orderBy('calculated_start_date', 'asc');
-
+            ->tasks()
+            ->orderBy('calculated_start_date', 'asc');
 
         $average_data = $task_query
-                            ->get()
-                            ->map(function ($task) {
+            ->get()
+            ->map(function ($task) {
 
-                                return [
-                                    'date' => $task->calculated_start_date ?? \Carbon\Carbon::parse($task->created_at)->format('Y-m-d'),
-                                    'hours_used' => $task->calcDuration(true) / 60 / 60,
-                                    'hours_invoiced' => $task->invoice_id ? $task->calcDuration(true) / 60 / 60 : 0,
-                                    'hours_uninvoiced' => $task->invoice_id ? 0 : $task->calcDuration(true) / 60 / 60,
-                                ];
-                            });
+                return [
+                    'date' => $task->calculated_start_date ?? \Carbon\Carbon::parse($task->created_at)->format('Y-m-d'),
+                    'hours_used' => $task->calcDuration(true) / 60 / 60,
+                    'hours_invoiced' => $task->invoice_id ? $task->calcDuration(true) / 60 / 60 : 0,
+                    'hours_uninvoiced' => $task->invoice_id ? 0 : $task->calcDuration(true) / 60 / 60,
+                ];
+            });
 
         $last_task = $task_query->latest()->first();
 
@@ -72,12 +70,10 @@ class ProjectService
             'hours_uninvoiced' => $average_data->sum('hours_uninvoiced'),
         ];
 
-
     }
 
     /**
      * Saves the project.
-     * @return \App\Models\Project
      */
     public function save(): ?Project
     {

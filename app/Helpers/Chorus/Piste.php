@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,8 +19,11 @@ use Http;
 class Piste
 {
     private string $oauth_sandbox_url = 'https://sandbox-oauth.piste.gouv.fr/api/oauth/token';
+
     private string $oauth_production_url = 'https://oauth.piste.gouv.fr/api/oauth/token';
+
     private string $sandbox_url = 'https://sandbox-api.piste.gouv.fr';
+
     private string $production_url = 'https://api.piste.gouv.fr';
 
     private bool $test_mode = false;
@@ -76,19 +78,19 @@ class Piste
         nlog(base64_encode($this->username . ':' . $this->password));
 
         $r = Http::withToken($access_token)
-                    ->withHeaders([
-                        'cpro-account' => base64_encode($this->username . ':' . $this->password),
-                        'Content-Type' => 'application/json;charset=utf-8',
-                        'Accept' => 'application/json;charset=utf-8',
-                    ])
-                    ->post($this->apiUrl() . '/cpro/factures/' . $uri, $data);
+            ->withHeaders([
+                'cpro-account' => base64_encode($this->username . ':' . $this->password),
+                'Content-Type' => 'application/json;charset=utf-8',
+                'Accept' => 'application/json;charset=utf-8',
+            ])
+            ->post($this->apiUrl() . '/cpro/factures/' . $uri, $data);
 
         nlog($r);
         nlog($r->json());
         nlog($r->successful());
         nlog($r->body());
         nlog($r->collect());
+
         return $r;
     }
-
 }

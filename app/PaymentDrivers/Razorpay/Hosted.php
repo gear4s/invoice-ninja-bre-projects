@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,7 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Razorpay\Api\Errors\SignatureVerificationError;
 
-class Hosted implements MethodInterface, LivewireMethodInterface
+class Hosted implements LivewireMethodInterface, MethodInterface
 {
     protected RazorpayPaymentDriver $razorpay;
 
@@ -40,9 +39,6 @@ class Hosted implements MethodInterface, LivewireMethodInterface
 
     /**
      * Show the authorization page for Razorpay.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function authorizeView(array $data): View
     {
@@ -51,9 +47,6 @@ class Hosted implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle the authorization page for Razorpay.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function authorizeResponse(Request $request): RedirectResponse
     {
@@ -62,9 +55,6 @@ class Hosted implements MethodInterface, LivewireMethodInterface
 
     /**
      * Payment view for the Razorpay.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function paymentView(array $data): View
     {
@@ -76,7 +66,6 @@ class Hosted implements MethodInterface, LivewireMethodInterface
     /**
      * Handle payments page for Razorpay.
      *
-     * @param PaymentResponseRequest $request
      * @return void
      */
     public function paymentResponse(PaymentResponseRequest $request)
@@ -87,7 +76,7 @@ class Hosted implements MethodInterface, LivewireMethodInterface
             'razorpay_signature' => ['required'],
         ]);
 
-        if (! property_exists($this->razorpay->payment_hash->data, 'order_id')) {
+        if (!property_exists($this->razorpay->payment_hash->data, 'order_id')) {
             $this->razorpay->sendFailureMail('Missing [order_id] property. ');
 
             throw new PaymentFailed('Missing [order_id] property. Please contact the administrator. Reference: ' . $this->razorpay->payment_hash->hash);
@@ -110,9 +99,6 @@ class Hosted implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle the successful payment for Razorpay.
-     *
-     * @param string $payment_id
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function processSuccessfulPayment(string $payment_id): RedirectResponse
     {
@@ -140,9 +126,9 @@ class Hosted implements MethodInterface, LivewireMethodInterface
     /**
      * Handle unsuccessful payment for Razorpay.
      *
-     * @param Exception $exception
+     * @param  Exception  $exception
+     *
      * @throws PaymentFailed
-     * @return void
      */
     public function processUnsuccessfulPayment(\Exception $exception): void
     {
@@ -161,7 +147,7 @@ class Hosted implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -169,7 +155,7 @@ class Hosted implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

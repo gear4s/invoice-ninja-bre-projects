@@ -6,11 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway;
+
+use InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
+use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 
 interface MutatorInterface
 {
@@ -21,12 +23,12 @@ interface MutatorInterface
     public function setInvoice($invoice): self;
 
     /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice
+     * @param  Invoice|CreditNote  $p_invoice
      */
     public function setPeppol($p_invoice): self;
 
     /**
-     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote
+     * @return Invoice|CreditNote
      */
     public function getPeppol(): mixed;
 

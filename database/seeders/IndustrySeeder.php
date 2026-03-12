@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -59,7 +59,7 @@ class IndustrySeeder extends Seeder
 
         foreach ($industries as $industry) {
             $record = Industry::whereName($industry['name'])->first();
-            if (! $record) {
+            if (!$record) {
                 Industry::create($industry);
             }
         }

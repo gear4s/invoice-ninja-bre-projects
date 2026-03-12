@@ -6,21 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Mail\Admin;
 
-use stdClass;
-use Carbon\Carbon;
-use App\Utils\Ninja;
-use App\Utils\Number;
+use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use Illuminate\Support\Facades\App;
+use App\Utils\Ninja;
 use App\Utils\Traits\MakesDates;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
+use stdClass;
 
 class InvoiceOverdueSummaryObject
 {
@@ -40,7 +38,7 @@ class InvoiceOverdueSummaryObject
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        $mail_obj = new stdClass();
+        $mail_obj = new stdClass;
         $mail_obj->amount = 0;
         $mail_obj->subject = $this->getSubject();
         $mail_obj->data = $this->getData();
@@ -77,7 +75,7 @@ class InvoiceOverdueSummaryObject
 
         $header_keys = array_keys($this->table_headers);
         $overdue_invoices_collection = array_map(
-            fn($row) => array_merge(
+            fn ($row) => array_merge(
                 array_fill_keys($header_keys, null),
                 array_intersect_key($row, array_flip($header_keys))
             ),

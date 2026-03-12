@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Helpers\Invoice\InvoiceSum
  */
 class InvoiceStatusTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     public $invoice;
 
     public $invoice_calc;
@@ -38,7 +37,7 @@ class InvoiceStatusTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testSentStatus()
+    public function test_sent_status()
     {
         $this->invoice->due_date = now()->addMonth();
         $this->invoice->status_id = Invoice::STATUS_SENT;
@@ -46,7 +45,7 @@ class InvoiceStatusTest extends TestCase
         $this->assertEquals(Invoice::STATUS_UNPAID, $this->invoice->getStatusAttribute());
     }
 
-    public function testPartialStatus()
+    public function test_partial_status()
     {
         $this->invoice->partial_due_date = now()->addMonth();
         $this->invoice->status_id = Invoice::STATUS_SENT;

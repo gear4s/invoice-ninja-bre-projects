@@ -6,17 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use App\Utils\Number;
 use App\DataMapper\ExpenseSync;
-use Illuminate\Support\Facades\App;
+use App\Utils\Number;
 use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\App;
 
 /**
  * App\Models\Expense
@@ -69,20 +71,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $calculate_tax_by_amount
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\ExpenseCategory|null $category
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\Currency|null $currency
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \App\Models\PaymentType|null $payment_type
- * @property-read \App\Models\Currency|null $invoice_currency
- * @property-read \App\Models\Project|null $project
- * @property-read \App\Models\PurchaseOrder|null $purchase_order
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor|null $vendor
- * @property-read \App\Models\Currency|null $invoice_currency
- * @property \App\DataMapper\ExpenseSync|null $sync
+ * @property-read User|null $assigned_user
+ * @property-read ExpenseCategory|null $category
+ * @property-read Client|null $client
+ * @property-read Company $company
+ * @property-read Currency|null $currency
+ * @property-read Collection<int, Document> $documents
+ * @property-read PaymentType|null $payment_type
+ * @property-read Currency|null $invoice_currency
+ * @property-read Project|null $project
+ * @property-read PurchaseOrder|null $purchase_order
+ * @property-read User $user
+ * @property-read Vendor|null $vendor
+ * @property-read Currency|null $invoice_currency
+ * @property ExpenseSync|null $sync
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\ExpenseFactory factory($count = null, $state = [])
@@ -94,21 +97,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Expense withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Expense withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \App\Models\Invoice|null $invoice
- * @property-read \App\Models\BankTransaction|null $transaction
+ *
+ * @property-read Collection<int, Document> $documents
+ * @property-read Invoice|null $invoice
+ * @property-read BankTransaction|null $transaction
+ *
  * @mixin \Eloquent
  */
 class Expense extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
     use Searchable;
+    use SoftDeletes;
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -188,8 +191,8 @@ class Expense extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.expense') . " " . ($this->number ?? '') . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
+            'id' => $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.expense') . ' ' . ($this->number ?? '') . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'is_deleted' => (bool) $this->is_deleted,
@@ -207,26 +210,25 @@ class Expense extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
-
 
     public function getEntityType()
     {
         return self::class;
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
@@ -236,17 +238,17 @@ class Expense extends BaseModel
         return $this->belongsTo(Company::class);
     }
 
-    public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
@@ -261,32 +263,32 @@ class Expense extends BaseModel
         return ctrans('texts.expense');
     }
 
-    public function currency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function invoice_currency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice_currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
 
-    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function category(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class)->withTrashed();
     }
 
-    public function payment_type(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function payment_type(): BelongsTo
     {
         return $this->belongsTo(PaymentType::class);
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class)->withTrashed();
     }
 
-    public function transaction(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function transaction(): BelongsTo
     {
         return $this->belongsTo(BankTransaction::class)->withTrashed();
     }
@@ -342,9 +344,11 @@ class Expense extends BaseModel
 
             if ($this->uses_inclusive_taxes) {
                 $total_tax_amount = ($this->calcInclusiveLineTax($this->tax_rate1 ?? 0, $this->amount, $precision)) + ($this->calcInclusiveLineTax($this->tax_rate2 ?? 0, $this->amount, $precision)) + ($this->calcInclusiveLineTax($this->tax_rate3 ?? 0, $this->amount, $precision));
+
                 return round(($this->amount - round($total_tax_amount, $precision)), $precision);
             } else {
                 $total_tax_amount = ($this->amount * (($this->tax_rate1 ?? 0) / 100)) + ($this->amount * (($this->tax_rate2 ?? 0) / 100)) + ($this->amount * (($this->tax_rate3 ?? 0) / 100));
+
                 return round(($this->amount + round($total_tax_amount, $precision)), $precision);
             }
         }
@@ -353,8 +357,6 @@ class Expense extends BaseModel
 
     /**
      * getTaxAmount
-     *
-     * @return float
      */
     public function getTaxAmount(): float
     {
@@ -365,11 +367,10 @@ class Expense extends BaseModel
 
             return round($this->tax_amount1 + $this->tax_amount2 + $this->tax_amount3, $precision);
 
-
         } else {
 
             if ($this->uses_inclusive_taxes) {
-                return ($this->calcInclusiveLineTax($this->tax_rate1 ?? 0, $this->amount, $precision)) + ($this->calcInclusiveLineTax($this->tax_rate2 ?? 0, $this->amount, $precision)) + ($this->calcInclusiveLineTax($this->tax_rate3 ?? 0, $this->amount, $precision));
+                return $this->calcInclusiveLineTax($this->tax_rate1 ?? 0, $this->amount, $precision) + ($this->calcInclusiveLineTax($this->tax_rate2 ?? 0, $this->amount, $precision)) + ($this->calcInclusiveLineTax($this->tax_rate3 ?? 0, $this->amount, $precision));
             } else {
                 return ($this->amount * (($this->tax_rate1 ?? 0) / 100)) + ($this->amount * (($this->tax_rate2 ?? 0) / 100)) + ($this->amount * (($this->tax_rate3 ?? 0) / 100));
             }
@@ -379,10 +380,9 @@ class Expense extends BaseModel
     /**
      * calcInclusiveLineTax
      *
-     * @param  mixed $tax_rate
-     * @param  mixed $amount
-     * @param  mixed $precision
-     * @return float
+     * @param  mixed  $tax_rate
+     * @param  mixed  $amount
+     * @param  mixed  $precision
      */
     private function calcInclusiveLineTax($tax_rate, $amount, $precision): float
     {

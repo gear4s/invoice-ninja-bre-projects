@@ -6,24 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Console\Commands;
 
+use App\Libraries\MultiDB;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use Illuminate\Console\Command;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\ClientGroupSettingsSaver;
+use Illuminate\Console\Command;
 
 class TypeCheck extends Command
 {
-    use ClientGroupSettingsSaver;
     use CleanLineItems;
+    use ClientGroupSettingsSaver;
 
     /**
      * The name and signature of the console command.
@@ -58,12 +57,12 @@ class TypeCheck extends Command
      */
     public function handle()
     {
-        //always return state to first DB
+        // always return state to first DB
 
         $current_db = config('database.default');
 
         if ($this->option('all')) {
-            if (! config('ninja.db.multi_db_enabled')) {
+            if (!config('ninja.db.multi_db_enabled')) {
                 $this->checkAll();
             } else {
                 foreach (MultiDB::$dbs as $db) {

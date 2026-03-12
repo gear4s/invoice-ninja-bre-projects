@@ -6,26 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Quickbooks;
 
+use App\Libraries\MultiDB;
 use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Libraries\MultiDB;
+use App\Services\Quickbooks\QuickbooksService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\Quickbooks\QuickbooksService;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 
 /**
  * Unified job to push entities to QuickBooks.
@@ -50,10 +49,9 @@ class PushToQuickbooks implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $entity_type Entity type: 'client', 'invoice', etc.
-     * @param int $entity_id The ID of the entity to push
-     *
-     * @param string $db The database name
+     * @param  string  $entity_type  Entity type: 'client', 'invoice', etc.
+     * @param  int  $entity_id  The ID of the entity to push
+     * @param  string  $db  The database name
      */
     public function __construct(
         private string $entity_type,
@@ -98,7 +96,7 @@ class PushToQuickbooks implements ShouldQueue
             // Note: Success activities are not logged to avoid spamming the activities table.
             // Only failures are logged as they require user attention.
         } catch (\Throwable $e) {
-            nlog("Quickbooks push to Quickbooks job failed => " . $e->getMessage());
+            nlog('Quickbooks push to Quickbooks job failed => ' . $e->getMessage());
             $this->logActivityFailure($entity, $this->extractReadableError($e->getMessage()));
 
             return;
@@ -123,10 +121,6 @@ class PushToQuickbooks implements ShouldQueue
 
     /**
      * Check if push should still occur (settings might have changed since job was queued).
-     *
-     * @param Company $company
-     * @param string $entity_type
-     * @return bool
      */
     private function shouldPush(Company $company, string $entity_type): bool
     {
@@ -135,45 +129,33 @@ class PushToQuickbooks implements ShouldQueue
 
     /**
      * Push a client to QuickBooks.
-     *
-     * @param QuickbooksService $qbService
-     * @param Client $client
-     * @return void
      */
     private function pushClient(QuickbooksService $qbService, Client $client): void
     {
-        
+
         $qbService->client->syncToForeign([$client]);
     }
 
     /**
      * Push a product to QuickBooks.
-     *
-     * @param QuickbooksService $qbService
-     * @param Product $product
-     * @return void
      */
     private function pushProduct(QuickbooksService $qbService, Product $product): void
     {
-        
+
         $qbService->product->syncToForeign([$product]);
     }
 
-
     /**
      * Push an invoice to QuickBooks.
-     *
-     * @param QuickbooksService $qbService
-     * @param Invoice $invoice
-     * @return void
      */
     private function pushInvoice(QuickbooksService $qbService, Invoice $invoice): void
     {
         // Skip invoices with no line items - QuickBooks requires at least one line item
-        $line_items_count = is_array($invoice->line_items) ? count($invoice->line_items) : (is_object($invoice->line_items) ? count((array)$invoice->line_items) : 0);
-        
+        $line_items_count = is_array($invoice->line_items) ? count($invoice->line_items) : (is_object($invoice->line_items) ? count((array) $invoice->line_items) : 0);
+
         if ($line_items_count === 0) {
             nlog("QuickBooks: Skipping push for invoice {$invoice->id} - invoice has no line items");
+
             return;
         }
 
@@ -182,10 +164,6 @@ class PushToQuickbooks implements ShouldQueue
 
     /**
      * Push a payment to QuickBooks.
-     *
-     * @param QuickbooksService $qbService
-     * @param Payment $payment
-     * @return void
      */
     private function pushPayment(QuickbooksService $qbService, Payment $payment): void
     {
@@ -223,7 +201,7 @@ class PushToQuickbooks implements ShouldQueue
     private function logActivityFailure($entity, string $errorMessage): void
     {
         try {
-            $activity = new Activity();
+            $activity = new Activity;
             $activity->user_id = $entity->user_id ?? null;
             $activity->company_id = $entity->company_id;
             $activity->account_id = $entity->company->account_id;
@@ -253,7 +231,7 @@ class PushToQuickbooks implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("Quickbooks push to Quickbooks job failed => " . $exception->getMessage());
+        nlog('Quickbooks push to Quickbooks job failed => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
 
     }

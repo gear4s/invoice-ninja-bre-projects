@@ -6,26 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Brevo;
 
-use App\Utils\TempFile;
 use App\Libraries\MultiDB;
-use Illuminate\Bus\Queueable;
-use Illuminate\Support\Carbon;
-use Brevo\Client\Configuration;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Queue\SerializesModels;
-use Brevo\Client\Api\InboundParsingApi;
-use Illuminate\Queue\InteractsWithQueue;
 use App\Services\InboundMail\InboundMail;
+use App\Services\InboundMail\InboundMailEngine;
+use Brevo\Client\Api\InboundParsingApi;
+use Brevo\Client\Configuration;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\InboundMail\InboundMailEngine;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 
 class ProcessBrevoInboundWebhook implements ShouldQueue
 {
@@ -116,7 +114,7 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
      */
     public function __construct(private array $input)
     {
-        $this->engine = new InboundMailEngine();
+        $this->engine = new InboundMailEngine;
     }
 
     /**
@@ -130,10 +128,10 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
         $foundOneRecipient = false; // used for spam documentation below
 
         // brevo defines recipients as array, we check all of them, to be sure
-        foreach ($this->input["Recipients"] as $recipient) {
+        foreach ($this->input['Recipients'] as $recipient) {
 
             // Spam protection
-            if ($this->engine->isInvalidOrBlocked($this->input["From"]["Address"], $recipient)) {
+            if ($this->engine->isInvalidOrBlocked($this->input['From']['Address'], $recipient)) {
                 return;
             }
 
@@ -142,6 +140,7 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
 
             if (!$company) {
                 nlog('[ProcessBrevoInboundWebhook] unknown Expense Mailbox occured while handling an inbound email from brevo: ' . $recipient);
+
                 continue;
             }
 
@@ -152,24 +151,24 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
             try { // important to save meta if something fails here to prevent spam
 
                 if (strlen($company->getSetting('brevo_secret') ?? '') < 2 && empty(config('services.brevo.secret'))) {
-                    nlog("No Brevo Configuration available for this company");
-                    throw new \Error("[ProcessBrevoInboundWebhook] no brevo credenitals found, we cannot get the attachement");
+                    nlog('No Brevo Configuration available for this company');
+                    throw new \Error('[ProcessBrevoInboundWebhook] no brevo credenitals found, we cannot get the attachement');
                 }
 
                 $company_brevo_secret = strlen($company->getSetting('brevo_secret') ?? '') < 2 ? $company->getSetting('brevo_secret') : config('services.brevo.secret');
 
                 // prepare data for ingresEngine
-                $inboundMail = new InboundMail();
+                $inboundMail = new InboundMail;
 
-                $inboundMail->from = $this->input["From"]["Address"];
+                $inboundMail->from = $this->input['From']['Address'];
                 $inboundMail->to = $recipient;
-                $inboundMail->subject = $this->input["Subject"];
-                $inboundMail->body = $this->input["RawHtmlBody"];
-                $inboundMail->text_body = $this->input["RawTextBody"];
-                $inboundMail->date = Carbon::createFromTimeString($this->input["SentAtDate"]);
+                $inboundMail->subject = $this->input['Subject'];
+                $inboundMail->body = $this->input['RawHtmlBody'];
+                $inboundMail->text_body = $this->input['RawTextBody'];
+                $inboundMail->date = Carbon::createFromTimeString($this->input['SentAtDate']);
 
                 // parse documents as UploadedFile from webhook-data
-                foreach ($this->input["Attachments"] as $attachment) {
+                foreach ($this->input['Attachments'] as $attachment) {
 
                     // @todo - i think this allows switching between client configured brevo AND system configured brevo
                     // download file and save to tmp dir
@@ -177,24 +176,24 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
 
                         try {
 
-                            $brevo = new InboundParsingApi(null, Configuration::getDefaultConfiguration()->setApiKey("api-key", $company_brevo_secret));
+                            $brevo = new InboundParsingApi(null, Configuration::getDefaultConfiguration()->setApiKey('api-key', $company_brevo_secret));
                             $inboundMail->documents[] = new UploadedFile(
-                                $brevo->getInboundEmailAttachment($attachment["DownloadToken"])->getPathname(),
-                                $attachment["Name"],
-                                $attachment["ContentType"],
+                                $brevo->getInboundEmailAttachment($attachment['DownloadToken'])->getPathname(),
+                                $attachment['Name'],
+                                $attachment['ContentType'],
                                 0,
                                 true // Mark it as test, since the file isn't from real HTTP POST.
                             );
 
                         } catch (\Error $e) {
                             if (config('services.brevo.secret')) {
-                                nlog("[ProcessBrevoInboundWebhook] Error while downloading with company credentials, we try to use default credentials now...");
+                                nlog('[ProcessBrevoInboundWebhook] Error while downloading with company credentials, we try to use default credentials now...');
 
-                                $brevo = new InboundParsingApi(null, Configuration::getDefaultConfiguration()->setApiKey("api-key", config('services.brevo.secret')));
+                                $brevo = new InboundParsingApi(null, Configuration::getDefaultConfiguration()->setApiKey('api-key', config('services.brevo.secret')));
                                 $inboundMail->documents[] = new UploadedFile(
-                                    $brevo->getInboundEmailAttachment($attachment["DownloadToken"])->getPathname(),
-                                    $attachment["Name"],
-                                    $attachment["ContentType"],
+                                    $brevo->getInboundEmailAttachment($attachment['DownloadToken'])->getPathname(),
+                                    $attachment['Name'],
+                                    $attachment['ContentType'],
                                     0,
                                     true // Mark it as test, since the file isn't from real HTTP POST.
                                 );
@@ -206,11 +205,11 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
 
                     } else {
 
-                        $brevo = new InboundParsingApi(null, Configuration::getDefaultConfiguration()->setApiKey("api-key", config('services.brevo.secret')));
+                        $brevo = new InboundParsingApi(null, Configuration::getDefaultConfiguration()->setApiKey('api-key', config('services.brevo.secret')));
                         $inboundMail->documents[] = new UploadedFile(
-                            $brevo->getInboundEmailAttachment($attachment["DownloadToken"])->getPathname(),
-                            $attachment["Name"],
-                            $attachment["ContentType"],
+                            $brevo->getInboundEmailAttachment($attachment['DownloadToken'])->getPathname(),
+                            $attachment['Name'],
+                            $attachment['ContentType'],
                             0,
                             true // Mark it as test, since the file isn't from real HTTP POST.
                         );
@@ -219,7 +218,7 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
                 }
 
             } catch (\Exception $e) {
-                $this->engine->saveMeta($this->input["From"]["Address"], $recipient); // important to save this, to protect from spam
+                $this->engine->saveMeta($this->input['From']['Address'], $recipient); // important to save this, to protect from spam
                 throw $e;
             }
 
@@ -229,22 +228,20 @@ class ProcessBrevoInboundWebhook implements ShouldQueue
 
         // document for spam => mark all recipients as handled emails with unmatched mailbox => otherwise dont do any
         if (!$foundOneRecipient) {
-            foreach ($this->input["Recipients"] as $recipient) {
-                $this->engine->saveMeta($this->input["From"]["Address"], $recipient, true);
+            foreach ($this->input['Recipients'] as $recipient) {
+                $this->engine->saveMeta($this->input['From']['Address'], $recipient, true);
             }
         }
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->input["From"]["Address"]))->dontRelease()];
+        return [(new WithoutOverlapping($this->input['From']['Address']))->dontRelease()];
     }
 
     public function failed($exception)
     {
-        nlog("BREVO:: Ingest Exception:: => " . $exception->getMessage());
+        nlog('BREVO:: Ingest Exception:: => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
     }
-
-
 }

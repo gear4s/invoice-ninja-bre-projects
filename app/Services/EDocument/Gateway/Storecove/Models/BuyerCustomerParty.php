@@ -19,6 +19,7 @@ class BuyerCustomerParty
     public function setParty(?Party $party): self
     {
         $this->party = $party;
+
         return $this;
     }
 }

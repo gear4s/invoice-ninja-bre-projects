@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,7 @@ class InvoiceFactory
 {
     public static function create(int $company_id, int $user_id): Invoice
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice->status_id = Invoice::STATUS_DRAFT;
         $invoice->number = null;
         $invoice->discount = 0;

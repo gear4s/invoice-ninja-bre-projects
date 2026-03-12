@@ -6,33 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use Exception;
+use App\Factory\ClientContactFactory;
+use App\Factory\ClientFactory;
+use App\Jobs\Util\SystemLogger;
 use App\Models\Client;
-use Braintree\Gateway;
+use App\Models\ClientContact;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Models\ClientContact;
-use App\Factory\ClientFactory;
-use Illuminate\Support\Carbon;
-use App\Jobs\Util\SystemLogger;
-use App\Models\ClientGatewayToken;
-use App\Factory\ClientContactFactory;
+use App\Models\SystemLog;
 use App\PaymentDrivers\Braintree\ACH;
-use App\Utils\Traits\GeneratesCounter;
-use Illuminate\Database\QueryException;
-use App\PaymentDrivers\Braintree\PayPal;
-use Illuminate\Support\Facades\Validator;
 use App\PaymentDrivers\Braintree\CreditCard;
+use App\PaymentDrivers\Braintree\PayPal;
+use App\Utils\Traits\GeneratesCounter;
+use Braintree\CustomerSearch;
+use Braintree\Gateway;
+use Braintree\TransactionLineItem;
+use Exception;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class BraintreePaymentDriver extends BaseDriver
 {
@@ -145,7 +146,7 @@ class BraintreePaymentDriver extends BaseDriver
 
             return $result->customer;
         }
-        //12-08-2022 catch when the customer is not created.
+        // 12-08-2022 catch when the customer is not created.
         $data = [
             'transaction_reference' => null,
             'transaction_response' => $result,
@@ -160,7 +161,7 @@ class BraintreePaymentDriver extends BaseDriver
     private function searchByEmail()
     {
         $result = $this->gateway->customer()->search([
-            \Braintree\CustomerSearch::email()->is($this->client->present()->email()),
+            CustomerSearch::email()->is($this->client->present()->email()),
         ]);
 
         if ($result->maximumCount() > 0) {
@@ -273,7 +274,7 @@ class BraintreePaymentDriver extends BaseDriver
             return $payment;
         }
 
-        if (! $result->success) {
+        if (!$result->success) {
             $this->unWindGatewayFees($payment_hash);
 
             $this->sendFailureMail($result->transaction->additionalProcessorResponse);
@@ -296,15 +297,11 @@ class BraintreePaymentDriver extends BaseDriver
         }
     }
 
-
     /**
      * Build Level 2/3 interchange data for Braintree transactions.
      *
      * Wrapped in try-catch — this is supplemental data for lower interchange rates
      * and must never cause a payment to fail.
-     *
-     * @param PaymentHash $payment_hash
-     * @return array
      */
     public function getLevel23Data(PaymentHash $payment_hash): array
     {
@@ -386,7 +383,7 @@ class BraintreePaymentDriver extends BaseDriver
 
                     $bt_item = [
                         'name' => substr($item->product_key ?? 'Item', 0, 35),
-                        'kind' => \Braintree\TransactionLineItem::DEBIT,
+                        'kind' => TransactionLineItem::DEBIT,
                         'quantity' => number_format($quantity, 4, '.', ''),
                         'unitAmount' => number_format(abs($unit_amount), 4, '.', ''),
                         'totalAmount' => number_format(abs($line_total), 2, '.', ''),
@@ -412,8 +409,9 @@ class BraintreePaymentDriver extends BaseDriver
 
             return $data;
 
-        } catch (\Exception $e) {
-            nlog("Braintree L2/L3 data build failed (non-fatal): " . $e->getMessage());
+        } catch (Exception $e) {
+            nlog('Braintree L2/L3 data build failed (non-fatal): ' . $e->getMessage());
+
             return [];
         }
     }
@@ -486,7 +484,7 @@ class BraintreePaymentDriver extends BaseDriver
             $ct = $this->init()->gateway->clientToken()->generate();
 
             return 'ok';
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
         }
 
@@ -498,7 +496,7 @@ class BraintreePaymentDriver extends BaseDriver
 
         try {
             return $this->init()->gateway->customer()->find($customer_id);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
 
@@ -507,25 +505,25 @@ class BraintreePaymentDriver extends BaseDriver
     private function findTokens(string $gateway_customer_reference)
     {
         return ClientGatewayToken::where('company_id', $this->company_gateway->company_id)
-                                 ->where('gateway_customer_reference', $gateway_customer_reference)
-                                 ->exists();
+            ->where('gateway_customer_reference', $gateway_customer_reference)
+            ->exists();
     }
 
     private function getToken(string $token, string $gateway_customer_reference)
     {
 
         return ClientGatewayToken::where('company_id', $this->company_gateway->company_id)
-                                 ->where('gateway_customer_reference', $gateway_customer_reference)
-                                 ->where('token', $token)
-                                 ->first();
+            ->where('gateway_customer_reference', $gateway_customer_reference)
+            ->where('token', $token)
+            ->first();
 
     }
 
     private function findClient(string $email)
     {
         return ClientContact::where('company_id', $this->company_gateway->company_id)
-                            ->where('email', $email)
-                            ->first()->client ?? false;
+            ->where('email', $email)
+            ->first()->client ?? false;
     }
 
     private function addClientCards(Client $client, array $cards)
@@ -535,11 +533,11 @@ class BraintreePaymentDriver extends BaseDriver
 
         foreach ($cards as $card) {
 
-            if ($this->getToken($card->token, $card->customerId) || Carbon::createFromDate($card->expirationYear, $card->expirationMonth, '1')->lt(now())) { //@phpstan-ignore-line
+            if ($this->getToken($card->token, $card->customerId) || Carbon::createFromDate($card->expirationYear, $card->expirationMonth, '1')->lt(now())) { // @phpstan-ignore-line
                 continue;
             }
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->exp_month = (string) $card->expirationMonth;
             $payment_meta->exp_year = (string) $card->expirationYear;
             $payment_meta->brand = (string) $card->cardType;
@@ -554,7 +552,7 @@ class BraintreePaymentDriver extends BaseDriver
 
             $this->storeGatewayToken($data, ['gateway_customer_reference' => $card->customerId]);
 
-            nlog("adding card to customer payment profile");
+            nlog('adding card to customer payment profile');
 
         }
 
@@ -618,7 +616,7 @@ class BraintreePaymentDriver extends BaseDriver
         $contact->client_id = $client->id;
         $contact->saveQuietly();
 
-        if (! isset($client->number) || empty($client->number)) {
+        if (!isset($client->number) || empty($client->number)) {
             $x = 1;
 
             do {
@@ -660,7 +658,7 @@ class BraintreePaymentDriver extends BaseDriver
             $client = $this->findClient($customer->email);
 
             if (!$this->findTokens($c->id) && !$client) {
-                //customer is not referenced in the system - create client
+                // customer is not referenced in the system - create client
                 $client = $this->createNinjaClient($customer);
                 // nlog("Creating new Client");
             }

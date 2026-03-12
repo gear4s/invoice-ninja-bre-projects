@@ -6,7 +6,6 @@
  * @link https://github.com/purchase_orderninja/purchase_orderninja source repository
  *
  * @copyright Copyright (c) 2022. PurchaseOrder Ninja LLC (https://purchase_orderninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -60,7 +59,7 @@ class PurchaseOrderEmailedNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new EntitySentObject($event->invitation, 'purchase_order', 'purchase_order', $company_user->portalType()))->build());
                 $nmo->company = $purchase_order->company;
                 $nmo->settings = $purchase_order->company->settings;

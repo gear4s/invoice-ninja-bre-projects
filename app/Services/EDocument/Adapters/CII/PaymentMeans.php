@@ -6,13 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Adapters\CII;
 
 use App\Services\EDocument\Interfaces\PaymentMeansInterface;
+use horstoeko\zugferd\entities\extended\ram\CreditorFinancialAccountType;
+use horstoeko\zugferd\entities\extended\ram\CreditorFinancialInstitutionType;
+use horstoeko\zugferd\entities\extended\ram\DebtorFinancialAccountType;
+use horstoeko\zugferd\entities\extended\ram\HeaderTradeSettlementType;
+use horstoeko\zugferd\entities\extended\ram\SupplyChainTradeTransactionType;
+use horstoeko\zugferd\entities\extended\ram\TradeSettlementFinancialCardType;
+use horstoeko\zugferd\entities\extended\ram\TradeSettlementPaymentMeansType;
+use horstoeko\zugferd\entities\extended\udt\IDType;
 
 class PaymentMeans implements PaymentMeansInterface
 {
@@ -362,7 +369,6 @@ class PaymentMeans implements PaymentMeansInterface
         'ZZZ' => [], // Mutually defined
     ];
 
-
     public static array $payment_means_requirements_codes = [
         '1' => [], // Instrument not defined
         '2' => ['iban', 'bic_swift'], // ACH credit
@@ -393,19 +399,19 @@ class PaymentMeans implements PaymentMeansInterface
         '27' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH demand CTP debit
         '28' => ['iban', 'bic_swift'], // ACH demand CTX credit
         '29' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH demand CTX debit
-        '30' => ['iban', 'bic_swift','account_holder'], // Credit transfer
-        '31' => ['iban', 'bic_swift','account_holder'], // Debit transfer
-        '32' => ['iban', 'bic_swift','account_holder'], // ACH demand CCD+ credit
+        '30' => ['iban', 'bic_swift', 'account_holder'], // Credit transfer
+        '31' => ['iban', 'bic_swift', 'account_holder'], // Debit transfer
+        '32' => ['iban', 'bic_swift', 'account_holder'], // ACH demand CCD+ credit
         '33' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH demand CCD+ debit
-        '34' => ['iban', 'bic_swift','account_holder'], // ACH PPD
-        '35' => ['iban', 'bic_swift','account_holder'], // ACH savings CCD credit
+        '34' => ['iban', 'bic_swift', 'account_holder'], // ACH PPD
+        '35' => ['iban', 'bic_swift', 'account_holder'], // ACH savings CCD credit
         '36' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH savings CCD debit
-        '37' => ['iban', 'bic_swift','account_holder'], // ACH savings CTP credit
+        '37' => ['iban', 'bic_swift', 'account_holder'], // ACH savings CTP credit
         '38' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH savings CTP debit
-        '39' => ['iban', 'bic_swift','account_holder'], // ACH savings CTX credit
+        '39' => ['iban', 'bic_swift', 'account_holder'], // ACH savings CTX credit
         '40' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH savings CTX debit
-        '41' => ['iban', 'bic_swift','account_holder'], // ACH savings CCD+ credit
-        '42' => ['iban', 'bic_swift','account_holder'], // Payment to bank account
+        '41' => ['iban', 'bic_swift', 'account_holder'], // ACH savings CCD+ credit
+        '42' => ['iban', 'bic_swift', 'account_holder'], // Payment to bank account
         '43' => ['payer_bank_account', 'iban', 'bic_swift'], // ACH savings CCD+ debit
         '44' => [], // Accepted bill of exchange
         '45' => ['iban', 'bic_swift'], // Referenced home-banking credit transfer
@@ -460,7 +466,6 @@ class PaymentMeans implements PaymentMeansInterface
         'card_holder' => 'CardAccount.HolderName',
     ];
 
-
     public string $code = '1';
 
     public ?string $information = null;
@@ -494,7 +499,8 @@ class PaymentMeans implements PaymentMeansInterface
 
         }
     }
-    //requires an object which looks like this
+
+    // requires an object which looks like this
     // @param string      $typecode         __BT-81, From BASIC WL__ The expected or used means of payment, expressed as a code. The entries from the UNTDID 4461 code list must be used. A distinction should be made between SEPA and non-SEPA payments as well
     // as between credit payments, direct debits, card payments and other means of payment
     // In particular, the following codes can be used:
@@ -512,11 +518,11 @@ class PaymentMeans implements PaymentMeansInterface
     //  * @param  string|null $information      __BT-82, From EN 16931__ The expected or used means of payment expressed in text form, e.g. cash, bank transfer, direct debit, credit card, etc.
     //  * @param  string|null $card_type         __BT-, From __ The type of the card
     //  * @param  string|null $cardId           __BT-84, From BASIC WL__ The primary account number (PAN) to which the card used for payment belongs. In accordance with card payment security standards, an invoice should never contain a full payment card master account number.
-    //The following specification of the PCI Security Standards Council currently applies: The first 6 and last 4 digits at most are to be displayed
+    // The following specification of the PCI Security Standards Council currently applies: The first 6 and last 4 digits at most are to be displayed
     //  * @param  string|null $cardholder_name   __BT-, From __ Name of the payment card holder
     //  * @param  string|null $buyerIban        __BT-91, From BASIC WL__ Direct debit: ID of the account to be debited
     //  * @param  string|null $iban        __BT-, From __ Transfer: A unique identifier for the financial account held with a payment service provider to which the payment should be made, e.g. Use an IBAN (in the case of a SEPA payment) for a national
-    //ProprietaryID account number
+    // ProprietaryID account number
     //  * @param  string|null $payeeAccountName __BT-, From __ The name of the payment account held with a payment service provider to which the payment should be made. Information only required if different from the name of the payee / seller
     //  * @param  string|null $payeePropId      __BT-, From __ National account number (not for SEPA)
     //  * @param  string|null $bic         __BT-, From __ Seller's banking institution, An identifier for the payment service provider with whom the payment account is managed, such as the BIC or a national bank code, if required. No identification scheme is to be used.
@@ -524,32 +530,32 @@ class PaymentMeans implements PaymentMeansInterface
     public function run()
     {
 
-        $TradeSettlementFinancialCardType = new \horstoeko\zugferd\entities\extended\ram\TradeSettlementFinancialCardType();
+        $TradeSettlementFinancialCardType = new TradeSettlementFinancialCardType;
         $TradeSettlementFinancialCardType->setCardholderName($this->cardholder_name)
-                                         ->setID(new \horstoeko\zugferd\entities\extended\udt\IDType($this->cardId));
+            ->setID(new IDType($this->cardId));
 
-        $DebtorFinancialAccountType = new \horstoeko\zugferd\entities\extended\ram\DebtorFinancialAccountType();
-        $DebtorFinancialAccountType->setIBANID(new \horstoeko\zugferd\entities\extended\udt\IDType($this->buyerIban));
+        $DebtorFinancialAccountType = new DebtorFinancialAccountType;
+        $DebtorFinancialAccountType->setIBANID(new IDType($this->buyerIban));
 
-        $CreditorFinancialAccountType = new \horstoeko\zugferd\entities\extended\ram\CreditorFinancialAccountType();
+        $CreditorFinancialAccountType = new CreditorFinancialAccountType;
         $CreditorFinancialAccountType->setAccountName($this->account_name)
-                                     ->setProprietaryID(new \horstoeko\zugferd\entities\extended\udt\IDType($this->payeePropId))
-                                     ->setIBANID(new \horstoeko\zugferd\entities\extended\udt\IDType($this->iban));
+            ->setProprietaryID(new IDType($this->payeePropId))
+            ->setIBANID(new IDType($this->iban));
 
-        $CreditorFinancialInstitutionType = new \horstoeko\zugferd\entities\extended\ram\CreditorFinancialInstitutionType();
-        $CreditorFinancialInstitutionType->setBICID(new \horstoeko\zugferd\entities\extended\udt\IDType($this->bic));
+        $CreditorFinancialInstitutionType = new CreditorFinancialInstitutionType;
+        $CreditorFinancialInstitutionType->setBICID(new IDType($this->bic));
 
-        $TradeSettlementPaymentMeansType = new \horstoeko\zugferd\entities\extended\ram\TradeSettlementPaymentMeansType();
+        $TradeSettlementPaymentMeansType = new TradeSettlementPaymentMeansType;
         $TradeSettlementPaymentMeansType->setTypeCode($this->code)->setInformation($this->information);
         $TradeSettlementPaymentMeansType->setPayeePartyCreditorFinancialAccount($CreditorFinancialAccountType);
         $TradeSettlementPaymentMeansType->setPayerPartyDebtorFinancialAccount($DebtorFinancialAccountType);
         $TradeSettlementPaymentMeansType->setApplicableTradeSettlementFinancialCard($TradeSettlementFinancialCardType);
         $TradeSettlementPaymentMeansType->setPayeeSpecifiedCreditorFinancialInstitution($CreditorFinancialInstitutionType);
 
-        $HeaderTradeSettlementType = new \horstoeko\zugferd\entities\extended\ram\HeaderTradeSettlementType();
+        $HeaderTradeSettlementType = new HeaderTradeSettlementType;
         $HeaderTradeSettlementType->addToSpecifiedTradeSettlementPaymentMeans($TradeSettlementPaymentMeansType);
 
-        $SupplyChainTradeTransactionType = new \horstoeko\zugferd\entities\extended\ram\SupplyChainTradeTransactionType();
+        $SupplyChainTradeTransactionType = new SupplyChainTradeTransactionType;
         $SupplyChainTradeTransactionType->setApplicableHeaderTradeSettlement($HeaderTradeSettlementType);
 
     }

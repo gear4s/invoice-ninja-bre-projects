@@ -6,23 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Providers;
 
-use App\Utils\Ninja;
-use App\Models\Scheduler;
-use Illuminate\Http\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 use App\Http\Middleware\ThrottleRequestsWithPredis;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundException;
+use App\Models\Scheduler;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -134,7 +133,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapWebRoutes()
     {
         Route::middleware('web')
-             ->group(base_path('routes/web.php'));
+            ->group(base_path('routes/web.php'));
     }
 
     /**
@@ -147,8 +146,8 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapApiRoutes()
     {
         Route::prefix('')
-             ->middleware('api')
-             ->group(base_path('routes/api.php'));
+            ->middleware('api')
+            ->group(base_path('routes/api.php'));
     }
 
     /**
@@ -161,8 +160,8 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapContactApiRoutes()
     {
         Route::prefix('')
-             ->middleware('contact')
-             ->group(base_path('routes/contact.php'));
+            ->middleware('contact')
+            ->group(base_path('routes/contact.php'));
     }
 
     /**
@@ -175,15 +174,15 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapClientApiRoutes()
     {
         Route::prefix('')
-             ->middleware('client')
-             ->group(base_path('routes/client.php'));
+            ->middleware('client')
+            ->group(base_path('routes/client.php'));
     }
 
     protected function mapShopApiRoutes()
     {
         Route::prefix('')
-             ->middleware('shop')
-             ->group(base_path('routes/shop.php'));
+            ->middleware('shop')
+            ->group(base_path('routes/shop.php'));
     }
 
     protected function mapVendorsApiRoutes()

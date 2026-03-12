@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * ClientFilters.
@@ -21,9 +21,6 @@ class ClientFilters extends QueryFilters
 {
     /**
      * Filter by name.
-     *
-     * @param string $name
-     * @return Builder
      */
     public function name(string $name = ''): Builder
     {
@@ -36,9 +33,6 @@ class ClientFilters extends QueryFilters
 
     /**
      * Filter by balance.
-     *
-     * @param string $balance
-     * @return Builder
      */
     public function balance(string $balance = ''): Builder
     {
@@ -57,9 +51,6 @@ class ClientFilters extends QueryFilters
 
     /**
      * Filter between balances.
-     *
-     * @param string $balance
-     * @return Builder
      */
     public function between_balance(string $balance = ''): Builder
     {
@@ -127,8 +118,6 @@ class ClientFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -171,8 +160,7 @@ class ClientFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
@@ -192,7 +180,7 @@ class ClientFilters extends QueryFilters
             count($sort_col) != 2 ||
             !in_array(
                 $sort_col[0],
-                \Illuminate\Support\Facades\Schema::getColumnListing(
+                Schema::getColumnListing(
                     $this->builder->getModel()->getTable(),
                 ),
             )
@@ -258,6 +246,7 @@ class ClientFilters extends QueryFilters
                 ) " . $dir,
             );
         }
+
         return $this->builder->orderBy($sort_col[0], $dir);
     }
 
@@ -268,8 +257,6 @@ class ClientFilters extends QueryFilters
      * so we scope by account_id rather than company_id.  This means every
      * company accessible from the company-switcher dropdown will see the same
      * shared client list.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {

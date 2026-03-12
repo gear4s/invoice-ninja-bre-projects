@@ -6,20 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 use App\Utils\Ninja;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Simple helper function that will log into "invoiceninja.log" file
  * only when extended logging is enabled.
  *
- * @param mixed $output
- * @param array $context
- *
- * @return void
+ * @param  mixed  $output
+ * @param  array  $context
  */
 function nlog($output, $context = []): void
 {
@@ -29,7 +27,7 @@ function nlog($output, $context = []): void
     //     echo "::debug::".print_r($output, true)."\n";
     // }
 
-    if (! config('ninja.expanded_logging')) {
+    if (!config('ninja.expanded_logging')) {
         return;
     }
 
@@ -42,20 +40,19 @@ function nlog($output, $context = []): void
     if (Ninja::isHosted()) {
         try {
             info($output);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
     } else {
-        \Illuminate\Support\Facades\Log::channel('invoiceninja')->info($output, $context);
+        Log::channel('invoiceninja')->info($output, $context);
     }
 
     $output = null;
     $context = null;
 }
 
-
 function nrlog($output, $context = []): void
 {
-    if (! config('ninja.expanded_logging')) {
+    if (!config('ninja.expanded_logging')) {
         return;
     }
 
@@ -68,10 +65,10 @@ function nrlog($output, $context = []): void
     if (Ninja::isHosted()) {
         try {
             info($output);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
     } else {
-        \Illuminate\Support\Facades\Log::channel('invoiceninja-reminders')->info($output, $context);
+        Log::channel('invoiceninja-reminders')->info($output, $context);
     }
 
     $output = null;

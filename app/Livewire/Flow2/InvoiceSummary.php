@@ -6,18 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Flow2;
 
+use App\Jobs\Entity\CreateRawPdf;
 use App\Models\InvoiceInvitation;
 use App\Utils\Number;
-use Livewire\Component;
-use Livewire\Attributes\On;
 use App\Utils\Traits\WithSecureContext;
-use Livewire\Attributes\Lazy;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class InvoiceSummary extends Component
 {
@@ -85,11 +86,11 @@ class InvoiceSummary extends Component
 
         $db = $_context['db'];
 
-        $invite = \App\Models\InvoiceInvitation::on($db)->withTrashed()->find($invitation_id);
+        $invite = InvoiceInvitation::on($db)->withTrashed()->find($invitation_id);
 
         $file_name = $invite->invoice->numberFormatter() . '.pdf';
 
-        $file = (new \App\Jobs\Entity\CreateRawPdf($invite))->handle();
+        $file = (new CreateRawPdf($invite))->handle();
 
         $headers = ['Content-Type' => 'application/pdf'];
 
@@ -99,7 +100,7 @@ class InvoiceSummary extends Component
 
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+    public function render(): Factory|View
     {
         $_context = $this->getContext($this->_key);
 

@@ -6,41 +6,40 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use Tests\MockAccountData;
 use App\Models\Account;
-use App\Models\Company;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Project;
-use App\Models\Vendor;
-use App\Models\Expense;
-use App\Models\Task;
-use App\Models\Quote;
-use App\Models\Credit;
-use App\Models\Payment;
-use App\Models\Product;
-use App\Models\TaxRate;
-use App\Models\Scheduler;
-use App\Models\TaskStatus;
-use App\Models\CompanyToken;
-use App\Models\RecurringQuote;
-use App\Models\RecurringExpense;
-use App\Models\RecurringInvoice;
-use App\Models\ExpenseCategory;
 use App\Models\BankIntegration;
 use App\Models\BankTransaction;
 use App\Models\BankTransactionRule;
+use App\Models\Client;
 use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Credit;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Project;
+use App\Models\Quote;
+use App\Models\RecurringExpense;
+use App\Models\RecurringInvoice;
+use App\Models\RecurringQuote;
+use App\Models\Scheduler;
+use App\Models\Task;
+use App\Models\TaskStatus;
+use App\Models\TaxRate;
+use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use ReflectionClass;
 use ReflectionProperty;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
  * Test class for MockAccountData trait.
@@ -58,7 +57,7 @@ class MockAccountDataTest extends TestCase
      *
      * This prevents PHP 8.2+ deprecation notices for dynamic properties.
      */
-    public function testAllPropertiesAreDeclared(): void
+    public function test_all_properties_are_declared(): void
     {
         $reflection = new ReflectionClass($this);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
@@ -115,7 +114,7 @@ class MockAccountDataTest extends TestCase
     /**
      * Test that properties can be assigned without triggering deprecation warnings.
      */
-    public function testPropertiesCanBeAssignedWithoutWarnings(): void
+    public function test_properties_can_be_assigned_without_warnings(): void
     {
         // These assignments should not trigger any deprecation warnings
         $this->credit_calc = 'test_value';
@@ -124,30 +123,30 @@ class MockAccountDataTest extends TestCase
         $this->recurring_invoice_calc = null;
 
         // Create mock objects for testing
-        $this->account = new Account();
-        $this->company = new Company();
-        $this->user = new User();
-        $this->client = new Client();
-        $this->project = new Project();
-        $this->vendor = new Vendor();
-        $this->expense = new Expense();
-        $this->task = new Task();
-        $this->quote = new Quote();
-        $this->credit = new Credit();
-        $this->payment = new Payment();
-        $this->product = new Product();
-        $this->tax_rate = new TaxRate();
-        $this->scheduler = new Scheduler();
-        $this->task_status = new TaskStatus();
-        $this->token = new CompanyToken();
-        $this->recurring_quote = new RecurringQuote();
-        $this->recurring_expense = new RecurringExpense();
-        $this->recurring_invoice = new RecurringInvoice();
-        $this->expense_category = new ExpenseCategory();
-        $this->bank_integration = new BankIntegration();
-        $this->bank_transaction = new BankTransaction();
-        $this->bank_transaction_rule = new BankTransactionRule();
-        $this->contact = new ClientContact();
+        $this->account = new Account;
+        $this->company = new Company;
+        $this->user = new User;
+        $this->client = new Client;
+        $this->project = new Project;
+        $this->vendor = new Vendor;
+        $this->expense = new Expense;
+        $this->task = new Task;
+        $this->quote = new Quote;
+        $this->credit = new Credit;
+        $this->payment = new Payment;
+        $this->product = new Product;
+        $this->tax_rate = new TaxRate;
+        $this->scheduler = new Scheduler;
+        $this->task_status = new TaskStatus;
+        $this->token = new CompanyToken;
+        $this->recurring_quote = new RecurringQuote;
+        $this->recurring_expense = new RecurringExpense;
+        $this->recurring_invoice = new RecurringInvoice;
+        $this->expense_category = new ExpenseCategory;
+        $this->bank_integration = new BankIntegration;
+        $this->bank_transaction = new BankTransaction;
+        $this->bank_transaction_rule = new BankTransactionRule;
+        $this->contact = new ClientContact;
 
         // Assert that the properties were set correctly
         $this->assertNotNull($this->credit_calc);
@@ -160,7 +159,7 @@ class MockAccountDataTest extends TestCase
     /**
      * Test that all properties have proper nullable type hints.
      */
-    public function testPropertiesHaveNullableTypeHints(): void
+    public function test_properties_have_nullable_type_hints(): void
     {
         $reflection = new ReflectionClass($this);
 
@@ -213,7 +212,7 @@ class MockAccountDataTest extends TestCase
     /**
      * Test that properties don't trigger dynamic property creation warnings.
      */
-    public function testNoDynamicPropertyWarnings(): void
+    public function test_no_dynamic_property_warnings(): void
     {
         // Enable error reporting to catch any warnings
         $previousErrorReporting = error_reporting();
@@ -237,7 +236,7 @@ class MockAccountDataTest extends TestCase
     /**
      * Test that credit_calc property accepts mixed types.
      */
-    public function testCreditCalcAcceptsMixedTypes(): void
+    public function test_credit_calc_accepts_mixed_types(): void
     {
         $this->credit_calc = 'string_value';
         $this->assertIsString($this->credit_calc);

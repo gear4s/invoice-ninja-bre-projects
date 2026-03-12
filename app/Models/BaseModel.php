@@ -6,31 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
-use App\Utils\Traits\MakesDates;
 use App\Jobs\Entity\CreateRawPdf;
 use App\Jobs\Util\WebhookHandler;
 use App\Models\Traits\Excludable;
+use App\Services\EDocument\Jobs\SendEDocument;
+use App\Services\Pdf\Purify;
 use App\Services\PdfMaker\PdfMerge;
-use Illuminate\Database\Eloquent\Model;
+use App\Utils\Traits\MakesDates;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\UserSessionAttributes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundException;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Class BaseModel
  *
  * @method scope() static
  * @method company() static
- * @package App\Models
+ *
  * @property-read mixed $hashed_id
  * @property string $number
  * @property object|array|null $e_invoice
@@ -38,8 +41,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundExceptio
  * @property int $id
  * @property int $user_id
  * @property int $assigned_user_id
+ *
  * @method BaseModel service()
- * @property \App\Models\Company $company
+ *
+ * @property Company $company
+ *
  * @method static BaseModel find($value)
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel<static> company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel|Illuminate\Database\Eloquent\Relations\BelongsTo|\Awobaz\Compoships\Database\Eloquent\Relations\BelongsTo|\App\Models\Company company()
@@ -60,8 +66,10 @@ use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundExceptio
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel invitations()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel whereHas($query)
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel without($query)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\InvoiceInvitation | \App\Models\CreditInvitation | \App\Models\QuoteInvitation | \App\Models\RecurringInvoiceInvitation> $invitations
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, InvoiceInvitation | CreditInvitation | QuoteInvitation | RecurringInvoiceInvitation> $invitations
  * @property-read int|null $invitations_count
+ *
  * @method int companyId()
  * @method createInvitations()
  * @method \Builder scopeCompany(\Builder $builder)
@@ -69,19 +77,20 @@ use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundExceptio
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel|\Illuminate\Database\Query\Builder withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel|\Illuminate\Database\Query\Builder onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel|\Illuminate\Database\Query\Builder withoutTrashed()
- * @mixin \Eloquent
- * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property \Illuminate\Support\Collection $tax_map
+ * @mixin \Eloquent
+ * @mixin Builder
+ *
+ * @property Collection $tax_map
  * @property array $total_tax_map
  */
 class BaseModel extends Model
 {
+    use Excludable;
+    use HasFactory;
+    use MakesDates;
     use MakesHash;
     use UserSessionAttributes;
-    use HasFactory;
-    use Excludable;
-    use MakesDates;
 
     public int $max_attachment_size = 3000000;
 
@@ -108,12 +117,11 @@ class BaseModel extends Model
     }
 
     /**
-    * @param  \Illuminate\Database\Eloquent\Builder  $query
-    * @return \Illuminate\Database\Eloquent\Builder
-    */
-    public function scopeCompany($query): \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     */
+    public function scopeCompany($query): Builder
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $query->where("{$query->getQuery()->from}.company_id", $user->companyId());
@@ -126,7 +134,7 @@ class BaseModel extends Model
      */
     public function scopeScope($query)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $query->where($this->getTable() . '.company_id', '=', $user->company()->id);
@@ -137,8 +145,8 @@ class BaseModel extends Model
     /**
      * Retrieve the model for a bound value.
      *
-     * @param mixed $value
-     * @param mixed $field
+     * @param  mixed  $value
+     * @param  mixed  $field
      * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)
@@ -153,7 +161,7 @@ class BaseModel extends Model
     }
 
     /**
-     * @param string $extension
+     * @param  string  $extension
      * @return string
      */
     public function getFileName($extension = 'pdf')
@@ -164,25 +172,25 @@ class BaseModel extends Model
     public function getDeliveryNoteName($extension = 'pdf')
     {
 
-        $number =  ctrans("texts.delivery_note") . "_" . $this->numberFormatter() . '.' . $extension;
+        $number = ctrans('texts.delivery_note') . '_' . $this->numberFormatter() . '.' . $extension;
 
-        $formatted_number =  mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $number);
+        $formatted_number = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $number);
 
         $formatted_number = mb_ereg_replace("([\.]{2,})", '', $formatted_number);
 
         $formatted_number = preg_replace('/\s+/', '_', $formatted_number);
 
-        return \Illuminate\Support\Str::ascii($formatted_number);
+        return Str::ascii($formatted_number);
 
     }
 
     /**
-    * @param string $extension
-    * @return string
-    */
+     * @param  string  $extension
+     * @return string
+     */
     public function getEFileName($extension = 'pdf')
     {
-        return ctrans("texts.e_invoice") . "_" . $this->numberFormatter() . '.' . $extension;
+        return ctrans('texts.e_invoice') . '_' . $this->numberFormatter() . '.' . $extension;
     }
 
     // public function numberFormatter()
@@ -217,15 +225,15 @@ class BaseModel extends Model
 
     public function numberFormatter()
     {
-        $number = strlen($this->number ?? '') >= 1 ? $this->translate_entity() . "_" . $this->number : class_basename($this) . "_" . Str::random(5);
+        $number = strlen($this->number ?? '') >= 1 ? $this->translate_entity() . '_' . $this->number : class_basename($this) . '_' . Str::random(5);
 
-        $formatted_number =  mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $number);
+        $formatted_number = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $number);
 
         $formatted_number = mb_ereg_replace("([\.]{2,})", '', $formatted_number);
 
         $formatted_number = preg_replace('/\s+/', '_', $formatted_number);
 
-        return \Illuminate\Support\Str::ascii($formatted_number);
+        return Str::ascii($formatted_number);
     }
 
     public function translate_entity()
@@ -236,41 +244,34 @@ class BaseModel extends Model
     /**
      * Model helper to send events for webhooks
      *
-     * @param  int    $event_id
-     * @param  string $additional_data optional includes
-     *
-     * @return void
+     * @param  string  $additional_data  optional includes
      */
-    public function sendEvent(int $event_id, string $additional_data = ""): void
+    public function sendEvent(int $event_id, string $additional_data = ''): void
     {
         $subscriptions = Webhook::where('company_id', $this->company_id)
-                                 ->where('event_id', $event_id)
-                                 ->exists();
+            ->where('event_id', $event_id)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch($event_id, $this->withoutRelations(), $this->company, $additional_data);
         }
 
         // Special catch here for einvoicing eventing
-        if (in_array($event_id, [Webhook::EVENT_SENT_INVOICE, Webhook::EVENT_SENT_CREDIT]) && ($this instanceof Invoice || $this instanceof Credit) && $this->backup->guid == "") {
+        if (in_array($event_id, [Webhook::EVENT_SENT_INVOICE, Webhook::EVENT_SENT_CREDIT]) && ($this instanceof Invoice || $this instanceof Credit) && $this->backup->guid == '') {
             if ($this->client->peppolSendingEnabled()) {
-                \App\Services\EDocument\Jobs\SendEDocument::dispatch(get_class($this), $this->id, $this->company->db);
+                SendEDocument::dispatch(get_class($this), $this->id, $this->company->db);
             }
-        } //Special Catch Here For Verifactu.
-        elseif (in_array($event_id, [Webhook::EVENT_SENT_INVOICE]) && $this->company->verifactuEnabled()  && ($this instanceof Invoice) && $this->backup->guid == "") {
+        } // Special Catch Here For Verifactu.
+        elseif (in_array($event_id, [Webhook::EVENT_SENT_INVOICE]) && $this->company->verifactuEnabled() && ($this instanceof Invoice) && $this->backup->guid == '') {
             $this->service()->sendVerifactu();
         }
 
     }
 
-
     /**
      * arrayFilterRecursive nee filterNullsRecursive
      *
      * Removes null properties from an array
-     *
-     * @param  array $array
-     * @return array
      */
     public function filterNullsRecursive(array $array): array
     {
@@ -290,12 +291,13 @@ class BaseModel extends Model
 
     /**
      * Returns the base64 encoded PDF string of the entity
+     *
      * @deprecated - unused implementation
      */
     public function fullscreenPdfViewer($invitation = null): string
     {
 
-        if (! $invitation) {
+        if (!$invitation) {
             if ($this->invitations()->exists()) {
                 $invitation = $this->invitations()->first();
             } else {
@@ -304,11 +306,11 @@ class BaseModel extends Model
             }
         }
 
-        if (! $invitation) {
+        if (!$invitation) {
             throw new \Exception('Hard fail, could not create an invitation.');
         }
 
-        return "data:application/pdf;base64," . base64_encode((new CreateRawPdf($invitation))->handle());
+        return 'data:application/pdf;base64,' . base64_encode((new CreateRawPdf($invitation))->handle());
 
     }
 
@@ -316,10 +318,6 @@ class BaseModel extends Model
      * Takes a entity prop as first argument
      * along with an array of variables and performs
      * a string replace on the prop.
-     *
-     * @param string $field
-     * @param array $variables
-     * @return string
      */
     public function parseHtmlVariables(string $field, array $variables): string
     {
@@ -331,7 +329,7 @@ class BaseModel extends Model
 
         $parsed = strtr($section, $variables['values']);
 
-        return \App\Services\Pdf\Purify::clean(html_entity_decode($parsed));
+        return Purify::clean(html_entity_decode($parsed));
     }
 
     /**
@@ -339,12 +337,10 @@ class BaseModel extends Model
      *
      * Uses the dn_document_hashed_id stored on the entity's sync object
      * to look up the Document record.
-     *
-     * @return \App\Models\Document|null
      */
-    public function getSignedPdfDocument(): ?\App\Models\Document
+    public function getSignedPdfDocument(): ?Document
     {
-        /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote | \App\Models\PurchaseOrder $this */
+        /** @var Invoice | Credit | Quote | PurchaseOrder $this */
         if (!$this->sync?->dn_document_hashed_id) {
             return null;
         }
@@ -358,42 +354,41 @@ class BaseModel extends Model
      * Merged PDFs associated with the entity / company
      * into a single document
      *
-     * @param  string $pdf
      * @todo need to provide a fallback here in case the headers of the PDF do not allow merging
-     * @return mixed
      */
     public function documentMerge(string $pdf): mixed
     {
         $files = collect([$pdf]);
 
         $entity_docs = $this->documents()
-        ->where('is_public', true)
-        ->get()
-        ->filter(function ($document) {
-            return $document->size < $this->max_attachment_size && stripos($document->name, ".pdf") !== false;
-        })->map(function ($d) {
-            return $d->getFile();
-        });
+            ->where('is_public', true)
+            ->get()
+            ->filter(function ($document) {
+                return $document->size < $this->max_attachment_size && stripos($document->name, '.pdf') !== false;
+            })->map(function ($d) {
+                return $d->getFile();
+            });
 
         $files->push($entity_docs);
 
         $company_docs = $this->company->documents()
-        ->where('is_public', true)
-        ->get()
-        ->filter(function ($document) {
-            return $document->size < $this->max_attachment_size && stripos($document->name, ".pdf") !== false;
-        })->map(function ($d) {
-            return $d->getFile();
-        });
+            ->where('is_public', true)
+            ->get()
+            ->filter(function ($document) {
+                return $document->size < $this->max_attachment_size && stripos($document->name, '.pdf') !== false;
+            })->map(function ($d) {
+                return $d->getFile();
+            });
 
         $files->push($company_docs);
 
         try {
             $pdf = (new PdfMerge($files->flatten()->toArray()))->run();
+
             return $pdf;
 
         } catch (\Exception $e) {
-            nlog("Exception:: BaseModel:: PdfMerge::" . $e->getMessage());
+            nlog('Exception:: BaseModel:: PdfMerge::' . $e->getMessage());
         }
 
         return $pdf;

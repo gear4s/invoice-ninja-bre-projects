@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\Currency;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 return new class extends Migration
 {
@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
-        \Illuminate\Support\Facades\Artisan::call('ninja:design-update');
 
-        $currency = \App\Models\Currency::where('code', 'ZWL')->first();
+        Artisan::call('ninja:design-update');
 
-        if($currency){
+        $currency = Currency::where('code', 'ZWL')->first();
+
+        if ($currency) {
             $currency->update(['name' => 'Zimbabwe Gold']);
         }
     }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,8 +13,8 @@ namespace App\Repositories;
 
 use App\DataMapper\InvoiceItem;
 use App\Factory\InvoiceFactory;
-use App\Models\Product;
 use App\Models\Invoice;
+use App\Models\Product;
 
 /**
  * Class for project repository.
@@ -25,7 +24,6 @@ class ProjectRepository extends BaseRepository
     /**
      * Invoices a collection of projects into a single invoice.
      *
-     * @param  mixed $projects
      * @return Invoice $invoice
      */
     public function invoice(mixed $projects)
@@ -45,38 +43,38 @@ class ProjectRepository extends BaseRepository
 
         foreach ($projects as $project) {
             $project->tasks()
-                    ->withTrashed()
-                    ->whereNull('invoice_id')
-                    ->where('is_deleted', 0)
-                    ->cursor()
-                    ->each(function ($task, $key) use (&$lines) {
+                ->withTrashed()
+                ->whereNull('invoice_id')
+                ->where('is_deleted', 0)
+                ->cursor()
+                ->each(function ($task, $key) use (&$lines) {
 
-                        if (!$task->isRunning() && $task->calcDuration(true) > 0) {
-                            if ($key == 0 && $task->company->invoice_task_project) {
-                                $body = '<div class="project-header">' . $task->project->name . '</div>' . $task->project?->public_notes ?? ''; //@phpstan-ignore-line
-                                $body .= '<div class="task-time-details">' . $task->description() . '</div>';
-                            } elseif (!$task->company->invoice_task_hours && !$task->company->invoice_task_timelog && !$task->company->invoice_task_datelog && !$task->company->invoice_task_item_description) {
-                                $body = $task->description ?? '';
-                            } else {
-                                $body = '<div class="task-time-details">' . $task->description() . '</div>';
-                            }
-
-                            $item = new InvoiceItem();
-                            $item->quantity = $task->getQuantity();
-                            $item->cost = $task->getRate();
-                            $item->product_key = '';
-                            $item->notes = $body;
-                            $item->task_id = $task->hashed_id;
-                            $item->tax_id = (string) Product::PRODUCT_TYPE_SERVICE;
-                            $item->type_id = '2';
-                            $item->custom_value1 = $task->custom_value1;
-                            $item->custom_value2 = $task->custom_value2;
-                            $item->custom_value3 = $task->custom_value3;
-                            $item->custom_value4 = $task->custom_value4;
-                            $lines[] = $item;
+                    if (!$task->isRunning() && $task->calcDuration(true) > 0) {
+                        if ($key == 0 && $task->company->invoice_task_project) {
+                            $body = '<div class="project-header">' . $task->project->name . '</div>' . $task->project?->public_notes ?? ''; // @phpstan-ignore-line
+                            $body .= '<div class="task-time-details">' . $task->description() . '</div>';
+                        } elseif (!$task->company->invoice_task_hours && !$task->company->invoice_task_timelog && !$task->company->invoice_task_datelog && !$task->company->invoice_task_item_description) {
+                            $body = $task->description ?? '';
+                        } else {
+                            $body = '<div class="task-time-details">' . $task->description() . '</div>';
                         }
 
-                    });
+                        $item = new InvoiceItem;
+                        $item->quantity = $task->getQuantity();
+                        $item->cost = $task->getRate();
+                        $item->product_key = '';
+                        $item->notes = $body;
+                        $item->task_id = $task->hashed_id;
+                        $item->tax_id = (string) Product::PRODUCT_TYPE_SERVICE;
+                        $item->type_id = '2';
+                        $item->custom_value1 = $task->custom_value1;
+                        $item->custom_value2 = $task->custom_value2;
+                        $item->custom_value3 = $task->custom_value3;
+                        $item->custom_value4 = $task->custom_value4;
+                        $lines[] = $item;
+                    }
+
+                });
 
             $project->expenses()
                 ->withTrashed()
@@ -85,7 +83,7 @@ class ProjectRepository extends BaseRepository
                 ->cursor()
                 ->each(function ($expense) use (&$lines) {
 
-                    $item = new InvoiceItem();
+                    $item = new InvoiceItem;
                     $item->quantity = 1;
                     $item->cost = $expense->foreign_amount > 0 ? $expense->foreign_amount : $expense->amount;
                     $item->product_key = $expense->category()->exists() ? $expense->category->name : '';

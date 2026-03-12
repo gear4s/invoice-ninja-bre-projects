@@ -6,49 +6,48 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
-use App\Models\Task;
-use App\Models\User;
-use App\Models\Quote;
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Design;
-use App\Models\Vendor;
 use App\Models\Account;
-use App\Models\Company;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Product;
-use App\Models\Project;
-use App\Models\TaxRate;
-use App\Models\Webhook;
 use App\Models\Activity;
-use App\Models\Document;
-use App\Models\Location;
-use App\Models\Scheduler;
-use App\Models\SystemLog;
-use App\Models\TaskStatus;
-use App\Models\CompanyUser;
-use App\Models\PaymentTerm;
-use App\Models\CompanyToken;
-use App\Models\GroupSetting;
-use App\Models\Subscription;
-use App\Models\CompanyLedger;
-use App\Models\PurchaseOrder;
-use App\Models\CompanyGateway;
 use App\Models\BankIntegration;
 use App\Models\BankTransaction;
+use App\Models\BankTransactionRule;
+use App\Models\Client;
+use App\Models\Company;
+use App\Models\CompanyGateway;
+use App\Models\CompanyLedger;
+use App\Models\CompanyToken;
+use App\Models\CompanyUser;
+use App\Models\Credit;
+use App\Models\Design;
+use App\Models\Document;
+use App\Models\Expense;
 use App\Models\ExpenseCategory;
-use App\Utils\Traits\MakesHash;
+use App\Models\GroupSetting;
+use App\Models\Invoice;
+use App\Models\Location;
+use App\Models\Payment;
+use App\Models\PaymentTerm;
+use App\Models\Product;
+use App\Models\Project;
+use App\Models\PurchaseOrder;
+use App\Models\Quote;
 use App\Models\RecurringExpense;
 use App\Models\RecurringInvoice;
-use App\Models\BankTransactionRule;
+use App\Models\Scheduler;
+use App\Models\Subscription;
+use App\Models\SystemLog;
+use App\Models\Task;
+use App\Models\TaskStatus;
+use App\Models\TaxRate;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Models\Webhook;
+use App\Utils\Traits\MakesHash;
 
 /**
  * Class CompanyTransformer.
@@ -57,16 +56,10 @@ class CompanyTransformer extends EntityTransformer
 {
     use MakesHash;
 
-    /**
-     * @var array
-     */
     protected array $defaultIncludes = [
         'documents',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'documents',
         'users',
@@ -112,13 +105,11 @@ class CompanyTransformer extends EntityTransformer
     ];
 
     /**
-     * @param Company $company
-     *
      * @return array
      */
     public function transform(Company $company)
     {
-        $std = new \stdClass();
+        $std = new \stdClass;
 
         return [
             'id' => (string) $this->encodePrimaryKey($company->id),
@@ -150,7 +141,7 @@ class CompanyTransformer extends EntityTransformer
             'archived_at' => (int) $company->deleted_at,
             'created_at' => (int) $company->created_at,
             'slack_webhook_url' => (string) $company->slack_webhook_url,
-            'google_analytics_url' => (string) $company->google_analytics_key, //@deprecate 1-2-2021
+            'google_analytics_url' => (string) $company->google_analytics_key, // @deprecate 1-2-2021
             'google_analytics_key' => (string) $company->google_analytics_key,
             'matomo_url' => (string) $company->matomo_url,
             'matomo_id' => (string) $company->matomo_id ?: '',
@@ -172,7 +163,7 @@ class CompanyTransformer extends EntityTransformer
             'calculate_expense_tax_by_amount' => (bool) $company->calculate_expense_tax_by_amount,
             'hide_empty_columns_on_pdf' => false, // @deprecate 1-2-2021
             'expense_inclusive_taxes' => (bool) $company->expense_inclusive_taxes,
-            'expense_amount_is_pretax' => (bool) true, //@deprecate 1-2-2021
+            'expense_amount_is_pretax' => (bool) true, // @deprecate 1-2-2021
             'oauth_password_required' => (bool) $company->oauth_password_required,
             'session_timeout' => (int) $company->session_timeout,
             'default_password_timeout' => (int) $company->default_password_timeout,
@@ -199,12 +190,12 @@ class CompanyTransformer extends EntityTransformer
             'notify_vendor_when_paid' => (bool) $company->notify_vendor_when_paid,
             'invoice_task_hours' => (bool) $company->invoice_task_hours,
             'calculate_taxes' => (bool) $company->calculate_taxes,
-            'tax_data' => $company->tax_data ?: new \stdClass(),
+            'tax_data' => $company->tax_data ?: new \stdClass,
             'has_e_invoice_certificate' => $company->e_invoice_certificate ? true : false,
             'has_e_invoice_certificate_passphrase' => $company->e_invoice_certificate_passphrase ? true : false,
             'invoice_task_project_header' => (bool) $company->invoice_task_project_header,
             'invoice_task_item_description' => (bool) $company->invoice_task_item_description,
-            'origin_tax_data' => $company->origin_tax_data ?: new \stdClass(),
+            'origin_tax_data' => $company->origin_tax_data ?: new \stdClass,
             'expense_mailbox' => (string) $company->expense_mailbox,
             'expense_mailbox_active' => (bool) $company->expense_mailbox_active,
             'inbound_mailbox_allow_company_users' => (bool) $company->inbound_mailbox_allow_company_users,
@@ -220,21 +211,21 @@ class CompanyTransformer extends EntityTransformer
             'smtp_password' => $company->smtp_password ? '********' : '',
             'smtp_local_domain' => (string) $company->smtp_local_domain ?? '',
             'smtp_verify_peer' => (bool) $company->smtp_verify_peer,
-            'e_invoice' => $company->e_invoice ?: new \stdClass(),
-            'legal_entity_id' =>  $company->legal_entity_id ? (int) $company->legal_entity_id : null,
+            'e_invoice' => $company->e_invoice ?: new \stdClass,
+            'legal_entity_id' => $company->legal_entity_id ? (int) $company->legal_entity_id : null,
             'quickbooks' => $company->getRawOriginal('quickbooks') ? $company->quickbooks->toArray() : null,
             'legal_entity_id' => $company->legal_entity_id ?? null,
-            'enable_modules' => (bool)$company->enable_modules,
+            'enable_modules' => (bool) $company->enable_modules,
         ];
 
     }
 
     private function isLarge(Company $company): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        //if the user is attached to more than one company AND they are not an admin across all companies
+        // if the user is attached to more than one company AND they are not an admin across all companies
         if ($company->is_large || ($user->company_users()->count() > 1 && ($user->company_users()->where('is_admin', 1)->count() != $user->company_users()->count()))) {
             return true;
         }
@@ -277,14 +268,12 @@ class CompanyTransformer extends EntityTransformer
         return $this->includeCollection($company->tokens, $transformer, CompanyToken::class);
     }
 
-
     public function includeBankTransactions(Company $company)
     {
         $transformer = new BankTransactionTransformer($this->serializer);
 
         return $this->includeCollection($company->bank_transactions, $transformer, BankTransaction::class);
     }
-
 
     public function includeTaskSchedulers(Company $company)
     {
@@ -306,7 +295,6 @@ class CompanyTransformer extends EntityTransformer
 
         return $this->includeCollection($company->locations, $transformer, Location::class);
     }
-
 
     public function includeBankTransactionRules(Company $company)
     {

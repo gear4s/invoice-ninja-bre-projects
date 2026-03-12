@@ -6,32 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\EInvoice;
 
-use Tests\TestCase;
-use App\Models\Client;
-use App\Models\Company;
-use Tests\MockAccountData;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
 use App\DataMapper\InvoiceItem;
+use App\Models\Client;
+use App\Models\Company;
 use App\Models\Invoice;
-use InvoiceNinja\EInvoice\Symfony\Encode;
 use App\Services\EDocument\Standards\FatturaPANew;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use InvoiceNinja\EInvoice\EInvoice;
 use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronica;
 use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronicaBodyType\FatturaElettronicaBody;
 use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronicaHeaderType\FatturaElettronicaHeader;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
-/**
- *
- */
 class FatturaPATest extends TestCase
 {
     use DatabaseTransactions;
@@ -43,7 +38,6 @@ class FatturaPATest extends TestCase
 
         $this->makeTestData();
 
-
         // $this->markTestSkipped('prevent running in CI');
 
         $this->withoutMiddleware(
@@ -51,7 +45,7 @@ class FatturaPATest extends TestCase
         );
     }
 
-    public function testInvoiceBoot()
+    public function test_invoice_boot()
     {
 
         $settings = CompanySettings::defaults();
@@ -89,9 +83,9 @@ class FatturaPATest extends TestCase
             'settings' => $client_settings,
         ]);
 
-        $item = new InvoiceItem();
-        $item->product_key = "Product Key";
-        $item->notes = "Product Description";
+        $item = new InvoiceItem;
+        $item->product_key = 'Product Key';
+        $item->notes = 'Product Description';
         $item->cost = 10;
         $item->quantity = 10;
         $item->tax_rate1 = 22;
@@ -111,7 +105,7 @@ class FatturaPATest extends TestCase
             'tax_name2' => '',
             'tax_name3' => '',
             'line_items' => [$item],
-            'number' => 'ITA-'.rand(1000, 100000)
+            'number' => 'ITA-' . rand(1000, 100000),
         ]);
 
         $invoice->service()->markSent()->save();
@@ -127,10 +121,8 @@ class FatturaPATest extends TestCase
         $this->assertInstanceOf(FatturaElettronicaBody::class, $fe->FatturaElettronicaBody[0]);
         $this->assertInstanceOf(FatturaElettronicaHeader::class, $fe->FatturaElettronicaHeader);
 
-        $e = new EInvoice();
+        $e = new EInvoice;
         $errors = $e->validate($fe);
-
-
 
         if (count($errors) > 0) {
             nlog($errors);

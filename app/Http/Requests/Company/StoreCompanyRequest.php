@@ -6,22 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Company;
 
-use App\Utils\Ninja;
-use App\Models\Company;
-use App\Libraries\MultiDB;
 use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use App\Http\ValidationRules\ValidSettingsRule;
-use Illuminate\Auth\Access\AuthorizationException;
-use App\Http\ValidationRules\Company\ValidSubdomain;
-use App\Http\ValidationRules\Company\ValidExpenseMailbox;
 use App\Http\ValidationRules\Company\ValidCompanyQuantity;
+use App\Http\ValidationRules\Company\ValidExpenseMailbox;
+use App\Http\ValidationRules\Company\ValidSubdomain;
+use App\Http\ValidationRules\ValidSettingsRule;
+use App\Libraries\MultiDB;
+use App\Models\Company;
+use App\Models\User;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class StoreCompanyRequest extends Request
 {
@@ -29,13 +29,12 @@ class StoreCompanyRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User auth()->user */
+        /** @var User auth()->user */
         $user = auth()->user();
+
         // return $user->can('create', Company::class);
         return $user->isOwner();
     }
@@ -46,21 +45,21 @@ class StoreCompanyRequest extends Request
 
         $rules = [];
 
-        $rules['name'] = new ValidCompanyQuantity();
+        $rules['name'] = new ValidCompanyQuantity;
         $rules['company_logo'] = 'mimes:jpeg,jpg,png,gif|max:10000'; // max 10000kb
-        $rules['settings'] = new ValidSettingsRule();
+        $rules['settings'] = new ValidSettingsRule;
 
         if (isset($input['portal_mode']) && ($input['portal_mode'] == 'domain' || $input['portal_mode'] == 'iframe')) {
             $rules['portal_domain'] = 'sometimes|url';
         } else {
             if (Ninja::isHosted()) {
-                $rules['subdomain'] = ['nullable', 'regex:/^[a-zA-Z0-9-]{1,63}$/', new ValidSubdomain()];
+                $rules['subdomain'] = ['nullable', 'regex:/^[a-zA-Z0-9-]{1,63}$/', new ValidSubdomain];
             } else {
                 $rules['subdomain'] = 'nullable|alpha_num';
             }
         }
 
-        $rules['expense_mailbox'] = new ValidExpenseMailbox();
+        $rules['expense_mailbox'] = new ValidExpenseMailbox;
 
         $rules['smtp_host'] = 'sometimes|string|nullable';
         $rules['smtp_port'] = 'sometimes|integer|nullable';
@@ -87,7 +86,7 @@ class StoreCompanyRequest extends Request
         }
 
         if (isset($input['portal_domain'])) {
-            $input['portal_domain'] = rtrim(strtolower($input['portal_domain']), "/");
+            $input['portal_domain'] = rtrim(strtolower($input['portal_domain']), '/');
         }
 
         if (isset($input['expense_mailbox']) && Ninja::isHosted() && !($this->company->account->isPaid() && $this->company->account->plan == 'enterprise')) {
@@ -98,11 +97,11 @@ class StoreCompanyRequest extends Request
             $input['subdomain'] = MultiDB::randomSubdomainGenerator();
         }
 
-        if (isset($input['smtp_username']) && strlen(str_replace("*", "", $input['smtp_username'])) < 2) {
+        if (isset($input['smtp_username']) && strlen(str_replace('*', '', $input['smtp_username'])) < 2) {
             unset($input['smtp_username']);
         }
 
-        if (isset($input['smtp_password']) && strlen(str_replace("*", "", $input['smtp_password'])) < 2) {
+        if (isset($input['smtp_password']) && strlen(str_replace('*', '', $input['smtp_password'])) < 2) {
             unset($input['smtp_password']);
         }
 

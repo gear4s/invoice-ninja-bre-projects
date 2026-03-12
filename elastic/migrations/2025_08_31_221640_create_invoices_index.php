@@ -1,11 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
-use Elastic\Adapter\Indices\Mapping;
-use Elastic\Adapter\Indices\Settings;
+use Elastic\Elasticsearch\ClientBuilder;
 use Elastic\Migrations\Facades\Index;
 use Elastic\Migrations\MigrationInterface;
-use Elastic\Elasticsearch\ClientBuilder;
 
 final class CreateInvoicesIndex implements MigrationInterface
 {
@@ -26,7 +25,7 @@ final class CreateInvoicesIndex implements MigrationInterface
                 'id' => ['type' => 'keyword'],
                 'name' => [
                     'type' => 'text',
-                    'analyzer' => 'standard'
+                    'analyzer' => 'standard',
                 ],
                 'hashed_id' => ['type' => 'keyword'],
                 'number' => ['type' => 'keyword'],
@@ -35,17 +34,17 @@ final class CreateInvoicesIndex implements MigrationInterface
                 'balance' => ['type' => 'float'],
                 'due_date' => ['type' => 'date'],
                 'date' => ['type' => 'date'],
-                
+
                 // Custom fields
                 'custom_value1' => ['type' => 'keyword'],
                 'custom_value2' => ['type' => 'keyword'],
                 'custom_value3' => ['type' => 'keyword'],
                 'custom_value4' => ['type' => 'keyword'],
-                
+
                 // Additional fields
                 'company_key' => ['type' => 'keyword'],
                 'po_number' => ['type' => 'keyword'],
-                
+
                 // Line items
                 'line_items' => [
                     'type' => 'nested',
@@ -78,9 +77,9 @@ final class CreateInvoicesIndex implements MigrationInterface
                         'task_id' => ['type' => 'keyword'],
                         'expense_id' => ['type' => 'keyword'],
                         'unit_code' => ['type' => 'keyword'],
-                    ]
+                    ],
                 ],
-            ]
+            ],
         ];
 
         Index::createRaw('invoices_v2', $mapping);

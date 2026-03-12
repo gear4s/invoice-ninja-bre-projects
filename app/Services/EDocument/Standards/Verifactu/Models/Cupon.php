@@ -5,8 +5,11 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class Cupon extends BaseXmlModel
 {
     protected string $idCupon;
+
     protected string $fechaExpedicionCupon;
+
     protected float $importeCupon;
+
     protected ?string $descripcionCupon = null;
 
     public function toXml(\DOMDocument $doc): \DOMElement
@@ -28,7 +31,7 @@ class Cupon extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $cupon = new self();
+        $cupon = new self;
         $cupon->setIdCupon($cupon->getElementValue($element, 'IDCupon'));
         $cupon->setFechaExpedicionCupon($cupon->getElementValue($element, 'FechaExpedicionCupon'));
         $cupon->setImporteCupon((float) $cupon->getElementValue($element, 'ImporteCupon'));
@@ -49,6 +52,7 @@ class Cupon extends BaseXmlModel
     public function setIdCupon(string $idCupon): self
     {
         $this->idCupon = $idCupon;
+
         return $this;
     }
 
@@ -60,6 +64,7 @@ class Cupon extends BaseXmlModel
     public function setFechaExpedicionCupon(string $fechaExpedicionCupon): self
     {
         $this->fechaExpedicionCupon = $fechaExpedicionCupon;
+
         return $this;
     }
 
@@ -71,6 +76,7 @@ class Cupon extends BaseXmlModel
     public function setImporteCupon(float $importeCupon): self
     {
         $this->importeCupon = $importeCupon;
+
         return $this;
     }
 
@@ -82,6 +88,7 @@ class Cupon extends BaseXmlModel
     public function setDescripcionCupon(?string $descripcionCupon): self
     {
         $this->descripcionCupon = $descripcionCupon;
+
         return $this;
     }
 }

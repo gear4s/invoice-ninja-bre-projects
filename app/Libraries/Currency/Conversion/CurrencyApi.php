@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class CurrencyApi implements CurrencyConversionInterface
 {
     public function convert($amount, $from_currency_id, $to_currency_id, $date = null)
     {
-        if (! $date) {
+        if (!$date) {
             $date = Carbon::now();
         }
 
@@ -46,9 +45,9 @@ class CurrencyApi implements CurrencyConversionInterface
     /**
      * Converts a currency amount to USD.
      *
-     * @param  float  $amount   amount
-     * @param  object $currency currency object
-     * @return float            USD Amount
+     * @param  float  $amount  amount
+     * @param  object  $currency  currency object
+     * @return float USD Amount
      */
     private function convertToUsd($amount, $currency)
     {
@@ -58,9 +57,9 @@ class CurrencyApi implements CurrencyConversionInterface
     /**
      * Converts USD to any other denomination.
      *
-     * @param  float  $amount   amount
-     * @param  object $currency destination currency
-     * @return float            the converted amount
+     * @param  float  $amount  amount
+     * @param  object  $currency  destination currency
+     * @return float the converted amount
      */
     private function convertFromUsdToCurrency($amount, $currency)
     {

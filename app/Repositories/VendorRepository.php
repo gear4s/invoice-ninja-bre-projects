@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Repositories;
 use App\Factory\VendorFactory;
 use App\Models\Vendor;
 use App\Utils\Traits\GeneratesCounter;
+use Laracasts\Presenter\Exceptions\PresenterException;
 
 /**
  * VendorRepository.
@@ -36,11 +36,11 @@ class VendorRepository extends BaseRepository
     /**
      * Saves the vendor and its contacts.
      *
-     * @param array $data The data
-     * @param \App\Models\Vendor $vendor The vendor
+     * @param  array  $data  The data
+     * @param  Vendor  $vendor  The vendor
+     * @return Vendor|Vendor|null Vendor Object
      *
-     * @return     vendor|\App\Models\Vendor|null  Vendor Object
-     * @throws \Laracasts\Presenter\Exceptions\PresenterException
+     * @throws PresenterException
      */
     public function save(array $data, Vendor $vendor): ?Vendor
     {
@@ -74,8 +74,7 @@ class VendorRepository extends BaseRepository
     /**
      * Store vendors in bulk.
      *
-     * @param array $vendor
-     * @return vendor|null
+     * @param  array  $vendor
      */
     public function create($vendor): ?Vendor
     {

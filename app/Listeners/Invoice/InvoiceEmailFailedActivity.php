@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,8 +25,6 @@ class InvoiceEmailFailedActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -48,7 +45,7 @@ class InvoiceEmailFailedActivity implements ShouldQueue
             $event->message = 'Unable to open attachment file for reading';
         }
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $user_id = $event->event_vars['user_id'] ?? $event->invitation->invoice->user_id;
 

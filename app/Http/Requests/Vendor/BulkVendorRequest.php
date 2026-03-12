@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Vendor;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Utils\Traits\BulkOptions;
 
@@ -27,15 +27,15 @@ class BulkVendorRequest extends Request
      */
     public function authorize()
     {
-        if (! $this->has('action')) {
+        if (!$this->has('action')) {
             return false;
         }
 
-        if (! in_array($this->action, $this->getBulkOptions(), true)) {
+        if (!in_array($this->action, $this->getBulkOptions(), true)) {
             return false;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', Vendor::class);

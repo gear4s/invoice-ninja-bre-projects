@@ -6,58 +6,57 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http;
 
-use App\Http\Middleware\Cors;
-use App\Http\Middleware\SetDb;
-use App\Http\Middleware\Locale;
-use App\Http\Middleware\SetWebDb;
-use App\Http\Middleware\UrlSetDb;
-use App\Http\Middleware\TokenAuth;
-use App\Http\Middleware\SetEmailDb;
-use App\Http\Middleware\VerifyHash;
-use App\Http\Middleware\SetInviteDb;
-use App\Http\Middleware\TrimStrings;
-use App\Http\Middleware\Authenticate;
-use App\Http\Middleware\ContactSetDb;
-use App\Http\Middleware\QueryLogging;
-use App\Http\Middleware\TrustProxies;
-use App\Http\Middleware\UserVerified;
-use App\Http\Middleware\VendorLocale;
-use App\Http\Middleware\PhantomSecret;
-use App\Http\Middleware\SetDocumentDb;
 use App\Http\Middleware\ApiSecretCheck;
+use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\CheckClientExistence;
+use App\Http\Middleware\CheckForMaintenanceMode;
+use App\Http\Middleware\ClientPortalEnabled;
 use App\Http\Middleware\ContactAccount;
-use App\Http\Middleware\EncryptCookies;
-use App\Http\Middleware\SessionDomains;
 use App\Http\Middleware\ContactKeyLogin;
 use App\Http\Middleware\ContactRegister;
-use App\Http\Middleware\SetDomainNameDb;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\ContactSetDb;
 use App\Http\Middleware\ContactTokenAuth;
-use Illuminate\Auth\Middleware\Authorize;
-use App\Http\Middleware\SetDbByCompanyKey;
-use App\Http\Middleware\ValidateSignature;
+use App\Http\Middleware\Cors;
+use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\Locale;
 use App\Http\Middleware\PasswordProtection;
-use App\Http\Middleware\ClientPortalEnabled;
-use App\Http\Middleware\CheckClientExistence;
-use App\Http\Middleware\VendorContactKeyLogin;
-use Illuminate\Http\Middleware\SetCacheHeaders;
-use Illuminate\Session\Middleware\StartSession;
-use App\Http\Middleware\CheckForMaintenanceMode;
+use App\Http\Middleware\PhantomSecret;
+use App\Http\Middleware\QueryLogging;
 use App\Http\Middleware\RedirectIfAuthenticated;
-use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Http\Middleware\SessionDomains;
+use App\Http\Middleware\SetDb;
+use App\Http\Middleware\SetDbByCompanyKey;
+use App\Http\Middleware\SetDocumentDb;
+use App\Http\Middleware\SetDomainNameDb;
+use App\Http\Middleware\SetEmailDb;
+use App\Http\Middleware\SetInviteDb;
+use App\Http\Middleware\SetWebDb;
+use App\Http\Middleware\TokenAuth;
+use App\Http\Middleware\TrimStrings;
+use App\Http\Middleware\TrustProxies;
+use App\Http\Middleware\UrlSetDb;
+use App\Http\Middleware\UserVerified;
+use App\Http\Middleware\ValidJson;
+use App\Http\Middleware\VendorContactKeyLogin;
+use App\Http\Middleware\VendorLocale;
+use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\VerifyHash;
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
-use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
+use Illuminate\Auth\Middleware\Authorize;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
+use Illuminate\Http\Middleware\SetCacheHeaders;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class Kernel extends HttpKernel
 {
@@ -149,7 +148,7 @@ class Kernel extends HttpKernel
         'invite_db' => SetInviteDb::class,
         'password_protected' => PasswordProtection::class,
         'portal_enabled' => ClientPortalEnabled::class,
-        'url_db' =>  UrlSetDb::class,
+        'url_db' => UrlSetDb::class,
         'web_db' => SetWebDb::class,
         'api_db' => SetDb::class,
         'company_key_db' => SetDbByCompanyKey::class,
@@ -164,8 +163,8 @@ class Kernel extends HttpKernel
         'user_verified' => UserVerified::class,
         'document_db' => SetDocumentDb::class,
         'session_domain' => SessionDomains::class,
-        'valid_json' => \App\Http\Middleware\ValidJson::class,
-        //we dyanamically add the throttle middleware in RouteServiceProvider
+        'valid_json' => ValidJson::class,
+        // we dyanamically add the throttle middleware in RouteServiceProvider
     ];
 
     protected $middlewarePriority = [
@@ -194,5 +193,4 @@ class Kernel extends HttpKernel
         SubstituteBindings::class,
         ContactAccount::class,
     ];
-
 }

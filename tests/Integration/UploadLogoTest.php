@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,14 +19,11 @@ use Illuminate\Support\Facades\Storage;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class UploadLogoTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
     use MakesHash;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -37,14 +33,13 @@ class UploadLogoTest extends TestCase
 
         Company::reguard();
 
-
         if (config('ninja.testvars.travis') !== false) {
             $this->markTestSkipped('Skip test, no need to run in GH Actions');
         }
 
     }
 
-    public function testLogoUploadWorks()
+    public function test_logo_upload_works()
     {
         Storage::fake('avatars');
 
@@ -56,7 +51,7 @@ class UploadLogoTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $data);
+        ])->put('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $data);
 
         $response->assertStatus(200);
 
@@ -69,7 +64,7 @@ class UploadLogoTest extends TestCase
         $this->assertNotNull($logo_file);
     }
 
-    public function testLogoUploadfailure()
+    public function test_logo_uploadfailure()
     {
         Storage::fake('avatars');
 
@@ -81,14 +76,14 @@ class UploadLogoTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $data);
+        ])->put('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $data);
 
-        //$acc = $response->json();
+        // $acc = $response->json();
 
         $response->assertStatus(302);
     }
 
-    public function testLogoUploadNoAttribute()
+    public function test_logo_upload_no_attribute()
     {
         Storage::fake('avatars');
 
@@ -99,7 +94,7 @@ class UploadLogoTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $data);
+        ])->put('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $data);
 
         $response->assertStatus(200);
     }

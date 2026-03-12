@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -44,26 +43,25 @@ class PurchaseOrderRepository extends BaseRepository
             });
 
             foreach ($data['invitations'] as $invitation) {
-                //if no invitations are present - create one.
-                if($invite = $this->getInvitation($invitation, 'PurchaseOrder')){
-                    if($dn_enabled){
+                // if no invitations are present - create one.
+                if ($invite = $this->getInvitation($invitation, 'PurchaseOrder')) {
+                    if ($dn_enabled) {
                         $invite->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
                         $invite->saveQuietly();
                     }
-                }
-                else{
+                } else {
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
 
-                    //make sure we are creating an invite for a contact who belongs to the vendor only!
+                    // make sure we are creating an invite for a contact who belongs to the vendor only!
                     $contact = VendorContact::find($invitation['vendor_contact_id']);
 
                     if ($contact && $purchase_order->vendor_id == $contact->vendor_id) {
                         $new_invitation = PurchaseOrderInvitation::withTrashed()
-                                            ->where('vendor_contact_id', $contact->id)
-                                            ->where('purchase_order_id', $purchase_order->id)
-                                            ->first();
+                            ->where('vendor_contact_id', $contact->id)
+                            ->where('purchase_order_id', $purchase_order->id)
+                            ->first();
 
                         if ($new_invitation && $new_invitation->trashed()) {
                             $new_invitation->restore();
@@ -80,13 +78,13 @@ class PurchaseOrderRepository extends BaseRepository
             }
         }
 
-        /* If no invitations have been created, this is our fail safe to maintain state*/
+        /* If no invitations have been created, this is our fail safe to maintain state */
         if ($purchase_order->invitations()->count() == 0) {
             $purchase_order->service()->createInvitations();
         }
 
-        if($dn_enabled && $purchase_order->invitations()->where('can_sign', true)->count() == 0){
-            $ii = $purchase_order->invitations()->whereHas('contact', function ($q){
+        if ($dn_enabled && $purchase_order->invitations()->where('can_sign', true)->count() == 0) {
+            $ii = $purchase_order->invitations()->whereHas('contact', function ($q) {
                 $q->where('is_primary', true);
             })->first() ?? $purchase_order->invitations()->first();
             $ii->can_sign = true;
@@ -106,7 +104,7 @@ class PurchaseOrderRepository extends BaseRepository
 
     public function getInvitation($invitation, $resource = null)
     {
-        if (is_array($invitation) && ! array_key_exists('key', $invitation)) {
+        if (is_array($invitation) && !array_key_exists('key', $invitation)) {
             return false;
         }
 

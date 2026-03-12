@@ -6,13 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\Client;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * ProjectFilters.
@@ -22,8 +24,6 @@ class ProjectFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -32,13 +32,13 @@ class ProjectFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('name', 'like', '%' . $filter . '%')
-                  ->orWhereHas('client', function ($q) use ($filter) {
-                      $q->where('name', 'like', '%' . $filter . '%');
-                  })
-                  ->orWhere('public_notes', 'like', '%' . $filter . '%')
-                  ->orWhere('private_notes', 'like', '%' . $filter . '%');
+                ->orWhereHas('client', function ($q) use ($filter) {
+                    $q->where('name', 'like', '%' . $filter . '%');
+                })
+                ->orWhere('public_notes', 'like', '%' . $filter . '%')
+                ->orWhere('private_notes', 'like', '%' . $filter . '%');
         });
     }
 
@@ -54,14 +54,13 @@ class ProjectFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing('projects'))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], Schema::getColumnListing('projects'))) {
             return $this->builder;
         }
 
@@ -69,7 +68,7 @@ class ProjectFilters extends QueryFilters
 
         if ($sort_col[0] == 'client_id') {
             return $this->builder->orderByRaw('ISNULL(client_id), client_id ' . $dir)
-                    ->orderBy(\App\Models\Client::select('name')
+                ->orderBy(Client::select('name')
                     ->whereColumn('clients.id', 'projects.client_id'), $dir);
         }
 
@@ -85,22 +84,21 @@ class ProjectFilters extends QueryFilters
      * date_range
      *
      * only filters on date
-     * @param  string $date_range in format column,start_date,end_date
-     * @return Builder
+     *
+     * @param  string  $date_range  in format column,start_date,end_date
      */
     public function date_range(string $date_range = ''): Builder
     {
-        $parts = explode(",", $date_range);
+        $parts = explode(',', $date_range);
 
-        if (count($parts) != 3 || !in_array($parts[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (count($parts) != 3 || !in_array($parts[0], Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
         try {
 
-            $start_date = \Carbon\Carbon::parse($parts[1]);
-            $end_date = \Carbon\Carbon::parse($parts[2]);
-
+            $start_date = Carbon::parse($parts[1]);
+            $end_date = Carbon::parse($parts[2]);
 
             return $this->builder->whereBetween($parts[0], [$start_date, $end_date]);
         } catch (\Exception $e) {
@@ -108,10 +106,9 @@ class ProjectFilters extends QueryFilters
         }
 
     }
+
     /**
      * Filters the query by the users company ID.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {

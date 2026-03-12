@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,8 +26,6 @@ class QueryLogging
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure $next
      *
      * @return mixed
      */
@@ -36,18 +33,19 @@ class QueryLogging
     {
 
         // Enable query logging for development
-        if (! Ninja::isHosted() || ! config('beacon.enabled')) {
+        if (!Ninja::isHosted() || !config('beacon.enabled')) {
             return $next($request);
         }
 
         DB::enableQueryLog();
+
         return $next($request);
 
     }
 
     public function terminate($request, $response)
     {
-        if (! Ninja::isHosted() || ! config('beacon.enabled')) {
+        if (!Ninja::isHosted() || !config('beacon.enabled')) {
             return;
         }
 

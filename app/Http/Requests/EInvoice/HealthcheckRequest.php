@@ -6,22 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice;
 
-use App\Utils\Ninja;
 use App\Http\Requests\Request;
+use App\Models\User;
+use App\Utils\Ninja;
 use Illuminate\Auth\Access\AuthorizationException;
 
 class HealthcheckRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -29,7 +27,7 @@ class HealthcheckRequest extends Request
             return true;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return Ninja::isSelfHost() && $user->account->isPaid();

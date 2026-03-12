@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use Crypt;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -20,10 +20,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class BankAccount.
  *
- * @property-read \App\Models\Bank|null $bank
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
+ * @property-read Bank|null $bank
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
  * @property-read int|null $bank_subaccounts_count
  * @property-read mixed $hashed_id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|BankAccount newModelQuery()
@@ -33,18 +34,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|BankAccount withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|BankAccount withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankSubaccount> $bank_subaccounts
+ *
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ * @property-read Collection<int, BankSubaccount> $bank_subaccounts
+ *
  * @mixin \Eloquent
  */
 class BankAccount extends BaseModel
@@ -65,9 +68,6 @@ class BankAccount extends BaseModel
         return Crypt::decrypt($this->username);
     }
 
-    /**
-     * @param $value
-     */
     public function setUsername($value)
     {
         $this->username = Crypt::encrypt($value);

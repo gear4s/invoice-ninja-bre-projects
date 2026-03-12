@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,7 +26,7 @@ trait Inviteable
     /**
      * Gets the status.
      *
-     * @return     string  The status.
+     * @return string The status.
      */
     public function getStatus(): string
     {
@@ -52,7 +51,7 @@ trait Inviteable
     {
 
         if (Ninja::isHosted()) {
-            /**@var \App\Models\Company $company */
+            /** @var \App\Models\Company $company */
             $domain = $this->company->domain();
         } else {
             $domain = config('ninja.app_url');
@@ -73,7 +72,7 @@ trait Inviteable
 
         $renderer = new ImageRenderer(
             new RendererStyle(150, margin: 0),
-            new SvgImageBackEnd()
+            new SvgImageBackEnd
         );
         $writer = new Writer($renderer);
 

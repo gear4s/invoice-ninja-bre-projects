@@ -6,45 +6,45 @@ return [
 
     'greeting' => 'Mirë se vini në E-Faturim, :name!',
 
-    'intro' => "Ky shërbim ju mundëson që të:",
-    'intro_items' => "
+    'intro' => 'Ky shërbim ju mundëson që të:',
+    'intro_items' => '
         • Dërgoni dhe merrni fatura në mënyrë elektronike<br>
         • Siguroni përputhshmëri me rregulloret tatimore<br>
         • Përshpejtoni përpunimin e pagesave<br>
         • Reduktoni futjen manuale të të dhënave dhe gabimet<br>
-    ",
+    ',
 
     'requirements_title' => 'Kërkesa të Rëndësishme',
     'requirements_intro' => 'Për të siguruar e-faturim të suksesshëm, ju lutemi verifikoni këto të dhëna të rëndësishme të biznesit:',
-    'requirements_items' => "
+    'requirements_items' => '
             • Emri Zyrtar i Biznesit - Duhet të përputhet saktësisht me regjistrimin tuaj zyrtar<br>
             • Numri NIPT/TVSH - Duhet të jetë i përditësuar dhe i vërtetuar<br>
             • Identifikuesit e Biznesit (NUIS/EORI/GLN) - Duhet të jenë të saktë dhe aktivë<br>
             • Adresa e Biznesit - Duhet të përputhet me regjistrat zyrtarë<br>
             • Të Dhënat e Kontaktit - Duhet të jenë të përditësuara dhe të monitoruara<br>
-        ",
+        ',
 
     'validation_title' => 'Pse Informacioni i Saktë është i Rëndësishëm',
-    'validation_items' => "
+    'validation_items' => '
             • Detajet e pasakta mund të shkaktojnë refuzimin e faturave<br>
             • Autoritetet tatimore kërkojnë përputhje të saktë të numrave të regjistrimit<br>
             • Sistemet e pagesave mbështeten në identifikuesit e saktë të biznesit<br>
             • Përputhshmëria ligjore varet nga informacioni i saktë i biznesit<br>
-        ",
+        ',
 
     'next_steps' => 'Hapat e Ardhshëm',
-    'next_steps_items' => "
+    'next_steps_items' => '
             1. Rishikoni detajet e kompanisë suaj në cilësimet e llogarisë<br>
             2. Përditësoni çdo informacion të vjetëruar<br>
             3. Verifikoni numrat e regjistrimit tatimor<br>
             4. Dërgoni një e-faturë test<br>
-        ",
+        ',
     'support_title' => 'Ju Nevojitet Ndihmë?',
-    'support_message' => "Ekipi ynë i mbështetjes është gati të ndihmojë me çdo pyetje në lidhje me kërkesat ose konfigurimin e e-faturimit.<br>
+    'support_message' => 'Ekipi ynë i mbështetjes është gati të ndihmojë me çdo pyetje në lidhje me kërkesat ose konfigurimin e e-faturimit.<br>
                     Kontaktoni mbështetjen: :email<br>
                     Faleminderit që zgjodhët shërbimin tonë të e-faturimit.<br>
-    ",
-    "text" => "
+    ',
+    'text' => '
     Aktivizimi i E-Faturimit
 
 Mirë se vini në E-Faturim.
@@ -87,6 +87,6 @@ Ekipi ynë i mbështetjes është gati të ndihmojë me çdo pyetje në lidhje m
 Kontaktoni mbështetjen: contact@invoiceninja.com
 
 Faleminderit që zgjodhët shërbimin tonë të e-faturimit.
-    "
+    ',
 
 ];

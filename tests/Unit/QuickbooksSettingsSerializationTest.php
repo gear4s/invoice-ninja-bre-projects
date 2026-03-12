@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,14 +24,13 @@ use Tests\TestCase;
  */
 class QuickbooksSettingsSerializationTest extends TestCase
 {
-
     /**
      * Test that demonstrates toArray() provides explicit control over enum serialization.
-     * 
+     *
      * While get_object_vars() + json_encode() works (json_encode handles enums),
      * toArray() provides explicit, controlled serialization that's more maintainable.
      */
-    public function testToArrayProvidesExplicitEnumSerialization()
+    public function test_to_array_provides_explicit_enum_serialization()
     {
         $syncMap = new QuickbooksSyncMap([
             'direction' => SyncDirection::PULL->value,
@@ -46,16 +44,16 @@ class QuickbooksSettingsSerializationTest extends TestCase
         // Verify explicit serialization works correctly
         $this->assertIsString($decoded['direction']);
         $this->assertEquals('pull', $decoded['direction']);
-        
+
         // toArray() explicitly converts enum to string value
-        $this->assertIsString($array['direction'], 
+        $this->assertIsString($array['direction'],
             'toArray() explicitly returns enum as string value');
     }
 
     /**
      * Test that the new toArray() method properly serializes enums.
      */
-    public function testNewSerializationMethodWorksWithEnums()
+    public function test_new_serialization_method_works_with_enums()
     {
         $settings = new QuickbooksSettings([
             'accessTokenKey' => 'test_token',
@@ -85,10 +83,10 @@ class QuickbooksSettingsSerializationTest extends TestCase
         // Verify enum values are properly serialized as strings
         $this->assertIsString($decoded['settings']['client']['direction']);
         $this->assertEquals('pull', $decoded['settings']['client']['direction']);
-        
+
         $this->assertIsString($decoded['settings']['invoice']['direction']);
         $this->assertEquals('push', $decoded['settings']['invoice']['direction']);
-        
+
         $this->assertIsString($decoded['settings']['product']['direction']);
         $this->assertEquals('bidirectional', $decoded['settings']['product']['direction']);
     }
@@ -96,7 +94,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
     /**
      * Test that nested objects are properly serialized.
      */
-    public function testNestedObjectsAreProperlySerialized()
+    public function test_nested_objects_are_properly_serialized()
     {
         $settings = new QuickbooksSettings([
             'accessTokenKey' => 'test_token',
@@ -109,7 +107,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
                 'client' => [
                     'direction' => SyncDirection::PULL->value,
                 ],
-               
+
             ],
         ]);
 
@@ -129,7 +127,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
     /**
      * Test round-trip serialization through the cast.
      */
-    public function testRoundTripSerializationThroughCast()
+    public function test_round_trip_serialization_through_cast()
     {
         $originalSettings = new QuickbooksSettings([
             'accessTokenKey' => 'test_token_123',
@@ -151,16 +149,17 @@ class QuickbooksSettingsSerializationTest extends TestCase
             ],
         ]);
 
-        $cast = new QuickbooksSettingsCast();
+        $cast = new QuickbooksSettingsCast;
 
         // Create a mock model for the cast
-        $model = new class extends Model {
+        $model = new class extends Model
+        {
             // Empty model for testing
         };
 
         // Serialize (set)
         $serialized = $cast->set($model, 'quickbooks', $originalSettings, []);
-        
+
         $this->assertNotNull($serialized);
         $this->assertIsString($serialized);
 
@@ -168,7 +167,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
         $deserialized = $cast->get($model, 'quickbooks', $serialized, []);
 
         $this->assertInstanceOf(QuickbooksSettings::class, $deserialized);
-        
+
         // Verify all properties are preserved
         $this->assertEquals($originalSettings->accessTokenKey, $deserialized->accessTokenKey);
         $this->assertEquals($originalSettings->refresh_token, $deserialized->refresh_token);
@@ -183,10 +182,10 @@ class QuickbooksSettingsSerializationTest extends TestCase
         // Verify enum values are preserved correctly
         $this->assertInstanceOf(QuickbooksSyncMap::class, $deserialized->settings->client);
         $this->assertEquals(SyncDirection::PULL, $deserialized->settings->client->direction);
-        
+
         $this->assertInstanceOf(QuickbooksSyncMap::class, $deserialized->settings->invoice);
         $this->assertEquals(SyncDirection::PUSH, $deserialized->settings->invoice->direction);
-        
+
         $this->assertInstanceOf(QuickbooksSyncMap::class, $deserialized->settings->product);
         $this->assertEquals(SyncDirection::BIDIRECTIONAL, $deserialized->settings->product->direction);
     }
@@ -194,7 +193,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
     /**
      * Test that all entity types are properly serialized.
      */
-    public function testAllEntityTypesAreSerialized()
+    public function test_all_entity_types_are_serialized()
     {
         $settings = new QuickbooksSettings([
             'settings' => [
@@ -213,7 +212,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
         $array = $settings->toArray();
 
         $entities = ['client', 'vendor', 'invoice', 'sales', 'quote', 'purchase_order', 'product', 'payment', 'expense'];
-        
+
         foreach ($entities as $entity) {
             $this->assertArrayHasKey($entity, $array['settings'], "Entity {$entity} should be in serialized array");
             $this->assertArrayHasKey('direction', $array['settings'][$entity], "Entity {$entity} should have direction");
@@ -224,9 +223,9 @@ class QuickbooksSettingsSerializationTest extends TestCase
     /**
      * Test that empty/default settings serialize correctly.
      */
-    public function testEmptySettingsSerializeCorrectly()
+    public function test_empty_settings_serialize_correctly()
     {
-        $settings = new QuickbooksSettings();
+        $settings = new QuickbooksSettings;
 
         $array = $settings->toArray();
 
@@ -241,7 +240,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
         // Verify settings structure exists
         $this->assertIsArray($array['settings']);
         $this->assertArrayHasKey('client', $array['settings']);
-        
+
         // Verify default direction is BIDIRECTIONAL
         $this->assertEquals('none', $array['settings']['client']['direction']);
     }
@@ -249,7 +248,7 @@ class QuickbooksSettingsSerializationTest extends TestCase
     /**
      * Test that JSON produced by toArray() can be decoded and reconstructed.
      */
-    public function testJsonCanBeDecodedAndReconstructed()
+    public function test_json_can_be_decoded_and_reconstructed()
     {
         $originalSettings = new QuickbooksSettings([
             'accessTokenKey' => 'token_123',

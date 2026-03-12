@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\DataMapper\CompanySettings;
 use Tests\TestCase;
 
 /**
- *
  *   App\Http\Requests\Company\UpdateCompanyRequest
  */
 class CompanySettingsSaveableTest extends TestCase
@@ -26,7 +24,7 @@ class CompanySettingsSaveableTest extends TestCase
         parent::setUp();
     }
 
-    public function testSettingsSaverWithFreePlan()
+    public function test_settings_saver_with_free_plan()
     {
         $filtered = $this->filterSaver(CompanySettings::defaults());
 
@@ -44,7 +42,7 @@ class CompanySettingsSaveableTest extends TestCase
         $saveable_cast = CompanySettings::$free_plan_casts;
 
         foreach ($settings as $key => $value) {
-            if (! array_key_exists($key, $saveable_cast)) {
+            if (!array_key_exists($key, $saveable_cast)) {
                 unset($settings->{$key});
             }
         }

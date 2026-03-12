@@ -6,7 +6,6 @@
  * @link https://github.com/entityninja/entityninja source repository
  *
  * @copyright Copyright (c) 2022. Entity Ninja LLC (https://entityninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Jobs\Entity;
 
 use App\Exceptions\FilePermissionsFailure;
 use App\Jobs\EDocument\MergeEDocument;
+use App\Models\Company;
 use App\Models\Credit;
 use App\Models\CreditInvitation;
 use App\Models\Invoice;
@@ -33,15 +33,15 @@ use App\Utils\Traits\Pdf\PdfMaker;
 
 class CreateRawPdf
 {
-    use NumberFormatter;
-    use MakesInvoiceHtml;
-    use PdfMaker;
     use MakesHash;
+    use MakesInvoiceHtml;
+    use NumberFormatter;
     use PageNumbering;
+    use PdfMaker;
 
     public Invoice|Credit|Quote|RecurringInvoice|PurchaseOrder $entity;
 
-    public \App\Models\Company $company;
+    public Company $company;
 
     public $contact;
 
@@ -49,9 +49,6 @@ class CreateRawPdf
 
     public $entity_string = '';
 
-    /**
-     * @param $invitation
-     */
     public function __construct($invitation, private ?string $type = null)
     {
 
@@ -125,7 +122,7 @@ class CreateRawPdf
 
         if ($this->isBlankPdf($pdf)) {
 
-            nlog("Blank PDF detected, generating again");
+            nlog('Blank PDF detected, generating again');
             $pdf = $this->generatePdf();
         }
 
@@ -170,7 +167,7 @@ class CreateRawPdf
             throw new FilePermissionsFailure('Unable to generate the raw PDF => ' . $e->getMessage());
         }
 
-        if ($this->entity_string == "invoice" && $this->entity->client->getSetting("merge_e_invoice_to_pdf")) {
+        if ($this->entity_string == 'invoice' && $this->entity->client->getSetting('merge_e_invoice_to_pdf')) {
             $pdf = (new MergeEDocument($this->entity, $pdf))->handle();
         }
 
@@ -186,7 +183,7 @@ class CreateRawPdf
     public function failed($exception = null)
     {
         if ($exception) {
-            nlog("CREATERAWPDF:: " . $exception->getMessage());
+            nlog('CREATERAWPDF:: ' . $exception->getMessage());
         }
     }
 }

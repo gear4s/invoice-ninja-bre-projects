@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
 use App\Events\Invoice\InvoiceWasPaid;
+use App\Events\Invoice\InvoiceWasUpdated;
 use App\Events\Payment\PaymentWasCreated;
 use App\Factory\PaymentFactory;
 use App\Libraries\Currency\Conversion\CurrencyApi;
@@ -33,7 +33,7 @@ class MarkPaid extends AbstractService
 
     public function run()
     {
-        /*Don't double pay*/
+        /* Don't double pay */
         if ($this->invoice->status_id == Invoice::STATUS_PAID) {
             return $this->invoice;
         }
@@ -46,16 +46,17 @@ class MarkPaid extends AbstractService
 
             if ($this->invoice->status_id == Invoice::STATUS_PAID) {
                 $already_paid = true;
+
                 return;
             }
 
             if ($this->invoice->status_id == Invoice::STATUS_DRAFT) {
 
-                /*Set status*/
+                /* Set status */
                 $this->invoice->status_id = Invoice::STATUS_SENT;
                 $this->invoice->balance = $this->invoice->amount;
 
-                /*Update ledger*/
+                /* Update ledger */
                 $this->invoice
                     ->ledger()
                     ->updateInvoiceBalance($this->invoice->amount, "Invoice {$this->invoice->number} marked as sent.");
@@ -71,7 +72,7 @@ class MarkPaid extends AbstractService
 
                 $this->invoice->markInvitationsSent();
 
-                event(new \App\Events\Invoice\InvoiceWasUpdated($this->invoice, $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
+                event(new InvoiceWasUpdated($this->invoice, $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
             }
 
@@ -140,24 +141,24 @@ class MarkPaid extends AbstractService
         $this->invoice->next_send_date = null;
 
         $this->invoice
-                ->service()
-                ->applyNumber()
-                ->save();
+            ->service()
+            ->applyNumber()
+            ->save();
 
         $payment->ledger()
-                ->updatePaymentBalance($this->payable_balance * -1, "Marked Paid Activity");
+            ->updatePaymentBalance($this->payable_balance * -1, 'Marked Paid Activity');
 
-        //06-09-2022
+        // 06-09-2022
         $this->invoice
-             ->client
-             ->service()
-             ->updateBalanceAndPaidToDate($payment->amount * -1, $payment->amount)
-             ->save();
+            ->client
+            ->service()
+            ->updateBalanceAndPaidToDate($payment->amount * -1, $payment->amount)
+            ->save();
 
         $this->invoice = $this->invoice
-                             ->service()
-                             ->workFlow()
-                             ->save();
+            ->service()
+            ->workFlow()
+            ->save();
 
         /* Update Invoice balance */
         event(new PaymentWasCreated($payment, $payment->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
@@ -178,10 +179,10 @@ class MarkPaid extends AbstractService
         $company_currency = $payment->client->company->settings->currency_id;
 
         if ($company_currency != $client_currency) {
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $payment->exchange_rate = $exchange_rate->exchangeRate($client_currency, $company_currency, Carbon::parse($payment->date));
-            //$payment->exchange_currency_id = $client_currency; // 23/06/2021
+            // $payment->exchange_currency_id = $client_currency; // 23/06/2021
             $payment->exchange_currency_id = $company_currency;
 
             $payment->saveQuietly();

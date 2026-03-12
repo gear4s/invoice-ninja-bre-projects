@@ -5,7 +5,8 @@ use App\Models\Gateway;
 use App\Utils\Traits\AppSetup;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     use AppSetup;
 
     /**
@@ -43,7 +44,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

@@ -6,39 +6,37 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu;
 
+use App\DataMapper\Tax\BaseRule;
+use App\Helpers\Invoice\InvoiceSum;
+use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Helpers\Invoice\Taxer;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Models\Product;
 use App\Models\VerifactuLog;
-use App\Helpers\Invoice\Taxer;
-use App\Utils\Traits\MakesHash;
-use App\DataMapper\Tax\BaseRule;
-use App\Services\AbstractService;
-use App\Helpers\Invoice\InvoiceSum;
-use App\Utils\Traits\NumberFormatter;
-use App\Helpers\Invoice\InvoiceSumInclusive;
-use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
-use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
-use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
+use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
+use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
+use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
-use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
-use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 use App\Utils\BcMath;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\NumberFormatter;
+use Carbon\Carbon;
 
 class RegistroAlta
 {
-    use Taxer;
-    use NumberFormatter;
     use MakesHash;
+    use NumberFormatter;
+    use Taxer;
 
     private Company $company;
 
@@ -53,12 +51,13 @@ class RegistroAlta
     private string $current_timestamp;
 
     private array $calculated_invoice_values = [];
+
     private array $impuesto_codes = [
         '01' => 'IVA (Impuesto sobre el Valor Añadido)', // Value Added Tax - Standard Spanish VAT
         '02' => 'IPSI (Impuesto sobre la Producción, los Servicios y la Importación)', // Production, Services and Import Tax - Ceuta and Melilla
         '03' => 'IGIC (Impuesto General Indirecto Canario)', // Canary Islands General Indirect Tax
         '05' => 'Otros (Others)', // Other taxes
-        '06' => 'IAE', //local taxes - rarely used
+        '06' => 'IAE', // local taxes - rarely used
         '07' => 'Non-Vat / Exempt operations',
     ];
 
@@ -96,7 +95,7 @@ class RegistroAlta
     {
         $this->company = $invoice->company;
         // $this->calc = $this->invoice->calc();
-        $this->v_invoice = new VerifactuInvoice();
+        $this->v_invoice = new VerifactuInvoice;
     }
 
     private function setInvoiceValues(Invoice $invoice): self
@@ -123,10 +122,9 @@ class RegistroAlta
 
         return $this;
     }
+
     /**
      * Entry point for building document
-     *
-     * @return self
      */
     public function run(): self
     {
@@ -138,64 +136,63 @@ class RegistroAlta
 
         $this->current_timestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
 
-        $date = \Carbon\Carbon::parse($this->invoice->date);
+        $date = Carbon::parse($this->invoice->date);
 
         // Ensure it’s not later than "now" in Spain
-        $now = \Carbon\Carbon::now('Europe/Madrid');
+        $now = Carbon::now('Europe/Madrid');
 
         if ($date->greaterThan($now)) {
             $date = $now;
             $this->invoice->date = $date->format('Y-m-d');
         }
 
-
         $formattedDate = $date->format('d-m-Y');
 
         $this->v_invoice
             ->setIdVersion('1.0')
-            ->setIdFactura((new IDFactura())
+            ->setIdFactura((new IDFactura)
                 ->setIdEmisorFactura($this->company->settings->vat_number)
                 ->setNumSerieFactura($this->invoice->number)
                 ->setFechaExpedicionFactura($formattedDate))
-            ->setNombreRazonEmisor($this->company->present()->name()) //company name
-            ->setTipoFactura('F1') //invoice type
+            ->setNombreRazonEmisor($this->company->present()->name()) // company name
+            ->setTipoFactura('F1') // invoice type
             ->setDescripcionOperacion('Alta')// It IS! manadatory - max chars 500
-            ->setCuotaTotal($this->calc->getTotalTaxes()) //total taxes
-            ->setImporteTotal($this->calc->getTotal()) //total invoice amount
-            ->setFechaHoraHusoGenRegistro($this->current_timestamp) //creation/submission timestamp
-            ->setTipoHuella('01') //sha256
+            ->setCuotaTotal($this->calc->getTotalTaxes()) // total taxes
+            ->setImporteTotal($this->calc->getTotal()) // total invoice amount
+            ->setFechaHoraHusoGenRegistro($this->current_timestamp) // creation/submission timestamp
+            ->setTipoHuella('01') // sha256
             ->setHuella('PLACEHOLDER_HUELLA');
 
         /** The business entity that is issuing the invoice */
-        $emisor = new PersonaFisicaJuridica();
+        $emisor = new PersonaFisicaJuridica;
         $emisor->setNif(substr($this->company->settings->vat_number, 0, 9))
-                ->setNombreRazon($this->invoice->company->present()->name());
+            ->setNombreRazon($this->invoice->company->present()->name());
 
         /** The business entity (Client) that is receiving the invoice */
         $destinatarios = [];
-        $destinatario = new PersonaFisicaJuridica();
+        $destinatario = new PersonaFisicaJuridica;
 
-        //Spanish NIF/VAT
+        // Spanish NIF/VAT
         if ($this->invoice->client->country_id == 724 && strlen($this->invoice->client->vat_number ?? '') > 5) {
             $destinatario
                 ->setNif($this->invoice->client->vat_number)
                 ->setNombreRazon($this->invoice->client->present()->name());
         } elseif ($this->invoice->client->country_id == 724) { // Spanish Passport
 
-            $destinatario = new IDOtro();
+            $destinatario = new IDOtro;
             $destinatario->setNombreRazon($this->invoice->client->present()->name());
             $destinatario->setCodigoPais('ES')
-                        ->setIdType('03')
-                        ->setId($this->invoice->client->id_number ?? '');
+                ->setIdType('03')
+                ->setId($this->invoice->client->id_number ?? '');
 
         } else {
             $locationData = $this->invoice->service()->location();
 
-            $destinatario = new IDOtro();
+            $destinatario = new IDOtro;
             $destinatario->setNombreRazon($this->invoice->client->present()->name());
             $destinatario->setCodigoPais($locationData['country_code']);
 
-            $br = new \App\DataMapper\Tax\BaseRule();
+            $br = new BaseRule;
 
             if (in_array($locationData['country_code'], $br->eu_country_codes) && strlen($this->invoice->client->vat_number ?? '') > 0) {
                 $destinatario->setIdType('03');
@@ -208,9 +205,9 @@ class RegistroAlta
         $this->v_invoice->setDestinatarios($destinatarios);
 
         // The tax breakdown
-        $desglose = new Desglose();
+        $desglose = new Desglose;
 
-        //Combine the line taxes with invoice taxes here to get a total tax amount
+        // Combine the line taxes with invoice taxes here to get a total tax amount
         $taxes = $this->calc->getTaxMap();
 
         $desglose_iva = [];
@@ -218,19 +215,19 @@ class RegistroAlta
         foreach ($taxes as $tax) {
 
             $desglose_iva = [
-                'Impuesto' => $this->calculateTaxType($tax['name']), //tax type
-                'ClaveRegimen' => $this->calculateRegimeClassification($tax['name']), //tax regime classification code
-                'CalificacionOperacion' => $this->calculateOperationClassification($tax['name']), //operation classification code
+                'Impuesto' => $this->calculateTaxType($tax['name']), // tax type
+                'ClaveRegimen' => $this->calculateRegimeClassification($tax['name']), // tax regime classification code
+                'CalificacionOperacion' => $this->calculateOperationClassification($tax['name']), // operation classification code
                 'BaseImponible' => $tax['base_amount'] ?? $this->calc->getNetSubtotal(), // taxable base amount - fixed: key matches DetalleDesglose::toXml()
                 'TipoImpositivo' => $tax['tax_rate'], // Tax Rate
                 'Cuota' => $tax['total'], // Tax Amount - fixed: key matches DetalleDesglose::toXml()
             ];
 
-            $detalle_desglose = new DetalleDesglose();
+            $detalle_desglose = new DetalleDesglose;
             $detalle_desglose->setDesgloseIVA($desglose_iva);
             $desglose->addDesgloseIVA($detalle_desglose);
 
-        };
+        }
 
         if (count($taxes) == 0) {
 
@@ -241,7 +238,7 @@ class RegistroAlta
             $clave_regimen = '08';
             $calificacion = 'S1';
 
-            $br = new \App\DataMapper\Tax\BaseRule();
+            $br = new BaseRule;
 
             /** EU B2B */
             if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
@@ -259,13 +256,13 @@ class RegistroAlta
             }
 
             $desglose_iva = [
-                'Impuesto' => $impuesto, //tax type
-                'ClaveRegimen' => $clave_regimen, //tax regime classification code
-                'CalificacionOperacion' => $calificacion, //operation classification code
+                'Impuesto' => $impuesto, // tax type
+                'ClaveRegimen' => $clave_regimen, // tax regime classification code
+                'CalificacionOperacion' => $calificacion, // operation classification code
                 'BaseImponible' => $this->calc->getNetSubtotal(), // taxable base amount - fixed: key matches DetalleDesglose::toXml()
             ];
 
-            $detalle_desglose = new DetalleDesglose();
+            $detalle_desglose = new DetalleDesglose;
             $detalle_desglose->setDesgloseIVA($desglose_iva);
             $desglose->addDesgloseIVA($detalle_desglose);
 
@@ -274,12 +271,12 @@ class RegistroAlta
         $this->v_invoice->setDesglose($desglose);
 
         // Encadenamiento
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
 
         // We chain the previous hash to the current invoice to ensure consistency
         if ($this->v_log) {
 
-            $registro_anterior = new RegistroAnterior();
+            $registro_anterior = new RegistroAnterior;
             $registro_anterior->setIDEmisorFactura($this->v_log->nif);
             $registro_anterior->setNumSerieFactura($this->v_log->invoice_number);
             $registro_anterior->setFechaExpedicionFactura($this->v_log->date->format('d-m-Y'));
@@ -295,11 +292,11 @@ class RegistroAlta
 
         $this->v_invoice->setEncadenamiento($encadenamiento);
 
-        //Sending system information - We automatically generate the obligado emision from this later
-        $sistema = new SistemaInformatico();
+        // Sending system information - We automatically generate the obligado emision from this later
+        $sistema = new SistemaInformatico;
         $sistema
             // ->setNombreRazon('Sistema de Facturación')
-            ->setNombreRazon(config('services.verifactu.sender_name')) //must match the cert name
+            ->setNombreRazon(config('services.verifactu.sender_name')) // must match the cert name
             ->setNif(config('services.verifactu.sender_nif'))
             ->setNombreSistemaInformatico('InvoiceNinja')
             ->setIdSistemaInformatico('77')
@@ -319,7 +316,7 @@ class RegistroAlta
 
         $document_type = 'R2';
 
-        //need to harvest the parent invoice!!
+        // need to harvest the parent invoice!!
         $_i = Invoice::withTrashed()->find($this->decodePrimaryKey($this->invoice->backup->parent_invoice_id));
 
         if (!$_i) {
@@ -341,7 +338,7 @@ class RegistroAlta
             [
                 'IDEmisorFactura' => $this->company->settings->vat_number,
                 'NumSerieFactura' => $_i->number,
-                'FechaExpedicionFactura' => \Carbon\Carbon::parse($_i->date)->format('d-m-Y'),
+                'FechaExpedicionFactura' => Carbon::parse($_i->date)->format('d-m-Y'),
             ],
         ];
 
@@ -383,7 +380,7 @@ class RegistroAlta
             return '01';
         }
 
-        $br = new \App\DataMapper\Tax\BaseRule();
+        $br = new BaseRule;
         if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
             return '08';
         } elseif (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification == 'individual') {
@@ -419,7 +416,7 @@ class RegistroAlta
             return '01';
         }
 
-        $br = new \App\DataMapper\Tax\BaseRule();
+        $br = new BaseRule;
         if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
             return '08';
         } elseif (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification == 'individual') {
@@ -437,5 +434,4 @@ class RegistroAlta
 
         return 'N2';
     }
-
 }

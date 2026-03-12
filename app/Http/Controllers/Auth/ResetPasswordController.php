@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 
 class ResetPasswordController extends Controller
 {
@@ -61,7 +61,7 @@ class ResetPasswordController extends Controller
 
         if (Ninja::isHosted()) {
             MultiDB::findAndSetDbByCompanyKey($request->session()->get('company_key'));
-            /** @var \App\Models\Company $company **/
+            /** @var Company $company * */
             $company = Company::where('company_key', $request->session()->get('company_key'))->first();
         }
 
@@ -71,16 +71,15 @@ class ResetPasswordController extends Controller
             $account = Account::first();
         }
 
-
         return $this->render('auth.passwords.reset', ['root' => 'themes', 'token' => $token, 'account' => $account, 'email' => $request->email]);
     }
 
     /**
      * Reset the given user's password.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse | \Illuminate\Http\RedirectResponse|JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
+     * @return RedirectResponse | RedirectResponse|JsonResponse
+     *
+     * @throws ValidationException
      */
     public function reset(Request $request)
     {
@@ -140,9 +139,8 @@ class ResetPasswordController extends Controller
     /**
      * Get the response for a successful password reset.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  string  $response
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     protected function sendResetResponse(Request $request, $response)
     {
@@ -159,5 +157,4 @@ class ResetPasswordController extends Controller
         // return redirect($this->redirectPath())
         //                     ->with('status', trans($response));
     }
-
 }

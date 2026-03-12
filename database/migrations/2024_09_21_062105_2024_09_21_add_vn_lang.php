@@ -2,8 +2,6 @@
 
 use App\Models\Currency;
 use App\Models\Language;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
@@ -13,20 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Language::unguard();
 
         $language = Language::find(42);
 
-        if (! $language) {
+        if (!$language) {
             Language::create(['id' => 42, 'name' => 'Vietnamese', 'locale' => 'vi']);
         }
 
-        if($currency = Currency::find(16)) {
+        if ($currency = Currency::find(16)) {
             $currency->symbol = '₫';
             $currency->save();
         }
-
 
     }
 

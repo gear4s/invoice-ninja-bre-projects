@@ -6,28 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
-use App\Models\Task;
-use App\Models\Quote;
+use App\Libraries\MultiDB;
 use App\Models\Client;
-use App\Models\Credit;
 use App\Models\Company;
+use App\Models\Credit;
+use App\Models\Document;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Project;
-use Livewire\Component;
-use App\Models\Document;
-use App\Libraries\MultiDB;
-use Livewire\WithPagination;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
+use App\Models\Task;
 use App\Utils\Traits\WithSorting;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class DocumentsTable extends Component
 {

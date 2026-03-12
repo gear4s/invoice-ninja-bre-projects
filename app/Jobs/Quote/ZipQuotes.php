@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Quote;
 
+use App\Jobs\Entity\CreateRawPdf;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
 use App\Jobs\Util\UnlinkFile;
@@ -26,6 +26,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use PhpZip\Exception\ZipException;
+use PhpZip\ZipFile;
 
 class ZipQuotes implements ShouldQueue
 {
@@ -54,7 +56,7 @@ class ZipQuotes implements ShouldQueue
         $this->settings = $this->company->settings;
 
         // create new zip object
-        $zipFile = new \PhpZip\ZipFile();
+        $zipFile = new ZipFile;
         $file_name = now()->addSeconds($this->company->timezone_offset())->format('Y-m-d-h-m-s') . '_' . str_replace(' ', '_', trans('texts.quotes')) . '.zip';
 
         $invitations = QuoteInvitation::query()->with('quote')->whereIn('quote_id', $this->quote_ids)->get();
@@ -67,15 +69,15 @@ class ZipQuotes implements ShouldQueue
             foreach ($invitations as $invitation) {
                 if ($invitation->quote->client->getSetting('enable_e_invoice')) {
                     $xml = $invitation->quote->service()->getEDocument();
-                    $zipFile->addFromString($invitation->quote->getFileName("xml"), $xml);
+                    $zipFile->addFromString($invitation->quote->getFileName('xml'), $xml);
                 }
-                $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
+                $file = (new CreateRawPdf($invitation))->handle();
                 $zipFile->addFromString($invitation->quote->numberFormatter() . '.pdf', $file);
             }
 
             Storage::put($path . $file_name, $zipFile->outputAsString());
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new DownloadQuotes(Storage::url($path . $file_name), $this->company);
             $nmo->to_user = $this->user;
             $nmo->settings = $this->settings;
@@ -85,8 +87,8 @@ class ZipQuotes implements ShouldQueue
 
             UnlinkFile::dispatch(config('filesystems.default'), $path . $file_name)->delay(now()->addHours(1));
 
-        } catch (\PhpZip\Exception\ZipException $e) {
-            nlog("zip build failed: " . $e->getMessage());
+        } catch (ZipException $e) {
+            nlog('zip build failed: ' . $e->getMessage());
         } finally {
             $zipFile->close();
         }
@@ -94,7 +96,7 @@ class ZipQuotes implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("ZipInvoices:: Exception:: => " . $exception->getMessage());
+        nlog('ZipInvoices:: Exception:: => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
     }
 }

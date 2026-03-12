@@ -10,9 +10,11 @@ use App\Http\Requests\Document\StoreDocumentRequest;
 use App\Http\Requests\Document\UpdateDocumentRequest;
 use App\Jobs\Document\ZipDocuments;
 use App\Models\Document;
+use App\Models\User;
 use App\Repositories\DocumentRepository;
 use App\Transformers\DocumentTransformer;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class DocumentController extends BaseController
@@ -50,27 +52,34 @@ class DocumentController extends BaseController
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of documents",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Document"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param DocumentFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function index(DocumentFilters $filters)
     {
@@ -92,7 +101,6 @@ class DocumentController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreDocumentRequest $request
      * @return void
      */
     public function store(StoreDocumentRequest $request)
@@ -103,9 +111,7 @@ class DocumentController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowDocumentRequest $request
-     * @param Document $document
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      */
     public function show(ShowDocumentRequest $request, Document $document)
     {
@@ -129,9 +135,7 @@ class DocumentController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditDocumentRequest $request
-     * @param Document $document
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      */
     public function edit(EditDocumentRequest $request, Document $document)
     {
@@ -141,16 +145,14 @@ class DocumentController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateDocumentRequest $request
-     * @param Document $document
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      */
     public function update(UpdateDocumentRequest $request, Document $document)
     {
         $document->fill($request->all());
         $document->save();
 
-        if ($document->documentable) { //@phpstan-ignore-line
+        if ($document->documentable) { // @phpstan-ignore-line
             $document->documentable->touch();
         }
 
@@ -160,9 +162,7 @@ class DocumentController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyDocumentRequest $request
-     * @param Document $document
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      */
     public function destroy(DestroyDocumentRequest $request, Document $document)
     {
@@ -173,7 +173,7 @@ class DocumentController extends BaseController
 
     public function bulk()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $action = request()->input('action');
@@ -182,12 +182,12 @@ class DocumentController extends BaseController
 
         $documents = Document::withTrashed()->whereIn('id', $this->transformKeys($ids))->company()->get();
 
-        if (! $documents) {
+        if (!$documents) {
             return response()->json(['message' => ctrans('texts.no_documents_found')]);
         }
 
         if ($action == 'download') {
-            ZipDocuments::dispatch($documents->pluck('id'), $user->company(), auth()->user()); //@phpstan-ignore-line
+            ZipDocuments::dispatch($documents->pluck('id'), $user->company(), auth()->user()); // @phpstan-ignore-line
 
             return response()->json(['message' => ctrans('texts.sent_message')], 200);
         }

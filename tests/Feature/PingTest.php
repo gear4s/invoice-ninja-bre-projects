@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\PingController
  */
 class PingTest extends TestCase
@@ -36,7 +34,7 @@ class PingTest extends TestCase
         );
     }
 
-    public function testPingEndPoint()
+    public function test_ping_end_point()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -46,7 +44,7 @@ class PingTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testHealthCheck()
+    public function test_health_check()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),

@@ -6,32 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\PurchaseOrder;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdatePurchaseOrderRequest extends Request
 {
     use ChecksEntityStatus;
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->purchase_order);
@@ -44,7 +43,7 @@ class UpdatePurchaseOrderRequest extends Request
      */
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -72,7 +71,7 @@ class UpdatePurchaseOrderRequest extends Request
         $rules['custom_surcharge3'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['custom_surcharge4'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('vendor_id', $this->purchase_order->vendor_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('vendor_id', $this->purchase_order->vendor_id)];
 
         return $rules;
     }
@@ -89,7 +88,7 @@ class UpdatePurchaseOrderRequest extends Request
             unset($input['documents']);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -107,16 +106,16 @@ class UpdatePurchaseOrderRequest extends Request
         }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
 
         $this->replace($input);

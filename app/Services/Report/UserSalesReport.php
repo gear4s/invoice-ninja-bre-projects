@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,15 +19,17 @@ use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class UserSalesReport extends BaseExport
 {
     use MakesDates;
-    //Name
-    //Invoice count
-    //Amount
-    //Amount with Tax
+
+    // Name
+    // Invoice count
+    // Amount
+    // Amount with Tax
     public Writer $csv;
 
     public string $date_key = 'created_at';
@@ -39,6 +40,7 @@ class UserSalesReport extends BaseExport
         'invoice_amount',
         'total_taxes',
     ];
+
     /**
         @param array $input
         [
@@ -48,7 +50,7 @@ class UserSalesReport extends BaseExport
             'clients',
             'client_id',
         ]
-    */
+     */
     public function __construct(public Company $company, public array $input) {}
 
     public function run()
@@ -60,13 +62,13 @@ class UserSalesReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = Invoice::query()
-                        ->withTrashed()
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0)
-                        ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL, Invoice::STATUS_PAID]);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL, Invoice::STATUS_PAID]);
 
         $query = $this->addDateRange($query, 'invoices');
 

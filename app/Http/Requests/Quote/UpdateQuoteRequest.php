@@ -6,32 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Quote;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdateQuoteRequest extends Request
 {
-    use MakesHash;
-    use CleanLineItems;
     use ChecksEntityStatus;
+    use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->quote);
@@ -39,7 +38,7 @@ class UpdateQuoteRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
         $rules = [];
 
@@ -59,7 +58,7 @@ class UpdateQuoteRequest extends Request
         $rules['date'] = 'bail|sometimes|date:Y-m-d';
 
         $rules['partial_due_date'] = ['bail', 'sometimes', 'nullable', 'exclude_if:partial,0', 'date', 'before:due_date', 'after_or_equal:date'];
-        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', 'after_or_equal:date', Rule::requiredIf(fn() => strlen($this->partial_due_date ?? '') > 1), 'date'];
+        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', 'after_or_equal:date', Rule::requiredIf(fn () => strlen($this->partial_due_date ?? '') > 1), 'date'];
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
 
         $rules['custom_surcharge1'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
@@ -67,7 +66,7 @@ class UpdateQuoteRequest extends Request
         $rules['custom_surcharge3'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['custom_surcharge4'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->quote->client_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->quote->client_id)];
 
         return $rules;
     }
@@ -80,7 +79,7 @@ class UpdateQuoteRequest extends Request
 
         $input['id'] = $this->quote->id;
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -102,18 +101,17 @@ class UpdateQuoteRequest extends Request
         }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
-
 
         $this->replace($input);
     }

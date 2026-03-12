@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,7 @@ class RecurringInvoiceFactory
 {
     public static function create(int $company_id, int $user_id): RecurringInvoice
     {
-        $invoice = new RecurringInvoice();
+        $invoice = new RecurringInvoice;
         $invoice->status_id = RecurringInvoice::STATUS_DRAFT;
         $invoice->discount = 0;
         $invoice->is_amount_discount = true;

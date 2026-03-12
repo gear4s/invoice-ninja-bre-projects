@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Services\Import\Quickbooks;
 
+use App\Services\Quickbooks\Contracts\SdkInterface as QuickbooksInterface;
+use App\Services\Quickbooks\Service as QuickbooksService;
+use Illuminate\Support\Collection;
 use Mockery;
 use Tests\TestCase;
-use Illuminate\Support\Collection;
-use App\Services\Quickbooks\Service as QuickbooksService;
-use App\Services\Quickbooks\Contracts\SdkInterface as QuickbooksInterface;
 
 class ServiceTest extends TestCase
 {
@@ -15,7 +15,7 @@ class ServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->markTestSkipped("no bueno");
+        $this->markTestSkipped('no bueno');
         // Inject the mock into the IntuitSDKservice instance
         $this->service = Mockery::mock(new QuickbooksService(Mockery::mock(QuickbooksInterface::class)))->shouldAllowMockingProtectedMethods();
     }
@@ -26,28 +26,28 @@ class ServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function testTotalRecords()
+    public function test_total_records()
     {
         $entity = 'Customer';
         $count = 10;
 
         $this->service->shouldReceive('totalRecords')
-                      ->with($entity)
-                      ->andReturn($count);
+            ->with($entity)
+            ->andReturn($count);
 
         $result = $this->service->totalRecords($entity);
 
         $this->assertEquals($count, $result);
     }
 
-    public function testHasFetchRecords()
+    public function test_has_fetch_records()
     {
         $entity = 'Customer';
         $count = 10;
 
         $this->service->shouldReceive('fetchRecords')
-                      ->with($entity, $count)
-                      ->andReturn(collect());
+            ->with($entity, $count)
+            ->andReturn(collect());
 
         $result = $this->service->fetchCustomers($count);
 

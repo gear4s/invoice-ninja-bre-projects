@@ -6,16 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\TaskScheduler;
 
-use App\Models\Design;
 use App\Http\Requests\Request;
-use Illuminate\Validation\Rule;
 use App\Http\ValidationRules\Scheduler\ValidClientIds;
+use App\Models\Design;
+use App\Models\User;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateSchedulerRequest extends Request
 {
@@ -60,12 +61,10 @@ class UpdateSchedulerRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin() && $this->task_scheduler->company_id == $user->company()->id;
@@ -81,34 +80,33 @@ class UpdateSchedulerRequest extends Request
             'next_run_client' => 'bail|sometimes|date:Y-m-d',
             'template' => 'bail|required|string',
             'parameters' => 'bail|array',
-            'parameters.clients' => ['bail','sometimes', 'array', new ValidClientIds()],
+            'parameters.clients' => ['bail', 'sometimes', 'array', new ValidClientIds],
             'parameters.date_range' => 'bail|sometimes|string|in:last7_days,last30_days,last365_days,this_month,last_month,this_quarter,last_quarter,this_year,last_year,all_time,custom,all',
             'parameters.start_date' => ['bail', 'sometimes', 'date:Y-m-d', 'required_if:parameters.date_range,custom'],
             'parameters.end_date' => ['bail', 'sometimes', 'date:Y-m-d', 'required_if:parameters.date_range,custom', 'after_or_equal:parameters.start_date'],
             'parameters.entity' => ['bail', 'sometimes', 'string', 'in:invoice,credit,quote,purchase_order'],
             'parameters.entity_id' => ['bail', 'sometimes', 'string'],
-            'parameters.report_name' => ['bail','sometimes', 'string', 'required_if:template,email_report','in:vendor,purchase_order_item,purchase_order,ar_detailed,ar_summary,client_balance,tax_summary,profitloss,client_sales,user_sales,product_sales,activity,activities,client,clients,client_contact,client_contacts,credit,credits,document,documents,expense,expenses,invoice,invoices,invoice_item,invoice_items,quote,quotes,quote_item,quote_items,recurring_invoice,recurring_invoices,payment,payments,product,products,task,tasks'],
-            'parameters.date_key' => ['bail','sometimes', 'string'],
-            'parameters.status' => ['bail','sometimes', 'nullable', 'string'],
-            'parameters.include_project_tasks' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
-            'parameters.auto_send' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
+            'parameters.report_name' => ['bail', 'sometimes', 'string', 'required_if:template,email_report', 'in:vendor,purchase_order_item,purchase_order,ar_detailed,ar_summary,client_balance,tax_summary,profitloss,client_sales,user_sales,product_sales,activity,activities,client,clients,client_contact,client_contacts,credit,credits,document,documents,expense,expenses,invoice,invoices,invoice_item,invoice_items,quote,quotes,quote_item,quote_items,recurring_invoice,recurring_invoices,payment,payments,product,products,task,tasks'],
+            'parameters.date_key' => ['bail', 'sometimes', 'string'],
+            'parameters.status' => ['bail', 'sometimes', 'nullable', 'string'],
+            'parameters.include_project_tasks' => ['bail', 'sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
+            'parameters.auto_send' => ['bail', 'sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
             // 'parameters.invoice_id' => ['bail','sometimes', 'string', 'required_if:template,payment_schedule'],
-            'parameters.auto_bill' => ['bail','sometimes', 'boolean', 'required_if:template,payment_schedule'],
+            'parameters.auto_bill' => ['bail', 'sometimes', 'boolean', 'required_if:template,payment_schedule'],
             'parameters.template' => ['bail', 'sometimes', 'nullable', 'string', Rule::in($this->templates)],
 
-            'parameters.schedule' => ['bail', 'array', 'required_if:template,payment_schedule','min:1'],
-            'parameters.schedule.*.id' => ['bail','sometimes', 'integer'],
-            'parameters.schedule.*.date' => ['bail','sometimes', 'date:Y-m-d'],
-            'parameters.schedule.*.amount' => ['bail','sometimes', 'numeric'],
-            'parameters.schedule.*.is_amount' => ['bail','sometimes', 'boolean'],
-            'parameters.template_id' => ['bail','sometimes', 'string', 'nullable'],
+            'parameters.schedule' => ['bail', 'array', 'required_if:template,payment_schedule', 'min:1'],
+            'parameters.schedule.*.id' => ['bail', 'sometimes', 'integer'],
+            'parameters.schedule.*.date' => ['bail', 'sometimes', 'date:Y-m-d'],
+            'parameters.schedule.*.amount' => ['bail', 'sometimes', 'numeric'],
+            'parameters.schedule.*.is_amount' => ['bail', 'sometimes', 'boolean'],
+            'parameters.template_id' => ['bail', 'sometimes', 'string', 'nullable'],
         ];
 
         return $rules;
     }
 
-
-    public function withValidator(\Illuminate\Validation\Validator $validator)
+    public function withValidator(Validator $validator)
     {
         $validator->after(function ($validator) {
             if (!empty($this->parameters['template_id']) && Design::where('id', $this->decodePrimaryKey($this->parameters['template_id']))->where('is_template', true)->company()->doesntExist()) {
@@ -139,18 +137,17 @@ class UpdateSchedulerRequest extends Request
 
         if (isset($input['parameters']['status'])) {
 
-
             $task_statuses = [];
 
             if (isset($input['parameters']['report_name']) && $input['parameters']['report_name'] == 'task') {
-                $task_statuses = array_diff(explode(",", $input['parameters']['status']), $this->client_statuses);
+                $task_statuses = array_diff(explode(',', $input['parameters']['status']), $this->client_statuses);
             }
 
-            $input['parameters']['status'] = collect(explode(",", $input['parameters']['status']))
-                                                    ->filter(function ($status) {
-                                                        return in_array($status, $this->client_statuses);
-                                                    })->merge($task_statuses)
-                                                    ->implode(",") ?? '';
+            $input['parameters']['status'] = collect(explode(',', $input['parameters']['status']))
+                ->filter(function ($status) {
+                    return in_array($status, $this->client_statuses);
+                })->merge($task_statuses)
+                ->implode(',') ?? '';
         }
 
         if (isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
@@ -171,5 +168,4 @@ class UpdateSchedulerRequest extends Request
             'parameters.invoice_id' => 'You must select an invoice.',
         ];
     }
-
 }

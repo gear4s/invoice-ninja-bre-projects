@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,7 +42,7 @@ class InvoiceController extends BaseController
     /**
      * InvoiceController constructor.
      *
-     * @param InvoiceRepository $invoice_repo  The invoice repo
+     * @param  InvoiceRepository  $invoice_repo  The invoice repo
      */
     public function __construct(InvoiceRepository $invoice_repo)
     {
@@ -54,28 +53,28 @@ class InvoiceController extends BaseController
 
     public function show(Request $request, string $invitation_key)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->first();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         $invitation = InvoiceInvitation::with(['invoice'])
-                                        ->where('company_id', $company->id)
-                                        ->where('key', $invitation_key)
-                                        ->firstOrFail();
+            ->where('company_id', $company->id)
+            ->where('key', $invitation_key)
+            ->firstOrFail();
 
         return $this->itemResponse($invitation->invoice);
     }
 
     public function store(StoreShopInvoiceRequest $request)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->first();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         app('queue')->createPayloadUsing(function () use ($company) {

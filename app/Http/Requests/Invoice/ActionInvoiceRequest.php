@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,11 @@ use App\Utils\Traits\MakesHash;
 
 class ActionInvoiceRequest extends Request
 {
-    use MakesHash;
     use ActionsInvoice;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     // private $error_msg;
 
@@ -47,15 +44,15 @@ class ActionInvoiceRequest extends Request
 
         $validator->after(function ($validator) {
 
-            if ($this->action == 'delete' && ! $this->invoiceDeletable($this->invoice)) {
+            if ($this->action == 'delete' && !$this->invoiceDeletable($this->invoice)) {
                 $validator->errors()->add('action', 'This invoice cannot be deleted');
-            } elseif ($this->action == 'cancel' && ! $this->invoiceCancellable($this->invoice)) {
+            } elseif ($this->action == 'cancel' && !$this->invoiceCancellable($this->invoice)) {
                 $validator->errors()->add('action', 'This invoice cannot be cancelled');
-            } elseif ($this->action == 'reverse' && ! $this->invoiceReversable($this->invoice)) {
+            } elseif ($this->action == 'reverse' && !$this->invoiceReversable($this->invoice)) {
                 $validator->errors()->add('action', 'This invoice cannot be reversed');
-            } elseif ($this->action == 'restore' && ! $this->invoiceRestorable($this->invoice)) {
+            } elseif ($this->action == 'restore' && !$this->invoiceRestorable($this->invoice)) {
                 $validator->errors()->add('action', 'This invoice cannot be restored');
-            } elseif ($this->action == 'mark_paid' && ! $this->invoicePayable($this->invoice)) {
+            } elseif ($this->action == 'mark_paid' && !$this->invoicePayable($this->invoice)) {
                 $validator->errors()->add('action', 'This invoice cannot be marked as paid');
             }
         });
@@ -70,5 +67,4 @@ class ActionInvoiceRequest extends Request
 
         $this->replace($input);
     }
-
 }

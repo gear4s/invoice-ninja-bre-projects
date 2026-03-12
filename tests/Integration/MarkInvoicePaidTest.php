@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,10 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class MarkInvoicePaidTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -32,12 +28,12 @@ class MarkInvoicePaidTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testClientExists()
+    public function test_client_exists()
     {
         $this->assertNotNull($this->client);
     }
 
-    public function testMarkInvoicePaidInvoice()
+    public function test_mark_invoice_paid_invoice()
     {
         $invoice = Invoice::find($this->invoice->id);
         $invoice_balance = $invoice->balance;
@@ -57,7 +53,7 @@ class MarkInvoicePaidTest extends TestCase
             $this->assertEquals(round($this->invoice->amount, 2), $payment->amount);
         }
 
-        //events are not firing which makes this impossible to control.
+        // events are not firing which makes this impossible to control.
 
         $invoice = $invoice->fresh();
         $client = $client->fresh();

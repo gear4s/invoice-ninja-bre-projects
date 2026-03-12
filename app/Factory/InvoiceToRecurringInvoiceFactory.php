@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class InvoiceToRecurringInvoiceFactory
 {
     public static function create(Invoice $invoice): RecurringInvoice
     {
-        $recurring_invoice = new RecurringInvoice();
+        $recurring_invoice = new RecurringInvoice;
 
         $recurring_invoice->status_id = RecurringInvoice::STATUS_DRAFT;
         $recurring_invoice->discount = $invoice->discount;
@@ -31,7 +30,7 @@ class InvoiceToRecurringInvoiceFactory
         $recurring_invoice->public_notes = $invoice->public_notes;
         $recurring_invoice->private_notes = $invoice->private_notes;
         $recurring_invoice->date = date_create()->format($invoice->client->date_format());
-        $recurring_invoice->due_date = $invoice->due_date; //todo calculate based on terms
+        $recurring_invoice->due_date = $invoice->due_date; // todo calculate based on terms
         $recurring_invoice->is_deleted = $invoice->is_deleted;
         $recurring_invoice->line_items = $invoice->line_items;
         $recurring_invoice->tax_name1 = $invoice->tax_name1;

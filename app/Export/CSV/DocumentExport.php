@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,8 +16,10 @@ use App\Models\Company;
 use App\Models\Document;
 use App\Transformers\DocumentTransformer;
 use App\Utils\Ninja;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class DocumentExport extends BaseExport
@@ -40,7 +41,7 @@ class DocumentExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->entity_transformer = new DocumentTransformer();
+        $this->entity_transformer = new DocumentTransformer;
     }
 
     public function returnJson()
@@ -54,12 +55,13 @@ class DocumentExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($document) {
+            ->map(function ($document) {
 
-                    /** @var \App\Models\Document $document */
-                    $row = $this->buildRow($document);
-                    return $this->processMetaData($row, $document);
-                })->toArray();
+                /** @var Document $document */
+                $row = $this->buildRow($document);
+
+                return $this->processMetaData($row, $document);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
@@ -95,18 +97,18 @@ class DocumentExport extends BaseExport
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-              ->each(function ($entity) {
-                  /** @var mixed $entity */
-                  $this->csv->insertOne($this->buildRow($entity));
-              });
+            ->each(function ($entity) {
+                /** @var mixed $entity */
+                $this->csv->insertOne($this->buildRow($entity));
+            });
 
         return $this->csv->toString();
     }
@@ -137,7 +139,7 @@ class DocumentExport extends BaseExport
         }
 
         if (in_array('created_at', $this->input['report_keys'])) {
-            $entity['created_at'] = \Carbon\Carbon::createFromTimestamp($document->created_at)->format('Y-m-d H:i:s');
+            $entity['created_at'] = Carbon::createFromTimestamp($document->created_at)->format('Y-m-d H:i:s');
         }
 
         // if(in_array('record_name', $this->input['report_keys']))

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,7 +22,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Import\Providers\Csv
  */
 class TaskImportTest extends TestCase
@@ -46,7 +44,7 @@ class TaskImportTest extends TestCase
         auth()->login($this->user);
     }
 
-    public function testTaskImportWithGroupedTaskNumbers()
+    public function test_task_import_with_grouped_task_numbers()
     {
         Task::query()
             ->where('company_id', $this->company->id)
@@ -54,9 +52,9 @@ class TaskImportTest extends TestCase
 
         $this->assertEquals(0, Task::withTrashed()->where('company_id', $this->company->id)->count());
 
-        /*Need to import clients first*/
+        /* Need to import clients first */
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/tasks2.csv'
+            base_path() . '/tests/Feature/Import/tasks2.csv'
         );
         $hash = Str::random(32);
         $column_map = [
@@ -80,7 +78,7 @@ class TaskImportTest extends TestCase
             'import_type' => 'csv',
         ];
 
-        Cache::put($hash.'-task', base64_encode($csv), 360);
+        Cache::put($hash . '-task', base64_encode($csv), 360);
 
         $csv_importer = new Csv($data, $this->company);
 
@@ -110,12 +108,9 @@ class TaskImportTest extends TestCase
             $this->assertTrue($log[3]);
         }
 
-
     }
 
-
-
-    public function testTaskImport()
+    public function test_task_import()
     {
         Task::query()
             ->where('company_id', $this->company->id)
@@ -123,9 +118,9 @@ class TaskImportTest extends TestCase
 
         $this->assertEquals(0, Task::withTrashed()->where('company_id', $this->company->id)->count());
 
-        /*Need to import clients first*/
+        /* Need to import clients first */
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/tasks.csv'
+            base_path() . '/tests/Feature/Import/tasks.csv'
         );
         $hash = Str::random(32);
         $column_map = [
@@ -148,7 +143,7 @@ class TaskImportTest extends TestCase
             'import_type' => 'csv',
         ];
 
-        Cache::put($hash.'-task', base64_encode($csv), 360);
+        Cache::put($hash . '-task', base64_encode($csv), 360);
 
         $csv_importer = new Csv($data, $this->company);
 
@@ -159,6 +154,4 @@ class TaskImportTest extends TestCase
         $base_transformer = new BaseTransformer($this->company);
 
     }
-
-
 }

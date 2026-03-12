@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,13 +14,14 @@ namespace App\Export\CSV;
 use App\Export\Decorators\Decorator;
 use App\Libraries\MultiDB;
 use App\Models\Company;
+use App\Models\Product;
 use App\Models\RecurringInvoice;
 use App\Transformers\RecurringInvoiceTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
-use App\Models\Product;
 
 class RecurringInvoiceItemExport extends BaseExport
 {
@@ -49,8 +49,8 @@ class RecurringInvoiceItemExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->invoice_transformer = new RecurringInvoiceTransformer();
-        $this->decorator = new Decorator();
+        $this->invoice_transformer = new RecurringInvoiceTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -71,12 +71,12 @@ class RecurringInvoiceItemExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = RecurringInvoice::query()
-                        ->withTrashed()
-                        ->with('client')
-                        ->whereHas('client', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->with('client')
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {// @phpstan-ignore-line
             $query->where('is_deleted', 0);
@@ -118,7 +118,7 @@ class RecurringInvoiceItemExport extends BaseExport
         $query->cursor()
             ->each(function ($resource) {
 
-                /** @var \App\Models\RecurringInvoice $resource */
+                /** @var RecurringInvoice $resource */
                 $this->iterateItems($resource);
 
                 foreach ($this->storage_array as $row) {
@@ -133,22 +133,21 @@ class RecurringInvoiceItemExport extends BaseExport
 
     }
 
-
     public function run()
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($invoice) {
 
-                /** @var \App\Models\RecurringInvoice $invoice */
+                /** @var RecurringInvoice $invoice */
                 $this->iterateItems($invoice);
             });
 
@@ -160,7 +159,7 @@ class RecurringInvoiceItemExport extends BaseExport
     private function filterItems(array $items): array
     {
 
-        //if we have product filters in place, we will also need to filter the items at this level:
+        // if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
 
             $products = str_getcsv($this->input['product_key'], ',', "'");
@@ -186,11 +185,11 @@ class RecurringInvoiceItemExport extends BaseExport
         foreach ($this->filterItems($invoice->line_items) as $item) {
             $item_array = [];
 
-            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { //items iterator produces item arr
+            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { // items iterator produces item arr
 
-                if (str_contains($key, "item.")) {
+                if (str_contains($key, 'item.')) {
 
-                    $tmp_key = str_replace("item.", "", $key);
+                    $tmp_key = str_replace('item.', '', $key);
 
                     if ($tmp_key == 'tax_id') {
 
@@ -239,7 +238,6 @@ class RecurringInvoiceItemExport extends BaseExport
 
         $entity = [];
 
-
         foreach (array_values($this->input['report_keys']) as $key) {
 
             $parts = explode('.', $key);
@@ -258,12 +256,12 @@ class RecurringInvoiceItemExport extends BaseExport
         }
 
         $entity = $this->decorateAdvancedFields($invoice, $entity);
+
         return $entity;
     }
 
     private function decorateAdvancedFields(RecurringInvoice $invoice, array $entity): array
     {
-
 
         if (in_array('recurring_invoice.frequency_id', $this->input['report_keys']) || in_array('frequency_id', $this->input['report_keys'])) {
             $entity['recurring_invoice.frequency_id'] = $invoice->frequencyForKey($invoice->frequency_id);
@@ -281,13 +279,10 @@ class RecurringInvoiceItemExport extends BaseExport
             $entity['recurring_invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : '';
         }
 
-
         if (in_array('invoice.project', $this->input['report_keys'])) {
-            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : '';// @phpstan-ignore-line
+            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : ''; // @phpstan-ignore-line
         }
-
 
         return $entity;
     }
-
 }

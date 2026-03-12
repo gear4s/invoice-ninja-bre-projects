@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -51,7 +50,7 @@ class Wave extends BaseImport implements ImportInterface
             $this->{$entity}();
         }
 
-        //collate any errors
+        // collate any errors
 
         // $this->finalizeImport();
     }
@@ -66,6 +65,7 @@ class Wave extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['clients'] = 0;
+
             return;
         }
 
@@ -85,12 +85,12 @@ class Wave extends BaseImport implements ImportInterface
 
     public function product()
     {
-        //done automatically inside the invoice() method as we need to harvest the products from the line items
+        // done automatically inside the invoice() method as we need to harvest the products from the line items
     }
 
     public function invoice()
     {
-        //make sure we update and create products with wave
+        // make sure we update and create products with wave
         $initial_update_products_value = $this->company->update_products;
         $this->company->update_products = true;
 
@@ -133,7 +133,7 @@ class Wave extends BaseImport implements ImportInterface
 
     public function payment()
     {
-        //these are pulled in when processing invoices
+        // these are pulled in when processing invoices
     }
 
     public function vendor()
@@ -142,7 +142,7 @@ class Wave extends BaseImport implements ImportInterface
 
         $data = $this->getCsvData($entity_type);
 
-        if (! is_array($data)) {
+        if (!is_array($data)) {
             return;
         }
 
@@ -176,6 +176,7 @@ class Wave extends BaseImport implements ImportInterface
 
         if (!$data) {
             $this->entity_count['expense'] = 0;
+
             return;
         }
 
@@ -183,6 +184,7 @@ class Wave extends BaseImport implements ImportInterface
 
         if (empty($data)) {
             $this->entity_count['expense'] = 0;
+
             return;
         }
 
@@ -256,7 +258,7 @@ class Wave extends BaseImport implements ImportInterface
 
                 $validator = Validator::make(
                     $expense_data,
-                    (new StoreExpenseRequest())->rules()
+                    (new StoreExpenseRequest)->rules()
                 );
                 if ($validator->fails()) {
                     $this->error_array['expense'][] = [

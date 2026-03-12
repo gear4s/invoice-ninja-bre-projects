@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\ValidationRules\Invoice\LockedInvoiceRule
  */
 class CheckLockedInvoiceValidationTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -33,7 +31,7 @@ class CheckLockedInvoiceValidationTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testValidationWorksForLockedInvoiceWhenOff()
+    public function test_validation_works_for_locked_invoice_when_off()
     {
         $invoice_update = [
             'po_number' => 'test',
@@ -43,7 +41,7 @@ class CheckLockedInvoiceValidationTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
-            ])->put('/api/v1/invoices/'.$this->encodePrimaryKey($this->invoice->id), $invoice_update)
+            ])->put('/api/v1/invoices/' . $this->encodePrimaryKey($this->invoice->id), $invoice_update)
                 ->assertStatus(200);
         } catch (ValidationException $e) {
             $message = json_decode($e->validator->getMessageBag(), 1);

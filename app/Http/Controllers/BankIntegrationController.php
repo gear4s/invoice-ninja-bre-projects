@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,8 +13,8 @@ namespace App\Http\Controllers;
 
 use App\Factory\BankIntegrationFactory;
 use App\Filters\BankIntegrationFilters;
-use App\Helpers\Bank\Yodlee\Yodlee;
 use App\Helpers\Bank\Nordigen\Nordigen;
+use App\Helpers\Bank\Yodlee\Yodlee;
 use App\Http\Requests\BankIntegration\AdminBankIntegrationRequest;
 use App\Http\Requests\BankIntegration\BulkBankIntegrationRequest;
 use App\Http\Requests\BankIntegration\CreateBankIntegrationRequest;
@@ -24,8 +23,8 @@ use App\Http\Requests\BankIntegration\EditBankIntegrationRequest;
 use App\Http\Requests\BankIntegration\ShowBankIntegrationRequest;
 use App\Http\Requests\BankIntegration\StoreBankIntegrationRequest;
 use App\Http\Requests\BankIntegration\UpdateBankIntegrationRequest;
-use App\Jobs\Bank\ProcessBankTransactionsYodlee;
 use App\Jobs\Bank\ProcessBankTransactionsNordigen;
+use App\Jobs\Bank\ProcessBankTransactionsYodlee;
 use App\Models\Account;
 use App\Models\BankIntegration;
 use App\Models\User;
@@ -55,8 +54,7 @@ class BankIntegrationController extends BaseController
     }
 
     /**
-     * @param BankIntegrationFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      */
     public function index(BankIntegrationFilters $filters)
     {
@@ -68,24 +66,17 @@ class BankIntegrationController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowBankIntegrationRequest $request
-     * @param BankIntegration $bank_integration
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function show(ShowBankIntegrationRequest $request, BankIntegration $bank_integration)
     {
         return $this->itemResponse($bank_integration);
     }
 
-
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditBankIntegrationRequest $request
-     * @param BankIntegration $bank_integration
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function edit(EditBankIntegrationRequest $request, BankIntegration $bank_integration)
     {
@@ -95,14 +86,11 @@ class BankIntegrationController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateBankIntegrationRequest $request
-     * @param BankIntegration $bank_integration
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function update(UpdateBankIntegrationRequest $request, BankIntegration $bank_integration)
     {
-        //stubs for updating the model
+        // stubs for updating the model
         $bank_integration = $this->bank_integration_repo->save($request->all(), $bank_integration);
 
         return $this->itemResponse($bank_integration->fresh());
@@ -111,15 +99,12 @@ class BankIntegrationController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateBankIntegrationRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      */
     public function create(CreateBankIntegrationRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $bank_integration = BankIntegrationFactory::create($user->company()->id, $user->id, $user->account_id);
@@ -130,17 +115,15 @@ class BankIntegrationController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreBankIntegrationRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function store(StoreBankIntegrationRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        //stub to store the model
+        // stub to store the model
         $bank_integration = $this->bank_integration_repo->save($request->all(), BankIntegrationFactory::create($user->company()->id, $user->id, $user->account_id));
 
         return $this->itemResponse($bank_integration);
@@ -149,9 +132,7 @@ class BankIntegrationController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyBankIntegrationRequest $request
-     * @param BankIntegration $bank_integration
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      *
      * @throws \Exception
      */
@@ -162,12 +143,10 @@ class BankIntegrationController extends BaseController
         return $this->itemResponse($bank_integration->fresh());
     }
 
-
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function bulk(BulkBankIntegrationRequest $request)
     {
@@ -187,7 +166,6 @@ class BankIntegrationController extends BaseController
         return $this->listResponse(BankIntegration::withTrashed()->whereIn('id', $this->transformKeys($ids))->company());
     }
 
-
     /**
      * Return the remote list of accounts stored on the third party provider.
      *
@@ -195,10 +173,10 @@ class BankIntegrationController extends BaseController
      */
     public function refreshAccounts(AdminBankIntegrationRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /** @var \App\Models\Account $user_account */
+        /** @var Account $user_account */
         $user_account = $user->account;
 
         $this->refreshAccountsYodlee($user);
@@ -211,15 +189,15 @@ class BankIntegrationController extends BaseController
 
         // Processing transactions for each bank account
         if (Ninja::isHosted() && $user->account->bank_integration_account_id) {
-            $user_account->bank_integrations->where("integration_type", BankIntegration::INTEGRATION_TYPE_YODLEE)->each(function ($bank_integration) use ($user_account) {
-                /** @var \App\Models\BankIntegration $bank_integration */
+            $user_account->bank_integrations->where('integration_type', BankIntegration::INTEGRATION_TYPE_YODLEE)->each(function ($bank_integration) use ($user_account) {
+                /** @var BankIntegration $bank_integration */
                 ProcessBankTransactionsYodlee::dispatch($user_account->bank_integration_account_id, $bank_integration);
             });
         }
 
         if (config('ninja.nordigen.secret_id') && config('ninja.nordigen.secret_key') && (Ninja::isSelfHost() || (Ninja::isHosted() && $user_account->isEnterprisePaidClient()))) {
-            $user_account->bank_integrations->where("integration_type", BankIntegration::INTEGRATION_TYPE_NORDIGEN)->each(function ($bank_integration) {
-                /** @var \App\Models\BankIntegration $bank_integration */
+            $user_account->bank_integrations->where('integration_type', BankIntegration::INTEGRATION_TYPE_NORDIGEN)->each(function ($bank_integration) {
+                /** @var BankIntegration $bank_integration */
                 ProcessBankTransactionsNordigen::dispatch($bank_integration);
             });
         }
@@ -240,13 +218,13 @@ class BankIntegrationController extends BaseController
         $accounts = $yodlee->getAccounts();
 
         foreach ($accounts as $account) {
-            if ($bi = BankIntegration::withTrashed()->where("integration_type", BankIntegration::INTEGRATION_TYPE_YODLEE)->where('bank_account_id', $account['id'])->where('company_id', $user->company()->id)->first()) {
+            if ($bi = BankIntegration::withTrashed()->where('integration_type', BankIntegration::INTEGRATION_TYPE_YODLEE)->where('bank_account_id', $account['id'])->where('company_id', $user->company()->id)->first()) {
                 $bi->balance = $account['current_balance'];
                 $bi->currency = $account['account_currency'];
                 $bi->disabled_upstream = false;
                 $bi->save();
             } else {
-                $bank_integration = new BankIntegration();
+                $bank_integration = new BankIntegration;
                 $bank_integration->company_id = $user->company()->id;
                 $bank_integration->account_id = $user->account_id;
                 $bank_integration->user_id = $user->id;
@@ -275,28 +253,31 @@ class BankIntegrationController extends BaseController
             return;
         }
 
-        $nordigen = new Nordigen();
+        $nordigen = new Nordigen;
 
-        BankIntegration::where("integration_type", BankIntegration::INTEGRATION_TYPE_NORDIGEN)->where('account_id', $user->account_id)->whereNotNull('nordigen_account_id')->each(function (BankIntegration $bank_integration) use ($nordigen) {
+        BankIntegration::where('integration_type', BankIntegration::INTEGRATION_TYPE_NORDIGEN)->where('account_id', $user->account_id)->whereNotNull('nordigen_account_id')->each(function (BankIntegration $bank_integration) use ($nordigen) {
             $is_account_active = $nordigen->isAccountActive($bank_integration->nordigen_account_id);
             $account = $nordigen->getAccount($bank_integration->nordigen_account_id);
 
             if (is_array($account) && isset($account['code']) && $account['code'] == 429) {
 
-                $bank_integration->bank_account_status = "429 Rate limit reached, check back later....";
+                $bank_integration->bank_account_status = '429 Rate limit reached, check back later....';
                 $bank_integration->save();
+
                 return;
             } elseif (is_array($account) && isset($account['account_status']) && !in_array($account['account_status'], ['READY', 'PROCESSING', 'DISCOVERED'])) {
                 $bank_integration->disabled_upstream = true;
                 $bank_integration->save();
 
                 $nordigen->disabledAccountEmail($bank_integration);
+
                 return;
             } elseif ($is_account_active['status'] != 'READY' || !$account || isset($account['requisition'])) {
                 $bank_integration->disabled_upstream = true;
                 $bank_integration->save();
 
                 $nordigen->disabledAccountEmail($bank_integration);
+
                 return;
             }
 
@@ -313,13 +294,11 @@ class BankIntegrationController extends BaseController
      * Return the remote list of accounts stored on the third party provider
      * and update our local cache.
      *
-     * @return Response| \Illuminate\Http\JsonResponse | JsonResponse
-     *
+     * @return Response| JsonResponse | JsonResponse
      */
-
     public function removeAccount(AdminBankIntegrationRequest $request, $acc_id)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $account = $user->account;
@@ -354,11 +333,10 @@ class BankIntegrationController extends BaseController
      * and update our local cache.
      *
      * @return JsonResponse
-     *
      */
     public function getTransactions(AdminBankIntegrationRequest $request)
     {
-        /** @var \App\Models\Account $account */
+        /** @var Account $account */
         $account = auth()->user()->account;
 
         if (Ninja::isHosted() && $account->isPaid() && $account->plan == 'enterprise') {
@@ -367,7 +345,7 @@ class BankIntegrationController extends BaseController
             });
         }
 
-        if (config("ninja.nordigen.secret_id") && config("ninja.nordigen.secret_key") && (Ninja::isSelfHost() || (Ninja::isHosted() && $account->isPaid() && $account->plan == 'enterprise'))) {
+        if (config('ninja.nordigen.secret_id') && config('ninja.nordigen.secret_key') && (Ninja::isSelfHost() || (Ninja::isHosted() && $account->isPaid() && $account->plan == 'enterprise'))) {
             $account->bank_integrations()->where('integration_type', BankIntegration::INTEGRATION_TYPE_NORDIGEN)->where('auto_sync', true)->cursor()->each(function ($bank_integration) {
                 (new ProcessBankTransactionsNordigen($bank_integration))->handle();
             });

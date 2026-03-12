@@ -6,22 +6,21 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Mail\Engine;
 
-use App\Utils\Ninja;
-use App\Utils\Number;
+use App\DataMapper\EmailTemplateDefaults;
+use App\Jobs\Entity\CreateRawPdf;
 use App\Models\Account;
 use App\Utils\HtmlEngine;
-use Illuminate\Support\Str;
-use App\Jobs\Entity\CreateRawPdf;
-use App\Services\PdfMaker\PdfMerge;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class QuoteEmailEngine extends BaseEmailEngine
 {
@@ -62,12 +61,12 @@ class QuoteEmailEngine extends BaseEmailEngine
         } elseif ($this->reminder_template == 'reminder1' && strlen($this->client->getSetting('email_quote_template_reminder1')) > 0) {
             $body_template = $this->client->getSetting('email_quote_template_reminder1');
         } elseif ($this->reminder_template == 'reminder1') {
-            $body_template = \App\DataMapper\EmailTemplateDefaults::getDefaultTemplate('email_quote_template_reminder1', $this->client->locale());
+            $body_template = EmailTemplateDefaults::getDefaultTemplate('email_quote_template_reminder1', $this->client->locale());
         } else {
             $body_template = $this->client->getSetting('email_template_' . $this->reminder_template);
         }
 
-        /* Use default translations if a custom message has not been set*/
+        /* Use default translations if a custom message has not been set */
         if (iconv_strlen($body_template) == 0) {
             $body_template = trans(
                 'texts.quote_message',
@@ -87,7 +86,7 @@ class QuoteEmailEngine extends BaseEmailEngine
         } elseif ($this->reminder_template == 'reminder1' && strlen($this->client->getSetting('email_quote_subject_reminder1')) > 0) {
             $subject_template = $this->client->getSetting('email_quote_subject_reminder1');
         } elseif ($this->reminder_template == 'reminder1') {
-            $subject_template = \App\DataMapper\EmailTemplateDefaults::getDefaultTemplate('email_quote_subject_reminder1', $this->client->locale());
+            $subject_template = EmailTemplateDefaults::getDefaultTemplate('email_quote_subject_reminder1', $this->client->locale());
         } else {
             $subject_template = $this->client->getSetting('email_subject_' . $this->reminder_template);
         }
@@ -115,7 +114,7 @@ class QuoteEmailEngine extends BaseEmailEngine
 
         $this->setTemplate($this->client->getSetting('email_style'))
             ->setContact($this->contact)
-            ->setVariables((new HtmlEngine($this->invitation))->makeValues())//move make values into the htmlengine
+            ->setVariables((new HtmlEngine($this->invitation))->makeValues())// move make values into the htmlengine
             ->setSubject($subject_template)
             ->setBody($body_template)
             ->setFooter("<a href='{$this->invitation->getLink()}'>" . ctrans('texts.view_quote') . '</a>')
@@ -134,7 +133,7 @@ class QuoteEmailEngine extends BaseEmailEngine
             $this->setAttachments([['file' => base64_encode($pdf), 'name' => $this->quote->numberFormatter() . '.pdf']]);
         }
 
-        //attach third party documents
+        // attach third party documents
         if ($this->client->getSetting('document_email_attachment') !== false && $this->quote->company->account->hasFeature(Account::FEATURE_DOCUMENTS)) {
             // Storage::url
             $this->quote->documents()->where('is_public', true)->cursor()->each(function ($document) {
@@ -143,9 +142,9 @@ class QuoteEmailEngine extends BaseEmailEngine
                     $hash = Str::random(64);
                     Cache::put($hash, ['db' => $this->quote->company->db, 'doc_hash' => $document->hash], now()->addDays(7));
 
-                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . "</a>"]);
+                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . '</a>']);
                 } else {
-                    $this->setAttachments([['file' => base64_encode($document->getFile()), 'path' => $document->filePath(), 'name' => $document->name, 'mime' => null, ]]);
+                    $this->setAttachments([['file' => base64_encode($document->getFile()), 'path' => $document->filePath(), 'name' => $document->name, 'mime' => null]]);
                 }
             });
 
@@ -155,9 +154,9 @@ class QuoteEmailEngine extends BaseEmailEngine
                     $hash = Str::random(64);
                     Cache::put($hash, ['db' => $this->quote->company->db, 'doc_hash' => $document->hash], now()->addDays(7));
 
-                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . "</a>"]);
+                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . '</a>']);
                 } else {
-                    $this->setAttachments([['file' => base64_encode($document->getFile()), 'path' => $document->filePath(), 'name' => $document->name, 'mime' => null, ]]);
+                    $this->setAttachments([['file' => base64_encode($document->getFile()), 'path' => $document->filePath(), 'name' => $document->name, 'mime' => null]]);
                 }
             });
         }

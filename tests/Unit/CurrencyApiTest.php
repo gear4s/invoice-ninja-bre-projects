@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,6 @@ use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 /**
- *
  *   App\Libraries\Currency\Conversion\CurrencyApi
  */
 class CurrencyApiTest extends TestCase
@@ -28,9 +26,9 @@ class CurrencyApiTest extends TestCase
         parent::setUp();
     }
 
-    public function testConversionAudToEur()
+    public function test_conversion_aud_to_eur()
     {
-        $converter = new CurrencyApi();
+        $converter = new CurrencyApi;
 
         $converted_amount = $converter->convert(100, 12, 3);
 
@@ -43,29 +41,29 @@ class CurrencyApiTest extends TestCase
 
     }
 
-    public function testCurrencyConversionWorking()
+    public function test_currency_conversion_working()
     {
-        $converter = new CurrencyApi();
+        $converter = new CurrencyApi;
 
         $converted_amount = $converter->convert(100, 1, 2);
 
         $this->assertIsFloat($converted_amount);
     }
 
-    public function testExchangeRate()
+    public function test_exchange_rate()
     {
-        $converter = new CurrencyApi();
+        $converter = new CurrencyApi;
 
         $exchange_rate = $converter->exchangeRate(1, 2);
 
         $this->assertIsNumeric($exchange_rate);
     }
 
-    public function testExchangeRateWithDate()
+    public function test_exchange_rate_with_date()
     {
         $date = Carbon::parse('2020-03-08');
 
-        $converter = new CurrencyApi();
+        $converter = new CurrencyApi;
 
         $exchange_rate = $converter->exchangeRate(1, 2, $date);
 

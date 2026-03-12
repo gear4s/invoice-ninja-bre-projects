@@ -6,24 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice\Peppol;
 
 use App\Models\Country;
-use Illuminate\Validation\Rule;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
-use App\Http\Requests\EInvoice\Peppol\AddTaxIdentifierRequest;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class StoreEntityRequest extends FormRequest
 {
     public function authorize(): bool
     {
         /**
-         * @var \App\Models\User
+         * @var User
          */
         $user = auth()->user();
 
@@ -36,7 +37,7 @@ class StoreEntityRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -52,8 +53,8 @@ class StoreEntityRequest extends FormRequest
             'acts_as_sender' => ['required', 'bool'],
             'tenant_id' => ['required'],
             'classification' => ['required', 'in:business,individual'],
-            'vat_number' => [Rule::requiredIf(fn() => $this->input('classification') !== 'individual')],
-            'id_number' => [Rule::requiredIf(fn() => $this->input('classification') === 'individual')],
+            'vat_number' => [Rule::requiredIf(fn () => $this->input('classification') !== 'individual')],
+            'id_number' => [Rule::requiredIf(fn () => $this->input('classification') === 'individual')],
         ];
     }
 
@@ -82,7 +83,7 @@ class StoreEntityRequest extends FormRequest
 
     public function country(): Country
     {
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         return $countries->first(function ($c) {

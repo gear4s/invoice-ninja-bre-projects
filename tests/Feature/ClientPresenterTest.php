@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Models\Presenters\ClientPresenter
  */
 class ClientPresenterTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,7 +30,7 @@ class ClientPresenterTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testCompanyName()
+    public function test_company_name()
     {
         $settings = $this->client->company->settings;
 
@@ -49,7 +48,7 @@ class ClientPresenterTest extends TestCase
         $this->assertEquals('test', $name);
     }
 
-    public function testCompanyAddress()
+    public function test_company_address()
     {
         $this->assertNotNull($this->client->present()->company_address());
     }

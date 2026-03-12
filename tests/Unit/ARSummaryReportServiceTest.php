@@ -2,18 +2,19 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Utils\TruthSource;
-use Illuminate\Support\Str;
 use App\DataMapper\CompanySettings;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Invoice;
+use App\Models\User;
 use App\Services\Report\ARSummaryReport;
-use Illuminate\Routing\Middleware\ThrottleRequests;
+use App\Utils\TruthSource;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 /**
  * Test ARSummaryReport service class with optimized implementation.
@@ -23,13 +24,15 @@ class ARSummaryReportServiceTest extends TestCase
     use DatabaseTransactions;
 
     protected Company $company;
+
     protected User $user;
+
     protected Account $account;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->account = Account::factory()->create([
             'hosted_client_count' => 1000,
             'hosted_company_count' => 1000,
@@ -41,7 +44,7 @@ class ARSummaryReportServiceTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -61,26 +64,25 @@ class ARSummaryReportServiceTest extends TestCase
             'is_owner' => 1,
             'is_admin' => 1,
             'is_locked' => 0,
-            'notifications' => \App\DataMapper\CompanySettings::notificationDefaults(),
+            'notifications' => CompanySettings::notificationDefaults(),
             'settings' => null,
         ]);
 
-        $company_token = new \App\Models\CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
         $company_token->name = 'test token';
-        $company_token->token = \Illuminate\Support\Str::random(64);
+        $company_token->token = Str::random(64);
         $company_token->is_system = true;
 
         $company_token->save();
 
-        $truth = app()->make(\App\Utils\TruthSource::class);
+        $truth = app()->make(TruthSource::class);
         $truth->setCompanyUser($this->user->company_users()->first());
         $truth->setCompanyToken($company_token);
         $truth->setUser($this->user);
         $truth->setCompany($this->company);
-
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -92,7 +94,7 @@ class ARSummaryReportServiceTest extends TestCase
     /**
      * Test that optimized report generates without errors.
      */
-    public function testOptimizedReportGenerates()
+    public function test_optimized_report_generates()
     {
         // Create test data
         $client = Client::factory()->create([
@@ -124,7 +126,7 @@ class ARSummaryReportServiceTest extends TestCase
     /**
      * Test that rollback flag works correctly.
      */
-    public function testRollbackToLegacyWorks()
+    public function test_rollback_to_legacy_works()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -159,7 +161,7 @@ class ARSummaryReportServiceTest extends TestCase
     /**
      * Test that both implementations produce same output.
      */
-    public function testBothImplementationsProduceSameOutput()
+    public function test_both_implementations_produce_same_output()
     {
         // Create test data
         $client = Client::factory()->create([
@@ -198,11 +200,11 @@ class ARSummaryReportServiceTest extends TestCase
             'report_keys' => [],
             'user_id' => $this->user->id,
         ]);
-        
+
         $reflection = new \ReflectionClass($reportLegacy);
         $property = $reflection->getProperty('useOptimizedQuery');
         $property->setValue($reportLegacy, false);
-        
+
         $csvLegacy = $reportLegacy->run();
 
         // Both should contain same client name and amounts
@@ -223,7 +225,7 @@ class ARSummaryReportServiceTest extends TestCase
     /**
      * Test with empty client list.
      */
-    public function testWithNoClients()
+    public function test_with_no_clients()
     {
         $report = new ARSummaryReport($this->company, [
             'report_keys' => [],

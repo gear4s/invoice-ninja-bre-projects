@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -38,19 +37,15 @@ class UserEmailChanged implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
-     * @param \App\Models\User $new_user
-     * @param \stdClass $old_user
-     * @param \App\Models\Company $company
      */
-    public function __construct(protected User $new_user, protected \stdClass $old_user, protected Company $company, protected bool $is_react = false)
+    public function __construct(protected User $new_user, protected stdClass $old_user, protected Company $company, protected bool $is_react = false)
     {
         $this->settings = $this->company->settings;
     }
 
     public function handle()
     {
-        //Set DB
+        // Set DB
         MultiDB::setDb($this->company->db);
 
         App::forgetInstance('translator');
@@ -58,17 +53,17 @@ class UserEmailChanged implements ShouldQueue
         $t->replace(Ninja::transformTranslations($this->company->settings));
         App::setLocale($this->company->getLocale());
 
-        /*Build the object*/
-        $mail_obj = new stdClass();
+        /* Build the object */
+        $mail_obj = new stdClass;
         $mail_obj->subject = ctrans('texts.email_address_changed');
         $mail_obj->markdown = 'email.admin.generic';
         $mail_obj->from = [$this->company->owner()->email, $this->company->owner()->present()->name()];
         $mail_obj->tag = $this->company->company_key;
         $mail_obj->data = $this->getData();
 
-        //Send email via a Mailable class
+        // Send email via a Mailable class
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new UserNotificationMailer($mail_obj);
         $nmo->settings = $this->settings;
         $nmo->company = $this->company;

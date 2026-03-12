@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,6 +18,7 @@ use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 use App\Jobs\Util\SystemLogger;
 use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
+use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
@@ -27,9 +27,11 @@ use App\PaymentDrivers\BraintreePaymentDriver;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\Common\MethodInterface;
 use App\Utils\Traits\MakesHash;
+use Braintree\Result\Error;
+use Braintree\Result\UsBankAccountVerification;
 use Illuminate\Http\Request;
 
-class ACH implements MethodInterface, LivewireMethodInterface
+class ACH implements LivewireMethodInterface, MethodInterface
 {
     use MakesHash;
 
@@ -49,8 +51,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $data['client_token'] = $this->braintree->gateway->clientToken()->generate();
         } catch (\Exception $e) {
 
-            throw new PaymentFailed("Unable to generate client token, check your Braintree credentials. Error: " . $e->getMessage(), 500);
-
+            throw new PaymentFailed('Unable to generate client token, check your Braintree credentials. Error: ' . $e->getMessage(), 500);
         }
 
         return render('gateways.braintree.ach.authorize', $data);
@@ -69,7 +70,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             'customerId' => $customer->id,
             'paymentMethodNonce' => $request->nonce,
             'options' => [
-                'usBankAccountVerificationMethod' => \Braintree\Result\UsBankAccountVerification::NETWORK_CHECK,
+                'usBankAccountVerificationMethod' => UsBankAccountVerification::NETWORK_CHECK,
             ],
         ]);
 
@@ -77,7 +78,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $account = $result->paymentMethod;
 
             try {
-                $payment_meta = new \stdClass();
+                $payment_meta = new \stdClass;
                 $payment_meta->brand = (string) $account->bankName;
                 $payment_meta->last4 = (string) $account->last4;
                 $payment_meta->type = GatewayType::BANK_TRANSFER;
@@ -95,11 +96,11 @@ class ACH implements MethodInterface, LivewireMethodInterface
                     $this->braintree->payment_hash = PaymentHash::where('hash', $request->payment_hash)->firstOrFail();
 
                     $data = [
-                        'invoices' => collect($this->braintree->payment_hash->data->invoices)->map(fn($invoice) => $invoice->invoice_id)->toArray(),
+                        'invoices' => collect($this->braintree->payment_hash->data->invoices)->map(fn ($invoice) => $invoice->invoice_id)->toArray(),
                         'action' => 'payment',
                     ];
 
-                    $request = new ProcessInvoicesInBulkRequest();
+                    $request = new ProcessInvoicesInBulkRequest;
                     $request->replace($data);
 
                     session()->flash('message', ctrans('texts.payment_method_added'));
@@ -110,12 +111,14 @@ class ACH implements MethodInterface, LivewireMethodInterface
                 return redirect()->route('client.payment_methods.index')->withMessage(ctrans('texts.payment_method_added'));
             } catch (\Exception $e) {
                 nlog($e->getMessage());
+
                 return $this->braintree->processInternallyFailedPayment($this->braintree, $e);
             }
         }
 
-        if ($result instanceof \Braintree\Result\Error && $result->message) {
+        if ($result instanceof Error && $result->message) {
             session()->flash('ach_error', $result->message);
+
             return back()->withInput();
         }
 
@@ -147,7 +150,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             ->where('id', $this->decodePrimaryKey($request->source))
             ->firstOrFail();
 
-        $total_taxes = \App\Models\Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->braintree->payment_hash->invoices(), 'invoice_id')))->withTrashed()->sum('total_taxes');
+        $total_taxes = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->braintree->payment_hash->invoices(), 'invoice_id')))->withTrashed()->sum('total_taxes');
         $invoice = $this->braintree->payment_hash->fee_invoice;
         $po_number = $invoice->po_number ?? $invoice->number ?? '';
 
@@ -218,14 +221,15 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $this->braintree->client->company,
         );
 
-        if ($response instanceof \Braintree\Result\Error && $response->message) {
+        if ($response instanceof Error && $response->message) {
             throw new PaymentFailed($response->message, 400);
         }
 
         throw new PaymentFailed($response->transaction->additionalProcessorResponse, $response->transaction->processorResponseCode);
     }
+
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -237,7 +241,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

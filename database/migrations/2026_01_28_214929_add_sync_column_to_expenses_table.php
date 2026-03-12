@@ -15,7 +15,6 @@ return new class extends Migration
             $table->text('sync')->nullable();
         });
 
-
         Schema::table('expense_categories', function (Blueprint $table) {
             $table->text('sync')->nullable();
         });
@@ -25,8 +24,5 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        
-    }
+    public function down(): void {}
 };

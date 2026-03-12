@@ -6,17 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Quickbooks\AuthorizedQuickbooksRequest;
-use App\Libraries\MultiDB;
-use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\Quickbooks\AuthQuickbooksRequest;
+use App\Libraries\MultiDB;
 use App\Services\Quickbooks\QuickbooksService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 
 class ImportQuickbooksController extends BaseController
 {
@@ -25,9 +25,7 @@ class ImportQuickbooksController extends BaseController
      *
      * Starts the Quickbooks authorization process.
      *
-     * @param  AuthQuickbooksRequest $request
-     * @param  string $token
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function authorizeQuickbooks(AuthQuickbooksRequest $request, string $token)
     {
@@ -53,9 +51,7 @@ class ImportQuickbooksController extends BaseController
      * Starts the Quickbooks re-authorization process for an existing connection.
      * Stores the expected realmID to validate on return.
      *
-     * @param  AuthQuickbooksRequest $request
-     * @param  string $token
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function reconnect(AuthQuickbooksRequest $request, string $token)
     {
@@ -88,15 +84,14 @@ class ImportQuickbooksController extends BaseController
      *
      * Handles the callback from Quickbooks after authorization.
      *
-     * @param  AuthorizedQuickbooksRequest $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function onAuthorized(AuthorizedQuickbooksRequest $request)
     {
         nlog($request->all());
 
         $state_data = Cache::get($request->query('state'));
-        
+
         // Handle both old format (string token) and new format (array with metadata)
         $expected_realm_id = is_array($state_data) ? ($state_data['expected_realm_id'] ?? null) : null;
         $is_reconnect = is_array($state_data) ? ($state_data['is_reconnect'] ?? false) : false;
@@ -109,6 +104,7 @@ class ImportQuickbooksController extends BaseController
         // Validate realmID matches for reconnections
         if ($is_reconnect && $expected_realm_id && $realm !== $expected_realm_id) {
             nlog("QB Reconnect: realmID mismatch. Expected: {$expected_realm_id}, Got: {$realm}");
+
             return redirect(config('ninja.react_url') . '?error=realm_mismatch&message=' . urlencode(
                 'You must reconnect to the same QuickBooks company. Expected company ID: ' . $expected_realm_id
             ));
@@ -131,7 +127,7 @@ class ImportQuickbooksController extends BaseController
         // Sync the company information from Quickbooks to Invoice Ninja
         $qb->companySync();
 
-        $redirect_url = $is_reconnect 
+        $redirect_url = $is_reconnect
             ? config('ninja.react_url') . '?quickbooks_reconnected=true'
             : config('ninja.react_url');
 

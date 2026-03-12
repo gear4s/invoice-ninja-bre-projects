@@ -11,30 +11,46 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class RegistroAnulacion extends BaseXmlModel
 {
     protected string $idVersion;
+
     protected string $idEmisorFactura;
+
     protected string $numSerieFactura;
+
     protected string $fechaExpedicionFactura;
+
     protected string $motivoAnulacion;
+
     protected string $nombreRazonEmisor;
+
     // Additional properties required by XSD schema
     protected ?string $refExterna = null;
+
     protected ?string $sinRegistroPrevio = null;
+
     protected ?string $rechazoPrevio = null;
+
     protected ?string $generadoPor = null;
+
     protected ?PersonaFisicaJuridica $generador = null;
+
     protected Encadenamiento $encadenamiento;
+
     protected SistemaInformatico $sistemaInformatico;
+
     protected string $fechaHoraHusoGenRegistro;
+
     protected string $tipoHuella;
+
     protected string $huella;
+
     protected ?string $signature = null;
 
     public function __construct()
     {
         $this->idVersion = '1.0';
         $this->motivoAnulacion = '1'; // Default: Sustitución por otra factura
-        $this->encadenamiento = new Encadenamiento();
-        $this->sistemaInformatico = new SistemaInformatico();
+        $this->encadenamiento = new Encadenamiento;
+        $this->sistemaInformatico = new SistemaInformatico;
         $this->fechaHoraHusoGenRegistro = now()->format('Y-m-d\TH:i:sP');
         $this->tipoHuella = '01';
         $this->huella = '';
@@ -48,6 +64,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setIdVersion(string $idVersion): self
     {
         $this->idVersion = $idVersion;
+
         return $this;
     }
 
@@ -59,6 +76,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setIdEmisorFactura(string $idEmisorFactura): self
     {
         $this->idEmisorFactura = $idEmisorFactura;
+
         return $this;
     }
 
@@ -70,6 +88,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setNumSerieFactura(string $numSerieFactura): self
     {
         $this->numSerieFactura = $numSerieFactura;
+
         return $this;
     }
 
@@ -81,6 +100,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
     {
         $this->fechaExpedicionFactura = $fechaExpedicionFactura;
+
         return $this;
     }
 
@@ -92,6 +112,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setMotivoAnulacion(string $motivoAnulacion): self
     {
         $this->motivoAnulacion = $motivoAnulacion;
+
         return $this;
     }
 
@@ -103,6 +124,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setRefExterna(?string $refExterna): self
     {
         $this->refExterna = $refExterna;
+
         return $this;
     }
 
@@ -114,6 +136,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setSinRegistroPrevio(?string $sinRegistroPrevio): self
     {
         $this->sinRegistroPrevio = $sinRegistroPrevio;
+
         return $this;
     }
 
@@ -125,6 +148,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setRechazoPrevio(?string $rechazoPrevio): self
     {
         $this->rechazoPrevio = $rechazoPrevio;
+
         return $this;
     }
 
@@ -136,6 +160,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setGeneradoPor(?string $generadoPor): self
     {
         $this->generadoPor = $generadoPor;
+
         return $this;
     }
 
@@ -147,6 +172,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setGenerador(?PersonaFisicaJuridica $generador): self
     {
         $this->generador = $generador;
+
         return $this;
     }
 
@@ -158,6 +184,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setEncadenamiento(Encadenamiento $encadenamiento): self
     {
         $this->encadenamiento = $encadenamiento;
+
         return $this;
     }
 
@@ -169,6 +196,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setSistemaInformatico(SistemaInformatico $sistemaInformatico): self
     {
         $this->sistemaInformatico = $sistemaInformatico;
+
         return $this;
     }
 
@@ -180,6 +208,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
     {
         $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
+
         return $this;
     }
 
@@ -191,6 +220,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setTipoHuella(string $tipoHuella): self
     {
         $this->tipoHuella = $tipoHuella;
+
         return $this;
     }
 
@@ -202,6 +232,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setHuella(string $huella): self
     {
         $this->huella = $huella;
+
         return $this;
     }
 
@@ -213,6 +244,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setSignature(?string $signature): self
     {
         $this->signature = $signature;
+
         return $this;
     }
 
@@ -224,6 +256,7 @@ class RegistroAnulacion extends BaseXmlModel
     public function setNombreRazonEmisor(string $nombreRazonEmisor): self
     {
         $this->nombreRazonEmisor = $nombreRazonEmisor;
+
         return $this;
     }
 
@@ -293,7 +326,7 @@ class RegistroAnulacion extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $registroAnulacion = new self();
+        $registroAnulacion = new self;
 
         // Handle IDVersion
         $idVersion = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDVersion')->item(0);
@@ -442,7 +475,7 @@ class RegistroAnulacion extends BaseXmlModel
         $regFactu->appendChild($registroFactura);
 
         // Import your existing XML into the RegistroFactura
-        $yourXmlDoc = new \DOMDocument();
+        $yourXmlDoc = new \DOMDocument;
         $yourXmlDoc->loadXML($this->toXmlString());
 
         // Import the root element from your XML

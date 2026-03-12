@@ -6,25 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\ClientPortal;
 
-use App\Exceptions\PaymentFailed;
 use App\Jobs\Invoice\InjectSignature;
-use App\Jobs\Util\SystemLogger;
 use App\Models\CompanyGateway;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentHash;
-use App\Models\SystemLog;
-use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use App\Utils\Traits\MakesHash;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -36,8 +30,8 @@ use Illuminate\Support\Str;
  */
 class LivewireInstantPayment
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     /**
      * (bool) success
@@ -45,8 +39,6 @@ class LivewireInstantPayment
      * (string) redirect - ie client.invoices.index
      * (array) payload - the data needed to complete the payment
      * (string) component - the payment component to be displayed
-     *
-     * @var array $responder
      */
     private array $responder = [
         'success' => true,
@@ -55,13 +47,16 @@ class LivewireInstantPayment
         'payload' => [],
         'component' => '',
     ];
+
     /**
      * is_credit_payment
      *
      * Indicates whether this is a credit payment
+     *
      * @var bool
      */
     private $is_credit_payment = false;
+
     /**
      * __construct
      *
@@ -77,7 +72,6 @@ class LivewireInstantPayment
      * ?is_recurring
      * ?hash
      *
-     * @param  array $data
      * @return void
      */
     public function __construct(public array $data) {}
@@ -158,10 +152,10 @@ class LivewireInstantPayment
         }
 
         /**
-        * Gateway fee is calculated
-        * by adding it as a line item, and then subtract
-        * the starting and finishing amounts of the invoice.
-        */
+         * Gateway fee is calculated
+         * by adding it as a line item, and then subtract
+         * the starting and finishing amounts of the invoice.
+         */
         $fee_totals = $first_invoice->balance - $starting_invoice_amount;
 
         if ($company_gateway) {
@@ -171,7 +165,7 @@ class LivewireInstantPayment
                 ->get();
         }
 
-        if (! $this->is_credit_payment) {
+        if (!$this->is_credit_payment) {
             $credit_totals = 0;
         }
 
@@ -194,7 +188,7 @@ class LivewireInstantPayment
             }
         }
 
-        $payment_hash = new PaymentHash();
+        $payment_hash = new PaymentHash;
         $payment_hash->hash = $payment_hash_string;
         $payment_hash->data = $hash_data;
         $payment_hash->fee_total = $fee_totals;
@@ -232,6 +226,7 @@ class LivewireInstantPayment
 
         if ($this->is_credit_payment) {
             $this->mergeResponder(['success' => true, 'view' => 'gateways.credit.pay_livewire', 'component' => 'CreditPaymentComponent', 'payload' => $data]);
+
             return $this->getResponder();
         }
 

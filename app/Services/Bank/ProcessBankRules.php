@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -39,9 +38,6 @@ class ProcessBankRules extends AbstractService
 
     protected $invoices;
 
-    /**
-     * @param \App\Models\BankTransaction $bank_transaction
-     */
     public function __construct(public BankTransaction $bank_transaction) {}
 
     public function run()
@@ -61,20 +57,21 @@ class ProcessBankRules extends AbstractService
     {
         // First try simple invoice number match in description
         $this->invoices = Invoice::query()
-                                ->withTrashed()
-                                ->where('company_id', $this->bank_transaction->company_id)
-                                ->whereIn('status_id', [1,2,3])
-                                ->where('is_deleted', 0)
-                                ->get();
+            ->withTrashed()
+            ->where('company_id', $this->bank_transaction->company_id)
+            ->whereIn('status_id', [1, 2, 3])
+            ->where('is_deleted', 0)
+            ->get();
 
         $invoice = $this->invoices->first(function ($value, $key) {
-            return str_contains($this->bank_transaction->description, $value->number) || str_contains(str_replace("\n", "", $this->bank_transaction->description), $value->number);
+            return str_contains($this->bank_transaction->description, $value->number) || str_contains(str_replace("\n", '', $this->bank_transaction->description), $value->number);
         });
 
         if ($invoice) {
             $this->bank_transaction->invoice_ids = $invoice->hashed_id;
             $this->bank_transaction->status_id = BankTransaction::STATUS_MATCHED;
             $this->bank_transaction->save();
+
             return;
         }
 
@@ -105,7 +102,7 @@ class ProcessBankRules extends AbstractService
                 $matched = false;
 
                 // Use match expression to handle each search key
-                match($rule['search_key']) {
+                match ($rule['search_key']) {
                     '$invoice.number' => $matched = $this->searchInvoiceNumber($invoiceNumber),
                     '$invoice.po_number' => $matched = $this->searchInvoicePONumber($invoicePONumbers, $rule),
                     '$invoice.amount' => $matched = $this->searchInvoiceAmount($invoiceAmounts, $rule),
@@ -337,7 +334,7 @@ class ProcessBankRules extends AbstractService
             return $expense;
         }
 
-        return collect(explode(",", $this->bank_transaction->expense_id))->push($expense)->implode(",");
+        return collect(explode(',', $this->bank_transaction->expense_id))->push($expense)->implode(',');
 
     }
 
@@ -367,10 +364,10 @@ class ProcessBankRules extends AbstractService
         $rule_value = (float) $rule_value;
 
         return match ($operator) {
-            '>'  => round($bt_value - $rule_value, 2) > 0,
+            '>' => round($bt_value - $rule_value, 2) > 0,
             '>=' => round($bt_value - $rule_value, 2) >= 0,
-            '='  => round($bt_value - $rule_value, 2) == 0,
-            '<'  => round($bt_value - $rule_value, 2) < 0,
+            '=' => round($bt_value - $rule_value, 2) == 0,
+            '<' => round($bt_value - $rule_value, 2) < 0,
             '<=' => round($bt_value - $rule_value, 2) <= 0,
             default => false,
         };
@@ -378,14 +375,15 @@ class ProcessBankRules extends AbstractService
 
     private function matchStringOperator($bt_value, $rule_value, $operator): bool
     {
-        $bt_value = strtolower(str_replace(" ", "", $bt_value ?? ''));
-        $rule_value = strtolower(str_replace(" ", "", $rule_value ?? ''));
+        $bt_value = strtolower(str_replace(' ', '', $bt_value ?? ''));
+        $rule_value = strtolower(str_replace(' ', '', $rule_value ?? ''));
         $rule_length = iconv_strlen($rule_value);
+
         // nlog($bt_value);
         // nlog($rule_value);
         // nlog($rule_length);
         return match ($operator) {
-            'is' =>  $bt_value == $rule_value,
+            'is' => $bt_value == $rule_value,
             'contains' => stripos($bt_value, $rule_value) !== false && strlen($rule_value) > 1,
             'starts_with' => substr($bt_value, 0, $rule_length) == $rule_value && strlen($rule_value) > 1,
             'is_empty' => empty($bt_value),
@@ -402,12 +400,13 @@ class ProcessBankRules extends AbstractService
         $invoices = Invoice::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,2,3])
+            ->whereIn('status_id', [1, 2, 3])
             ->where('is_deleted', 0)
             ->get();
 
         $invoiceNumber = $invoices->first(function ($value) {
-            $description = str_replace("\n", "", $this->bank_transaction->description);
+            $description = str_replace("\n", '', $this->bank_transaction->description);
+
             return str_contains($description, $value->number);
         });
 
@@ -423,7 +422,7 @@ class ProcessBankRules extends AbstractService
         $invoicePONumbers = Invoice::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,2,3])
+            ->whereIn('status_id', [1, 2, 3])
             ->where('is_deleted', 0)
             ->get()
             ->filter(function ($invoice) use ($rule) {
@@ -446,7 +445,7 @@ class ProcessBankRules extends AbstractService
         $invoiceAmounts = Invoice::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,2,3])
+            ->whereIn('status_id', [1, 2, 3])
             ->where('is_deleted', 0)
             ->get()
             ->filter(function ($invoice) use ($rule) {
@@ -469,7 +468,7 @@ class ProcessBankRules extends AbstractService
         $invoiceCustomMatches[$field] = Invoice::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,2,3])
+            ->whereIn('status_id', [1, 2, 3])
             ->where('is_deleted', 0)
             ->get()
             ->filter(function ($invoice) use ($rule, $field) {
@@ -492,7 +491,7 @@ class ProcessBankRules extends AbstractService
         $paymentAmounts = Payment::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,4])
+            ->whereIn('status_id', [1, 4])
             ->where('is_deleted', 0)
             ->whereNull('transaction_id')
             ->get()
@@ -516,7 +515,7 @@ class ProcessBankRules extends AbstractService
         $paymentReferences = Payment::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,4])
+            ->whereIn('status_id', [1, 4])
             ->where('is_deleted', 0)
             ->whereNull('transaction_id')
             ->get()
@@ -540,7 +539,7 @@ class ProcessBankRules extends AbstractService
         $paymentCustomMatches[$field] = Payment::query()
             ->withTrashed()
             ->where('company_id', $this->bank_transaction->company_id)
-            ->whereIn('status_id', [1,4])
+            ->whereIn('status_id', [1, 4])
             ->where('is_deleted', 0)
             ->whereNull('transaction_id')
             ->get()
@@ -613,9 +612,9 @@ class ProcessBankRules extends AbstractService
 
     private function matchPaymentAndClient($payments, $clients): ?int
     {
-        foreach($payments as $payment) {
-            foreach($clients as $client) {
-                if($payment->client_id == $client->id) {
+        foreach ($payments as $payment) {
+            foreach ($clients as $client) {
+                if ($payment->client_id == $client->id) {
                     return $payment->id;
                 }
             }
@@ -626,9 +625,9 @@ class ProcessBankRules extends AbstractService
 
     private function matchInvoiceAndClient($invoices, $clients): ?string
     {
-        foreach($invoices as $invoice) {
-            foreach($clients as $client) {
-                if($invoice->client_id == $client->id) {
+        foreach ($invoices as $invoice) {
+            foreach ($clients as $client) {
+                if ($invoice->client_id == $client->id) {
                     return $invoice->hashed_id;
                 }
             }

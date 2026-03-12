@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,7 +24,7 @@ class CloneQuoteFactory
         $clone_quote->due_date = null;
         $clone_quote->partial_due_date = null;
         $clone_quote->user_id = $user_id;
-        //$clone_quote->balance = $quote->amount;
+        // $clone_quote->balance = $quote->amount;
         $clone_quote->amount = $quote->amount;
         $clone_quote->line_items = $quote->line_items;
 

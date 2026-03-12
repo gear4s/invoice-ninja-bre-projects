@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -61,7 +60,6 @@ use InvoiceNinja\EInvoice\Models\Peppol\TaxTotalType\WithholdingTaxTotal;
 use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
-use Symfony\Component\Validator\Constraints\Date;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\Valid;
@@ -91,7 +89,6 @@ class ClientLevel
     // #[SerializedName('cbc:ID')]
     // public $ID;
 
-    /** @var bool */
     #[SerializedName('cbc:CopyIndicator')]
     public bool $CopyIndicator;
 
@@ -121,11 +118,9 @@ class ClientLevel
     #[SerializedName('cbc:InvoiceTypeCode')]
     public $InvoiceTypeCode;
 
-    /** @var string */
     #[SerializedName('cbc:Note')]
     public string $Note;
 
-    /** @var ?\DateTime */
     #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     #[SerializedName('cbc:TaxPointDate')]
     public ?DateTime $TaxPointDate;
@@ -154,7 +149,6 @@ class ClientLevel
     // #[SerializedName('cbc:AccountingCostCode')]
     // public $AccountingCostCode;
 
-    /** @var string */
     #[SerializedName('cbc:AccountingCost')]
     public string $AccountingCost;
 

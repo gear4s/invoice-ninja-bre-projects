@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $updated_at
  * @property int|null $deleted_at
  * @property-read mixed $hashed_id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentTerm filter(\App\Filters\QueryFilters $filters)
@@ -46,12 +46,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentTerm whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentTerm withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentTerm withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class PaymentTerm extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     /**
      * @var bool
@@ -76,9 +77,9 @@ class PaymentTerm extends BaseModel
         });
 
         $default_terms->merge($terms)
-        ->sort()
-        ->values()
-        ->all();
+            ->sort()
+            ->values()
+            ->all();
 
         return $default_terms;
     }

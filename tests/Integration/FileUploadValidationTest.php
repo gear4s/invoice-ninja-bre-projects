@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,14 +18,11 @@ use Illuminate\Support\Facades\Storage;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class FileUploadValidationTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
     use MakesHash;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -36,7 +32,7 @@ class FileUploadValidationTest extends TestCase
 
     }
 
-    public function testIteratingThroughAllEntities()
+    public function test_iterating_through_all_entities()
     {
 
         Storage::fake('local');
@@ -80,7 +76,7 @@ class FileUploadValidationTest extends TestCase
 
     }
 
-    public function testFileUploadIsPublicSetsAppropriately()
+    public function test_file_upload_is_public_sets_appropriately()
     {
         Storage::fake('local');
 
@@ -104,10 +100,10 @@ class FileUploadValidationTest extends TestCase
         $this->assertFalse($acc['data']['documents'][0]['is_public']);
 
         $data = [
-                    'documents' => [$file],
-                    'is_public' => true,
-                    '_method' => 'PUT',
-                ];
+            'documents' => [$file],
+            'is_public' => true,
+            '_method' => 'PUT',
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -122,7 +118,7 @@ class FileUploadValidationTest extends TestCase
 
     }
 
-    public function testMultiFileUploadIsPublicSetsAppropriately()
+    public function test_multi_file_upload_is_public_sets_appropriately()
     {
         Storage::fake('local');
 
@@ -147,5 +143,4 @@ class FileUploadValidationTest extends TestCase
         $this->assertFalse($acc['data']['documents'][1]['is_public']);
 
     }
-
 }

@@ -5,6 +5,7 @@ namespace App\Services\EDocument\Gateway\Storecove\Models;
 class PublicIdentifiers
 {
     public ?string $scheme;
+
     public ?string $id;
 
     public function __construct(?string $scheme, ?string $id)
@@ -26,12 +27,14 @@ class PublicIdentifiers
     public function setScheme(?string $scheme): self
     {
         $this->scheme = $scheme;
+
         return $this;
     }
 
     public function setId(?string $id): self
     {
         $this->id = $id;
+
         return $this;
     }
 }

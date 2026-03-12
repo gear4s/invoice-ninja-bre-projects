@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,24 +15,24 @@ use App\Http\Requests\Request;
 use App\Http\ValidationRules\Project\ValidProjectForClient;
 use App\Models\Client;
 use App\Models\RecurringInvoice;
+use App\Models\User;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreRecurringInvoiceRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
 
-        /** @var \App\Models\User auth()->user() */
+        /** @var User auth()->user() */
         $user = auth()->user();
 
         return $user->can('create', RecurringInvoice::class);
@@ -41,7 +40,7 @@ class StoreRecurringInvoiceRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -60,7 +59,7 @@ class StoreRecurringInvoiceRequest extends Request
 
         $rules['project_id'] = ['bail', 'sometimes', new ValidProjectForClient($this->all())];
 
-        $rules['number'] = ['bail', 'nullable', \Illuminate\Validation\Rule::unique('recurring_invoices')->where('company_id', $user->company()->id)];
+        $rules['number'] = ['bail', 'nullable', Rule::unique('recurring_invoices')->where('company_id', $user->company()->id)];
 
         $rules['tax_rate1'] = 'bail|sometimes|numeric';
         $rules['tax_rate2'] = 'bail|sometimes|numeric';
@@ -72,8 +71,8 @@ class StoreRecurringInvoiceRequest extends Request
         $rules['exchange_rate'] = 'bail|sometimes|numeric';
         $rules['next_send_date'] = 'bail|required|date|after_or_equal:yesterday';
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
-        $rules['vendor_id'] = ['nullable', 'sometimes','bail', Rule::exists('vendors', 'id')->where('company_id', $user->company()->id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
+        $rules['vendor_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('vendors', 'id')->where('company_id', $user->company()->id)];
 
         return $rules;
     }
@@ -84,14 +83,13 @@ class StoreRecurringInvoiceRequest extends Request
         $input['amount'] = 0;
         $input['balance'] = 0;
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
-
 
         if (array_key_exists('due_date_days', $input) && is_null($input['due_date_days'])) {
             $input['due_date_days'] = 'terms';
@@ -121,7 +119,6 @@ class StoreRecurringInvoiceRequest extends Request
             $input['vendor_id'] = $this->decodePrimaryKey($input['vendor_id']);
         }
 
-
         if (array_key_exists('location_id', $input) && is_string($input['location_id'])) {
             $input['location_id'] = $this->decodePrimaryKey($input['location_id']);
         }
@@ -132,7 +129,7 @@ class StoreRecurringInvoiceRequest extends Request
 
         if (isset($input['client_contacts'])) {
             foreach ($input['client_contacts'] as $key => $contact) {
-                if (! array_key_exists('send_email', $contact) || ! array_key_exists('id', $contact)) {
+                if (!array_key_exists('send_email', $contact) || !array_key_exists('id', $contact)) {
                     unset($input['client_contacts'][$key]);
                 }
             }
@@ -163,7 +160,7 @@ class StoreRecurringInvoiceRequest extends Request
             $input['auto_bill_enabled'] = $this->setAutoBillFlag($input['auto_bill']);
         } else {
             if (array_key_exists('client_id', $input) && $client = Client::query()->find($input['client_id'])) {
-                /** @var \App\Models\Client $client */
+                /** @var Client $client */
                 $input['auto_bill'] = $client->getSetting('auto_bill');
                 $input['auto_bill_enabled'] = $this->setAutoBillFlag($input['auto_bill']);
             }

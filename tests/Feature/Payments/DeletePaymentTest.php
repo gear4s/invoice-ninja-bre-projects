@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,13 +27,10 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class DeletePaymentTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockUnitData;
 
     protected function setUp(): void
@@ -52,19 +48,19 @@ class DeletePaymentTest extends TestCase
         );
     }
 
-    public function testRegularPayment()
+    public function test_regular_payment()
     {
         Invoice::factory()
-                ->count(10)
-                ->create([
-                    'user_id' => $this->user->id,
-                    'company_id' => $this->company->id,
-                    'client_id' => $this->client->id,
-                    'amount' => 101,
-                    'balance' => 101,
-                    'status_id' => Invoice::STATUS_SENT,
-                    'paid_to_date' => 0,
-                ]);
+            ->count(10)
+            ->create([
+                'user_id' => $this->user->id,
+                'company_id' => $this->company->id,
+                'client_id' => $this->client->id,
+                'amount' => 101,
+                'balance' => 101,
+                'status_id' => Invoice::STATUS_SENT,
+                'paid_to_date' => 0,
+            ]);
 
         $i = Invoice::where('amount', 101)->where('status_id', 2)->take(1)->get();
 
@@ -115,7 +111,7 @@ class DeletePaymentTest extends TestCase
      * Bug: When a credit is deleted BEFORE its associated payment is deleted,
      * the credit balance is not restored. This test should FAIL until the fix is applied.
      */
-    public function testDeleteCreditThenDeletePaymentRestoresCredit()
+    public function test_delete_credit_then_delete_payment_restores_credit()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -221,7 +217,7 @@ class DeletePaymentTest extends TestCase
      * Baseline: When a payment is deleted BEFORE the credit, the credit balance
      * IS correctly restored. This test should PASS with current code.
      */
-    public function testDeletePaymentThenDeleteCreditWorksCorrectly()
+    public function test_delete_payment_then_delete_credit_works_correctly()
     {
         $client = Client::factory()->create([
             'company_id' => $this->company->id,

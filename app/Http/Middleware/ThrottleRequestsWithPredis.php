@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,15 +13,20 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Contracts\Redis\Factory;
 use Illuminate\Contracts\Redis\Factory as Redis;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Http\Request;
 use Illuminate\Redis\Limiters\DurationLimiter;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Symfony\Component\HttpFoundation\Response;
 
-class ThrottleRequestsWithPredis extends \Illuminate\Routing\Middleware\ThrottleRequests
+class ThrottleRequestsWithPredis extends ThrottleRequests
 {
     /**
      * The Redis factory implementation.
      *
-     * @var \Illuminate\Contracts\Redis\Factory
+     * @var Factory
      */
     protected $redis; /** @phpstan-ignore-line */
 
@@ -42,6 +46,7 @@ class ThrottleRequestsWithPredis extends \Illuminate\Routing\Middleware\Throttle
 
     /**
      * Create a new request throttler.
+     *
      * @return void
      */
 
@@ -59,12 +64,10 @@ class ThrottleRequestsWithPredis extends \Illuminate\Routing\Middleware\Throttle
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  array  $limits
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param  Request  $request
+     * @return Response
      *
-     * @throws \Illuminate\Http\Exceptions\ThrottleRequestsException
+     * @throws ThrottleRequestsException
      */
     protected function handleRequest($request, Closure $next, array $limits)
     {
@@ -104,7 +107,7 @@ class ThrottleRequestsWithPredis extends \Illuminate\Routing\Middleware\Throttle
             $decaySeconds
         );
 
-        return tap(! $limiter->acquire(), function () use ($key, $limiter) {
+        return tap(!$limiter->acquire(), function () use ($key, $limiter) {
             [$this->decaysAt[$key], $this->remaining[$key]] = [
                 $limiter->decaysAt, $limiter->remaining,
             ];
@@ -137,7 +140,6 @@ class ThrottleRequestsWithPredis extends \Illuminate\Routing\Middleware\Throttle
 
     /**
      * Get the Redis connection that should be used for throttling.
-     *
      */
     protected function getRedisConnection()
     {

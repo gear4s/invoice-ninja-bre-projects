@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -49,7 +48,7 @@ class SubscriptionRepository extends BaseRepository
         DB::connection(config('database.default'))->beginTransaction();
         $data = [];
 
-        /** @var \App\Models\Client $client **/
+        /** @var Client $client * */
         $client = Client::factory()->create([
             'user_id' => $subscription->user_id,
             'company_id' => $subscription->company_id,
@@ -58,7 +57,7 @@ class SubscriptionRepository extends BaseRepository
             'settings' => ClientSettings::defaults(),
         ]);
 
-        /** @var \App\Models\ClientContact $contact **/
+        /** @var ClientContact $contact * */
         $contact = ClientContact::factory()->create([
             'user_id' => $subscription->user_id,
             'company_id' => $subscription->company_id,
@@ -105,7 +104,7 @@ class SubscriptionRepository extends BaseRepository
 
         $line_items = [];
 
-        if (! $is_recurring) {
+        if (!$is_recurring) {
             foreach ($subscription->service()->products() as $product) {
                 $line_items[] = (array) $this->makeLineItem($product, $multiplier);
             }
@@ -125,8 +124,7 @@ class SubscriptionRepository extends BaseRepository
      *
      * Removing the nested keys of the items array
      *
-     * @param  mixed $bundle
-     * @return array
+     * @param  mixed  $bundle
      */
     private function convertV3Bundle($bundle): array
     {
@@ -138,7 +136,7 @@ class SubscriptionRepository extends BaseRepository
 
         foreach ($bundle['recurring_products'] as $key => $value) {
 
-            $line_item = new \stdClass();
+            $line_item = new \stdClass;
             $line_item->product_key = $value['product']['product_key'];
             $line_item->qty = (float) $value['quantity'];
             $line_item->unit_cost = (float) $value['product']['price'];
@@ -149,7 +147,7 @@ class SubscriptionRepository extends BaseRepository
 
         foreach ($bundle['recurring_products'] as $key => $value) {
 
-            $line_item = new \stdClass();
+            $line_item = new \stdClass;
             $line_item->product_key = $value['product']['product_key'];
             $line_item->qty = (float) $value['quantity'];
             $line_item->unit_cost = (float) $value['product']['price'];
@@ -176,7 +174,7 @@ class SubscriptionRepository extends BaseRepository
         $line_items = collect($bundle)->filter(function ($item) {
             return $item->is_recurring ?? false;
         })->map(function ($item) {
-            $line_item = new InvoiceItem();
+            $line_item = new InvoiceItem;
             $line_item->product_key = $item->product_key;
             $line_item->quantity = (float) $item->qty;
             $line_item->cost = (float) $item->unit_cost;
@@ -185,16 +183,14 @@ class SubscriptionRepository extends BaseRepository
             return $line_item;
         })->toArray();
 
-
         $line_items = $this->cleanItems($line_items);
 
         return $line_items;
     }
 
-
     private function makeLineItem($product, $multiplier)
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = $this->quantity;
         $item->product_key = $product->product_key;
         $item->notes = $product->notes;
@@ -215,7 +211,7 @@ class SubscriptionRepository extends BaseRepository
 
     public function assign_invoice(Subscription $subscription, $request)
     {
-        $class = "\\App\\Models\\" . ucfirst(Str::camel($request->entity));
+        $class = '\\App\\Models\\' . ucfirst(Str::camel($request->entity));
 
         $entity = $class::withTrashed()->find($request->entity_id);
 

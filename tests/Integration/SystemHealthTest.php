@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,9 +15,6 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class SystemHealthTest extends TestCase
 {
     use DatabaseTransactions;
@@ -31,7 +27,7 @@ class SystemHealthTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testSystemHealthRouteAvailable()
+    public function test_system_health_route_available()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),

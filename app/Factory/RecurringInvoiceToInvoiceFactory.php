@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,7 @@ class RecurringInvoiceToInvoiceFactory
 {
     public static function create(RecurringInvoice $recurring_invoice, Client $client): Invoice
     {
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice->status_id = Invoice::STATUS_DRAFT;
         $invoice->discount = $recurring_invoice->discount;
         $invoice->is_amount_discount = $recurring_invoice->is_amount_discount;
@@ -77,7 +76,7 @@ class RecurringInvoiceToInvoiceFactory
     /**
      * transformEInvoice
      *
-     * @param  \App\Models\RecurringInvoice $recurring_invoice
+     * @param  RecurringInvoice  $recurring_invoice
      * @return \stdClass|null
      */
     private static function transformEInvoice($recurring_invoice)
@@ -121,14 +120,14 @@ class RecurringInvoiceToInvoiceFactory
                         // $einvoice->InvoicePeriod = [$ip];
 
                         // 2026-01-12 - To prevent storing datetime objects in the database, we manually build the InvoicePeriod object
-                        $einvoice = new \stdClass();
+                        $einvoice = new \stdClass;
 
-                        $invoice_period = new \stdClass();
+                        $invoice_period = new \stdClass;
                         $invoice_period->StartDate = $start_date;
                         $invoice_period->EndDate = $end_date;
                         $einvoice->InvoicePeriod = [$invoice_period];
 
-                        $stub = new \stdClass();
+                        $stub = new \stdClass;
                         $stub->Invoice = $einvoice;
 
                         return $stub;
@@ -137,7 +136,6 @@ class RecurringInvoiceToInvoiceFactory
                 }
 
             }
-
 
         }
 

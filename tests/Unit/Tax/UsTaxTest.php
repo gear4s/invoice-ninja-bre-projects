@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,49 +23,47 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class UsTaxTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     private array $mock_response = [
-                "geoPostalCode" => "92582",
-                "geoCity" => "SAN JACINTO",
-                "geoCounty" => "RIVERSIDE",
-                "geoState" => "CA",
-                "taxSales" => 0.0875,
-                "taxUse" => 0.0875,
-                "txbService" => "N",
-                "txbFreight" => "N",
-                "stateSalesTax" => 0.06,
-                "stateUseTax" => 0.06,
-                "citySalesTax" => 0.01,
-                "cityUseTax" => 0.01,
-                "cityTaxCode" => "874",
-                "countySalesTax" => 0.0025,
-                "countyUseTax" => 0.0025,
-                "countyTaxCode" => "",
-                "districtSalesTax" => 0.015,
-                "districtUseTax" => 0.015,
-                "district1Code" => "26",
-                "district1SalesTax" => 0,
-                "district1UseTax" => 0,
-                "district2Code" => "26",
-                "district2SalesTax" => 0.005,
-                "district2UseTax" => 0.005,
-                "district3Code" => "",
-                "district3SalesTax" => 0,
-                "district3UseTax" => 0,
-                "district4Code" => "33",
-                "district4SalesTax" => 0.01,
-                "district4UseTax" => 0.01,
-                "district5Code" => "",
-                "district5SalesTax" => 0,
-                "district5UseTax" => 0,
-                "originDestination" => "D",
-        ];
+        'geoPostalCode' => '92582',
+        'geoCity' => 'SAN JACINTO',
+        'geoCounty' => 'RIVERSIDE',
+        'geoState' => 'CA',
+        'taxSales' => 0.0875,
+        'taxUse' => 0.0875,
+        'txbService' => 'N',
+        'txbFreight' => 'N',
+        'stateSalesTax' => 0.06,
+        'stateUseTax' => 0.06,
+        'citySalesTax' => 0.01,
+        'cityUseTax' => 0.01,
+        'cityTaxCode' => '874',
+        'countySalesTax' => 0.0025,
+        'countyUseTax' => 0.0025,
+        'countyTaxCode' => '',
+        'districtSalesTax' => 0.015,
+        'districtUseTax' => 0.015,
+        'district1Code' => '26',
+        'district1SalesTax' => 0,
+        'district1UseTax' => 0,
+        'district2Code' => '26',
+        'district2SalesTax' => 0.005,
+        'district2UseTax' => 0.005,
+        'district3Code' => '',
+        'district3SalesTax' => 0,
+        'district3UseTax' => 0,
+        'district4Code' => '33',
+        'district4SalesTax' => 0.01,
+        'district4UseTax' => 0.01,
+        'district5Code' => '',
+        'district5SalesTax' => 0,
+        'district5UseTax' => 0,
+        'originDestination' => 'D',
+    ];
 
     protected function setUp(): void
     {
@@ -87,7 +84,7 @@ class UsTaxTest extends TestCase
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -148,13 +145,13 @@ class UsTaxTest extends TestCase
         return $invoice;
     }
 
-    public function testTaxAuNoExemption()
+    public function test_tax_au_no_exemption()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -179,7 +176,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'NSW'
+            'state' => 'NSW',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -220,13 +217,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testTaxAuClientExemption()
+    public function test_tax_au_client_exemption()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -251,7 +248,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => true,
-            'state' => 'NSW'
+            'state' => 'NSW',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -292,13 +289,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testTaxAuProductExemption()
+    public function test_tax_au_product_exemption()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -323,7 +320,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'NSW'
+            'state' => 'NSW',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -364,13 +361,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testTaxAuProductOverride()
+    public function test_tax_au_product_override()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -395,7 +392,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'NSW'
+            'state' => 'NSW',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -436,13 +433,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testInterstateFreightNoTaxWithProductTax()
+    public function test_interstate_freight_no_tax_with_product_tax()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -465,7 +462,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'GA'
+            'state' => 'GA',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -520,13 +517,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testInterstateFreightProductNoTax()
+    public function test_interstate_freight_product_no_tax()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -549,7 +546,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'GA'
+            'state' => 'GA',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -590,15 +587,13 @@ class UsTaxTest extends TestCase
 
     }
 
-
-
-    public function testInterstateServiceProductNoTax()
+    public function test_interstate_service_product_no_tax()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -621,7 +616,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'GA'
+            'state' => 'GA',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -662,14 +657,13 @@ class UsTaxTest extends TestCase
 
     }
 
-
-    public function testInterstateWithNoTax()
+    public function test_interstate_with_no_tax()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = false;
@@ -692,7 +686,7 @@ class UsTaxTest extends TestCase
             'shipping_state' => '30002',
             'has_valid_vat_number' => false,
             'is_tax_exempt' => false,
-            'state' => 'GA'
+            'state' => 'GA',
         ]);
 
         $invoice = Invoice::factory()->create([
@@ -733,13 +727,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testSameSubregionAndExemptProduct()
+    public function test_same_subregion_and_exempt_product()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -805,13 +799,13 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testSameSubregionAndExemptClient()
+    public function test_same_subregion_and_exempt_client()
     {
 
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -876,13 +870,12 @@ class UsTaxTest extends TestCase
 
     }
 
-
-    public function testForeignTaxesEnabledWithExemptProduct()
+    public function test_foreign_taxes_enabled_with_exempt_product()
     {
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -946,13 +939,12 @@ class UsTaxTest extends TestCase
 
     }
 
-
-    public function testForeignTaxesDisabled()
+    public function test_foreign_taxes_disabled()
     {
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -1015,13 +1007,12 @@ class UsTaxTest extends TestCase
 
     }
 
-
-    public function testForeignTaxesEnabled()
+    public function test_foreign_taxes_enabled()
     {
         $settings = CompanySettings::defaults();
         $settings->country_id = '840'; // germany
 
-        $tax_data = new TaxModel();
+        $tax_data = new TaxModel;
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
@@ -1090,7 +1081,7 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testCompanyTaxAllOffButTaxUSRegion()
+    public function test_company_tax_all_off_but_tax_us_region()
     {
 
         $invoice = $this->invoiceStub('92582');
@@ -1114,7 +1105,7 @@ class UsTaxTest extends TestCase
 
     }
 
-    public function testCompanyTaxAllOff()
+    public function test_company_tax_all_off()
     {
 
         $invoice = $this->invoiceStub('92582');
@@ -1142,8 +1133,7 @@ class UsTaxTest extends TestCase
 
     }
 
-
-    public function testThresholdLevelsAreMet()
+    public function test_threshold_levels_are_met()
     {
 
         $invoice = $this->invoiceStub('92582');
@@ -1165,10 +1155,9 @@ class UsTaxTest extends TestCase
         $this->assertEquals(0, $invoice->line_items[0]->tax_rate1);
         $this->assertEquals(100, $invoice->amount);
 
-
     }
 
-    public function testHasValidVatMakesNoDifferenceToTaxCalc()
+    public function test_has_valid_vat_makes_no_difference_to_tax_calc()
     {
 
         $invoice = $this->invoiceStub('92582');
@@ -1182,8 +1171,7 @@ class UsTaxTest extends TestCase
         $this->assertEquals(108.75, $invoice->amount);
     }
 
-
-    public function testTaxExemption()
+    public function test_tax_exemption()
     {
         $invoice = $this->invoiceStub('92582');
         $client = $invoice->client;
@@ -1196,16 +1184,13 @@ class UsTaxTest extends TestCase
         $this->assertEquals(100, $invoice->amount);
     }
 
-    public function testBasicTaxCalculation()
+    public function test_basic_tax_calculation()
     {
 
         $invoice = $this->invoiceStub();
 
-
         $this->assertEquals(8.75, $invoice->line_items[0]->tax_rate1);
         $this->assertEquals(108.75, $invoice->amount);
 
-
     }
-
 }

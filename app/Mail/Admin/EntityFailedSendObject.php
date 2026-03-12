@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -82,16 +81,16 @@ class EntityFailedSendObject
     public function build()
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->setTemplate();
 
-        $mail_obj = new stdClass();
+        $mail_obj = new stdClass;
         $mail_obj->amount = $this->getAmount();
         $mail_obj->subject = $this->getSubject();
         $mail_obj->data = $this->getData();
@@ -169,15 +168,15 @@ class EntityFailedSendObject
         );
 
         $data = [
-            "title" => $this->getSubject(),
-            "content" => $content,
-            "url" => $this->invitation->getAdminLink($this->use_react_url),
-            "button" => ctrans("texts.view_{$this->entity_type}"),
-            "signature" => $signature,
-            "logo" => $this->company->present()->logo(),
-            "settings" => $settings,
-            "whitelabel" => $this->company->account->isPaid() ? true : false,
-            "text_body" => str_replace("<br>", "\n", $content),
+            'title' => $this->getSubject(),
+            'content' => $content,
+            'url' => $this->invitation->getAdminLink($this->use_react_url),
+            'button' => ctrans("texts.view_{$this->entity_type}"),
+            'signature' => $signature,
+            'logo' => $this->company->present()->logo(),
+            'settings' => $settings,
+            'whitelabel' => $this->company->account->isPaid() ? true : false,
+            'text_body' => str_replace('<br>', "\n", $content),
             'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
 

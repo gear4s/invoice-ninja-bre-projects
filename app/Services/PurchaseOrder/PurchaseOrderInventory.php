@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,7 +26,7 @@ class PurchaseOrderInventory
             $p = Product::query()->where('product_key', $item->product_key)->where('company_id', $this->purchase_order->company_id)->first();
 
             if (!$p) {
-                $p = new Product();
+                $p = new Product;
                 $p->user_id = $this->purchase_order->user_id;
                 $p->company_id = $this->purchase_order->company_id;
                 $p->project_id = $this->purchase_order->project_id;

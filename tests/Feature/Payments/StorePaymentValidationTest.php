@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,17 +16,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class StorePaymentValidationTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -44,12 +39,12 @@ class StorePaymentValidationTest extends TestCase
         );
     }
 
-    public function testNumericParse()
+    public function test_numeric_parse()
     {
         $this->assertFalse(is_numeric('2760.0,139.14'));
     }
 
-    public function testNoAmountGiven()
+    public function test_no_amount_given()
     {
         $data = [
             // 'amount' => 0,
@@ -71,7 +66,6 @@ class StorePaymentValidationTest extends TestCase
 
         $response = false;
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -80,7 +74,7 @@ class StorePaymentValidationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testInValidPaymentAmount()
+    public function test_in_valid_payment_amount()
     {
         $data = [
             'amount' => '10,33',
@@ -92,17 +86,15 @@ class StorePaymentValidationTest extends TestCase
 
         $response = false;
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/payments/', $data);
 
-
         $response->assertStatus(422);
     }
 
-    public function testValidPayment()
+    public function test_valid_payment()
     {
         $data = [
             'amount' => 0,
@@ -119,11 +111,10 @@ class StorePaymentValidationTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/payments/', $data);
 
-
         $response->assertStatus(200);
     }
 
-    public function testValidPaymentWithAmount()
+    public function test_valid_payment_with_amount()
     {
         $data = [
             'amount' => 0,
@@ -153,7 +144,7 @@ class StorePaymentValidationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testValidPaymentWithInvalidData()
+    public function test_valid_payment_with_invalid_data()
     {
         $data = [
             'amount' => 0,

@@ -6,31 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Account;
 
-use App\Utils\Ninja;
-use App\Models\Account;
-use Illuminate\Support\Str;
-use App\Jobs\User\CreateUser;
-use App\DataProviders\Domains;
-use App\Jobs\Util\VersionCheck;
-use App\Jobs\Mail\NinjaMailerJob;
-use App\Jobs\Company\CreateCompany;
-use Illuminate\Support\Facades\App;
-use App\Jobs\Mail\NinjaMailerObject;
-use App\Utils\Traits\User\LoginCache;
-use App\Events\Account\AccountCreated;
-use Turbo124\Beacon\Facades\LightLogs;
-use App\Jobs\Company\CreateCompanyToken;
-use Illuminate\Foundation\Bus\Dispatchable;
+use App\DataMapper\Analytics\AccountCreated as AnalyticsAccountCreated;
 use App\DataMapper\Analytics\AccountPlatform;
+use App\DataProviders\Domains;
+use App\Events\Account\AccountCreated;
+use App\Jobs\Company\CreateCompany;
 use App\Jobs\Company\CreateCompanyPaymentTerms;
 use App\Jobs\Company\CreateCompanyTaskStatuses;
-use App\DataMapper\Analytics\AccountCreated as AnalyticsAccountCreated;
+use App\Jobs\Company\CreateCompanyToken;
+use App\Jobs\User\CreateUser;
+use App\Jobs\Util\VersionCheck;
+use App\Models\Account;
+use App\Utils\Ninja;
+use App\Utils\Traits\User\LoginCache;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Str;
+use Modules\Admin\Jobs\Account\NinjaUser;
+use Turbo124\Beacon\Facades\LightLogs;
 
 class CreateAccount
 {
@@ -40,8 +38,6 @@ class CreateAccount
     protected $request;
 
     protected $client_ip;
-
-
 
     public function __construct(array $sp660339, $client_ip)
     {
@@ -57,14 +53,14 @@ class CreateAccount
     private function create()
     {
         Account::reguard();
-        $sp794f3f = new Account();
+        $sp794f3f = new Account;
         $sp794f3f->fill($this->request);
 
         if (array_key_exists('rc', $this->request)) {
             $sp794f3f->referral_code = $this->request['rc'];
         }
 
-        if (! $sp794f3f->key) {
+        if (!$sp794f3f->key) {
             $sp794f3f->key = Str::random(32);
         }
 
@@ -107,7 +103,6 @@ class CreateAccount
             event(new AccountCreated($spaa9f78, $sp035a66, Ninja::eventVars()));
         }
 
-
         $spaa9f78->fresh();
 
         if (Ninja::isHosted()) {
@@ -115,15 +110,15 @@ class CreateAccount
             $t = app('translator');
             $t->replace(Ninja::transformTranslations($sp035a66->settings));
 
-            (new \Modules\Admin\Jobs\Account\NinjaUser([], $sp035a66))->handle();
+            (new NinjaUser([], $sp035a66))->handle();
 
         }
 
         VersionCheck::dispatch();
 
-        LightLogs::create(new AnalyticsAccountCreated())
-                 ->increment()
-                 ->queue();
+        LightLogs::create(new AnalyticsAccountCreated)
+            ->increment()
+            ->queue();
 
         $ip = '';
 
@@ -138,7 +133,7 @@ class CreateAccount
         $platform = request()->has('platform') ? request()->input('platform') : 'www';
 
         LightLogs::create(new AccountPlatform($platform, request()->server('HTTP_USER_AGENT'), $ip))
-                 ->queue();
+            ->queue();
 
         return $sp794f3f;
     }
@@ -156,8 +151,4 @@ class CreateAccount
 
         return 'gmail.com';
     }
-
-
-
-
 }

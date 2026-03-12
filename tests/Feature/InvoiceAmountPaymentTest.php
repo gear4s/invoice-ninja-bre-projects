@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,9 +19,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class InvoiceAmountPaymentTest extends TestCase
 {
     use DatabaseTransactions;
@@ -39,7 +35,7 @@ class InvoiceAmountPaymentTest extends TestCase
         );
     }
 
-    public function testPaymentAmountForInvoice()
+    public function test_payment_amount_for_invoice()
     {
         $data = [
             'name' => 'A Nice Client',
@@ -59,7 +55,7 @@ class InvoiceAmountPaymentTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 
@@ -112,7 +108,7 @@ class InvoiceAmountPaymentTest extends TestCase
         $this->assertEquals(10, $payment->amount);
     }
 
-    public function testMarkPaidRemovesUnpaidGatewayFees()
+    public function test_mark_paid_removes_unpaid_gateway_fees()
     {
         $data = [
             'name' => 'A Nice Client',
@@ -132,7 +128,7 @@ class InvoiceAmountPaymentTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 
@@ -183,7 +179,7 @@ class InvoiceAmountPaymentTest extends TestCase
 
         $invoice = Invoice::find($this->decodePrimaryKey($invoice_one_hashed_id));
 
-        $line_items = (array)$invoice->line_items;
+        $line_items = (array) $invoice->line_items;
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = 5;

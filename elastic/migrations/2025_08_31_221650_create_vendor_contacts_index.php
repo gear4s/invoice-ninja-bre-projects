@@ -1,11 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
-use Elastic\Adapter\Indices\Mapping;
-use Elastic\Adapter\Indices\Settings;
+use Elastic\Elasticsearch\ClientBuilder;
 use Elastic\Migrations\Facades\Index;
 use Elastic\Migrations\MigrationInterface;
-use Elastic\Elasticsearch\ClientBuilder;
 
 final class CreateVendorContactsIndex implements MigrationInterface
 {
@@ -26,7 +25,7 @@ final class CreateVendorContactsIndex implements MigrationInterface
                 'id' => ['type' => 'keyword'],
                 'name' => [
                     'type' => 'text',
-                    'analyzer' => 'standard'
+                    'analyzer' => 'standard',
                 ],
                 'is_deleted' => ['type' => 'boolean'],
                 'hashed_id' => ['type' => 'keyword'],
@@ -35,18 +34,18 @@ final class CreateVendorContactsIndex implements MigrationInterface
                 'email' => ['type' => 'keyword'],
                 'phone' => ['type' => 'keyword'],
                 'is_primary' => ['type' => 'boolean'],
-                
+
                 // Custom fields
                 'custom_value1' => ['type' => 'keyword'],
                 'custom_value2' => ['type' => 'keyword'],
                 'custom_value3' => ['type' => 'keyword'],
                 'custom_value4' => ['type' => 'keyword'],
-                
+
                 // Additional fields
                 'company_key' => ['type' => 'keyword'],
                 'vendor_id' => ['type' => 'keyword'],
                 'send_email' => ['type' => 'boolean'],
-            ]
+            ],
         ];
 
         Index::createRaw('vendor_contacts_v2', $mapping);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,7 +16,6 @@ use App\DataMapper\CompanySettings;
 use Tests\TestCase;
 
 /**
- *
  *   App\DataMapper\ClientSettings
  */
 class CompareObjectTest extends TestCase
@@ -34,7 +32,7 @@ class CompareObjectTest extends TestCase
     public function buildClientSettings()
     {
         foreach ($this->company_settings as $key => $value) {
-            if (! isset($this->client_settings->{$key}) && property_exists($this->company_settings, $key)) {
+            if (!isset($this->client_settings->{$key}) && property_exists($this->company_settings, $key)) {
                 $this->client_settings->{$key} = $this->company_settings->{$key};
             }
         }
@@ -42,7 +40,7 @@ class CompareObjectTest extends TestCase
         return $this->client_settings;
     }
 
-    public function testProperties()
+    public function test_properties()
     {
         $build_client_settings = $this->buildClientSettings();
 
@@ -51,7 +49,7 @@ class CompareObjectTest extends TestCase
         $this->assertEquals($build_client_settings->payment_terms, '');
     }
 
-    public function testDirectClientSettingsBuild()
+    public function test_direct_client_settings_build()
     {
         $settings = ClientSettings::buildClientSettings(CompanySettings::defaults(), ClientSettings::defaults());
 

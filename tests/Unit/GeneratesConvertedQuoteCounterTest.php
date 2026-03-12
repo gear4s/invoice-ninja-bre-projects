@@ -6,40 +6,43 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Quote;
-use App\Models\Client;
 use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Company;
 use App\Models\Country;
 use App\Models\Invoice;
-use App\Models\ClientContact;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
+use App\Models\Quote;
+use App\Models\User;
 use App\Utils\Traits\GeneratesConvertedQuoteCounter;
+use App\Utils\Traits\MakesHash;
+use Faker\Factory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Session;
+use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Traits\GeneratesConvertedQuoteCounter
  */
 class GeneratesConvertedQuoteCounterTest extends TestCase
 {
-    use GeneratesConvertedQuoteCounter;
     use DatabaseTransactions;
+    use GeneratesConvertedQuoteCounter;
     use MakesHash;
 
     protected $account;
+
     protected $faker;
+
     protected $client;
+
     protected $company;
 
     protected function setUp(): void
@@ -47,16 +50,16 @@ class GeneratesConvertedQuoteCounterTest extends TestCase
         parent::setUp();
 
         Session::start();
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
         Model::reguard();
 
-        if (\App\Models\Country::count() == 0) {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        if (Country::count() == 0) {
+            Artisan::call('db:seed', ['--force' => true]);
         }
 
     }
 
-    public function testCounterExtraction()
+    public function test_counter_extraction()
     {
         $this->account = Account::factory()->create([
             'hosted_client_count' => 1000,
@@ -70,7 +73,7 @@ class GeneratesConvertedQuoteCounterTest extends TestCase
 
         $user = User::whereEmail($fake_email)->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $this->account->id,
                 'confirmation_code' => $this->createDbHash(config('database.default')),
@@ -122,8 +125,8 @@ class GeneratesConvertedQuoteCounterTest extends TestCase
 
         $this->assertNotNull($invoice);
 
-        $this->assertEquals(now()->format('Y'). '-Q0001', $quote->number);
-        $this->assertEquals(now()->format('Y'). '-I0001', $invoice->number);
+        $this->assertEquals(now()->format('Y') . '-Q0001', $quote->number);
+        $this->assertEquals(now()->format('Y') . '-I0001', $invoice->number);
 
         $settings = $this->client->getMergedSettings();
         $settings->invoice_number_counter = 100;

@@ -6,18 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Repositories;
 
-use App\Models\Task;
-use App\Models\Project;
 use App\Factory\TaskFactory;
 use App\Jobs\Task\TaskAssigned;
-use App\Utils\Traits\MakesHash;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use App\Utils\Traits\GeneratesCounter;
+use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 
 /**
@@ -39,10 +41,9 @@ class TaskRepository extends BaseRepository
     /**
      * Saves the task and its contacts.
      *
-     * @param      array                         $data    The data
-     * @param      \App\Models\Task              $task  The task
-     *
-     * @return     task|null  task Object
+     * @param  array  $data  The data
+     * @param  Task  $task  The task
+     * @return Task|null task Object
      */
     public function save(array $data, Task $task): ?Task
     {
@@ -63,7 +64,7 @@ class TaskRepository extends BaseRepository
 
         $this->init($task);
 
-        if ($this->new_task && ! $task->status_id) {
+        if ($this->new_task && !$task->status_id) {
             $task->status_id = $this->setDefaultStatus($task);
         }
 
@@ -71,34 +72,34 @@ class TaskRepository extends BaseRepository
             $task->rate = $task->getRate();
         }
 
-        $task->number = empty($task->number) || ! array_key_exists('number', $data) ? $this->trySaving($task) : $data['number'];
+        $task->number = empty($task->number) || !array_key_exists('number', $data) ? $this->trySaving($task) : $data['number'];
 
         if (isset($data['description'])) {
             $task->description = trim($data['description']);
         }
 
-        //todo i can't set it - i need to calculate it.
+        // todo i can't set it - i need to calculate it.
         if (isset($data['status_order'])) {
             $task->status_order = $data['status_order'];
         }
 
-        /*V4 override*/
-        if (! empty($data['time_details'])) {
+        /* V4 override */
+        if (!empty($data['time_details'])) {
             $timeLog = [];
             foreach ($data['time_details'] as $detail) {
                 $startTime = strtotime($detail['start_datetime'] ?? now()->format('Y-m-d'));
                 $endTime = false;
-                if (! empty($detail['end_datetime'])) {
+                if (!empty($detail['end_datetime'])) {
                     $endTime = strtotime($detail['end_datetime']);
                 } else {
                     $duration = 0;
-                    if (! empty($detail['duration_seconds'])) {
+                    if (!empty($detail['duration_seconds'])) {
                         $duration += $detail['duration_seconds'];
                     }
-                    if (! empty($detail['duration_minutes'])) {
+                    if (!empty($detail['duration_minutes'])) {
                         $duration += $detail['duration_minutes'] * 60;
                     }
-                    if (! empty($detail['duration_hours'])) {
+                    if (!empty($detail['duration_hours'])) {
                         $duration += $detail['duration_hours'] * 60 * 60;
                     }
                     if ($duration) {
@@ -106,7 +107,7 @@ class TaskRepository extends BaseRepository
                     }
                 }
                 $timeLog[] = [$startTime, $endTime];
-                if (! $endTime) {
+                if (!$endTime) {
                     $data['is_running'] = true;
                 }
             }
@@ -177,7 +178,7 @@ class TaskRepository extends BaseRepository
     {
 
         if (isset($time_log[0][0])) {
-            return \Carbon\Carbon::createFromTimestamp((int) $time_log[0][0])->addSeconds($task->company->utc_offset());
+            return Carbon::createFromTimestamp((int) $time_log[0][0])->addSeconds($task->company->utc_offset());
         }
 
         return null;
@@ -187,12 +188,11 @@ class TaskRepository extends BaseRepository
     /**
      * Store tasks in bulk.
      *
-     * @param array $task
-     * @return Task|null
+     * @param  array  $task
      */
     public function create($task): ?Task
     {
-        /** @var \App\Models\User $user **/
+        /** @var User $user * */
         $user = auth()->user();
 
         return $this->save(
@@ -204,9 +204,9 @@ class TaskRepository extends BaseRepository
     private function setDefaultStatus(Task $task)
     {
         $first_status = $task->company->task_statuses()
-                              ->whereNull('deleted_at')
-                              ->orderBy('id', 'asc')
-                              ->first();
+            ->whereNull('deleted_at')
+            ->orderBy('id', 'asc')
+            ->first();
 
         if ($first_status) {
             return $first_status->id;
@@ -218,12 +218,12 @@ class TaskRepository extends BaseRepository
     /**
      * Sorts the task status order IF the old status has changed between requests
      *
-     * @param  Task     $new_task The new Task model
+     * @param  Task  $new_task  The new Task model
      * @return void
      */
     public function sortStatuses($new_task)
     {
-        if (! $new_task->project()->exists()) {
+        if (!$new_task->project()->exists()) {
             return;
         }
 
@@ -245,7 +245,7 @@ class TaskRepository extends BaseRepository
 
     public function start(Task $task)
     {
-        //do no allow an task to be restarted if it has been invoiced
+        // do no allow an task to be restarted if it has been invoiced
         if ($task->invoice_id) {
             return $task;
         }
@@ -255,9 +255,9 @@ class TaskRepository extends BaseRepository
 
             $start_time = time();
 
-            $log = array_merge($log, [[$start_time, 0, "", true]]);
+            $log = array_merge($log, [[$start_time, 0, '', true]]);
             $task->time_log = json_encode($log);
-            $task->calculated_start_date = \Carbon\Carbon::createFromTimestamp($start_time)->addSeconds($task->company->utc_offset());
+            $task->calculated_start_date = Carbon::createFromTimestamp($start_time)->addSeconds($task->company->utc_offset());
 
             $task->saveQuietly();
         }
@@ -267,7 +267,7 @@ class TaskRepository extends BaseRepository
         $last = end($log);
 
         if (is_array($last) && $last[1] !== 0) { // this line is a disaster
-            $new = [time(), 0, "", true];
+            $new = [time(), 0, '', true];
 
             $log = array_merge($log, [$new]);
             $task->time_log = json_encode($log);
@@ -282,7 +282,7 @@ class TaskRepository extends BaseRepository
 
     public function roundTimeLog(int $start_time, int $end_time): int
     {
-        if (in_array($this->task_round_to_nearest, [0,1]) || $end_time == 0) {
+        if (in_array($this->task_round_to_nearest, [0, 1]) || $end_time == 0) {
             return $end_time;
         }
 
@@ -312,7 +312,7 @@ class TaskRepository extends BaseRepository
             $last[1] = $this->roundTimeLog($last[0], time());
 
             array_pop($log);
-            $log = array_merge($log, [$last]);//check at this point, it may be prepending here.
+            $log = array_merge($log, [$last]); // check at this point, it may be prepending here.
 
             $task->time_log = json_encode($log);
             $task->is_running = false;
@@ -402,7 +402,7 @@ class TaskRepository extends BaseRepository
     }
 
     /**
-     * @param $entity
+     * @param  $entity
      */
     public function restore($task)
     {
@@ -417,7 +417,7 @@ class TaskRepository extends BaseRepository
     }
 
     /**
-     * @param $entity
+     * @param  $entity
      */
     public function delete($task)
     {
@@ -431,8 +431,7 @@ class TaskRepository extends BaseRepository
 
     }
 
-
-    public function bulkUpdate(\Illuminate\Database\Eloquent\Builder $models, string $column, mixed $new_value): void
+    public function bulkUpdate(Builder $models, string $column, mixed $new_value): void
     {
 
         // First, filter out tasks that have been invoiced
@@ -450,7 +449,7 @@ class TaskRepository extends BaseRepository
                 ->first();
 
             if ($project) {
-                /** @var \App\Models\Project $project */
+                /** @var Project $project */
                 $models->update([
                     'project_id' => $project->id,
                     'client_id' => $project->client_id,
@@ -464,5 +463,4 @@ class TaskRepository extends BaseRepository
             $models->update([$column => $new_value]);
         }
     }
-
 }

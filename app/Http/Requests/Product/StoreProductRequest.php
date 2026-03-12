@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,17 +13,17 @@ namespace App\Http\Requests\Product;
 
 use App\Http\Requests\Request;
 use App\Models\Product;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 class StoreProductRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Product::class);
@@ -57,15 +56,15 @@ class StoreProductRequest extends Request
     {
         $input = $this->all();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
-        if (! isset($input['quantity'])) {
+        if (!isset($input['quantity'])) {
             $input['quantity'] = 1;
         }
 

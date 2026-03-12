@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,16 +19,10 @@ use App\Models\User;
 
 class CompanyUserTransformer extends EntityTransformer
 {
-    /**
-     * @var array
-     */
     protected array $defaultIncludes = [
         // 'user',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'user',
         'company',
@@ -39,12 +32,12 @@ class CompanyUserTransformer extends EntityTransformer
 
     public function transform(CompanyUser $company_user)
     {
-        $blank_obj = new \stdClass();
+        $blank_obj = new \stdClass;
 
         return [
             'permissions' => $company_user->permissions ?: '',
             'notifications' => $company_user->notifications ? (object) $company_user->notifications : $blank_obj,
-            'settings' =>  $company_user->settings ? (object) $company_user->settings : $blank_obj,
+            'settings' => $company_user->settings ? (object) $company_user->settings : $blank_obj,
             'react_settings' => $company_user->react_settings ? (object) $company_user->react_settings : $blank_obj,
             'is_owner' => (bool) $company_user->is_owner,
             'is_admin' => (bool) $company_user->is_admin,
@@ -82,10 +75,10 @@ class CompanyUserTransformer extends EntityTransformer
     public function includeToken(CompanyUser $company_user)
     {
         $token = $company_user->tokens()
-                              ->where('company_id', $company_user->company_id)
-                              ->where('user_id', $company_user->user_id)
-                              ->where('is_system', 1)
-                              ->first();
+            ->where('company_id', $company_user->company_id)
+            ->where('user_id', $company_user->user_id)
+            ->where('is_system', 1)
+            ->first();
 
         $transformer = new CompanyTokenTransformer($this->serializer);
 

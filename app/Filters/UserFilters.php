@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * UserFilters.
@@ -22,8 +23,6 @@ class UserFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -32,26 +31,24 @@ class UserFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('first_name', 'like', '%' . $filter . '%')
-                          ->orWhere('last_name', 'like', '%' . $filter . '%')
-                          ->orWhere('email', 'like', '%' . $filter . '%')
-                          ->orWhere('signature', 'like', '%' . $filter . '%');
+                ->orWhere('last_name', 'like', '%' . $filter . '%')
+                ->orWhere('email', 'like', '%' . $filter . '%')
+                ->orWhere('signature', 'like', '%' . $filter . '%');
         });
     }
-
 
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing('users'))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], Schema::getColumnListing('users'))) {
             return $this->builder;
         }
 
@@ -68,10 +65,10 @@ class UserFilters extends QueryFilters
     public function entityFilter()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        if($user->isOwner() && request()->input('showAccountUsers', false) == 'true'){
+        if ($user->isOwner() && request()->input('showAccountUsers', false) == 'true') {
             return $this->builder;
         }
 
@@ -82,16 +79,14 @@ class UserFilters extends QueryFilters
 
     /**
      * Hides owner users from the list.
-     *
-     * @return Builder
      */
     public function hideOwnerUsers(): Builder
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        if($user->isOwner() && request()->input('showAccountUsers', false) == 'true'){
-            
+        if ($user->isOwner() && request()->input('showAccountUsers', false) == 'true') {
+
             return $this->builder->whereHas('company_users', function ($q) {
                 $q->where('is_owner', false);
             });
@@ -106,11 +101,11 @@ class UserFilters extends QueryFilters
     public function showAccountUsers(string $value = ''): Builder
     {
 
-        if($value !== 'true'){
+        if ($value !== 'true') {
             return $this->builder;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $this->builder->where('account_id', $user->account_id);
@@ -119,12 +114,10 @@ class UserFilters extends QueryFilters
     /**
      * Filters users that have been removed from the
      * company, but not deleted from the system.
-     *
-     * @return Builder
      */
     public function hideRemovedUsers(): Builder
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $this->builder->whereHas('company_users', function ($q) use ($user) {
@@ -136,9 +129,7 @@ class UserFilters extends QueryFilters
      * Overrides the base with() function as no company ID
      * exists on the user table
      *
-     * @param  string $value Hashed ID of the user to return back in the dataset
-     *
-     * @return Builder
+     * @param  string  $value  Hashed ID of the user to return back in the dataset
      */
     public function with(string $value = ''): Builder
     {
@@ -146,7 +137,7 @@ class UserFilters extends QueryFilters
             return $this->builder;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $this->builder
@@ -157,9 +148,6 @@ class UserFilters extends QueryFilters
 
     /**
      * Returns users with permissions to send emails via OAuth
-     *
-     * @param  string $value
-     * @return Builder
      */
     public function sending_users(string $value = ''): Builder
     {
@@ -173,9 +161,6 @@ class UserFilters extends QueryFilters
     /**
      * Exclude a list of user_ids, can pass multiple
      * user IDs by separating them with a comma.
-     *
-     * @param  string $user_id
-     * @return Builder
      */
     public function without(string $user_id = ''): Builder
     {
@@ -185,7 +170,7 @@ class UserFilters extends QueryFilters
 
         $user_array = $this->transformKeys(explode(',', $user_id));
 
-        return  $this->builder->where(function ($query) use ($user_array) {
+        return $this->builder->where(function ($query) use ($user_array) {
             $query->whereNotIn('id', $user_array);
         });
     }
@@ -193,13 +178,9 @@ class UserFilters extends QueryFilters
     /**
      * Filters the list based on the status
      * archived, active, deleted.
-     *
-     * @param string $filter
-     * @return Builder
      */
     public function status(string $filter = ''): Builder
     {
-
 
         if (strlen($filter) == 0) {
             return $this->builder;
@@ -209,7 +190,7 @@ class UserFilters extends QueryFilters
 
         return $this->builder->where(function ($query) use ($filters) {
 
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = auth()->user();
 
             if (in_array(self::STATUS_ACTIVE, $filters)) {
@@ -225,6 +206,4 @@ class UserFilters extends QueryFilters
             }
         });
     }
-
-
 }

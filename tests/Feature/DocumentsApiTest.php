@@ -6,30 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
 use App\Models\Document;
-use Tests\MockAccountData;
+use App\Models\Task;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\DocumentController
  */
 class DocumentsApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -40,7 +39,7 @@ class DocumentsApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testDocumentFilters()
+    public function test_document_filters()
     {
         Document::query()->withTrashed()->cursor()->each(function ($d) {
             $d->forceDelete();
@@ -65,8 +64,7 @@ class DocumentsApiTest extends TestCase
         $this->assertCount(1, $response->json());
     }
 
-
-    public function testDocumentFilters2()
+    public function test_document_filters2()
     {
         Document::query()->withTrashed()->cursor()->each(function ($d) {
             $d->forceDelete();
@@ -91,7 +89,7 @@ class DocumentsApiTest extends TestCase
         $this->assertCount(1, $response->json());
     }
 
-    public function testDocumentFilters3()
+    public function test_document_filters3()
     {
         Document::query()->withTrashed()->cursor()->each(function ($d) {
             $d->forceDelete();
@@ -168,8 +166,7 @@ class DocumentsApiTest extends TestCase
 
     }
 
-
-    public function testIsPublicTypesForDocumentRequest()
+    public function test_is_public_types_for_document_request()
     {
         $d = Document::factory()->create([
             'company_id' => $this->company->id,
@@ -190,100 +187,100 @@ class DocumentsApiTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertFalse($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => true,
-                ];
+            'is_public' => true,
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertTrue($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => 'true',
-                ];
+            'is_public' => 'true',
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertTrue($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => '1',
-                ];
+            'is_public' => '1',
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertTrue($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => 1,
-                ];
+            'is_public' => 1,
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertTrue($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => 'false',
-                ];
+            'is_public' => 'false',
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertFalse($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => '0',
-                ];
+            'is_public' => '0',
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
         $this->assertFalse($arr['data']['is_public']);
 
         $update = [
-                    'is_public' => 0,
-                ];
+            'is_public' => 0,
+        ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson("/api/v1/documents/{$d->hashed_id}", $update);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -291,7 +288,7 @@ class DocumentsApiTest extends TestCase
 
     }
 
-    public function testClientDocuments()
+    public function test_client_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -303,7 +300,7 @@ class DocumentsApiTest extends TestCase
         $this->assertArrayHasKey('documents', $arr['data'][0]);
     }
 
-    public function testInvoiceDocuments()
+    public function test_invoice_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -315,7 +312,7 @@ class DocumentsApiTest extends TestCase
         $this->assertArrayHasKey('documents', $arr['data'][0]);
     }
 
-    public function testProjectsDocuments()
+    public function test_projects_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -327,7 +324,7 @@ class DocumentsApiTest extends TestCase
         $this->assertArrayHasKey('documents', $arr['data'][0]);
     }
 
-    public function testExpenseDocuments()
+    public function test_expense_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -339,7 +336,7 @@ class DocumentsApiTest extends TestCase
         $this->assertArrayHasKey('documents', $arr['data'][0]);
     }
 
-    public function testVendorDocuments()
+    public function test_vendor_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -351,7 +348,7 @@ class DocumentsApiTest extends TestCase
         $this->assertArrayHasKey('documents', $arr['data'][0]);
     }
 
-    public function testProductDocuments()
+    public function test_product_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -363,7 +360,7 @@ class DocumentsApiTest extends TestCase
         $this->assertArrayHasKey('documents', $arr['data'][0]);
     }
 
-    public function testTaskDocuments()
+    public function test_task_documents()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,7 +25,9 @@ class Attachments
     public ?string $filename;
 
     public ?string $description;
+
     public ?string $document_id;
+
     public ?bool $primary_image;
 
     public function __construct(
@@ -78,36 +79,42 @@ class Attachments
     public function setDocument(?string $document): self
     {
         $this->document = $document;
+
         return $this;
     }
 
     public function setMimeType(?string $mime_type): self
     {
         $this->mime_type = $mime_type;
+
         return $this;
     }
 
     public function setFilename(?string $filename): self
     {
         $this->filename = $filename;
+
         return $this;
     }
 
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
     public function setDocumentId(?string $document_id): self
     {
         $this->document_id = $document_id;
+
         return $this;
     }
 
     public function setPrimaryImage(?bool $primary_image): self
     {
         $this->primary_image = $primary_image;
+
         return $this;
     }
 }

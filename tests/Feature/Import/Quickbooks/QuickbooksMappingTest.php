@@ -2,32 +2,14 @@
 
 namespace Tests\Feature\Import\Quickbooks;
 
-use Mockery;
-use Tests\TestCase;
-use ReflectionClass;
 use App\Models\Client;
-use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\ClientContact;
-use App\DataMapper\ClientSync;
-use App\DataMapper\InvoiceItem;
-use App\DataMapper\InvoiceSync;
-use App\DataMapper\ProductSync;
-use App\Utils\Traits\MakesHash;
-use App\Import\Providers\Quickbooks;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use QuickBooksOnline\API\Facades\Item;
-use App\Import\Transformer\BaseTransformer;
 use App\Services\Quickbooks\QuickbooksService;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use QuickBooksOnline\API\Facades\Invoice as QbInvoice;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Services\Quickbooks\Transformers\ClientTransformer;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class QuickbooksMappingTest extends TestCase
 {
@@ -41,7 +23,6 @@ class QuickbooksMappingTest extends TestCase
     {
         parent::setUp();
 
-
         if (config('ninja.testvars.travis') !== false || !config('services.quickbooks.client_id')) {
             $this->markTestSkipped('Skip test for GH Actions');
         }
@@ -50,12 +31,12 @@ class QuickbooksMappingTest extends TestCase
 
         $this->makeTestData();
 
-        if(!$this->company->quickbooks->accessTokenKey) {
+        if (!$this->company->quickbooks->accessTokenKey) {
             $this->markTestSkipped('Company does not have Quickbooks connected');
         }
     }
 
-    public function testBackupImport()
+    public function test_backup_import()
     {
 
         $qb = new QuickbooksService($this->company);
@@ -98,8 +79,7 @@ class QuickbooksMappingTest extends TestCase
 
         $this->assertGreaterThan($pre_count, $post_count);
 
-
-        //loop and check every single invoice amount/balance
+        // loop and check every single invoice amount/balance
         $qb_invoices = collect($this->qb_data['invoices']);
 
         Invoice::where('company_id', $this->company->id)->cursor()->each(function ($invoice) use ($qb_invoices) {
@@ -129,28 +109,23 @@ class QuickbooksMappingTest extends TestCase
 
         });
 
-
-
-
         Client::where('company_id', $this->company->id)->cursor()->each(function ($client) {
             $client->forceDelete();
         });
 
-
-
     }
 
-    public function testFileHydrated()
+    public function test_file_hydrated()
     {
         $this->assertGreaterThan(1, count($this->qb_data));
     }
 
-    public function testClientMapping()
+    public function test_client_mapping()
     {
         $this->assertTrue(isset($this->qb_data['clients']));
     }
 
-    public function testClientTransformation()
+    public function test_client_transformation()
     {
 
         $ct = new ClientTransformer($this->company);
@@ -160,6 +135,4 @@ class QuickbooksMappingTest extends TestCase
         $this->assertNotNull($client_array);
 
     }
-
-
 }

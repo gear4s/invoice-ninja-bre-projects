@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,8 +25,7 @@ class RecurringInvoiceTransformer extends BaseTransformer
     use CleanLineItems;
 
     /**
-     * @param $data
-     *
+     * @param  $data
      * @return bool|array
      */
     public function transform($line_items_data)
@@ -131,10 +129,10 @@ class RecurringInvoiceTransformer extends BaseTransformer
                 'invoice.exchange_rate'
             ),
             'is_amount_discount' => filter_var(
-                    $this->getString($invoice_data, 'invoice.is_amount_discount'),
-                    FILTER_VALIDATE_BOOLEAN,
-                    FILTER_NULL_ON_FAILURE
-                ),
+                $this->getString($invoice_data, 'invoice.is_amount_discount'),
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            ),
             'status_id' => RecurringInvoice::STATUS_DRAFT,
             // 'status_id' => $invoiceStatusMap[
             //         ($status = strtolower(
@@ -154,7 +152,7 @@ class RecurringInvoiceTransformer extends BaseTransformer
         ];
 
         /* If we can't find the client, then lets try and create a client */
-        if (! $transformed['client_id']) {
+        if (!$transformed['client_id']) {
             $client_transformer = new ClientTransformer($this->company);
 
             $transformed['client'] = $client_transformer->transform(

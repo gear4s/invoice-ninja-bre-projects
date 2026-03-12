@@ -6,22 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use Elastic\ScoutDriverPlus\Searchable;
-use App\Utils\Traits\AppSetup;
 use App\DataMapper\CompanySettings;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
-use App\Services\Vendor\VendorService;
-use App\Utils\Traits\GeneratesCounter;
-use Laracasts\Presenter\PresentableTrait;
 use App\Models\Presenters\VendorPresenter;
+use App\Services\Vendor\VendorService;
+use App\Utils\Traits\AppSetup;
+use App\Utils\Traits\GeneratesCounter;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Laracasts\Presenter\PresentableTrait;
 
 /**
  * App\Models\Vendor
@@ -61,23 +63,24 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $last_login
  * @property bool $is_tax_exempt
  * @property string|null $classification
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Activity> $activities
  * @property-read int|null $activities_count
- * @property-read \App\Models\Language|null $language
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Company $company
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VendorContact> $contacts
+ * @property-read Language|null $language
+ * @property-read User|null $assigned_user
+ * @property-read Company $company
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorContact> $contacts
  * @property-read int|null $contacts_count
- * @property-read \App\Models\Country|null $country
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read Country|null $country
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Document> $documents
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VendorContact> $primary_contact
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorContact> $primary_contact
  * @property-read int|null $primary_contact_count
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Language|null $language
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
+ * @property-read User $user
+ * @property-read Language|null $language
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Location> $locations
  * @property-read int|null $locations_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\VendorFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Vendor filter(\App\Filters\QueryFilters $filters)
@@ -88,26 +91,26 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Vendor withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Vendor withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VendorContact> $contacts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VendorContact> $primary_contact
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Activity> $activities
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorContact> $contacts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Document> $documents
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, VendorContact> $primary_contact
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Location> $locations
+ *
  * @mixin \Eloquent
  */
 class Vendor extends BaseModel
 {
-    use SoftDeletes;
+    use AppSetup;
     use Filterable;
     use GeneratesCounter;
     use PresentableTrait;
-    use AppSetup;
     use Searchable;
+    use SoftDeletes;
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -158,21 +161,20 @@ class Vendor extends BaseModel
         'contacts.company',
     ];
 
-
     public function toSearchableArray()
     {
 
         $locale = $this->locale();
         App::setLocale($locale);
 
-        $name = ctrans('texts.vendor') . " | " . $this->present()->name();
+        $name = ctrans('texts.vendor') . ' | ' . $this->present()->name();
 
         if (strlen($this->vat_number ?? '') > 1) {
-            $name .= " | " . $this->vat_number;
+            $name .= ' | ' . $this->vat_number;
         }
 
         return [
-            'id' => $this->company->db . ":" . $this->id,
+            'id' => $this->company->db . ':' . $this->id,
             'name' => $name,
             'is_deleted' => (bool) $this->is_deleted,
             'hashed_id' => $this->hashed_id,
@@ -198,7 +200,7 @@ class Vendor extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
 
     protected $presenter = VendorPresenter::class;
@@ -208,32 +210,32 @@ class Vendor extends BaseModel
         return self::class;
     }
 
-    public function primary_contact(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function primary_contact(): HasMany
     {
         return $this->hasMany(VendorContact::class)->where('is_primary', true);
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    public function contacts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function contacts(): HasMany
     {
         return $this->hasMany(VendorContact::class)->orderBy('is_primary', 'desc');
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
     }
 
-    public function locations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function locations(): HasMany
     {
         return $this->hasMany(Location::class)->withTrashed();
     }
@@ -250,7 +252,7 @@ class Vendor extends BaseModel
     public function currency()
     {
         return once(function () {
-            /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+            /** @var Collection<Currency> */
             $currencies = app('currencies');
 
             if (!$this->currency_id) {
@@ -268,15 +270,12 @@ class Vendor extends BaseModel
         return $this->company->timezone();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
@@ -312,8 +311,7 @@ class Vendor extends BaseModel
     /**
      * Returns a vendor settings proxying company setting
      *
-     * @param string $setting
-     * @return mixed
+     * @param  string  $setting
      */
     public function getSetting($setting): mixed
     {
@@ -348,12 +346,12 @@ class Vendor extends BaseModel
         return $this->locale();
     }
 
-    public function language(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function language(): BelongsTo
     {
         return $this->belongsTo(Language::class);
     }
 
-    public function country(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
     }
@@ -373,27 +371,27 @@ class Vendor extends BaseModel
         return new VendorService($this);
     }
 
-    public function credits(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function credits(): HasMany
     {
         return $this->hasMany(Credit::class)->withTrashed();
     }
 
-    public function expenses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class)->withTrashed();
     }
 
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class)->withTrashed();
     }
 
-    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->withTrashed();
     }
 
-    public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class)->withTrashed();
     }

@@ -6,18 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\ViewComposers\Components\Rotessa;
 
-use App\DataProviders\CAProvinces;
-use App\DataProviders\USStates;
-use Illuminate\View\Component;
-use App\Models\ClientContact;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
+use Illuminate\View\Component;
 
 // AmericanBankInfo Component
 class AccountComponent extends Component
@@ -32,7 +27,7 @@ class AccountComponent extends Component
         'account_number',
     ];
 
-    private $defaults =  [
+    private $defaults = [
         'bank_account_type' => null,
         'routing_number' => null,
         'institution_number' => null,
@@ -40,7 +35,7 @@ class AccountComponent extends Component
         'bank_name' => null,
         'account_number' => null,
         'country' => 'US',
-        "authorization_type" => 'Online',
+        'authorization_type' => 'Online',
     ];
 
     public function __construct(public array $account)

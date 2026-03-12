@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
 use App\Jobs\Cron\RecurringExpensesCron;
+use App\Models\Expense;
+use App\Models\RecurringExpense;
 use App\Models\RecurringInvoice;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
@@ -24,14 +25,14 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\RecurringExpenseController
  */
 class RecurringExpenseApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,16 +43,16 @@ class RecurringExpenseApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testRecurringExpenseGenerationWithCurrencyConversion()
+    public function test_recurring_expense_generation_with_currency_conversion()
     {
-        $r = \App\Models\RecurringExpense::factory()->create([
+        $r = RecurringExpense::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'amount' => 100,
             'number' => Str::random(10),
             'frequency_id' => 5,
             'remaining_cycles' => -1,
-            'status_id' => \App\Models\RecurringInvoice::STATUS_ACTIVE,
+            'status_id' => RecurringInvoice::STATUS_ACTIVE,
             'date' => now()->format('Y-m-d'),
             'currency_id' => 1,
             'next_send_date' => now(),
@@ -60,9 +61,9 @@ class RecurringExpenseApiTest extends TestCase
             'foreign_amount' => 50,
         ]);
 
-        (new RecurringExpensesCron())->handle();
+        (new RecurringExpensesCron)->handle();
 
-        $expense = \App\Models\Expense::where('recurring_expense_id', $r->id)->orderBy('id', 'desc')->first();
+        $expense = Expense::where('recurring_expense_id', $r->id)->orderBy('id', 'desc')->first();
 
         $this->assertEquals($r->amount, $expense->amount);
         $this->assertEquals($r->currency_id, $expense->currency_id);
@@ -71,26 +72,26 @@ class RecurringExpenseApiTest extends TestCase
 
     }
 
-    public function testRecurringExpenseGenerationNullForeignCurrency()
+    public function test_recurring_expense_generation_null_foreign_currency()
     {
-        $r = \App\Models\RecurringExpense::factory()->create([
+        $r = RecurringExpense::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'amount' => 100,
             'number' => Str::random(10),
             'frequency_id' => 5,
             'remaining_cycles' => -1,
-            'status_id' => \App\Models\RecurringInvoice::STATUS_ACTIVE,
+            'status_id' => RecurringInvoice::STATUS_ACTIVE,
             'date' => now()->format('Y-m-d'),
             'currency_id' => 1,
             'next_send_date' => now(),
             'next_send_date_client' => now(),
-            'invoice_currency_id' => null
+            'invoice_currency_id' => null,
         ]);
 
-        (new RecurringExpensesCron())->handle();
+        (new RecurringExpensesCron)->handle();
 
-        $expense = \App\Models\Expense::where('recurring_expense_id', $r->id)->orderBy('id', 'desc')->first();
+        $expense = Expense::where('recurring_expense_id', $r->id)->orderBy('id', 'desc')->first();
 
         $this->assertEquals($r->amount, $expense->amount);
         $this->assertEquals($r->currency_id, $expense->currency_id);
@@ -98,32 +99,32 @@ class RecurringExpenseApiTest extends TestCase
 
     }
 
-    public function testRecurringExpenseGeneration()
+    public function test_recurring_expense_generation()
     {
-        $r = \App\Models\RecurringExpense::factory()->create([
+        $r = RecurringExpense::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'amount' => 100,
             'number' => Str::random(10),
             'frequency_id' => 5,
             'remaining_cycles' => -1,
-            'status_id' => \App\Models\RecurringInvoice::STATUS_ACTIVE,
+            'status_id' => RecurringInvoice::STATUS_ACTIVE,
             'date' => now()->format('Y-m-d'),
             'currency_id' => 1,
             'next_send_date' => now(),
             'next_send_date_client' => now(),
         ]);
 
-        (new RecurringExpensesCron())->handle();
+        (new RecurringExpensesCron)->handle();
 
-        $expense = \App\Models\Expense::where('recurring_expense_id', $r->id)->orderBy('id', 'desc')->first();
+        $expense = Expense::where('recurring_expense_id', $r->id)->orderBy('id', 'desc')->first();
 
         $this->assertEquals($r->amount, $expense->amount);
         $this->assertEquals($r->currency_id, $expense->currency_id);
 
     }
 
-    public function testRecurringExpenseValidation()
+    public function test_recurring_expense_validation()
     {
         $data = [
             'amount' => 10,
@@ -131,7 +132,7 @@ class RecurringExpenseApiTest extends TestCase
             'number' => '123321',
             'frequency_id' => 5,
             'remaining_cycles' => 5,
-            'currency_id' => 34545435425
+            'currency_id' => 34545435425,
         ];
 
         $response = $this->withHeaders([
@@ -143,7 +144,7 @@ class RecurringExpenseApiTest extends TestCase
 
     }
 
-    public function testRecurringExpenseValidation2()
+    public function test_recurring_expense_validation2()
     {
         $data = [
             'amount' => 10,
@@ -151,7 +152,7 @@ class RecurringExpenseApiTest extends TestCase
             'number' => '123321',
             'frequency_id' => 5,
             'remaining_cycles' => 5,
-            'currency_id' => 1
+            'currency_id' => 1,
         ];
 
         $response = $this->withHeaders([
@@ -163,7 +164,7 @@ class RecurringExpenseApiTest extends TestCase
 
     }
 
-    public function testRecurringExpenseValidation3()
+    public function test_recurring_expense_validation3()
     {
         $data = [
             'amount' => 10,
@@ -171,31 +172,7 @@ class RecurringExpenseApiTest extends TestCase
             'number' => '123321',
             'frequency_id' => 5,
             'remaining_cycles' => 5,
-            'currency_id' => null
-        ];
-
-        $response = $this->withHeaders([
-            'X-API-SECRET' => config('ninja.api_secret'),
-            'X-API-TOKEN' => $this->token,
-        ])->postJson('/api/v1/recurring_expenses?start=true', $data);
-
-        $data = $response->json();
-
-        $response->assertStatus(200);
-
-        $this->assertEquals(1, $data['data']['currency_id']);
-
-    }
-
-    public function testRecurringExpenseValidation4()
-    {
-        $data = [
-            'amount' => 10,
-            'client_id' => $this->client->hashed_id,
-            'number' => '123321',
-            'frequency_id' => 5,
-            'remaining_cycles' => 5,
-            'currency_id' => ""
+            'currency_id' => null,
         ];
 
         $response = $this->withHeaders([
@@ -211,7 +188,31 @@ class RecurringExpenseApiTest extends TestCase
 
     }
 
-    public function testRecurringExpenseGetFiltered()
+    public function test_recurring_expense_validation4()
+    {
+        $data = [
+            'amount' => 10,
+            'client_id' => $this->client->hashed_id,
+            'number' => '123321',
+            'frequency_id' => 5,
+            'remaining_cycles' => 5,
+            'currency_id' => '',
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/recurring_expenses?start=true', $data);
+
+        $data = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertEquals(1, $data['data']['currency_id']);
+
+    }
+
+    public function test_recurring_expense_get_filtered()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -221,7 +222,7 @@ class RecurringExpenseApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRecurringExpenseGet()
+    public function test_recurring_expense_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -231,17 +232,17 @@ class RecurringExpenseApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRecurringExpenseGetSingleExpense()
+    public function test_recurring_expense_get_single_expense()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_expenses/'.$this->recurring_expense->hashed_id);
+        ])->get('/api/v1/recurring_expenses/' . $this->recurring_expense->hashed_id);
 
         $response->assertStatus(200);
     }
 
-    public function testRecurringExpensePost()
+    public function test_recurring_expense_post()
     {
         $data = [
             'amount' => 10,
@@ -262,7 +263,7 @@ class RecurringExpenseApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_expenses/'.$arr['data']['id'], $data)->assertStatus(200);
+        ])->put('/api/v1/recurring_expenses/' . $arr['data']['id'], $data)->assertStatus(200);
 
         try {
             $response = $this->withHeaders([
@@ -274,7 +275,7 @@ class RecurringExpenseApiTest extends TestCase
         }
     }
 
-    public function testRecurringExpensePut()
+    public function test_recurring_expense_put()
     {
         $data = [
             'amount' => 20,
@@ -284,24 +285,24 @@ class RecurringExpenseApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_expenses/'.$this->encodePrimaryKey($this->recurring_expense->id), $data);
+        ])->put('/api/v1/recurring_expenses/' . $this->encodePrimaryKey($this->recurring_expense->id), $data);
 
         $response->assertStatus(200);
     }
 
-    public function testRecurringExpenseNotArchived()
+    public function test_recurring_expense_not_archived()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_expenses/'.$this->encodePrimaryKey($this->recurring_expense->id));
+        ])->get('/api/v1/recurring_expenses/' . $this->encodePrimaryKey($this->recurring_expense->id));
 
         $arr = $response->json();
 
         $this->assertEquals(0, $arr['data']['archived_at']);
     }
 
-    public function testRecurringExpenseArchived()
+    public function test_recurring_expense_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->recurring_expense->id)],
@@ -317,7 +318,7 @@ class RecurringExpenseApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testRecurringExpenseRestored()
+    public function test_recurring_expense_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->recurring_expense->id)],
@@ -333,7 +334,7 @@ class RecurringExpenseApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testRecurringExpenseDeleted()
+    public function test_recurring_expense_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->recurring_expense->id)],
@@ -349,7 +350,7 @@ class RecurringExpenseApiTest extends TestCase
         $this->assertTrue($arr['data'][0]['is_deleted']);
     }
 
-    public function testRecurringExpenseStart()
+    public function test_recurring_expense_start()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->recurring_expense->id)],
@@ -365,7 +366,7 @@ class RecurringExpenseApiTest extends TestCase
         $this->assertEquals(RecurringInvoice::STATUS_ACTIVE, $arr['data'][0]['status_id']);
     }
 
-    public function testRecurringExpensePaused()
+    public function test_recurring_expense_paused()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->recurring_expense->id)],
@@ -386,7 +387,7 @@ class RecurringExpenseApiTest extends TestCase
         $this->assertEquals(RecurringInvoice::STATUS_PAUSED, $arr['data'][0]['status_id']);
     }
 
-    public function testRecurringExpenseStartedWithTriggeredAction()
+    public function test_recurring_expense_started_with_triggered_action()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->recurring_expense->id)],
@@ -395,7 +396,7 @@ class RecurringExpenseApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_expenses/'.$this->recurring_expense->hashed_id.'?start=true', []);
+        ])->put('/api/v1/recurring_expenses/' . $this->recurring_expense->hashed_id . '?start=true', []);
 
         $arr = $response->json();
 
@@ -404,14 +405,14 @@ class RecurringExpenseApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_expenses/'.$this->recurring_expense->hashed_id.'?stop=true', []);
+        ])->put('/api/v1/recurring_expenses/' . $this->recurring_expense->hashed_id . '?stop=true', []);
 
         $arr = $response->json();
 
         $this->assertEquals(RecurringInvoice::STATUS_PAUSED, $arr['data']['status_id']);
     }
 
-    public function testRecurringExpensePostWithStartAction()
+    public function test_recurring_expense_post_with_start_action()
     {
         $data = [
             'amount' => 10,
@@ -433,7 +434,7 @@ class RecurringExpenseApiTest extends TestCase
         $this->assertEquals(RecurringInvoice::STATUS_ACTIVE, $arr['data']['status_id']);
     }
 
-    public function testRecurringExpensePostWithStopAction()
+    public function test_recurring_expense_post_with_stop_action()
     {
         $data = [
             'amount' => 10,

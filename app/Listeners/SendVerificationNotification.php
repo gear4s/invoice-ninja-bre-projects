@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -57,7 +56,7 @@ class SendVerificationNotification implements ShouldQueue
             $t = app('translator');
             $t->replace(Ninja::transformTranslations($event->company->settings));
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new UserAdded($event->company, $event->creating_user, $event->user);
             $nmo->company = $event->company;
             $nmo->settings = $event->company->settings;

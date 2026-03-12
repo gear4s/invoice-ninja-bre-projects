@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -40,10 +39,6 @@ class InvoiceWasCreated implements ShouldBroadcast
 
     /**
      * Create a new event instance.
-     *
-     * @param Invoice $invoice
-     * @param Company $company
-     * @param array $event_vars
      */
     public function __construct(Invoice $invoice, Company $company, array $event_vars)
     {
@@ -61,7 +56,6 @@ class InvoiceWasCreated implements ShouldBroadcast
     {
         return [];
     }
-
 
     // /**
     //  * Get the data to broadcast.

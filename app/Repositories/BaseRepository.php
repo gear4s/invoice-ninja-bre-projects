@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Repositories;
 
 use App\Jobs\Client\UpdateTaxData;
 use App\Jobs\Product\UpdateOrCreateProduct;
+use App\Jobs\Quickbooks\PushToQuickbooks;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\Company;
@@ -21,10 +21,13 @@ use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Quote;
 use App\Models\RecurringInvoice;
+use App\Services\Quickbooks\QuickbooksBatchCollector;
+use App\Services\Quickbooks\QuickbooksService;
 use App\Utils\Helpers;
 use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\SavesDocuments;
+use Illuminate\Database\Eloquent\Builder;
 
 class BaseRepository
 {
@@ -34,10 +37,8 @@ class BaseRepository
     public bool $import_mode = false;
 
     private bool $new_model = false;
+
     /**
-     * @param $entity
-     * @param $type
-     *
      * @return string
      */
     private function getEventClass($entity, $type)
@@ -45,9 +46,6 @@ class BaseRepository
         return 'App\Events\\' . ucfirst(class_basename($entity)) . '\\' . ucfirst(class_basename($entity)) . 'Was' . $type;
     }
 
-    /**
-     * @param $entity
-     */
     public function archive($entity)
     {
         if ($entity->trashed()) {
@@ -63,9 +61,6 @@ class BaseRepository
         }
     }
 
-    /**
-     * @param $entity
-     */
     public function restore($entity)
     {
         if (!$entity->trashed()) {
@@ -89,9 +84,6 @@ class BaseRepository
         }
     }
 
-    /**
-     * @param $entity
-     */
     public function delete($entity)
     {
         if (!$entity || $entity->is_deleted) {
@@ -110,7 +102,7 @@ class BaseRepository
         }
     }
 
-    /* Returns an invoice if defined as a key in the $resource array*/
+    /* Returns an invoice if defined as a key in the $resource array */
     public function getInvitation($invitation, $resource)
     {
         if (is_array($invitation) && !array_key_exists('key', $invitation)) {
@@ -124,17 +116,17 @@ class BaseRepository
         return $invitation;
     }
 
-    /* Clean return of a key rather than butchering the model*/
+    /* Clean return of a key rather than butchering the model */
     private function resolveEntityKey($model)
     {
         switch ($model) {
-            case ($model instanceof RecurringInvoice):
+            case $model instanceof RecurringInvoice:
                 return 'recurring_invoice_id';
-            case ($model instanceof Invoice):
+            case $model instanceof Invoice:
                 return 'invoice_id';
-            case ($model instanceof Quote):
+            case $model instanceof Quote:
                 return 'quote_id';
-            case ($model instanceof Credit):
+            case $model instanceof Credit:
                 return 'credit_id';
         }
     }
@@ -142,9 +134,8 @@ class BaseRepository
     /**
      * Alternative save used for Invoices, Recurring Invoices, Quotes & Credits.
      *
-     * @param $data
-     * @param $model
      * @return mixed
+     *
      * @throws \ReflectionException
      */
     protected function alternativeSave($data, $model)
@@ -157,9 +148,9 @@ class BaseRepository
 
         $state = [];
 
-        $resource = class_basename($model); //ie Invoice
+        $resource = class_basename($model); // ie Invoice
 
-        $lcfirst_resource_id = $this->resolveEntityKey($model); //ie invoice_id
+        $lcfirst_resource_id = $this->resolveEntityKey($model); // ie invoice_id
 
         $state['starting_amount'] = $model->balance;
 
@@ -171,7 +162,7 @@ class BaseRepository
             $data = array_merge($data, $company_defaults);
         }
 
-        $tmp_data = $data; //preserves the $data array
+        $tmp_data = $data; // preserves the $data array
 
         /* We need to unset some variable as we sometimes unguard the model */
         if (isset($tmp_data['invitations'])) {
@@ -240,19 +231,18 @@ class BaseRepository
             });
 
             foreach ($data['invitations'] as $invitation) {
-                //if no invitations are present - create one.
-                if($invite = $this->getInvitation($invitation, $resource)){
-                    if($dn_enabled){
+                // if no invitations are present - create one.
+                if ($invite = $this->getInvitation($invitation, $resource)) {
+                    if ($dn_enabled) {
                         $invite->can_sign = isset($invitation['can_sign']) ? $invitation['can_sign'] : false;
                         $invite->saveQuietly();
                     }
-                }
-                else{
+                } else {
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
 
-                    //make sure we are creating an invite for a contact who belongs to the client only!
+                    // make sure we are creating an invite for a contact who belongs to the client only!
                     $contact = ClientContact::find($invitation['client_contact_id']);
 
                     if ($contact && $model->client_id == $contact->client_id) {
@@ -277,18 +267,18 @@ class BaseRepository
 
                     }
                 }
-                
+
             }
 
         }
 
-        /* If no invitations have been created, this is our fail safe to maintain state*/
+        /* If no invitations have been created, this is our fail safe to maintain state */
         if ($model->invitations()->count() == 0) {
             $model->service()->createInvitations();
         }
 
-        if($dn_enabled && $model->invitations()->where('can_sign', true)->count() == 0){
-            $ii = $model->invitations()->whereHas('contact', function ($q){
+        if ($dn_enabled && $model->invitations()->where('can_sign', true)->count() == 0) {
+            $ii = $model->invitations()->whereHas('contact', function ($q) {
                 $q->where('is_primary', true);
             })->first() ?? $model->invitations()->first();
             $ii->can_sign = true;
@@ -300,7 +290,7 @@ class BaseRepository
 
         /* Check if the model has been changed in a way that is relevant to Quickbooks */
         $qb_model_changes = $model->wasChanged(['amount', 'line_items', 'total_taxes']);
-        
+
         /* We use this to compare to our starting amount */
         $state['finished_amount'] = $model->balance;
 
@@ -322,19 +312,19 @@ class BaseRepository
             if ($model->status_id != Invoice::STATUS_DRAFT) {
                 $model->service()->updateStatus()->save();
                 // $model->client->service()->calculateBalance($model); //2026-02-21 - disabled due to race conditions
-            
+
                 $adjustment = round($state['finished_amount'] - $state['starting_amount'], 2);
                 if ($adjustment != 0) {
                     $model->client->service()->updateBalance($adjustment);
                 }
-                
+
             }
 
             if (!$model->design_id) {
                 $model->design_id = intval($this->decodePrimaryKey($model->client->getSetting('invoice_design_id')));
             }
 
-            //links tasks and expenses back to the invoice, but only if we are not in the middle of a transaction.
+            // links tasks and expenses back to the invoice, but only if we are not in the middle of a transaction.
             if (\DB::transactionLevel() == 0) {
                 $model->service()->linkEntities()->save();
             }
@@ -346,23 +336,21 @@ class BaseRepository
             }
 
             /** Quickbooks Sync Logic */
-            if ($qb_model_changes && $model->company->quickbooks && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$model->company_id]) && $model->company->shouldPushToQuickbooks('invoice')) {
-    
-                nlog("base repo changes detected => status: " . $model->status_id);
+            if ($qb_model_changes && $model->company->quickbooks && empty(QuickbooksService::$importing[$model->company_id]) && $model->company->shouldPushToQuickbooks('invoice')) {
 
-                if($model->company->quickbooks->settings->automatic_taxes){
-    
-                    try{
-                        (new \App\Jobs\Quickbooks\PushToQuickbooks('invoice', $model->id, $model->company->db))->handle();
+                nlog('base repo changes detected => status: ' . $model->status_id);
+
+                if ($model->company->quickbooks->settings->automatic_taxes) {
+
+                    try {
+                        (new PushToQuickbooks('invoice', $model->id, $model->company->db))->handle();
+                    } catch (\Throwable $e) {
+                        nlog('Quickbooks push to Quickbooks job failed => ' . $e->getMessage());
                     }
-                    catch(\Throwable $e){
-                        nlog("Quickbooks push to Quickbooks job failed => " . $e->getMessage());
-                    }
+                } elseif ($model->status_id != Invoice::STATUS_DRAFT) {
+                    QuickbooksBatchCollector::collect('invoice', $model->id, $model->company->db, $model->company_id);
                 }
-                elseif($model->status_id != Invoice::STATUS_DRAFT){
-                    \App\Services\Quickbooks\QuickbooksBatchCollector::collect('invoice', $model->id, $model->company->db, $model->company_id);
-                }
-    
+
             }
 
             /** If the client does not have tax_data - then populate this now */
@@ -443,14 +431,14 @@ class BaseRepository
         return $model->fresh();
     }
 
-    public function bulkUpdate(\Illuminate\Database\Eloquent\Builder $model, string $column, mixed $new_value): void
+    public function bulkUpdate(Builder $model, string $column, mixed $new_value): void
     {
         /** Handle taxes being updated */
-        if (in_array($column, ['tax1','tax2','tax3'])) {
+        if (in_array($column, ['tax1', 'tax2', 'tax3'])) {
 
-            $parts = explode("||", $new_value);
-            $tax_name_column = str_replace("tax", "tax_name", $column);
-            $tax_rate_column = str_replace("tax", "tax_rate", $column);
+            $parts = explode('||', $new_value);
+            $tax_name_column = str_replace('tax', 'tax_name', $column);
+            $tax_rate_column = str_replace('tax', 'tax_rate', $column);
 
             /** Harvest the tax name and rate */
             if (count($parts) == 2) {
@@ -462,10 +450,10 @@ class BaseRepository
                     return;
                 }
 
-            } else { //else we need to clear the value
+            } else { // else we need to clear the value
 
                 $rate = 0;
-                $tax_name = "";
+                $tax_name = '';
 
             }
 

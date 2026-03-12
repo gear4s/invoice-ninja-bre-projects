@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class QuoteInvitationFactory
 {
     public static function create(int $company_id, int $user_id): QuoteInvitation
     {
-        $qi = new QuoteInvitation();
+        $qi = new QuoteInvitation;
         $qi->company_id = $company_id;
         $qi->user_id = $user_id;
         $qi->client_contact_id = null;

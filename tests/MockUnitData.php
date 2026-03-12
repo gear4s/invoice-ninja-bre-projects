@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,8 +19,12 @@ use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\Company;
 use App\Models\CompanyToken;
+use App\Models\Country;
 use App\Models\User;
 use App\Models\Vendor;
+use Faker\Factory;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 
 /**
  * Class MockUnitData.
@@ -47,17 +50,17 @@ trait MockUnitData
     public function makeTestData()
     {
 
-        if (\App\Models\Country::count() == 0) {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        if (Country::count() == 0) {
+            Artisan::call('db:seed', ['--force' => true]);
         }
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
         $this->account = Account::factory()->create();
 
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $this->company = Company::factory()->create([
@@ -85,9 +88,9 @@ trait MockUnitData
             'is_locked' => 0,
         ]);
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;

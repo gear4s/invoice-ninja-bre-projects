@@ -6,12 +6,12 @@ use Tests\TestCase;
 
 class EncodeWithoutClassFailureTest extends TestCase
 {
-    private string $problematicSubject = "Rappel facture impayée (\$invoice) 🚀";
+    private string $problematicSubject = 'Rappel facture impayée ($invoice) 🚀';
 
     /**
      * Test that direct mb_convert_encoding through Windows-1252 corrupts emojis
      */
-    public function testDirectConversionCorruptsEmojis()
+    public function test_direct_conversion_corrupts_emojis()
     {
         $original = $this->problematicSubject;
 
@@ -38,7 +38,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test that naive iconv usage fails with emojis
      */
-    public function testIconvFailsWithEmojis()
+    public function test_iconv_fails_with_emojis()
     {
         $original = $this->problematicSubject;
 
@@ -55,7 +55,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test that forcing through ASCII destroys international characters
      */
-    public function testAsciiConversionDestroysInternationalChars()
+    public function test_ascii_conversion_destroys_international_chars()
     {
         $original = $this->problematicSubject;
 
@@ -74,7 +74,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test that manual character replacement approach is inadequate
      */
-    public function testManualReplacementInadequate()
+    public function test_manual_replacement_inadequate()
     {
         $original = $this->problematicSubject;
 
@@ -83,12 +83,12 @@ class EncodeWithoutClassFailureTest extends TestCase
             'é',
             'à',
             'ç',
-            'ù'
+            'ù',
         ], [
             'e',
             'a',
             'c',
-            'u'
+            'u',
         ], $original);
 
         // Still has the emoji problem - can't handle all Unicode
@@ -105,7 +105,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test simulated database storage/retrieval corruption
      */
-    public function testDatabaseStorageCorruption()
+    public function test_database_storage_corruption()
     {
         $original = $this->problematicSubject;
 
@@ -123,7 +123,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test simulated file read/write corruption
      */
-    public function testFileHandlingCorruption()
+    public function test_file_handling_corruption()
     {
         $original = $this->problematicSubject;
 
@@ -171,7 +171,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test naive regular expression replacement
      */
-    public function testRegexReplacementBreaksUnicode()
+    public function test_regex_replacement_breaks_unicode()
     {
         $original = $this->problematicSubject;
 
@@ -190,7 +190,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test double-encoding problems
      */
-    public function testDoubleEncodingProblems()
+    public function test_double_encoding_problems()
     {
         $original = $this->problematicSubject;
 
@@ -206,14 +206,14 @@ class EncodeWithoutClassFailureTest extends TestCase
             str_contains($doubleEncoded, 'Ã©') || // é becomes Ã©
             str_contains($doubleEncoded, 'Ã¢â‚¬') || // Other artifacts
             !str_contains($doubleEncoded, '🚀'), // Emoji lost
-            "Expected double-encoding artifacts but got: " . $doubleEncoded
+            'Expected double-encoding artifacts but got: ' . $doubleEncoded
         );
     }
 
     /**
      * Test CSV export/import corruption
      */
-    public function testCsvCorruption()
+    public function test_csv_corruption()
     {
         $original = $this->problematicSubject;
 
@@ -235,7 +235,7 @@ class EncodeWithoutClassFailureTest extends TestCase
             $this->assertNotEquals($original, $parsed);
         } else {
             // Even if it's valid UTF-8, it might still be different due to CSV processing
-            $this->assertTrue(true, "CSV processing completed");
+            $this->assertTrue(true, 'CSV processing completed');
         }
 
         // Clean up
@@ -245,7 +245,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test JSON encoding/decoding issues
      */
-    public function testJsonEncodingIssues()
+    public function test_json_encoding_issues()
     {
         $original = $this->problematicSubject;
 
@@ -254,11 +254,11 @@ class EncodeWithoutClassFailureTest extends TestCase
 
         // Encode to JSON
         $json = json_encode($data);
-        $this->assertNotFalse($json, "JSON encoding should work with UTF-8");
+        $this->assertNotFalse($json, 'JSON encoding should work with UTF-8');
 
         // Decode back
         $decoded = json_decode($json, true);
-        $this->assertNotNull($decoded, "JSON decoding should work");
+        $this->assertNotNull($decoded, 'JSON decoding should work');
 
         // This should actually work correctly with modern PHP
         // But let's test what happens if someone tries to "fix" it
@@ -271,7 +271,7 @@ class EncodeWithoutClassFailureTest extends TestCase
             // In some PHP versions or configurations, this might alter the data
             $this->assertTrue(
                 $decoded['subject'] === $original,
-                "Proper JSON handling preserves Unicode"
+                'Proper JSON handling preserves Unicode'
             );
         }
     }
@@ -279,12 +279,12 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Test email header encoding issues
      */
-    public function testEmailHeaderEncodingIssues()
+    public function test_email_header_encoding_issues()
     {
         $original = $this->problematicSubject;
 
         // Naive attempt to create email header without proper encoding
-        $naiveHeader = "Subject: " . $original;
+        $naiveHeader = 'Subject: ' . $original;
 
         // Email headers with non-ASCII characters need RFC 2047 encoding
         // Without proper encoding, the subject would be corrupted by email servers
@@ -303,7 +303,7 @@ class EncodeWithoutClassFailureTest extends TestCase
     /**
      * Summary test showing multiple failure modes
      */
-    public function testMultipleFailureModes()
+    public function test_multiple_failure_modes()
     {
         $original = $this->problematicSubject;
         $failures = [];
@@ -324,7 +324,7 @@ class EncodeWithoutClassFailureTest extends TestCase
         }
 
         // All methods should fail to preserve the original
-        $this->assertGreaterThan(0, count($failures), "At least some methods should fail");
+        $this->assertGreaterThan(0, count($failures), 'At least some methods should fail');
 
         // None of the failed attempts should contain the emoji
         foreach ($failures as $method => $result) {

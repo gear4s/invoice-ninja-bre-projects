@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,7 +20,8 @@ class TaxService
     public function validateVat(): self
     {
         if (!extension_loaded('soap')) {
-            nlog("Install the PHP SOAP extension if you wish to check VAT Numbers. See https://www.php.net/manual/en/soap.installation.php for more information on installing the PHP");
+            nlog('Install the PHP SOAP extension if you wish to check VAT Numbers. See https://www.php.net/manual/en/soap.installation.php for more information on installing the PHP');
+
             return $this;
         }
 

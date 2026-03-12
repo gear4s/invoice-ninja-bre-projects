@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,19 +22,19 @@ class CanRestoreUserRule implements Rule
     public function __construct() {}
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
         $count = CompanyUser::query()
-                              ->where('company_user.account_id', auth()->user()->account_id)
-                              ->join('users', 'users.id', '=', 'company_user.user_id')
-                              ->whereNull('users.deleted_at')
-                              ->whereNull('company_user.deleted_at')
-                              ->distinct()
-                              ->count('company_user.user_id');
+            ->where('company_user.account_id', auth()->user()->account_id)
+            ->join('users', 'users.id', '=', 'company_user.user_id')
+            ->whereNull('users.deleted_at')
+            ->whereNull('company_user.deleted_at')
+            ->distinct()
+            ->count('company_user.user_id');
 
         return $count < auth()->user()->company()->account->num_users;
     }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,6 @@ use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /**
- *
  *   App\Http\ValidationRules\NewUniqueUserRule
  */
 class UniqueEmailTest extends TestCase
@@ -37,11 +35,11 @@ class UniqueEmailTest extends TestCase
 
         User::unguard();
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->markTestSkipped('Multi DB not enabled - skipping');
         }
 
-        $this->rule = new NewUniqueUserRule();
+        $this->rule = new NewUniqueUserRule;
 
         $ac = Account::factory()->make();
         $ac->setHidden(['hashed_id']);
@@ -84,13 +82,13 @@ class UniqueEmailTest extends TestCase
 
         $user_find = User::on('db-ninja-01')->where('email', 'user@example.com')->first();
 
-        if (! $user_find) {
+        if (!$user_find) {
             User::on('db-ninja-01')->create($user);
         }
 
         $user_find = User::on('db-ninja-02')->where('email', 'user@example.com')->first();
 
-        if (! $user_find) {
+        if (!$user_find) {
             User::on('db-ninja-02')->create($user2);
         }
     }
@@ -107,7 +105,6 @@ class UniqueEmailTest extends TestCase
 
     protected function tearDown(): void
     {
-
 
         DB::connection('db-ninja-01')->table('users')->delete();
         DB::connection('db-ninja-02')->table('users')->delete();

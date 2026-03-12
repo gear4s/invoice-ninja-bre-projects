@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,13 @@ namespace App\Jobs\Quickbooks;
 
 use App\Libraries\MultiDB;
 use App\Models\Activity;
+use App\Models\Client;
 use App\Models\Company;
-use App\Services\Quickbooks\QuickbooksService;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Product;
 use App\Services\Quickbooks\QuickbooksRateLimiter;
+use App\Services\Quickbooks\QuickbooksService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -59,10 +62,10 @@ class BatchPushToQuickbooks implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $entity_type Entity type: 'client', 'invoice', etc.
-     * @param array<int> $entity_ids Array of entity IDs to push
-     * @param string $db The database name
-     * @param int $company_id The company ID
+     * @param  string  $entity_type  Entity type: 'client', 'invoice', etc.
+     * @param  array<int>  $entity_ids  Array of entity IDs to push
+     * @param  string  $db  The database name
+     * @param  int  $company_id  The company ID
      */
     public function __construct(
         public string $entity_type,
@@ -87,12 +90,14 @@ class BatchPushToQuickbooks implements ShouldQueue
 
         if (!$company || !$company->quickbooks) {
             nlog("QB Batch: Company {$this->company_id} not found or QB not configured");
+
             return;
         }
 
         // Check if push is still enabled
         if (!$company->shouldPushToQuickbooks($this->entity_type)) {
             nlog("QB Batch: Push disabled for {$this->entity_type} in company {$company->company_key}");
+
             return;
         }
 
@@ -101,12 +106,13 @@ class BatchPushToQuickbooks implements ShouldQueue
 
         // Log rate limit status
         $status = $rateLimiter->getStatus();
-        nlog("QB Batch: Rate limit status before processing", $status);
+        nlog('QB Batch: Rate limit status before processing', $status);
 
         // Wait for capacity if needed (max 60 seconds)
         if (!$rateLimiter->waitForCapacity(60)) {
-            nlog("QB Batch: Rate limit capacity not available, releasing job for 60 seconds");
+            nlog('QB Batch: Rate limit capacity not available, releasing job for 60 seconds');
             $this->release(60);
+
             return;
         }
 
@@ -114,11 +120,12 @@ class BatchPushToQuickbooks implements ShouldQueue
         $entities = $this->resolveEntities();
 
         if (empty($entities)) {
-            nlog("QB Batch: No entities found for IDs: " . implode(', ', $this->entity_ids));
+            nlog('QB Batch: No entities found for IDs: ' . implode(', ', $this->entity_ids));
+
             return;
         }
 
-        nlog("QB Batch: Processing {$this->entity_type} batch of " . count($entities) . " entities");
+        nlog("QB Batch: Processing {$this->entity_type} batch of " . count($entities) . ' entities');
 
         // Initialize QB service
         $qbService = new QuickbooksService($company);
@@ -132,23 +139,18 @@ class BatchPushToQuickbooks implements ShouldQueue
      *
      * CRITICAL: All entities MUST belong to the same database + company + realm.
      * This is validated at the start of processing.
-     *
-     * @param QuickbooksService $qbService
-     * @param array $entities
-     * @param QuickbooksRateLimiter $rateLimiter
-     * @return void
      */
     private function processBatch(QuickbooksService $qbService, array $entities, QuickbooksRateLimiter $rateLimiter): void
     {
         // SAFETY CHECK: Verify all entities belong to the same company
-        $companyIds = array_unique(array_map(fn($e) => $e->company_id, $entities));
+        $companyIds = array_unique(array_map(fn ($e) => $e->company_id, $entities));
         if (count($companyIds) > 1) {
-            nlog("QB Batch ERROR: Entities from multiple companies detected!", [
+            nlog('QB Batch ERROR: Entities from multiple companies detected!', [
                 'expected_company_id' => $this->company_id,
                 'found_company_ids' => $companyIds,
                 'expected_db' => $this->db,
             ]);
-            throw new \RuntimeException("Cannot batch entities from multiple companies/realms");
+            throw new \RuntimeException('Cannot batch entities from multiple companies/realms');
         }
 
         // Additional sanity check: all entities should match the job's company_id
@@ -157,7 +159,7 @@ class BatchPushToQuickbooks implements ShouldQueue
                 'job_company_id' => $this->company_id,
                 'entity_company_ids' => $companyIds,
             ]);
-            throw new \RuntimeException("Entity company mismatch - possible cross-database contamination");
+            throw new \RuntimeException('Entity company mismatch - possible cross-database contamination');
         }
 
         $successCount = 0;
@@ -176,6 +178,7 @@ class BatchPushToQuickbooks implements ShouldQueue
                 } else {
                     // Delay too long, re-queue remaining entities
                     $rateLimitedIds[] = $entity->id;
+
                     continue;
                 }
             }
@@ -223,7 +226,7 @@ class BatchPushToQuickbooks implements ShouldQueue
         // Re-queue rate-limited entities
         if (!empty($rateLimitedIds)) {
             $delay = $rateLimiter->getRecommendedDelay();
-            nlog("QB Batch: Re-queuing " . count($rateLimitedIds) . " entities due to rate limiting (delay: {$delay}s)");
+            nlog('QB Batch: Re-queuing ' . count($rateLimitedIds) . " entities due to rate limiting (delay: {$delay}s)");
 
             self::dispatch($this->entity_type, $rateLimitedIds, $this->db, $this->company_id)
                 ->delay(now()->addSeconds($delay));
@@ -235,9 +238,7 @@ class BatchPushToQuickbooks implements ShouldQueue
     /**
      * Process a single entity
      *
-     * @param QuickbooksService $qbService
-     * @param mixed $entity
-     * @return void
+     * @param  mixed  $entity
      */
     private function processEntity(QuickbooksService $qbService, $entity): void
     {
@@ -253,10 +254,7 @@ class BatchPushToQuickbooks implements ShouldQueue
     /**
      * Handle QuickBooks service exceptions
      *
-     * @param ServiceException $e
-     * @param mixed $entity
-     * @param QuickbooksRateLimiter $rateLimiter
-     * @return void
+     * @param  mixed  $entity
      */
     private function handleServiceException(ServiceException $e, $entity, QuickbooksRateLimiter $rateLimiter): void
     {
@@ -274,12 +272,13 @@ class BatchPushToQuickbooks implements ShouldQueue
             $rateLimiter->enterBackoff($backoffSeconds);
 
             nlog("QB Batch: Rate limit exceeded, entering backoff for {$backoffSeconds} seconds");
+
             return;
         }
 
         // Handle authentication errors
         if ($statusCode === 401) {
-            nlog("QB Batch: Authentication failed, may need token refresh");
+            nlog('QB Batch: Authentication failed, may need token refresh');
         }
 
         $this->logActivityFailure($entity, $this->extractReadableError($errorMessage));
@@ -287,9 +286,6 @@ class BatchPushToQuickbooks implements ShouldQueue
 
     /**
      * Check if exception is a rate limit error
-     *
-     * @param ServiceException $e
-     * @return bool
      */
     private function isRateLimitException(ServiceException $e): bool
     {
@@ -361,7 +357,7 @@ class BatchPushToQuickbooks implements ShouldQueue
     private function logActivityFailure($entity, string $errorMessage): void
     {
         try {
-            $activity = new Activity();
+            $activity = new Activity;
             $activity->user_id = $entity->user_id ?? null;
             $activity->company_id = $entity->company_id;
             $activity->account_id = $entity->company->account_id;
@@ -384,24 +380,20 @@ class BatchPushToQuickbooks implements ShouldQueue
 
     /**
      * Resolve entities from IDs
-     *
-     * @return array
      */
     private function resolveEntities(): array
     {
         return match ($this->entity_type) {
-            'client' => \App\Models\Client::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
-            'invoice' => \App\Models\Invoice::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
-            'product' => \App\Models\Product::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
-            'payment' => \App\Models\Payment::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
+            'client' => Client::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
+            'invoice' => Invoice::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
+            'product' => Product::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
+            'payment' => Payment::withTrashed()->whereIn('id', $this->entity_ids)->get()->all(),
             default => [],
         };
     }
 
     /**
      * Get middleware for this job
-     *
-     * @return array
      */
     public function middleware(): array
     {
@@ -410,13 +402,10 @@ class BatchPushToQuickbooks implements ShouldQueue
 
     /**
      * Handle job failure
-     *
-     * @param \Throwable $exception
-     * @return void
      */
     public function failed(\Throwable $exception): void
     {
-        nlog("QB Batch: Job failed permanently", [
+        nlog('QB Batch: Job failed permanently', [
             'entity_type' => $this->entity_type,
             'entity_ids' => $this->entity_ids,
             'company_id' => $this->company_id,

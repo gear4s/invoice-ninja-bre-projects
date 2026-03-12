@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,7 @@ use App\Models\Presenters\RecurringQuotePresenter;
 use App\Services\Recurring\RecurringService;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Recurring\HasRecurrence;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Laracasts\Presenter\PresentableTrait;
@@ -85,23 +85,24 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $partial_due_date
  * @property int|null $subscription_id
  * @property bool $uses_inclusive_taxes
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ * @property-read Collection<int, Activity> $activities
  * @property-read int|null $activities_count
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Client $client
- * @property-read \App\Models\Company $company
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read User|null $assigned_user
+ * @property-read Client $client
+ * @property-read Company $company
+ * @property-read Collection<int, Document> $documents
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
  * @property-read mixed $status
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
+ * @property-read Collection<int, Backup> $history
  * @property-read int|null $history_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringQuoteInvitation> $invitations
+ * @property-read Collection<int, RecurringQuoteInvitation> $invitations
  * @property-read int|null $invitations_count
- * @property-read \App\Models\Project|null $project
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quote> $quotes
+ * @property-read Project|null $project
+ * @property-read Collection<int, Quote> $quotes
  * @property-read int|null $quotes_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\RecurringQuoteFactory factory($count = null, $state = [])
@@ -113,20 +114,22 @@ use Laracasts\Presenter\PresentableTrait;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringQuote withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringQuote withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringQuoteInvitation> $invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quote> $quotes
+ *
+ * @property-read Collection<int, Activity> $activities
+ * @property-read Collection<int, Document> $documents
+ * @property-read Collection<int, Backup> $history
+ * @property-read Collection<int, RecurringQuoteInvitation> $invitations
+ * @property-read Collection<int, Quote> $quotes
+ *
  * @mixin \Eloquent
  */
 class RecurringQuote extends BaseModel
 {
-    use MakesHash;
-    use SoftDeletes;
     use Filterable;
     use HasRecurrence;
+    use MakesHash;
     use PresentableTrait;
+    use SoftDeletes;
 
     protected $presenter = RecurringQuotePresenter::class;
 
@@ -241,7 +244,7 @@ class RecurringQuote extends BaseModel
 
     public function getDateAttribute($value)
     {
-        if (! empty($value)) {
+        if (!empty($value)) {
             return (new Carbon($value))->format('Y-m-d');
         }
 
@@ -250,7 +253,7 @@ class RecurringQuote extends BaseModel
 
     public function getDueDateAttribute($value)
     {
-        if (! empty($value)) {
+        if (!empty($value)) {
             return (new Carbon($value))->format('Y-m-d');
         }
 
@@ -259,7 +262,7 @@ class RecurringQuote extends BaseModel
 
     public function getPartialDueDateAttribute($value)
     {
-        if (! empty($value)) {
+        if (!empty($value)) {
             return (new Carbon($value))->format('Y-m-d');
         }
 
@@ -327,7 +330,7 @@ class RecurringQuote extends BaseModel
 
     public function nextSendDate(): ?Carbon
     {
-        if (! $this->next_send_date) {
+        if (!$this->next_send_date) {
             return null;
         }
 
@@ -475,6 +478,7 @@ class RecurringQuote extends BaseModel
 
     /**
      * Access the invoice calculator object.
+     *
      * @return InvoiceSumInclusive | InvoiceSum The invoice calculator object getters
      */
     public function calc(): InvoiceSumInclusive|InvoiceSum
@@ -500,11 +504,11 @@ class RecurringQuote extends BaseModel
         /* Return early if nothing to send back! */
         if ($this->status_id == self::STATUS_COMPLETED
             || $this->remaining_cycles == 0
-            || ! $this->next_send_date) {
+            || !$this->next_send_date) {
             return [];
         }
 
-        /* Endless - lets send 10 back*/
+        /* Endless - lets send 10 back */
         $iterations = $this->remaining_cycles;
 
         if ($this->remaining_cycles == -1) {
@@ -513,7 +517,7 @@ class RecurringQuote extends BaseModel
 
         $data = [];
 
-        if (! Carbon::parse($this->next_send_date)) {
+        if (!Carbon::parse($this->next_send_date)) {
             return $data;
         }
 
@@ -531,7 +535,7 @@ class RecurringQuote extends BaseModel
                 'due_date' => $next_due_date_string,
             ];
 
-            /* Fixes the timeshift in case the offset is negative which cause a infinite loop due to UTC +0*/
+            /* Fixes the timeshift in case the offset is negative which cause a infinite loop due to UTC +0 */
             if ($this->client->timezone_offset() < 0) {
                 $next_send_date = $this->nextDateByFrequency($next_send_date->addDay()->format('Y-m-d'));
             } else {
@@ -555,8 +559,8 @@ class RecurringQuote extends BaseModel
     /**
      * Calculates a date based on the client payment terms.
      *
-     * @param  Carbon $date A given date
-     * @return null|Carbon  The date
+     * @param  Carbon  $date  A given date
+     * @return null|Carbon The date
      */
     public function calculateDateFromTerms($date)
     {
@@ -564,16 +568,15 @@ class RecurringQuote extends BaseModel
 
         $client_payment_terms = $this->client->getSetting('payment_terms');
 
-        if ($client_payment_terms == '') {//no due date! return null;
+        if ($client_payment_terms == '') {// no due date! return null;
             return null;
         }
 
-        return $new_date->addDays((int) $client_payment_terms); //add the number of days in the payment terms to the date
+        return $new_date->addDays((int) $client_payment_terms); // add the number of days in the payment terms to the date
     }
 
     /**
      * Service entry points.
-     * @return RecurringService
      */
     public function service(): RecurringService
     {

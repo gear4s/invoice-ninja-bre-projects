@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,7 +29,7 @@ use Stripe\ApplePayDomain;
 use Stripe\Exception\ApiErrorException;
 use Stripe\PaymentIntent;
 
-class BrowserPay implements MethodInterface, LivewireMethodInterface
+class BrowserPay implements LivewireMethodInterface, MethodInterface
 {
     protected StripePaymentDriver $stripe;
 
@@ -45,9 +44,6 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
 
     /**
      * Authorization page for browser pay.
-     *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function authorizeView(array $data): RedirectResponse
     {
@@ -56,15 +52,11 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle the authorization for browser pay.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function authorizeResponse(Request $request): RedirectResponse
     {
         return redirect()->route('client.payment_methods.index');
     }
-
 
     public function paymentData(array $data): array
     {
@@ -108,8 +100,7 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
     /**
      * Handle payment response for browser pay.
      *
-     * @param PaymentResponseRequest $request
-     * @return \Illuminate\Http\RedirectResponse|App\PaymentDrivers\Stripe\never
+     * @return RedirectResponse|App\PaymentDrivers\Stripe\never
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
@@ -129,7 +120,7 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
     /**
      * Handle successful payment for browser pay.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     protected function processSuccessfulPayment()
     {
@@ -197,6 +188,7 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
      * Ensure Apple Pay domain is verified.
      *
      * @return void
+     *
      * @throws ApiErrorException
      */
     protected function ensureApplePayDomainIsValidated()
@@ -209,7 +201,7 @@ class BrowserPay implements MethodInterface, LivewireMethodInterface
 
         $domain = $this->getAppleDomain();
 
-        if (! $domain) {
+        if (!$domain) {
             throw new PaymentFailed('Unable to register Domain with Apple Pay', 500);
         }
 

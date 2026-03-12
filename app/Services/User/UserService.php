@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,13 +31,13 @@ class UserService
         }
 
         try {
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new NinjaMailer((new VerifyUserObject($this->user, $company, $is_react))->build());
             $nmo->company = $company;
             $nmo->to_user = $this->user;
             $nmo->settings = $company->settings;
 
-            if (\App\Utils\Ninja::isHosted()) {
+            if (Ninja::isHosted()) {
                 $nmo->transport = 'default';
             }
 

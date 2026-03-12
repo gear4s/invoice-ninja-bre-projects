@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,9 +20,10 @@ use Tests\TestCase;
 
 class BankTransactionRuleApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -52,23 +52,23 @@ class BankTransactionRuleApiTest extends TestCase
     if(isset($this->client_id))
         $rules['client_id'] = 'bail|sometimes|exists:clients,id,company_id,'.auth()->user()->company()->id.',is_deleted,0';
     */
-    public function testBankRuleCategoryIdValidation()
+    public function test_bank_rule_category_id_validation()
     {
         $data = [
-           'name' => 'The First Rule',
-           'rules' => [
-            [
-                "operator" => "contains",
-                "search_key" => "description",
-                "value" => "mobile"
+            'name' => 'The First Rule',
+            'rules' => [
+                [
+                    'operator' => 'contains',
+                    'search_key' => 'description',
+                    'value' => 'mobile',
+                ],
             ],
-           ],
-           'assigned_user_id' => null,
-           'auto_convert' => false,
-           'matches_on_all' => true,
-           'applies_to' => 'DEBIT',
-           'category_id' => $this->expense_category->hashed_id,
-           'vendor_id' => $this->vendor->hashed_id
+            'assigned_user_id' => null,
+            'auto_convert' => false,
+            'matches_on_all' => true,
+            'applies_to' => 'DEBIT',
+            'category_id' => $this->expense_category->hashed_id,
+            'vendor_id' => $this->vendor->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -82,11 +82,10 @@ class BankTransactionRuleApiTest extends TestCase
 
         $this->assertEquals('DEBIT', $arr['data']['applies_to']);
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/bank_transaction_rules/'. $arr['data']['id'], $data);
+        ])->putJson('/api/v1/bank_transaction_rules/' . $arr['data']['id'], $data);
 
         $arr = $response->json();
 
@@ -95,14 +94,14 @@ class BankTransactionRuleApiTest extends TestCase
         $this->assertEquals('DEBIT', $arr['data']['applies_to']);
     }
 
-    public function testBankRulePost()
+    public function test_bank_rule_post()
     {
         $data = [
-           'name' => 'The First Rule',
-           'rules' => [],
-           'auto_convert' => false,
-           'matches_on_all' => false,
-           'applies_to' => 'CREDIT',
+            'name' => 'The First Rule',
+            'rules' => [],
+            'auto_convert' => false,
+            'matches_on_all' => false,
+            'applies_to' => 'CREDIT',
         ];
 
         $response = $this->withHeaders([
@@ -117,14 +116,14 @@ class BankTransactionRuleApiTest extends TestCase
         $this->assertEquals('The First Rule', $arr['data']['name']);
     }
 
-    public function testBankRulePut()
+    public function test_bank_rule_put()
     {
         $data = [
-           'name' => 'The First Rule',
-           'rules' => [],
-           'auto_convert' => false,
-           'matches_on_all' => false,
-           'applies_to' => 'CREDIT',
+            'name' => 'The First Rule',
+            'rules' => [],
+            'auto_convert' => false,
+            'matches_on_all' => false,
+            'applies_to' => 'CREDIT',
         ];
 
         $response = $this->withHeaders([
@@ -139,17 +138,17 @@ class BankTransactionRuleApiTest extends TestCase
         $this->assertEquals('The First Rule', $arr['data']['name']);
 
         $data = [
-           'name' => 'A New Name For The First Rule',
-           'rules' => [],
-           'auto_convert' => false,
-           'matches_on_all' => false,
-           'applies_to' => 'CREDIT',
+            'name' => 'A New Name For The First Rule',
+            'rules' => [],
+            'auto_convert' => false,
+            'matches_on_all' => false,
+            'applies_to' => 'CREDIT',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/bank_transaction_rules/'. $arr['data']['id'], $data);
+        ])->putJson('/api/v1/bank_transaction_rules/' . $arr['data']['id'], $data);
 
         $arr = $response->json();
 
@@ -158,17 +157,17 @@ class BankTransactionRuleApiTest extends TestCase
         $this->assertEquals('A New Name For The First Rule', $arr['data']['name']);
     }
 
-    public function testBankTransactionRuleGet()
+    public function test_bank_transaction_rule_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/bank_transaction_rules/'.$this->encodePrimaryKey($this->bank_transaction_rule->id));
+        ])->get('/api/v1/bank_transaction_rules/' . $this->encodePrimaryKey($this->bank_transaction_rule->id));
 
         $response->assertStatus(200);
     }
 
-    public function testBankTransactionRuleArchived()
+    public function test_bank_transaction_rule_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_transaction_rule->id)],
@@ -184,7 +183,7 @@ class BankTransactionRuleApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testBankTransactionRuleRestored()
+    public function test_bank_transaction_rule_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_transaction_rule->id)],
@@ -200,7 +199,7 @@ class BankTransactionRuleApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testBankTransactionRuleDeleted()
+    public function test_bank_transaction_rule_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_transaction_rule->id)],

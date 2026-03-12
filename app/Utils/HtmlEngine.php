@@ -6,50 +6,65 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils;
 
-use Exception;
-use App\Models\Account;
-use App\Utils\Traits\AppSetup;
-use App\Models\QuoteInvitation;
-use App\Utils\Traits\MakesHash;
-use App\Models\CreditInvitation;
-use App\Utils\Traits\MakesDates;
-use App\Models\InvoiceInvitation;
+use App\DataMapper\CompanySettings;
 use App\Helpers\Epc\EpcQrGenerator;
-use Illuminate\Support\Facades\App;
-use App\Utils\Traits\DesignCalculator;
 use App\Helpers\SwissQr\SwissQrGenerator;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\Country;
+use App\Models\Credit;
+use App\Models\CreditInvitation;
+use App\Models\Currency;
+use App\Models\Document;
+use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Quote;
+use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoice;
 use App\Models\RecurringInvoiceInvitation;
+use App\Models\VerifactuLog;
 use App\Services\EDocument\Standards\Verifactu;
+use App\Utils\Traits\AppSetup;
+use App\Utils\Traits\DesignCalculator;
+use App\Utils\Traits\MakesDates;
+use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 class HtmlEngine
 {
-    use MakesDates;
     use AppSetup;
-    use MakesHash;
     use DesignCalculator;
+    use MakesDates;
+    use MakesHash;
 
-    /** @var  \App\Models\Invoice | \App\Models\Credit | \App\Models\RecurringInvoice | \App\Models\Quote $entity **/
+    /** @var Invoice | Credit | RecurringInvoice | Quote * */
     public $entity;
 
-    /** @var  \App\Models\CreditInvitation | CreditInvitation | \App\Models\RecurringInvoiceInvitation | \App\Models\QuoteInvitation $invitation **/
+    /** @var CreditInvitation | CreditInvitation | RecurringInvoiceInvitation | QuoteInvitation * */
     public $invitation;
 
-    /** @var \App\Models\Client $client */
+    /** @var Client */
     public $client;
 
-    /** @var ?\App\Models\ClientContact $contact */
+    /** @var ?ClientContact */
     public $contact;
 
-    /** @var \App\Models\Company $company */
+    /** @var Company */
     public $company;
 
-    /** @var \App\DataMapper\CompanySettings|\stdClass $settings **/
+    /** @var CompanySettings|\stdClass * */
     public $settings;
 
     public $entity_calc;
@@ -58,11 +73,10 @@ class HtmlEngine
 
     private $helpers;
 
-
     /**
      * __construct
      *
-     * @param  InvoiceInvitation | CreditInvitation | RecurringInvoiceInvitation | QuoteInvitation $invitation
+     * @param  InvoiceInvitation | CreditInvitation | RecurringInvoiceInvitation | QuoteInvitation  $invitation
      * @return void
      */
     public function __construct($invitation)
@@ -85,7 +99,7 @@ class HtmlEngine
 
         $this->entity_calc = $this->entity->calc();
 
-        $this->helpers = new Helpers();
+        $this->helpers = new Helpers;
     }
 
     public function setSettings($settings): self
@@ -95,28 +109,28 @@ class HtmlEngine
         return $this;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private function resolveEntityString()
     {
         switch ($this->invitation) {
-            case ($this->invitation instanceof InvoiceInvitation):
+            case $this->invitation instanceof InvoiceInvitation:
                 return 'invoice';
-            case ($this->invitation instanceof CreditInvitation):
+            case $this->invitation instanceof CreditInvitation:
                 return 'credit';
-            case ($this->invitation instanceof QuoteInvitation):
+            case $this->invitation instanceof QuoteInvitation:
                 return 'quote';
-            case ($this->invitation instanceof RecurringInvoiceInvitation):
+            case $this->invitation instanceof RecurringInvoiceInvitation:
                 return 'recurring_invoice';
             default:
-                # code...
+                // code...
                 break;
         }
     }
 
     public function buildEntityDataArray(): array
     {
-        if (! $this->client->currency()) {
+        if (!$this->client->currency()) {
             throw new Exception(debug_backtrace()[1]['function'], 1);
             // exit;
         }
@@ -256,7 +270,7 @@ class HtmlEngine
                 $data['$status_logo'] = ['value' => '<div class="stamp is-paid"> ' . ctrans('texts.cancelled') . '</div>', 'label' => ''];
             }
 
-            $data['$show_paid_stamp'] = ['value' => in_array($this->entity->status_id, [4,5]) && $this->settings->show_paid_stamp ? 'flex' : 'none', 'label' => ''];
+            $data['$show_paid_stamp'] = ['value' => in_array($this->entity->status_id, [4, 5]) && $this->settings->show_paid_stamp ? 'flex' : 'none', 'label' => ''];
 
             $data['$invoice.vendor'] = ['value' => $this->entity->vendor?->present()->name() ?: '', 'label' => ctrans('texts.vendor_name')];
 
@@ -264,7 +278,7 @@ class HtmlEngine
                 try {
                     $data['$swiss_qr'] = ['value' => (new SwissQrGenerator($this->entity, $this->company))->run(), 'label' => ''];
                     $data['$swiss_qr_raw'] = ['value' => html_entity_decode($data['$swiss_qr']['value']), 'label' => ''];
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $data['$swiss_qr'] = ['value' => '', 'label' => ''];
                     $data['$swiss_qr_raw'] = ['value' => '', 'label' => ''];
                 }
@@ -272,7 +286,6 @@ class HtmlEngine
         }
 
         if ($this->entity_string == 'quote') {
-
 
             $data['$term_days'] = ['value' => $this->client->getSetting('valid_until'), 'label' => ctrans('texts.valid_until')];
 
@@ -379,24 +392,24 @@ class HtmlEngine
         /* Do not change the order of these */
         if ($this->entity->partial > 0) {
             $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->partial, $this->client) ?: ' ', 'label' => ctrans('texts.partial_due')];
-            $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->partial), 'label' => ctrans('texts.partial_due')];
+            $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->partial), 'label' => ctrans('texts.partial_due')];
             $data['$balance_due_raw'] = ['value' => $this->entity->partial, 'label' => ctrans('texts.partial_due')];
             $data['$amount_raw'] = ['value' => $this->entity->partial, 'label' => ctrans('texts.partial_due')];
             $data['$due_date'] = ['value' => $this->translateDate($this->entity->partial_due_date, $this->client->date_format(), $this->client->locale()) ?: ' ', 'label' => ctrans('texts.' . $this->entity_string . '_due_date')];
         } else {
             if ($this->entity->status_id == 1 || $this->entity_string == 'recurring_invoice') {
                 $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->amount, $this->client) ?: ' ', 'label' => ctrans('texts.balance_due')];
-                $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->amount), 'label' => ctrans('texts.balance_due')];
+                $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->amount), 'label' => ctrans('texts.balance_due')];
                 $data['$balance_due_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.balance_due')];
                 $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
             } elseif ($this->entity->status_id == 4 && $this->entity_string == 'invoice') {
                 $data['$balance_due'] = ['value' => Number::formatMoney(0, $this->client) ?: ' ', 'label' => ctrans('texts.balance_due')];
-                $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", 0), 'label' => ctrans('texts.balance_due')];
+                $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', 0), 'label' => ctrans('texts.balance_due')];
                 $data['$balance_due_raw'] = ['value' => 0, 'label' => ctrans('texts.balance_due')];
                 $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
             } else {
                 $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->balance, $this->client) ?: ' ', 'label' => ctrans('texts.balance_due')];
-                $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->balance), 'label' => ctrans('texts.balance_due')];
+                $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->balance), 'label' => ctrans('texts.balance_due')];
                 $data['$balance_due_raw'] = ['value' => $this->entity->balance, 'label' => ctrans('texts.balance_due')];
                 $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
             }
@@ -405,17 +418,16 @@ class HtmlEngine
         $data['$quote.balance_due'] = &$data['$balance_due'];
         $data['$invoice.balance_due'] = &$data['$balance_due'];
 
-
         if ($this->entity_string == 'credit') {
             $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->balance, $this->client) ?: ' ', 'label' => ctrans('texts.credit_balance')];
-            $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->balance), 'label' => ctrans('texts.credit_balance')];
+            $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->balance), 'label' => ctrans('texts.credit_balance')];
             $data['$balance_due_raw'] = ['value' => $this->entity->balance, 'label' => ctrans('texts.credit_balance')];
             $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
         }
 
         if ($this->entity_string == 'credit' && $this->entity->status_id == 1) {
             $data['$balance_due'] = ['value' => Number::formatMoney($this->entity->amount, $this->client) ?: ' ', 'label' => ctrans('texts.credit_balance')];
-            $data['$balance_due_dec'] = ['value' => sprintf("%01.2f", $this->entity->amount), 'label' => ctrans('texts.credit_balance')];
+            $data['$balance_due_dec'] = ['value' => sprintf('%01.2f', $this->entity->amount), 'label' => ctrans('texts.credit_balance')];
             $data['$balance_due_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.credit_balance')];
             $data['$amount_raw'] = ['value' => $this->entity->amount, 'label' => ctrans('texts.amount')];
         }
@@ -429,7 +441,7 @@ class HtmlEngine
         $data['$total'] = ['value' => Number::formatMoney($this->entity_calc->getTotal(), $this->client) ?: ' ', 'label' => ctrans('texts.total')];
         $data['$amount'] = &$data['$total'];
         $data['$amount_bgn_eur'] = ['value' => Number::formatValue($this->entity_calc->getTotal() / 1.95583, app('currencies')->first(function ($currency) {
-            /** @var \App\Models\Currency $currency */
+            /** @var Currency $currency */
             return $currency->code == 'EUR';
         })) ?: ' ', 'label' => ''];
         $data['$amount_due'] = ['value' => &$data['$balance_due']['value'], 'label' => ctrans('texts.amount_due')];
@@ -454,7 +466,6 @@ class HtmlEngine
         $data['$invoice.balance'] = &$data['$balance'];
         $data['$taxes'] = ['value' => Number::formatMoney($this->entity_calc->getItemTotalTaxes(), $this->client) ?: ' ', 'label' => ctrans('texts.taxes')];
         $data['$invoice.taxes'] = &$data['$taxes'];
-
 
         $data['$user.name'] = ['value' => $this->entity->user->present()->name(), 'label' => ctrans('texts.name')];
 
@@ -489,7 +500,6 @@ class HtmlEngine
         $data['$valid_until'] = &$data['$quote.valid_until'];
         $data['$credit_amount'] = ['value' => Number::formatMoney($this->entity_calc->getTotal(), $this->client) ?: ' ', 'label' => ctrans('texts.credit_amount')];
         $data['$credit_balance'] = ['value' => Number::formatMoney($this->entity->balance, $this->client) ?: ' ', 'label' => ctrans('texts.credit_balance')];
-
 
         if ($this->entity_string == 'invoice' && $this->client->peppolSendingEnabled() && $this->entity->amount < 0) {
             $data['$invoice.total'] = &$data['$credit_amount'];
@@ -703,7 +713,6 @@ class HtmlEngine
         $data['$task.task3'] = ['value' => '', 'label' => $this->helpers->makeCustomField($this->company->custom_fields, 'task3')];
         $data['$task.task4'] = ['value' => '', 'label' => $this->helpers->makeCustomField($this->company->custom_fields, 'task4')];
 
-
         if ($this->entity->vendor) {
 
             $data['$vendor_name'] = ['value' => $this->entity->vendor->present()->name() ?: '&nbsp;', 'label' => ctrans('texts.vendor_name')];
@@ -738,7 +747,7 @@ class HtmlEngine
             $data['$contact.signature'] = ['value' => '', 'label' => ''];
         }
 
-        if ($this->entity->quote) { //@phpstan-ignore-line
+        if ($this->entity->quote) { // @phpstan-ignore-line
             $data['$quote.reference'] = ['value' => $this->entity->quote->number ?: '&nbsp;', 'label' => ctrans('texts.quote_number')];
         }
 
@@ -771,7 +780,7 @@ class HtmlEngine
         $data['$item'] = ['value' => '', 'label' => ctrans('texts.item')];
         $data['$description'] = ['value' => '', 'label' => ctrans('texts.description')];
 
-        //$data['$entity_footer'] = ['value' => $this->client->getSetting("{$this->entity_string}_footer"), 'label' => ''];
+        // $data['$entity_footer'] = ['value' => $this->client->getSetting("{$this->entity_string}_footer"), 'label' => ''];
         $data['$entity_footer'] = ['value' => Helpers::processReservedKeywords(\nl2br($this->entity->footer ?: ''), $this->client), 'label' => ''];
         $data['$footer'] = &$data['$entity_footer'];
 
@@ -782,7 +791,7 @@ class HtmlEngine
         $data['$autoBill'] = ['value' => ctrans('texts.auto_bill_notification_placeholder'), 'label' => ''];
         $data['$auto_bill'] = &$data['$autoBill'];
 
-        /*Payment Aliases*/
+        /* Payment Aliases */
         $data['$paymentLink'] = &$data['$payment_link'];
         $data['$payment_url'] = &$data['$payment_link'];
 
@@ -816,13 +825,13 @@ class HtmlEngine
         if ($this->entity_string == 'invoice' && $this->entity->net_payments()->exists()) {
             $payment_list = '<br><br>';
 
-            foreach ($this->entity->net_payments as $payment) { //@phpstan-ignore-line
-                $payment_list .= ctrans('texts.payment_subject') . ": " . $this->formatDate($payment->date, $this->client->date_format()) . " :: " . Number::formatMoney($payment->amount, $this->client) . " :: " . $payment->translatedType() . "<br>";
+            foreach ($this->entity->net_payments as $payment) { // @phpstan-ignore-line
+                $payment_list .= ctrans('texts.payment_subject') . ': ' . $this->formatDate($payment->date, $this->client->date_format()) . ' :: ' . Number::formatMoney($payment->amount, $this->client) . ' :: ' . $payment->translatedType() . '<br>';
             }
 
             $data['$payments'] = ['value' => $payment_list, 'label' => ctrans('texts.payments')];
 
-            /** @var ?\App\Models\Payment $payment */
+            /** @var ?Payment $payment */
             $payment = $this->entity->net_payments()->first();
 
             if ($payment) {
@@ -845,14 +854,13 @@ class HtmlEngine
         }
 
         $data['$actual_delivery_date'] = ['value' => $this->translateDate(data_get($this->entity, 'e_invoice.Invoice.Delivery.0.ActualDeliveryDate', ''), $this->client->date_format(), $this->client->locale()), 'label' => ctrans('texts.actual_delivery_date')];
-        
+
         $invoice_period = '';
 
-        if($period = data_get($this->entity, 'e_invoice.Invoice.InvoicePeriod.0', false)) {
-            try{
+        if ($period = data_get($this->entity, 'e_invoice.Invoice.InvoicePeriod.0', false)) {
+            try {
                 $invoice_period = $this->translateDate($period->StartDate, $this->client->date_format(), $this->client->locale()) . ' - ' . $this->translateDate($period->EndDate, $this->client->date_format(), $this->client->locale());
-            }
-            catch(\Throwable $e) {
+            } catch (\Throwable $e) {
                 nlog("Error getting invoice period: {$e->getMessage()}");
             }
         }
@@ -869,11 +877,11 @@ class HtmlEngine
 
     private function getVerifactuQrCode()
     {
-        if (!($this->entity instanceof \App\Models\Invoice) || !$this->company->verifactuEnabled() || strlen($this->entity->backup->guid ?? '') < 2 || $this->entity->backup->guid == 'exempt') {
+        if (!($this->entity instanceof Invoice) || !$this->company->verifactuEnabled() || strlen($this->entity->backup->guid ?? '') < 2 || $this->entity->backup->guid == 'exempt') {
             return '';
         }
 
-        /** @var \App\Models\VerifactuLog $verifactu_log */
+        /** @var VerifactuLog $verifactu_log */
         $verifactu_log = $this->entity->verifactu_logs()->orderBy('id', 'desc')->first();
 
         if (!$verifactu_log) {
@@ -913,7 +921,6 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
         return "<tr><td>{$text}</td></tr><tr><td><img src=\"data:image/png;base64,{$qr_code}\" alt=\"Verifactu QR Code\"></td></tr>";
     }
 
-
     /**
      * totalTaskHours
      *
@@ -924,10 +931,10 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     private function totalTaskHours()
     {
         return collect($this->entity->line_items)
-                    ->filter(function ($item) {
-                        return $item->type_id == '2';
-                    })
-                    ->sum('quantity');
+            ->filter(function ($item) {
+                return $item->type_id == '2';
+            })
+            ->sum('quantity');
     }
 
     /**
@@ -941,14 +948,14 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     {
         if ($this->entity->partial > 0 && !empty($this->entity->partial_due_date)) {
 
-            $days_overdue = (int) \Carbon\Carbon::parse($this->entity->partial_due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
+            $days_overdue = (int) Carbon::parse($this->entity->partial_due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
 
             return max($days_overdue, 0);
         }
 
         if (!empty($this->entity->due_date)) {
 
-            $days_overdue = (int) \Carbon\Carbon::parse($this->entity->due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
+            $days_overdue = (int) Carbon::parse($this->entity->due_date)->diffInDays(now()->startOfDay()->setTimezone($this->entity->company->timezone()->name));
 
             return max($days_overdue, 0);
         }
@@ -956,7 +963,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
         return 0;
     }
 
-    private function getPaymentMeta(\App\Models\Payment $payment)
+    private function getPaymentMeta(Payment $payment)
     {
 
         if (!is_array($payment->refund_meta)) {
@@ -964,43 +971,42 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
         }
 
         return collect($payment->refund_meta)
-                ->map(function ($refund) use ($payment) {
+            ->map(function ($refund) use ($payment) {
 
-                    $date = \Carbon\Carbon::parse($refund['date'] ?? $payment->date)->addSeconds($payment->client->timezone_offset());
-                    $date = $this->translateDate($date, $payment->client->date_format(), $payment->client->locale());
-                    $entity = ctrans('texts.invoice');
+                $date = Carbon::parse($refund['date'] ?? $payment->date)->addSeconds($payment->client->timezone_offset());
+                $date = $this->translateDate($date, $payment->client->date_format(), $payment->client->locale());
+                $entity = ctrans('texts.invoice');
 
-                    $map = [];
+                $map = [];
 
-                    foreach ($refund['invoices'] as $refunded_invoice) {
-                        $invoice = \App\Models\Invoice::withTrashed()->find($refunded_invoice['invoice_id']);
-                        $amount = Number::formatMoney($refunded_invoice['amount'], $payment->client);
-                        $notes = ctrans('texts.status_partially_refunded_amount', ['amount' => $amount]);
+                foreach ($refund['invoices'] as $refunded_invoice) {
+                    $invoice = Invoice::withTrashed()->find($refunded_invoice['invoice_id']);
+                    $amount = Number::formatMoney($refunded_invoice['amount'], $payment->client);
+                    $notes = ctrans('texts.status_partially_refunded_amount', ['amount' => $amount]);
 
-                        if ($invoice) {
-                            array_push($map, "{$date} {$entity} #{$invoice->number} {$notes}\n");
-                        }
-
+                    if ($invoice) {
+                        array_push($map, "{$date} {$entity} #{$invoice->number} {$notes}\n");
                     }
 
-                    return $map;
+                }
 
-                })->flatten()->implode("\n");
+                return $map;
+
+            })->flatten()->implode("\n");
 
     }
+
     /**
      * Returns a localized string for tax compliance purposes
-     *
-     * @return string
      */
     private function taxLabel(): string
     {
         $tax_label = '';
 
-        if (collect($this->entity->line_items)->contains('tax_id', \App\Models\Product::PRODUCT_TYPE_REVERSE_TAX)) {
-            $tax_label .= ctrans('texts.reverse_tax_info') . " <br>";
+        if (collect($this->entity->line_items)->contains('tax_id', Product::PRODUCT_TYPE_REVERSE_TAX)) {
+            $tax_label .= ctrans('texts.reverse_tax_info') . ' <br>';
         } elseif ((int) $this->client->country_id !== (int) $this->company->settings->country_id) {
-            $tax_label .= ctrans('texts.intracommunity_tax_info') . " <br>";
+            $tax_label .= ctrans('texts.intracommunity_tax_info') . ' <br>';
 
             if ($this->entity_calc->getTotalTaxes() > 0) {
                 $tax_label = '';
@@ -1008,7 +1014,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
         }
 
         if (isset($this->entity->company->tax_data->regions->EU->has_sales_above_threshold) && !$this->entity->company->tax_data->regions->EU->has_sales_above_threshold) {
-            $tax_label .= ctrans('texts.small_company_info') . "<br>";
+            $tax_label .= ctrans('texts.small_company_info') . '<br>';
         }
 
         return $tax_label;
@@ -1035,7 +1041,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
 
         return $data;
     }
-    
+
     public function generateLabelsAndValues()
     {
         $data = [];
@@ -1054,7 +1060,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     {
         $data = '';
 
-        if (! $this->entity_calc->getTotalTaxMap()) {
+        if (!$this->entity_calc->getTotalTaxMap()) {
             return $data;
         }
 
@@ -1069,7 +1075,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     {
         $data = '';
 
-        if (! $this->entity_calc->getTotalTaxMap()) {
+        if (!$this->entity_calc->getTotalTaxMap()) {
             return $data;
         }
 
@@ -1096,7 +1102,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     private function getCountryName(): string
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $country = $countries->first(function ($item) {
@@ -1106,12 +1112,10 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
         return $country ? ctrans('texts.country_' . $country->name) : ctrans('texts.country_' . $countries->first()->name);
     }
 
-
     private function getCountryCode(): string
     {
 
-
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $country = $countries->first(function ($item) {
@@ -1139,7 +1143,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
     */
     public function generateAppUrl()
     {
-        //return rtrim(config('ninja.app_url'), "/");
+        // return rtrim(config('ninja.app_url'), "/");
         return config('ninja.app_url');
     }
 
@@ -1156,10 +1160,10 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
 
-        $container =  $dom->createElement('div');
+        $container = $dom->createElement('div');
         $container->setAttribute('style', 'display:grid; grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr);justify-items: center;');
 
-        /** @var \App\Models\Document $document */
+        /** @var Document $document */
         foreach ($this->entity->documents()->where('is_public', true)->get() as $document) {
             if (!$document->isImage()) {
                 continue;
@@ -1167,7 +1171,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
 
             $image = $dom->createElement('img');
 
-            $image->setAttribute('src', "data:image/png;base64," . base64_encode($document->compress()));
+            $image->setAttribute('src', 'data:image/png;base64,' . base64_encode($document->compress()));
             $image->setAttribute('style', 'max-width: 50%; margin-top: 20px;');
 
             $container->appendChild($image);
@@ -1183,7 +1187,7 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
 
                     $image = $dom->createElement('img');
 
-                    $image->setAttribute('src', "data:image/png;base64," . base64_encode($document->compress()));
+                    $image->setAttribute('src', 'data:image/png;base64,' . base64_encode($document->compress()));
                     $image->setAttribute('style', 'max-width: 50%; margin-top: 20px;');
 
                     $container->appendChild($image);
@@ -1202,10 +1206,6 @@ Código seguro de verificación (CSV): {$verifactu_log->status}";
 
     /**
      * buildViewButton
-     *
-     * @param  string $link
-     * @param  string $text
-     * @return string
      */
     private function buildViewButton(string $link, string $text): string
     {

@@ -6,22 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
+use App\Models\Activity;
 use App\Models\Backup;
 use App\Models\Client;
 use App\Models\Credit;
+use App\Models\Document;
 use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Models\Location;
 use App\Models\Payment;
 use App\Models\Project;
-use App\Models\Activity;
-use App\Models\Document;
 use App\Utils\Traits\MakesHash;
-use App\Models\InvoiceInvitation;
 
 class InvoiceTransformer extends EntityTransformer
 {
@@ -48,7 +48,7 @@ class InvoiceTransformer extends EntityTransformer
             return null;
         }
 
-        return $this->includeItem($invoice->location, $transformer, \App\Models\Location::class);
+        return $this->includeItem($invoice->location, $transformer, Location::class);
     }
 
     public function includeInvitations(Invoice $invoice)
@@ -158,13 +158,13 @@ class InvoiceTransformer extends EntityTransformer
             'is_amount_discount' => (bool) ($invoice->is_amount_discount ?: false),
             'footer' => $invoice->footer ?: '',
             'partial' => (float) ($invoice->partial ?: 0.0),
-            'partial_due_date' => ($invoice->partial_due_date && $invoice->partial_due_date != "-0001-11-30") ? $invoice->partial_due_date->format('Y-m-d') : '',
+            'partial_due_date' => ($invoice->partial_due_date && $invoice->partial_due_date != '-0001-11-30') ? $invoice->partial_due_date->format('Y-m-d') : '',
             'custom_value1' => (string) $invoice->custom_value1 ?: '',
             'custom_value2' => (string) $invoice->custom_value2 ?: '',
             'custom_value3' => (string) $invoice->custom_value3 ?: '',
             'custom_value4' => (string) $invoice->custom_value4 ?: '',
-            'has_tasks' => (bool) false, //@deprecated v5.0.23
-            'has_expenses' => (bool) false, //@deprecated v5.0.23
+            'has_tasks' => (bool) false, // @deprecated v5.0.23
+            'has_expenses' => (bool) false, // @deprecated v5.0.23
             'custom_surcharge1' => (float) $invoice->custom_surcharge1,
             'custom_surcharge2' => (float) $invoice->custom_surcharge2,
             'custom_surcharge3' => (float) $invoice->custom_surcharge3,
@@ -183,8 +183,8 @@ class InvoiceTransformer extends EntityTransformer
             'paid_to_date' => (float) $invoice->paid_to_date,
             'subscription_id' => $this->encodePrimaryKey($invoice->subscription_id),
             'auto_bill_enabled' => (bool) $invoice->auto_bill_enabled,
-            'tax_info' => $invoice->tax_data ?: new \stdClass(),
-            'e_invoice' => $invoice->e_invoice ?: new \stdClass(),
+            'tax_info' => $invoice->tax_data ?: new \stdClass,
+            'e_invoice' => $invoice->e_invoice ?: new \stdClass,
             'backup' => $invoice->backup,
             'location_id' => $this->encodePrimaryKey($invoice->location_id),
             'sync' => $invoice->sync,
@@ -201,7 +201,6 @@ class InvoiceTransformer extends EntityTransformer
         if (request()->has('show_schedule') && request()->query('show_schedule') == 'true') {
             $data['schedule'] = (array) $invoice->paymentSchedule();
         }
-
 
         return $data;
 

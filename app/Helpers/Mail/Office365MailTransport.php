@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Helpers\Mail;
 
 use Microsoft\Graph\Graph;
+use Microsoft\Graph\Model\Message;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mime\MessageConverter;
@@ -26,9 +26,9 @@ class Office365MailTransport extends AbstractTransport
 
     protected function doSend(SentMessage $message): void
     {
-        $symfony_message = MessageConverter::toEmail($message->getOriginalMessage()); //@phpstan-ignore-line
+        $symfony_message = MessageConverter::toEmail($message->getOriginalMessage()); // @phpstan-ignore-line
 
-        $graph = new Graph();
+        $graph = new Graph;
 
         /** @phpstan-ignore-next-line **/
         $token = $symfony_message->getHeaders()->get('gmailtoken')->getValue();
@@ -53,7 +53,7 @@ class Office365MailTransport extends AbstractTransport
             $graphMessage = $graph->createRequest('POST', '/users/' . $symfony_message->getFrom()[0]->getAddress() . '/sendmail')
                 ->attachBody(base64_encode($bcc_list . $message->toString()))
                 ->addHeaders(['Content-Type' => 'text/plain'])
-                ->setReturnType(\Microsoft\Graph\Model\Message::class)
+                ->setReturnType(Message::class)
                 ->execute();
         } catch (\Exception $e) {
 
@@ -63,7 +63,7 @@ class Office365MailTransport extends AbstractTransport
                 $graphMessage = $graph->createRequest('POST', '/users/' . $symfony_message->getFrom()[0]->getAddress() . '/sendmail')
                     ->attachBody(base64_encode($bcc_list . $message->toString()))
                     ->addHeaders(['Content-Type' => 'text/plain'])
-                    ->setReturnType(\Microsoft\Graph\Model\Message::class)
+                    ->setReturnType(Message::class)
                     ->execute();
             } catch (\Exception $e) {
 

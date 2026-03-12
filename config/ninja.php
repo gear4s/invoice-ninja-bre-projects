@@ -1,5 +1,17 @@
 <?php
 
+use App\Models\Bank;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\DateFormat;
+use App\Models\DatetimeFormat;
+use App\Models\Gateway;
+use App\Models\Industry;
+use App\Models\Language;
+use App\Models\PaymentType;
+use App\Models\Size;
+use App\Models\Timezone;
+
 return [
 
     'web_url' => 'https://www.invoiceninja.com',
@@ -41,7 +53,7 @@ return [
     'trusted_proxies' => env('TRUSTED_PROXIES', false),
     'is_docker' => env('IS_DOCKER', false),
     'local_download' => env('LOCAL_DOWNLOAD', false),
-    'sentry_dsn' => env('SENTRY_LARAVEL_DSN', "https://39389664f3f14969b4c43dadda00a40b@sentry2.invoicing.co/5"),
+    'sentry_dsn' => env('SENTRY_LARAVEL_DSN', 'https://39389664f3f14969b4c43dadda00a40b@sentry2.invoicing.co/5'),
     'environment' => env('NINJA_ENVIRONMENT', 'selfhost'), // 'hosted', 'development', 'selfhost', 'reseller'
     'preconfigured_install' => env('PRECONFIGURED_INSTALL', false),
     'update_secret' => env('UPDATE_SECRET', ''),
@@ -68,7 +80,7 @@ return [
         'timezone_id' => env('DEFAULT_TIMEZONE', 1),
         'country_id' => env('DEFAULT_COUNTRY', 840), // United Stated
         'currency_id' => env('DEFAULT_CURRENCY', 1),
-        'language_id' => env('DEFAULT_LANGUAGE', 1), //en
+        'language_id' => env('DEFAULT_LANGUAGE', 1), // en
         'date_format_id' => env('DEFAULT_DATE_FORMAT_ID', '1'),
         'datetime_format_id' => env('DEFAULT_DATETIME_FORMAT_ID', '1'),
         'locale' => env('DEFAULT_LOCALE', 'en'),
@@ -105,22 +117,22 @@ return [
         'ninja_official_contact' => env('NINJA_OFFICIAL_CONTACT', 'contact@invoiceninja.com'),
     ],
     'cached_tables' => [
-        'banks' => App\Models\Bank::class,
-        'countries' => App\Models\Country::class,
-        'currencies' => App\Models\Currency::class,
-        'date_formats' => App\Models\DateFormat::class,
-        'datetime_formats' => App\Models\DatetimeFormat::class,
-        'gateways' => App\Models\Gateway::class,
-        //'gateway_types' => App\Models\GatewayType::class,
-        'industries' => App\Models\Industry::class,
-        'languages' => App\Models\Language::class,
-        'payment_types' => App\Models\PaymentType::class,
-        'sizes' => App\Models\Size::class,
-        'timezones' => App\Models\Timezone::class,
-        //'invoiceDesigns' => 'App\Models\InvoiceDesign',
-        //'invoiceStatus' => 'App\Models\InvoiceStatus',
-        //'frequencies' => 'App\Models\Frequency',
-        //'fonts' => 'App\Models\Font',
+        'banks' => Bank::class,
+        'countries' => Country::class,
+        'currencies' => Currency::class,
+        'date_formats' => DateFormat::class,
+        'datetime_formats' => DatetimeFormat::class,
+        'gateways' => Gateway::class,
+        // 'gateway_types' => App\Models\GatewayType::class,
+        'industries' => Industry::class,
+        'languages' => Language::class,
+        'payment_types' => PaymentType::class,
+        'sizes' => Size::class,
+        'timezones' => Timezone::class,
+        // 'invoiceDesigns' => 'App\Models\InvoiceDesign',
+        // 'invoiceStatus' => 'App\Models\InvoiceStatus',
+        // 'frequencies' => 'App\Models\Frequency',
+        // 'fonts' => 'App\Models\Font',
     ],
     'notification' => [
         'slack' => env('SLACK_WEBHOOK_URL', false),
@@ -211,17 +223,17 @@ return [
         'client_id' => env('YODLEE_CLIENT_ID', false),
         'client_secret' => env('YODLEE_CLIENT_SECRET', false),
         'admin_name' => env('YODLEE_LOGIN_ADMIN_NAME', false),
-        'test_mode' => env("YODLEE_TEST_MODE", false),
-        'dev_mode' => env("YODLEE_DEV_MODE", false),
-        'config_name' => env("YODLEE_CONFIG_NAME", false),
+        'test_mode' => env('YODLEE_TEST_MODE', false),
+        'dev_mode' => env('YODLEE_DEV_MODE', false),
+        'config_name' => env('YODLEE_CONFIG_NAME', false),
     ],
     'nordigen' => [
         'secret_id' => env('NORDIGEN_SECRET_ID', false),
         'secret_key' => env('NORDIGEN_SECRET_KEY', false),
-        'test_mode' => env("NORDIGEN_TEST_MODE", false),
+        'test_mode' => env('NORDIGEN_TEST_MODE', false),
     ],
     'licenses' => env('LICENSES', false),
-    'google_application_credentials' => env("GOOGLE_APPLICATION_CREDENTIALS", false),
+    'google_application_credentials' => env('GOOGLE_APPLICATION_CREDENTIALS', false),
     'shopify' => [
         'client_id' => env('SHOPIFY_CLIENT_ID', null),
         'client_secret' => env('SHOPIFY_CLIENT_SECRET', null),
@@ -246,7 +258,7 @@ return [
         'turnstile' => [
             'secret' => env('CLOUDFLARE_SECRET', null),
             'site_key' => env('CLOUDFLARE_SITE_KEY', false),
-        ]
+        ],
     ],
     'encryption' => [
         'public_key' => env('NINJA_PUBLIC_KEY', false),
@@ -254,7 +266,7 @@ return [
     ],
     'upload_extensions' => env('ADDITIONAL_UPLOAD_EXTENSIONS', ''),
     'storecove_api_key' => env('STORECOVE_API_KEY', false),
-    'storecove_email_catchall' => env('STORECOVE_CATCHALL_EMAIL',false),
+    'storecove_email_catchall' => env('STORECOVE_CATCHALL_EMAIL', false),
     'pdf_page_numbering_x_alignment' => env('PDF_PAGE_NUMBER_X', 0),
     'pdf_page_numbering_y_alignment' => env('PDF_PAGE_NUMBER_Y', -6),
     'pdf_page_numbering_font_name' => env('PDF_PAGE_NUMBER_FONT_NAME', 'Arial'),

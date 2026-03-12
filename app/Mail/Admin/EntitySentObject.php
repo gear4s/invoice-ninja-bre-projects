@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -53,9 +52,9 @@ class EntitySentObject
     public function build()
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->company->settings));
@@ -63,7 +62,7 @@ class EntitySentObject
         $this->setTemplate();
 
         if ($this->template == 'purchase_order') {
-            $mail_obj = new stdClass();
+            $mail_obj = new stdClass;
             $mail_obj->amount = Number::formatMoney($this->entity->amount, $this->entity->vendor);
             $mail_obj->subject = ctrans(
                 $this->template_subject,
@@ -103,7 +102,7 @@ class EntitySentObject
             $mail_obj->tag = $this->company->company_key;
 
         } else {
-            $mail_obj = new stdClass();
+            $mail_obj = new stdClass;
             $mail_obj->amount = $this->getAmount();
             $mail_obj->subject = $this->getSubject();
             $mail_obj->data = $this->getData();

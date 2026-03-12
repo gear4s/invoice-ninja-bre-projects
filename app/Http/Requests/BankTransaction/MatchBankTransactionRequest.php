@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,17 +14,16 @@ namespace App\Http\Requests\BankTransaction;
 use App\Http\Requests\Request;
 use App\Models\BankTransaction;
 use App\Models\Payment;
+use App\Models\User;
 
 class MatchBankTransactionRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin() || $user->can('create', BankTransaction::class) || $user->hasPermission('edit_bank_transaction');
@@ -33,7 +31,7 @@ class MatchBankTransactionRequest extends Request
 
     public function rules(): array
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [
@@ -51,7 +49,7 @@ class MatchBankTransactionRequest extends Request
 
     public function prepareForValidation()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $inputs = $this->all();
@@ -73,7 +71,7 @@ class MatchBankTransactionRequest extends Request
                 $inputs['transactions'][$key]['payment_id'] = $this->decodePrimaryKey($inputs['transactions'][$key]['payment_id']);
                 $p = Payment::withTrashed()->where('company_id', $user->company()->id)->where('id', $inputs['transactions'][$key]['payment_id'])->first();
 
-                /*Ensure we don't relink an existing payment*/
+                /* Ensure we don't relink an existing payment */
                 if (!$p || is_numeric($p->transaction_id)) {
                     unset($inputs['transactions'][$key]);
                 }

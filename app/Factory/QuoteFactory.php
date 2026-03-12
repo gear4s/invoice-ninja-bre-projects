@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,7 @@ class QuoteFactory
 {
     public static function create(int $company_id, int $user_id): Quote
     {
-        $quote = new Quote();
+        $quote = new Quote;
         $quote->status_id = Quote::STATUS_DRAFT;
         $quote->number = null;
         $quote->discount = 0;

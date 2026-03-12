@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('e_invoicing_logs', function (Blueprint $table){
+        Schema::create('e_invoicing_logs', function (Blueprint $table) {
             $table->id();
             $table->string('tenant_id')->nullable();
             $table->unsignedInteger('legal_entity_id')->index();
@@ -27,7 +27,5 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,6 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 
-/**
- *
- */
 class TimeZoneTest extends TestCase
 {
     private array $timezones = [
@@ -133,7 +129,7 @@ class TimeZoneTest extends TestCase
         'Asia/Vladivostok' => 'Asia/Vladivostok',
         'Asia/Magadan' => 'Asia/Magadan',
         'Pacific/Auckland' => 'Pacific/Auckland',
-        'Pacific/Fiji' => 'Pacific/Fiji'
+        'Pacific/Fiji' => 'Pacific/Fiji',
     ];
 
     protected function setUp(): void
@@ -141,15 +137,13 @@ class TimeZoneTest extends TestCase
         parent::setUp();
     }
 
-
-    public function testTimezoneCompatibility()
+    public function test_timezone_compatibility()
     {
-
 
         foreach ($this->timezones as $timezone) {
 
             date_default_timezone_set('GMT');
-            $date = new \DateTime("now", new \DateTimeZone($timezone));
+            $date = new \DateTime('now', new \DateTimeZone($timezone));
             $this->assertIsNumeric($date->getOffset());
 
         }

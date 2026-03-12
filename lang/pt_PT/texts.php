@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organização',
     'name' => 'Nome',
     'website' => 'Site',
@@ -1173,7 +1173,6 @@ $lang = array(
     'enterprise_plan_features' => 'O Plano Enterprise adiciona suporte para vários usuários e anexos de arquivo, :link para ver a lista completa de recursos.',
     'return_to_app' => 'Voltar à Aplicação',
 
-
     // Payment updates
     'refund_payment' => 'Reembolsar Pagamento',
     'refund_max' => 'Máx:',
@@ -1702,7 +1701,6 @@ Quando tiver os valores dos depósitos, volte a esta página e conclua a verific
     'lang_Serbian' => 'Sérvio',
     'lang_Bulgarian' => 'Búlgaro',
     'lang_Russian (Russia)' => 'Russo (Rússia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Contabilidade & Legislação',
@@ -2361,7 +2359,7 @@ Quando tiver os valores dos depósitos, volte a esta página e conclua a verific
     'currency_gold_troy_ounce' => 'Onça Troy de Ouro',
     'currency_nicaraguan_córdoba' => 'Córdoba Nicaraguense',
     'currency_malagasy_ariary' => 'Ariário malgaxe',
-    "currency_tongan_pa_anga" => "Pa&#39;anga de Tonga",
+    'currency_tongan_pa_anga' => 'Pa&#39;anga de Tonga',
 
     'review_app_help' => 'Esperamos que esteja a gostar da aplicação. <br/>Se eventualmente considerar :link agradecíamos muito!',
     'writing_a_review' => 'escrever uma avaliação',
@@ -4363,7 +4361,7 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'activity_122' => ':user despesa recorrente arquivada :recurring_expense',
     'activity_123' => ':user despesa recorrente excluída :recurring_expense',
     'activity_124' => ':user despesa recorrente restaurada :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Para visualizar o :entity, você precisa definir uma senha.',
     'unsubscribe' => 'Cancelar subscrição',
     'unsubscribed' => 'Desinscrito',
@@ -4869,7 +4867,7 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Pagável dentro de :payeddue dias líquidos até :paydate',
-    'xinvoice_no_buyers_reference' => "Nenhuma referência do comprador fornecida",
+    'xinvoice_no_buyers_reference' => 'Nenhuma referência do comprador fornecida',
     'xinvoice_online_payment' => 'A fatura precisa ser paga on-line através do link fornecido',
     'pre_payment' => 'Pré-Pagamento',
     'number_of_payments' => 'Número de pagamentos',
@@ -4974,8 +4972,8 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'e_invoice' => 'Fatura eletrônica',
     'light_dark_mode' => 'Modo claro/escuro',
     'activities' => 'Atividades',
-    'recent_transactions' => "Transações recentes",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Transações recentes',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Obrigações',
     'order_number' => 'Número do pedido',
@@ -5192,7 +5190,7 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'rff' => 'Formulário de campos obrigatórios',
     'add_step' => 'Adicionar etapa',
     'steps' => 'Passos',
-    'steps_order_help' =>  'A ordem das etapas é importante. O primeiro passo não deve depender de nenhum outro passo. A segunda etapa deve depender da primeira etapa e assim por diante.',
+    'steps_order_help' => 'A ordem das etapas é importante. O primeiro passo não deve depender de nenhum outro passo. A segunda etapa deve depender da primeira etapa e assim por diante.',
     'other_steps' => 'Outras etapas',
     'use_available_payments' => 'Use pagamentos disponíveis',
     'test_email_sent' => 'E-mail enviado com sucesso',
@@ -5401,7 +5399,7 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'credit_updated' => 'Crédito Atualizado',
     'payment_updated' => 'Pagamento Atualizado',
     'search_placeholder' => 'Encontre faturas, clientes e muito mais',
-    'invalid_vat_number' => "O número de IVA não é válido para o país selecionado. O formato deve ser Código do país seguido apenas por número, ou seja, DE123456789",
+    'invalid_vat_number' => 'O número de IVA não é válido para o país selecionado. O formato deve ser Código do país seguido apenas por número, ou seja, DE123456789',
     'acts_as_sender' => 'Enviar faturas eletrônicas',
     'acts_as_receiver' => 'Receber faturas eletrônicas',
     'peppol_token_generated' => 'Token PEPPOL gerado com sucesso.',
@@ -5538,7 +5536,7 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'pro_plan_feature_10' => 'Configure lembretes automáticos por e-mail',
     'pro_plan_feature_11' => 'Anexação automática de faturas em PDF a e-mails',
     'pro_plan_feature_12' => 'Exibir a assinatura eletrônica do cliente nas faturas',
-    'pro_plan_feature_13' => "Ative a caixa de seleção &quot;Aprovar Termos&quot;.",
+    'pro_plan_feature_13' => 'Ative a caixa de seleção &quot;Aprovar Termos&quot;.',
     'pro_plan_feature_14' => 'Relatórios: Faturas, Despesas, Demonstração de Resultados e muito mais',
     'pro_plan_feature_15' => 'Envio em massa de faturas, orçamentos e créditos por e-mail.',
     'pro_plan_feature_16' => 'Interligue 10 empresas com um único login',
@@ -5913,6 +5911,6 @@ O envio de E-mails foi suspenso. Será retomado às 23:00 UTC.',
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Transferência bancária Stripe',
     'activity_164' => 'A sincronização do QuickBooks falhou. :notes',
-);
+];
 
 return $lang;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,8 +17,10 @@ use App\Models\Company;
 use App\Models\RecurringInvoice;
 use App\Transformers\RecurringInvoiceTransformer;
 use App\Utils\Ninja;
+use App\Utils\Number;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class RecurringInvoiceExport extends BaseExport
@@ -36,8 +37,8 @@ class RecurringInvoiceExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->invoice_transformer = new RecurringInvoiceTransformer();
-        $this->decorator = new Decorator();
+        $this->invoice_transformer = new RecurringInvoiceTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -55,12 +56,12 @@ class RecurringInvoiceExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = RecurringInvoice::query()
-                        ->withTrashed()
-                        ->with('client')
-                        ->whereHas('client', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->with('client')
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -84,25 +85,24 @@ class RecurringInvoiceExport extends BaseExport
     public function run()
     {
 
-        $query  = $this->init();
+        $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($invoice) {
 
-                /** @var \App\Models\RecurringInvoice $invoice */
+                /** @var RecurringInvoice $invoice */
                 $this->csv->insertOne($this->buildRow($invoice));
             });
 
         return $this->csv->toString();
     }
-
 
     public function returnJson()
     {
@@ -115,16 +115,16 @@ class RecurringInvoiceExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\RecurringInvoice $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var RecurringInvoice $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
-
 
     private function buildRow(RecurringInvoice $invoice): array
     {
@@ -146,7 +146,7 @@ class RecurringInvoiceExport extends BaseExport
             }
 
             if (is_float($entity[$key])) {
-                $entity[$key] = \App\Utils\Number::formatValue($entity[$key], $currency);
+                $entity[$key] = Number::formatValue($entity[$key], $currency);
             }
 
         }
@@ -173,7 +173,6 @@ class RecurringInvoiceExport extends BaseExport
         if (in_array('recurring_invoice.user_id', $this->input['report_keys'])) {
             $entity['recurring_invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : '';
         }
-
 
         return $entity;
     }

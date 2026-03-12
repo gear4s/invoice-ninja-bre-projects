@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organisatie',
     'name' => 'Naam',
     'website' => 'Website',
@@ -1173,7 +1173,6 @@ $lang = array(
     'enterprise_plan_features' => 'Het Enterprise Plan biedt ondersteuning voor meerdere gebruikers en bestandsbijlagen, :link voor de volledige lijst met functies.',
     'return_to_app' => 'Terug naar de app',
 
-
     // Payment updates
     'refund_payment' => 'Terugbetalen',
     'refund_max' => 'Max:',
@@ -1702,7 +1701,6 @@ Kom terug naar deze betaalmethode pagina zodra u de bedragen heeft ontvangen en 
     'lang_Serbian' => 'Servisch',
     'lang_Bulgarian' => 'Bulgaars',
     'lang_Russian (Russia)' => 'Russisch (Rusland)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Boekhouding & juridisch',
@@ -2360,7 +2358,7 @@ Kom terug naar deze betaalmethode pagina zodra u de bedragen heeft ontvangen en 
     'currency_gold_troy_ounce' => 'Gouden Troy Ounce',
     'currency_nicaraguan_córdoba' => 'Nicaraguaans Córdoba',
     'currency_malagasy_ariary' => 'Malagassische ariarium',
-    "currency_tongan_pa_anga" => "Tongaanse pa'anga",
+    'currency_tongan_pa_anga' => "Tongaanse pa'anga",
 
     'review_app_help' => 'We hopen dat u veel gemak heeft aan het gebruik van deze app.<br/> Als u :link zou overwegen, stellen wij dat zeer op prijs!',
     'writing_a_review' => 'een recensie schrijven',
@@ -4363,7 +4361,7 @@ E-mail: :email<b><br><b>',
     'activity_122' => ':user heeft terugkerende uitgave :recurring_expense gearchiveerd',
     'activity_123' => ':user heeft terugkerende uitgave :recurring_expense verwijderd',
     'activity_124' => ':user heeft terugkerende uitgave :recurring_expense teruggezet',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Om de :entity te bekijken, moet u een wachtwoord instellen.',
     'unsubscribe' => 'Afmelden',
     'unsubscribed' => 'Afgemeld',
@@ -4869,7 +4867,7 @@ E-mail: :email<b><br><b>',
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E-overdracht',
     'xinvoice_payable' => 'Te betalen binnen :payeddue vervaldagen netto tot :paydate',
-    'xinvoice_no_buyers_reference' => "Geen kopersreferentie opgegeven",
+    'xinvoice_no_buyers_reference' => 'Geen kopersreferentie opgegeven',
     'xinvoice_online_payment' => 'De factuur dient online betaald te worden via de voorziene link',
     'pre_payment' => 'Vooruitbetaling',
     'number_of_payments' => 'Aantal betalingen',
@@ -4974,8 +4972,8 @@ E-mail: :email<b><br><b>',
     'e_invoice' => 'E-factuur',
     'light_dark_mode' => 'Lichte-/donkere modus',
     'activities' => 'Activiteiten',
-    'recent_transactions' => "Recente transacties",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Recente transacties',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Taken',
     'order_number' => 'Bestellingsnummer',
@@ -5192,7 +5190,7 @@ E-mail: :email<b><br><b>',
     'rff' => 'Verplichte velden formulier',
     'add_step' => 'Stap toevoegen',
     'steps' => 'Stappen',
-    'steps_order_help' =>  'De volgorde van de stappen is belangrijk. De eerste stap mag niet afhankelijk zijn van een andere stap. De tweede stap moet afhankelijk zijn van de eerste stap, enzovoort.',
+    'steps_order_help' => 'De volgorde van de stappen is belangrijk. De eerste stap mag niet afhankelijk zijn van een andere stap. De tweede stap moet afhankelijk zijn van de eerste stap, enzovoort.',
     'other_steps' => 'Overige stappen',
     'use_available_payments' => 'Gebruik beschikbare betalingen',
     'test_email_sent' => 'E-mail succesvol verzonden',
@@ -5401,7 +5399,7 @@ E-mail: :email<b><br><b>',
     'credit_updated' => 'Krediet bijgewerkt',
     'payment_updated' => 'Betaling bijgewerkt',
     'search_placeholder' => 'Vind facturen, klanten en meer',
-    'invalid_vat_number' => "Het BTW-nummer is niet geldig voor het geselecteerde land. Het formaat moet Landcode zijn, gevolgd door alleen een nummer, bijvoorbeeld DE123456789",
+    'invalid_vat_number' => 'Het BTW-nummer is niet geldig voor het geselecteerde land. Het formaat moet Landcode zijn, gevolgd door alleen een nummer, bijvoorbeeld DE123456789',
     'acts_as_sender' => 'E-facturen verzenden',
     'acts_as_receiver' => 'Ontvang E-facturen',
     'peppol_token_generated' => 'PEPPOL-token succesvol gegenereerd.',
@@ -5538,7 +5536,7 @@ E-mail: :email<b><br><b>',
     'pro_plan_feature_10' => 'Automatische herinneringsmails instellen',
     'pro_plan_feature_11' => 'Automatisch bijgevoegde factuur-PDF aan e-mails',
     'pro_plan_feature_12' => 'Toon de elektronische handtekening van klanten op facturen',
-    'pro_plan_feature_13' => "Schakel het selectievakje &#39;Voorwaarden goedkeuren&#39; in",
+    'pro_plan_feature_13' => 'Schakel het selectievakje &#39;Voorwaarden goedkeuren&#39; in',
     'pro_plan_feature_14' => 'Rapporten: facturen, uitgaven, winst- en verliesrekening, meer',
     'pro_plan_feature_15' => 'Bulk e-mailfacturen, offertes en tegoeden',
     'pro_plan_feature_16' => 'Koppel 10 bedrijven met 1 login',
@@ -5913,6 +5911,6 @@ E-mail: :email<b><br><b>',
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe bankoverschrijving',
     'activity_164' => 'De synchronisatie met QuickBooks is mislukt. :notes',
-);
+];
 
 return $lang;

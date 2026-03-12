@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,12 +31,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\ExpenseCategory|null $expense_category
+ * @property-read Client|null $client
+ * @property-read Company $company
+ * @property-read ExpenseCategory|null $expense_category
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor|null $vendor
+ * @property-read User $user
+ * @property-read Vendor|null $vendor
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\BankTransactionRuleFactory factory($count = null, $state = [])
@@ -64,12 +64,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BankTransactionRule whereVendorId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|BankTransactionRule withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|BankTransactionRule withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class BankTransactionRule extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -143,15 +144,14 @@ class BankTransactionRule extends BaseModel
         return $this->belongsTo(ExpenseCategory::class, 'category_id')->withTrashed();
     }
 
-
     // rule object looks like this:
-    //[
+    // [
     // {
     //     'search_key': 'client_id',
     //     'operator' : 'is',
     //     'value' : 'Sparky'
     // }
-    //]
+    // ]
 
     // public function processRule(BankTransaction $bank_transaction)
     // {
@@ -197,7 +197,6 @@ class BankTransactionRule extends BaseModel
     // private function searchVendor($rule, $bank_transaction)
     // {
     //     //search expenses
-
 
     // }
 

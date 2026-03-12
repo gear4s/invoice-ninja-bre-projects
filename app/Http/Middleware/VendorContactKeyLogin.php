@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,7 +30,6 @@ class VendorContactKeyLogin
      * If the contact_key is provided in the route
      *
      * @param  Request  $request
-     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -44,7 +42,7 @@ class VendorContactKeyLogin
         if ($request->segment(2) && $request->segment(2) == 'magic_link' && $request->segment(3)) {
             $payload = Cache::get($request->segment(3));
 
-            if (! $payload) {
+            if (!$payload) {
                 abort(403, 'Link expired.');
             }
 
@@ -58,7 +56,7 @@ class VendorContactKeyLogin
 
                 auth()->guard('vendor')->loginUsingId($vendor_contact->id, true);
 
-                if ($request->query('redirect') && ! empty($request->query('redirect'))) {
+                if ($request->query('redirect') && !empty($request->query('redirect'))) {
                     return redirect()->to($request->query('redirect'));
                 }
 
@@ -139,7 +137,7 @@ class VendorContactKeyLogin
                 return redirect($this->setRedirectPath());
             }
         }
-        //28-02-2022 middleware should not allow this to progress as we should have redirected by this stage.
+        // 28-02-2022 middleware should not allow this to progress as we should have redirected by this stage.
         abort(404, 'Unable to authenticate.');
 
         return $next($request);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,10 +22,10 @@ use Illuminate\Queue\SerializesModels;
 
 class CreditWasCreated implements ShouldBroadcast
 {
+    use DefaultResourceBroadcast;
     use Dispatchable;
     use InteractsWithSockets;
     use SerializesModels;
-    use DefaultResourceBroadcast;
 
     public $credit;
 
@@ -36,10 +35,6 @@ class CreditWasCreated implements ShouldBroadcast
 
     /**
      * Create a new event instance.
-     *
-     * @param Credit $credit
-     * @param Company $company
-     * @param array $event_vars
      */
     public function __construct(Credit $credit, Company $company, array $event_vars)
     {

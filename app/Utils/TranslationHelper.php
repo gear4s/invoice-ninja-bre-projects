@@ -6,15 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils;
 
-use Illuminate\Support\Facades\Cache;
+use App\Models\Country;
+use App\Models\Currency;
 use App\Models\PaymentTerm;
-use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 
 class TranslationHelper
 {
@@ -34,7 +34,7 @@ class TranslationHelper
     public static function getCountries()
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         return app('countries');
 
     }
@@ -68,7 +68,7 @@ class TranslationHelper
     public static function getCurrencies()
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         return app('currencies');
 
     }

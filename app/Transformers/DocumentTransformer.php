@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,7 +31,7 @@ class DocumentTransformer extends EntityTransformer
 
     public function transform(Document $document)
     {
-        return  [
+        return [
             'id' => $this->encodePrimaryKey($document->id),
             'user_id' => $this->encodePrimaryKey($document->user_id),
             'assigned_user_id' => $this->encodePrimaryKey($document->assigned_user_id),

@@ -6,36 +6,35 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Rotessa;
 
+use App\Exceptions\PaymentFailed;
 use App\Http\Controllers\ClientPortal\InvoiceController;
 use App\Http\Requests\ClientPortal\Invoices\ProcessInvoicesInBulkRequest;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
 use App\Models\Payment;
 use App\Models\PaymentHash;
+use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
-use Illuminate\View\View;
-use App\Models\GatewayType;
-use App\Models\PaymentType;
-use Illuminate\Http\Request;
-use App\Jobs\Util\SystemLogger;
-use App\Exceptions\PaymentFailed;
-use App\Models\ClientGatewayToken;
-use Illuminate\Http\RedirectResponse;
-use App\PaymentDrivers\RotessaPaymentDriver;
 use App\PaymentDrivers\Common\MethodInterface;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\PaymentDrivers\RotessaPaymentDriver;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
-class PaymentMethod implements MethodInterface, LivewireMethodInterface
+class PaymentMethod implements LivewireMethodInterface, MethodInterface
 {
     private array $transaction = [
-        "financial_transactions" => [],
-        "frequency" => 'Once',
-        "installments" => 1,
+        'financial_transactions' => [],
+        'frequency' => 'Once',
+        'installments' => 1,
     ];
 
     public function __construct(protected RotessaPaymentDriver $rotessa)
@@ -45,9 +44,6 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
 
     /**
      * Show the authorization page for Rotessa.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function authorizeView(array $data): View
     {
@@ -65,43 +61,44 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
             'country' => $data['client']->country->iso_3166_2,
         ];
 
-        $data['address'] = collect($data['client']->toArray())->merge(['country' => $data['client']->country->iso_3166_2 ])->all();
+        $data['address'] = collect($data['client']->toArray())->merge(['country' => $data['client']->country->iso_3166_2])->all();
 
         return render('gateways.rotessa.bank_transfer.authorize', $data);
     }
+
     /**
      * Handle the authorization page for Rotessa.
      *
-     * @param Request $request
+     * @param  Request  $request
      * @return RedirectResponse
      */
     public function authorizeResponse($request)
     {
 
         $request->validate([
-            'gateway_type_id' => ['required','integer'],
-            'country' => ['required','in:US,CA,United States,Canada'],
+            'gateway_type_id' => ['required', 'integer'],
+            'country' => ['required', 'in:US,CA,United States,Canada'],
             'name' => ['required'],
             'address_1' => ['required'],
             'city' => ['required'],
-            'email' => ['required','email:filter'],
-            'province_code' => ['required','size:2','alpha'],
+            'email' => ['required', 'email:filter'],
+            'province_code' => ['required', 'size:2', 'alpha'],
             'postal_code' => ['required'],
             'authorization_type' => ['required'],
             'account_number' => ['required'],
             'bank_name' => ['required'],
             'phone' => ['required'],
-            'home_phone' => ['required','size:10'],
+            'home_phone' => ['required', 'size:10'],
             'bank_account_type' => ['required_if:country,US'],
             'routing_number' => ['required_if:country,US'],
-            'institution_number' => ['required_if:country,CA','numeric','digits:3'],
-            'transit_number' => ['required_if:country,CA','numeric','digits:5'],
+            'institution_number' => ['required_if:country,CA', 'numeric', 'digits:3'],
+            'transit_number' => ['required_if:country,CA', 'numeric', 'digits:5'],
             'custom_identifier' => ['required_without:customer_id'],
-            'customer_id' => ['required_without:custom_identifier','integer'],
+            'customer_id' => ['required_without:custom_identifier', 'integer'],
             'customer_type' => ['required', 'in:Personal,Business'],
         ]);
 
-        $customer = array_merge(['address' => $request->only('address_1', 'address_2', 'city', 'postal_code', 'province_code', 'country'), 'custom_identifier' => $request->input('custom_identifier') ], $request->all());
+        $customer = array_merge(['address' => $request->only('address_1', 'address_2', 'city', 'postal_code', 'province_code', 'country'), 'custom_identifier' => $request->input('custom_identifier')], $request->all());
 
         try {
             $this->rotessa->findOrCreateCustomer($customer);
@@ -117,11 +114,11 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
             $this->rotessa->payment_hash = PaymentHash::where('hash', $request->payment_hash)->firstOrFail();
 
             $data = [
-                'invoices' => collect($this->rotessa->payment_hash->data->invoices)->map(fn($invoice) => $invoice->invoice_id)->toArray(),
+                'invoices' => collect($this->rotessa->payment_hash->data->invoices)->map(fn ($invoice) => $invoice->invoice_id)->toArray(),
                 'action' => 'payment',
             ];
 
-            $request = new ProcessInvoicesInBulkRequest();
+            $request = new ProcessInvoicesInBulkRequest;
             $request->replace($data);
 
             session()->flash('message', ctrans('texts.payment_method_added'));
@@ -134,9 +131,6 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
 
     /**
      * Payment view for the Rotessa.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function paymentView(array $data): View
     {
@@ -151,8 +145,6 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle payments page for Rotessa.
-     *
-     * @param PaymentResponseRequest $request
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
@@ -188,20 +180,16 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
 
             $response = $response->json();
 
-            return  $this->processPendingPayment($response['id'], (float) $response['amount'], PaymentType::ACSS, $customer->token);
+            return $this->processPendingPayment($response['id'], (float) $response['amount'], PaymentType::ACSS, $customer->token);
         } catch (\Throwable $e) {
             $this->processUnsuccessfulPayment(new \Exception($e->getMessage(), (int) $e->getCode()));
         }
     }
 
-
-
     /**
      * Handle unsuccessful payment for Rotessa.
      *
-     * @param \Exception $exception
      * @throws PaymentFailed
-     * @return void
      */
     public function processUnsuccessfulPayment(\Exception $exception): void
     {
@@ -220,7 +208,7 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -232,7 +220,7 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {
@@ -256,12 +244,12 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
                 'id' => null,
             ])->all();
             $data['gateway'] = $this->rotessa;
-            $data['gateway_type_id'] =   GatewayType::ACSS ;
+            $data['gateway_type_id'] = GatewayType::ACSS;
             $data['account'] = [
                 'routing_number' => $data['client']->routing_id,
                 'country' => $data['client']->country->iso_3166_2,
             ];
-            $data['address'] = collect($data['client']->toArray())->merge(['country' => $data['client']->country->iso_3166_2 ])->all();
+            $data['address'] = collect($data['client']->toArray())->merge(['country' => $data['client']->country->iso_3166_2])->all();
 
             $this->authorizeView($data);
         }
@@ -269,7 +257,7 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
         return $data;
     }
 
-    public function tokenBilling(\App\Models\ClientGatewayToken $customer, \App\Models\PaymentHash $payment_hash)
+    public function tokenBilling(ClientGatewayToken $customer, PaymentHash $payment_hash)
     {
 
         try {
@@ -298,7 +286,7 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
             ];
 
             SystemLogger::dispatch(
-                [ 'data' => $data ],
+                ['data' => $data],
                 SystemLog::CATEGORY_GATEWAY_RESPONSE,
                 SystemLog::EVENT_GATEWAY_SUCCESS,
                 SystemLog::TYPE_ROTESSA,
@@ -316,7 +304,6 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
 
     }
 
-
     public function processPendingPayment($payment_id, float $amount, int $gateway_type_id, $payment_method)
     {
         $data = [
@@ -328,7 +315,7 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
         ];
         $payment = $this->rotessa->createPayment($data, Payment::STATUS_PENDING);
         SystemLogger::dispatch(
-            [ 'data' => $data ],
+            ['data' => $data],
             SystemLog::CATEGORY_GATEWAY_RESPONSE,
             SystemLog::EVENT_GATEWAY_SUCCESS,
             SystemLog::TYPE_ROTESSA,
@@ -336,8 +323,6 @@ class PaymentMethod implements MethodInterface, LivewireMethodInterface
             $this->rotessa->client->company,
         );
 
-        return redirect()->route('client.payments.show', [ 'payment' => $payment->hashed_id ]);
+        return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
     }
-
-
 }

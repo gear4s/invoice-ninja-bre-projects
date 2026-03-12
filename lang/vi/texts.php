@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Công ty',
     'name' => 'Tên khách hàng',
     'website' => 'Trang web',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Gói Enterprise bổ sung tính năng hỗ trợ nhiều người dùng và tệp đính kèm, :link đến xem danh sách đầy đủ các tính năng.',
     'return_to_app' => 'Quay lại ứng dụng',
 
-
     // Payment updates
     'refund_payment' => 'Hoàn tiền thanh toán',
     'refund_max' => 'Tối đa:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Russian (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Kế toán &amp; Pháp lý',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Ounce vàng Troy',
     'currency_nicaraguan_córdoba' => 'Córdoba Nicaragua',
     'currency_malagasy_ariary' => 'Tiếng Malagasy',
-    "currency_tongan_pa_anga" => "Tongan Pa'anga",
+    'currency_tongan_pa_anga' => "Tongan Pa'anga",
 
     'review_app_help' => 'Chúng tôi hy vọng bạn thích sử dụng ứng dụng này.<br/> Nếu bạn cân nhắc :link chúng tôi sẽ rất cảm kích!',
     'writing_a_review' => 'viết đánh giá',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ':user chi phí định kỳ đã lưu trữ :recurring_expense',
     'activity_123' => ':user đã xóa chi phí định kỳ :recurring_expense',
     'activity_124' => ':user đã khôi phục chi phí định kỳ :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Để xem :entity bạn cần đặt mật khẩu.',
     'unsubscribe' => 'Hủy đăng ký',
     'unsubscribed' => 'Đã hủy đăng ký',
@@ -4869,7 +4867,7 @@ $lang = array(
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Chuyển giao Interac E',
     'xinvoice_payable' => 'Thanh toán trong vòng :payeddue ngày ròng cho đến :paydate',
-    'xinvoice_no_buyers_reference' => "Không có tài liệu tham khảo của người mua",
+    'xinvoice_no_buyers_reference' => 'Không có tài liệu tham khảo của người mua',
     'xinvoice_online_payment' => 'Hóa đơn cần được thanh toán trực tuyến thông qua liên kết được cung cấp',
     'pre_payment' => 'Thanh toán trước',
     'number_of_payments' => 'Số lượng thanh toán',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'Hóa đơn điện tử',
     'light_dark_mode' => 'Chế độ sáng/tối',
     'activities' => 'Các hoạt động',
-    'recent_transactions' => "Giao dịch gần đây",
-    'country_Palestine' => "Palestine",
+    'recent_transactions' => 'Giao dịch gần đây',
+    'country_Palestine' => 'Palestine',
     'country_Taiwan' => 'Đài Loan',
     'duties' => 'Nhiệm vụ',
     'order_number' => 'Số đơn hàng',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'Biểu mẫu trường bắt buộc',
     'add_step' => 'Thêm bước',
     'steps' => 'Các bước',
-    'steps_order_help' =>  'Thứ tự các bước rất quan trọng. Bước đầu tiên không nên phụ thuộc vào bất kỳ bước nào khác. Bước thứ hai nên phụ thuộc vào bước đầu tiên, v.v.',
+    'steps_order_help' => 'Thứ tự các bước rất quan trọng. Bước đầu tiên không nên phụ thuộc vào bất kỳ bước nào khác. Bước thứ hai nên phụ thuộc vào bước đầu tiên, v.v.',
     'other_steps' => 'Các bước khác',
     'use_available_payments' => 'Sử dụng các khoản thanh toán có sẵn',
     'test_email_sent' => 'Đã gửi email thành công',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'đã cập nhật tín dụng',
     'payment_updated' => 'đã cập nhật Sự chi trả',
     'search_placeholder' => 'Tìm Hóa đơn , Khách hàng , v.v.',
-    'invalid_vat_number' => "Mã số VAT không hợp lệ đối với quốc gia đã chọn. Định dạng phải là Mã quốc gia theo sau là số, ví dụ: DE123456789",
+    'invalid_vat_number' => 'Mã số VAT không hợp lệ đối với quốc gia đã chọn. Định dạng phải là Mã quốc gia theo sau là số, ví dụ: DE123456789',
     'acts_as_sender' => 'Gửi E- Hóa đơn',
     'acts_as_receiver' => 'Nhận E- Hóa đơn',
     'peppol_token_generated' => 'PEPPOL token Thành công được tạo.',
@@ -5915,6 +5913,6 @@ $lang = array(
     'activity_164' => 'Đồng bộ QuickBooks thất bại. :notes',
     'activity_166' => 'Người dùng :notes đã bị xóa bởi :user',
     'purged_user' => 'Người dùng đã được Thành công',
-);
+];
 
 return $lang;

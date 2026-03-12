@@ -6,22 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Payment;
 
-use stdClass;
-use App\Utils\Ninja;
+use App\Exceptions\PaymentRefundFailed;
+use App\Jobs\Payment\EmailRefundPayment;
+use App\Listeners\Payment\PaymentTransactionEventEntry;
+use App\Models\Activity;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\Activity;
-use App\Exceptions\PaymentRefundFailed;
-use App\Jobs\Payment\EmailRefundPayment;
 use App\Repositories\ActivityRepository;
-use App\Listeners\Payment\PaymentTransactionEventEntry;
+use App\Utils\BcMath;
+use App\Utils\Ninja;
+use stdClass;
 
 class RefundPayment
 {
@@ -38,13 +38,13 @@ class RefundPayment
     public function run()
     {
         $this->payment = $this
-                            ->calculateTotalRefund() //sets amount for the refund (needed if we are refunding multiple invoices in one payment)
-                            ->updateCreditables() //return the credits first
-                            ->processGatewayRefund() //process the gateway refund if needed
-                            ->setStatus() //sets status of payment
-                            ->updatePaymentables() //update the paymentable items
-                            ->adjustInvoices()
-                            ->save();
+            ->calculateTotalRefund() // sets amount for the refund (needed if we are refunding multiple invoices in one payment)
+            ->updateCreditables() // return the credits first
+            ->processGatewayRefund() // process the gateway refund if needed
+            ->setStatus() // sets status of payment
+            ->updatePaymentables() // update the paymentable items
+            ->adjustInvoices()
+            ->save();
 
         if (array_key_exists('email_receipt', $this->refund_data) && $this->refund_data['email_receipt'] == 'true') {
 
@@ -67,7 +67,7 @@ class RefundPayment
         }
 
         $is_gateway_refund = ($this->refund_data['gateway_refund'] !== false || $this->refund_failed || (isset($this->refund_data['via_webhook']) && $this->refund_data['via_webhook'] !== false)) ? ctrans('texts.yes') : ctrans('texts.no');
-        $notes = ctrans('texts.refunded') . " : {$this->total_refund} - " . ctrans('texts.gateway_refund') . " : " . $is_gateway_refund;
+        $notes = ctrans('texts.refunded') . " : {$this->total_refund} - " . ctrans('texts.gateway_refund') . ' : ' . $is_gateway_refund;
 
         $this->createActivity($notes);
         $this->finalize();
@@ -99,6 +99,7 @@ class RefundPayment
      * ];
      *
      * @return $this
+     *
      * @throws PaymentRefundFailed
      */
     private function processGatewayRefund()
@@ -114,8 +115,8 @@ class RefundPayment
                 }
 
                 if ($response['voided'] ?? false) {
-                    //When a transaction is voided - all invoices attached to the payment need to be reversed, this
-                    //block prevents the edge case where a partial refund was attempted.
+                    // When a transaction is voided - all invoices attached to the payment need to be reversed, this
+                    // block prevents the edge case where a partial refund was attempted.
                     $this->refund_data['invoices'] = $this->payment->invoices->map(function ($invoice) {
                         return [
                             'date' => now()->addSeconds($invoice->client->timezone_offset())->format('Y-m-d'),
@@ -145,13 +146,13 @@ class RefundPayment
     /**
      * Create the payment activity.
      *
-     * @param  string $notes
+     * @param  string  $notes
      * @return $this
      */
     private function createActivity($notes)
     {
-        $fields = new stdClass();
-        $activity_repo = new ActivityRepository();
+        $fields = new stdClass;
+        $activity_repo = new ActivityRepository;
 
         $fields->payment_id = $this->payment->id;
         $fields->user_id = $this->payment->user_id;
@@ -194,7 +195,7 @@ class RefundPayment
      */
     private function setStatus()
     {
-        if ($this->total_refund == $this->payment->amount || \App\Utils\BcMath::equal($this->payment->amount, $this->payment->refunded)) {
+        if ($this->total_refund == $this->payment->amount || BcMath::equal($this->payment->amount, $this->payment->refunded)) {
             $this->payment->status_id = Payment::STATUS_REFUNDED;
         } else {
             $this->payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
@@ -237,7 +238,7 @@ class RefundPayment
 
             $amount_to_refund = $this->total_refund;
 
-            //Adjust credits first!!!
+            // Adjust credits first!!!
             foreach ($this->payment->credits as $paymentable_credit) {
                 $available_credit = $paymentable_credit->pivot->amount - $paymentable_credit->pivot->refunded;
 
@@ -246,10 +247,10 @@ class RefundPayment
                     $paymentable_credit->pivot->save();
 
                     $paymentable_credit->service()
-                                       ->setStatus(Credit::STATUS_SENT)
-                                       ->adjustBalance($amount_to_refund)
-                                       ->updatePaidToDate($amount_to_refund * -1)
-                                       ->save();
+                        ->setStatus(Credit::STATUS_SENT)
+                        ->adjustBalance($amount_to_refund)
+                        ->updatePaidToDate($amount_to_refund * -1)
+                        ->save();
 
                     // Restore the client's credit_balance when credit is refunded
                     // This prevents the double-spend bug where credit.balance is restored
@@ -269,10 +270,10 @@ class RefundPayment
                     $paymentable_credit->pivot->save();
 
                     $paymentable_credit->service()
-                                       ->setStatus(Credit::STATUS_SENT)
-                                       ->adjustBalance($available_credit)
-                                       ->updatePaidToDate($available_credit * -1)
-                                       ->save();
+                        ->setStatus(Credit::STATUS_SENT)
+                        ->adjustBalance($available_credit)
+                        ->updatePaidToDate($available_credit * -1)
+                        ->save();
 
                     // Restore the client's credit_balance when credit is refunded
                     // This prevents the double-spend bug where credit.balance is restored
@@ -316,6 +317,7 @@ class RefundPayment
                     $_credit->balance = 0;
                     $_credit->status_id = Credit::STATUS_APPLIED;
                     $_credit->save();
+
                     continue;
                 }
 
@@ -324,13 +326,13 @@ class RefundPayment
                 }
 
                 $invoice->service()
-                        ->updateBalance($refunded_invoice['amount'])
-                        ->updatePaidToDate($refunded_invoice['amount'] * -1)
-                        ->save();
+                    ->updateBalance($refunded_invoice['amount'])
+                    ->updatePaidToDate($refunded_invoice['amount'] * -1)
+                    ->save();
 
                 $invoice->ledger()
-                        ->updateInvoiceBalance(abs($refunded_invoice['amount']), "Refund of payment # {$this->payment->number}")
-                        ->save();
+                    ->updateInvoiceBalance(abs($refunded_invoice['amount']), "Refund of payment # {$this->payment->number}")
+                    ->save();
 
                 if ($invoice->amount == $invoice->balance) {
                     $invoice->service()->setStatus(Invoice::STATUS_SENT);
@@ -338,16 +340,16 @@ class RefundPayment
                     $invoice->service()->setStatus(Invoice::STATUS_PARTIAL);
                 }
 
-                //26-10-2022 - disable autobill to prevent future billings;
+                // 26-10-2022 - disable autobill to prevent future billings;
                 $invoice->auto_bill_enabled = false;
 
                 $invoice->saveQuietly();
 
-                //08-08-2023
+                // 08-08-2023
                 $client = $invoice->client
-                                  ->service()
-                                  ->updateBalanceAndPaidToDate($refunded_invoice['amount'], -1 * $refunded_invoice['amount'])
-                                  ->save();
+                    ->service()
+                    ->updateBalanceAndPaidToDate($refunded_invoice['amount'], -1 * $refunded_invoice['amount'])
+                    ->save();
 
                 if ($invoice->is_deleted) {
                     $invoice->delete();
@@ -358,7 +360,7 @@ class RefundPayment
             PaymentTransactionEventEntry::dispatch($this->payment, array_column($this->refund_data['invoices'], 'invoice_id'), $this->payment->company->db, $this->total_refund, false);
 
         } else {
-            //if we are refunding and no payments have been tagged, then we need to decrement the client->paid_to_date by the total refund amount.
+            // if we are refunding and no payments have been tagged, then we need to decrement the client->paid_to_date by the total refund amount.
 
             $client = $this->payment->client->fresh();
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,15 +16,18 @@ use App\Factory\CompanyGatewayFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GoCardless\OAuthConnectConfirmRequest;
 use App\Http\Requests\GoCardless\OAuthConnectRequest;
+use App\Models\Company;
 use App\Models\CompanyGateway;
 use App\Models\GatewayType;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Http;
+use Illuminate\View\View;
 
 class GoCardlessOAuthController extends Controller
 {
-    public function connect(OAuthConnectRequest $request): \Illuminate\Http\RedirectResponse
+    public function connect(OAuthConnectRequest $request): RedirectResponse
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $request->getCompany();
 
         $params = [
@@ -52,9 +54,9 @@ class GoCardlessOAuthController extends Controller
         );
     }
 
-    public function confirm(OAuthConnectConfirmRequest $request): \Illuminate\Http\RedirectResponse|\Illuminate\View\View
+    public function confirm(OAuthConnectConfirmRequest $request): RedirectResponse|View
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $request->getCompany();
 
         $url = config('services.gocardless.environment') === 'production'
@@ -86,8 +88,8 @@ class GoCardlessOAuthController extends Controller
 
         if ($company_gateway === null) {
             $company_gateway = CompanyGatewayFactory::create($company->id, $company->owner()->id);
-            $fees_and_limits = new \stdClass();
-            $fees_and_limits->{GatewayType::INSTANT_BANK_PAY} = new FeesAndLimits();
+            $fees_and_limits = new \stdClass;
+            $fees_and_limits->{GatewayType::INSTANT_BANK_PAY} = new FeesAndLimits;
             $company_gateway->gateway_key = 'b9886f9257f0c6ee7c302f1c74475f6c';
             $company_gateway->fees_and_limits = $fees_and_limits;
             $company_gateway->setConfig([]);
@@ -105,7 +107,7 @@ class GoCardlessOAuthController extends Controller
             'oauth2' => true,
         ];
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->organisation_id = $response['organisation_id'];
 
         $company_gateway->setSettings($settings);

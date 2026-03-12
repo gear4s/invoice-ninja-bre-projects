@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,10 +19,10 @@ use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
+use Stripe\PaymentIntent;
 
 class Klarna implements LivewireMethodInterface
 {
-    /** @var StripePaymentDriver */
     public StripePaymentDriver $stripe;
 
     public function __construct(StripePaymentDriver $stripe)
@@ -68,7 +67,7 @@ class Klarna implements LivewireMethodInterface
     {
         $this->stripe->init();
 
-        //catch duplicate submissions.
+        // catch duplicate submissions.
         if ($pay_exists = Payment::query()->where('transaction_reference', $payment_intent)->first()) {
 
             return redirect()->route('client.payments.show', ['payment' => $pay_exists->hashed_id]);
@@ -133,7 +132,7 @@ class Klarna implements LivewireMethodInterface
 
         $description = $this->stripe->getDescription(false);
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = PaymentIntent::create([
             'amount' => $data['stripe_amount'],
             'currency' => $this->stripe->client->getCurrencyCode(),
             'payment_method_types' => ['klarna'],
@@ -143,7 +142,7 @@ class Klarna implements LivewireMethodInterface
                 'payment_hash' => $this->stripe->payment_hash->hash,
                 'gateway_type_id' => GatewayType::KLARNA,
             ],
-        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid("st", true)]));
+        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid('st', true)]));
 
         $data['pi_client_secret'] = $intent->client_secret;
 

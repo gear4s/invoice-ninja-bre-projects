@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,17 +19,18 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  * DefaultClass App\Models\Client
  */
 class GroupSettingsTest extends TestCase
 {
-    use MockAccountData;
-    use DatabaseTransactions;
     use ClientGroupSettingsSaver;
+    use DatabaseTransactions;
+    use MockAccountData;
 
     public $company_settings;
+
     public $client_settings;
+
     public $settings;
 
     protected function setUp(): void
@@ -43,7 +43,7 @@ class GroupSettingsTest extends TestCase
         $this->client_settings = ClientSettings::buildClientSettings($this->company_settings, ClientSettings::defaults());
     }
 
-    public function testCompanyDefaults()
+    public function test_company_defaults()
     {
         $this->company_settings->timezone_id = 'fluffy';
         $this->company->settings = $this->company_settings;
@@ -60,7 +60,7 @@ class GroupSettingsTest extends TestCase
         $this->assertEquals($this->company->settings->timezone_id, 'fluffy');
     }
 
-    public function testGroupDefaults()
+    public function test_group_defaults()
     {
         $cs = $this->company->settings;
         $cs->timezone_id = '';
@@ -87,7 +87,7 @@ class GroupSettingsTest extends TestCase
         $this->assertEquals($this->client->getMergedSettings()->timezone_id, 'SPOCK');
     }
 
-    public function testClientDefaults()
+    public function test_client_defaults()
     {
         $cs = $this->client->company->settings;
         $cs->timezone_id = null;
@@ -116,7 +116,7 @@ class GroupSettingsTest extends TestCase
         $this->assertEquals($this->client->getMergedSettings()->timezone_id, 'SCOTTY');
     }
 
-    public function testClientPriority()
+    public function test_client_priority()
     {
         $cs = $this->client->company->settings;
         $cs->timezone_id = 'COMPANY';
@@ -146,7 +146,7 @@ class GroupSettingsTest extends TestCase
     /**
      *  ::getMergedSettings
      */
-    public function testGroupPriority()
+    public function test_group_priority()
     {
         $cs = $this->client->company->settings;
         $cs->timezone_id = 'COMPANY';
@@ -176,7 +176,7 @@ class GroupSettingsTest extends TestCase
     /**
      *  ::getSetting
      */
-    public function testCompanyFallBackPriority()
+    public function test_company_fall_back_priority()
     {
         $cs = $this->client->company->settings;
         $cs->timezone_id = 'COMPANY';
@@ -203,7 +203,7 @@ class GroupSettingsTest extends TestCase
         $this->assertEquals($this->client->getMergedSettings()->timezone_id, 'COMPANY');
     }
 
-    public function testDiscardingUnsetProperties()
+    public function test_discarding_unset_properties()
     {
         $this->settings = $this->company->settings;
 

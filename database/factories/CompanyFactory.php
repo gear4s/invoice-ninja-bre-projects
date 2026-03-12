@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +15,7 @@ use App\DataMapper\CompanySettings;
 use App\DataMapper\Tax\TaxModel;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class CompanyFactory extends Factory
 {
@@ -28,8 +29,8 @@ class CompanyFactory extends Factory
     public function definition()
     {
         return [
-            //'name' => $this->faker->name(),
-            'company_key' => strtolower(\Illuminate\Support\Str::random(config('ninja.key_length'))),
+            // 'name' => $this->faker->name(),
+            'company_key' => strtolower(Str::random(config('ninja.key_length'))),
             'ip' => $this->faker->ipv4(),
             'db' => config('database.default'),
             'settings' => CompanySettings::defaults(),
@@ -39,7 +40,7 @@ class CompanyFactory extends Factory
             'custom_fields' => (object) [
             ],
             'company_key' => $this->createHash(),
-            'tax_data' => new TaxModel(),
+            'tax_data' => new TaxModel,
         ];
     }
 }

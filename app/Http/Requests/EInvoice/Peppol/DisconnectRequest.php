@@ -6,16 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice\Peppol;
 
-use App\Models\Country;
-use App\Rules\EInvoice\Peppol\SupportsReceiverIdentifier;
-use App\Services\EDocument\Standards\Peppol\ReceiverIdentifier;
+use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DisconnectRequest extends FormRequest
@@ -23,7 +21,7 @@ class DisconnectRequest extends FormRequest
     public function authorize(): bool
     {
         /**
-         * @var \App\Models\User
+         * @var User
          */
         $user = auth()->user();
 
@@ -36,7 +34,7 @@ class DisconnectRequest extends FormRequest
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

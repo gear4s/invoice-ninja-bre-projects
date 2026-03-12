@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\Http\Requests\TaskScheduler\ShowSchedulerRequest;
 use App\Http\Requests\TaskScheduler\StoreSchedulerRequest;
 use App\Http\Requests\TaskScheduler\UpdateSchedulerRequest;
 use App\Models\Scheduler;
+use App\Models\User;
 use App\Repositories\SchedulerRepository;
 use App\Transformers\SchedulerTransformer;
 use App\Utils\Traits\MakesHash;
@@ -46,7 +46,7 @@ class TaskSchedulerController extends BaseController
 
     public function create(CreateSchedulerRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $scheduler = SchedulerFactory::create($user->company()->id, auth()->user()->id);
@@ -56,7 +56,7 @@ class TaskSchedulerController extends BaseController
 
     public function store(StoreSchedulerRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $scheduler = $this->scheduler_repository->save($request->all(), SchedulerFactory::create($user->company()->id, auth()->user()->id));
@@ -86,7 +86,7 @@ class TaskSchedulerController extends BaseController
     public function bulk()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $action = request()->input('action');

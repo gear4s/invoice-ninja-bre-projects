@@ -6,20 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Libraries\MultiDB;
-use Illuminate\Support\Str;
-use App\Models\Subscription;
 use App\Models\ClientContact;
 use App\Models\RecurringInvoice;
-use Livewire\Attributes\Computed;
+use App\Models\Subscription;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class SubscriptionPlanSwitch extends Component
 {
@@ -46,6 +45,7 @@ class SubscriptionPlanSwitch extends Component
     public $total;
 
     public $hide_button = false;
+
     /**
      * @var array
      */
@@ -171,9 +171,6 @@ class SubscriptionPlanSwitch extends Component
     /**
      * Middle method between selecting payment method &
      * submitting the from to the backend.
-     *
-     * @param $company_gateway_id
-     * @param $gateway_type_id
      */
     public function handleMethodSelectingEvent($company_gateway_id, $gateway_type_id)
     {
@@ -187,7 +184,7 @@ class SubscriptionPlanSwitch extends Component
     {
         $this->hide_button = true;
 
-        $response =  $this->target()->service()->createChangePlanCreditV2([
+        $response = $this->target()->service()->createChangePlanCreditV2([
             'recurring_invoice' => $this->recurring_invoice(),
             'subscription' => $this->subscription(),
             'target' => $this->target(),

@@ -6,30 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Vendor;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdateVendorRequest extends Request
 {
-    use MakesHash;
     use ChecksEntityStatus;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->vendor);
@@ -37,7 +36,7 @@ class UpdateVendorRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules['country_id'] = 'integer';
@@ -57,7 +56,7 @@ class UpdateVendorRequest extends Request
             'regex:/[a-z]/',      // must contain at least one lowercase letter
             'regex:/[A-Z]/',      // must contain at least one uppercase letter
             'regex:/[0-9]/',      // must contain at least one digit
-            //'regex:/[@$!%*#?&.]/', // must contain a special character
+            // 'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
         $rules['currency_id'] = 'bail|sometimes|exists:currencies,id';
@@ -83,7 +82,7 @@ class UpdateVendorRequest extends Request
     {
         $input = $this->all();
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -99,7 +98,7 @@ class UpdateVendorRequest extends Request
             unset($input['country_id']);
         } elseif (!$this->vendor->country_id) {
 
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = auth()->user();
 
             $input['country_id'] = $user->company()->country()->id;

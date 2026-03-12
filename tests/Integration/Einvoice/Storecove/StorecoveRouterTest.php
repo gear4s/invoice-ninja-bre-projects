@@ -6,21 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration\Einvoice\Storecove;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
 use App\Models\Account;
+use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
-use Illuminate\Routing\Middleware\ThrottleRequests;
+use App\Models\User;
 use App\Services\EDocument\Gateway\Storecove\Storecove;
+use Faker\Factory;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class StorecoveRouterTest extends TestCase
 {
@@ -36,7 +38,7 @@ class StorecoveRouterTest extends TestCase
             ThrottleRequests::class
         );
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
     }
 
@@ -51,8 +53,8 @@ class StorecoveRouterTest extends TestCase
         $user = User::factory()->create([
             'account_id' => $account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
-            'password' => \Illuminate\Support\Facades\Hash::make('ALongAndBriliantPassword'),
+            'email' => Str::random(32) . '@example.com',
+            'password' => Hash::make('ALongAndBriliantPassword'),
         ]);
 
         $client = Client::factory()->create([
@@ -63,7 +65,7 @@ class StorecoveRouterTest extends TestCase
         $invoice = Invoice::factory()->create([
             'user_id' => $user->id,
             'company_id' => $company->id,
-            'client_id' => $client->id
+            'client_id' => $client->id,
         ]);
 
         $invoice->service()->markSent()->save();
@@ -72,7 +74,7 @@ class StorecoveRouterTest extends TestCase
 
     }
 
-    public function testIsBusinessTaxIdentifier()
+    public function test_is_business_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -82,15 +84,15 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
-        $this->assertEquals("IS:VAT", $storecove->router->resolveTaxScheme('IS', 'business'));
+        $this->assertEquals('IS:VAT', $storecove->router->resolveTaxScheme('IS', 'business'));
 
     }
 
     // Luxembourg Tests
-    public function testLuBusinessClientRoutingIdentifier()
+    public function test_lu_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -100,13 +102,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('LU:VAT', $storecove->router->resolveRouting('LU', 'business'));
     }
 
-    public function testLuGovClientRoutingIdentifier()
+    public function test_lu_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -116,13 +118,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('LU:VAT', $storecove->router->resolveRouting('LU', 'government'));
     }
 
-    public function testLuBusinessClientTaxIdentifier()
+    public function test_lu_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -132,13 +134,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('LU:VAT', $storecove->router->resolveTaxScheme('LU', 'business'));
     }
 
-    public function testLuGovClientTaxIdentifier()
+    public function test_lu_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -148,14 +150,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
-        $this->assertEquals("LU:VAT", $storecove->router->resolveTaxScheme('LU', 'government'));
+        $this->assertEquals('LU:VAT', $storecove->router->resolveTaxScheme('LU', 'government'));
     }
 
     // Norway Tests
-    public function testNoBusinessClientRoutingIdentifier()
+    public function test_no_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -165,13 +167,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('NO:ORG', $storecove->router->resolveRouting('NO', 'business'));
     }
 
-    public function testNoGovClientRoutingIdentifier()
+    public function test_no_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -181,13 +183,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('NO:ORG', $storecove->router->resolveRouting('NO', 'government'));
     }
 
-    public function testNoBusinessClientTaxIdentifier()
+    public function test_no_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -197,13 +199,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('NO:VAT', $storecove->router->resolveTaxScheme('NO', 'business'));
     }
 
-    public function testNoGovClientTaxIdentifier()
+    public function test_no_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -213,14 +215,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
-        $this->assertEquals("NO:VAT", $storecove->router->resolveTaxScheme('NO', 'government'));
+        $this->assertEquals('NO:VAT', $storecove->router->resolveTaxScheme('NO', 'government'));
     }
 
     // Netherlands Tests
-    public function testNlBusinessClientRoutingIdentifier()
+    public function test_nl_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -230,13 +232,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('NL:VAT', $storecove->router->resolveRouting('NL', 'business'));
     }
 
-    public function testNlGovClientRoutingIdentifier()
+    public function test_nl_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -246,13 +248,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('NL:OINO', $storecove->router->resolveRouting('NL', 'government'));
     }
 
-    public function testNlBusinessClientTaxIdentifier()
+    public function test_nl_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -262,13 +264,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('NL:VAT', $storecove->router->resolveTaxScheme('NL', 'business'));
     }
 
-    public function testNlGovClientTaxIdentifier()
+    public function test_nl_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -278,14 +280,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals(false, $storecove->router->resolveTaxScheme('NL', 'government'));
     }
 
     // Sweden Tests
-    public function testSeBusinessClientRoutingIdentifier()
+    public function test_se_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -295,13 +297,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('SE:ORGNR', $storecove->router->resolveRouting('SE', 'business'));
     }
 
-    public function testSeGovClientRoutingIdentifier()
+    public function test_se_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -311,13 +313,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('SE:ORGNR', $storecove->router->resolveRouting('SE', 'government'));
     }
 
-    public function testSeBusinessClientTaxIdentifier()
+    public function test_se_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -327,13 +329,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('SE:VAT', $storecove->router->resolveTaxScheme('SE', 'business'));
     }
 
-    public function testSeGovClientTaxIdentifier()
+    public function test_se_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -343,14 +345,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('SE:VAT', $storecove->router->resolveTaxScheme('SE', 'government'));
     }
 
     // Iceland Tests
-    public function testIsBusinessClientRoutingIdentifier()
+    public function test_is_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -360,13 +362,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IS:KTNR', $storecove->router->resolveRouting('IS', 'business'));
     }
 
-    public function testIsGovClientRoutingIdentifier()
+    public function test_is_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -376,13 +378,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IS:KTNR', $storecove->router->resolveRouting('IS', 'government'));
     }
 
-    public function testIsBusinessClientTaxIdentifier()
+    public function test_is_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -392,13 +394,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IS:VAT', $storecove->router->resolveTaxScheme('IS', 'business'));
     }
 
-    public function testIsGovClientTaxIdentifier()
+    public function test_is_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -408,14 +410,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IS:VAT', $storecove->router->resolveTaxScheme('IS', 'government'));
     }
 
     // Ireland Tests
-    public function testIeBusinessClientRoutingIdentifier()
+    public function test_ie_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -425,13 +427,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IE:VAT', $storecove->router->resolveRouting('IE', 'business'));
     }
 
-    public function testIeGovClientRoutingIdentifier()
+    public function test_ie_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -441,13 +443,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IE:VAT', $storecove->router->resolveRouting('IE', 'government'));
     }
 
-    public function testIeBusinessClientTaxIdentifier()
+    public function test_ie_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -457,13 +459,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IE:VAT', $storecove->router->resolveTaxScheme('IE', 'business'));
     }
 
-    public function testIeGovClientTaxIdentifier()
+    public function test_ie_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -473,15 +475,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('IE:VAT', $storecove->router->resolveTaxScheme('IE', 'government'));
     }
 
-
     // Denmark Tests
-    public function testDkBusinessClientRoutingIdentifier()
+    public function test_dk_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -491,13 +492,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DK:DIGST', $storecove->router->resolveRouting('DK', 'business'));
     }
 
-    public function testDkGovClientRoutingIdentifier()
+    public function test_dk_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -507,13 +508,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DK:DIGST', $storecove->router->resolveRouting('DK', 'government'));
     }
 
-    public function testDkBusinessClientTaxIdentifier()
+    public function test_dk_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -523,13 +524,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DK:ERST', $storecove->router->resolveTaxScheme('DK', 'business'));
     }
 
-    public function testDkGovClientTaxIdentifier()
+    public function test_dk_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -539,14 +540,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DK:ERST', $storecove->router->resolveTaxScheme('DK', 'government'));
     }
 
     // UK/England Tests
-    public function testGbBusinessClientRoutingIdentifier()
+    public function test_gb_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -556,13 +557,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('GB:VAT', $storecove->router->resolveRouting('GB', 'business'));
     }
 
-    public function testGbGovClientRoutingIdentifier()
+    public function test_gb_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -572,13 +573,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('GB:VAT', $storecove->router->resolveRouting('GB', 'government'));
     }
 
-    public function testGbBusinessClientTaxIdentifier()
+    public function test_gb_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -588,13 +589,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('GB:VAT', $storecove->router->resolveTaxScheme('GB', 'business'));
     }
 
-    public function testGbGovClientTaxIdentifier()
+    public function test_gb_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -604,13 +605,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('GB:VAT', $storecove->router->resolveTaxScheme('GB', 'government'));
     }
 
-    public function testBeBusinessClientRoutingIdentifier()
+    public function test_be_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -620,13 +621,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('BE:EN', $storecove->router->resolveRouting('BE', 'business'));
     }
 
-    public function testBeGovClientRoutingIdentifier()
+    public function test_be_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -636,13 +637,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('BE:EN', $storecove->router->resolveRouting('BE', 'government'));
     }
 
-    public function testBeBusinessClientTaxIdentifier()
+    public function test_be_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -652,13 +653,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('BE:VAT', $storecove->router->resolveTaxScheme('BE', 'business'));
     }
 
-    public function testBeGovClientTaxIdentifier()
+    public function test_be_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -668,14 +669,13 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('BE:VAT', $storecove->router->resolveTaxScheme('BE', 'government'));
     }
 
-
-    public function testAtBusinessClientRoutingIdentifier()
+    public function test_at_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -685,14 +685,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('AT:VAT', $storecove->router->resolveRouting('AT', 'business'));
 
     }
 
-    public function testAtGovClientRoutingIdentifier()
+    public function test_at_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -702,14 +702,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
-        $this->assertEquals("9915:b", $storecove->router->resolveRouting('AT', 'government'));
+        $this->assertEquals('9915:b', $storecove->router->resolveRouting('AT', 'government'));
 
     }
 
-    public function testAtBusinessClientTaxIdentifier()
+    public function test_at_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -719,14 +719,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('AT:VAT', $storecove->router->resolveTaxScheme('AT', 'business'));
 
     }
 
-    public function testAtGovClientTaxIdentifier()
+    public function test_at_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -736,14 +736,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals(false, $storecove->router->resolveTaxScheme('AT', 'government'));
 
     }
 
-    public function testDeSteurNummerRegistration()
+    public function test_de_steur_nummer_registration()
     {
         $invoice = $this->buildData();
 
@@ -754,14 +754,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'individual';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DE:STNR', $storecove->router->resolveRouting('DE', 'individual'));
 
     }
 
-    public function testDeBusinessClientRoutingIdentifier()
+    public function test_de_business_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -771,14 +771,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DE:VAT', $storecove->router->resolveRouting('DE', 'business'));
 
     }
 
-    public function testDeGovClientRoutingIdentifier()
+    public function test_de_gov_client_routing_identifier()
     {
         $invoice = $this->buildData();
 
@@ -788,14 +788,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
-        $this->assertEquals("DE:LWID", $storecove->router->resolveRouting('DE', 'government'));
+        $this->assertEquals('DE:LWID', $storecove->router->resolveRouting('DE', 'government'));
 
     }
 
-    public function testDeBusinessClientTaxIdentifier()
+    public function test_de_business_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -805,14 +805,14 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'business';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals('DE:VAT', $storecove->router->resolveTaxScheme('DE', 'business'));
 
     }
 
-    public function testDeGovClientTaxIdentifier()
+    public function test_de_gov_client_tax_identifier()
     {
         $invoice = $this->buildData();
 
@@ -822,12 +822,10 @@ class StorecoveRouterTest extends TestCase
         $client->classification = 'government';
         $client->save();
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $storecove->router->setInvoice($invoice->fresh());
 
         $this->assertEquals(false, $storecove->router->resolveTaxScheme('DE', 'government'));
 
     }
-
-
 }

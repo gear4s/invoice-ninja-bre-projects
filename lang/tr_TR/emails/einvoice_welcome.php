@@ -6,45 +6,45 @@ return [
 
     'greeting' => 'E-Fatura sistemine hoş geldiniz, :name!',
 
-    'intro' => "Bu hizmet size şunları sağlar:",
-    'intro_items' => "
+    'intro' => 'Bu hizmet size şunları sağlar:',
+    'intro_items' => '
         • Faturaları elektronik olarak gönderme ve alma<br>
         • Vergi mevzuatına uygunluğu sağlama<br>
         • Ödeme işlemlerini hızlandırma<br>
         • Manuel veri girişini ve hataları azaltma<br>
-    ",
+    ',
 
     'requirements_title' => 'Önemli Gereksinimler',
     'requirements_intro' => 'Başarılı bir e-fatura kullanımı için lütfen bu önemli şirket bilgilerini doğrulayın:',
-    'requirements_items' => "
+    'requirements_items' => '
             • Şirket Unvanı - Resmi kayıtla tam olarak eşleşmelidir<br>
             • VKN/TCKN - Güncel ve doğrulanmış olmalıdır<br>
             • İşletme Tanımlayıcıları (MERSİS/GLN) - Doğru ve aktif olmalıdır<br>
             • Şirket Adresi - Resmi kayıtlarla eşleşmelidir<br>
             • İletişim Bilgileri - Güncel ve takip edilebilir olmalıdır<br>
-        ",
+        ',
 
     'validation_title' => 'Doğru Bilgilerin Önemi',
-    'validation_items' => "
+    'validation_items' => '
             • Yanlış bilgiler faturaların reddedilmesine neden olabilir<br>
             • Gelir İdaresi Başkanlığı kayıt numaralarının tam eşleşmesini gerektirir<br>
             • Ödeme sistemleri doğru işletme tanımlayıcılarına bağlıdır<br>
             • Yasal uyumluluk doğru şirket bilgilerine bağlıdır<br>
-        ",
+        ',
 
     'next_steps' => 'Sonraki Adımlar',
-    'next_steps_items' => "
+    'next_steps_items' => '
             1. Hesap ayarlarındaki şirket bilgilerini gözden geçirin<br>
             2. Eski bilgileri güncelleyin<br>
             3. Vergi kayıt numaralarını doğrulayın<br>
             4. Test e-fatura gönderin<br>
-        ",
+        ',
     'support_title' => 'Yardıma mı İhtiyacınız Var?',
-    'support_message' => "Destek ekibimiz, e-fatura gereksinimleri veya kurulumu ile ilgili her türlü sorunuzda yardıma hazırdır.<br>
+    'support_message' => 'Destek ekibimiz, e-fatura gereksinimleri veya kurulumu ile ilgili her türlü sorunuzda yardıma hazırdır.<br>
                     Destek ile iletişime geçin: :email<br>
                     E-fatura hizmetimizi seçtiğiniz için teşekkür ederiz.<br>
-    ",
-    "text" => "
+    ',
+    'text' => '
     E-Fatura Aktivasyonu
 
 E-Fatura sistemine hoş geldiniz!
@@ -87,6 +87,6 @@ Destek ekibimiz, e-fatura gereksinimleri veya kurulumu ile ilgili her türlü so
 Destek ile iletişime geçin: contact@invoiceninja.com
 
 E-fatura hizmetimizi seçtiğiniz için teşekkür ederiz.
-    "
+    ',
 
 ];

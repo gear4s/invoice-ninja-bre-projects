@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Factory\InvoiceFactory;
 use App\Factory\InvoiceItemFactory;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Repositories\InvoiceRepository;
@@ -25,13 +25,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Helpers\Invoice\InvoiceSum
  */
 class InvoiceTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     public $invoice;
 
     public $invoice_calc;
@@ -51,31 +51,29 @@ class InvoiceTest extends TestCase
         $this->invoice_calc = new InvoiceSum($this->invoice);
     }
 
-
-    public function testInvoiceLineItemValidation()
+    public function test_invoice_line_item_validation()
     {
         $data = [
-            "client_id" => $this->client->hashed_id,
-            "project_id" => $this->project->hashed_id,
-            "custom_value3" => "<FLIGHTREFERENCE>",
-            "line_items" => [
+            'client_id' => $this->client->hashed_id,
+            'project_id' => $this->project->hashed_id,
+            'custom_value3' => '<FLIGHTREFERENCE>',
+            'line_items' => [
                 [
-                    "quantity" => 1,
-                    "cost" => 100,
-                    "product_key" => "<TASK_DESCRIPTION>",
-                    "notes" => ['an', 'illegal', 'array'],
-                    "tax_name1" => "gst",
-                    "tax_rate1" => 18,
-                    "type_id" => "2",
-                    "tax_id" => "2"
-                ]
+                    'quantity' => 1,
+                    'cost' => 100,
+                    'product_key' => '<TASK_DESCRIPTION>',
+                    'notes' => ['an', 'illegal', 'array'],
+                    'tax_name1' => 'gst',
+                    'tax_rate1' => 18,
+                    'type_id' => '2',
+                    'tax_id' => '2',
+                ],
             ],
-            "custom_surcharge1" => 4,
-            "custom_surcharge2" => 3,
-            "custom_surcharge3" => 2,
-            "custom_surcharge4" => 1
+            'custom_surcharge1' => 4,
+            'custom_surcharge2' => 3,
+            'custom_surcharge3' => 2,
+            'custom_surcharge4' => 1,
         ];
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -91,30 +89,29 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testInvoiceCreationWithClientAndProjectDoesNotTriggerAnInvalidJsonPayloadException()
+    public function test_invoice_creation_with_client_and_project_does_not_trigger_an_invalid_json_payload_exception()
     {
         $data = [
-            "client_id" => $this->client->hashed_id,
-            "project_id" => $this->project->hashed_id,
-            "custom_value3" => "<FLIGHTREFERENCE>",
-            "line_items" => [
+            'client_id' => $this->client->hashed_id,
+            'project_id' => $this->project->hashed_id,
+            'custom_value3' => '<FLIGHTREFERENCE>',
+            'line_items' => [
                 [
-                    "quantity" => 1,
-                    "cost" => 100,
-                    "product_key" => "<TASK_DESCRIPTION>",
-                    "notes" => "<TASK_NOTES>",
-                    "tax_name1" => "gst",
-                    "tax_rate1" => 18,
-                    "type_id" => "2",
-                    "tax_id" => "2"
-                ]
+                    'quantity' => 1,
+                    'cost' => 100,
+                    'product_key' => '<TASK_DESCRIPTION>',
+                    'notes' => '<TASK_NOTES>',
+                    'tax_name1' => 'gst',
+                    'tax_rate1' => 18,
+                    'type_id' => '2',
+                    'tax_id' => '2',
+                ],
             ],
-            "custom_surcharge1" => 4,
-            "custom_surcharge2" => 3,
-            "custom_surcharge3" => 2,
-            "custom_surcharge4" => 1
+            'custom_surcharge1' => 4,
+            'custom_surcharge2' => 3,
+            'custom_surcharge3' => 2,
+            'custom_surcharge4' => 1,
         ];
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -124,12 +121,11 @@ class InvoiceTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testBulkInvoiceValidationRequestFailsWithMissingIds()
+    public function test_bulk_invoice_validation_request_fails_with_missing_ids()
     {
         $data = [
             'action' => 'archive',
         ];
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -140,10 +136,11 @@ class InvoiceTest extends TestCase
         $response->assertJsonValidationErrors('ids');
 
     }
-    public function testInvoiceItemRoundingWithDiscountIsPercent()
+
+    public function test_invoice_item_rounding_with_discount_is_percent()
     {
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -166,7 +163,6 @@ class InvoiceTest extends TestCase
         $item->tax_id = '1';
         $line_items[] = $item;
 
-
         $i = Invoice::factory()->create([
             'discount' => 0,
             'tax_name1' => '',
@@ -181,7 +177,7 @@ class InvoiceTest extends TestCase
             'line_items' => $line_items,
             'status_id' => 1,
             'uses_inclusive_taxes' => false,
-            'is_amount_discount' => false
+            'is_amount_discount' => false,
         ]);
 
         $invoice_calc = new InvoiceSum($i);
@@ -192,10 +188,10 @@ class InvoiceTest extends TestCase
         $this->assertEquals(16.49, $ii->total_taxes);
     }
 
-    public function testInvoiceItemRoundingWithDiscountIsAmount()
+    public function test_invoice_item_rounding_with_discount_is_amount()
     {
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -218,7 +214,6 @@ class InvoiceTest extends TestCase
         $item->tax_id = '1';
         $line_items[] = $item;
 
-
         $i = Invoice::factory()->create([
             'discount' => 0,
             'tax_name1' => '',
@@ -233,7 +228,7 @@ class InvoiceTest extends TestCase
             'line_items' => $line_items,
             'status_id' => 1,
             'uses_inclusive_taxes' => false,
-            'is_amount_discount' => true
+            'is_amount_discount' => true,
         ]);
 
         $invoice_calc = new InvoiceSum($i);
@@ -244,11 +239,10 @@ class InvoiceTest extends TestCase
         $this->assertEquals(16.49, $ii->total_taxes);
     }
 
-
-    public function testDeletingCancelledAndTrashedInvoicePayment()
+    public function test_deleting_cancelled_and_trashed_invoice_payment()
     {
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -317,7 +311,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals(5, $ii->paid_to_date);
         $this->assertEquals(5, $ii->status_id);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->archive($ii);
 
         $payment = Payment::find($this->decodePrimaryKey($payment_hashed_id));
@@ -331,10 +325,10 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testDeletingCancelledInvoicePayment()
+    public function test_deleting_cancelled_invoice_payment()
     {
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -414,10 +408,10 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testRefundPaidToDateRelation()
+    public function test_refund_paid_to_date_relation()
     {
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -469,7 +463,7 @@ class InvoiceTest extends TestCase
         $refund_data['gateway_refund'] = false;
         $refund_data['invoices'][] = [
             'invoice_id' => $ii->id,
-            'amount' => 10
+            'amount' => 10,
         ];
 
         $p->service()->refundPayment($refund_data);
@@ -482,19 +476,18 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testRappenRounding()
+    public function test_rappen_rounding()
     {
 
         $c_settings = $this->client->settings;
         $c_settings->enable_rappen_rounding = true;
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'settings' => $c_settings,
         ]);
 
-       
         $this->assertEquals(0, $c->balance);
 
         $item = InvoiceItemFactory::create();
@@ -530,13 +523,13 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testRappenRoundingUp()
+    public function test_rappen_rounding_up()
     {
 
         $c_settings = $this->client->settings;
         $c_settings->enable_rappen_rounding = true;
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'settings' => $c_settings,
@@ -591,29 +584,29 @@ class InvoiceTest extends TestCase
         $this->assertEquals(20.20, round($c->fresh()->balance, 2));
     }
 
-    public function testPartialDueDateCast()
+    public function test_partial_due_date_cast()
     {
         $i = Invoice::factory()
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'client_id' => $this->client->id
-        ]);
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'client_id' => $this->client->id,
+            ]);
 
         $this->assertNull($i->partial_due_date);
 
         $i = Invoice::factory()
-        ->create([
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'client_id' => $this->client->id,
-            'partial_due_date' => '2023-10-10',
-        ]);
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'client_id' => $this->client->id,
+                'partial_due_date' => '2023-10-10',
+            ]);
 
         $this->assertEquals('2023-10-10', $i->partial_due_date->format('Y-m-d'));
     }
 
-    public function testMarkPaidWithPartial()
+    public function test_mark_paid_with_partial()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -628,7 +621,7 @@ class InvoiceTest extends TestCase
 
         $invoice_calc = new InvoiceSum($this->invoice);
 
-        /** @var \App\Models\Invoice $ii */
+        /** @var Invoice $ii */
         $ii = $invoice_calc->build()->getInvoice();
         $invoice = $ii->service()->markSent()->save();
 
@@ -644,7 +637,7 @@ class InvoiceTest extends TestCase
         $this->assertNull($invoice->partial_due_date);
     }
 
-    public function testSurchargesAndTaxes()
+    public function test_surcharges_and_taxes()
     {
 
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
@@ -660,7 +653,7 @@ class InvoiceTest extends TestCase
 
         $line_items = [];
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 0;
@@ -683,7 +676,7 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testSurchargesAndTaxes2()
+    public function test_surcharges_and_taxes2()
     {
 
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
@@ -699,7 +692,7 @@ class InvoiceTest extends TestCase
 
         $line_items = [];
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 0;
@@ -724,8 +717,7 @@ class InvoiceTest extends TestCase
 
     }
 
-
-    public function testSurchargesAndTaxesExclusive()
+    public function test_surcharges_and_taxes_exclusive()
     {
 
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
@@ -741,7 +733,7 @@ class InvoiceTest extends TestCase
 
         $line_items = [];
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 1;
         $line_item->cost = 10;
         $line_item->tax_rate1 = 0;
@@ -764,8 +756,7 @@ class InvoiceTest extends TestCase
 
     }
 
-
-    public function testGrossTaxAmountCalcuations()
+    public function test_gross_tax_amount_calcuations()
     {
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
@@ -775,7 +766,7 @@ class InvoiceTest extends TestCase
         $invoice->status_id = 2;
         $line_items = [];
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 1;
         $line_item->cost = 8000;
         $line_item->tax_rate1 = 5;
@@ -785,7 +776,7 @@ class InvoiceTest extends TestCase
         $line_item->tax_id = 1;
         $line_items[] = $line_item;
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 1;
         $line_item->cost = 9500;
         $line_item->tax_rate1 = 5;
@@ -814,10 +805,9 @@ class InvoiceTest extends TestCase
         $this->assertEquals(89.82, $item->tax_amount);
         $this->assertEquals(9589.82, $item->gross_line_total);
 
-
     }
 
-    public function testTaskRoundingPrecisionThree()
+    public function test_task_rounding_precision_three()
     {
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
@@ -825,7 +815,7 @@ class InvoiceTest extends TestCase
 
         $line_items = [];
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 25;
         $line_item->cost = 0.333;
         $line_item->tax_rate1 = 0;
@@ -834,7 +824,7 @@ class InvoiceTest extends TestCase
         $line_item->notes = 'Test';
         $line_items[] = $line_item;
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 25;
         $line_item->cost = 0.333;
         $line_item->tax_rate1 = 0;
@@ -843,7 +833,7 @@ class InvoiceTest extends TestCase
         $line_item->notes = 'Test';
         $line_items[] = $line_item;
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 25;
         $line_item->cost = 1.333;
         $line_item->tax_rate1 = 0;
@@ -852,7 +842,7 @@ class InvoiceTest extends TestCase
         $line_item->notes = 'Test';
         $line_items[] = $line_item;
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 25;
         $line_item->cost = 0.267;
         $line_item->tax_rate1 = 0;
@@ -861,7 +851,7 @@ class InvoiceTest extends TestCase
         $line_item->notes = 'Test';
         $line_items[] = $line_item;
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 25;
         $line_item->cost = 0.05;
         $line_item->tax_rate1 = 0;
@@ -879,7 +869,7 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testRoundingWithLargeUnitCostPrecision()
+    public function test_rounding_with_large_unit_cost_precision()
     {
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
@@ -887,7 +877,7 @@ class InvoiceTest extends TestCase
 
         $line_items = [];
 
-        $line_item = new InvoiceItem();
+        $line_item = new InvoiceItem;
         $line_item->quantity = 1;
         $line_item->cost = 82.6446;
         $line_item->tax_rate1 = 21;
@@ -905,18 +895,17 @@ class InvoiceTest extends TestCase
 
     }
 
-    public function testInclusiveRounding()
+    public function test_inclusive_rounding()
     {
         $this->invoice->line_items = [];
         $this->invoice->discount = 0;
         $this->invoice->uses_inclusive_taxes = true;
         $this->invoice->save();
 
-
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = 50;
-        $item->tax_name1 = "taxy";
+        $item->tax_name1 = 'taxy';
         $item->tax_rate1 = 19;
 
         $line_items[] = $item;
@@ -924,7 +913,7 @@ class InvoiceTest extends TestCase
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = 50;
-        $item->tax_name1 = "taxy";
+        $item->tax_name1 = 'taxy';
         $item->tax_rate1 = 19;
 
         $line_items[] = $item;
@@ -959,7 +948,7 @@ class InvoiceTest extends TestCase
         return $line_items;
     }
 
-    public function testInvoiceTotals()
+    public function test_invoice_totals()
     {
         $this->invoice_calc->build();
 
@@ -967,18 +956,18 @@ class InvoiceTest extends TestCase
         $this->assertEquals($this->invoice_calc->getTotal(), 20);
     }
 
-    public function testInvoiceTotalsWithDiscount()
+    public function test_invoice_totals_with_discount()
     {
         $this->invoice->discount = 5;
 
         $this->invoice_calc->build();
 
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
-        //$this->assertEquals($this->invoice_calc->getTotal(), 15);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 15);
+        // $this->assertEquals($this->invoice_calc->getTotal(), 15);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 15);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurcharge()
+    public function test_invoice_totals_with_discount_with_surcharge()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -986,11 +975,11 @@ class InvoiceTest extends TestCase
         $this->invoice_calc->build();
 
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
-        //$this->assertEquals($this->invoice_calc->getTotal(), 20);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 20);
+        // $this->assertEquals($this->invoice_calc->getTotal(), 20);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 20);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurchargeWithInclusiveTax()
+    public function test_invoice_totals_with_discount_with_surcharge_with_inclusive_tax()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -1001,10 +990,10 @@ class InvoiceTest extends TestCase
 
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
         // $this->assertEquals($this->invoice_calc->getTotal(), 21.5);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 20);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 20);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurchargeWithExclusiveTax()
+    public function test_invoice_totals_with_discount_with_surcharge_with_exclusive_tax()
     {
         $this->invoice->discount = 5;
         $this->invoice->custom_surcharge1 = 5;
@@ -1013,18 +1002,18 @@ class InvoiceTest extends TestCase
         $this->invoice->uses_inclusive_taxes = false;
         $this->invoice->is_amount_discount = true;
 
-        //$this->invoice_calc = new InvoiceSum($this->invoice, $this->settings);
+        // $this->invoice_calc = new InvoiceSum($this->invoice, $this->settings);
 
         $this->invoice_calc->build();
 
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
         // $this->assertEquals($this->invoice_calc->getGrossSubTotal(), 22);
         $this->assertEquals($this->invoice_calc->getTotal(), 21.5);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 21.5);
-        //$this->assertEquals($this->invoice_calc->getTotalTaxes(), 1.5);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 21.5);
+        // $this->assertEquals($this->invoice_calc->getTotalTaxes(), 1.5);
     }
 
-    public function testInvoiceTotalsWithDiscountWithSurchargeWithDoubleExclusiveTax()
+    public function test_invoice_totals_with_discount_with_surcharge_with_double_exclusive_tax()
     {
         $this->invoice_calc = new InvoiceSum($this->invoice);
 
@@ -1040,11 +1029,11 @@ class InvoiceTest extends TestCase
 
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
         $this->assertEquals($this->invoice_calc->getTotal(), 23);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 23);
-        //$this->assertEquals($this->invoice_calc->getTotalTaxes(), 3);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 23);
+        // $this->assertEquals($this->invoice_calc->getTotalTaxes(), 3);
     }
 
-    public function testLineItemTaxRatesInclusiveTaxes()
+    public function test_line_item_tax_rates_inclusive_taxes()
     {
         $line_items = [];
 
@@ -1074,13 +1063,13 @@ class InvoiceTest extends TestCase
         $this->invoice_calc->build();
 
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
-        //$this->assertEquals($this->invoice_calc->getTotal(), 20);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 20);
-        //$this->assertEquals($this->invoice_calc->getTotalTaxes(), 1.82);
+        // $this->assertEquals($this->invoice_calc->getTotal(), 20);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 20);
+        // $this->assertEquals($this->invoice_calc->getTotalTaxes(), 1.82);
         $this->assertEquals(count($this->invoice_calc->getTaxMap()), 1);
     }
 
-    public function testLineItemTaxRatesExclusiveTaxes()
+    public function test_line_item_tax_rates_exclusive_taxes()
     {
         $line_items = [];
 
@@ -1114,8 +1103,8 @@ class InvoiceTest extends TestCase
         $this->assertEquals($this->invoice_calc->getSubTotal(), 20);
         // $this->assertEquals($this->invoice_calc->getGrossSubTotal(), 22);
         $this->assertEquals($this->invoice_calc->getTotal(), 26);
-        //$this->assertEquals($this->invoice_calc->getBalance(), 26);
-        //$this->assertEquals($this->invoice_calc->getTotalTaxes(), 4);
-        //$this->assertEquals(count($this->invoice_calc->getTaxMap()), 1);
+        // $this->assertEquals($this->invoice_calc->getBalance(), 26);
+        // $this->assertEquals($this->invoice_calc->getTotalTaxes(), 4);
+        // $this->assertEquals(count($this->invoice_calc->getTaxMap()), 1);
     }
 }

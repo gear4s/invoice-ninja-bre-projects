@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,8 +21,8 @@ use Tests\TestCase;
 
 class ClientDeletedInvoiceCreationTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -36,7 +35,7 @@ class ClientDeletedInvoiceCreationTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testClientedDeletedAttemptingToCreateInvoice()
+    public function test_cliented_deleted_attempting_to_create_invoice()
     {
         /* Test fire new invoice */
         $data = [
@@ -48,7 +47,7 @@ class ClientDeletedInvoiceCreationTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/invoices/', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $this->client->is_deleted = true;
         $this->client->save();
@@ -62,6 +61,6 @@ class ClientDeletedInvoiceCreationTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/invoices/', $data)
-        ->assertStatus(302);
+            ->assertStatus(302);
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,10 +25,9 @@ class RecurringExpenseRepository extends BaseRepository
     /**
      * Saves the recurring_expense and its contacts.
      *
-     * @param      array  $data    The data
-     * @param      \App\Models\RecurringExpense              $recurring_expense  The recurring_expense
-     *
-     * @return     \App\Models\RecurringExpense|null  recurring_expense Object
+     * @param  array  $data  The data
+     * @param  RecurringExpense  $recurring_expense  The recurring_expense
+     * @return RecurringExpense|null recurring_expense Object
      */
     public function save(array $data, RecurringExpense $recurring_expense): ?RecurringExpense
     {
@@ -47,8 +45,7 @@ class RecurringExpenseRepository extends BaseRepository
     /**
      * Store recurring_expenses in bulk.
      *
-     * @param array $recurring_expense
-     * @return \App\Models\RecurringExpense|null
+     * @param  array  $recurring_expense
      */
     public function create($recurring_expense): ?RecurringExpense
     {

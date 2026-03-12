@@ -6,14 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Ninja;
 
 use App\DataMapper\InvoiceItem;
-use App\Events\Invoice\InvoiceWasEmailed;
 use App\Jobs\Entity\EmailEntity;
 use App\Jobs\Util\WebhookHandler;
 use App\Libraries\MultiDB;
@@ -31,15 +29,15 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 
-//@DEPRECATED
+// @DEPRECATED
 class SendReminders implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
     use MakesDates;
     use MakesReminders;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new job instance.
@@ -60,10 +58,10 @@ class SendReminders implements ShouldQueue
     {
         nlog('Sending reminders ' . Carbon::now()->format('Y-m-d h:i:s'));
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->sendReminderEmails();
         } else {
-            //multiDB environment, need to
+            // multiDB environment, need to
             foreach (MultiDB::$dbs as $db) {
                 MultiDB::setDB($db);
 
@@ -75,13 +73,13 @@ class SendReminders implements ShouldQueue
     private function sendReminderEmails()
     {
         $invoices = Invoice::where('is_deleted', 0)
-                           ->where('balance', '>', 0)
-                           ->whereDate('next_send_date', '<=', now()->startOfDay())
-                           ->whereNotNull('next_send_date')
-                           ->with('client')
-                           ->cursor();
+            ->where('balance', '>', 0)
+            ->whereDate('next_send_date', '<=', now()->startOfDay())
+            ->whereNotNull('next_send_date')
+            ->with('client')
+            ->cursor();
 
-        //we only need invoices that are payable
+        // we only need invoices that are payable
         $invoices->filter(function ($invoice) {
             return $invoice->isPayable();
         })->each(function ($invoice) {
@@ -121,7 +119,7 @@ class SendReminders implements ShouldQueue
      * Create a collection of all possible reminder dates
      * and pass back the first one in chronology
      *
-     * @param  Invoice $invoice
+     * @param  Invoice  $invoice
      * @return Carbon $date
      */
     private function calculateNextSendDate($invoice)
@@ -140,7 +138,7 @@ class SendReminders implements ShouldQueue
             if ($next_reminder_date && $next_reminder_date->gt(Carbon::parse($invoice->last_sent_date)));
             $dates->push($next_reminder_date);
 
-            if (! $invoice->reminder1_sent) {
+            if (!$invoice->reminder1_sent) {
                 $set_reminder1 = true;
             }
         }
@@ -151,7 +149,7 @@ class SendReminders implements ShouldQueue
             if ($next_reminder_date && $next_reminder_date->gt(Carbon::parse($invoice->last_sent_date)));
             $dates->push($next_reminder_date);
 
-            if (! $invoice->reminder2_sent) {
+            if (!$invoice->reminder2_sent) {
                 $set_reminder2 = true;
             }
         }
@@ -162,26 +160,27 @@ class SendReminders implements ShouldQueue
             if ($next_reminder_date && $next_reminder_date->gt(Carbon::parse($invoice->last_sent_date)));
             $dates->push($next_reminder_date);
 
-            if (! $invoice->reminder3_sent) {
+            if (!$invoice->reminder3_sent) {
                 $set_reminder3 = true;
             }
         }
 
-        //If all the available reminders have fired, we then start to fire the endless reminders
-        if ((int) $settings->endless_reminder_frequency_id > 0 && ! $set_reminder1 && ! $set_reminder2 && ! $set_reminder3) {
+        // If all the available reminders have fired, we then start to fire the endless reminders
+        if ((int) $settings->endless_reminder_frequency_id > 0 && !$set_reminder1 && !$set_reminder2 && !$set_reminder3) {
             $dates->push($this->addTimeInterval($invoice->last_sent_date, (int) $settings->endless_reminder_frequency_id));
         }
 
-        //order the dates ascending and get first one
+        // order the dates ascending and get first one
         return $dates->sort()->first();
     }
 
     /**
      * Helper method which switches values based on the $schedule_reminder
-     * @param  Invoice $invoice
-     * @param  string $schedule_reminder
-     * @param  int $num_days_reminder
-     * @return Carbon  $date
+     *
+     * @param  Invoice  $invoice
+     * @param  string  $schedule_reminder
+     * @param  int  $num_days_reminder
+     * @return Carbon $date
      */
     private function calculateScheduledDate($invoice, $schedule_reminder, $num_days_reminder): ?Carbon
     {
@@ -206,22 +205,21 @@ class SendReminders implements ShouldQueue
     /**
      * Sends the reminder and/or late fee for the invoice.
      *
-     * @param  Invoice $invoice
-     * @param  string $template
-     * @return void
+     * @param  Invoice  $invoice
+     * @param  string  $template
      */
     private function sendReminder($invoice, $template): void
     {
         $invoice = $this->calcLateFee($invoice, $template);
 
         $invoice->invitations->each(function ($invitation) use ($template, $invoice) {
-            //only send if enable_reminder setting is toggled to yes
+            // only send if enable_reminder setting is toggled to yes
             if ($this->checkSendSetting($invoice, $template) && $invoice->company->account->hasFeature(Account::FEATURE_EMAIL_TEMPLATES_REMINDERS)) {
                 nlog('firing email');
 
                 EmailEntity::dispatch($invitation->withoutRelations(), $invitation->company->db, $template)->delay(10);
                 $invoice->entityEmailEvent($invoice->invitations->first(), $template);
-                $invoice->sendEvent(Webhook::EVENT_REMIND_INVOICE, "client");
+                $invoice->sendEvent(Webhook::EVENT_REMIND_INVOICE, 'client');
             }
         });
 
@@ -239,9 +237,8 @@ class SendReminders implements ShouldQueue
     /**
      * Calculates the late if - if any - and rebuilds the invoice
      *
-     * @param  Invoice $invoice
-     * @param  string $template
-     * @return Invoice
+     * @param  Invoice  $invoice
+     * @param  string  $template
      */
     private function calcLateFee($invoice, $template): Invoice
     {
@@ -277,11 +274,9 @@ class SendReminders implements ShouldQueue
     /**
      * Applies the late fee to the invoice line items
      *
-     * @param Invoice $invoice
-     * @param float $amount  The fee amount
-     * @param float $percent The fee percentage amount
-     *
-     * @return Invoice
+     * @param  Invoice  $invoice
+     * @param  float  $amount  The fee amount
+     * @param  float  $percent  The fee percentage amount
      */
     private function setLateFee($invoice, $amount, $percent): Invoice
     {
@@ -304,7 +299,7 @@ class SendReminders implements ShouldQueue
             $fee += round($invoice->balance * $percent / 100, 2);
         }
 
-        $invoice_item = new InvoiceItem();
+        $invoice_item = new InvoiceItem;
         $invoice_item->type_id = '5';
         $invoice_item->product_key = trans('texts.fee');
         $invoice_item->notes = ctrans('texts.late_fee_added', ['date' => $this->translateDate(now()->startOfDay(), $invoice->client->date_format(), $invoice->client->locale())]);

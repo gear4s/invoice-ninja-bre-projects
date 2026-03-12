@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,15 +17,14 @@ use App\DataMapper\Tax\TaxModel;
 use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Country;
-use App\Models\TaxRate;
 use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Bus\Dispatchable;
 
 class CreateCompany
 {
-    use MakesHash;
     use Dispatchable;
+    use MakesHash;
 
     protected $request;
 
@@ -34,9 +32,6 @@ class CreateCompany
 
     /**
      * Create a new job instance.
-     *
-     * @param array $request
-     * @param $account
      */
     public function __construct(array $request, $account)
     {
@@ -47,8 +42,6 @@ class CreateCompany
 
     /**
      * Execute the job.
-     *
-     * @return Company|null
      */
     public function handle(): ?Company
     {
@@ -60,7 +53,7 @@ class CreateCompany
             $settings->country_id = $country_id;
         }
 
-        $company = new Company();
+        $company = new Company;
         $company->account_id = $this->account->id;
         $company->company_key = $this->createHash();
         $company->ip = request()->ip();
@@ -68,12 +61,12 @@ class CreateCompany
         $company->db = config('database.default');
         $company->enabled_modules = config('ninja.enabled_modules');
         $company->subdomain = $this->request['subdomain'] ?? MultiDB::randomSubdomainGenerator();
-        $company->custom_fields = new \stdClass();
+        $company->custom_fields = new \stdClass;
         $company->default_password_timeout = 1800000;
         $company->client_registration_fields = ClientRegistrationFields::generate();
         $company->markdown_email_enabled = true;
         $company->markdown_enabled = false;
-        $company->tax_data = new TaxModel();
+        $company->tax_data = new TaxModel;
 
         if (Ninja::isHosted()) {
             $company->subdomain = MultiDB::randomSubdomainGenerator();
@@ -84,7 +77,7 @@ class CreateCompany
         /** Location Specific Configuration */
         match ($settings->country_id) {
             '724' => $company = $this->spanishSetup($company),
-            '36'  => $company = $this->australiaSetup($company),
+            '36' => $company = $this->australiaSetup($company),
             '710' => $company = $this->southAfticaSetup($company),
             '554' => $company = $this->newZealandSetup($company),
             default => $company->save(),
@@ -95,8 +88,6 @@ class CreateCompany
 
     /**
      * Resolve Country
-     *
-     * @return string
      */
     private function resolveCountry(): string
     {
@@ -126,7 +117,7 @@ class CreateCompany
 
             }
         } catch (\Exception $e) {
-            nlog("Exception:: CreateCompany::" . $e->getMessage());
+            nlog('Exception:: CreateCompany::' . $e->getMessage());
             nlog("Could not resolve country => {$e->getMessage()}");
         }
 
@@ -154,18 +145,18 @@ class CreateCompany
     {
         try {
 
-            $custom_fields = new \stdClass();
-            $custom_fields->contact1 = "Rol|CONTABLE,FISCAL,GESTOR,RECEPTOR,TRAMITADOR,PAGADOR,PROPONENTE,B2B_FISCAL,B2B_PAYER,B2B_BUYER,B2B_COLLECTOR,B2B_SELLER,B2B_PAYMENT_RECEIVER,B2B_COLLECTION_RECEIVER,B2B_ISSUER";
-            $custom_fields->contact2 = "Code|single_line_text";
-            $custom_fields->contact3 = "Nombre|single_line_text";
-            $custom_fields->client1 = "Administración Pública|switch";
+            $custom_fields = new \stdClass;
+            $custom_fields->contact1 = 'Rol|CONTABLE,FISCAL,GESTOR,RECEPTOR,TRAMITADOR,PAGADOR,PROPONENTE,B2B_FISCAL,B2B_PAYER,B2B_BUYER,B2B_COLLECTOR,B2B_SELLER,B2B_PAYMENT_RECEIVER,B2B_COLLECTION_RECEIVER,B2B_ISSUER';
+            $custom_fields->contact2 = 'Code|single_line_text';
+            $custom_fields->contact3 = 'Nombre|single_line_text';
+            $custom_fields->client1 = 'Administración Pública|switch';
 
             $company->custom_fields = $custom_fields;
             $company->enabled_item_tax_rates = 1;
 
             $settings = $company->settings;
             $settings->language_id = '7';
-            $settings->e_invoice_type = 'Facturae_3.2.2'; //change this to verifactu
+            $settings->e_invoice_type = 'Facturae_3.2.2'; // change this to verifactu
             $settings->currency_id = '3';
             $settings->timezone_id = '42';
             $settings->lock_invoices = 'when_sent';
@@ -177,8 +168,8 @@ class CreateCompany
             return $company;
 
         } catch (\Exception $e) {
-            nlog("Exception:: CreateCompany::" . $e->getMessage());
-            nlog("SETUP: could not complete setup for Spanish Locale");
+            nlog('Exception:: CreateCompany::' . $e->getMessage());
+            nlog('SETUP: could not complete setup for Spanish Locale');
         }
 
         $company->save();
@@ -195,8 +186,8 @@ class CreateCompany
             $company->enabled_item_tax_rates = 1;
             $company->enabled_tax_rates = 1;
 
-            $translations = new \stdClass();
-            $translations->invoice = "Tax Invoice";
+            $translations = new \stdClass;
+            $translations->invoice = 'Tax Invoice';
 
             $settings = $company->settings;
             $settings->currency_id = '4';
@@ -211,14 +202,13 @@ class CreateCompany
 
         } catch (\Exception $e) {
             nlog($e->getMessage());
-            nlog("Exception:: CreateCompany::" . $e->getMessage());
-            nlog("SETUP: could not complete setup for South African Locale");
+            nlog('Exception:: CreateCompany::' . $e->getMessage());
+            nlog('SETUP: could not complete setup for South African Locale');
         }
 
         $company->save();
 
         return $company;
-
 
     }
 
@@ -229,8 +219,8 @@ class CreateCompany
             $company->enabled_item_tax_rates = 1;
             $company->enabled_tax_rates = 1;
 
-            $translations = new \stdClass();
-            $translations->invoice = "Tax Invoice";
+            $translations = new \stdClass;
+            $translations->invoice = 'Tax Invoice';
 
             $settings = $company->settings;
             $settings->currency_id = '12';
@@ -245,8 +235,8 @@ class CreateCompany
 
         } catch (\Exception $e) {
             nlog($e->getMessage());
-            nlog("Exception:: CreateCompany::" . $e->getMessage());
-            nlog("SETUP: could not complete setup for Australian Locale");
+            nlog('Exception:: CreateCompany::' . $e->getMessage());
+            nlog('SETUP: could not complete setup for Australian Locale');
         }
 
         $company->save();
@@ -254,5 +244,4 @@ class CreateCompany
         return $company;
 
     }
-
 }

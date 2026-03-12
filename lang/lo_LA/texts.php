@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'ອົງການ',
     'name' => 'ຊື່',
     'website' => 'ເວັບໄຊ',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'ແຜນການວິສາຫະກິດເພີ່ມການສະຫນັບສະຫນູນຜູ້ໃຊ້ຫຼາຍແລະໄຟລ໌ແນບ, :link ເພື່ອເບິ່ງລາຍຊື່ເຕັມຂອງຄຸນສົມບັດ.',
     'return_to_app' => 'ກັບຄືນຫາແອັບ',
 
-
     // Payment updates
     'refund_payment' => 'ການຈ່າຍເງິນຄືນ',
     'refund_max' => 'ສູງສຸດ:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'ເຊີເບຍ',
     'lang_Bulgarian' => 'ບຸນກາຣີ',
     'lang_Russian (Russia)' => 'ລັດເຊຍ (ຣັດເຊຍ)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'ການບັນຊີ ແລະກົດໝາຍ',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'ທອງຄຳ Troy ອອນສ໌',
     'currency_nicaraguan_córdoba' => 'ນິກາຣາກົວ ໂກໂດບາ',
     'currency_malagasy_ariary' => 'ມາລາກາຊີ ariary',
-    "currency_tongan_pa_anga" => "ຕົງ​ອານ​ປາ​ອານ​ກາ",
+    'currency_tongan_pa_anga' => 'ຕົງ​ອານ​ປາ​ອານ​ກາ',
 
     'review_app_help' => 'ພວກ​ເຮົາ​ຫວັງ​ວ່າ​ທ່ານ​ຈະ​ມີ​ຄວາມ​ສຸກ​ກັບ​ການ​ນໍາ​ໃຊ້ app ໄດ້.<br/>ຖ້າ​ຫາກ​ວ່າ​ທ່ານ \'ພິ​ຈາ​ລະ​ນາ :link ພວກ​ເຮົາ​ຈະ​ຂໍ​ຂອບ​ໃຈ​ເປັນ​ຢ່າງ​ຍິ່ງ​!',
     'writing_a_review' => 'ຂຽນບົດວິຈານ',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ': ຜູ້ໃຊ້ເກັບຄ່າໃຊ້ຈ່າຍທີ່ເກີດຂຶ້ນຊ້ຳໆ :recurring_expense',
     'activity_123' => ':ຜູ້ໃຊ້ລຶບຄ່າໃຊ້ຈ່າຍທີ່ເກີດຂຶ້ນຊ້ຳໆ :recurring_expense',
     'activity_124' => ': ຜູ້ໃຊ້ໄດ້ຟື້ນຟູຄ່າໃຊ້ຈ່າຍທີ່ເກີດຂື້ນ :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'ເພື່ອເບິ່ງ :entity ທ່ານຕ້ອງຕັ້ງລະຫັດຜ່ານ.',
     'unsubscribe' => 'ເຊົາຕິດຕາມ',
     'unsubscribed' => 'ເຊົາສະໝັກແລ້ວ',
@@ -4869,7 +4867,7 @@ $lang = array(
     'payment_type_Klarna' => 'ຄລານາ',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'ຊໍາລະພາຍໃນ: payeddue ວັນສຸດທິຈົນກ່ວາ: paydate',
-    'xinvoice_no_buyers_reference' => "ບໍ່ມີການອ້າງອີງຂອງຜູ້ຊື້",
+    'xinvoice_no_buyers_reference' => 'ບໍ່ມີການອ້າງອີງຂອງຜູ້ຊື້',
     'xinvoice_online_payment' => 'ໃບແຈ້ງໜີ້ຕ້ອງຈ່າຍອອນໄລນ໌ຜ່ານລິ້ງທີ່ສະໜອງໃຫ້',
     'pre_payment' => 'ການຈ່າຍເງິນລ່ວງໜ້າ',
     'number_of_payments' => 'ຈໍານວນການຈ່າຍເງິນ',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'ໃບເກັບເງິນອີເມລ໌',
     'light_dark_mode' => 'ໂໝດແສງສະຫວ່າງ/ມືດ',
     'activities' => 'ກິດຈະກຳ',
-    'recent_transactions' => "ທຸລະກຳທີ່ຜ່ານມາ",
-    'country_Palestine' => "ປາແລັດສະໄຕ",
+    'recent_transactions' => 'ທຸລະກຳທີ່ຜ່ານມາ',
+    'country_Palestine' => 'ປາແລັດສະໄຕ',
     'country_Taiwan' => 'ໄຕ້ຫວັນ',
     'duties' => 'ໜ້າທີ່',
     'order_number' => 'ເລກສັ່ງຊື້',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'ແບບຟອມຊ່ອງຂໍ້ມູນທີ່ຕ້ອງການ',
     'add_step' => 'ເພີ່ມຂັ້ນຕອນ',
     'steps' => 'ຂັ້ນຕອນ',
-    'steps_order_help' =>  'ລໍາດັບຂອງຂັ້ນຕອນແມ່ນສໍາຄັນ. ຂັ້ນຕອນທໍາອິດບໍ່ຄວນຂຶ້ນກັບຂັ້ນຕອນອື່ນ. ຂັ້ນຕອນທີສອງຄວນຂຶ້ນກັບຂັ້ນຕອນທໍາອິດ, ແລະອື່ນໆ.',
+    'steps_order_help' => 'ລໍາດັບຂອງຂັ້ນຕອນແມ່ນສໍາຄັນ. ຂັ້ນຕອນທໍາອິດບໍ່ຄວນຂຶ້ນກັບຂັ້ນຕອນອື່ນ. ຂັ້ນຕອນທີສອງຄວນຂຶ້ນກັບຂັ້ນຕອນທໍາອິດ, ແລະອື່ນໆ.',
     'other_steps' => 'ຂັ້ນຕອນອື່ນໆ',
     'use_available_payments' => 'ໃຊ້ການຈ່າຍເງິນທີ່ມີຢູ່',
     'test_email_sent' => 'ສົ່ງອີເມວສຳເລັດແລ້ວ',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'ອັບເດດສິນເຊື່ອ',
     'payment_updated' => 'ອັບເດດການຈ່າຍເງິນແລ້ວ',
     'search_placeholder' => 'ຊອກຫາໃບແຈ້ງໜີ້, ລູກຄ້າ, ແລະອື່ນໆອີກ',
-    'invalid_vat_number' => "ໝາຍເລກ VAT ບໍ່ຖືກຕ້ອງສຳລັບປະເທດທີ່ເລືອກ. ຮູບແບບຄວນຈະເປັນລະຫັດປະເທດຕາມດ້ວຍຕົວເລກເທົ່ານັ້ນ ເຊັ່ນ: DE123456789",
+    'invalid_vat_number' => 'ໝາຍເລກ VAT ບໍ່ຖືກຕ້ອງສຳລັບປະເທດທີ່ເລືອກ. ຮູບແບບຄວນຈະເປັນລະຫັດປະເທດຕາມດ້ວຍຕົວເລກເທົ່ານັ້ນ ເຊັ່ນ: DE123456789',
     'acts_as_sender' => 'ສົ່ງ E-Invoices',
     'acts_as_receiver' => 'ຮັບ E-Invoices',
     'peppol_token_generated' => 'PEPPOL token ສ້າງສຳເລັດແລ້ວ.',
@@ -5702,7 +5700,7 @@ $lang = array(
     'custom_document_completed' => 'Custom Document completed',
     'email_client_when_custom_document_completed' => 'Email client when a Custom Document has been signed',
     'sender' => 'Sender',
-     'create_template' => 'Create Template',
+    'create_template' => 'Create Template',
     'edit_template' => 'Edit Template',
     'delete_template' => 'Delete Template',
     'template_created' => 'Template created',
@@ -5767,6 +5765,6 @@ $lang = array(
     'tour_toolbox_description' => 'On the right is the toolbox. Use it to add fields and elements for signatories to interact with. The signature field is already selected. Click to continue.',
     'tour_document_canvas' => 'This is your document canvas. Place and position fields for your signatories here.',
     'tour_save_document' => 'When you’re finished, click here to save your document.',
-);
+];
 
 return $lang;

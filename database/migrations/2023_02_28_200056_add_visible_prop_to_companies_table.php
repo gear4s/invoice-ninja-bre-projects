@@ -4,7 +4,8 @@ use App\DataMapper\ClientRegistrationFields;
 use App\Models\Company;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -15,12 +16,12 @@ return new class extends Migration {
         Company::query()->cursor()->each(function ($company) {
 
             $crfs = $company->client_registration_fields;
-            
-            if(!$crfs) {
+
+            if (!$crfs) {
                 $crfs = ClientRegistrationFields::generate();
             }
 
-            foreach($crfs as $key => $crf) {
+            foreach ($crfs as $key => $crf) {
                 $crfs[$key]['visible'] = $crfs[$key]['required'];
             }
 
@@ -35,8 +36,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-        
-    }
+    public function down() {}
 };

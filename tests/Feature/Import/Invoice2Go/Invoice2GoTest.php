@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,14 +24,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Import\Providers\Invoice2Go
  */
 class Invoice2GoTest extends TestCase
 {
+    use DatabaseTransactions;
     use MakesHash;
     use MockAccountData;
-    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -47,10 +45,10 @@ class Invoice2GoTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testInvoice2GoImport()
+    public function test_invoice2_go_import()
     {
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/i2g_invoices.csv'
+            base_path() . '/tests/Feature/Import/i2g_invoices.csv'
         );
         $hash = Str::random(32);
 
@@ -104,7 +102,7 @@ class Invoice2GoTest extends TestCase
             'import_type' => 'invoice2go',
         ];
 
-        Cache::put($hash.'-invoice', base64_encode($csv), 360);
+        Cache::put($hash . '-invoice', base64_encode($csv), 360);
 
         $csv_importer = new Invoice2Go($data, $this->company);
 

@@ -6,14 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\Client;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * TaskFilters.
@@ -24,9 +26,6 @@ class TaskFilters extends QueryFilters
 
     /**
      * Filter based on search text.
-     *
-     * @param string $filter
-     * @return Builder
      */
     public function filter(string $filter = ''): Builder
     {
@@ -34,25 +33,25 @@ class TaskFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('description', 'like', '%' . $filter . '%')
-                          ->orWhere("number", 'like', '%' . $filter . '%')
-                          ->orWhere('time_log', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value1', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value2', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value3', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value4', 'like', '%' . $filter . '%')
-                          ->orWhereHas('project', function ($q) use ($filter) {
-                              $q->where('name', 'like', '%' . $filter . '%');
-                          })
-                          ->orWhereHas('client', function ($q) use ($filter) {
-                              $q->where('name', 'like', '%' . $filter . '%');
-                          })
-                            ->orWhereHas('client.contacts', function ($q) use ($filter) {
-                                $q->where('first_name', 'like', '%' . $filter . '%')
-                                  ->orWhere('last_name', 'like', '%' . $filter . '%')
-                                  ->orWhere('email', 'like', '%' . $filter . '%');
-                            });
+                ->orWhere('number', 'like', '%' . $filter . '%')
+                ->orWhere('time_log', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value1', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value2', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value3', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value4', 'like', '%' . $filter . '%')
+                ->orWhereHas('project', function ($q) use ($filter) {
+                    $q->where('name', 'like', '%' . $filter . '%');
+                })
+                ->orWhereHas('client', function ($q) use ($filter) {
+                    $q->where('name', 'like', '%' . $filter . '%');
+                })
+                ->orWhereHas('client.contacts', function ($q) use ($filter) {
+                    $q->where('first_name', 'like', '%' . $filter . '%')
+                        ->orWhere('last_name', 'like', '%' . $filter . '%')
+                        ->orWhere('email', 'like', '%' . $filter . '%');
+                });
         });
     }
 
@@ -64,8 +63,7 @@ class TaskFilters extends QueryFilters
      * - invoiced
      * - uninvoiced
      *
-     * @param string $value The invoice status as seen by the client
-     * @return Builder
+     * @param  string  $value  The invoice status as seen by the client
      */
     public function client_status(string $value = ''): Builder
     {
@@ -125,27 +123,26 @@ class TaskFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing('tasks'))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], Schema::getColumnListing('tasks'))) {
             return $this->builder;
         }
 
         $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
 
         if ($sort_col[0] == 'client_id') {
-            return $this->builder->orderBy(\App\Models\Client::select('name')
-                    ->whereColumn('clients.id', 'tasks.client_id'), $dir);
+            return $this->builder->orderBy(Client::select('name')
+                ->whereColumn('clients.id', 'tasks.client_id'), $dir);
         }
 
         if ($sort_col[0] == 'user_id') {
-            return $this->builder->orderBy(\App\Models\User::select('first_name')
-                    ->whereColumn('users.id', 'tasks.user_id'), $dir);
+            return $this->builder->orderBy(User::select('first_name')
+                ->whereColumn('users.id', 'tasks.user_id'), $dir);
         }
 
         if ($sort_col[0] == 'number') {
@@ -195,11 +192,8 @@ class TaskFilters extends QueryFilters
         return $this->builder;
     }
 
-
     /**
      * Filters the query by the users company ID.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {

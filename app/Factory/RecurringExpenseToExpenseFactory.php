@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Factory;
 
+use App\Models\DateFormat;
 use App\Models\Expense;
 use App\Models\RecurringExpense;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -22,7 +23,7 @@ class RecurringExpenseToExpenseFactory
 {
     public static function create(RecurringExpense $recurring_expense): Expense
     {
-        $expense = new Expense();
+        $expense = new Expense;
         $expense->user_id = $recurring_expense->user_id;
         $expense->assigned_user_id = $recurring_expense->assigned_user_id;
         $expense->client_id = $recurring_expense->client_id;
@@ -45,7 +46,7 @@ class RecurringExpenseToExpenseFactory
         $expense->amount = $recurring_expense->amount;
         $expense->foreign_amount = $recurring_expense->foreign_amount ?: 0;
 
-        //11-09-2022 - we should be tracking the recurring expense!!
+        // 11-09-2022 - we should be tracking the recurring expense!!
         $expense->recurring_expense_id = $recurring_expense->id;
 
         $expense->public_notes = self::transformObject($recurring_expense->public_notes, $recurring_expense);
@@ -73,7 +74,7 @@ class RecurringExpenseToExpenseFactory
 
     public static function transformObject(?string $value, $recurring_expense): ?string
     {
-        if (! $value) {
+        if (!$value) {
             return '';
         }
 
@@ -83,10 +84,10 @@ class RecurringExpenseToExpenseFactory
         } else {
             $locale = $recurring_expense->company->locale();
 
-            //@deprecated
+            // @deprecated
             // $date_formats = Cache::get('date_formats');
 
-            /** @var \Illuminate\Support\Collection<\App\Models\DateFormat> */
+            /** @var Collection<DateFormat> */
             $date_formats = app('date_formats');
 
             $date_format = $date_formats->first(function ($item) use ($recurring_expense) {
@@ -145,7 +146,7 @@ class RecurringExpenseToExpenseFactory
         $matches = array_shift($ranges);
 
         foreach ($matches as $match) {
-            if (! Str::contains($match, '|')) {
+            if (!Str::contains($match, '|')) {
                 continue;
             }
 
@@ -156,7 +157,7 @@ class RecurringExpenseToExpenseFactory
             $right = substr($parts[1], 0, -1); // MONTH+2
 
             // If left side is not part of replacements, skip.
-            if (! array_key_exists($left, $replacements['ranges'])) {
+            if (!array_key_exists($left, $replacements['ranges'])) {
                 continue;
             }
 
@@ -164,7 +165,7 @@ class RecurringExpenseToExpenseFactory
             $_right = '';
 
             // If right side doesn't have any calculations, replace with raw ranges keyword.
-            if (! Str::contains($right, ['-', '+', '/', '*'])) {
+            if (!Str::contains($right, ['-', '+', '/', '*'])) {
                 $_right = Carbon::createFromDate(now()->year, now()->month)->translatedFormat('F Y');
             }
 
@@ -176,7 +177,7 @@ class RecurringExpenseToExpenseFactory
 
                 $_value = explode($_operation, $right); // [MONTHYEAR, 4]
 
-                $_right = Carbon::createFromDate(now()->year, now()->month)->addMonths($_value[1])->translatedFormat('F Y'); //@phpstan-ignore-line
+                $_right = Carbon::createFromDate(now()->year, now()->month)->addMonths($_value[1])->translatedFormat('F Y'); // @phpstan-ignore-line
             }
 
             $replacement = sprintf('%s to %s', $_left, $_right);
@@ -204,7 +205,7 @@ class RecurringExpenseToExpenseFactory
                 continue;
             }
 
-            if (! Str::contains($match, ['-', '+', '/', '*'])) {
+            if (!Str::contains($match, ['-', '+', '/', '*'])) {
                 $value = preg_replace(
                     sprintf('/%s/', $matches->keys()->first()),
                     $replacements['literal'][$matches->keys()->first()],
@@ -252,7 +253,7 @@ class RecurringExpenseToExpenseFactory
 
                     $final_date = now()->addMonths($output - now()->month);
 
-                    $output =    \sprintf(
+                    $output = \sprintf(
                         '%s %s',
                         $final_date->translatedFormat('F'),
                         $final_date->year,

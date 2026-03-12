@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -42,16 +41,18 @@ class BACS implements LivewireMethodInterface
             'payment_method_types' => ['bacs_debit'],
             'mode' => 'setup',
             'customer' => $customer->id,
-            'success_url' => str_replace("%7B", "{", str_replace("%7D", "}", $this->buildAuthorizeUrl())),
+            'success_url' => str_replace('%7B', '{', str_replace('%7D', '}', $this->buildAuthorizeUrl())),
             'cancel_url' => route('client.payment_methods.index'),
         ]);
+
         return render('gateways.stripe.bacs.authorize', $data);
     }
+
     private function buildAuthorizeUrl(): string
     {
         return route('client.payment_methods.confirm', [
             'method' => GatewayType::BACS,
-            'session_id' => "{CHECKOUT_SESSION_ID}",
+            'session_id' => '{CHECKOUT_SESSION_ID}',
         ]);
     }
 
@@ -63,17 +64,20 @@ class BACS implements LivewireMethodInterface
 
             $customer = $this->stripe->findOrCreateCustomer();
             $this->stripe->attach($session->setup_intent->payment_method, $customer);
-            $payment_method =  $this->stripe->getStripePaymentMethod($session->setup_intent->payment_method);
+            $payment_method = $this->stripe->getStripePaymentMethod($session->setup_intent->payment_method);
             $this->storePaymentMethod($payment_method, $customer);
         }
+
         return redirect()->route('client.payment_methods.index');
     }
+
     public function paymentView(array $data)
     {
         $data = $this->paymentData($data);
 
         return render('gateways.stripe.bacs.pay', $data);
     }
+
     public function paymentResponse(PaymentResponseRequest $request)
     {
         $this->stripe->init();
@@ -111,7 +115,7 @@ class BACS implements LivewireMethodInterface
             return $this->processSuccessfulPayment($state['payment_intent']);
         }
 
-        return $this->processUnsuccessfulPayment("An unknown error occured.");
+        return $this->processUnsuccessfulPayment('An unknown error occured.');
     }
 
     public function processSuccessfulPayment($payment_intent)
@@ -136,7 +140,6 @@ class BACS implements LivewireMethodInterface
             $this->stripe->client,
             $this->stripe->client->company,
         ))->handle();
-
 
         return redirect()->route('client.payments.show', ['payment' => $this->stripe->encodePrimaryKey($payment->id)]);
     }
@@ -165,7 +168,7 @@ class BACS implements LivewireMethodInterface
     private function storePaymentMethod($method, $customer)
     {
         try {
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) $method->bacs_debit->sort_code;
             $payment_meta->last4 = (string) $method->bacs_debit->last4;
             $payment_meta->state = 'unauthorized';

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\Models\Invoice;
 use App\Utils\Helpers;
 use App\Utils\Number;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
 
 /**
  * Class MakesInvoiceValues.
@@ -28,6 +26,7 @@ trait MakesInvoiceValues
     /**
      * Master list of columns used
      * for invoice tables.
+     *
      * @var array
      */
     private static $master_columns = [
@@ -101,9 +100,9 @@ trait MakesInvoiceValues
      * Transforms all placeholders
      * to invoice values.
      *
-     * @param null $contact
+     * @param  null  $contact
      * @return array returns an array
-     * of keyed labels (appended with _label)
+     *               of keyed labels (appended with _label)
      */
     public function makeValues($contact = null): array
     {
@@ -120,8 +119,9 @@ trait MakesInvoiceValues
 
     /**
      * V2 of building a table header for PDFs.
-     * @param  array $columns The array (or string of column headers)
-     * @return string  injectable HTML string
+     *
+     * @param  array  $columns  The array (or string of column headers)
+     * @return string injectable HTML string
      */
     public function buildTableHeader($columns): ?string
     {
@@ -142,10 +142,8 @@ trait MakesInvoiceValues
 
     /**
      * V2 of building a table body for PDFs.
-     * @param array $default_columns
-     * @param $user_columns
-     * @param string $table_prefix
-     * @return string  injectable HTML string
+     *
+     * @return string injectable HTML string
      */
     public function buildTableBody(array $default_columns, $user_columns, string $table_prefix): ?string
     {
@@ -189,8 +187,8 @@ trait MakesInvoiceValues
     /**
      * Transform the column headers into translated header values.
      *
-     * @param  array  $columns The column header values
-     * @return array          The new column header variables
+     * @param  array  $columns  The column header values
+     * @return array The new column header variables
      */
     private function transformColumnsForHeader(array $columns): array
     {
@@ -221,8 +219,8 @@ trait MakesInvoiceValues
     /**
      * Transform the column headers into invoice variables.
      *
-     * @param  array  $columns The column header values
-     * @return array          The invoice variables
+     * @param  array  $columns  The column header values
+     * @return array The invoice variables
      */
     private function transformColumnsForLineItems(array $columns): array
     {
@@ -255,19 +253,17 @@ trait MakesInvoiceValues
     /**
      * Formats the line items for display.
      *
-     * @param mixed $items
-     * @param string $table_type
-     * @param mixed|null $custom_fields
-     *
-     * @return array
+     * @param  mixed  $items
+     * @param  string  $table_type
+     * @param  mixed|null  $custom_fields
      */
     public function transformLineItems($items, $table_type = '$product'): array
-    {   //$start = microtime(true);
+    {   // $start = microtime(true);
         $entity = $this->client ? $this->client : $this->vendor;
 
         $data = [];
 
-        if (! is_array($items)) {
+        if (!is_array($items)) {
         }
 
         $locale_info = localeconv();
@@ -285,7 +281,7 @@ trait MakesInvoiceValues
                 continue;
             }
 
-            $helpers = new Helpers();
+            $helpers = new Helpers;
             $_table_type = ltrim($table_type, '$'); // From $product -> product.
 
             $data[$key][$table_type . '.product_key'] = is_null(optional($item)->product_key) ? $item->item : $item->product_key;
@@ -366,7 +362,7 @@ trait MakesInvoiceValues
             $data[$key]['task_id'] = property_exists($item, 'task_id') ? $item->task_id : '';
         }
 
-        //nlog(microtime(true) - $start);
+        // nlog(microtime(true) - $start);
 
         return $data;
     }
@@ -378,7 +374,7 @@ trait MakesInvoiceValues
      * we use this function to format a section of rows.
      *
      * @return string a collection of <tr> rows with line item
-     * aggregate data
+     *                aggregate data
      */
     private function makeLineTaxes(): string
     {
@@ -398,14 +394,14 @@ trait MakesInvoiceValues
 
     /**
      * @return string a collectino of <tr> with
-     * itemised total tax data
+     *                itemised total tax data
      */
     private function makeTotalTaxes(): string
     {
         $data = '';
         $entity = $this->client ? $this->client : $this->vendor;
 
-        if (! $this->calc()->getTotalTaxMap()) {
+        if (!$this->calc()->getTotalTaxMap()) {
             return $data;
         }
 
@@ -422,7 +418,7 @@ trait MakesInvoiceValues
     {
         $data = '';
 
-        if (! $this->calc()->getTotalTaxMap()) {
+        if (!$this->calc()->getTotalTaxMap()) {
             return $data;
         }
 
@@ -438,7 +434,7 @@ trait MakesInvoiceValues
         $data = '';
         $entity = $this->client ? $this->client : $this->vendor;
 
-        if (! $this->calc()->getTotalTaxMap()) {
+        if (!$this->calc()->getTotalTaxMap()) {
             return $data;
         }
 
@@ -481,13 +477,14 @@ trait MakesInvoiceValues
     */
     public function generateAppUrl()
     {
-        //return rtrim(config('ninja.app_url'), "/");
+        // return rtrim(config('ninja.app_url'), "/");
         return config('ninja.app_url');
     }
 
     /**
      * Builds CSS to assist with the generation
      * of Repeating headers and footers on the PDF.
+     *
      * @return string The css string
      */
     public function generateCustomCSS(): string
@@ -560,9 +557,9 @@ trait MakesInvoiceValues
 
         if ($settings->all_pages_header && $settings->all_pages_footer) {
             $css .= $header_and_footer;
-        } elseif ($settings->all_pages_header && ! $settings->all_pages_footer) {
+        } elseif ($settings->all_pages_header && !$settings->all_pages_footer) {
             $css .= $header;
-        } elseif (! $settings->all_pages_header && $settings->all_pages_footer) {
+        } elseif (!$settings->all_pages_header && $settings->all_pages_footer) {
             $css .= $footer;
         }
 

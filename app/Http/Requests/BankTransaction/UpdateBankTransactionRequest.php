@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,8 +20,6 @@ class UpdateBankTransactionRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -31,7 +28,7 @@ class UpdateBankTransactionRequest extends Request
 
     public function rules()
     {
-        /* Ensure we have a client name, and that all emails are unique*/
+        /* Ensure we have a client name, and that all emails are unique */
         $rules = [
             'date' => 'bail|required|date',
             'amount' => 'numeric|required',
@@ -49,7 +46,6 @@ class UpdateBankTransactionRequest extends Request
 
         $rules['bank_integration_id'] = 'bail|required|exists:bank_integrations,id,company_id,' . auth()->user()->company()->id . ',is_deleted,0';
 
-
         return $rules;
     }
 
@@ -57,10 +53,9 @@ class UpdateBankTransactionRequest extends Request
     {
         $input = $this->all();
 
-
         if (array_key_exists('baseType', $input) && strlen($input['baseType']) > 1) {
             $input['base_type'] = $input['baseType'];
-        } //== 'deposit' ? 'CREDIT' : 'DEBIT';
+        } // == 'deposit' ? 'CREDIT' : 'DEBIT';
 
         if (array_key_exists('vendor_id', $input) && strlen($input['vendor_id']) > 1) {
             $input['vendor_id'] = $this->decodePrimaryKey($input['vendor_id']);
@@ -74,7 +69,7 @@ class UpdateBankTransactionRequest extends Request
             $input['ninja_category_id'] = $this->decodePrimaryKey($input['ninja_category_id']);
         }
 
-        if (array_key_exists('bank_integration_id', $input) && $input['bank_integration_id'] == "") {
+        if (array_key_exists('bank_integration_id', $input) && $input['bank_integration_id'] == '') {
             unset($input['bank_integration_id']);
         } elseif (array_key_exists('bank_integration_id', $input) && strlen($input['bank_integration_id']) > 1) {
             $input['bank_integration_id'] = $this->decodePrimaryKey($input['bank_integration_id']);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,6 +27,9 @@ use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
 use App\Utils\Traits\MakesHash;
 use Exception;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
+use Stripe\Charge;
 use Stripe\Customer;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Exception\AuthenticationException;
@@ -35,6 +37,7 @@ use Stripe\Exception\CardException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\Exception\RateLimitException;
 use Stripe\PaymentIntent;
+use Stripe\SetupIntent;
 
 class ACH implements LivewireMethodInterface
 {
@@ -58,12 +61,10 @@ class ACH implements LivewireMethodInterface
     //     return render('gateways.stripe.ach.authorize', array_merge($data));
     // }
 
-
     /**
      * Instant Verification methods with fall back to microdeposits.
      *
-     * @param array $data
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Factory|View
      */
     public function authorizeView(array $data)
     {
@@ -72,7 +73,7 @@ class ACH implements LivewireMethodInterface
         $customer = $this->stripe->findOrCreateCustomer();
 
         // Create SetupIntent with Financial Connections for instant verification
-        $intent = \Stripe\SetupIntent::create([
+        $intent = SetupIntent::create([
             'customer' => $customer->id,
             'usage' => 'off_session',
             'payment_method_types' => ['us_bank_account'],
@@ -118,7 +119,7 @@ class ACH implements LivewireMethodInterface
 
             // Determine verification state based on SetupIntent status
             /** @var string $status */
-            $status = $setup_intent->status ?? 'unauthorized'; //@phpstan-ignore-line
+            $status = $setup_intent->status ?? 'unauthorized'; // @phpstan-ignore-line
             $state = match ($status) {
                 'succeeded' => 'authorized',
                 'requires_action' => 'unauthorized', // Microdeposit verification pending
@@ -126,8 +127,8 @@ class ACH implements LivewireMethodInterface
             };
 
             // Build a new stdClass object for storage (Stripe objects are immutable)
-            $method = new \stdClass();
-            $method->id = $setup_intent->payment_method; //@phpstan-ignore-line
+            $method = new \stdClass;
+            $method->id = $setup_intent->payment_method; // @phpstan-ignore-line
             $method->bank_name = $bank_account->bank_name;
             $method->last4 = $bank_account->last4;
             $method->state = $state;
@@ -135,8 +136,8 @@ class ACH implements LivewireMethodInterface
             // If microdeposit verification is required, store the verification URL
             if ($status === 'requires_action'
                 && isset($setup_intent->next_action)
-                && ($setup_intent->next_action->type ?? null) === 'verify_with_microdeposits') { //@phpstan-ignore-line
-                $method->next_action = $setup_intent->next_action->verify_with_microdeposits->hosted_verification_url ?? null; //@phpstan-ignore-line
+                && ($setup_intent->next_action->type ?? null) === 'verify_with_microdeposits') { // @phpstan-ignore-line
+                $method->next_action = $setup_intent->next_action->verify_with_microdeposits->hosted_verification_url ?? null; // @phpstan-ignore-line
             }
 
             // Note: We don't attach the payment method here - it's already linked to the
@@ -159,7 +160,7 @@ class ACH implements LivewireMethodInterface
                 'method' => GatewayType::BANK_TRANSFER,
             ], false);
 
-            $mailer = new NinjaMailerObject();
+            $mailer = new NinjaMailerObject;
 
             $mailer->mailable = new ACHVerificationNotification(
                 auth()->guard('contact')->user()->client->company,
@@ -193,8 +194,8 @@ class ACH implements LivewireMethodInterface
         $stripe_event = $event['data']['object'];
 
         $token = ClientGatewayToken::query()->where('token', $stripe_event['id'])
-                                   ->where('gateway_customer_reference', $stripe_event['customer'])
-                                   ->first();
+            ->where('gateway_customer_reference', $stripe_event['customer'])
+            ->first();
 
         if ($token && isset($stripe_event['object']) && $stripe_event['object'] == 'bank_account' && isset($stripe_event['status']) && $stripe_event['status'] == 'verified') {
             $meta = $token->meta;
@@ -237,6 +238,7 @@ class ACH implements LivewireMethodInterface
 
         if (!$token) {
             nlog("ACH SetupIntent succeeded but no matching token found for payment_method: {$payment_method_id}");
+
             return;
         }
 
@@ -258,7 +260,7 @@ class ACH implements LivewireMethodInterface
     public function verificationView(ClientGatewayToken $token)
     {
 
-        //double check here if we need to show the verification view.
+        // double check here if we need to show the verification view.
         $this->stripe->init();
 
         if (substr($token->token, 0, 2) == 'pm') {
@@ -351,6 +353,7 @@ class ACH implements LivewireMethodInterface
 
         if (!$data['authorized']) {
             $token = $data['tokens'][0];
+
             return redirect()->route('client.payment_methods.show', $token->hashed_id);
         }
 
@@ -368,7 +371,7 @@ class ACH implements LivewireMethodInterface
 
         $description = $this->stripe->getDescription(false);
 
-        //@2025-11-21: Charges API is deprecated for ACH, we can pass the ba_ token with mandate data now.
+        // @2025-11-21: Charges API is deprecated for ACH, we can pass the ba_ token with mandate data now.
         // if (substr($cgt->token, 0, 2) === 'pm') {
         return $this->paymentIntentTokenBilling($amount, $description, $cgt, false);
         // }
@@ -386,7 +389,7 @@ class ACH implements LivewireMethodInterface
                 'source' => $cgt->token,
             ];
 
-            $state['charge'] = \Stripe\Charge::create([
+            $state['charge'] = Charge::create([
                 'amount' => $state['amount'],
                 'currency' => $state['currency'],
                 'customer' => $state['customer'],
@@ -442,9 +445,9 @@ class ACH implements LivewireMethodInterface
 
             if (str_starts_with($cgt->token, 'ba_')) {
 
-                $data["mandate_data"] = [
-                    "customer_acceptance" => [
-                        "type" => "offline",
+                $data['mandate_data'] = [
+                    'customer_acceptance' => [
+                        'type' => 'offline',
                     ],
                 ];
             }
@@ -452,7 +455,7 @@ class ACH implements LivewireMethodInterface
             $response = $this->stripe->createPaymentIntent($data);
 
             SystemLogger::dispatch($response, SystemLog::CATEGORY_GATEWAY_RESPONSE, SystemLog::EVENT_GATEWAY_SUCCESS, SystemLog::TYPE_STRIPE, $this->stripe->client, $this->stripe->client->company);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $data = [
                 'status' => '',
                 'error_type' => '',
@@ -494,7 +497,7 @@ class ACH implements LivewireMethodInterface
             SystemLogger::dispatch($data, SystemLog::CATEGORY_GATEWAY_RESPONSE, SystemLog::EVENT_GATEWAY_FAILURE, SystemLog::TYPE_STRIPE, $this->stripe->client, $this->stripe->client->company);
         }
 
-        if (! $response) {
+        if (!$response) {
             return false;
         }
 
@@ -526,7 +529,7 @@ class ACH implements LivewireMethodInterface
         $response = json_decode($request->gateway_response);
         $bank_account_response = json_decode($request->bank_account_response);
 
-        if (in_array($response->status, ['requires_action','requires_source_action']) && ($response->next_action->type ?? null) == 'verify_with_microdeposits') {
+        if (in_array($response->status, ['requires_action', 'requires_source_action']) && ($response->next_action->type ?? null) == 'verify_with_microdeposits') {
             $method = $bank_account_response->payment_method->us_bank_account ?? null;
 
             if (!$method) {
@@ -598,7 +601,7 @@ class ACH implements LivewireMethodInterface
             $this->stripe->client->company,
         );
 
-        if (! $client_present) {
+        if (!$client_present) {
             return $payment;
         }
 
@@ -609,7 +612,7 @@ class ACH implements LivewireMethodInterface
     {
         $this->stripe->init();
 
-        //it may be a payment intent here.
+        // it may be a payment intent here.
         if ($request->input('client_secret') != '') {
             return $this->handlePaymentIntentResponse($request);
         }
@@ -619,7 +622,7 @@ class ACH implements LivewireMethodInterface
             ->where('company_id', auth()->guard('contact')->user()->client->company->id)
             ->first();
 
-        if (! $source) {
+        if (!$source) {
             throw new PaymentFailed(ctrans('texts.payment_token_not_found'), 401);
         }
 
@@ -646,7 +649,7 @@ class ACH implements LivewireMethodInterface
         // }
 
         try {
-            $state['charge'] = \Stripe\Charge::create([
+            $state['charge'] = Charge::create([
                 'amount' => $state['amount'],
                 'currency' => $state['currency'],
                 'customer' => $state['customer'],
@@ -696,7 +699,7 @@ class ACH implements LivewireMethodInterface
             $this->stripe->client->company,
         );
 
-        if (! $client_present) {
+        if (!$client_present) {
             return $payment;
         }
 
@@ -729,7 +732,7 @@ class ACH implements LivewireMethodInterface
         $state = property_exists($method, 'state') ? $method->state : 'unauthorized';
 
         try {
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) \sprintf('%s (%s)', $method->bank_name, ctrans('texts.ach'));
             $payment_meta->last4 = (string) $method->last4;
             $payment_meta->type = GatewayType::BANK_TRANSFER;
@@ -748,7 +751,6 @@ class ACH implements LivewireMethodInterface
             /**
              * Ensure the method does not already exist!!
              */
-
             $token = ClientGatewayToken::where([
                 'gateway_customer_reference' => $customer->id,
                 'token' => $method->id,

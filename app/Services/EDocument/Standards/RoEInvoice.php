@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards;
 
 use App\Models\Invoice;
+use App\Models\Product;
 use App\Services\AbstractService;
 use CleverIt\UBL\Invoice\Address;
 use CleverIt\UBL\Invoice\ClassifiedTaxCategory;
@@ -32,7 +32,6 @@ use CleverIt\UBL\Invoice\TaxCategory;
 use CleverIt\UBL\Invoice\TaxScheme;
 use CleverIt\UBL\Invoice\TaxSubTotal;
 use CleverIt\UBL\Invoice\TaxTotal;
-use App\Models\Product;
 
 /**
  * Requirements:
@@ -101,48 +100,48 @@ class RoEInvoice extends AbstractService
     ];
 
     private array $sectorCodes = [
-        'RO-AB'  => 'Manufacturing, Agriculture',
-        'RO-AG'  => 'Manufacturing, Agriculture',
-        'RO-AR'  => 'Manufacturing, Agriculture',
-        'RO-B'  => 'Information Technology (IT), Education, Tourism',
-        'RO-BC'  => 'Manufacturing, Agriculture',
-        'RO-BH'  => 'Agriculture, Manufacturing',
-        'RO-BN'  => 'Agriculture',
-        'RO-BR'  => 'Agriculture',
-        'RO-BT'  => 'Agriculture',
-        'RO-BV'  => 'Tourism, Agriculture',
-        'RO-BZ'  => 'Agriculture',
-        'RO-CJ'  => 'Information Technology (IT), Education, Tourism',
-        'RO-CL'  => 'Agriculture',
-        'RO-CS'  => 'Manufacturing, Agriculture',
-        'RO-CT'  => 'Tourism, Agriculture',
-        'RO-CV'  => 'Agriculture',
-        'RO-DB'  => 'Agriculture',
-        'RO-DJ'  => 'Agriculture',
-        'RO-GJ'  => 'Manufacturing, Agriculture',
-        'RO-GL'  => 'Energy, Manufacturing',
-        'RO-GR'  => 'Agriculture',
-        'RO-HD'  => 'Energy, Manufacturing',
-        'RO-HR'  => 'Agriculture',
-        'RO-IF'  => 'Information Technology (IT), Education',
-        'RO-IL'  => 'Agriculture',
-        'RO-IS'  => 'Information Technology (IT), Education, Agriculture',
-        'RO-MH'  => 'Manufacturing, Agriculture',
-        'RO-MM'  => 'Agriculture',
-        'RO-MS'  => 'Energy, Manufacturing, Agriculture',
-        'RO-NT'  => 'Agriculture',
-        'RO-OT'  => 'Agriculture',
-        'RO-PH'  => 'Energy, Manufacturing',
-        'RO-SB'  => 'Manufacturing, Agriculture',
-        'RO-SJ'  => 'Agriculture',
-        'RO-SM'  => 'Agriculture',
-        'RO-SV'  => 'Agriculture',
-        'RO-TL'  => 'Agriculture',
-        'RO-TM'  => 'Agriculture, Manufacturing',
-        'RO-TR'  => 'Agriculture',
-        'RO-VL'  => 'Agriculture',
-        'RO-VN'  => 'Agriculture',
-        'RO-VS'  => 'Agriculture',
+        'RO-AB' => 'Manufacturing, Agriculture',
+        'RO-AG' => 'Manufacturing, Agriculture',
+        'RO-AR' => 'Manufacturing, Agriculture',
+        'RO-B' => 'Information Technology (IT), Education, Tourism',
+        'RO-BC' => 'Manufacturing, Agriculture',
+        'RO-BH' => 'Agriculture, Manufacturing',
+        'RO-BN' => 'Agriculture',
+        'RO-BR' => 'Agriculture',
+        'RO-BT' => 'Agriculture',
+        'RO-BV' => 'Tourism, Agriculture',
+        'RO-BZ' => 'Agriculture',
+        'RO-CJ' => 'Information Technology (IT), Education, Tourism',
+        'RO-CL' => 'Agriculture',
+        'RO-CS' => 'Manufacturing, Agriculture',
+        'RO-CT' => 'Tourism, Agriculture',
+        'RO-CV' => 'Agriculture',
+        'RO-DB' => 'Agriculture',
+        'RO-DJ' => 'Agriculture',
+        'RO-GJ' => 'Manufacturing, Agriculture',
+        'RO-GL' => 'Energy, Manufacturing',
+        'RO-GR' => 'Agriculture',
+        'RO-HD' => 'Energy, Manufacturing',
+        'RO-HR' => 'Agriculture',
+        'RO-IF' => 'Information Technology (IT), Education',
+        'RO-IL' => 'Agriculture',
+        'RO-IS' => 'Information Technology (IT), Education, Agriculture',
+        'RO-MH' => 'Manufacturing, Agriculture',
+        'RO-MM' => 'Agriculture',
+        'RO-MS' => 'Energy, Manufacturing, Agriculture',
+        'RO-NT' => 'Agriculture',
+        'RO-OT' => 'Agriculture',
+        'RO-PH' => 'Energy, Manufacturing',
+        'RO-SB' => 'Manufacturing, Agriculture',
+        'RO-SJ' => 'Agriculture',
+        'RO-SM' => 'Agriculture',
+        'RO-SV' => 'Agriculture',
+        'RO-TL' => 'Agriculture',
+        'RO-TM' => 'Agriculture, Manufacturing',
+        'RO-TR' => 'Agriculture',
+        'RO-VL' => 'Agriculture',
+        'RO-VN' => 'Agriculture',
+        'RO-VS' => 'Agriculture',
     ];
 
     public function __construct(public Invoice $invoice) {}
@@ -161,7 +160,6 @@ class RoEInvoice extends AbstractService
 
     /**
      * Execute the job
-     * @return UBLInvoice
      */
     public function run(): UBLInvoice
     {
@@ -183,14 +181,14 @@ class RoEInvoice extends AbstractService
         $clPhone = $client->present()->phone();
         $clEmail = $client->present()->email();
 
-        $ubl_invoice = new UBLInvoice();
+        $ubl_invoice = new UBLInvoice;
 
-        $ubl_invoice->setCustomizationID("urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1");
+        $ubl_invoice->setCustomizationID('urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1');
         // invoice
-        $ubl_invoice->setId($invoice->number); //@phpstan-ignore-line
+        $ubl_invoice->setId($invoice->number); // @phpstan-ignore-line
         $ubl_invoice->setIssueDate(date_create($invoice->date));
         $ubl_invoice->setDueDate(date_create($invoice->due_date ?? $invoice->date));
-        $ubl_invoice->setInvoiceTypeCode("380");
+        $ubl_invoice->setInvoiceTypeCode('380');
         $ubl_invoice->setDocumentCurrencyCode($invoice->client->getCurrencyCode());
         $ubl_invoice->setTaxCurrencyCode($invoice->client->getCurrencyCode());
 
@@ -214,13 +212,13 @@ class RoEInvoice extends AbstractService
         $customer_party = $this->createParty($client, $clientVatNr, $clEmail, $clPhone, $clientIdn, $clFullName, 'client', $taxName);
         $ubl_invoice->setAccountingCustomerParty($customer_party);
 
-        $payeeFinancialAccount = (new PayeeFinancialAccount())
+        $payeeFinancialAccount = (new PayeeFinancialAccount)
             ->setBankId($company->settings->custom_value1)
             ->setBankName($company->settings->custom_value2);
 
-        $paymentMeans = (new PaymentMeans())
-        ->setPaymentMeansCode($invoice->custom_value1)
-        ->setPayeeFinancialAccount($payeeFinancialAccount);
+        $paymentMeans = (new PaymentMeans)
+            ->setPaymentMeansCode($invoice->custom_value1)
+            ->setPayeeFinancialAccount($payeeFinancialAccount);
         $ubl_invoice->setPaymentMeans($paymentMeans);
 
         // line items
@@ -254,19 +252,19 @@ class RoEInvoice extends AbstractService
         }
 
         $invoicing_data = $this->invoice->calc();
-        $taxtotal = new TaxTotal();
+        $taxtotal = new TaxTotal;
         $taxtotal->setTaxAmount($invoicing_data->getItemTotalTaxes());
-        $taxtotal->addTaxSubTotal((new TaxSubTotal())
+        $taxtotal->addTaxSubTotal((new TaxSubTotal)
             ->setTaxAmount($invoicing_data->getItemTotalTaxes())
             ->setTaxableAmount($taxable)
-            ->setTaxCategory((new TaxCategory())
-                ->setId("S")
+            ->setTaxCategory((new TaxCategory)
+                ->setId('S')
                 ->setPercent($taxRatePercent)
-                ->setTaxScheme(((new TaxScheme())->setId(($taxNameScheme === 'TVA') ? 'VAT' : $taxNameScheme)))));
+                ->setTaxScheme(((new TaxScheme)->setId(($taxNameScheme === 'TVA') ? 'VAT' : $taxNameScheme)))));
 
         $ubl_invoice->setTaxTotal($taxtotal);
 
-        $ubl_invoice->setLegalMonetaryTotal((new LegalMonetaryTotal())
+        $ubl_invoice->setLegalMonetaryTotal((new LegalMonetaryTotal)
             ->setLineExtensionAmount($taxable)
             ->setTaxExclusiveAmount($taxable)
             ->setTaxInclusiveAmount($invoice->amount)
@@ -277,9 +275,9 @@ class RoEInvoice extends AbstractService
 
     private function createParty($company, $vatNr, $eMail, $phone, $idNr, $fullName, $compType, $taxNameScheme = '')
     {
-        $party = new Party();
+        $party = new Party;
         $party->setPartyIdentification(preg_replace('/^RO/', '', $vatNr));
-        $address = new Address();
+        $address = new Address;
         if ($compType === 'company') {
             $address->setCityName($this->resolveSectorCode($company->settings->state));
             $address->setStreetName($company->settings->address1);
@@ -292,13 +290,13 @@ class RoEInvoice extends AbstractService
 
         if ($compType === 'company') {
             if ($company->settings->country_id) {
-                $country = new Country();
+                $country = new Country;
                 $country->setIdentificationCode($company->country()->iso_3166_2);
                 $address->setCountry($country);
             }
         } elseif ($compType === 'client') {
             if ($company->country_id) {
-                $country = new Country();
+                $country = new Country;
                 $country->setIdentificationCode($company->country->iso_3166_2);
                 $address->setCountry($country);
             }
@@ -308,14 +306,14 @@ class RoEInvoice extends AbstractService
 
         $taxScheme = null;
         if (preg_match('/^RO/', $vatNr)) {
-            $taxScheme = (new TaxScheme())
+            $taxScheme = (new TaxScheme)
                 ->setCompanyId($vatNr)
                 ->setId(($taxNameScheme === 'TVA') ? 'VAT' : $taxNameScheme);
         }
 
         $party->setTaxScheme($taxScheme);
 
-        $legalEntity = new LegalEntity();
+        $legalEntity = new LegalEntity;
         if ($compType === 'company') {
             $legalEntity->setRegistrationName($company->settings->name);
         } elseif ($compType === 'client') {
@@ -330,7 +328,7 @@ class RoEInvoice extends AbstractService
 
         $party->setLegalEntity($legalEntity);
 
-        $contact = (new Contact())
+        $contact = (new Contact)
             ->setName($fullName)
             ->setElectronicMail($eMail)
             ->setTelephone($phone);
@@ -343,42 +341,42 @@ class RoEInvoice extends AbstractService
     private function createInvoiceLine($index, $item)
     {
         if (strlen($item->tax_name1) > 1) {
-            $classifiedTaxCategory = (new ClassifiedTaxCategory())
-            ->setId($this->resolveTaxCode($item->tax_id ?? 1))
-            ->setPercent($item->tax_rate1)
-            ->setTaxScheme(((new TaxScheme())->setId(($item->tax_name1 === 'TVA') ? 'VAT' : $item->tax_name1)));
+            $classifiedTaxCategory = (new ClassifiedTaxCategory)
+                ->setId($this->resolveTaxCode($item->tax_id ?? 1))
+                ->setPercent($item->tax_rate1)
+                ->setTaxScheme(((new TaxScheme)->setId(($item->tax_name1 === 'TVA') ? 'VAT' : $item->tax_name1)));
         } elseif (strlen($item->tax_name2) > 1) {
-            $classifiedTaxCategory = (new ClassifiedTaxCategory())
-            ->setId($this->resolveTaxCode($item->tax_id ?? 1))
-            ->setPercent($item->tax_rate2)
-            ->setTaxScheme(((new TaxScheme())->setId(($item->tax_name2 === 'TVA') ? 'VAT' : $item->tax_name2)));
+            $classifiedTaxCategory = (new ClassifiedTaxCategory)
+                ->setId($this->resolveTaxCode($item->tax_id ?? 1))
+                ->setPercent($item->tax_rate2)
+                ->setTaxScheme(((new TaxScheme)->setId(($item->tax_name2 === 'TVA') ? 'VAT' : $item->tax_name2)));
         } elseif (strlen($item->tax_name3) > 1) {
-            $classifiedTaxCategory = (new ClassifiedTaxCategory())
-            ->setId($this->resolveTaxCode($item->tax_id ?? 1))
-            ->setPercent($item->tax_rate3)
-            ->setTaxScheme(((new TaxScheme())->setId(($item->tax_name3 === 'TVA') ? 'VAT' : $item->tax_name3)));
+            $classifiedTaxCategory = (new ClassifiedTaxCategory)
+                ->setId($this->resolveTaxCode($item->tax_id ?? 1))
+                ->setPercent($item->tax_rate3)
+                ->setTaxScheme(((new TaxScheme)->setId(($item->tax_name3 === 'TVA') ? 'VAT' : $item->tax_name3)));
         } else {
 
-            $classifiedTaxCategory = (new ClassifiedTaxCategory())
-            ->setId($this->resolveTaxCode($item->tax_id ?? 8))
-            ->setPercent(0)
-            ->setTaxScheme(((new TaxScheme())->setId(($item->tax_name3 === 'TVA') ? 'VAT' : $item->tax_name3)));
+            $classifiedTaxCategory = (new ClassifiedTaxCategory)
+                ->setId($this->resolveTaxCode($item->tax_id ?? 8))
+                ->setPercent(0)
+                ->setTaxScheme(((new TaxScheme)->setId(($item->tax_name3 === 'TVA') ? 'VAT' : $item->tax_name3)));
 
         }
 
-        $invoiceLine = (new InvoiceLine())
+        $invoiceLine = (new InvoiceLine)
             ->setId($index + 1)
             ->setInvoicedQuantity($item->quantity)
             ->setUnitCode($item->unit_code ?? 'C62')
             ->setLineExtensionAmount($item->line_total)
-            ->setItem((new Item())
+            ->setItem((new Item)
                 ->setName($item->product_key)
                 ->setDescription($item->notes)
                 ->setClassifiedTaxCategory([$classifiedTaxCategory]))
-            ->setPrice((new Price())
+            ->setPrice((new Price)
                 ->setPriceAmount($this->costWithDiscount($item)));
 
-        //->setSellersItemIdentification("1ABCD"));
+        // ->setSellersItemIdentification("1ABCD"));
 
         return $invoiceLine;
     }
@@ -387,23 +385,21 @@ class RoEInvoice extends AbstractService
     {
         $invoice = $this->invoice;
         $taxAmount = $this->taxAmount($taxable, $taxRate);
-        $taxScheme = ((new TaxScheme()))->setId($taxName);
+        $taxScheme = ((new TaxScheme))->setId($taxName);
 
-        $taxtotal->addTaxSubTotal((new TaxSubTotal())
-                ->setTaxAmount($taxAmount)
-                ->setTaxableAmount($taxable)
-                ->setTaxCategory((new TaxCategory())
-                    ->setId($taxName)
-                    ->setName($taxName)
-                    ->setTaxScheme($taxScheme)
-                    ->setPercent($taxRate)));
+        $taxtotal->addTaxSubTotal((new TaxSubTotal)
+            ->setTaxAmount($taxAmount)
+            ->setTaxableAmount($taxable)
+            ->setTaxCategory((new TaxCategory)
+                ->setId($taxName)
+                ->setName($taxName)
+                ->setTaxScheme($taxScheme)
+                ->setPercent($taxRate)));
 
         return $taxAmount;
     }
 
     /**
-     * @param $item
-     * @param $invoice_total
      * @return float
      */
     private function getItemTaxable($item, $invoice_total)
@@ -528,8 +524,8 @@ class RoEInvoice extends AbstractService
     public function generateXml(): string
     {
         $ubl_invoice = $this->run(); // Call the existing handle method to get the UBLInvoice
-        $generator = new Generator();
+        $generator = new Generator;
+
         return $generator->invoice($ubl_invoice, $this->invoice->client->getCurrencyCode());
     }
-
 }

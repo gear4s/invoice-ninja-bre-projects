@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,8 +21,8 @@ use Illuminate\Support\Str;
 
 class CreateUser
 {
-    use MakesHash;
     use Dispatchable;
+    use MakesHash;
 
     protected $request;
 
@@ -36,10 +35,7 @@ class CreateUser
     /**
      * Create a new job instance.
      *
-     * @param array $request
-     * @param $account
-     * @param $company
-     * @param bool $company_owner
+     * @param  bool  $company_owner
      */
     public function __construct(array $request, $account, $company, $company_owner = false)
     {
@@ -51,18 +47,16 @@ class CreateUser
 
     /**
      * Execute the job.
-     *
-     * @return User|null
      */
     public function handle(): ?User
     {
-        $user = new User();
+        $user = new User;
         $user->account_id = $this->account->id;
         $user->password = $this->request['password'] ? bcrypt($this->request['password']) : '';
         $user->accepted_terms_version = config('ninja.terms_version');
         $user->confirmation_code = $this->createDbHash($this->company->db);
         $user->fill($this->request);
-        $user->email = $this->request['email']; //todo need to remove this in production
+        $user->email = $this->request['email']; // todo need to remove this in production
         $user->last_login = now();
         $user->referral_code = Str::lower(Str::random(32));
         $user->ip = request()->ip();
@@ -83,7 +77,7 @@ class CreateUser
             'settings' => null,
         ]);
 
-        if (! Ninja::isSelfHost()) {
+        if (!Ninja::isSelfHost()) {
             event(new UserWasCreated($user, $user, $this->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), request()->hasHeader('X-REACT') ?? false));
         }
 

@@ -6,29 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\ClientContact;
 use App\DataMapper\InvoiceItem;
-use Tests\MockAccountData;
-use App\Utils\Traits\MakesHash;
-use App\Repositories\InvoiceRepository;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Credit;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Repositories\CreditRepository;
+use App\Repositories\InvoiceRepository;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
 use Tests\TestCase;
 
 class CreditTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -41,23 +42,23 @@ class CreditTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testCreditEInvoiceValidation()
+    public function test_credit_e_invoice_validation()
     {
 
         $credit_update = [
             'e_invoice' => [
-                    'CreditNote' => [
-                        'BillingReference' => [
-                            [
+                'CreditNote' => [
+                    'BillingReference' => [
+                        [
                             'InvoiceDocumentReference' => [
                                 'ID' => '',
                                 'IssueDate' => '',
                             ],
-                            ]
                         ],
                     ],
                 ],
-            
+            ],
+
         ];
 
         $data = array_merge($this->credit->toArray(), $credit_update);
@@ -65,26 +66,26 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->putJson('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(422);
     }
 
-    public function testCreditEInvoiceValidationWithProperNumber()
+    public function test_credit_e_invoice_validation_with_proper_number()
     {
 
         $credit_update = [
             'e_invoice' => [
-                    'CreditNote' => [
-                        'BillingReference' => [
-                            [
+                'CreditNote' => [
+                    'BillingReference' => [
+                        [
                             'InvoiceDocumentReference' => [
-                        'ID' => 'INV-123456S',
-                        'IssueDate' => '',
+                                'ID' => 'INV-123456S',
+                                'IssueDate' => '',
                             ],
+                        ],
                     ],
                 ],
-            ],
             ],
         ];
 
@@ -93,26 +94,26 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->putJson('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(200);
     }
 
-    public function testCreditEInvoiceValidationWithProperDate()
+    public function test_credit_e_invoice_validation_with_proper_date()
     {
 
         $credit_update = [
             'e_invoice' => [
-                    'CreditNote' => [
-                        'BillingReference' => [
-                            [
+                'CreditNote' => [
+                    'BillingReference' => [
+                        [
                             'InvoiceDocumentReference' => [
-                        'ID' => 'INV-123456S',
-                        'IssueDate' => '2026-01-18',
+                                'ID' => 'INV-123456S',
+                                'IssueDate' => '2026-01-18',
+                            ],
                         ],
                     ],
                 ],
-            ],
             ],
         ];
 
@@ -121,51 +122,50 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->putJson('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(200);
     }
 
-
-    public function testCreditEInvoiceValidationWithIncorrectDate()
+    public function test_credit_e_invoice_validation_with_incorrect_date()
     {
 
         $credit_update = [
             'e_invoice' => [
-                    'CreditNote' => [
-                        'BillingReference' => [
-                            [
-                                'InvoiceDocumentReference' => [
-                                    'ID' => 'INV-123456S',
-                                    'IssueDate' => '203326-01-118',
-                                ],
+                'CreditNote' => [
+                    'BillingReference' => [
+                        [
+                            'InvoiceDocumentReference' => [
+                                'ID' => 'INV-123456S',
+                                'IssueDate' => '203326-01-118',
                             ],
                         ],
                     ],
                 ],
-            ];
+            ],
+        ];
 
         $data = array_merge($this->credit->toArray(), $credit_update);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->putJson('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(422);
     }
 
-    public function testCreditEInvoiceValidationWithIncorrectDateButPassesValidation()
+    public function test_credit_e_invoice_validation_with_incorrect_date_but_passes_validation()
     {
 
         $credit_update = [
             'e_invoice' => [
-                    'CreditNote' => [
-                        'BillingReference' => [
-                            [
-                    'InvoiceDocumentReference' => [
-                        'ID' => 'INV-123456S',
-                        'IssueDate' => '3000-01-11',
+                'CreditNote' => [
+                    'BillingReference' => [
+                        [
+                            'InvoiceDocumentReference' => [
+                                'ID' => 'INV-123456S',
+                                'IssueDate' => '3000-01-11',
                             ],
                         ],
                     ],
@@ -178,13 +178,12 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->putJson('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(200);
     }
 
-
-    public function testCreditDeletionAfterInvoiceReversalAndPaymentRefund()
+    public function test_credit_deletion_after_invoice_reversal_and_payment_refund()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -192,15 +191,14 @@ class CreditTest extends TestCase
             'balance' => 0,
             'paid_to_date' => 0,
         ]);
-    
-    
-        $ii = new InvoiceItem();
+
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -212,16 +210,16 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $i = $i->calc()->getInvoice();
-        $i = $i->service()->markPaid()->save(); //paid
+        $i = $i->service()->markPaid()->save(); // paid
 
         $payment = $i->payments()->first();
 
@@ -236,30 +234,29 @@ class CreditTest extends TestCase
         unset($credit_array['backup']);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->post('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/credits', $credit_array);
 
-        $response->assertStatus(200); //reversal - credit created.
+        $response->assertStatus(200); // reversal - credit created.
 
         $arr = $response->json();
-        $credit = \App\Models\Credit::find($this->decodePrimaryKey($arr['data']['id']));
+        $credit = Credit::find($this->decodePrimaryKey($arr['data']['id']));
 
         $this->assertNotNull($credit);
         $payment = $payment->fresh();
 
         $i = $i->fresh();
 
-        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
-        
+        $this->assertEquals(Invoice::STATUS_REVERSED, $i->status_id);
+
         $client = $i->client;
 
         $this->assertEquals(100, $client->credit_balance);
         $this->assertEquals(0, $client->paid_to_date);
         $this->assertEquals(0, $client->balance);
 
-
-        //delete the credit!!
+        // delete the credit!!
 
         $data = [
             'ids' => [$credit->hashed_id],
@@ -276,11 +273,10 @@ class CreditTest extends TestCase
         $payment = $payment->fresh();
 
         $this->assertEquals($payment->amount, $payment->refunded);
-        $this->assertEquals(\App\Models\Payment::STATUS_REFUNDED, $payment->status_id);
+        $this->assertEquals(Payment::STATUS_REFUNDED, $payment->status_id);
         $this->assertTrue($payment->paymentables()->where('paymentable_type', Credit::class)->where('paymentable_id', $credit->id)->exists());
-    
-    
-        //lets restore the credit!!
+
+        // lets restore the credit!!
         $data = [
             'ids' => [$credit->hashed_id],
             'action' => 'restore',
@@ -295,12 +291,12 @@ class CreditTest extends TestCase
 
         $payment = $payment->fresh();
         $this->assertEquals(0, $payment->refunded);
-        $this->assertEquals(\App\Models\Payment::STATUS_COMPLETED, $payment->status_id);
+        $this->assertEquals(Payment::STATUS_COMPLETED, $payment->status_id);
         $this->assertFalse($payment->paymentables()->where('paymentable_type', Credit::class)->where('paymentable_id', $credit->id)->exists());
-    
+
     }
 
-    public function testInvoiceWithMultiplePaymentsAndSingleCreditDeletionPostInvoiceReversal()
+    public function test_invoice_with_multiple_payments_and_single_credit_deletion_post_invoice_reversal()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -308,15 +304,14 @@ class CreditTest extends TestCase
             'balance' => 0,
             'paid_to_date' => 0,
         ]);
-    
-    
-        $ii = new InvoiceItem();
+
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -328,17 +323,17 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $i = $i->calc()->getInvoice();
 
-        $data =[
+        $data = [
             'date' => now()->format('Y-m-d'),
             'client_id' => $c->hashed_id,
             'invoices' => [
@@ -346,7 +341,7 @@ class CreditTest extends TestCase
                     'invoice_id' => $i->hashed_id,
                     'amount' => 10,
                 ],
-            ]
+            ],
         ];
 
         $response = $this->withHeaders([
@@ -355,7 +350,7 @@ class CreditTest extends TestCase
         ])->postJson('/api/v1/payments', $data);
 
         $response->assertStatus(200);
-        
+
         sleep(1);
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -383,15 +378,14 @@ class CreditTest extends TestCase
 
         $response->assertStatus(200);
 
-
         // At this stage we have 5 payments for half of the invoice amount.
-//create the reversal invoice for half of the invoice.
+        // create the reversal invoice for half of the invoice.
 
         $credit_array = $i->withoutRelations()->toArray();
         $credit_array['invoice_id'] = $i->hashed_id;
         $credit_array['client_id'] = $c->hashed_id;
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 50;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
@@ -401,11 +395,11 @@ class CreditTest extends TestCase
         unset($credit_array['backup']);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->post('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/credits', $credit_array);
 
-        $response->assertStatus(200); //reversal - credit created.
+        $response->assertStatus(200); // reversal - credit created.
 
         $arr = $response->json();
 
@@ -416,7 +410,7 @@ class CreditTest extends TestCase
 
         $credit = Credit::withTrashed()->find($this->decodePrimaryKey($arr['data']['id']));
 
-        //delete the credit!!
+        // delete the credit!!
         $data = [
             'ids' => [$arr['data']['id']],
             'action' => 'delete',
@@ -431,10 +425,10 @@ class CreditTest extends TestCase
 
         $invoice = $i->fresh();
 
-        $invoice->payments()->each(function ($payment) use ($credit){
+        $invoice->payments()->each(function ($payment) use ($credit) {
 
             $this->assertEquals($payment->amount, $payment->refunded);
-            $this->assertEquals(\App\Models\Payment::STATUS_REFUNDED, $payment->status_id);
+            $this->assertEquals(Payment::STATUS_REFUNDED, $payment->status_id);
             $this->assertTrue($payment->paymentables()->where('paymentable_type', Credit::class)->where('paymentable_id', $credit->id)->exists());
 
         });
@@ -445,7 +439,7 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $client->paid_to_date);
         $this->assertEquals(0, $client->balance);
 
-        //restore the credit!!
+        // restore the credit!!
 
         $data = [
             'ids' => [$arr['data']['id']],
@@ -461,10 +455,10 @@ class CreditTest extends TestCase
 
         $invoice = $i->fresh();
 
-        $invoice->payments()->each(function ($payment) use ($credit){
+        $invoice->payments()->each(function ($payment) use ($credit) {
 
             $this->assertEquals(0, $payment->refunded);
-            $this->assertEquals(\App\Models\Payment::STATUS_COMPLETED, $payment->status_id);
+            $this->assertEquals(Payment::STATUS_COMPLETED, $payment->status_id);
             $this->assertFalse($payment->paymentables()->where('paymentable_type', Credit::class)->where('paymentable_id', $credit->id)->exists());
 
         });
@@ -477,8 +471,7 @@ class CreditTest extends TestCase
 
     }
 
-
-    public function testClientPaidToDateStateAfterCreditCreatedForPaidInvoice()
+    public function test_client_paid_to_date_state_after_credit_created_for_paid_invoice()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -487,13 +480,13 @@ class CreditTest extends TestCase
             'paid_to_date' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -505,16 +498,16 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $i = $i->calc()->getInvoice();
-        $i = $i->service()->markPaid()->save(); //paid
+        $i = $i->service()->markPaid()->save(); // paid
 
         $payment = $i->payments()->first();
 
@@ -529,21 +522,21 @@ class CreditTest extends TestCase
         unset($credit_array['backup']);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->post('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/credits', $credit_array);
 
-        $response->assertStatus(200); //reversal - credit created.
+        $response->assertStatus(200); // reversal - credit created.
 
         $arr = $response->json();
-        $credit = \App\Models\Credit::find($this->decodePrimaryKey($arr['data']['id']));
+        $credit = Credit::find($this->decodePrimaryKey($arr['data']['id']));
 
         $this->assertNotNull($credit);
         $payment = $payment->fresh();
 
         $i = $i->fresh();
 
-        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
+        $this->assertEquals(Invoice::STATUS_REVERSED, $i->status_id);
         // $this->assertTrue($payment->credits()->exists());
 
         $client = $i->client;
@@ -554,9 +547,7 @@ class CreditTest extends TestCase
 
     }
 
-
-
-    public function testNewCreditDeletionAfterInvoiceReversalAndPaymentRefund()
+    public function test_new_credit_deletion_after_invoice_reversal_and_payment_refund()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -565,13 +556,13 @@ class CreditTest extends TestCase
             'paid_to_date' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -583,16 +574,16 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $i = $i->calc()->getInvoice();
-        $i = $i->service()->markPaid()->save(); //paid
+        $i = $i->service()->markPaid()->save(); // paid
 
         $payment = $i->payments()->first();
 
@@ -607,27 +598,26 @@ class CreditTest extends TestCase
         unset($credit_array['backup']);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->post('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/credits', $credit_array);
 
-        $response->assertStatus(200); //reversal - credit created.
+        $response->assertStatus(200); // reversal - credit created.
 
         $arr = $response->json();
-        $credit = \App\Models\Credit::find($this->decodePrimaryKey($arr['data']['id']));
+        $credit = Credit::find($this->decodePrimaryKey($arr['data']['id']));
 
         $this->assertNotNull($credit);
         $payment = $payment->fresh();
 
         $i = $i->fresh();
 
-        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
+        $this->assertEquals(Invoice::STATUS_REVERSED, $i->status_id);
         // $this->assertTrue($payment->credits()->exists());
 
         $client = $i->client;
 
         $this->assertEquals(100, $client->credit_balance);
-
 
         $refund_payload = [
             'id' => $payment->hashed_id,
@@ -654,10 +644,9 @@ class CreditTest extends TestCase
         $client = $client->fresh();
 
         $this->assertEquals(100, $payment->refunded);
-        $this->assertEquals(\App\Models\Payment::STATUS_REFUNDED, $payment->status_id);
+        $this->assertEquals(Payment::STATUS_REFUNDED, $payment->status_id);
         $this->assertEquals(0, $credit->balance);
         $this->assertEquals(Credit::STATUS_APPLIED, $credit->status_id);
-
 
         $this->assertEquals(0, $client->paid_to_date);
         $this->assertEquals(0, $client->balance);
@@ -678,7 +667,7 @@ class CreditTest extends TestCase
         $this->assertEquals(Credit::STATUS_APPLIED, $credit->status_id);
     }
 
-    public function testNewCreditDeletionAfterInvoiceReversal()
+    public function test_new_credit_deletion_after_invoice_reversal()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -687,13 +676,13 @@ class CreditTest extends TestCase
             'paid_to_date' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -705,12 +694,12 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $i = $i->calc()->getInvoice();
@@ -723,27 +712,26 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $i->balance);
         $this->assertEquals(100, $i->amount);
 
-
         $credit_array = $i->withoutRelations()->toArray();
         $credit_array['invoice_id'] = $i->hashed_id;
         $credit_array['client_id'] = $c->hashed_id;
         unset($credit_array['backup']);
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->post('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/credits', $credit_array);
 
         $response->assertStatus(200);
 
         $arr = $response->json();
-        $credit = \App\Models\Credit::find($this->decodePrimaryKey($arr['data']['id']));
+        $credit = Credit::find($this->decodePrimaryKey($arr['data']['id']));
 
         $this->assertNotNull($credit);
         $payment = $payment->fresh();
 
         $i = $i->fresh();
 
-        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
+        $this->assertEquals(Invoice::STATUS_REVERSED, $i->status_id);
 
         $client = $i->client;
 
@@ -759,10 +747,10 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $client->balance);
         $this->assertEquals(0, $client->paid_to_date);
         $this->assertEquals(0, $i->balance);
-        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
+        $this->assertEquals(Invoice::STATUS_REVERSED, $i->status_id);
     }
 
-    public function testPartialAmountWithPartialCreditAndPaymentDeletedBalance()
+    public function test_partial_amount_with_partial_credit_and_payment_deleted_balance()
     {
 
         $c = Client::factory()->create([
@@ -772,13 +760,13 @@ class CreditTest extends TestCase
             'paid_to_date' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -790,12 +778,12 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $i = $i->calc()->getInvoice();
@@ -804,24 +792,24 @@ class CreditTest extends TestCase
         $this->assertEquals(100, $i->balance);
         $this->assertEquals(100, $i->amount);
 
-        $cr = \App\Models\Credit::factory()->create([
-                'company_id' => $this->company->id,
-                'user_id' => $this->user->id,
-                'client_id' => $c->id,
-                'tax_name1' => '',
-                'tax_name2' => '',
-                'tax_name3' => '',
-                'tax_rate1' => 0,
-                'tax_rate2' => 0,
-                'tax_rate3' => 0,
-                'discount' => 0,
-                'line_items' => [
-                    $ii
-                ],
-                'status_id' => 1,
-            ]);
+        $cr = Credit::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'client_id' => $c->id,
+            'tax_name1' => '',
+            'tax_name2' => '',
+            'tax_name3' => '',
+            'tax_rate1' => 0,
+            'tax_rate2' => 0,
+            'tax_rate3' => 0,
+            'discount' => 0,
+            'line_items' => [
+                $ii,
+            ],
+            'status_id' => 1,
+        ]);
 
-        $repo = new CreditRepository();
+        $repo = new CreditRepository;
         $repo->save([], $cr);
 
         $cr = $cr->calc()->getInvoice();
@@ -830,24 +818,23 @@ class CreditTest extends TestCase
         $this->assertEquals(100, $cr->balance);
         $this->assertEquals(100, $cr->amount);
 
-
         $data = [
-                'date' => '2020/12/12',
-                'client_id' => $c->hashed_id,
-                'amount' => 10,
-                'invoices' => [
-                    [
-                        'invoice_id' => $i->hashed_id,
-                        'amount' => 10
-                    ],
+            'date' => '2020/12/12',
+            'client_id' => $c->hashed_id,
+            'amount' => 10,
+            'invoices' => [
+                [
+                    'invoice_id' => $i->hashed_id,
+                    'amount' => 10,
                 ],
-                'credits' => [
-                    [
-                        'credit_id' => $cr->hashed_id,
-                        'amount' => 10
-                    ]
+            ],
+            'credits' => [
+                [
+                    'credit_id' => $cr->hashed_id,
+                    'amount' => 10,
                 ],
-            ];
+            ],
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -867,7 +854,7 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->deleteJson('/api/v1/payments/'.$arr['data']['id']);
+        ])->deleteJson('/api/v1/payments/' . $arr['data']['id']);
 
         $response->assertStatus(200);
 
@@ -876,10 +863,9 @@ class CreditTest extends TestCase
         $this->assertEquals(100, $c->fresh()->balance);
         $this->assertEquals(0, $c->fresh()->paid_to_date);
 
-
     }
 
-    public function testCreditReversalScenarioInvoicePartiallyPaid()
+    public function test_credit_reversal_scenario_invoice_partially_paid()
     {
 
         $c = Client::factory()->create([
@@ -889,13 +875,13 @@ class CreditTest extends TestCase
             'paid_to_date' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -907,7 +893,7 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
@@ -929,20 +915,19 @@ class CreditTest extends TestCase
         $credit_array['client_id'] = $c->hashed_id;
         unset($credit_array['backup']);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 50;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-
         $credit_array['line_items'] = [];
-        $credit_array['line_items'][] = (array)$ii;
+        $credit_array['line_items'][] = (array) $ii;
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/credits', $credit_array);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -957,11 +942,9 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $c->balance);
         $this->assertEquals(6, $i->status_id);
 
-
     }
 
-
-    public function testCreditReversalScenarioInvoicePaidInFull()
+    public function test_credit_reversal_scenario_invoice_paid_in_full()
     {
 
         $c = Client::factory()->create([
@@ -971,13 +954,13 @@ class CreditTest extends TestCase
             'paid_to_date' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -989,7 +972,7 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
@@ -1013,20 +996,19 @@ class CreditTest extends TestCase
 
         unset($credit_array['backup']);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-
         $credit_array['line_items'] = [];
-        $credit_array['line_items'][] = (array)$ii;
+        $credit_array['line_items'][] = (array) $ii;
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/credits', $credit_array);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/credits', $credit_array);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -1042,7 +1024,7 @@ class CreditTest extends TestCase
         $this->assertEquals(6, $i->status_id);
     }
 
-    public function testPaidToDateAdjustments()
+    public function test_paid_to_date_adjustments()
     {
 
         $c = Client::factory()->create([
@@ -1051,13 +1033,13 @@ class CreditTest extends TestCase
             'balance' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -1069,7 +1051,7 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
@@ -1094,7 +1076,6 @@ class CreditTest extends TestCase
 
         // $i->service()->handleReversal()->save();
 
-
         $data = $i->toArray();
         $data['invoice_id'] = $i->hashed_id;
         $data['user_id'] = $this->encodePrimaryKey($i->user_id);
@@ -1102,9 +1083,9 @@ class CreditTest extends TestCase
         $data['status_id'] = 1;
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson("/api/v1/credits?mark_sent=true", $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/credits?mark_sent=true', $data);
 
         $response->assertStatus(200);
         $arr = $response->json();
@@ -1138,7 +1119,7 @@ class CreditTest extends TestCase
 
     }
 
-    public function testCreditPaymentsPaidToDates()
+    public function test_credit_payments_paid_to_dates()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
@@ -1146,13 +1127,13 @@ class CreditTest extends TestCase
             'balance' => 0,
         ]);
 
-        $ii = new InvoiceItem();
+        $ii = new InvoiceItem;
         $ii->cost = 100;
         $ii->quantity = 1;
         $ii->product_key = 'xx';
         $ii->notes = 'yy';
 
-        $i = \App\Models\Invoice::factory()->create([
+        $i = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $c->id,
@@ -1164,7 +1145,7 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
@@ -1187,11 +1168,10 @@ class CreditTest extends TestCase
             'tax_rate3' => 0,
             'discount' => 0,
             'line_items' => [
-                $ii
+                $ii,
             ],
             'status_id' => 1,
         ]);
-
 
         $cr->calc()->getCredit();
         $cr->service()->markSent()->save();
@@ -1217,14 +1197,14 @@ class CreditTest extends TestCase
             'invoices' => [
                 [
                     'invoice_id' => $i->hashed_id,
-                    'amount' => 100
+                    'amount' => 100,
                 ],
             ],
             'credits' => [
                 [
                     'credit_id' => $cr->hashed_id,
-                    'amount' => 100
-                ]
+                    'amount' => 100,
+                ],
             ],
         ];
 
@@ -1249,19 +1229,18 @@ class CreditTest extends TestCase
         $this->assertEquals(100, $cr->paid_to_date);
         $this->assertEquals(4, $i->status_id);
 
-
         $this->assertEquals(100, $c->paid_to_date);
         $this->assertEquals(0, $c->balance);
 
-        $p = \App\Models\Payment::find($this->decodePrimaryKey($p_id));
+        $p = Payment::find($this->decodePrimaryKey($p_id));
 
         $this->assertEquals(0, $p->amount);
         $this->assertEquals(0, $p->applied);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->deleteJson("/api/v1/payments/{$p_id}");
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->deleteJson("/api/v1/payments/{$p_id}");
 
         $response->assertStatus(200);
 
@@ -1282,11 +1261,10 @@ class CreditTest extends TestCase
         $this->assertEquals(100, $c->balance);
         $this->assertEquals(0, $c->paid_to_date);
 
-
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->deleteJson("/api/v1/credits/{$cr->hashed_id}");
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->deleteJson("/api/v1/credits/{$cr->hashed_id}");
 
         $response->assertStatus(200);
 
@@ -1297,12 +1275,13 @@ class CreditTest extends TestCase
         $this->assertEquals(100, $c->balance);
         $this->assertEquals(0, $c->paid_to_date);
 
-
     }
 
-    public function testApplicableFilters()
+    public function test_applicable_filters()
     {
-        Credit::where('company_id', $this->company->id)->cursor()->each(function ($c) { $c->forceDelete(); });
+        Credit::where('company_id', $this->company->id)->cursor()->each(function ($c) {
+            $c->forceDelete();
+        });
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -1401,11 +1380,9 @@ class CreditTest extends TestCase
         $arr = $response->json();
         $this->assertCount(0, $arr['data']);
 
-
-
     }
 
-    public function testQuoteDownloadPDF()
+    public function test_quote_download_pdf()
     {
         $i = $this->credit->invitations->first();
 
@@ -1418,55 +1395,52 @@ class CreditTest extends TestCase
         $this->assertTrue($response->headers->get('content-type') == 'application/pdf');
     }
 
-
-    public function testBulkActions()
+    public function test_bulk_actions()
     {
         $data = [
             'action' => 'archive',
-            'ids' => [$this->credit->hashed_id]
+            'ids' => [$this->credit->hashed_id],
         ];
 
         $response = $this->withHeaders([
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/credits/bulk', $data)
-          ->assertStatus(200);
-
+            ->assertStatus(200);
 
         $data = [
             'ids' => [$this->credit->hashed_id],
-            'action' => 'restore'
+            'action' => 'restore',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/credits/bulk', $data)
-          ->assertStatus(200);
+            ->assertStatus(200);
 
         $data = [
             'ids' => [$this->credit->hashed_id],
-            'action' => 'delete'
+            'action' => 'delete',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/credits/bulk', $data)
-          ->assertStatus(200);
+            ->assertStatus(200);
     }
 
-
-    public function testCreditGetClientStatus()
+    public function test_credit_get_client_status()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/credits?client_status=draft'.$this->encodePrimaryKey($this->bank_transaction->id));
+        ])->get('/api/v1/credits?client_status=draft' . $this->encodePrimaryKey($this->bank_transaction->id));
 
         $response->assertStatus(200);
     }
 
-    public function testCreditsList()
+    public function test_credits_list()
     {
         Client::factory()->count(3)->create(['user_id' => $this->user->id, 'company_id' => $this->company->id])->each(function ($c) {
             ClientContact::factory()->create([
@@ -1495,19 +1469,19 @@ class CreditTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testCreditRESTEndPoints()
+    public function test_credit_rest_end_points()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id));
+        ])->get('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id));
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id).'/edit');
+        ])->get('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id) . '/edit');
 
         $response->assertStatus(200);
 
@@ -1520,11 +1494,11 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $credit_update)
+        ])->put('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $credit_update)
             ->assertStatus(200);
     }
 
-    public function testPostNewCredit()
+    public function test_post_new_credit()
     {
         $credit = [
             'status_id' => 1,
@@ -1549,17 +1523,17 @@ class CreditTest extends TestCase
             ->assertStatus(200);
     }
 
-    public function testDeleteCredit()
+    public function test_delete_credit()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id));
+        ])->delete('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id));
 
         $response->assertStatus(200);
     }
 
-    public function testDuplicateNumberCatch()
+    public function test_duplicate_number_catch()
     {
         $data = [
             'status_id' => 1,
@@ -1592,7 +1566,7 @@ class CreditTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function testCreditPut()
+    public function test_credit_put()
     {
         $data = [
             'status_id' => 1,
@@ -1613,14 +1587,14 @@ class CreditTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->put('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/credits/'.$this->encodePrimaryKey($this->credit->id), $data);
+        ])->put('/api/v1/credits/' . $this->encodePrimaryKey($this->credit->id), $data);
 
         $response->assertStatus(200);
 

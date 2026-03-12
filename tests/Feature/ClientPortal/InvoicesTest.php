@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,8 +26,8 @@ use Tests\TestCase;
 
 class InvoicesTest extends TestCase
 {
-    use DatabaseTransactions;
     use AppSetup;
+    use DatabaseTransactions;
 
     public $faker;
 
@@ -39,7 +38,7 @@ class InvoicesTest extends TestCase
         $this->faker = Factory::create();
     }
 
-    public function testInvoiceTableFilters()
+    public function test_invoice_table_filters()
     {
         $account = Account::factory()->create();
 

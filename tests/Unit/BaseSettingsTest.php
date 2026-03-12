@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,34 +15,32 @@ use App\DataMapper\ClientSettings;
 use Tests\TestCase;
 
 /**
- *
  *   App\DataMapper\BaseSettings
  */
 class BaseSettingsTest extends TestCase
 {
-
     public $settings;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->settings = new \stdClass();
+        $this->settings = new \stdClass;
         $this->settings = ClientSettings::defaults();
     }
 
-    public function testPropertyNamesExist()
+    public function test_property_names_exist()
     {
-        $blank_object = new \stdClass();
+        $blank_object = new \stdClass;
 
         $updated_object = $this->migrate($blank_object);
 
         $this->assertTrue(property_exists($updated_object, 'size_id'));
     }
 
-    public function testPropertyNamesNotExist()
+    public function test_property_names_not_exist()
     {
-        $blank_object = new \stdClass();
+        $blank_object = new \stdClass;
 
         $updated_object = $this->migrate($blank_object);
 
@@ -53,7 +50,7 @@ class BaseSettingsTest extends TestCase
     public function migrate(\stdClass $object): \stdClass
     {
         foreach ($this->settings as $property => $value) {
-            if (! property_exists($object, $property)) {
+            if (!property_exists($object, $property)) {
                 $object->{$property} = null;
             }
         }

@@ -6,25 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Credit;
 
-use App\Utils\Ninja;
-use App\Utils\BcMath;
+use App\Factory\PaymentFactory;
+use App\Jobs\EDocument\CreateEDocument;
 use App\Models\Credit;
+use App\Models\CreditInvitation;
 use App\Models\Payment;
 use App\Models\Paymentable;
 use App\Models\PaymentType;
-use App\Factory\PaymentFactory;
-use App\Utils\Traits\MakesHash;
 use App\Repositories\CreditRepository;
-use App\Services\Invoice\LocationData;
-use App\Jobs\EDocument\CreateEDocument;
 use App\Repositories\PaymentRepository;
+use App\Services\Invoice\LocationData;
+use App\Utils\BcMath;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Storage;
+use InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja;
 
 class CreditService
 {
@@ -59,6 +60,7 @@ class CreditService
 
     /**
      * Applies the invoice number.
+     *
      * @return $this InvoiceService object
      */
     public function applyNumber()
@@ -119,17 +121,17 @@ class CreditService
 
         $this->markSent();
 
-        $payment_repo = new PaymentRepository(new CreditRepository());
+        $payment_repo = new PaymentRepository(new CreditRepository);
 
-        //set credit balance to zero
+        // set credit balance to zero
         $adjustment = $this->credit->balance;
 
         $this->updateBalance($adjustment)
-             ->updatePaidToDate($adjustment)
-             ->setStatus(Credit::STATUS_APPLIED)
-             ->save();
+            ->updatePaidToDate($adjustment)
+            ->setStatus(Credit::STATUS_APPLIED)
+            ->save();
 
-        //create a negative payment of total $this->credit->balance
+        // create a negative payment of total $this->credit->balance
         $payment = PaymentFactory::create($this->credit->company_id, $this->credit->user_id);
         $payment->client_id = $this->credit->client_id;
         $payment->amount = $adjustment;
@@ -147,14 +149,14 @@ class CreditService
         $payment->saveQuietly();
 
         $payment
-             ->credits()
-             ->attach($this->credit->id, ['amount' => $adjustment]);
+            ->credits()
+            ->attach($this->credit->id, ['amount' => $adjustment]);
 
         $client = $this->credit->client->fresh();
         $client->service()
-                ->updatePaidToDate($adjustment)
-                ->adjustCreditBalance($adjustment * -1)
-                ->save();
+            ->updatePaidToDate($adjustment)
+            ->adjustCreditBalance($adjustment * -1)
+            ->save();
 
         event('eloquent.created: App\Models\Payment', $payment);
 
@@ -202,24 +204,24 @@ class CreditService
     {
         $settings = $this->credit->client->getMergedSettings();
 
-        if (! $this->credit->design_id) {
+        if (!$this->credit->design_id) {
             $this->credit->design_id = $this->decodePrimaryKey($settings->credit_design_id);
         }
 
-        if (! isset($this->credit->footer)) {
+        if (!isset($this->credit->footer)) {
             $this->credit->footer = $settings->credit_footer;
         }
 
-        if (! isset($this->credit->terms)) {
+        if (!isset($this->credit->terms)) {
             $this->credit->terms = $settings->credit_terms;
         }
 
-        /* If client currency differs from the company default currency, then insert the client exchange rate on the model.*/
-        if (! isset($this->credit->exchange_rate) && $this->credit->client->currency()->id != (int) $this->credit->company->settings->currency_id) {
+        /* If client currency differs from the company default currency, then insert the client exchange rate on the model. */
+        if (!isset($this->credit->exchange_rate) && $this->credit->client->currency()->id != (int) $this->credit->company->settings->currency_id) {
             $this->credit->exchange_rate = $this->credit->client->currency()->exchange_rate;
         }
 
-        if (! isset($this->credit->public_notes)) {
+        if (!isset($this->credit->public_notes)) {
             $this->credit->public_notes = $this->credit->client->public_notes;
         }
 
@@ -238,12 +240,12 @@ class CreditService
         $this->credit->invitations->each(function ($invitation) {
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
-                Storage::disk(config('filesystems.default'))->delete($this->credit->client->e_document_filepath($invitation) . $this->credit->getFileName("xml"));
+                Storage::disk(config('filesystems.default'))->delete($this->credit->client->e_document_filepath($invitation) . $this->credit->getFileName('xml'));
                 // }
 
                 // if (Ninja::isHosted() && Storage::disk('public')->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
                 if (Ninja::isHosted()) {
-                    Storage::disk('public')->delete($this->credit->client->e_document_filepath($invitation) . $this->credit->getFileName("xml"));
+                    Storage::disk('public')->delete($this->credit->client->e_document_filepath($invitation) . $this->credit->getFileName('xml'));
                 }
             } catch (\Exception $e) {
                 nlog($e->getMessage());
@@ -252,6 +254,7 @@ class CreditService
 
         return $this;
     }
+
     public function triggeredActions($request)
     {
         $this->credit = (new TriggeredActions($this->credit, $request))->run();
@@ -269,7 +272,6 @@ class CreditService
             ->adjustCreditBalance($this->credit->balance * -1)
             ->save();
 
-
         /** 2025-12-03 - On credit deletion => credit => delete - if this credit was linked to a previous invoice
          * reversal, we cannot leave the payment dangling. This has the same net effect as a payment refund.
          *
@@ -280,39 +282,38 @@ class CreditService
          * or any remainder on the credit if it has been subsequently used elsewhere.
          *
          * Once this credit has been deleted, it cannot be restored?
-        */
-
+         */
         if ($this->credit->invoice_id && $this->credit->balance > 0) {
 
             $this->credit->invoice
-                    ->payments()
-                    ->where('is_deleted', 0)
-                    ->cursor()
-                    ->each(function ($payment) {
+                ->payments()
+                ->where('is_deleted', 0)
+                ->cursor()
+                ->each(function ($payment) {
 
-                        $balance = $this->credit->balance;
+                    $balance = $this->credit->balance;
 
-                        $pivot = $payment->pivot;
+                    $pivot = $payment->pivot;
 
-                        $refundable_amount = min($balance, $pivot->amount);
+                    $refundable_amount = min($balance, $pivot->amount);
 
-                        $paymentable = new Paymentable();
-                        $paymentable->payment_id = $payment->id;
-                        $paymentable->paymentable_id = $this->credit->id;
-                        $paymentable->paymentable_type = Credit::class;
-                        $paymentable->refunded = $refundable_amount;
-                        $paymentable->save();
+                    $paymentable = new Paymentable;
+                    $paymentable->payment_id = $payment->id;
+                    $paymentable->paymentable_id = $this->credit->id;
+                    $paymentable->paymentable_type = Credit::class;
+                    $paymentable->refunded = $refundable_amount;
+                    $paymentable->save();
 
-                        $payment->refunded += $refundable_amount;
+                    $payment->refunded += $refundable_amount;
 
-                        if (BcMath::comp($payment->amount, $refundable_amount) == 0) {
-                            $payment->status_id = Payment::STATUS_REFUNDED;
-                        } else {
-                            $payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
-                        }
-                        $payment->save();
+                    if (BcMath::comp($payment->amount, $refundable_amount) == 0) {
+                        $payment->status_id = Payment::STATUS_REFUNDED;
+                    } else {
+                        $payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
+                    }
+                    $payment->save();
 
-                    });
+                });
         }
 
         return $this;
@@ -325,12 +326,11 @@ class CreditService
         $paid_to_date = $this->credit->invoice_id ? $this->credit->balance : 0;
 
         $this->credit
-             ->client
-             ->service()
+            ->client
+            ->service()
             //  ->updatePaidToDate($paid_to_date * -1)
-             ->adjustCreditBalance($this->credit->balance)
-             ->save();
-
+            ->adjustCreditBalance($this->credit->balance)
+            ->save();
 
         /**
          * If we have previously deleted a reversed credit / invoice
@@ -339,60 +339,60 @@ class CreditService
          */
         if ($this->credit->invoice_id && $this->credit->balance > 0) {
 
-
             $this->credit->invoice
-            ->payments()
-            ->where('is_deleted', 0)
-            ->whereHas('paymentables', function ($q) {
-                $q->where('paymentable_type', Credit::class)
-                ->where('paymentable_id', $this->credit->id)
-                ->where('refunded', '>', 0);
-            })
-            ->cursor()
-            ->each(function ($payment) {
+                ->payments()
+                ->where('is_deleted', 0)
+                ->whereHas('paymentables', function ($q) {
+                    $q->where('paymentable_type', Credit::class)
+                        ->where('paymentable_id', $this->credit->id)
+                        ->where('refunded', '>', 0);
+                })
+                ->cursor()
+                ->each(function ($payment) {
 
-                $refund_reversal = 0;
+                    $refund_reversal = 0;
 
-                $payment->paymentables->where('paymentable_type', Credit::class)
-                ->where('paymentable_id', $this->credit->id)
-                ->each(function ($paymentable) use (&$refund_reversal) {
-                    $refund_reversal += $paymentable->refunded;
+                    $payment->paymentables->where('paymentable_type', Credit::class)
+                        ->where('paymentable_id', $this->credit->id)
+                        ->each(function ($paymentable) use (&$refund_reversal) {
+                            $refund_reversal += $paymentable->refunded;
 
-                    $paymentable->forceDelete();
+                            $paymentable->forceDelete();
 
+                        });
+
+                    $payment->refunded -= $refund_reversal;
+                    $payment->save();
+
+                    if (BcMath::comp($payment->refunded, 0) == 0) {
+                        $payment->status_id = Payment::STATUS_COMPLETED;
+                    } elseif (BcMath::comp($payment->amount, $payment->refunded) == 0) {
+                        $payment->status_id = Payment::STATUS_REFUNDED;
+                    } else {
+                        $payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
+                    }
+                    $payment->save();
                 });
-
-                $payment->refunded -= $refund_reversal;
-                $payment->save();
-
-                if (BcMath::comp($payment->refunded, 0) == 0) {
-                    $payment->status_id = Payment::STATUS_COMPLETED;
-                } elseif (BcMath::comp($payment->amount, $payment->refunded) == 0) {
-                    $payment->status_id = Payment::STATUS_REFUNDED;
-                } else {
-                    $payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
-                }
-                $payment->save();
-            });
 
         }
 
         return $this;
     }
 
-
-    public function getDocuNinjaSignable(?\App\Models\CreditInvitation $invite = null)
+    public function getDocuNinjaSignable(?CreditInvitation $invite = null)
     {
 
-        if (class_exists(\InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
-        {
+        if (class_exists(DocuNinja::class)) {
             $invite = $invite ?: $this->credit->invitations->first();
-            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($invite);
+
+            return (new DocuNinja)->signable->get($invite);
         }
-        
+
     }
+
     /**
      * Saves the credit.
+     *
      * @return Credit object
      */
     public function save(): ?Credit

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,7 +20,7 @@ trait WithSorting
     public function sortBy($field)
     {
         $this->sort_field === $field
-            ? $this->sort_asc = ! $this->sort_asc
+            ? $this->sort_asc = !$this->sort_asc
             : $this->sort_asc = true;
 
         $this->sort_field = $field;

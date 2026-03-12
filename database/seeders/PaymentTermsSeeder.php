@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,7 +23,7 @@ class PaymentTermsSeeder extends Seeder
 
         $paymentTerms = [
             ['num_days' => 0, 'name' => 'Net 0'],
-            ['num_days' => 7,  'name'  => ''],
+            ['num_days' => 7,  'name' => ''],
             ['num_days' => 10, 'name' => ''],
             ['num_days' => 14, 'name' => ''],
             ['num_days' => 15, 'name' => ''],

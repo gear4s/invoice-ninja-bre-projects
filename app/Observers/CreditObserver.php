@@ -6,7 +6,6 @@
  * @link https://github.com/creditninja/creditninja source repository
  *
  * @copyright Copyright (c) 2022. Credit Ninja LLC (https://creditninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,14 +23,13 @@ class CreditObserver
     /**
      * Handle the client "created" event.
      *
-     * @param Credit $credit
      * @return void
      */
     public function created(Credit $credit)
     {
         $subscriptions = Webhook::where('company_id', $credit->company_id)
-                                    ->where('event_id', Webhook::EVENT_CREATE_CREDIT)
-                                    ->exists();
+            ->where('event_id', Webhook::EVENT_CREATE_CREDIT)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_CREDIT, $credit, $credit->company)->delay(0);
@@ -41,7 +39,6 @@ class CreditObserver
     /**
      * Handle the client "updated" event.
      *
-     * @param Credit $credit
      * @return void
      */
     public function updated(Credit $credit)
@@ -57,8 +54,8 @@ class CreditObserver
         }
 
         $subscriptions = Webhook::where('company_id', $credit->company_id)
-                                    ->where('event_id', $event)
-                                    ->exists();
+            ->where('event_id', $event)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $credit, $credit->company)->delay(0);
@@ -68,7 +65,6 @@ class CreditObserver
     /**
      * Handle the client "deleted" event.
      *
-     * @param Credit $credit
      * @return void
      */
     public function deleted(Credit $credit)
@@ -78,8 +74,8 @@ class CreditObserver
         }
 
         $subscriptions = Webhook::where('company_id', $credit->company_id)
-                                    ->where('event_id', Webhook::EVENT_ARCHIVE_CREDIT)
-                                    ->exists();
+            ->where('event_id', Webhook::EVENT_ARCHIVE_CREDIT)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_ARCHIVE_CREDIT, $credit, $credit->company)->delay(0);
@@ -89,7 +85,6 @@ class CreditObserver
     /**
      * Handle the client "restored" event.
      *
-     * @param Credit $credit
      * @return void
      */
     public function restored(Credit $credit)
@@ -100,7 +95,6 @@ class CreditObserver
     /**
      * Handle the client "force deleted" event.
      *
-     * @param Credit $credit
      * @return void
      */
     public function forceDeleted(Credit $credit)
@@ -110,7 +104,7 @@ class CreditObserver
     /**
      * Handle the client "archive" event.
      *
-     * @param Credit $credit
+     * @param  Credit  $credit
      * @return void
      */
 }

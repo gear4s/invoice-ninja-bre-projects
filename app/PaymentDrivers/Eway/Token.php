@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,8 @@ use App\Models\PaymentHash;
 use App\Models\PaymentType;
 use App\PaymentDrivers\EwayPaymentDriver;
 use App\Utils\Traits\MakesHash;
+use Eway\Rapid\Enum\ApiMethod;
+use Eway\Rapid\Enum\TransactionType;
 
 class Token
 {
@@ -54,14 +55,14 @@ class Token
                 'InvoiceNumber' => $invoice_numbers,
                 'InvoiceDescription' => substr($description, 0, 63),
             ],
-            'TransactionType' => \Eway\Rapid\Enum\TransactionType::RECURRING,
+            'TransactionType' => TransactionType::RECURRING,
         ];
 
-        $response = $this->eway_driver->init()->eway->createTransaction(\Eway\Rapid\Enum\ApiMethod::DIRECT, $transaction);
+        $response = $this->eway_driver->init()->eway->createTransaction(ApiMethod::DIRECT, $transaction);
 
         $response_status = ErrorCode::getStatus($response->ResponseMessage);
 
-        if (! $response_status['success']) {
+        if (!$response_status['success']) {
             return $this->processUnsuccessfulPayment($response);
         }
 

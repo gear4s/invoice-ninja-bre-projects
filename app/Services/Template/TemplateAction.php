@@ -6,61 +6,59 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Template;
 
-use App\Models\Task;
-use App\Models\User;
-use App\Models\Quote;
+use App\Libraries\MultiDB;
 use App\Models\Client;
+use App\Models\Company;
 use App\Models\Credit;
 use App\Models\Design;
-use App\Models\Vendor;
-use App\Models\Company;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Project;
-use App\Libraries\MultiDB;
 use App\Models\PurchaseOrder;
-use Illuminate\Bus\Queueable;
-use App\Utils\Traits\MakesHash;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Vendor;
 use App\Services\Email\AdminEmail;
 use App\Services\Email\EmailObject;
 use App\Services\PdfMaker\PdfMerge;
-use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class TemplateAction implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use MakesHash;
 
     public $tries = 1;
 
     /**
      * Create a new job instance.
      *
-     * @param array $ids The array of entity IDs
-     * @param string $template The template id
-     * @param string $entity The entity class name
-     * @param int $user_id requesting the template
-     * @param string $db The database name
-     * @param bool $send_email Determines whether to send an email
-     *
+     * @param  array  $ids  The array of entity IDs
+     * @param  string  $template  The template id
+     * @param  string  $entity  The entity class name
+     * @param  int  $user_id  requesting the template
+     * @param  string  $db  The database name
+     * @param  bool  $send_email  Determines whether to send an email
      * @return void
      */
     public function __construct(
@@ -76,11 +74,10 @@ class TemplateAction implements ShouldQueue
 
     /**
      * Execute the job.
-     *
      */
     public function handle()
     {
-        nlog("inside template action");
+        nlog('inside template action');
 
         MultiDB::setDb($this->db);
 
@@ -90,7 +87,7 @@ class TemplateAction implements ShouldQueue
 
         $template = Design::withTrashed()->find($this->decodePrimaryKey($this->template));
 
-        $template_service = new \App\Services\Template\TemplateService($template);
+        $template_service = new TemplateService($template);
 
         match ($this->entity) {
             Invoice::class => $resource->with('payments', 'client'),
@@ -139,10 +136,12 @@ class TemplateAction implements ShouldQueue
 
             if ($this->send_email) {
                 $this->sendEmail($pdf, $template);
+
                 return;
             } else {
                 $filename = "templates/{$this->hash}.pdf";
                 Storage::disk(config('filesystems.default'))->put($filename, $pdf);
+
                 return $pdf;
             }
 
@@ -163,10 +162,10 @@ class TemplateAction implements ShouldQueue
         }
 
         $ts = $template_service
-                    ->setCompany($this->company)
-                    ->setEntity($first_entity)
-                    ->addGlobal(['currency_code' => $currency_code])
-                    ->build($data);
+            ->setCompany($this->company)
+            ->setEntity($first_entity)
+            ->addGlobal(['currency_code' => $currency_code])
+            ->build($data);
 
         if ($this->send_email) {
             $pdf = $ts->getPdf();
@@ -175,6 +174,7 @@ class TemplateAction implements ShouldQueue
             $pdf = $ts->getPdf();
             $filename = "templates/{$this->hash}.pdf";
             Storage::disk(config('filesystems.default'))->put($filename, $pdf);
+
             return $pdf;
         }
     }
@@ -184,9 +184,9 @@ class TemplateAction implements ShouldQueue
         $user = $this->user_id ? User::find($this->user_id) : $this->company->owner();
 
         $template_name = " [{$template->name}]";
-        $email_object = new EmailObject();
+        $email_object = new EmailObject;
         $email_object->to = [new Address($user->email, $user->present()->name())];
-        $email_object->attachments = [['file' => base64_encode($pdf), 'name' => ctrans('texts.template') . ".pdf"]];
+        $email_object->attachments = [['file' => base64_encode($pdf), 'name' => ctrans('texts.template') . '.pdf']];
         $email_object->company_key = $this->company->company_key;
         $email_object->company = $this->company;
         $email_object->settings = $this->company->settings;
@@ -204,8 +204,6 @@ class TemplateAction implements ShouldQueue
      * Context
      *
      * If I have an array of invoices, what could I possib
-     *
-     *
      */
     private function resolveEntityString()
     {
@@ -231,5 +229,4 @@ class TemplateAction implements ShouldQueue
     {
         return [(new WithoutOverlapping('template-' . $this->company->company_key . $this->entity))->dontRelease()];
     }
-
 }

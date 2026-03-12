@@ -6,28 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
 use App\Utils\Traits\MakesHash;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\WebhookController
  */
 class WebhookAPITest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -40,20 +38,20 @@ class WebhookAPITest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testWebhookRetry()
+    public function test_webhook_retry()
     {
 
         $data = [
             'target_url' => 'http://hook.com',
-            'event_id' => 1, //create client
+            'event_id' => 1, // create client
             'format' => 'JSON',
-            'headers' => []
+            'headers' => [],
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/webhooks", $data);
+        ])->postJson('/api/v1/webhooks', $data);
 
         $response->assertStatus(200);
 
@@ -67,13 +65,13 @@ class WebhookAPITest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/webhooks/".$arr['data']['id']."/retry", $data);
+        ])->postJson('/api/v1/webhooks/' . $arr['data']['id'] . '/retry', $data);
 
         $response->assertStatus(200);
 
     }
 
-    public function testWebhookGetFilter()
+    public function test_webhook_get_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -83,7 +81,7 @@ class WebhookAPITest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testWebhookGetRoute()
+    public function test_webhook_get_route()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -93,7 +91,7 @@ class WebhookAPITest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testWebhookPostRoute()
+    public function test_webhook_post_route()
     {
         $data = [
             'target_url' => 'http://hook.com',
@@ -135,10 +133,9 @@ class WebhookAPITest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/webhooks/'.$arr['data']['id'], $data);
+        ])->putJson('/api/v1/webhooks/' . $arr['data']['id'], $data);
 
         $response->assertStatus(200);
-
 
         $data = [
             'target_url' => 'http://hook.com',
@@ -150,7 +147,7 @@ class WebhookAPITest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/webhooks/'.$arr['data']['id'], $data);
+        ])->putJson('/api/v1/webhooks/' . $arr['data']['id'], $data);
 
         $response->assertStatus(200);
 
@@ -161,7 +158,7 @@ class WebhookAPITest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/webhooks/'.$arr['data']['id']);
+        ])->delete('/api/v1/webhooks/' . $arr['data']['id']);
 
         $arr = $response->json();
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,7 +23,11 @@ use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
 use Carbon\Carbon;
 use DateTime;
-use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundException;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Laracasts\Presenter\PresentableTrait;
@@ -82,10 +85,11 @@ use Laracasts\Presenter\PresentableTrait;
  * @property-read int|null $bank_integrations_count
  * @property-read int|null $companies_count
  * @property-read int|null $company_users_count
- * @property-read \App\Models\Company|null $default_company
+ * @property-read Company|null $default_company
  * @property-read mixed $hashed_id
- * @property-read \App\Models\Payment|null $payment
+ * @property-read Payment|null $payment
  * @property-read int|null $users_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\AccountFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Account newModelQuery()
@@ -95,17 +99,19 @@ use Laracasts\Presenter\PresentableTrait;
  * @method static \Illuminate\Database\Eloquent\Builder|Account first()
  * @method static \Illuminate\Database\Eloquent\Builder|Account count()
  * @method static \Illuminate\Database\Eloquent\Builder|Account where($query)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BankIntegration> $bank_integrations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Company> $companies
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyUser> $company_users
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ *
+ * @property-read Collection<int, BankIntegration> $bank_integrations
+ * @property-read Collection<int, Company> $companies
+ * @property-read Collection<int, CompanyUser> $company_users
+ * @property-read Collection<int, User> $users
 
+ *
  * @mixin \Eloquent
  */
 class Account extends BaseModel
 {
-    use PresentableTrait;
     use MakesHash;
+    use PresentableTrait;
 
     private $free_plan_email_quota = 20;
 
@@ -147,37 +153,65 @@ class Account extends BaseModel
     ];
 
     public const PLAN_FREE = 'free';
+
     public const PLAN_PRO = 'pro';
+
     public const PLAN_ENTERPRISE = 'enterprise';
+
     public const PLAN_WHITE_LABEL = 'white_label';
+
     public const PLAN_TERM_MONTHLY = 'month';
+
     public const PLAN_TERM_YEARLY = 'year';
 
     public const FEATURE_TASKS = 'tasks';
+
     public const FEATURE_EXPENSES = 'expenses';
+
     public const FEATURE_QUOTES = 'quotes';
+
     public const FEATURE_PURCHASE_ORDERS = 'purchase_orders';
+
     public const FEATURE_CUSTOMIZE_INVOICE_DESIGN = 'custom_designs';
+
     public const FEATURE_DIFFERENT_DESIGNS = 'different_designs';
+
     public const FEATURE_EMAIL_TEMPLATES_REMINDERS = 'template_reminders';
+
     public const FEATURE_INVOICE_SETTINGS = 'invoice_settings';
+
     public const FEATURE_CUSTOM_EMAILS = 'custom_emails';
+
     public const FEATURE_PDF_ATTACHMENT = 'pdf_attachments';
+
     public const FEATURE_MORE_INVOICE_DESIGNS = 'more_invoice_designs';
+
     public const FEATURE_REPORTS = 'reports';
+
     public const FEATURE_BUY_NOW_BUTTONS = 'buy_now_buttons';
+
     public const FEATURE_API = 'api';
+
     public const FEATURE_CLIENT_PORTAL_PASSWORD = 'client_portal_password';
+
     public const FEATURE_CUSTOM_URL = 'custom_url';
+
     public const FEATURE_MORE_CLIENTS = 'more_clients';
+
     public const FEATURE_WHITE_LABEL = 'white_label';
+
     public const FEATURE_REMOVE_CREATED_BY = 'remove_created_by';
+
     public const FEATURE_USERS = 'users'; // Grandfathered for old Pro users
+
     public const FEATURE_DOCUMENTS = 'documents';
+
     public const FEATURE_USER_PERMISSIONS = 'permissions';
+
     public const FEATURE_SUBSCRIPTIONS = 'subscriptions';
 
     public const RESULT_FAILURE = 'failure';
+
     public const RESULT_SUCCESS = 'success';
 
     public function getEntityType()
@@ -190,46 +224,47 @@ class Account extends BaseModel
         return $this->hasMany(Activity::class);
     }
 
-    public function users(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function users(): HasMany
     {
         return $this->hasMany(User::class)->withTrashed();
     }
 
-    public function default_company(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function default_company(): HasOne
     {
         return $this->hasOne(Company::class, 'id', 'default_company_id');
     }
 
-    public function payment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class)->withTrashed();
     }
 
-    public function companies(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function companies(): HasMany
     {
         return $this->hasMany(Company::class);
     }
 
-    public function bank_integrations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bank_integrations(): HasMany
     {
         return $this->hasMany(BankIntegration::class);
     }
 
-    public function company_users(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function company_users(): HasMany
     {
         return $this->hasMany(CompanyUser::class);
     }
 
     /**
      * Returns the owner of the Account - not a HasMany relation
-     * @return \App\Models\User | bool
+     *
+     * @return User | bool
      */
     public function owner()
     {
         return $this->hasMany(CompanyUser::class)->where('is_owner', true)->first() ? $this->hasMany(CompanyUser::class)->where('is_owner', true)->first()->user : false;
     }
 
-    public function tokens(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tokens(): HasMany
     {
         return $this->hasMany(CompanyToken::class)->withTrashed();
     }
@@ -351,7 +386,7 @@ class Account extends BaseModel
 
     public function isEnterprisePaidClient(): bool
     {
-        if (! Ninja::isNinja()) {
+        if (!Ninja::isNinja()) {
             return false;
         }
 
@@ -360,7 +395,7 @@ class Account extends BaseModel
 
     public function isProClient(): bool
     {
-        if (! Ninja::isNinja()) {
+        if (!Ninja::isNinja()) {
             return false;
         }
 
@@ -369,7 +404,7 @@ class Account extends BaseModel
 
     public function isProPaidClient(): bool
     {
-        if (! Ninja::isNinja()) {
+        if (!Ninja::isNinja()) {
             return false;
         }
 
@@ -420,7 +455,7 @@ class Account extends BaseModel
         $trial_expires = false;
         $trial_started = false;
 
-        //14 day trial
+        // 14 day trial
         $duration = 60 * 60 * 24 * 14;
 
         if ($trial_plan && $include_trial) {
@@ -537,27 +572,27 @@ class Account extends BaseModel
 
     public function emailsSent()
     {
-        if (is_null(Cache::get("email_quota" . $this->key))) {
+        if (is_null(Cache::get('email_quota' . $this->key))) {
             return 0;
         }
 
-        return Cache::get("email_quota" . $this->key);
+        return Cache::get('email_quota' . $this->key);
     }
 
     public function emailQuotaExceeded(): bool
     {
-        if (is_null(Atomic::get("email_quota" . $this->key))) {
+        if (is_null(Atomic::get('email_quota' . $this->key))) {
             return false;
         }
 
         try {
-            if (Atomic::get("email_quota" . $this->key) > $this->getDailyEmailLimit()) {
+            if (Atomic::get('email_quota' . $this->key) > $this->getDailyEmailLimit()) {
                 if (Atomic::set("throttle_notified:{$this->key}", true, 60 * 60 * 24)) {
                     App::forgetInstance('translator');
                     $t = app('translator');
                     $t->replace(Ninja::transformTranslations($this->companies()->first()->settings));
 
-                    $nmo = new NinjaMailerObject();
+                    $nmo = new NinjaMailerObject;
                     $nmo->mailable = new EmailQuotaExceeded($this->companies()->first());
                     $nmo->company = $this->companies()->first();
                     $nmo->settings = $this->companies()->first()->settings;
@@ -581,13 +616,13 @@ class Account extends BaseModel
 
     public function gmailCredentialNotification(): bool
     {
-        nlog("checking if gmail credential notification has already been sent");
+        nlog('checking if gmail credential notification has already been sent');
 
         if (is_null(Cache::get($this->key))) {
             return false;
         }
 
-        nlog("Sending notification");
+        nlog('Sending notification');
 
         try {
             if (is_null(Cache::get("gmail_credentials_notified:{$this->key}"))) {
@@ -595,7 +630,7 @@ class Account extends BaseModel
                 $t = app('translator');
                 $t->replace(Ninja::transformTranslations($this->companies()->first()->settings));
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new GmailTokenInvalid($this->companies()->first());
                 $nmo->company = $this->companies()->first();
                 $nmo->settings = $this->companies()->first()->settings;
@@ -651,6 +686,6 @@ class Account extends BaseModel
 
     public function canTrial(): bool
     {
-        return !$this->is_trial && empty($this->plan) && $this->created_at > time() - (60 * 60 * 24 * 14); //@phpstan-ignore-line
+        return !$this->is_trial && empty($this->plan) && $this->created_at > time() - (60 * 60 * 24 * 14); // @phpstan-ignore-line
     }
 }

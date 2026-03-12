@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\PaymentDrivers\StripePaymentDriver;
 use App\Utils\Traits\MakesHash;
 use Stripe\Customer;
 use Stripe\PaymentMethod;
+use Stripe\StripeObject;
 
 class UpdatePaymentMethods
 {
@@ -102,10 +102,10 @@ class UpdatePaymentMethods
         $this->importPMBankAccounts($customer, $client);
     }
 
-    /* ACH may also be nested inside Payment Methods.*/
+    /* ACH may also be nested inside Payment Methods. */
     public function importPMBankAccounts($customer, $client)
     {
-        $bank_methods = \Stripe\PaymentMethod::all(
+        $bank_methods = PaymentMethod::all(
             [
                 'customer' => $customer->id,
                 'type' => 'us_bank_account',
@@ -133,7 +133,7 @@ class UpdatePaymentMethods
 
             $bank_account = $method['us_bank_account'];
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) \sprintf('%s (%s)', $bank_account->bank_name, ctrans('texts.ach'));
             $payment_meta->last4 = (string) $bank_account->last4;
             $payment_meta->type = GatewayType::BANK_TRANSFER;
@@ -176,7 +176,7 @@ class UpdatePaymentMethods
                 continue;
             }
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) \sprintf('%s (%s)', $method->bank_name, ctrans('texts.ach'));
             $payment_meta->last4 = (string) $method->last4;
             $payment_meta->type = GatewayType::BANK_TRANSFER;
@@ -234,20 +234,22 @@ class UpdatePaymentMethods
             case GatewayType::CREDIT_CARD:
 
                 if ($method->type == 'link') {
-                    return new \stdClass();
+                    return new \stdClass;
                 }
 
                 /**
                  * @class \Stripe\PaymentMethod $method
-                 * @property \Stripe\StripeObject $card
+                 *
+                 * @property StripeObject $card
+                 *
                  * @class \Stripe\StripeObject $card
+                 *
                  * @property string|null $exp_year
                  * @property string|null $exp_month
                  * @property string|null $brand
                  * @property string|null $last4
-                */
-
-                $payment_meta = new \stdClass();
+                 */
+                $payment_meta = new \stdClass;
                 $payment_meta->exp_month = (string) ($method->card->exp_month ?? '00');
                 $payment_meta->exp_year = (string) ($method->card->exp_year ?? '0000');
                 $payment_meta->brand = (string) ($method->card->brand ?? 'visa');
@@ -258,11 +260,11 @@ class UpdatePaymentMethods
             case GatewayType::ALIPAY:
             case GatewayType::SOFORT:
 
-                return new \stdClass();
+                return new \stdClass;
 
             case GatewayType::SEPA:
 
-                $payment_meta = new \stdClass();
+                $payment_meta = new \stdClass;
                 $payment_meta->brand = (string) \sprintf('%s (%s)', $method->sepa_debit->bank_code, ctrans('texts.sepa'));
                 $payment_meta->last4 = (string) $method->sepa_debit->last4;
                 $payment_meta->state = 'authorized';

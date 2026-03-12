@@ -6,33 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Helpers\Invoice;
 
-use App\Models\Quote;
-use App\Utils\Number;
+use App\DataMapper\BaseSettings;
+use App\DataMapper\InvoiceItem;
+use App\DataMapper\Tax\BaseRule;
+use App\DataMapper\Tax\RuleInterface;
 use App\Models\Client;
 use App\Models\Credit;
-use App\Models\Vendor;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
-use App\Models\RecurringQuote;
-use App\DataMapper\InvoiceItem;
-use App\DataMapper\BaseSettings;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use App\DataMapper\Tax\RuleInterface;
+use App\Models\RecurringQuote;
+use App\Models\Vendor;
+use App\Utils\Number;
 use App\Utils\Traits\NumberFormatter;
 
 class InvoiceItemSum
 {
-    use NumberFormatter;
     use Discounter;
+    use NumberFormatter;
     use Taxer;
 
-    //@phpstan-ignore-next-line
+    // @phpstan-ignore-next-line
     private array $eu_tax_jurisdictions = [
         'AT', // Austria
         'BE', // Belgium
@@ -65,9 +65,9 @@ class InvoiceItemSum
         'SI', // Slovenia
         'SK', // Slovakia
 
-        'NO', //NORWAY - EEA
-        'IS', //ICELAND - EEA
-        'LI', //Liechtenstein - EEA
+        'NO', // NORWAY - EEA
+        'IS', // ICELAND - EEA
+        'LI', // Liechtenstein - EEA
 
     ];
 
@@ -103,9 +103,9 @@ class InvoiceItemSum
         'SI', // Slovenia
         'SK', // Slovakia
 
-        'NO', //NORWAY - EEA
-        'IS', //ICELAND - EEA
-        'LI', //Liechtenstein - EEA
+        'NO', // NORWAY - EEA
+        'IS', // ICELAND - EEA
+        'LI', // Liechtenstein - EEA
 
         'US', // USA
 
@@ -171,6 +171,7 @@ class InvoiceItemSum
     {
         if (!$this->invoice->line_items || !is_iterable($this->invoice->line_items)) {
             $this->items = [];
+
             return $this;
         }
 
@@ -195,25 +196,26 @@ class InvoiceItemSum
     private function shouldCalculateTax(): self
     {
 
-        if (!$this->invoice->client || !$this->invoice->company?->calculate_taxes || $this->invoice->company->account->isFreeHostedClient()) { //@phpstan-ignore-line
+        if (!$this->invoice->client || !$this->invoice->company?->calculate_taxes || $this->invoice->company->account->isFreeHostedClient()) { // @phpstan-ignore-line
             $this->calc_tax = false;
+
             return $this;
         }
 
-        if (in_array($this->client->company->country()->iso_3166_2, $this->tax_jurisdictions)) { //only calculate for supported tax jurisdictions
+        if (in_array($this->client->company->country()->iso_3166_2, $this->tax_jurisdictions)) { // only calculate for supported tax jurisdictions
 
-            /** @var \App\DataMapper\Tax\BaseRule $class */
-            $class = "App\DataMapper\Tax\\" . str_replace("-", "_", $this->client->company->country()->iso_3166_2) . "\\Rule";
+            /** @var BaseRule $class */
+            $class = "App\DataMapper\Tax\\" . str_replace('-', '_', $this->client->company->country()->iso_3166_2) . '\\Rule';
 
-            $this->rule = new $class();
+            $this->rule = new $class;
 
             if ($this->rule->regionWithNoTaxCoverage($this->client->country->iso_3166_2)) {
                 return $this;
             }
 
             $this->rule
-                 ->setEntity($this->invoice)
-                 ->init();
+                ->setEntity($this->invoice)
+                ->init();
 
             $this->calc_tax = $this->rule->shouldCalcTax();
 
@@ -260,24 +262,22 @@ class InvoiceItemSum
 
     /**
      * Attempts to calculate taxes based on the clients location
-     *
-     * @return self
      */
     private function calcTaxesAutomatically(): self
     {
         $this->rule->tax($this->item);
 
-        $precision = strlen(substr(strrchr($this->rule->tax_rate1, "."), 1));
+        $precision = strlen(substr(strrchr($this->rule->tax_rate1, '.'), 1));
 
         $this->item->tax_name1 = $this->rule->tax_name1;
         $this->item->tax_rate1 = round($this->rule->tax_rate1, $precision);
 
-        $precision = strlen(substr(strrchr($this->rule->tax_rate2, "."), 1));
+        $precision = strlen(substr(strrchr($this->rule->tax_rate2, '.'), 1));
 
         $this->item->tax_name2 = $this->rule->tax_name2;
         $this->item->tax_rate2 = round($this->rule->tax_rate2, $precision);
 
-        $precision = strlen(substr(strrchr($this->rule->tax_rate3, "."), 1));
+        $precision = strlen(substr(strrchr($this->rule->tax_rate3, '.'), 1));
 
         $this->item->tax_name3 = $this->rule->tax_name3;
         $this->item->tax_rate3 = round($this->rule->tax_rate3, $precision);
@@ -349,7 +349,6 @@ class InvoiceItemSum
         return $this;
     }
 
-
     private function getPeppolSurchargeTaxes(): self
     {
 
@@ -360,14 +359,14 @@ class InvoiceItemSum
         collect($this->invoice->line_items)
             ->flatMap(function ($item) {
                 return collect([1, 2, 3])
-                    ->map(fn($i) => [
+                    ->map(fn ($i) => [
                         'name' => $item->{"tax_name{$i}"} ?? '',
                         'percentage' => $item->{"tax_rate{$i}"} ?? 0,
                         'tax_id' => $item->tax_id ?? '1',
                     ])
-                    ->filter(fn($tax) => strlen($tax['name']) > 1);
+                    ->filter(fn ($tax) => strlen($tax['name']) > 1);
             })
-            ->unique(fn($tax) => $tax['percentage'] . '_' . $tax['name'])
+            ->unique(fn ($tax) => $tax['percentage'] . '_' . $tax['name'])
             ->values()
             ->each(function ($tax) {
 
@@ -410,7 +409,7 @@ class InvoiceItemSum
 
         $key = str_replace(' ', '', $tax_name . $tax_rate);
 
-        //Handles an edge case where a blank line is entered.
+        // Handles an edge case where a blank line is entered.
         if ($tax_rate > 0 && $amount == 0) {
             return;
         }
@@ -438,7 +437,7 @@ class InvoiceItemSum
     }
 
     public function setLineTotal($total)
-    {   //Here we go! Epsilon in PHP, who would have thunk it....
+    {   // Here we go! Epsilon in PHP, who would have thunk it....
         $this->item->line_total = round(((float) $total + 0.000000000000004), 2);
 
         return $this;
@@ -564,7 +563,7 @@ class InvoiceItemSum
         unset($invoice_item->casts);
 
         foreach ($invoice_item as $key => $value) {
-            if (! property_exists($this->item, $key) || ! isset($this->item->{$key})) {
+            if (!property_exists($this->item, $key) || !isset($this->item->{$key})) {
                 $this->item->{$key} = $value;
                 $this->item->{$key} = BaseSettings::castAttribute(InvoiceItem::$casts[$key], $value);
             }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,11 +28,9 @@ use App\Models\RecurringQuote;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Vendor;
+use Faker\Factory;
 use Tests\TestCase;
 
-/**
- *
- */
 class EntityTranslationTest extends TestCase
 {
     public $faker;
@@ -42,10 +39,10 @@ class EntityTranslationTest extends TestCase
     {
         parent::setUp();
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
     }
 
-    public function testTranslations()
+    public function test_translations()
     {
         $account = Account::factory()->create([
             'hosted_client_count' => 1000,
@@ -135,7 +132,6 @@ class EntityTranslationTest extends TestCase
             'client_id' => $client->id,
         ]);
 
-
         $vendor = Vendor::factory()->create([
             'company_id' => $company->id,
             'user_id' => $u->id,
@@ -165,16 +161,16 @@ class EntityTranslationTest extends TestCase
         $this->assertEquals(ctrans('texts.vendor'), $vendor->translate_entity());
         $this->assertEquals(ctrans('texts.purchase_order'), $po->translate_entity());
 
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.purchase_order')) . "_xxx.pdf", $po->getFileName());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.credit')) . "_xxx.pdf", $credit->getFileName());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.invoice')) . "_xxx.pdf", $invoice->getFileName());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.quote')) . "_xxx.pdf", $quote->getFileName());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.recurring_invoice')) . "_xxx.pdf", $recurring_invoice->getFileName());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.purchase_order')) . '_xxx.pdf', $po->getFileName());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.credit')) . '_xxx.pdf', $credit->getFileName());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.invoice')) . '_xxx.pdf', $invoice->getFileName());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.quote')) . '_xxx.pdf', $quote->getFileName());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.recurring_invoice')) . '_xxx.pdf', $recurring_invoice->getFileName());
 
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.recurring_invoice')) . "_xxx", $recurring_invoice->numberFormatter());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.credit')) . "_xxx", $credit->numberFormatter());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.invoice')) . "_xxx", $invoice->numberFormatter());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.quote')) . "_xxx", $quote->numberFormatter());
-        $this->assertEquals(str_replace(" ", "_", ctrans('texts.purchase_order')) . "_xxx", $po->numberFormatter());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.recurring_invoice')) . '_xxx', $recurring_invoice->numberFormatter());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.credit')) . '_xxx', $credit->numberFormatter());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.invoice')) . '_xxx', $invoice->numberFormatter());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.quote')) . '_xxx', $quote->numberFormatter());
+        $this->assertEquals(str_replace(' ', '_', ctrans('texts.purchase_order')) . '_xxx', $po->numberFormatter());
     }
 }

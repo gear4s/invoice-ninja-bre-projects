@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Support\Messages;
 
 use App\Http\Controllers\Controller;
 use App\Mail\SupportMessageSent;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 
 class SendingController extends Controller
@@ -18,15 +20,20 @@ class SendingController extends Controller
      *      tags={"support"},
      *      summary="Sends a support message to Invoice Ninja team",
      *      description="Allows a user to send a support message to the Invoice Ninja Team",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\RequestBody(
      *         description="The message",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="string",
+     *
      *                 @OA\Property(
      *                     property="message",
      *                     description="The support message",
@@ -35,16 +42,21 @@ class SendingController extends Controller
      *             )
      *         ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Success",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\MediaType(
      *             mediaType="application/json",
+     *
      *               @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="string",
      *                     description="Server response",
@@ -53,14 +65,16 @@ class SendingController extends Controller
      *             )
      *          )
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     *
+     * @return JsonResponse|Response
      */
     public function __invoke(Request $request)
     {

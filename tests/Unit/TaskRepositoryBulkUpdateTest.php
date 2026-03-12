@@ -6,35 +6,39 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\Task;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
 use App\Repositories\TaskRepository;
-use Tests\MockAccountData;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
  * Test TaskRepository::bulkUpdate() method
  */
 class TaskRepositoryBulkUpdateTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     private TaskRepository $taskRepository;
+
     private Client $testClient;
+
     private Project $testProject;
+
     private User $testUser;
 
     protected function setUp(): void
@@ -47,7 +51,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
 
         Model::reguard();
 
-        $this->taskRepository = new TaskRepository();
+        $this->taskRepository = new TaskRepository;
 
         // Create test client
         $this->testClient = Client::factory()->create([
@@ -67,7 +71,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         ]);
     }
 
-    public function testBulkUpdateProjectIdUpdatesClientId()
+    public function test_bulk_update_project_id_updates_client_id()
     {
         // Create tasks with different clients
         $task1 = Task::factory()->create([
@@ -115,7 +119,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertEquals($otherClient->id, $task2->client_id);
     }
 
-    public function testBulkUpdateProjectIdWithNonExistentProject()
+    public function test_bulk_update_project_id_with_non_existent_project()
     {
         // Create a task
         $task = Task::factory()->create([
@@ -143,7 +147,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertEquals($originalProjectId, $task->project_id);
     }
 
-    public function testBulkUpdateClientIdUnsetsProjectId()
+    public function test_bulk_update_client_id_unsets_project_id()
     {
         // Create a task with a project
         $task = Task::factory()->create([
@@ -174,7 +178,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertNull($task->project_id);
     }
 
-    public function testBulkUpdateAssignedUser()
+    public function test_bulk_update_assigned_user()
     {
         // Create tasks
         $task1 = Task::factory()->create([
@@ -208,10 +212,10 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertEquals($this->testUser->id, $task2->assigned_user_id);
     }
 
-    public function testBulkUpdateSkipsInvoicedTasks()
+    public function test_bulk_update_skips_invoiced_tasks()
     {
         // Create an invoice first
-        $invoice = \App\Models\Invoice::factory()->create([
+        $invoice = Invoice::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->testClient->id,
@@ -251,7 +255,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertEquals($this->testUser->id, $regularTask->assigned_user_id);
     }
 
-    public function testBulkUpdateWithSoftDeletedProject()
+    public function test_bulk_update_with_soft_deleted_project()
     {
         // Create a task
         $task = Task::factory()->create([
@@ -279,7 +283,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertEquals($this->testClient->id, $task->client_id);
     }
 
-    public function testBulkUpdateWithDifferentColumnTypes()
+    public function test_bulk_update_with_different_column_types()
     {
         // Create a task
         $task = Task::factory()->create([
@@ -304,7 +308,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertEquals(75.50, $task->rate);
     }
 
-    public function testBulkUpdatePerformanceWithLargeDataset()
+    public function test_bulk_update_performance_with_large_dataset()
     {
         // Create many tasks
         $tasks = Task::factory()->count(100)->create([
@@ -339,7 +343,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertLessThan(1.0, $executionTime, 'Bulk update should be fast for 100 records');
     }
 
-    public function testBulkUpdateWithEmptyResultSet()
+    public function test_bulk_update_with_empty_result_set()
     {
         // Get query builder for non-existent tasks
         $models = Task::where('id', 99999);
@@ -351,7 +355,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testBulkUpdateProjectIdWithTrashedProject()
+    public function test_bulk_update_project_id_with_trashed_project()
     {
         // Create a task
         $task = Task::factory()->create([

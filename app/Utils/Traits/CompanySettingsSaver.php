@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -36,22 +35,24 @@ trait CompanySettingsSaver
         'besr_id',
         'gmail_sending_user_id',
     ];
+
     /**
      * Saves a setting object.
      *
      * Works for groups|clients|companies
-     * @param  mixed $settings The request input settings array
-     * @param  object $entity   The entity which the settings belongs to
+     *
+     * @param  mixed  $settings  The request input settings array
+     * @param  object  $entity  The entity which the settings belongs to
      * @return void
      */
     public function saveSettings($settings, $entity)
     {
-        /* No Settings, No Save!*/
-        if (! $settings) {
+        /* No Settings, No Save! */
+        if (!$settings) {
             return;
         }
 
-        //Unset Protected Properties.
+        // Unset Protected Properties.
         foreach (CompanySettings::$protected_fields as $field) {
             unset($settings[$field]);
         }
@@ -69,7 +70,7 @@ trait CompanySettingsSaver
         }
 
         if (property_exists($settings, 'translations')) {
-            //this pass will handle any null values that are in the translations
+            // this pass will handle any null values that are in the translations
             foreach ($settings->translations as $key => $value) {
                 if (is_array($settings->translations)) {
                     if (is_null($settings->translations[$key])) {
@@ -87,7 +88,7 @@ trait CompanySettingsSaver
 
         $entity->settings = $company_settings;
 
-        if ($entity?->calculate_taxes && $company_settings->country_id == "840" && array_key_exists('settings', $entity->getDirty()) && !$entity?->account->isFreeHostedClient()) {
+        if ($entity?->calculate_taxes && $company_settings->country_id == '840' && array_key_exists('settings', $entity->getDirty()) && !$entity?->account->isFreeHostedClient()) {
             $old_settings = $entity->getOriginal()['settings'];
 
             /** Monitor changes of the Postal code */
@@ -95,8 +96,7 @@ trait CompanySettingsSaver
                 CompanyTaxRate::dispatch($entity);
             }
 
-
-        } elseif ($entity?->calculate_taxes && $company_settings->country_id == "840" && array_key_exists('calculate_taxes', $entity->getDirty()) && $entity->getOriginal('calculate_taxes') == 0 && !$entity?->account->isFreeHostedClient()) {
+        } elseif ($entity?->calculate_taxes && $company_settings->country_id == '840' && array_key_exists('calculate_taxes', $entity->getDirty()) && $entity->getOriginal('calculate_taxes') == 0 && !$entity?->account->isFreeHostedClient()) {
             CompanyTaxRate::dispatch($entity);
         }
 
@@ -109,8 +109,9 @@ trait CompanySettingsSaver
      *
      * Returns an array of errors, or boolean TRUE
      * on successful validation
-     * @param  array $settings The request() settings array
-     * @return array|bool      Array on failure, boolean TRUE on success
+     *
+     * @param  array  $settings  The request() settings array
+     * @return array|bool Array on failure, boolean TRUE on success
      */
     public function validateSettings($settings)
     {
@@ -124,15 +125,15 @@ trait CompanySettingsSaver
             if (in_array($key, CompanySettings::$string_casts)) {
                 $value = 'string';
 
-                if (! property_exists($settings, $key)) {
+                if (!property_exists($settings, $key)) {
                     continue;
-                } elseif (! $this->checkAttribute($value, $settings->{$key})) {
+                } elseif (!$this->checkAttribute($value, $settings->{$key})) {
                     return [$key, $value, $settings->{$key}];
                 }
 
                 continue;
             }
-            /*Separate loop if it is a _id field which is an integer cast as a string*/ elseif (substr($key, -3) == '_id' || substr($key, -14) == 'number_counter') {
+            /* Separate loop if it is a _id field which is an integer cast as a string */ elseif (substr($key, -3) == '_id' || substr($key, -14) == 'number_counter') {
                 $value = 'integer';
 
                 if (in_array($key, $this->string_ids)) {
@@ -140,9 +141,9 @@ trait CompanySettingsSaver
                     $value = 'string';
                 }
 
-                if (! property_exists($settings, $key)) {
+                if (!property_exists($settings, $key)) {
                     continue;
-                } elseif (! $this->checkAttribute($value, $settings->{$key})) {
+                } elseif (!$this->checkAttribute($value, $settings->{$key})) {
                     return [$key, $value, $settings->{$key}];
                 }
 
@@ -152,12 +153,12 @@ trait CompanySettingsSaver
             }
 
             /* Handles unset settings or blank strings */
-            if (! property_exists($settings, $key) || is_null($settings->{$key}) || ! isset($settings->{$key}) || $settings->{$key} == '') {
+            if (!property_exists($settings, $key) || is_null($settings->{$key}) || !isset($settings->{$key}) || $settings->{$key} == '') {
                 continue;
             }
 
-            /*Catch all filter */
-            if (! $this->checkAttribute($value, $settings->{$key})) {
+            /* Catch all filter */
+            if (!$this->checkAttribute($value, $settings->{$key})) {
                 return [$key, $value, $settings->{$key}];
             }
         }
@@ -173,8 +174,8 @@ trait CompanySettingsSaver
      * the object and will also settype() the property
      * so that it can be saved cleanly
      *
-     * @param  array $settings The settings request() array
-     * @return stdClass       stdClass object
+     * @param  array  $settings  The settings request() array
+     * @return stdClass stdClass object
      */
     private function checkSettingType($settings): stdClass
     {
@@ -186,7 +187,7 @@ trait CompanySettingsSaver
             if (in_array($key, CompanySettings::$string_casts)) {
                 $value = 'string';
 
-                if (! property_exists($settings, $key)) {
+                if (!property_exists($settings, $key)) {
                     continue;
                 } elseif ($this->checkAttribute($value, $settings->{$key})) {
                     if (substr($key, -3) == '_id') {
@@ -200,7 +201,7 @@ trait CompanySettingsSaver
 
                 continue;
             }
-            /*Separate loop if it is a _id field which is an integer cast as a string*/
+            /* Separate loop if it is a _id field which is an integer cast as a string */
             if (substr($key, -3) == '_id' || substr($key, -14) == 'number_counter') {
                 $value = 'integer';
 
@@ -208,7 +209,7 @@ trait CompanySettingsSaver
                     $value = 'string';
                 }
 
-                if (! property_exists($settings, $key)) {
+                if (!property_exists($settings, $key)) {
                     continue;
                 } elseif ($this->checkAttribute($value, $settings->{$key})) {
                     if (substr($key, -3) == '_id') {
@@ -225,17 +226,17 @@ trait CompanySettingsSaver
                 settype($settings->{$key}, 'object');
             }
 
-            //try casting floats here
+            // try casting floats here
             if ($value == 'float' && property_exists($settings, $key)) {
                 $settings->{$key} = floatval($settings->{$key});
             }
 
             /* Handles unset settings or blank strings */
-            if (! property_exists($settings, $key) || is_null($settings->{$key}) || ! isset($settings->{$key}) || $settings->{$key} == '') {
+            if (!property_exists($settings, $key) || is_null($settings->{$key}) || !isset($settings->{$key}) || $settings->{$key} == '') {
                 continue;
             }
 
-            /*Catch all filter */
+            /* Catch all filter */
             if ($this->checkAttribute($value, $settings->{$key})) {
                 if ($value == 'string' && is_null($settings->{$key})) {
                     $settings->{$key} = '';
@@ -252,9 +253,10 @@ trait CompanySettingsSaver
 
     /**
      * Type checks a object property.
-     * @param  string $key   The type
-     * @param  string $value The object property
-     * @return bool        TRUE if the property is the expected type
+     *
+     * @param  string  $key  The type
+     * @param  string  $value  The object property
+     * @return bool TRUE if the property is the expected type
      */
     private function checkAttribute($key, $value): bool
     {
@@ -265,7 +267,7 @@ trait CompanySettingsSaver
             case 'real':
             case 'float':
             case 'double':
-                return ! is_string($value) && (is_float($value) || is_numeric(strval($value)));
+                return !is_string($value) && (is_float($value) || is_numeric(strval($value)));
             case 'string':
                 return (is_string($value) && method_exists($value, '__toString')) || is_null($value) || is_string($value);
             case 'bool':

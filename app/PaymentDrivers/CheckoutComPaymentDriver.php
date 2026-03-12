@@ -6,51 +6,52 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use Exception;
+use App\Exceptions\PaymentFailed;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Http\Requests\Gateways\Checkout3ds\Checkout3dsRequest;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
+use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
 use App\Models\Company;
+use App\Models\GatewayType;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\SystemLog;
-use Checkout\CheckoutSdk;
-use Checkout\Environment;
-use Checkout\Common\Phone;
-use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use Illuminate\Support\Carbon;
-use App\Jobs\Util\SystemLogger;
-use App\Exceptions\PaymentFailed;
-use App\Models\ClientGatewayToken;
-use Checkout\CheckoutApiException;
-use App\Utils\Traits\SystemLogTrait;
-use Checkout\Payments\RefundRequest;
-use Illuminate\Support\Facades\Auth;
-use Checkout\CheckoutArgumentException;
-use Checkout\Customers\CustomerRequest;
-use Checkout\CheckoutAuthorizationException;
-use App\PaymentDrivers\CheckoutCom\Utilities;
-use Checkout\Payments\Request\PaymentRequest;
-use App\PaymentDrivers\CheckoutCom\CreditCard;
+use App\Models\SystemLog;
 use App\PaymentDrivers\CheckoutCom\CheckoutWebhook;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
-use Checkout\Payments\Request\Source\RequestIdSource;
-use App\Http\Requests\Gateways\Checkout3ds\Checkout3dsRequest;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\PaymentDrivers\CheckoutCom\CreditCard;
+use App\PaymentDrivers\CheckoutCom\Utilities;
+use App\Utils\Traits\SystemLogTrait;
+use Checkout\CheckoutApiException;
+use Checkout\CheckoutArgumentException;
+use Checkout\CheckoutAuthorizationException;
+use Checkout\CheckoutSdk;
+use Checkout\Common\Phone;
+use Checkout\Customers\CustomerRequest;
+use Checkout\Environment;
 use Checkout\Payments\Previous\PaymentRequest as PreviousPaymentRequest;
 use Checkout\Payments\Previous\Source\RequestIdSource as SourceRequestIdSource;
+use Checkout\Payments\RefundRequest;
+use Checkout\Payments\Request\PaymentRequest;
+use Checkout\Payments\Request\Source\RequestIdSource;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class CheckoutComPaymentDriver extends BaseDriver
 {
     use SystemLogTrait;
     use Utilities;
 
-    /* The company gateway instance*/
+    /* The company gateway instance */
     public $company_gateway;
 
     /* The Invitation */
@@ -72,7 +73,7 @@ class CheckoutComPaymentDriver extends BaseDriver
      */
     public $gateway;
 
-    public $payment_method; //the gateway type id
+    public $payment_method; // the gateway type id
 
     public static $methods = [
         GatewayType::CREDIT_CARD => CreditCard::class,
@@ -94,8 +95,8 @@ class CheckoutComPaymentDriver extends BaseDriver
 
     /**
      * Since with Checkout.com we handle only credit cards, this method should be empty.
-     * @param int|null $payment_method
-     * @return CheckoutComPaymentDriver
+     *
+     * @param  int|null  $payment_method
      */
     public function setPaymentMethod($payment_method = null): self
     {
@@ -111,6 +112,7 @@ class CheckoutComPaymentDriver extends BaseDriver
 
     /**
      * Initialize the checkout payment driver
+     *
      * @return $this
      */
     public function init()
@@ -118,15 +120,15 @@ class CheckoutComPaymentDriver extends BaseDriver
 
         if (str_contains($this->company_gateway->getConfigField('secretApiKey'), '-')) {
 
-            $this->is_four_api = true; //was four api, now known as previous.
+            $this->is_four_api = true; // was four api, now known as previous.
 
             /** @phpstan-ignore-next-line **/
             $builder = CheckoutSdk::builder()
-                    ->previous()
-                    ->staticKeys()
-                    ->environment($this->company_gateway->getConfigField('testMode') ? Environment::sandbox() : Environment::production()) /** phpstan-ignore-line **/
-                    ->publicKey($this->company_gateway->getConfigField('publicApiKey'))
-                    ->secretKey($this->company_gateway->getConfigField('secretApiKey'));
+                ->previous()
+                ->staticKeys()
+                ->environment($this->company_gateway->getConfigField('testMode') ? Environment::sandbox() : Environment::production()) /** phpstan-ignore-line **/
+                ->publicKey($this->company_gateway->getConfigField('publicApiKey'))
+                ->secretKey($this->company_gateway->getConfigField('secretApiKey'));
 
             $this->gateway = $builder->build();
 
@@ -134,21 +136,22 @@ class CheckoutComPaymentDriver extends BaseDriver
 
             /** @phpstan-ignore-next-line **/
             $builder = CheckoutSdk::builder()
-                    ->staticKeys()
-                    ->environment($this->company_gateway->getConfigField('testMode') ? Environment::sandbox() : Environment::production()) /** phpstan-ignore-line **/
-                    ->publicKey($this->company_gateway->getConfigField('publicApiKey'))
-                    ->secretKey($this->company_gateway->getConfigField('secretApiKey'));
+                ->staticKeys()
+                ->environment($this->company_gateway->getConfigField('testMode') ? Environment::sandbox() : Environment::production()) /** phpstan-ignore-line **/
+                ->publicKey($this->company_gateway->getConfigField('publicApiKey'))
+                ->secretKey($this->company_gateway->getConfigField('secretApiKey'));
 
             $this->gateway = $builder->build();
 
         }
+
         return $this;
     }
 
     /**
      * Process different view depending on payment type
      *
-     * @param int $gateway_type_id The gateway type
+     * @param  int  $gateway_type_id  The gateway type
      * @return string The view string
      */
     public function viewForType($gateway_type_id)
@@ -159,8 +162,8 @@ class CheckoutComPaymentDriver extends BaseDriver
     /**
      * Authorize View
      *
-     * @param  array $data
-     * @return \Illuminate\View\View
+     * @param  array  $data
+     * @return View
      */
     public function authorizeView($data)
     {
@@ -170,8 +173,8 @@ class CheckoutComPaymentDriver extends BaseDriver
     /**
      * Authorize Response
      *
-     * @param  array $data
-     * @return \Illuminate\View\View
+     * @param  array  $data
+     * @return View
      */
     public function authorizeResponse($data)
     {
@@ -181,8 +184,8 @@ class CheckoutComPaymentDriver extends BaseDriver
     /**
      * Payment View
      *
-     * @param array $data Payment data array
-     * @return \Illuminate\View\View
+     * @param  array  $data  Payment data array
+     * @return View
      */
     public function processPaymentView(array $data)
     {
@@ -192,8 +195,8 @@ class CheckoutComPaymentDriver extends BaseDriver
     /**
      * Process the payment response
      *
-     * @param \Illuminate\Http\Request $request The payment request
-     * @return \Illuminate\View\View
+     * @param  Request  $request  The payment request
+     * @return View
      */
     public function processPaymentResponse($request)
     {
@@ -203,7 +206,6 @@ class CheckoutComPaymentDriver extends BaseDriver
     /**
      * Store PaymentMethod
      *
-     * @param  array $data
      * @return ?ClientGatewayToken $token
      */
     public function storePaymentMethod(array $data)
@@ -219,7 +221,7 @@ class CheckoutComPaymentDriver extends BaseDriver
             $this->updateCustomer();
         }
 
-        $request = new RefundRequest();
+        $request = new RefundRequest;
         $request->reference = "{$payment->transaction_reference} " . now();
         $request->amount = $this->convertToCheckoutAmount($amount, $this->client->getCurrencyCode());
 
@@ -227,9 +229,8 @@ class CheckoutComPaymentDriver extends BaseDriver
 
             $response = $this->gateway->getPaymentsClient()->refundPayment($payment->transaction_reference, $request);
 
-
             SystemLogger::dispatch(
-                array_merge(['message' => "Gateway Refund"], $response),
+                array_merge(['message' => 'Gateway Refund'], $response),
                 SystemLog::CATEGORY_GATEWAY_RESPONSE,
                 SystemLog::EVENT_GATEWAY_SUCCESS,
                 SystemLog::TYPE_CHECKOUT,
@@ -295,12 +296,12 @@ class CheckoutComPaymentDriver extends BaseDriver
             $response = $this->gateway->getCustomersClient()->get($this->client->present()->email());
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
-            $request = new CustomerRequest();
+            $request = new CustomerRequest;
 
-            $phone = new Phone();
-            $phone->number = substr(str_pad($this->client->present()->phone(), 6, "0", STR_PAD_RIGHT), 0, 24);
+            $phone = new Phone;
+            $phone->number = substr(str_pad($this->client->present()->phone(), 6, '0', STR_PAD_RIGHT), 0, 24);
             $request->email = $this->client->present()->email();
             $request->name = $this->client->present()->name();
             $request->phone = $phone;
@@ -324,7 +325,7 @@ class CheckoutComPaymentDriver extends BaseDriver
             } catch (CheckoutAuthorizationException $e) {
                 // Bad Invalid authorization
 
-                throw new PaymentFailed("Checkout Gateway credentials are invalid", 400);
+                throw new PaymentFailed('Checkout Gateway credentials are invalid', 400);
             }
 
             return $response;
@@ -340,16 +341,15 @@ class CheckoutComPaymentDriver extends BaseDriver
 
         try {
 
-            $request = new CustomerRequest();
+            $request = new CustomerRequest;
 
-            $phone = new Phone();
-            $phone->number = substr(str_pad($this->client->present()->phone(), 6, "0", STR_PAD_RIGHT), 0, 24);
+            $phone = new Phone;
+            $phone->number = substr(str_pad($this->client->present()->phone(), 6, '0', STR_PAD_RIGHT), 0, 24);
             $request->email = $this->client->present()->email();
             $request->name = $this->client->present()->name();
             $request->phone = $phone;
 
             $response = $this->gateway->getCustomersClient()->update($customer_id, $request);
-
 
         } catch (CheckoutApiException $e) {
             nlog($e->getMessage());
@@ -362,20 +362,20 @@ class CheckoutComPaymentDriver extends BaseDriver
     /**
      * Boots a request for a token payment
      *
-     * @param  string $token
+     * @param  string  $token
      * @return PreviousPaymentRequest | PaymentRequest
      */
     public function bootTokenRequest($token)
     {
         if ($this->is_four_api) {
-            $token_source = new SourceRequestIdSource();
+            $token_source = new SourceRequestIdSource;
             $token_source->id = $token;
-            $request = new PreviousPaymentRequest();
+            $request = new PreviousPaymentRequest;
             $request->source = $token_source;
         } else {
-            $token_source = new RequestIdSource();
+            $token_source = new RequestIdSource;
             $token_source->id = $token;
-            $request = new PaymentRequest();
+            $request = new PaymentRequest;
             $request->source = $token_source;
         }
 
@@ -398,7 +398,7 @@ class CheckoutComPaymentDriver extends BaseDriver
         $paymentRequest->metadata = ['udf1' => 'Invoice Ninja', 'udf2' => $payment_hash->hash];
         $paymentRequest->currency = $this->client->getCurrencyCode();
 
-        $request = new PaymentResponseRequest();
+        $request = new PaymentResponseRequest;
         $request->setMethod('POST');
         $request->request->add(['payment_hash' => $payment_hash->hash]);
 
@@ -506,7 +506,7 @@ class CheckoutComPaymentDriver extends BaseDriver
         $this->init();
         $this->setPaymentHash($request->getPaymentHash());
 
-        //11-08-2022 check the user is authenticated
+        // 11-08-2022 check the user is authenticated
         if (!Auth::guard('contact')->check()) {
             $client = $request->getClient();
             $this->client = $client;
@@ -518,7 +518,7 @@ class CheckoutComPaymentDriver extends BaseDriver
                 $request->query('cko-session-id')
             );
 
-            nlog("checkout3ds");
+            nlog('checkout3ds');
             nlog($payment);
 
             if (isset($payment['approved']) && $payment['approved']) {
@@ -527,8 +527,9 @@ class CheckoutComPaymentDriver extends BaseDriver
                 return $this->processUnsuccessfulPayment($payment);
             }
         } catch (CheckoutApiException|Exception $e) {
-            nlog("checkout");
+            nlog('checkout');
             nlog($e->getMessage());
+
             return $this->processInternallyFailedPayment($this, $e);
         }
     }
@@ -542,20 +543,22 @@ class CheckoutComPaymentDriver extends BaseDriver
     {
         try {
             $this->init()->gateway->getCustomersClient('x');
+
             return 'ok';
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
         }
+
         return 'error';
     }
 
     private function getToken(string $token, $gateway_customer_reference)
     {
-        return  ClientGatewayToken::query()
-                                  ->where('company_id', $this->company_gateway->company_id)
-                                  ->where('gateway_customer_reference', $gateway_customer_reference)
-                                  ->where('token', $token)
-                                  ->first();
+        return ClientGatewayToken::query()
+            ->where('company_id', $this->company_gateway->company_id)
+            ->where('gateway_customer_reference', $gateway_customer_reference)
+            ->where('token', $token)
+            ->first();
     }
 
     /**
@@ -571,53 +574,54 @@ class CheckoutComPaymentDriver extends BaseDriver
         $this->init();
 
         $this->company_gateway
-             ->company
-             ->clients()
-             ->cursor()
-             ->each(function ($client) {
+            ->company
+            ->clients()
+            ->cursor()
+            ->each(function ($client) {
 
-                 if (!str_contains($client->present()->email(), "@")) {
-                     return;
-                 }
+                if (!str_contains($client->present()->email(), '@')) {
+                    return;
+                }
 
-                 try {
-                     $customer = $this->gateway->getCustomersClient()->get($client->present()->email());
-                 } catch (\Exception $e) {
-                     nlog("Checkout: Customer not found");
-                     return;
-                 }
+                try {
+                    $customer = $this->gateway->getCustomersClient()->get($client->present()->email());
+                } catch (Exception $e) {
+                    nlog('Checkout: Customer not found');
 
-                 $this->client = $client;
+                    return;
+                }
 
-                 nlog($customer['instruments']);
+                $this->client = $client;
 
-                 foreach ($customer['instruments'] as $card) {
-                     if (
-                         $card['type'] != 'card'
-                         || Carbon::createFromDate($card['expiry_year'], $card['expiry_month'], '1')->lt(now()) //@phpstan-ignore-line
-                         || $this->getToken($card['id'], $customer['id'])
-                     ) {
-                         continue;
-                     }
+                nlog($customer['instruments']);
 
-                     $payment_meta = new \stdClass();
-                     $payment_meta->exp_month = (string) $card['expiry_month'];
-                     $payment_meta->exp_year = (string) $card['expiry_year'];
-                     $payment_meta->brand = (string) $card['scheme'];
-                     $payment_meta->last4 = (string) $card['last4'];
-                     $payment_meta->type = (int) GatewayType::CREDIT_CARD;
+                foreach ($customer['instruments'] as $card) {
+                    if (
+                        $card['type'] != 'card'
+                        || Carbon::createFromDate($card['expiry_year'], $card['expiry_month'], '1')->lt(now()) // @phpstan-ignore-line
+                        || $this->getToken($card['id'], $customer['id'])
+                    ) {
+                        continue;
+                    }
 
-                     $data = [
-                         'payment_meta' => $payment_meta,
-                         'token' => $card['id'],
-                         'payment_method_id' => GatewayType::CREDIT_CARD,
-                     ];
+                    $payment_meta = new \stdClass;
+                    $payment_meta->exp_month = (string) $card['expiry_month'];
+                    $payment_meta->exp_year = (string) $card['expiry_year'];
+                    $payment_meta->brand = (string) $card['scheme'];
+                    $payment_meta->last4 = (string) $card['last4'];
+                    $payment_meta->type = (int) GatewayType::CREDIT_CARD;
 
-                     $this->storeGatewayToken($data, ['gateway_customer_reference' => $customer['id']]);
+                    $data = [
+                        'payment_meta' => $payment_meta,
+                        'token' => $card['id'],
+                        'payment_method_id' => GatewayType::CREDIT_CARD,
+                    ];
 
-                 }
+                    $this->storeGatewayToken($data, ['gateway_customer_reference' => $customer['id']]);
 
-             });
+                }
+
+            });
     }
 
     public function livewirePaymentView(array $data): string

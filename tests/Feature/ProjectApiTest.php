@@ -6,35 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Quote;
 use App\Models\Client;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Project;
-use Tests\MockAccountData;
+use App\Models\Quote;
+use App\Models\Task;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ProjectController
  */
 class ProjectApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -45,7 +44,7 @@ class ProjectApiTest extends TestCase
         Model::reguard();
     }
 
-    public function testInvoiceProject()
+    public function test_invoice_project()
     {
 
         $p = Project::factory()->create([
@@ -82,7 +81,7 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects/bulk", $data);
+        ])->postJson('/api/v1/projects/bulk', $data);
 
         $response->assertStatus(200);
 
@@ -90,7 +89,7 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testBulkProjectInvoiceValidation()
+    public function test_bulk_project_invoice_validation()
     {
 
         $p1 = Project::factory()->create([
@@ -98,7 +97,6 @@ class ProjectApiTest extends TestCase
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
         ]);
-
 
         $c = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -110,7 +108,6 @@ class ProjectApiTest extends TestCase
             'company_id' => $this->company->id,
             'client_id' => $c->id,
         ]);
-
 
         $data = [
             'ids' => [$p1->hashed_id, $p2->hashed_id],
@@ -120,13 +117,13 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects/bulk", $data);
+        ])->postJson('/api/v1/projects/bulk', $data);
 
         $response->assertStatus(422);
 
     }
 
-    public function testBulkProjectInvoiceValidationPasses()
+    public function test_bulk_project_invoice_validation_passes()
     {
 
         $p1 = Project::factory()->create([
@@ -134,7 +131,6 @@ class ProjectApiTest extends TestCase
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
         ]);
-
 
         $c = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -147,7 +143,6 @@ class ProjectApiTest extends TestCase
             'client_id' => $c->id,
         ]);
 
-
         $data = [
             'ids' => [$p1->hashed_id],
             'action' => 'invoice',
@@ -156,14 +151,13 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects/bulk", $data);
+        ])->postJson('/api/v1/projects/bulk', $data);
 
         $response->assertStatus(200);
 
     }
 
-
-    public function testCreateProjectWithNullTaskRate()
+    public function test_create_project_with_null_task_rate()
     {
 
         $data = [
@@ -175,7 +169,7 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects", $data);
+        ])->postJson('/api/v1/projects', $data);
 
         $response->assertStatus(200);
 
@@ -185,19 +179,19 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testCreateProjectWithNullTaskRate2()
+    public function test_create_project_with_null_task_rate2()
     {
 
         $data = [
             'client_id' => $this->client->hashed_id,
             'name' => 'howdy',
-            'task_rate' => "A",
+            'task_rate' => 'A',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects", $data);
+        ])->postJson('/api/v1/projects', $data);
 
         $response->assertStatus(422);
 
@@ -205,20 +199,19 @@ class ProjectApiTest extends TestCase
 
     }
 
-
-    public function testCreateProjectWithNullTaskRate3()
+    public function test_create_project_with_null_task_rate3()
     {
 
         $data = [
             'client_id' => $this->client->hashed_id,
             'name' => 'howdy',
-            'task_rate' => "10",
+            'task_rate' => '10',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects", $data);
+        ])->postJson('/api/v1/projects', $data);
 
         $response->assertStatus(200);
 
@@ -228,19 +221,19 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testCreateProjectWithNullTaskRate5()
+    public function test_create_project_with_null_task_rate5()
     {
 
         $data = [
             'client_id' => $this->client->hashed_id,
             'name' => 'howdy',
-            'task_rate' => "-10",
+            'task_rate' => '-10',
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects", $data);
+        ])->postJson('/api/v1/projects', $data);
 
         $response->assertStatus(200);
 
@@ -250,9 +243,7 @@ class ProjectApiTest extends TestCase
 
     }
 
-
-
-    public function testCreateProjectWithNullTaskRate4()
+    public function test_create_project_with_null_task_rate4()
     {
 
         $data = [
@@ -264,7 +255,7 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/projects", $data);
+        ])->postJson('/api/v1/projects', $data);
 
         $response->assertStatus(200);
 
@@ -274,7 +265,7 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectIncludesZeroCount()
+    public function test_project_includes_zero_count()
     {
 
         $response = $this->withHeaders([
@@ -292,7 +283,7 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectIncludes()
+    public function test_project_includes()
     {
         $i = Invoice::factory()->create([
             'user_id' => $this->user->id,
@@ -301,7 +292,6 @@ class ProjectApiTest extends TestCase
             'project_id' => $this->project->id,
         ]);
 
-
         $e = Expense::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
@@ -309,14 +299,12 @@ class ProjectApiTest extends TestCase
             'project_id' => $this->project->id,
         ]);
 
-
         $q = Quote::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->project->client_id,
             'project_id' => $this->project->id,
         ]);
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -333,11 +321,11 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectValidationForBudgetedHoursPut()
+    public function test_project_validation_for_budgeted_hours_put()
     {
 
         $data = $this->project->toArray();
-        $data['budgeted_hours'] = "aa";
+        $data['budgeted_hours'] = 'aa';
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -348,7 +336,7 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectValidationForBudgetedHoursPutNull()
+    public function test_project_validation_for_budgeted_hours_put_null()
     {
 
         $data = $this->project->toArray();
@@ -363,12 +351,11 @@ class ProjectApiTest extends TestCase
 
     }
 
-
-    public function testProjectValidationForBudgetedHoursPutEmpty()
+    public function test_project_validation_for_budgeted_hours_put_empty()
     {
 
         $data = $this->project->toArray();
-        $data['budgeted_hours'] = "";
+        $data['budgeted_hours'] = '';
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -379,15 +366,14 @@ class ProjectApiTest extends TestCase
 
     }
 
-
-    public function testProjectValidationForBudgetedHours()
+    public function test_project_validation_for_budgeted_hours()
     {
 
         $data = [
             'name' => $this->faker->firstName(),
             'client_id' => $this->client->hashed_id,
             'number' => 'duplicate',
-            'budgeted_hours' => null
+            'budgeted_hours' => null,
         ];
 
         $response = $this->withHeaders([
@@ -399,14 +385,14 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectValidationForBudgetedHours2()
+    public function test_project_validation_for_budgeted_hours2()
     {
 
         $data = [
             'name' => $this->faker->firstName(),
             'client_id' => $this->client->hashed_id,
             'number' => 'duplicate',
-            'budgeted_hours' => "a"
+            'budgeted_hours' => 'a',
         ];
 
         $response = $this->withHeaders([
@@ -418,14 +404,14 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectValidationForBudgetedHours3()
+    public function test_project_validation_for_budgeted_hours3()
     {
 
         $data = [
             'name' => $this->faker->firstName(),
             'client_id' => $this->client->hashed_id,
             'number' => 'duplicate',
-            'budgeted_hours' => ""
+            'budgeted_hours' => '',
         ];
 
         $response = $this->withHeaders([
@@ -437,7 +423,7 @@ class ProjectApiTest extends TestCase
 
     }
 
-    public function testProjectGetFilter()
+    public function test_project_get_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -447,17 +433,17 @@ class ProjectApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testProjectGet()
+    public function test_project_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/projects/'.$this->encodePrimaryKey($this->project->id));
+        ])->get('/api/v1/projects/' . $this->encodePrimaryKey($this->project->id));
 
         $response->assertStatus(200);
     }
 
-    public function testProjectPost()
+    public function test_project_post()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -477,7 +463,7 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/projects/'.$arr['data']['id'], $data)->assertStatus(200);
+        ])->put('/api/v1/projects/' . $arr['data']['id'], $data)->assertStatus(200);
 
         try {
             $response = $this->withHeaders([
@@ -489,7 +475,7 @@ class ProjectApiTest extends TestCase
         }
     }
 
-    public function testProjectPostFilters()
+    public function test_project_post_filters()
     {
         $data = [
             'name' => 'Sherlock',
@@ -513,7 +499,7 @@ class ProjectApiTest extends TestCase
         $this->assertEquals(1, count($arr['data']));
     }
 
-    public function testProjectPut()
+    public function test_project_put()
     {
         $data = [
             'name' => $this->faker->firstName(),
@@ -523,24 +509,24 @@ class ProjectApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/projects/'.$this->encodePrimaryKey($this->project->id), $data);
+        ])->put('/api/v1/projects/' . $this->encodePrimaryKey($this->project->id), $data);
 
         $response->assertStatus(200);
     }
 
-    public function testProjectNotArchived()
+    public function test_project_not_archived()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/projects/'.$this->encodePrimaryKey($this->project->id));
+        ])->get('/api/v1/projects/' . $this->encodePrimaryKey($this->project->id));
 
         $arr = $response->json();
 
         $this->assertEquals(0, $arr['data']['archived_at']);
     }
 
-    public function testProjectArchived()
+    public function test_project_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->project->id)],
@@ -556,7 +542,7 @@ class ProjectApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testProjectRestored()
+    public function test_project_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->project->id)],
@@ -572,7 +558,7 @@ class ProjectApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testProjectDeleted()
+    public function test_project_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->project->id)],

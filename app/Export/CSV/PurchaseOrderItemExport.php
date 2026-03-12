@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2024. PurchaseOrder Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\Transformers\PurchaseOrderTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class PurchaseOrderItemExport extends BaseExport
@@ -42,8 +42,8 @@ class PurchaseOrderItemExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->purchase_order_transformer = new PurchaseOrderTransformer();
-        $this->decorator = new Decorator();
+        $this->purchase_order_transformer = new PurchaseOrderTransformer;
+        $this->decorator = new Decorator;
     }
 
     private function init(): Builder
@@ -62,11 +62,11 @@ class PurchaseOrderItemExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_vendor_fields, $this->input['report_keys']));
 
         $query = PurchaseOrder::query()
-                        ->withTrashed()
-                        ->whereHas('vendor', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->with('vendor')->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->whereHas('vendor', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->with('vendor')->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -102,37 +102,37 @@ class PurchaseOrderItemExport extends BaseExport
         })->toArray();
 
         $query->cursor()
-              ->each(function ($resource) {
+            ->each(function ($resource) {
 
-                  /** @var \App\Models\PurchaseOrder $resource */
-                  $this->iterateItems($resource);
+                /** @var PurchaseOrder $resource */
+                $this->iterateItems($resource);
 
-                  foreach ($this->storage_array as $row) {
-                      $this->storage_item_array[] = $this->processItemMetaData($row, $resource);
-                  }
+                foreach ($this->storage_array as $row) {
+                    $this->storage_item_array[] = $this->processItemMetaData($row, $resource);
+                }
 
-                  $this->storage_array = [];
+                $this->storage_array = [];
 
-              });
+            });
 
         return array_merge(['columns' => $header], $this->storage_item_array);
     }
 
     public function run()
     {
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = $this->init();
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($purchase_order) {
 
-                /** @var \App\Models\PurchaseOrder $purchase_order */
+                /** @var PurchaseOrder $purchase_order */
                 $this->iterateItems($purchase_order);
             });
 
@@ -145,7 +145,7 @@ class PurchaseOrderItemExport extends BaseExport
     private function filterItems(array $items): array
     {
 
-        //if we have product filters in place, we will also need to filter the items at this level:
+        // if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
 
             $products = str_getcsv($this->input['product_key'], ',', "'");
@@ -171,11 +171,11 @@ class PurchaseOrderItemExport extends BaseExport
         foreach ($this->filterItems($purchase_order->line_items) as $item) {
             $item_array = [];
 
-            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { //items iterator produces item array
+            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { // items iterator produces item array
 
-                if (str_contains($key, "item.")) {
+                if (str_contains($key, 'item.')) {
 
-                    $tmp_key = str_replace("item.", "", $key);
+                    $tmp_key = str_replace('item.', '', $key);
 
                     if ($tmp_key == 'tax_id') {
                         $tmp_key = 'tax_category';
@@ -255,5 +255,4 @@ class PurchaseOrderItemExport extends BaseExport
 
         return $entity;
     }
-
 }

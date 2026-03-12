@@ -120,7 +120,7 @@ class NordigenClient
 
             // Check if we're making progress (offset is changing)
             if ($newOffset === $offset) {
-                nlog("getAllRequisitions: Offset not changing, likely stuck in loop. Breaking.");
+                nlog('getAllRequisitions: Offset not changing, likely stuck in loop. Breaking.');
                 break;
             }
 
@@ -865,6 +865,7 @@ class NordigenClient
     {
         if (!$response->successful()) {
             $this->logError('Paginated request failed', $response);
+
             return collect();
         }
 
@@ -873,8 +874,6 @@ class NordigenClient
         return collect($data);
     }
 
-
-
     /**
      * Handle single response
      */
@@ -882,6 +881,7 @@ class NordigenClient
     {
         if (!$response->successful()) {
             $this->logError('Request failed', $response);
+
             return null;
         }
 
@@ -907,6 +907,7 @@ class NordigenClient
     public function setTimeout(int $seconds): self
     {
         $this->httpClient = $this->httpClient->timeout($seconds);
+
         return $this;
     }
 
@@ -916,6 +917,7 @@ class NordigenClient
     public function setHeaders(array $headers): self
     {
         $this->httpClient = $this->httpClient->withHeaders($headers);
+
         return $this;
     }
 

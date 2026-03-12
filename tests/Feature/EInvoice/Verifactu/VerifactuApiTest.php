@@ -6,37 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\EInvoice\Verifactu;
 
-use Tests\TestCase;
-use App\Models\Client;
-use App\Models\Invoice;
-use App\Models\Project;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\GroupSetting;
-use App\Models\Subscription;
-use App\Models\ClientContact;
 use App\DataMapper\InvoiceItem;
-use App\Utils\Traits\MakesHash;
-use App\Models\RecurringInvoice;
-use App\Factory\InvoiceItemFactory;
-use App\Helpers\Invoice\InvoiceSum;
-use Illuminate\Support\Facades\Config;
+use App\Models\GroupSetting;
+use App\Models\Invoice;
 use App\Repositories\InvoiceRepository;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class VerifactuApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -52,7 +43,7 @@ class VerifactuApiTest extends TestCase
         $this->client->classification = 'business';
         $this->client->save();
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = 1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -61,7 +52,7 @@ class VerifactuApiTest extends TestCase
         $item->tax_rate1 = 21;
         $item->tax_name1 = 'IVA';
 
-        /** @var \App\Models\Invoice $invoice */
+        /** @var Invoice $invoice */
         $invoice = Invoice::factory()->make([
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -89,7 +80,7 @@ class VerifactuApiTest extends TestCase
         // $invoice->backup->document_type = 'F1';
         // $invoice->backup->adjustable_amount = 121;
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save([], $invoice);
 
         return $invoice;
@@ -105,27 +96,27 @@ class VerifactuApiTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-        $gs = new GroupSetting();
+        $gs = new GroupSetting;
         $gs->name = 'Test';
         $gs->company_id = $this->company->id;
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->lock_invoices = 'when_sent';
         $gs->settings = $settings;
         $gs->save();
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->lock_invoices = 'off';
 
         $data = [
             'name' => 'testX',
-            'settings' => (array)$settings,
+            'settings' => (array) $settings,
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/group_settings/'.$gs->hashed_id, $data);
+        ])->putJson('/api/v1/group_settings/' . $gs->hashed_id, $data);
 
         nlog($response->json());
         $response->assertStatus(422);
@@ -141,7 +132,7 @@ class VerifactuApiTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->lock_invoices = 'off';
 
         $data = [
@@ -167,7 +158,6 @@ class VerifactuApiTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-
         $settings->lock_invoices = 'off';
         $data = $this->company->toArray();
         $data['settings'] = (array) $settings;
@@ -175,7 +165,7 @@ class VerifactuApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/companies/'.$this->company->hashed_id, $data);
+        ])->putJson('/api/v1/companies/' . $this->company->hashed_id, $data);
 
         $response->assertStatus(200);
 
@@ -192,12 +182,11 @@ class VerifactuApiTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-
         $data = [
             'name' => 'A loyal Client',
             'settings' => [
-                'lock_invoices' => 'off'
-            ]
+                'lock_invoices' => 'off',
+            ],
         ];
 
         $response = $this->withHeaders([
@@ -222,7 +211,7 @@ class VerifactuApiTest extends TestCase
 
         $this->assertTrue($invoice->verifactuEnabled());
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = 1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -237,18 +226,18 @@ class VerifactuApiTest extends TestCase
         $invoice->discount = 0;
         $invoice->is_amount_discount = false;
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save($invoice->toArray(), $invoice);
 
         $invoice = $invoice->service()->markSent()->save();
 
-        //check the state for an original invoice
+        // check the state for an original invoice
         $this->assertEquals('F1', $invoice->backup->document_type);
         $this->assertEquals(121, $invoice->backup->adjustable_amount);
         $this->assertCount(0, $invoice->backup->child_invoice_ids);
         $this->assertEquals(106, $invoice->amount);
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = -1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -287,8 +276,8 @@ class VerifactuApiTest extends TestCase
         $invoice = $invoice->fresh();
 
         $child_invoices = Invoice::withTrashed()
-        ->whereIn('id', $this->transformKeys($invoice->backup->child_invoice_ids->toArray()))
-        ->get();
+            ->whereIn('id', $this->transformKeys($invoice->backup->child_invoice_ids->toArray()))
+            ->get();
 
         $child_invoice_amounts = $child_invoices->sum('backup.adjustable_amount');
 
@@ -296,7 +285,6 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals(Invoice::STATUS_CANCELLED, $invoice->status_id);
 
     }
-
 
     public function test_cancellation_generates_correct_status()
     {
@@ -309,7 +297,7 @@ class VerifactuApiTest extends TestCase
 
         $invoice = $this->buildData();
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = 1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -324,21 +312,20 @@ class VerifactuApiTest extends TestCase
         $invoice->discount = 0;
         $invoice->is_amount_discount = false;
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save($invoice->toArray(), $invoice);
 
         $invoice = $invoice->service()->markSent()->save();
 
-        //check the state for an original invoice
+        // check the state for an original invoice
         $this->assertEquals('F1', $invoice->backup->document_type);
         $this->assertEquals(121, $invoice->backup->adjustable_amount);
         $this->assertCount(0, $invoice->backup->child_invoice_ids);
         $this->assertEquals(106, $invoice->amount);
 
-
         $data = [
             'action' => 'cancel',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -355,7 +342,6 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals(Invoice::STATUS_CANCELLED, $invoice->status_id);
     }
 
-
     public function test_backup_object_state()
     {
         $settings = $this->company->settings;
@@ -367,7 +353,7 @@ class VerifactuApiTest extends TestCase
 
         $invoice = $this->buildData();
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = 1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -382,21 +368,20 @@ class VerifactuApiTest extends TestCase
         $invoice->discount = 0;
         $invoice->is_amount_discount = false;
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save($invoice->toArray(), $invoice);
 
         $invoice = $invoice->service()->markSent()->save();
 
         nlog($invoice->toArray());
 
-        //check the state for an original invoice
+        // check the state for an original invoice
         $this->assertEquals('F1', $invoice->backup->document_type);
         $this->assertEquals(121, $invoice->backup->adjustable_amount);
         $this->assertCount(0, $invoice->backup->child_invoice_ids);
         $this->assertEquals(106, $invoice->amount);
 
-
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->quantity = -1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -425,15 +410,14 @@ class VerifactuApiTest extends TestCase
 
         $invoice = Invoice::find($this->decodePrimaryKey($arr['data']['id']));
 
-        //Create a partial cancellation for half of the invoice value
+        // Create a partial cancellation for half of the invoice value
         $this->assertEquals('R1', $invoice->backup->document_type);
         $this->assertEquals(-60.5, $invoice->backup->adjustable_amount);
         $this->assertEquals(-53, $invoice->amount);
         $this->assertEquals(Invoice::STATUS_SENT, $invoice->status_id);
 
-
-        //Test Validation to catch illegal cancellation amounts
-        $item = new InvoiceItem();
+        // Test Validation to catch illegal cancellation amounts
+        $item = new InvoiceItem;
         $item->quantity = -1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -458,8 +442,8 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(422);
 
-        //Test Validation to catch illegal cancellation amounts
-        $item = new InvoiceItem();
+        // Test Validation to catch illegal cancellation amounts
+        $item = new InvoiceItem;
         $item->quantity = 1;
         $item->product_key = 'product_1';
         $item->notes = 'Product 1';
@@ -514,19 +498,19 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'delete',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/invoices/bulk', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
 
         $response->assertStatus(422);
 
         $data = [
             'action' => 'delete',
-            'ids' => [$invoice2->hashed_id]
+            'ids' => [$invoice2->hashed_id],
         ];
 
         sleep(1);
@@ -538,9 +522,7 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(422);
 
-
     }
-
 
     public function test_archive_invoice_with_no_parent()
     {
@@ -557,7 +539,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'archive',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -567,10 +549,9 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(200);
 
-
         $data = [
             'action' => 'restore',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -624,7 +605,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'delete',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -653,7 +634,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'delete',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -663,10 +644,9 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(422);
 
-
         $data = [
             'action' => 'restore',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -676,7 +656,6 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(422);
     }
-
 
     public function test_credits_never_exceed_original_invoice9()
     {
@@ -796,7 +775,6 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals(-60.5, $arr['data']['amount']);
     }
 
-
     public function test_credits_never_exceed_original_invoice6()
     {
 
@@ -838,26 +816,25 @@ class VerifactuApiTest extends TestCase
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/invoices', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/invoices', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/invoices', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
 
         $response->assertStatus(200);
-
 
     }
 
@@ -897,7 +874,6 @@ class VerifactuApiTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/invoices', $data);
-
 
         $response->assertStatus(422);
     }
@@ -940,7 +916,6 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(200);
     }
-
 
     public function test_credits_never_exceed_original_invoice3()
     {
@@ -1003,7 +978,6 @@ class VerifactuApiTest extends TestCase
         $response->assertStatus(422);
 
     }
-
 
     public function test_credits_never_exceed_original_invoice()
     {
@@ -1103,13 +1077,11 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(422);
 
-
     }
 
     public function test_create_modification_invoice_validation_fails()
     {
         $invoice = $this->buildData();
-        ;
 
         $data = $invoice->toArray();
         $data['verifactu_modified'] = true;
@@ -1126,11 +1098,10 @@ class VerifactuApiTest extends TestCase
     public function test_create_modification_invoice_validation_fails2()
     {
         $invoice = $this->buildData();
-        ;
 
         $data = $invoice->toArray();
         $data['verifactu_modified'] = true;
-        $data['modified_invoice_id'] = "XXX";
+        $data['modified_invoice_id'] = 'XXX';
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -1144,7 +1115,6 @@ class VerifactuApiTest extends TestCase
     public function test_create_modification_invoice_validation_fails3()
     {
         $invoice = $this->buildData();
-        ;
 
         $invoice2 = $this->buildData();
         $invoice2->service()->markPaid()->save();
@@ -1172,7 +1142,6 @@ class VerifactuApiTest extends TestCase
         $this->company->save();
 
         $invoice = $this->buildData();
-        ;
 
         $invoice2 = $this->buildData();
         $invoice2->service()->markSent()->save();
@@ -1204,7 +1173,7 @@ class VerifactuApiTest extends TestCase
 
         $invoice = $this->buildData();
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save($invoice->toArray(), $invoice);
 
         $invoice->service()->markSent()->save();
@@ -1223,7 +1192,7 @@ class VerifactuApiTest extends TestCase
         $data = [
             'action' => 'cancel',
             'ids' => [$invoice->hashed_id],
-            'reason' => 'R3'
+            'reason' => 'R3',
         ];
 
         $response = $this->withHeaders([
@@ -1264,7 +1233,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'delete',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -1278,7 +1247,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'restore',
-            'ids' => [$this->invoice->hashed_id]
+            'ids' => [$this->invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -1289,7 +1258,6 @@ class VerifactuApiTest extends TestCase
         $response->assertStatus(422);
 
     }
-
 
     public function test_restore_invoice_that_is_archived()
     {
@@ -1305,7 +1273,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'archive',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -1321,7 +1289,7 @@ class VerifactuApiTest extends TestCase
 
         $data = [
             'action' => 'restore',
-            'ids' => [$invoice->hashed_id]
+            'ids' => [$invoice->hashed_id],
         ];
 
         $response = $this->withHeaders([
@@ -1337,6 +1305,7 @@ class VerifactuApiTest extends TestCase
      * test_update_company_settings
      *
      * Verifactu we do not allow the user to change from the verifactu system nor, do we allow changing the locking feature of invoices
+     *
      * @return void
      */
     public function test_update_company_settings()
@@ -1356,8 +1325,8 @@ class VerifactuApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/companies/'.$this->company->hashed_id, $this->company->toArray())
-        ->assertStatus(200);
+        ])->putJson('/api/v1/companies/' . $this->company->hashed_id, $this->company->toArray())
+            ->assertStatus(200);
 
         $settings = $this->company->settings;
         $settings->e_invoice_type = 'Facturae_3.2.2';
@@ -1366,9 +1335,8 @@ class VerifactuApiTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/companies/'.$this->company->hashed_id, $this->company->toArray())
-        ->assertStatus(200);
-
+        ])->putJson('/api/v1/companies/' . $this->company->hashed_id, $this->company->toArray())
+            ->assertStatus(200);
 
         $arr = $response->json();
 

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('vendors', function (Blueprint $table){
+        Schema::table('vendors', function (Blueprint $table) {
             $table->boolean('is_tax_exempt')->default(false);
         });
     }

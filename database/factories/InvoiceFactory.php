@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,14 +27,14 @@ class InvoiceFactory extends Factory
         return [
             'status_id' => Invoice::STATUS_SENT,
             'number' => $this->faker->ean13(),
-            'discount' => rand(1,10),
+            'discount' => rand(1, 10),
             'is_amount_discount' => (bool) random_int(0, 1),
             'tax_name1' => 'GST',
             'tax_rate1' => 10,
             'tax_name2' => 'VAT',
             'tax_rate2' => 17.5,
-            //'tax_name3' => 'THIRDTAX',
-            //'tax_rate3' => 5,
+            // 'tax_name3' => 'THIRDTAX',
+            // 'tax_rate3' => 5,
             'custom_value1' => $this->faker->date(),
             'custom_value2' => rand(0, 1) ? 'yes' : 'no',
             'custom_value3' => $this->faker->numberBetween(1, 4),

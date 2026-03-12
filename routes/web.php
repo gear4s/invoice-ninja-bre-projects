@@ -7,7 +7,6 @@ use App\Http\Controllers\Bank\NordigenController;
 use App\Http\Controllers\Bank\YodleeController;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\ClientPortal\ApplePayDomainController;
-use App\Http\Controllers\EInvoice\SelfhostController;
 use App\Http\Controllers\Gateways\Checkout3dsController;
 use App\Http\Controllers\Gateways\GoCardlessController;
 use App\Http\Controllers\Gateways\GoCardlessOAuthController;
@@ -16,6 +15,7 @@ use App\Http\Controllers\Gateways\Mollie3dsController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [BaseController::class, 'flutterRoute'])->middleware('guest');
@@ -59,4 +59,4 @@ Route::get('gocardless/oauth/connect/{token}', [GoCardlessOAuthController::class
 
 Route::redirect('buy_now', 'https://invoiceninja.invoicing.co/client/subscriptions/O5xe7Rwd7r/purchase', 301);
 
-\Illuminate\Support\Facades\Broadcast::routes(['middleware' => ['token_auth']]);
+Broadcast::routes(['middleware' => ['token_auth']]);

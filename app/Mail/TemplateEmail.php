@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,16 @@ namespace App\Mail;
 
 use App\Jobs\Invoice\CreateUbl;
 use App\Models\Account;
+use App\Models\Client;
 use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CreditInvitation;
+use App\Models\InvoiceInvitation;
+use App\Models\PurchaseOrderInvitation;
+use App\Models\QuoteInvitation;
+use App\Models\RecurringInvoiceInvitation;
+use App\Models\VendorContact;
+use App\Services\Pdf\Markdown;
 use App\Utils\HtmlEngine;
 use App\Utils\Ninja;
 use Illuminate\Mail\Mailable;
@@ -24,17 +32,16 @@ class TemplateEmail extends Mailable
 {
     private $build_email;
 
-
-    /** @var \App\Models\Client $client */
+    /** @var Client */
     private $client;
 
-    /** @var \App\Models\ClientContact | \App\Models\VendorContact $contact */
+    /** @var ClientContact | VendorContact */
     private $contact;
 
-    /** @var \App\Models\Company $company */
+    /** @var Company */
     private $company;
 
-    /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\PurchaseOrderInvitation | \App\Models\RecurringInvoiceInvitation | null $invitation */
+    /** @var InvoiceInvitation | QuoteInvitation | CreditInvitation | PurchaseOrderInvitation | RecurringInvoiceInvitation | null */
     private $invitation;
 
     public function __construct($build_email, ClientContact $contact, $invitation = null)
@@ -53,8 +60,6 @@ class TemplateEmail extends Mailable
     /**
      * Supports inline attachments for large
      * attachments in custom designs
-     *
-     * @return string
      */
     private function buildLinksForCustomDesign(): string
     {
@@ -95,7 +100,7 @@ class TemplateEmail extends Mailable
 
         if ($this->build_email->getTemplate() !== 'custom') {
             $this->build_email->setBody(
-                \App\Services\Pdf\Markdown::parse($this->build_email->getBody())
+                Markdown::parse($this->build_email->getBody())
             );
         }
 
@@ -129,7 +134,7 @@ class TemplateEmail extends Mailable
             }
         }
 
-        $this->subject(str_replace("<br>", "", $this->build_email->getSubject()))
+        $this->subject(str_replace('<br>', '', $this->build_email->getSubject()))
             ->text('email.template.text', [
                 'text_body' => $this->build_email->getTextBody(),
                 'whitelabel' => $this->client->user->account->isPaid() ? true : false,
@@ -172,30 +177,30 @@ class TemplateEmail extends Mailable
 
         }
 
-        if ($this->invitation->invoice) { //@phpstan-ignore-line
+        if ($this->invitation->invoice) { // @phpstan-ignore-line
             if (!$this->invitation->invoice->client->getSetting('merge_e_invoice_to_pdf') && $this->invitation->invoice->client->getSetting('enable_e_invoice') && $this->invitation->invoice->client->getSetting('ubl_email_attachment') && $this->company->account->hasFeature(Account::FEATURE_PDF_ATTACHMENT)) {
                 $xml_string = $this->invitation->invoice->service()->getEInvoice($this->invitation->contact);
 
                 if ($xml_string) {
-                    $this->attachData($xml_string, $this->invitation->invoice->getEFileName("xml"));
+                    $this->attachData($xml_string, $this->invitation->invoice->getEFileName('xml'));
                 }
 
             }
-        } elseif ($this->invitation->credit) {//@phpstan-ignore-line
+        } elseif ($this->invitation->credit) {// @phpstan-ignore-line
             if (!$this->invitation->credit->client->getSetting('merge_e_invoice_to_pdf') && $this->invitation->credit->client->getSetting('ubl_email_attachment') && $this->company->account->hasFeature(Account::FEATURE_PDF_ATTACHMENT)) {
                 $xml_string = $this->invitation->credit->service()->getECredit($this->invitation->contact);
 
                 if ($xml_string) {
-                    $this->attachData($xml_string, $this->invitation->credit->getEFileName("xml"));
+                    $this->attachData($xml_string, $this->invitation->credit->getEFileName('xml'));
                 }
 
             }
-        } elseif ($this->invitation->quote) {//@phpstan-ignore-line
+        } elseif ($this->invitation->quote) {// @phpstan-ignore-line
             if (!$this->invitation->quote->client->getSetting('merge_e_invoice_to_pdf') && $this->invitation->quote->client->getSetting('enable_e_invoice') && $this->invitation->quote->client->getSetting('ubl_email_attachment') && $this->company->account->hasFeature(Account::FEATURE_PDF_ATTACHMENT)) {
                 $xml_string = $this->invitation->quote->service()->getEQuote($this->invitation->contact);
 
                 if ($xml_string) {
-                    $this->attachData($xml_string, $this->invitation->quote->getEFileName("xml"));
+                    $this->attachData($xml_string, $this->invitation->quote->getEFileName('xml'));
                 }
 
             }
@@ -204,11 +209,12 @@ class TemplateEmail extends Mailable
                 $xml_string = $this->invitation->purchase_order->service()->getEPurchaseOrder($this->invitation->contact);
 
                 if ($xml_string) {
-                    $this->attachData($xml_string, $this->invitation->purchase_order->getEFileName("xml"));
+                    $this->attachData($xml_string, $this->invitation->purchase_order->getEFileName('xml'));
                 }
 
             }
         }
+
         return $this;
     }
 }

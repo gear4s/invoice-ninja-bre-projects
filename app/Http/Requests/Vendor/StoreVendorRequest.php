@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Vendor;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreVendorRequest extends Request
@@ -23,11 +24,10 @@ class StoreVendorRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Vendor::class);
@@ -35,7 +35,7 @@ class StoreVendorRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -51,9 +51,8 @@ class StoreVendorRequest extends Request
             'regex:/[a-z]/',      // must contain at least one lowercase letter
             'regex:/[A-Z]/',      // must contain at least one uppercase letter
             'regex:/[0-9]/',      // must contain at least one digit
-            //'regex:/[@$!%*#?&.]/', // must contain a special character
+            // 'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
-
 
         if (isset($this->number)) {
             $rules['number'] = Rule::unique('vendors')->where('company_id', $user->company()->id);
@@ -72,16 +71,16 @@ class StoreVendorRequest extends Request
 
     public function prepareForValidation()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 

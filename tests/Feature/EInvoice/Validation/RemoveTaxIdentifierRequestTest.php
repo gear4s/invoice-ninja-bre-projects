@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\EInvoice\Validation;
 
-use Tests\TestCase;
 use App\Http\Requests\EInvoice\Peppol\RemoveTaxIdentifierRequest;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Validator;
 use Tests\MockAccountData;
+use Tests\TestCase;
 
 class RemoveTaxIdentifierRequestTest extends TestCase
 {
@@ -18,7 +18,7 @@ class RemoveTaxIdentifierRequestTest extends TestCase
     {
         parent::setUp();
 
-        $this->request = new RemoveTaxIdentifierRequest();
+        $this->request = new RemoveTaxIdentifierRequest;
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -27,7 +27,7 @@ class RemoveTaxIdentifierRequestTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testMissingCountry(): void
+    public function test_missing_country(): void
     {
         $this->actingAs($this->user);
 
@@ -42,7 +42,7 @@ class RemoveTaxIdentifierRequestTest extends TestCase
         $this->assertFalse($validator->passes());
     }
 
-    public function testInvalidCountry(): void
+    public function test_invalid_country(): void
     {
         $this->actingAs($this->user);
 
@@ -58,7 +58,7 @@ class RemoveTaxIdentifierRequestTest extends TestCase
         $this->assertFalse($validator->passes());
     }
 
-    public function testMissingVat(): void
+    public function test_missing_vat(): void
     {
         $this->actingAs($this->user);
 

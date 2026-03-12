@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -15,11 +16,11 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('payment_types', function (Blueprint $table) {
-            $type = new PaymentType();
-            $type2 = new PaymentType();
-            $type3 = new PaymentType();
-            $type4 = new PaymentType();
-            $type5 = new PaymentType();
+            $type = new PaymentType;
+            $type2 = new PaymentType;
+            $type3 = new PaymentType;
+            $type4 = new PaymentType;
+            $type5 = new PaymentType;
 
             $type->id = 44;
             $type->name = 'ACSS';

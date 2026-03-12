@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,7 +14,6 @@ namespace Tests\Unit\Phantom;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\PhantomJS\Phantom
  */
 class PhantomJsTest extends TestCase
@@ -25,7 +23,7 @@ class PhantomJsTest extends TestCase
         parent::setUp();
     }
 
-    public function testValidPdfMime()
+    public function test_valid_pdf_mime()
     {
         $pdf = file_get_contents(base_path('/tests/Unit/Phantom/valid.pdf'));
 
@@ -34,7 +32,7 @@ class PhantomJsTest extends TestCase
         $this->assertEquals('application/pdf; charset=binary', $finfo->buffer($pdf));
     }
 
-    public function testInValidPdfMime()
+    public function test_in_valid_pdf_mime()
     {
         $pdf = file_get_contents(base_path('/tests/Unit/Phantom/invalid.pdf'));
 

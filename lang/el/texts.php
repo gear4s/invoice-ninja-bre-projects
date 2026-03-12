@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Οργανισμός',
     'name' => 'Επωνυμία',
     'website' => 'Ιστοσελίδα',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Το Enterprise Plan προσθέτει υποστήριξη για πολλούς χρήστες και συνημμένα αρχεία, :link για να δείτε την πλήρη λίστα των δυνατοτήτων.',
     'return_to_app' => 'Επιστροφή στην Εφαρμοφή',
 
-
     // Payment updates
     'refund_payment' => 'Επιστροφή Πληρωμής',
     'refund_max' => 'Μέγιστο:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'Σέρβικα',
     'lang_Bulgarian' => 'Βουλγάρικα',
     'lang_Russian (Russia)' => 'Ρωσικά (Ρωσία)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Λογιστικά & Νομικά',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Χρυσή ουγγιά Τροίας',
     'currency_nicaraguan_córdoba' => 'Νικαράγουαν Κόρδοβα',
     'currency_malagasy_ariary' => 'Μαδαγασκάρης αριάρι',
-    "currency_tongan_pa_anga" => "Tongan Paanga",
+    'currency_tongan_pa_anga' => 'Tongan Paanga',
 
     'review_app_help' => 'Ελπίζουμε να απολαμβάνετε τη χρήση της εφαρμογής.<br/> Εάν θα θέλατε να γράψετε μια κριτική :link θα το εκτιμούσαμε ιδιαίτερα!',
     'writing_a_review' => 'συγγραφή κριτικής',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ':user αρχειοθετημένη επαναλαμβανόμενη δαπάνη :recurring_expense',
     'activity_123' => ':user διαγράφηκε επαναλαμβανόμενη δαπάνη :recurring_expense',
     'activity_124' => ':user αποκαταστάθηκε επαναλαμβανόμενη δαπάνη :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Για να δείτε το :entity πρέπει να ορίσετε έναν κωδικό πρόσβασης.',
     'unsubscribe' => 'Κατάργηση εγγραφής',
     'unsubscribed' => 'Καταργήθηκε η εγγραφή',
@@ -4869,7 +4867,7 @@ $lang = array(
     'payment_type_Klarna' => 'Κλάρνα',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Πληρωμή εντός :payeddue ημερών καθαρά έως :paydate',
-    'xinvoice_no_buyers_reference' => "Δεν δόθηκε αναφορά αγοραστή",
+    'xinvoice_no_buyers_reference' => 'Δεν δόθηκε αναφορά αγοραστή',
     'xinvoice_online_payment' => 'Το τιμολόγιο πρέπει να εξοφληθεί ηλεκτρονικά μέσω του παρεχόμενου συνδέσμου',
     'pre_payment' => 'Προπληρωμή',
     'number_of_payments' => 'Αριθμός πληρωμών',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'Ηλεκτρονικό Τιμολόγιο',
     'light_dark_mode' => 'Λειτουργία Light/Dark',
     'activities' => 'Δραστηριότητες',
-    'recent_transactions' => "Πρόσφατες Συναλλαγές",
-    'country_Palestine' => "Παλαιστίνη",
+    'recent_transactions' => 'Πρόσφατες Συναλλαγές',
+    'country_Palestine' => 'Παλαιστίνη',
     'country_Taiwan' => 'Ταϊβάν',
     'duties' => 'Καθήκοντα',
     'order_number' => 'Αριθμός Παραγγελίας',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'Φόρμα υποχρεωτικών πεδίων',
     'add_step' => 'Προσθήκη βήματος',
     'steps' => 'Βήματα',
-    'steps_order_help' =>  'Η σειρά των βημάτων είναι σημαντική. Το πρώτο βήμα δεν πρέπει να εξαρτάται από κανένα άλλο βήμα. Το δεύτερο βήμα πρέπει να εξαρτάται από το πρώτο βήμα, και ούτω καθεξής.',
+    'steps_order_help' => 'Η σειρά των βημάτων είναι σημαντική. Το πρώτο βήμα δεν πρέπει να εξαρτάται από κανένα άλλο βήμα. Το δεύτερο βήμα πρέπει να εξαρτάται από το πρώτο βήμα, και ούτω καθεξής.',
     'other_steps' => 'Άλλα βήματα',
     'use_available_payments' => 'Χρησιμοποιήστε τις διαθέσιμες πληρωμές',
     'test_email_sent' => 'Το email εστάλη με επιτυχία',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'Πίστωση Ενημερώθηκε',
     'payment_updated' => 'Η πληρωμή ενημερώθηκε',
     'search_placeholder' => 'Βρείτε τιμολόγια, πελάτες και πολλά άλλα',
-    'invalid_vat_number' => "Ο ΑΦΜ δεν ισχύει για την επιλεγμένη χώρα. Η μορφή θα πρέπει να είναι Κωδικός χώρας ακολουθούμενο από αριθμό μόνο, π.χ. DE123456789",
+    'invalid_vat_number' => 'Ο ΑΦΜ δεν ισχύει για την επιλεγμένη χώρα. Η μορφή θα πρέπει να είναι Κωδικός χώρας ακολουθούμενο από αριθμό μόνο, π.χ. DE123456789',
     'acts_as_sender' => 'Αποστολή Ηλεκτρονικών Τιμολογίων',
     'acts_as_receiver' => 'Λήψη Ηλεκτρονικών Τιμολογίων',
     'peppol_token_generated' => 'Το διακριτικό PEPPOL δημιουργήθηκε με επιτυχία.',
@@ -5538,7 +5536,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Ρύθμιση αυτόματων υπενθυμίσεων μέσω email',
     'pro_plan_feature_11' => 'Αυτόματη επισύναψη PDF τιμολογίου σε email',
     'pro_plan_feature_12' => 'Εμφάνιση ηλεκτρονικής υπογραφής πελατών σε τιμολόγια',
-    'pro_plan_feature_13' => "Ενεργοποίηση πλαισίου ελέγχου «Έγκριση όρων»",
+    'pro_plan_feature_13' => 'Ενεργοποίηση πλαισίου ελέγχου «Έγκριση όρων»',
     'pro_plan_feature_14' => 'Αναφορές: Τιμολόγια, Έξοδα, Αποτελέσματα &amp; Ζημιές, περισσότερα',
     'pro_plan_feature_15' => 'Μαζική αποστολή τιμολογίων, προσφορών, πιστώσεων μέσω email',
     'pro_plan_feature_16' => 'Διασύνδεση 10 εταιρειών με 1 σύνδεση',
@@ -5913,6 +5911,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Τραπεζική Μεταφορά Stripe',
     'activity_164' => 'Ο συγχρονισμός του QuickBooks απέτυχε. :notes',
-);
+];
 
 return $lang;

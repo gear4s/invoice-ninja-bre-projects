@@ -6,41 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Country;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Currency;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\CompanyToken;
-use App\DataMapper\InvoiceItem;
-use App\Factory\InvoiceFactory;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
 use App\Factory\InvoiceItemFactory;
-use App\Helpers\Invoice\InvoiceSum;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Invoice;
+use App\Models\User;
+use App\Repositories\InvoiceRepository;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
-use App\Repositories\InvoiceRepository;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Artisan;
-use App\Helpers\Invoice\InvoiceSumInclusive;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class InvoiceMarkPaidTest extends TestCase
 {
-
     public $invoice;
 
     public $company;
@@ -57,7 +47,7 @@ class InvoiceMarkPaidTest extends TestCase
 
     public $cu;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -71,10 +61,11 @@ class InvoiceMarkPaidTest extends TestCase
 
             $resource = Currency::query()->orderBy('name')->get();
             Cache::forever('currencies', $resource);
+
             return $resource;
 
         });
-        
+
         Event::fake();
 
     }
@@ -82,10 +73,10 @@ class InvoiceMarkPaidTest extends TestCase
     private function buildData()
     {
 
-        if($this->account){
+        if ($this->account) {
             $this->account->forceDelete();
         }
-        /** @var \App\Models\Account $account */
+        /** @var Account $account */
         $this->account = Account::factory()->create([
             'hosted_client_count' => 1000,
             'hosted_company_count' => 1000,
@@ -97,7 +88,7 @@ class InvoiceMarkPaidTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -118,9 +109,9 @@ class InvoiceMarkPaidTest extends TestCase
         $this->cu->is_locked = false;
         $this->cu->save();
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
@@ -132,12 +123,12 @@ class InvoiceMarkPaidTest extends TestCase
 
     }
 
-    public function testInvoiceMarkPaidFromDraft()
+    public function test_invoice_mark_paid_from_draft()
     {
 
         $this->buildData();
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -150,7 +141,6 @@ class InvoiceMarkPaidTest extends TestCase
         $item->type_id = '1';
         $item->tax_id = '1';
         $line_items[] = $item;
-
 
         $i = Invoice::factory()->create([
             'discount' => 0,
@@ -166,12 +156,12 @@ class InvoiceMarkPaidTest extends TestCase
             'line_items' => $line_items,
             'status_id' => 1,
             'uses_inclusive_taxes' => false,
-            'is_amount_discount' => false
+            'is_amount_discount' => false,
         ]);
 
         $i->calc()->getInvoice();
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $response = $this->withHeaders([
@@ -195,13 +185,12 @@ class InvoiceMarkPaidTest extends TestCase
 
     }
 
-
-    public function testInvoiceMarkPaidFromDraftBulk()
+    public function test_invoice_mark_paid_from_draft_bulk()
     {
 
         $this->buildData();
 
-        $c = \App\Models\Client::factory()->create([
+        $c = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
         ]);
@@ -215,8 +204,7 @@ class InvoiceMarkPaidTest extends TestCase
         $item->tax_id = '1';
         $line_items[] = $item;
 
-
-        /** @var \App\Models\Invoice $i */
+        /** @var Invoice $i */
         $i = Invoice::factory()->create([
             'discount' => 0,
             'tax_name1' => '',
@@ -231,23 +219,23 @@ class InvoiceMarkPaidTest extends TestCase
             'line_items' => $line_items,
             'status_id' => 1,
             'uses_inclusive_taxes' => false,
-            'is_amount_discount' => false
+            'is_amount_discount' => false,
         ]);
 
         $i->calc()->getInvoice();
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
 
         $data = [
             'action' => 'mark_paid',
-            'ids' => [$i->hashed_id]
+            'ids' => [$i->hashed_id],
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson("/api/v1/invoices/bulk", $data);
+        ])->postJson('/api/v1/invoices/bulk', $data);
 
         $response->assertStatus(200);
 
@@ -264,5 +252,4 @@ class InvoiceMarkPaidTest extends TestCase
         $this->account->forceDelete();
 
     }
-
 }

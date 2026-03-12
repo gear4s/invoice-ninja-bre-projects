@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34,12 +33,12 @@ trait CompanyGatewayFeesAndLimitsSaver
                 }
 
                 /* Handles unset settings or blank strings */
-                if (! property_exists($fee_and_limit, $key) || is_null($fee_and_limit->{$key}) || ! isset($fee_and_limit->{$key}) || $fee_and_limit->{$key} == '') {
+                if (!property_exists($fee_and_limit, $key) || is_null($fee_and_limit->{$key}) || !isset($fee_and_limit->{$key}) || $fee_and_limit->{$key} == '') {
                     continue;
                 }
 
-                /*Catch all filter */
-                if (! $this->checkAttribute($value, $fee_and_limit->{$key})) {
+                /* Catch all filter */
+                if (!$this->checkAttribute($value, $fee_and_limit->{$key})) {
                     return [$key, $value];
                 }
             }
@@ -50,9 +49,10 @@ trait CompanyGatewayFeesAndLimitsSaver
 
     /**
      * Type checks a object property.
-     * @param  string $key   The type
-     * @param  string $value The object property
-     * @return bool        TRUE if the property is the expected type
+     *
+     * @param  string  $key  The type
+     * @param  string  $value  The object property
+     * @return bool TRUE if the property is the expected type
      */
     private function checkAttribute($key, $value): bool
     {
@@ -63,7 +63,7 @@ trait CompanyGatewayFeesAndLimitsSaver
             case 'real':
             case 'float':
             case 'double':
-                return ! is_string($value) && (is_float($value) || is_numeric(strval($value)));
+                return !is_string($value) && (is_float($value) || is_numeric(strval($value)));
                 //     return is_float($value) || is_numeric(strval($value));
             case 'string':
                 return (is_string($value) && method_exists($value, '__toString')) || is_null($value) || is_string($value);
@@ -88,7 +88,7 @@ trait CompanyGatewayFeesAndLimitsSaver
         $new_arr = [];
 
         foreach ($fees_and_limits as $key => $value) {
-            $fal = new FeesAndLimits();
+            $fal = new FeesAndLimits;
             // $fal->{$key} = $value;
 
             foreach ($value as $k => $v) {

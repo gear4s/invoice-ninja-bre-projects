@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ use App\Transformers\QuoteTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class QuoteItemExport extends BaseExport
@@ -45,8 +45,8 @@ class QuoteItemExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->quote_transformer = new QuoteTransformer();
-        $this->decorator = new Decorator();
+        $this->quote_transformer = new QuoteTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -65,11 +65,11 @@ class QuoteItemExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = Quote::query()
-                            ->withTrashed()
-                            ->whereHas('client', function ($q) {
-                                $q->where('is_deleted', false);
-                            })
-                            ->with('client')->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->with('client')->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -107,7 +107,7 @@ class QuoteItemExport extends BaseExport
         $query->cursor()
             ->each(function ($resource) {
 
-                /** @var \App\Models\Quote $resource */
+                /** @var Quote $resource */
                 $this->iterateItems($resource);
 
                 foreach ($this->storage_array as $row) {
@@ -122,24 +122,22 @@ class QuoteItemExport extends BaseExport
 
     }
 
-
     public function run()
     {
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = $this->init();
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
-
 
         $query->cursor()
             ->each(function ($quote) {
 
-                /** @var \App\Models\Quote $quote */
+                /** @var Quote $quote */
                 $this->iterateItems($quote);
             });
 
@@ -152,7 +150,7 @@ class QuoteItemExport extends BaseExport
     private function filterItems(array $items): array
     {
 
-        //if we have product filters in place, we will also need to filter the items at this level:
+        // if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
 
             $products = str_getcsv($this->input['product_key'], ',', "'");
@@ -179,11 +177,11 @@ class QuoteItemExport extends BaseExport
         foreach ($this->filterItems($quote->line_items) as $item) {
             $item_array = [];
 
-            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { //items iterator produces item array
+            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { // items iterator produces item array
 
-                if (str_contains($key, "item.")) {
+                if (str_contains($key, 'item.')) {
 
-                    $tmp_key = str_replace("item.", "", $key);
+                    $tmp_key = str_replace('item.', '', $key);
 
                     // if ($tmp_key == 'type_id') {
                     //     $tmp_key = 'type';
@@ -234,9 +232,11 @@ class QuoteItemExport extends BaseExport
         }
 
         $entity = $this->decorateAdvancedFields($quote, $entity);
+
         return $entity;
 
     }
+
     private function decorateAdvancedFields(Quote $quote, array $entity): array
     {
 
@@ -247,7 +247,6 @@ class QuoteItemExport extends BaseExport
         if (in_array('quote.user_id', $this->input['report_keys'])) {
             $entity['quote.user_id'] = $quote->user ? $quote->user->present()->name() : '';
         }
-
 
         if (in_array('quote.subtotal', $this->input['report_keys'])) {
             $entity['quote.subtotal'] = $quote->calc()->getSubTotal();

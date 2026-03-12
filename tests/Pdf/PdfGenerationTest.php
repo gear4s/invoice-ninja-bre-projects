@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use Beganovich\Snappdf\Snappdf;
 use Tests\TestCase;
 
 /**
- *
  *   App\DataMapper\BaseSettings
  */
 class PdfGenerationTest extends TestCase
@@ -31,9 +29,9 @@ class PdfGenerationTest extends TestCase
 
     }
 
-    public function testPdfGeneration()
+    public function test_pdf_generation()
     {
-        $pdf = new Snappdf();
+        $pdf = new Snappdf;
 
         if (config('ninja.snappdf_chromium_path')) {
             $pdf->setChromiumPath(config('ninja.snappdf_chromium_path'));

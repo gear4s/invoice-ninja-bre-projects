@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class CloneCreditToQuoteFactory
 {
     public static function create(Credit $credit, $user_id): ?Quote
     {
-        $quote = new Quote();
+        $quote = new Quote;
         $quote->client_id = $credit->client_id;
         $quote->user_id = $user_id;
         $quote->company_id = $credit->company_id;
@@ -40,7 +39,7 @@ class CloneCreditToQuoteFactory
         $quote->custom_value3 = $credit->custom_value3;
         $quote->custom_value4 = $credit->custom_value4;
         $quote->amount = $credit->amount;
-        //$quote->balance = $credit->balance;
+        // $quote->balance = $credit->balance;
         $quote->partial = $credit->partial;
         $quote->partial_due_date = $credit->partial_due_date;
         $quote->last_viewed = $credit->last_viewed;

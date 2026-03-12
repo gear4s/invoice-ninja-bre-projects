@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,37 +13,37 @@ namespace App\PaymentDrivers\CBAPowerBoard\Models;
 
 class Customer
 {
-    /** @var ?string */
     public ?string $_id;
-    /** @var ?string */
+
     public ?string $_source_ip_address;
-    /** @var ?string */
+
     public ?string $first_name;
-    /** @var ?string */
+
     public ?string $last_name;
-    /** @var ?string */
+
     public ?string $email;
-    /** @var ?string */
+
     public ?string $reference;
-    /** @var ?string */
+
     public ?string $default_source;
-    /** @var ?string */
+
     public ?string $status;
-    /** @var ?bool */
+
     public ?bool $archived;
-    /** @var ?string */
+
     public ?string $created_at;
-    /** @var ?string */
+
     public ?string $updated_at;
-    /** @var ?bool */
+
     public ?bool $_check_expire_date;
+
     /** @var ?PaymentSource[] */
     public ?array $payment_sources;
-    /** @var ?PaymentSource */
+
     public ?PaymentSource $payment_source;
-    /** @var ?array */
+
     public ?array $payment_destinations;
-    /** @var ?string */
+
     public ?string $company_id;
 
     public function __construct(

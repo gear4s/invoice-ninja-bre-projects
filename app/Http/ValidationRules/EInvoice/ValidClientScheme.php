@@ -14,11 +14,10 @@ namespace App\Http\ValidationRules\EInvoice;
 
 use App\Services\EDocument\Standards\Validation\Peppol\ClientLevel;
 use Closure;
-use InvoiceNinja\EInvoice\EInvoice;
-use Illuminate\Validation\Validator;
-use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
+use Illuminate\Validation\Validator;
+use InvoiceNinja\EInvoice\EInvoice;
 
 /**
  * Class ValidClientScheme.
@@ -36,7 +35,7 @@ class ValidClientScheme implements ValidationRule, ValidatorAwareRule
     {
 
         if (isset($value['Invoice'])) {
-            $r = new EInvoice();
+            $r = new EInvoice;
             $errors = $r->validateRequest($value['Invoice'], ClientLevel::class);
 
             foreach ($errors as $key => $msg) {
@@ -56,8 +55,7 @@ class ValidClientScheme implements ValidationRule, ValidatorAwareRule
     public function setValidator(Validator $validator): static
     {
         $this->validator = $validator;
+
         return $this;
     }
-
-
 }

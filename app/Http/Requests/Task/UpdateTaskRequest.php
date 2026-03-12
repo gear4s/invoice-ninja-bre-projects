@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,29 +13,29 @@ namespace App\Http\Requests\Task;
 
 use App\Http\Requests\Request;
 use App\Models\Project;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class UpdateTaskRequest extends Request
 {
-    use MakesHash;
     use ChecksEntityStatus;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        //prevent locked tasks from updating
+        // prevent locked tasks from updating
         if ($this->task->invoice_id && $this->task->company->invoice_task_lock) {
             return false;
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->task);
@@ -44,7 +43,7 @@ class UpdateTaskRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -71,6 +70,7 @@ class UpdateTaskRequest extends Request
 
             if (!is_array($values)) {
                 $fail('The ' . $attribute . ' must be a valid array.');
+
                 return;
             }
 
@@ -120,7 +120,6 @@ class UpdateTaskRequest extends Request
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
 
-
         return $this->globalRules($rules);
     }
 
@@ -128,7 +127,7 @@ class UpdateTaskRequest extends Request
     {
         $input = $this->decodePrimaryKeys($this->all());
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -137,7 +136,7 @@ class UpdateTaskRequest extends Request
         }
 
         if (isset($input['description']) && is_string($input['description'])) {
-            $input['description'] = str_ireplace(['</sc', 'file:/', 'iframe', '<embed', '&lt;embed', '&lt;object', '<object', '127.0.0.1', 'localhost', '<?xml encoding="UTF-8">', '/etc/'], "", $input['description']);
+            $input['description'] = str_ireplace(['</sc', 'file:/', 'iframe', '<embed', '&lt;embed', '&lt;object', '<object', '127.0.0.1', 'localhost', '<?xml encoding="UTF-8">', '/etc/'], '', $input['description']);
         }
 
         if (isset($input['documents'])) {
@@ -159,7 +158,6 @@ class UpdateTaskRequest extends Request
             $input['color'] = '';
         }
 
-
         if (isset($input['time_log']) && is_string($input['time_log'])) {
             $input['time_log'] = json_decode($input['time_log'], true);
         }
@@ -171,7 +169,7 @@ class UpdateTaskRequest extends Request
             foreach ($time_logs as &$time_log) {
 
                 if (is_string($time_log)) {
-                    continue; //catch if it isn't even a proper time log
+                    continue; // catch if it isn't even a proper time log
                 }
 
                 $time_log[0] = intval($time_log[0] ?? 0);
@@ -200,7 +198,6 @@ class UpdateTaskRequest extends Request
 
         $this->replace($input);
     }
-
 
     protected function failedAuthorization()
     {

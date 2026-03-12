@@ -6,34 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use Carbon\Carbon;
-use App\Utils\Ninja;
-use App\Utils\Number;
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Libraries\MultiDB;
-use App\Models\PaymentHash;
-use App\Models\PaymentType;
-use Illuminate\Support\Str;
 use App\DataMapper\InvoiceItem;
 use App\Events\Invoice\InvoiceAutoBillFailed;
 use App\Events\Invoice\InvoiceAutoBillSuccess;
-use App\Factory\PaymentFactory;
-use App\Services\AbstractService;
-use App\Models\ClientGatewayToken;
 use App\Events\Invoice\InvoiceWasPaid;
+use App\Events\Payment\PaymentWasCreated;
+use App\Factory\PaymentFactory;
+use App\Libraries\MultiDB;
+use App\Models\Client;
+use App\Models\ClientGatewayToken;
+use App\Models\Credit;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\PaymentType;
 use App\Repositories\CreditRepository;
 use App\Repositories\PaymentRepository;
-use App\Events\Payment\PaymentWasCreated;
+use App\Services\AbstractService;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class AutoBillInvoice extends AbstractService
 {
@@ -43,7 +42,7 @@ class AutoBillInvoice extends AbstractService
 
     private array $used_credit = [];
 
-    /*Specific variable for partial payments */
+    /* Specific variable for partial payments */
     private bool $is_partial_amount = false;
 
     public function __construct(private Invoice $invoice, protected string $db)
@@ -59,7 +58,7 @@ class AutoBillInvoice extends AbstractService
         $is_partial = false;
 
         /* Is the invoice payable? */
-        if (! $this->invoice->refresh()->isPayable()) {
+        if (!$this->invoice->refresh()->isPayable()) {
             return $this->invoice;
         }
 
@@ -71,7 +70,7 @@ class AutoBillInvoice extends AbstractService
             return $this->invoice->service()->markPaid()->save();
         }
 
-        //if the credits cover the payments, we stop here, build the payment with credits and exit early
+        // if the credits cover the payments, we stop here, build the payment with credits and exit early
         if ($this->client->getSetting('use_credits_payment') != 'off') {
             $this->applyCreditPayment();
         }
@@ -80,7 +79,7 @@ class AutoBillInvoice extends AbstractService
             $this->applyUnappliedPayment();
         }
 
-        //If this returns true, it means a partial invoice amount was paid as a credit and there is no further balance payable
+        // If this returns true, it means a partial invoice amount was paid as a credit and there is no further balance payable
         if (($this->is_partial_amount && $this->invoice->partial == 0) || (int) $this->invoice->balance == 0) {
             return;
         }
@@ -104,11 +103,11 @@ class AutoBillInvoice extends AbstractService
         nlog($this->invoice->balance);
 
         /* Retrieve the Client Gateway Token */
-        /** @var \App\Models\ClientGatewayToken $gateway_token */
+        /** @var ClientGatewayToken $gateway_token */
         $gateway_token = $this->getGateway($amount);
 
         /* Bail out if no payment methods available */
-        if (! $gateway_token || ! $gateway_token->gateway || ! $gateway_token->gateway->driver($this->client)->token_billing) {
+        if (!$gateway_token || !$gateway_token->gateway || !$gateway_token->gateway->driver($this->client)->token_billing) {
             nlog('Bailing out - no suitable gateway token found.');
 
             throw new \Exception(ctrans('texts.no_payment_method_specified'));
@@ -122,7 +121,7 @@ class AutoBillInvoice extends AbstractService
         /* $gateway fee */
         $this->invoice = $this->invoice->service()->addGatewayFee($gateway_token->gateway, $gateway_token->gateway_type_id, $amount, $payment_hash_string)->save();
 
-        //change from $this->invoice->amount to $this->invoice->balance
+        // change from $this->invoice->amount to $this->invoice->balance
         if ($is_partial) {
             $fee = $this->invoice->balance - $invoice_total;
         } else {
@@ -172,7 +171,7 @@ class AutoBillInvoice extends AbstractService
 
             if ($this->invoice->auto_bill_tries == 4) {
 
-                \App\Models\Invoice::where('id', $this->invoice->id)->update([
+                Invoice::where('id', $this->invoice->id)->update([
                     'auto_bill_enabled' => false,
                     'auto_bill_tries' => 0,
                 ]);
@@ -180,7 +179,6 @@ class AutoBillInvoice extends AbstractService
             }
 
             throw $e;
-
         }
 
         if ($payment) {
@@ -222,63 +220,61 @@ class AutoBillInvoice extends AbstractService
         foreach ($this->used_credit as $credit) {
             $current_credit = Credit::query()->find($credit['credit_id']);
             $payment->credits()
-                    ->attach($current_credit->id, ['amount' => $credit['amount']]);
+                ->attach($current_credit->id, ['amount' => $credit['amount']]);
 
             info("adjusting credit balance {$current_credit->balance} by this amount " . $credit['amount']);
-
 
             $item_date = Carbon::parse($payment->date)->format($payment->client->date_format());
             $invoice_numbers = $this->invoice->number;
 
-            $item = new InvoiceItem();
+            $item = new InvoiceItem;
             $item->quantity = 0;
             $item->cost = $credit['amount'] * -1;
-            $item->notes = "{$item_date} - " . ctrans('texts.credit_payment', ['invoice_number' => $invoice_numbers]) . " " . Number::formatMoney($credit['amount'], $payment->client);
-            $item->type_id = "1";
+            $item->notes = "{$item_date} - " . ctrans('texts.credit_payment', ['invoice_number' => $invoice_numbers]) . ' ' . Number::formatMoney($credit['amount'], $payment->client);
+            $item->type_id = '1';
 
             $line_items = $current_credit->line_items;
             $line_items[] = $item;
             $current_credit->line_items = $line_items;
 
-
             $current_credit->service()
-                           ->adjustBalance($credit['amount'] * -1)
-                           ->updatePaidToDate($credit['amount'])
-                           ->setCalculatedStatus()
-                           ->save();
+                ->adjustBalance($credit['amount'] * -1)
+                ->updatePaidToDate($credit['amount'])
+                ->setCalculatedStatus()
+                ->save();
 
         }
 
         $payment->ledger()
-            ->updatePaymentBalance($amount * -1, "AutoBill")
+            ->updatePaymentBalance($amount * -1, 'AutoBill')
             ->save();
 
         $this->invoice
-             ->client
-             ->service()
-             ->updateBalanceAndPaidToDate($amount * -1, $amount)
-             ->adjustCreditBalance($amount * -1)
-             ->save();
+            ->client
+            ->service()
+            ->updateBalanceAndPaidToDate($amount * -1, $amount)
+            ->adjustCreditBalance($amount * -1)
+            ->save();
 
         $credit_reference = $current_credit ? $current_credit->number : 'unknown';
 
-        $this->invoice->ledger() //09-03-2022
-                      ->updateCreditBalance($amount * -1, "Credit {$credit_reference} used to pay down Invoice {$this->invoice->number}")
-                      ->save();
+        $this->invoice->ledger() // 09-03-2022
+            ->updateCreditBalance($amount * -1, "Credit {$credit_reference} used to pay down Invoice {$this->invoice->number}")
+            ->save();
 
         event('eloquent.created: App\Models\Payment', $payment);
         event(new PaymentWasCreated($payment, $payment->company, Ninja::eventVars()));
 
-        //if we have paid the invoice in full using credits, then we need to fire the event
+        // if we have paid the invoice in full using credits, then we need to fire the event
         if ($this->invoice->balance == 0) {
             event(new InvoiceWasPaid($this->invoice, $payment, $payment->company, Ninja::eventVars()));
         }
 
         return $this->invoice
-                    ->service()
-                    ->setCalculatedStatus()
-                    ->workFlow() //07-06-2024 - run the workflow if paid!
-                    ->save();
+            ->service()
+            ->setCalculatedStatus()
+            ->workFlow() // 07-06-2024 - run the workflow if paid!
+            ->save();
     }
 
     /**
@@ -287,19 +283,17 @@ class AutoBillInvoice extends AbstractService
      * payment method on file.
      *
      * This needs to be wrapped in a transaction.
-     *
-     * @return self
      */
     public function applyUnappliedPayment(): self
     {
         $unapplied_payments = Payment::query()
-                                  ->where('client_id', $this->client->id)
-                                  ->where('status_id', Payment::STATUS_COMPLETED)
-                                  ->where('is_deleted', false)
-                                  ->whereColumn('amount', '>', 'applied')
-                                  ->where('amount', '>', 0)
-                                  ->orderBy('created_at')
-                                  ->get();
+            ->where('client_id', $this->client->id)
+            ->where('status_id', Payment::STATUS_COMPLETED)
+            ->where('is_deleted', false)
+            ->whereColumn('amount', '>', 'applied')
+            ->where('amount', '>', 0)
+            ->orderBy('created_at')
+            ->get();
 
         $available_unapplied_balance = $unapplied_payments->sum('amount') - $unapplied_payments->sum('applied');
 
@@ -318,29 +312,29 @@ class AutoBillInvoice extends AbstractService
             $this->is_partial_amount = true;
         }
 
-        $payment_repo = new PaymentRepository(new CreditRepository());
+        $payment_repo = new PaymentRepository(new CreditRepository);
 
         foreach ($unapplied_payments as $key => $payment) {
             $payment_balance = $payment->amount - $payment->applied;
 
             if ($this->is_partial_amount) {
-                //more than needed
+                // more than needed
                 if ($payment_balance > $this->invoice->partial) {
-                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id,'amount' => $this->invoice->partial]]];
+                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id, 'amount' => $this->invoice->partial]]];
                     $payment_repo->save($payload, $payment);
 
                     $this->invoice = $this->invoice->fresh();
 
                     return $this;
                 } else {
-                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id,'amount' => $payment_balance]]];
+                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id, 'amount' => $payment_balance]]];
                     $payment_repo->save($payload, $payment);
                 }
             } else {
-                //more than needed
+                // more than needed
                 if ($payment_balance > $this->invoice->balance) {
 
-                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id,'amount' => $this->invoice->balance]]];
+                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id, 'amount' => $this->invoice->balance]]];
                     $payment_repo->save($payload, $payment);
 
                     $this->invoice = $this->invoice->fresh();
@@ -349,7 +343,7 @@ class AutoBillInvoice extends AbstractService
 
                 } else {
 
-                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id,'amount' => $payment_balance]]];
+                    $payload = ['client_id' => $this->invoice->client_id, 'invoices' => [['invoice_id' => $this->invoice->id, 'amount' => $payment_balance]]];
                     $payment_repo->save($payload, $payment);
 
                     $this->invoice = $this->invoice->fresh();
@@ -359,6 +353,7 @@ class AutoBillInvoice extends AbstractService
 
             if ((int) $this->invoice->balance == 0) {
                 event(new InvoiceWasPaid($this->invoice, $payment, $payment->company, Ninja::eventVars()));
+
                 return $this;
             }
         }
@@ -375,10 +370,10 @@ class AutoBillInvoice extends AbstractService
     public function applyCreditPayment(): self
     {
         $available_credits = Credit::query()->where('client_id', $this->client->id)
-                                  ->where('is_deleted', false)
-                                  ->where('balance', '>', 0)
-                                  ->orderBy('created_at')
-                                  ->get();
+            ->where('is_deleted', false)
+            ->where('balance', '>', 0)
+            ->orderBy('created_at')
+            ->get();
 
         $available_credit_balance = $available_credits->sum('balance');
 
@@ -396,7 +391,7 @@ class AutoBillInvoice extends AbstractService
 
         foreach ($available_credits as $key => $credit) {
             if ($this->is_partial_amount) {
-                //more credit than needed
+                // more credit than needed
                 if ($credit->balance > $this->invoice->partial) {
                     $this->used_credit[$key]['credit_id'] = $credit->id;
                     $this->used_credit[$key]['amount'] = $this->invoice->partial;
@@ -412,7 +407,7 @@ class AutoBillInvoice extends AbstractService
                     $this->invoice->paid_to_date += $credit->balance;
                 }
             } else {
-                //more credit than needed
+                // more credit than needed
                 if ($credit->balance > $this->invoice->balance) {
                     $this->used_credit[$key]['credit_id'] = $credit->id;
                     $this->used_credit[$key]['amount'] = $this->invoice->balance;
@@ -434,13 +429,12 @@ class AutoBillInvoice extends AbstractService
         return $this;
     }
 
-
     /**
      * Harvests a client gateway token which passes the
      * necessary filters for an $amount.
      *
-     * @param  float              $amount The amount to charge
-     * @return ClientGatewayToken | bool        The client gateway token
+     * @param  float  $amount  The amount to charge
+     * @return ClientGatewayToken | bool The client gateway token
      */
     public function getGateway($amount)
     {
@@ -448,35 +442,35 @@ class AutoBillInvoice extends AbstractService
 
         $transformed_ids = false;
 
-        //gateways are disabled!
-        if ($company_gateway_ids == "0") {
+        // gateways are disabled!
+        if ($company_gateway_ids == '0') {
             return false;
-        } elseif (strlen($company_gateway_ids ?? '')  > 2) {
+        } elseif (strlen($company_gateway_ids ?? '') > 2) {
 
             // If the client has a special gateway configuration, we need to ensure we only use the ones that are enabled!
             $transformed_ids = $this->transformKeys(explode(',', $company_gateway_ids));
         }
 
-        //get all client gateway tokens and set the is_default one to the first record
-        $gateway_tokens = \App\Models\ClientGatewayToken::query()
-                                ->where('client_id', $this->client->id)
-                                ->where('is_deleted', 0)
-                                ->whereHas('gateway', function ($query) use ($transformed_ids) {
-                                    $query->where('is_deleted', 0)
-                                            ->where('deleted_at', null)
-                                            ->when($transformed_ids, function ($q) use ($transformed_ids) {
-                                                $q->whereIn('id', $transformed_ids);
-                                            });
-                                })
-                                ->orderBy('is_default', 'DESC')
-                                ->get();
+        // get all client gateway tokens and set the is_default one to the first record
+        $gateway_tokens = ClientGatewayToken::query()
+            ->where('client_id', $this->client->id)
+            ->where('is_deleted', 0)
+            ->whereHas('gateway', function ($query) use ($transformed_ids) {
+                $query->where('is_deleted', 0)
+                    ->where('deleted_at', null)
+                    ->when($transformed_ids, function ($q) use ($transformed_ids) {
+                        $q->whereIn('id', $transformed_ids);
+                    });
+            })
+            ->orderBy('is_default', 'DESC')
+            ->get();
 
         $filtered_gateways = $gateway_tokens->filter(function ($gateway_token) use ($amount) {
             $company_gateway = $gateway_token->gateway;
 
-            //check if fees and limits are set
-            if (isset($company_gateway->fees_and_limits) && ! is_array($company_gateway->fees_and_limits) && property_exists($company_gateway->fees_and_limits, $gateway_token->gateway_type_id)) { //@phpstan-ignore-line
-                //if valid we keep this gateway_token
+            // check if fees and limits are set
+            if (isset($company_gateway->fees_and_limits) && !is_array($company_gateway->fees_and_limits) && property_exists($company_gateway->fees_and_limits, $gateway_token->gateway_type_id)) { // @phpstan-ignore-line
+                // if valid we keep this gateway_token
                 if ($this->invoice->client->validGatewayForAmount($company_gateway->fees_and_limits->{$gateway_token->gateway_type_id}, $amount)) {
                     return true;
                 } else {
@@ -484,7 +478,7 @@ class AutoBillInvoice extends AbstractService
                 }
             }
 
-            return true; //if no fees_and_limits set then we automatically must add this gateway
+            return true; // if no fees_and_limits set then we automatically must add this gateway
         });
 
         if ($filtered_gateways->count() >= 1) {
@@ -493,5 +487,4 @@ class AutoBillInvoice extends AbstractService
 
         return false;
     }
-
 }

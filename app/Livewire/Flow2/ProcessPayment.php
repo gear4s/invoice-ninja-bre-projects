@@ -6,19 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Flow2;
 
-use Livewire\Component;
+use App\Exceptions\PaymentFailed;
 use App\Libraries\MultiDB;
 use App\Models\CompanyGateway;
-use App\Exceptions\PaymentFailed;
 use App\Models\InvoiceInvitation;
-use App\Utils\Traits\WithSecureContext;
 use App\Services\ClientPortal\LivewireInstantPayment;
+use App\Utils\Traits\WithSecureContext;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Support\MessageBag;
+use Illuminate\Support\ViewErrorBag;
+use Illuminate\View\View;
+use Livewire\Component;
 
 class ProcessPayment extends Component
 {
@@ -29,7 +32,9 @@ class ProcessPayment extends Component
     private array $payment_data_payload = [];
 
     public $isLoading = true;
+
     public $_key;
+
     public function mount()
     {
 
@@ -73,7 +78,6 @@ class ProcessPayment extends Component
             $this->dispatch('payment-view-rendered');
         }
 
-
         if (isset($responder_data['component']) && $responder_data['component'] == 'CreditPaymentComponent') {
             $this->payment_view = $responder_data['view'];
             $this->payment_data_payload = $responder_data['payload'];
@@ -94,7 +98,7 @@ class ProcessPayment extends Component
 
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|string|\Illuminate\View\View
+    public function render(): Factory|string|View
     {
         if ($this->isLoading) {
             return <<<'HTML'
@@ -110,9 +114,9 @@ class ProcessPayment extends Component
 
         app('sentry')->captureException($e);
 
-        $errors = session()->get('errors', new \Illuminate\Support\ViewErrorBag());
+        $errors = session()->get('errors', new ViewErrorBag);
 
-        $bag = new \Illuminate\Support\MessageBag();
+        $bag = new MessageBag;
         $bag->add('gateway_error', $e->getMessage());
         session()->put('errors', $errors->put('default', $bag));
 
@@ -121,5 +125,4 @@ class ProcessPayment extends Component
         $stopPropagation();
 
     }
-
 }

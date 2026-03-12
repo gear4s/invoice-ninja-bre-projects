@@ -1,11 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
-use Elastic\Adapter\Indices\Mapping;
-use Elastic\Adapter\Indices\Settings;
+use Elastic\Elasticsearch\ClientBuilder;
 use Elastic\Migrations\Facades\Index;
 use Elastic\Migrations\MigrationInterface;
-use Elastic\Elasticsearch\ClientBuilder;
 
 final class CreateExpensesIndex implements MigrationInterface
 {
@@ -26,7 +25,7 @@ final class CreateExpensesIndex implements MigrationInterface
                 'id' => ['type' => 'keyword'],
                 'name' => [
                     'type' => 'text',
-                    'analyzer' => 'standard'
+                    'analyzer' => 'standard',
                 ],
                 'is_deleted' => ['type' => 'boolean'],
                 'hashed_id' => ['type' => 'keyword'],
@@ -41,13 +40,13 @@ final class CreateExpensesIndex implements MigrationInterface
                 'tax_rate3' => ['type' => 'float'],
                 'date' => ['type' => 'date'],
                 'payment_date' => ['type' => 'date'],
-                
+
                 // Custom fields
                 'custom_value1' => ['type' => 'keyword'],
                 'custom_value2' => ['type' => 'keyword'],
                 'custom_value3' => ['type' => 'keyword'],
                 'custom_value4' => ['type' => 'keyword'],
-                
+
                 // Additional fields
                 'company_key' => ['type' => 'keyword'],
                 'category_id' => ['type' => 'keyword'],
@@ -56,13 +55,13 @@ final class CreateExpensesIndex implements MigrationInterface
                 'project_id' => ['type' => 'keyword'],
                 'private_notes' => [
                     'type' => 'text',
-                    'analyzer' => 'standard'
+                    'analyzer' => 'standard',
                 ],
                 'public_notes' => [
                     'type' => 'text',
-                    'analyzer' => 'standard'
+                    'analyzer' => 'standard',
                 ],
-            ]
+            ],
         ];
 
         Index::createRaw('expenses_v2', $mapping);

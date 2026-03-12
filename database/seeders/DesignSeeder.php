@@ -1,17 +1,18 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Database\Seeders;
 
 use App\Models\Design;
+use App\Services\Pdf\DesignExtractor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 
@@ -43,14 +44,14 @@ class DesignSeeder extends Seeder
         foreach ($designs as $design) {
             $d = Design::find($design['id']);
 
-            if (! $d) {
+            if (!$d) {
                 Design::create($design);
             }
         }
 
         foreach (Design::where('is_custom', false)->get() as $design) {
-            
-            $template = new \App\Services\Pdf\DesignExtractor($design->name);
+
+            $template = new DesignExtractor($design->name);
 
             $design_object = new \stdClass;
             $design_object->includes = $template->getSectionHTML('style');

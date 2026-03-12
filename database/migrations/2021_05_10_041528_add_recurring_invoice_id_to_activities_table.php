@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -16,7 +17,7 @@ return new class extends Migration {
             $table->unsignedInteger('recurring_invoice_id')->nullable();
         });
 
-        if (! Schema::hasColumn('companies', 'show_task_end_date')) {
+        if (!Schema::hasColumn('companies', 'show_task_end_date')) {
             Schema::table('companies', function (Blueprint $table) {
                 $table->boolean('show_task_end_date')->default(false);
             });
@@ -28,7 +29,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

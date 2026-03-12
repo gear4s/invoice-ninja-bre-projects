@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,9 +17,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class ExportCompanyTest extends TestCase
 {
     use MakesHash;
@@ -45,7 +41,7 @@ class ExportCompanyTest extends TestCase
         }
     }
 
-    public function testCompanyExport()
+    public function test_company_export()
     {
         $res = (new CompanyExport($this->company, $this->company->users->first(), '123'))->handle();
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -52,7 +51,7 @@ class DesignExtractor
     public function getSectionHTML(string $section, $id = true): ?string
     {
 
-        $document = new \DOMDocument();
+        $document = new \DOMDocument;
 
         $document->validateOnParse = true;
         @$document->loadHTML($this->getHtml());
@@ -66,7 +65,7 @@ class DesignExtractor
 
         if ($element) {
 
-            $_document = new \DOMDocument();
+            $_document = new \DOMDocument;
             $_document->preserveWhiteSpace = false;
             $_document->formatOutput = true;
 

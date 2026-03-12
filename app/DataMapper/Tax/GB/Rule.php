@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,36 +17,26 @@ use App\Models\Product;
 
 class Rule extends BaseRule implements RuleInterface
 {
-    /** @var string $seller_region */
     public string $seller_region = 'UK';
 
-    /** @var bool $consumer_tax_exempt */
     public bool $consumer_tax_exempt = false;
 
-    /** @var bool $business_tax_exempt */
     public bool $business_tax_exempt = false;
 
-    /** @var bool $eu_business_tax_exempt */
     public bool $eu_business_tax_exempt = true;
 
-    /** @var bool $foreign_business_tax_exempt */
     public bool $foreign_business_tax_exempt = false;
 
-    /** @var bool $foreign_consumer_tax_exempt */
     public bool $foreign_consumer_tax_exempt = false;
 
-    /** @var float $tax_rate */
     public float $tax_rate = 0;
 
-    /** @var float $reduced_tax_rate */
     public float $reduced_tax_rate = 0;
 
     public string $tax_name1 = 'VAT';
 
     /**
      * Initializes the rules and builds any required data.
-     *
-     * @return self
      */
     public function init(): self
     {
@@ -60,12 +49,10 @@ class Rule extends BaseRule implements RuleInterface
     /**
      * Sets the correct tax rate based on the product type.
      *
-     * @param  mixed $item
-     * @return self
+     * @param  mixed  $item
      */
     public function taxByType($item): self
     {
-
 
         if ($this->client->is_tax_exempt || !property_exists($item, 'tax_id') || (isset($item->type_id) && $item->type_id == '5')) {
             return $this->taxExempt($item);
@@ -89,8 +76,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a reduced tax product
-     *
-     * @return self
      */
     public function reverseTax($item): self
     {
@@ -102,8 +87,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a reduced tax product
-     *
-     * @return self
      */
     public function taxReduced($item): self
     {
@@ -115,8 +98,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a zero rated tax product
-     *
-     * @return self
      */
     public function zeroRated($item): self
     {
@@ -126,11 +107,8 @@ class Rule extends BaseRule implements RuleInterface
         return $this;
     }
 
-
     /**
      * Calculates the tax rate for a tax exempt product
-     *
-     * @return self
      */
     public function taxExempt($item): self
     {
@@ -142,8 +120,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a digital product
-     *
-     * @return self
      */
     public function taxDigital($item): self
     {
@@ -156,8 +132,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a service product
-     *
-     * @return self
      */
     public function taxService($item): self
     {
@@ -170,8 +144,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a shipping product
-     *
-     * @return self
      */
     public function taxShipping($item): self
     {
@@ -184,8 +156,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a physical product
-     *
-     * @return self
      */
     public function taxPhysical($item): self
     {
@@ -198,8 +168,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for a default product
-     *
-     * @return self
      */
     public function default($item): self
     {
@@ -212,8 +180,6 @@ class Rule extends BaseRule implements RuleInterface
 
     /**
      * Calculates the tax rate for an override product
-     *
-     * @return self
      */
     public function override($item): self
     {
@@ -229,37 +195,35 @@ class Rule extends BaseRule implements RuleInterface
     }
 
     /**
-    * Calculates the tax rates based on the client's location.
-    *
-    * Internal (UK) Sales:
-    * - Standard rate: 20%
-    * - Reduced rate: 5%
-    * - Zero rate: 0% (still VAT registered but charge no VAT)
-    * - Exempt: No VAT registration required
-    *
-    * External Sales:
-    * 1. To EU Businesses (B2B):
-    *    - Zero-rated (0%)
-    *    - Reverse charge applies (customer pays VAT in their country)
-    *    - Must validate EU VAT number
-    *    - Must report in EC Sales List
-    *
-    * 2. To EU Consumers (B2C):
-    *    - Charge UK VAT rate (20%)
-    *    - Unless distance selling threshold exceeded in destination country
-    *    - Then must register for VAT in that country
-    *
-    * 3. To Non-EU (Rest of World):
-    *    - Zero-rated (0%)
-    *    - Export documentation required
-    *
-    * Special Cases:
-    * - Northern Ireland (GB-NIR): Follows EU VAT rules for goods but UK rules for services
-    * - Channel Islands: Outside UK & EU VAT area
-    * - Digital Services: Special rules apply (check MOSS registration)
-    *
-    * @return self
-    */
+     * Calculates the tax rates based on the client's location.
+     *
+     * Internal (UK) Sales:
+     * - Standard rate: 20%
+     * - Reduced rate: 5%
+     * - Zero rate: 0% (still VAT registered but charge no VAT)
+     * - Exempt: No VAT registration required
+     *
+     * External Sales:
+     * 1. To EU Businesses (B2B):
+     *    - Zero-rated (0%)
+     *    - Reverse charge applies (customer pays VAT in their country)
+     *    - Must validate EU VAT number
+     *    - Must report in EC Sales List
+     *
+     * 2. To EU Consumers (B2C):
+     *    - Charge UK VAT rate (20%)
+     *    - Unless distance selling threshold exceeded in destination country
+     *    - Then must register for VAT in that country
+     *
+     * 3. To Non-EU (Rest of World):
+     *    - Zero-rated (0%)
+     *    - Export documentation required
+     *
+     * Special Cases:
+     * - Northern Ireland (GB-NIR): Follows EU VAT rules for goods but UK rules for services
+     * - Channel Islands: Outside UK & EU VAT area
+     * - Digital Services: Special rules apply (check MOSS registration)
+     */
     public function calculateRates(): self
     {
         if ($this->client->is_tax_exempt) {
@@ -281,8 +245,8 @@ class Rule extends BaseRule implements RuleInterface
 
         $is_over_threshold = $this->client->company->tax_data->regions->EU->has_sales_above_threshold ?? false;
 
-        //GB => EU sales - Reverse Charge
-        if (in_array($this->client_subregion, $this->eu_country_codes) && !in_array($this->client->classification, ['','individual'])) {
+        // GB => EU sales - Reverse Charge
+        if (in_array($this->client_subregion, $this->eu_country_codes) && !in_array($this->client->classification, ['', 'individual'])) {
 
             $this->tax_name = 'VAT';
             $this->tax_rate = 0;
@@ -304,5 +268,4 @@ class Rule extends BaseRule implements RuleInterface
         return $this;
 
     }
-
 }

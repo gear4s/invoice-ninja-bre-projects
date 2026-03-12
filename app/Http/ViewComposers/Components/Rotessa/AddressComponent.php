@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,10 +13,8 @@ namespace App\Http\ViewComposers\Components\Rotessa;
 
 use App\DataProviders\CAProvinces;
 use App\DataProviders\USStates;
-use Illuminate\View\Component;
-use App\Models\ClientContact;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
+use Illuminate\View\Component;
 
 // Address Component
 class AddressComponent extends Component
@@ -44,13 +41,12 @@ class AddressComponent extends Component
         $this->attributes = $this->newAttributeBag(
             Arr::only(
                 Arr::mapWithKeys($this->address, function ($item, $key) {
-                    return in_array($key, ['address1','address2','state']) ? [ (['address1' => 'address_1','address2' => 'address_2','state' => 'province_code'])[$key] => $item ] : [ $key => $item ];
+                    return in_array($key, ['address1', 'address2', 'state']) ? [(['address1' => 'address_1', 'address2' => 'address_2', 'state' => 'province_code'])[$key] => $item] : [$key => $item];
                 }),
                 $this->fields
             )
         );
     }
-
 
     public function render()
     {

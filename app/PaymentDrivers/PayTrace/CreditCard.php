@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -57,7 +56,7 @@ class CreditCard implements LivewireMethodInterface
             'customer_id' => Str::random(32),
             'hpf_token' => $data['HPF_Token'],
             'enc_key' => $data['enc_key'],
-            'integrator_id' =>  $this->paytrace->company_gateway->getConfigField('integratorId'),
+            'integrator_id' => $this->paytrace->company_gateway->getConfigField('integratorId'),
             'billing_address' => $this->buildBillingAddress(),
             'email' => $this->paytrace->client->present()->email(),
             'phone' => $this->paytrace->client->present()->phone(),
@@ -66,7 +65,7 @@ class CreditCard implements LivewireMethodInterface
 
         $response = $this->paytrace->gatewayRequest('/v1/customer/pt_protect_create', $post_data);
 
-        if (! $response->success) {
+        if (!$response->success) {
             $error = 'Error creating customer in gateway';
             $error_code = $response->response_code ?? 'PT_ERR';
 
@@ -85,7 +84,7 @@ class CreditCard implements LivewireMethodInterface
             return $this->paytrace->processUnsuccessfulTransaction($data);
         }
 
-        nlog("paytrace response createCustomer");
+        nlog('paytrace response createCustomer');
         nlog($response);
 
         $cgt = [];
@@ -94,7 +93,7 @@ class CreditCard implements LivewireMethodInterface
 
         $profile = $this->getCustomerProfile($response->customer_id);
 
-        $payment_meta = new \stdClass();
+        $payment_meta = new \stdClass;
         $payment_meta->exp_month = $profile->credit_card->expiration_month;
         $payment_meta->exp_year = $profile->credit_card->expiration_year;
         $payment_meta->brand = 'CC';
@@ -111,7 +110,7 @@ class CreditCard implements LivewireMethodInterface
     private function getCustomerProfile($customer_id)
     {
         $profile = $this->paytrace->gatewayRequest('/v1/customer/export', [
-            'integrator_id' =>  $this->paytrace->company_gateway->getConfigField('integratorId'),
+            'integrator_id' => $this->paytrace->company_gateway->getConfigField('integratorId'),
             'customer_id' => $customer_id,
         ]);
 
@@ -156,11 +155,11 @@ class CreditCard implements LivewireMethodInterface
             return $this->processTokenPayment($response->customer_id, $request);
         }
 
-        //process a regular charge here:
+        // process a regular charge here:
         $data = [
             'hpf_token' => $response_array['HPF_Token'],
             'enc_key' => $response_array['enc_key'],
-            'integrator_id' =>  $this->paytrace->company_gateway->getConfigField('integratorId'),
+            'integrator_id' => $this->paytrace->company_gateway->getConfigField('integratorId'),
             'billing_address' => $this->buildBillingAddress(),
             'amount' => $request->input('amount_with_fee'),
             'invoice_id' => $this->harvestInvoiceId(),
@@ -179,7 +178,7 @@ class CreditCard implements LivewireMethodInterface
     {
         $data = [
             'customer_id' => $token,
-            'integrator_id' =>  $this->paytrace->company_gateway->getConfigField('integratorId'),
+            'integrator_id' => $this->paytrace->company_gateway->getConfigField('integratorId'),
             'amount' => $request->input('amount_with_fee'),
             'invoice_id' => $this->harvestInvoiceId(),
         ];
@@ -242,7 +241,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -250,7 +249,7 @@ class CreditCard implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

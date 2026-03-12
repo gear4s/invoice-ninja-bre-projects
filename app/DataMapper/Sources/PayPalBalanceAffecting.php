@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -63,47 +62,89 @@ class PayPalBalanceAffecting
     ];
 
     public $date;
+
     public $time;
+
     public $timezone;
+
     public $name;
+
     public $type;
+
     public $status;
+
     public $currency;
+
     public $gross;
+
     public $fee;
+
     public $net;
+
     public $fromEmailAddress;
+
     public $toEmailAddress;
+
     public $transactionId;
+
     public $shippingAddress;
+
     public $itemTitle;
+
     public $itemId;
+
     public $option1Name;
+
     public $option1Value;
+
     public $option2Name;
+
     public $option2Value;
+
     public $referenceTxnId;
+
     public $invoiceNumber;
+
     public $customNumber;
+
     public $quantity;
+
     public $receiptId;
+
     public $addressLine1;
+
     public $addressLine2DistrictNeighborhood;
+
     public $townCity;
+
     public $stateProvinceRegionCountyTerritoryPrefectureRepublic;
+
     public $zipPostalCode;
+
     public $country;
+
     public $contactPhoneNumber;
+
     public $subject;
+
     public $note;
+
     public $transactionEventCode;
+
     public $paymentTrackingId;
+
     public $itemDetails;
+
     public $authorizationReviewStatus;
+
     public $countryCode;
+
     public $tip;
+
     public $discount;
+
     public $creditTransactionalFee;
+
     public $originalInvoiceId;
 
     public function __construct(private array $import_row) {}
@@ -154,7 +195,7 @@ class PayPalBalanceAffecting
 
     public function getInvoice(): array
     {
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->cost = $this->gross ?? 0;
         $item->product_key = $this->itemId ?? '';
         $item->notes = $this->subject ?? $this->itemDetails;
@@ -172,7 +213,7 @@ class PayPalBalanceAffecting
 
     public function getContact(): array
     {
-        $name_parts = explode(" ", $this->name ?? '');
+        $name_parts = explode(' ', $this->name ?? '');
 
         if (count($name_parts) == 2) {
             $contact['first_name'] = $name_parts[0];
@@ -205,7 +246,7 @@ class PayPalBalanceAffecting
             return [];
         }
 
-        $ship_parts = explode(",", $this->shippingAddress);
+        $ship_parts = explode(',', $this->shippingAddress);
 
         if (count($ship_parts) != 7) {
             return [];
@@ -232,8 +273,6 @@ class PayPalBalanceAffecting
     }
 }
 
-
-
 // $csv = Reader::fromString($csvFile);
 // // $csvdelimiter = self::detectDelimiter($csvfile);
 // $csv->setDelimiter(",");
@@ -244,7 +283,6 @@ class PayPalBalanceAffecting
 // $arr = [];
 
 // foreach($data as $key => $value) {
-
 
 //     if($key == 0) {
 //         continue;
@@ -266,7 +304,6 @@ class PayPalBalanceAffecting
 //     $p = new PayPalBalanceAffecting($pp);
 //     $p->run();
 
-
 //     if(!$p->isInvoiceType()) {
 //         continue;
 //     }
@@ -274,9 +311,7 @@ class PayPalBalanceAffecting
 //     $import_c = $p->getClient();
 //     $import_i = $p->getInvoice();
 
-
 //     $contact = ClientContact::where('company_id', 3358)->where('email', $import_c['email'])->first();
-
 
 //     if(!$contact) {
 
@@ -291,6 +326,5 @@ class PayPalBalanceAffecting
 //     $i = InvoiceFactory::create($company->id, $owner->id);
 //     $i->client_id = $client->id;
 //     $invoice_repo->save($import_i, $i);
-
 
 // }

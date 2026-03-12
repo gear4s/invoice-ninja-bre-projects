@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -33,18 +32,15 @@ class LedgerBalanceUpdate implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     *
-     * @return void
      */
     public function handle(): void
     {
         nlog('Updating company ledgers');
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->checkLedger();
         } else {
-            //multiDB environment, need to
+            // multiDB environment, need to
             foreach (MultiDB::$dbs as $db) {
                 MultiDB::setDB($db);
 
@@ -65,12 +61,12 @@ class LedgerBalanceUpdate implements ShouldQueue
             }
 
             $last_record = CompanyLedger::where('client_id', $company_ledger->client_id)
-                            ->where('company_id', $company_ledger->company_id)
-                            ->where('balance', '!=', 0)
-                            ->orderBy('id', 'DESC')
-                            ->first();
+                ->where('company_id', $company_ledger->company_id)
+                ->where('balance', '!=', 0)
+                ->orderBy('id', 'DESC')
+                ->first();
 
-            if (! $last_record) {
+            if (!$last_record) {
                 return;
             }
 

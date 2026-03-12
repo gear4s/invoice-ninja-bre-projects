@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,9 +27,11 @@ trait Refundable
 {
     /**
      * Entry point for processing of refunds.
-     * @param array $data
+     *
      * @deprecated ???? 06-09-2022
+     *
      * @return self
+     *
      * @throws PaymentRefundFailed
      */
     public function processRefund(array $data)
@@ -44,7 +45,7 @@ trait Refundable
 
     private function refundPaymentWithNoInvoices(array $data)
     {
-        //adjust payment refunded column amount
+        // adjust payment refunded column amount
         $this->refunded = $data['amount'];
 
         if ($data['amount'] == $this->amount) {
@@ -72,14 +73,14 @@ trait Refundable
 
         $this->createActivity($data, $credit_note->id);
 
-        //determine if we need to refund via gateway
+        // determine if we need to refund via gateway
         if ($data['gateway_refund'] !== false) {
-            //todo process gateway refund, on success, reduce the credit note balance to 0
+            // todo process gateway refund, on success, reduce the credit note balance to 0
         }
 
         $this->save();
 
-        //$this->client->paid_to_date -= $data['amount'];
+        // $this->client->paid_to_date -= $data['amount'];
         $this->client->save();
 
         return $this->fresh();
@@ -95,14 +96,14 @@ trait Refundable
 
         $data['amount'] = $total_refund;
 
-        /* Set Payment Status*/
+        /* Set Payment Status */
         if ($total_refund == $this->amount) {
             $this->status_id = Payment::STATUS_REFUNDED;
         } else {
             $this->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
         }
 
-        /* Build Credit Note*/
+        /* Build Credit Note */
         $credit_note = $this->buildCreditNote($data);
 
         $line_items = [];
@@ -110,7 +111,7 @@ trait Refundable
         $ledger_string = '';
 
         foreach ($data['invoices'] as $invoice) {
-            /** @var \App\Models\Invoice $inv */
+            /** @var Invoice $inv */
             $inv = Invoice::find($invoice['invoice_id']);
 
             $credit_line_item = InvoiceItemFactory::create();
@@ -137,7 +138,7 @@ trait Refundable
         }
 
         if ($this->credits()->exists()) {
-            //Adjust credits first!!!
+            // Adjust credits first!!!
             foreach ($this->credits as $paymentable_credit) {
                 $available_credit = $paymentable_credit->pivot->amount - $paymentable_credit->pivot->refunded;
 
@@ -172,14 +173,14 @@ trait Refundable
         $credit_note->save();
 
         if ($data['gateway_refund'] !== false && $total_refund > 0) {
-            /** @var \App\Models\CompanyGateway $gateway */
+            /** @var CompanyGateway $gateway */
             $gateway = CompanyGateway::find($this->company_gateway_id);
 
             if ($gateway) {
                 $response = $gateway->driver($this->client)->refund($this, $total_refund);
 
-                if (! $response) {
-                    throw new PaymentRefundFailed();
+                if (!$response) {
+                    throw new PaymentRefundFailed;
                 }
             }
         }
@@ -192,7 +193,7 @@ trait Refundable
 
         $client_balance_adjustment = $this->adjustInvoices($data);
 
-        /** @var \App\Models\Payment $this */
+        /** @var Payment $this */
         $this->client->paid_to_date -= $data['amount'];
         $this->client->save();
 
@@ -201,8 +202,8 @@ trait Refundable
 
     private function createActivity(array $data, int $credit_id)
     {
-        $fields = new stdClass();
-        $activity_repo = new ActivityRepository();
+        $fields = new stdClass;
+        $activity_repo = new ActivityRepository;
 
         $fields->payment_id = $this->id;
         $fields->user_id = $this->user_id;
@@ -240,7 +241,7 @@ trait Refundable
         $adjustment_amount = 0;
 
         foreach ($data['invoices'] as $refunded_invoice) {
-            /** @var \App\Models\Invoice $invoice */
+            /** @var Invoice $invoice */
             $invoice = Invoice::find($refunded_invoice['invoice_id']);
 
             $invoice->service()->updateBalance($refunded_invoice['amount'])->save();
@@ -258,7 +259,7 @@ trait Refundable
 
             $client->save();
 
-            //todo adjust ledger balance here? or after and reference the credit and its total
+            // todo adjust ledger balance here? or after and reference the credit and its total
         }
 
         return $adjustment_amount;

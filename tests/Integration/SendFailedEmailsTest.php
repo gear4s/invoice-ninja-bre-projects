@@ -6,26 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration;
 
 use App\Jobs\Util\SendFailedEmails;
+use App\Models\InvoiceInvitation;
 use App\Models\SystemLog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Jobs\Util\SendFailedEmails
  */
 class SendFailedEmailsTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -34,20 +33,20 @@ class SendFailedEmailsTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testReminderFires()
+    public function test_reminder_fires()
     {
         $invitation = $this->invoice->invitations->first();
         $reminder_template = $this->invoice->calculateTemplate('invoice');
 
         $sl = [
-            'entity_name' => \App\Models\InvoiceInvitation::class,
+            'entity_name' => InvoiceInvitation::class,
             'invitation_key' => $invitation->key,
             'reminder_template' => $reminder_template,
             'subject' => '',
             'body' => '',
         ];
 
-        $system_log = new SystemLog();
+        $system_log = new SystemLog;
         $system_log->company_id = $this->invoice->company_id;
         $system_log->client_id = $this->invoice->client_id;
         $system_log->category_id = SystemLog::CATEGORY_MAIL;

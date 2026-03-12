@@ -6,15 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu;
 
-use Illuminate\Support\Facades\Http;
-use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
 use App\Services\EDocument\Standards\Verifactu\Signing\SigningService;
+use Illuminate\Support\Facades\Http;
 
 class AeatClient
 {
@@ -26,7 +24,6 @@ class AeatClient
 
     private string $sandbox_qr_url = 'https://prewww2.aeat.es/wlpl/TIKE-CONT/ValidarQR?csv=%s&nif=%s&numserie=%s&fecha=%s&importe=%s';
 
-
     public function __construct(private ?string $certificate = null, private ?string $ssl_key = null)
     {
         $this->init();
@@ -34,8 +31,6 @@ class AeatClient
 
     /**
      * initialize the certificates
-     *
-     * @return self
      */
     private function init(): self
     {
@@ -51,8 +46,6 @@ class AeatClient
 
     /**
      * setTestMode
-     *
-     * @return self
      */
     public function setTestMode(): self
     {
@@ -65,7 +58,7 @@ class AeatClient
     /**
      * Sign SOAP envelope with XML Digital Signature
      *
-     * @param string $xml - Unsigned SOAP envelope
+     * @param  string  $xml  - Unsigned SOAP envelope
      * @return string - Signed SOAP envelope
      */
     private function signSoapEnvelope(string $xml): string
@@ -76,9 +69,10 @@ class AeatClient
                 file_get_contents($this->ssl_key),
                 file_get_contents($this->certificate)
             );
+
             return $signingService->sign();
         } catch (\Exception $e) {
-            nlog("Error signing SOAP envelope: " . $e->getMessage());
+            nlog('Error signing SOAP envelope: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -88,8 +82,8 @@ class AeatClient
         // Sign the SOAP envelope before sending
         $signed_xml = $this->signSoapEnvelope($xml);
 
-        nlog("AEAT Request URL: " . $this->base_url);
-        nlog("Signed SOAP envelope size: " . strlen($signed_xml) . " bytes");
+        nlog('AEAT Request URL: ' . $this->base_url);
+        nlog('Signed SOAP envelope size: ' . strlen($signed_xml) . ' bytes');
 
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
@@ -106,9 +100,9 @@ class AeatClient
 
         $success = $response->successful();
 
-        nlog("AEAT Response HTTP Code: " . $response->status());
+        nlog('AEAT Response HTTP Code: ' . $response->status());
 
-        $responseProcessor = new ResponseProcessor();
+        $responseProcessor = new ResponseProcessor;
 
         $parsedResponse = $responseProcessor->processResponse($response->body());
 

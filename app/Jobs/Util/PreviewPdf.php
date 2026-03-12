@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,16 +24,13 @@ class PreviewPdf implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use PageNumbering;
+    use PdfMaker;
     use Queueable;
     use SerializesModels;
-    use PdfMaker;
-    use PageNumbering;
 
     /**
      * Create a new job instance.
-     *
-     * @param $design_string
-     * @param Company $company
      */
     public function __construct(public string $design_string, public Company $company) {}
 

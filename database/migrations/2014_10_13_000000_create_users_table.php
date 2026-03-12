@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +14,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -94,7 +95,7 @@ return new class extends Migration {
             $table->string('provider');
             $table->boolean('visible')->default(true);
             $table->unsignedInteger('sort_order')->default(10000);
-            //$table->boolean('recommended')->default(0);
+            // $table->boolean('recommended')->default(0);
             $table->string('site_url', 200)->nullable();
             $table->boolean('is_offsite')->default(false);
             $table->boolean('is_secure')->default(false);
@@ -138,7 +139,7 @@ return new class extends Migration {
 
         Schema::create('companies', function (Blueprint $table) {
             $table->increments('id');
-            //$table->string('name')->nullable();
+            // $table->string('name')->nullable();
             $table->unsignedInteger('account_id')->index();
             $table->unsignedInteger('industry_id')->nullable();
             $table->string('ip')->nullable();
@@ -154,7 +155,7 @@ return new class extends Migration {
             $table->boolean('custom_surcharge_taxes2')->default(false);
             $table->boolean('custom_surcharge_taxes3')->default(false);
             $table->boolean('custom_surcharge_taxes4')->default(false);
-            //$table->boolean('enable_invoice_quantity')->default(true);
+            // $table->boolean('enable_invoice_quantity')->default(true);
             $table->boolean('show_product_cost')->default(false);
             $table->unsignedInteger('enabled_tax_rates')->default(0);
             $table->unsignedInteger('enabled_modules')->default(0);
@@ -179,15 +180,15 @@ return new class extends Migration {
             $table->string('google_analytics_url');
 
             $table->timestamps(6);
-            //$table->softDeletes('deleted_at', 6);
+            // $table->softDeletes('deleted_at', 6);
 
-            //$table->foreign('country_id')->references('id')->on('countries');
+            // $table->foreign('country_id')->references('id')->on('countries');
             $table->foreign('industry_id')->references('id')->on('industries');
             $table->foreign('size_id')->references('id')->on('sizes');
             $table->foreign('account_id')->references('id')->on('accounts')->onDelete('cascade')->onUpdate('cascade');
         });
 
-        //DB::statement('ALTER table companies key_block_size=8 row_format=compressed');
+        // DB::statement('ALTER table companies key_block_size=8 row_format=compressed');
 
         Schema::create('company_user', function (Blueprint $table) {
             $table->increments('id');
@@ -396,7 +397,7 @@ return new class extends Migration {
             $table->index(['company_id', 'email', 'deleted_at']);
 
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade')->onUpdate('cascade');
-            //$table->unique(['company_id', 'email']);
+            // $table->unique(['company_id', 'email']);
         });
 
         Schema::create('company_gateways', function ($table) {
@@ -967,7 +968,7 @@ return new class extends Migration {
             $t->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
         });
 
-        Schema::create('paymentables', function ($table) { //allows multiple invoices to one payment
+        Schema::create('paymentables', function ($table) { // allows multiple invoices to one payment
             $table->increments('id');
             $table->unsignedInteger('payment_id');
             $table->unsignedInteger('paymentable_id');
@@ -1083,7 +1084,7 @@ return new class extends Migration {
             $table->index(['client_contact_id', 'company_id']);
 
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade')->onUpdate('cascade');
-            //$table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade')->onUpdate('cascade');
+            // $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade')->onUpdate('cascade');
         });
 
         Schema::create('backups', function ($table) {
@@ -1104,7 +1105,7 @@ return new class extends Migration {
             $table->unsignedInteger('activity_id')->nullable();
 
             $table->decimal('adjustment', 16, 4)->nullable();
-            $table->decimal('balance', 16, 4)->nullable(); //this is the clients balance carried forward
+            $table->decimal('balance', 16, 4)->nullable(); // this is the clients balance carried forward
             $table->text('notes')->nullable();
             $table->text('hash')->nullable();
 
@@ -1391,7 +1392,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

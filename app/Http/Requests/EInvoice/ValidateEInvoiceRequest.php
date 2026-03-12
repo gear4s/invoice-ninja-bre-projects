@@ -6,32 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice;
 
-use App\Utils\Ninja;
+use App\Http\Requests\Request;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Http\Requests\Request;
-use Illuminate\Validation\Rule;
 use App\Models\RecurringInvoice;
+use App\Models\User;
+use App\Services\EDocument\Standards\Validation\EntityLevelInterface;
 use App\Services\EDocument\Standards\Validation\Peppol\EntityLevel;
+use Illuminate\Validation\Rule;
 
 class ValidateEInvoiceRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $entity = $this->getEntity();
@@ -47,15 +45,15 @@ class ValidateEInvoiceRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return [
             'entity' => 'required|bail|in:invoices,recurring_invoices,clients,companies',
-            'entity_id' => ['required','bail', Rule::exists($this->entity, 'id')
-                                                                ->when($this->entity != 'companies', function ($q) use ($user) {
-                                                                    $q->where('company_id', $user->company()->id);
-                                                                }),
+            'entity_id' => ['required', 'bail', Rule::exists($this->entity, 'id')
+                ->when($this->entity != 'companies', function ($q) use ($user) {
+                    $q->where('company_id', $user->company()->id);
+                }),
             ],
         ];
     }
@@ -67,7 +65,6 @@ class ValidateEInvoiceRequest extends Request
         if (isset($input['entity_id']) && $input['entity_id'] != null) {
             $input['entity_id'] = $this->decodePrimaryKey($input['entity_id']);
         }
-
 
         $this->replace($input);
     }
@@ -101,18 +98,18 @@ class ValidateEInvoiceRequest extends Request
      *
      * Return the validator class based on the EInvoicing Standard
      *
-     * @return \App\Services\EDocument\Standards\Validation\EntityLevelInterface
+     * @return EntityLevelInterface
      */
     public function getValidatorClass()
     {
         $user = auth()->user();
 
         if ($user->company()->settings->e_invoice_type == 'VERIFACTU') {
-            return new \App\Services\EDocument\Standards\Validation\Verifactu\EntityLevel();
+            return new \App\Services\EDocument\Standards\Validation\Verifactu\EntityLevel;
         }
 
         // if($user->company()->settings->e_invoice_type == 'PEPPOL') {
-        return new \App\Services\EDocument\Standards\Validation\Peppol\EntityLevel();
+        return new EntityLevel;
         // }
 
     }

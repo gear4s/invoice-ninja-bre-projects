@@ -21,10 +21,8 @@ class Turnstile implements ValidationRule
         if ($data['success']) {
 
         } else {
-            $fail("Captcha failed");
+            $fail('Captcha failed');
         }
 
-
     }
-
 }

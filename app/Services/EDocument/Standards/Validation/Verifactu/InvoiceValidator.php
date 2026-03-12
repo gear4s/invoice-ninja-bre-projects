@@ -3,7 +3,6 @@
 namespace App\Services\EDocument\Standards\Validation\Verifactu;
 
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
-use InvalidArgumentException;
 
 class InvoiceValidator
 {
@@ -74,10 +73,8 @@ class InvoiceValidator
             $errors[] = "Invalid FechaHoraHusoGenRegistro format. Expected: YYYY-MM-DDTHH:MM:SS+HH:MM, Got: {$fechaHora}";
         }
 
-
         return $errors;
     }
-
 
     /**
      * Validate amounts
@@ -88,20 +85,20 @@ class InvoiceValidator
 
         // Validate total amounts
         if ($invoice->getImporteTotal() <= 0) {
-            $errors[] = "ImporteTotal must be greater than 0";
+            $errors[] = 'ImporteTotal must be greater than 0';
         }
 
         if ($invoice->getCuotaTotal() < 0) {
-            $errors[] = "CuotaTotal cannot be negative (use rectification invoice for negative amounts)";
+            $errors[] = 'CuotaTotal cannot be negative (use rectification invoice for negative amounts)';
         }
 
         // Validate decimal places (AEAT expects 2 decimal places)
         if (fmod($invoice->getImporteTotal() * 100, 1) !== 0.0) {
-            $errors[] = "ImporteTotal must have maximum 2 decimal places";
+            $errors[] = 'ImporteTotal must have maximum 2 decimal places';
         }
 
         if (fmod($invoice->getCuotaTotal() * 100, 1) !== 0.0) {
-            $errors[] = "CuotaTotal must have maximum 2 decimal places";
+            $errors[] = 'CuotaTotal must have maximum 2 decimal places';
         }
 
         return $errors;
@@ -139,23 +136,23 @@ class InvoiceValidator
         $errors = [];
 
         // Check for required fields based on invoice type
-        if (in_array($invoice->getTipoFactura(), ['R1','R2']) && !$invoice->getTipoRectificativa()) {
-            $errors[] = "Rectification invoices (R1/R2) must specify TipoRectificativa";
+        if (in_array($invoice->getTipoFactura(), ['R1', 'R2']) && !$invoice->getTipoRectificativa()) {
+            $errors[] = 'Rectification invoices (R1/R2) must specify TipoRectificativa';
         }
 
         // Check for simplified invoice requirements
         if ($invoice->getTipoFactura() === 'F2' && !$invoice->getFacturaSimplificadaArt7273()) {
-            $errors[] = "Simplified invoices (F2) must specify FacturaSimplificadaArt7273";
+            $errors[] = 'Simplified invoices (F2) must specify FacturaSimplificadaArt7273';
         }
 
         // Check for system information requirements
         if (!$invoice->getSistemaInformatico()) {
-            $errors[] = "SistemaInformatico is required for all invoices";
+            $errors[] = 'SistemaInformatico is required for all invoices';
         }
 
         // Check for encadenamiento requirements
         if (!$invoice->getEncadenamiento()) {
-            $errors[] = "Encadenamiento is required for all invoices";
+            $errors[] = 'Encadenamiento is required for all invoices';
         }
 
         return $errors;
@@ -171,6 +168,7 @@ class InvoiceValidator
         // Individual NIFs: 8 digits + letter (e.g., 12345678A)
 
         $pattern = '/^([A-Z]\d{8}|\d{8}[A-Z])$/';
+
         return preg_match($pattern, $nif) === 1;
     }
 

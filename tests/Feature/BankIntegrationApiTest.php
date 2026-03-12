@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,9 +20,10 @@ use Tests\TestCase;
 
 class BankIntegrationApiTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -34,8 +34,7 @@ class BankIntegrationApiTest extends TestCase
         Model::reguard();
     }
 
-
-    public function testBankIntegrationPost()
+    public function test_bank_integration_post()
     {
         $data = [
             'bank_account_name' => 'Nuevo Banko',
@@ -48,18 +47,17 @@ class BankIntegrationApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-    public function testBankIntegrationGet()
+    public function test_bank_integration_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/bank_integrations/'.$this->encodePrimaryKey($this->bank_integration->id));
+        ])->get('/api/v1/bank_integrations/' . $this->encodePrimaryKey($this->bank_integration->id));
 
         $response->assertStatus(200);
     }
 
-    public function testBankIntegrationArchived()
+    public function test_bank_integration_archived()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_integration->id)],
@@ -75,7 +73,7 @@ class BankIntegrationApiTest extends TestCase
         $this->assertNotNull($arr['data'][0]['archived_at']);
     }
 
-    public function testBankIntegrationRestored()
+    public function test_bank_integration_restored()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_integration->id)],
@@ -91,7 +89,7 @@ class BankIntegrationApiTest extends TestCase
         $this->assertEquals(0, $arr['data'][0]['archived_at']);
     }
 
-    public function testBankIntegrationDeleted()
+    public function test_bank_integration_deleted()
     {
         $data = [
             'ids' => [$this->encodePrimaryKey($this->bank_integration->id)],

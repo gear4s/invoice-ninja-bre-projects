@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,25 +24,25 @@ class PaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = true; //does this gateway support refunds?
+    public $refundable = true; // does this gateway support refunds?
 
-    public $token_billing = true; //does this gateway support token billing?
+    public $token_billing = true; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = true; //does this gateway support authorizations?
+    public $can_authorise_credit_card = true; // does this gateway support authorizations?
 
-    public $gateway; //initialized gateway
+    public $gateway; // initialized gateway
 
-    public $payment_method; //initialized payment method
+    public $payment_method; // initialized payment method
 
     public static $methods = [
-        GatewayType::CREDIT_CARD => CreditCard::class, //maps GatewayType => Implementation class
+        GatewayType::CREDIT_CARD => CreditCard::class, // maps GatewayType => Implementation class
     ];
 
-    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_STRIPE; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_STRIPE; // define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
 
     public function init()
     {
-        return $this; /* This is where you boot the gateway with your auth credentials*/
+        return $this; /* This is where you boot the gateway with your auth credentials */
     }
 
     /* Returns an array of gateway types for the payment gateway */
@@ -67,33 +66,33 @@ class PaymentDriver extends BaseDriver
 
     public function authorizeView(array $data)
     {
-        return $this->payment_method->authorizeView($data); //this is your custom implementation from here
+        return $this->payment_method->authorizeView($data); // this is your custom implementation from here
     }
 
     public function authorizeResponse($request)
     {
-        return $this->payment_method->authorizeResponse($request);  //this is your custom implementation from here
+        return $this->payment_method->authorizeResponse($request);  // this is your custom implementation from here
     }
 
     public function processPaymentView(array $data)
     {
-        return $this->payment_method->paymentView($data);  //this is your custom implementation from here
+        return $this->payment_method->paymentView($data);  // this is your custom implementation from here
     }
 
     public function processPaymentResponse($request)
     {
-        return $this->payment_method->paymentResponse($request); //this is your custom implementation from here
+        return $this->payment_method->paymentResponse($request); // this is your custom implementation from here
     }
 
     public function refund(Payment $payment, $amount, $return_client_response = false)
     {
-        //this is your custom implementation from here
+        // this is your custom implementation from here
     }
 
     public function tokenBilling(ClientGatewayToken $cgt, PaymentHash $payment_hash)
     {
-        //this is your custom implementation from here
+        // this is your custom implementation from here
     }
 
-    public function processWebhookRequest(PaymentWebhookRequest $request, Payment $payment = null) {}
+    public function processWebhookRequest(PaymentWebhookRequest $request, ?Payment $payment = null) {}
 }

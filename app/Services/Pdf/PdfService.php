@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,12 +14,12 @@ namespace App\Services\Pdf;
 use App\Jobs\EDocument\CreateEDocument;
 use App\Models\Company;
 use App\Models\CreditInvitation;
-use App\Utils\Gotenberg\GotenbergPdf;
 use App\Models\Invoice;
 use App\Models\InvoiceInvitation;
 use App\Models\PurchaseOrderInvitation;
 use App\Models\QuoteInvitation;
 use App\Models\RecurringInvoiceInvitation;
+use App\Utils\Gotenberg\GotenbergPdf;
 use App\Utils\HostedPDF\NinjaPdf;
 use App\Utils\HtmlEngine;
 use App\Utils\PhantomJS\Phantom;
@@ -31,8 +30,8 @@ use horstoeko\zugferd\ZugferdDocumentPdfBuilder;
 
 class PdfService
 {
-    use PdfMaker;
     use PageNumbering;
+    use PdfMaker;
 
     public InvoiceInvitation|QuoteInvitation|CreditInvitation|RecurringInvoiceInvitation|PurchaseOrderInvitation $invitation;
 
@@ -57,8 +56,11 @@ class PdfService
     private ?string $json_design_html = null;
 
     public const DELIVERY_NOTE = 'delivery_note';
+
     public const STATEMENT = 'statement';
+
     public const PURCHASE_ORDER = 'purchase_order';
+
     public const PRODUCT = 'product';
 
     public function __construct($invitation, $document_type = 'product', $options = [])
@@ -88,7 +90,6 @@ class PdfService
      * string.
      *
      * @return mixed | Exception
-     *
      */
     public function getPdf()
     {
@@ -104,7 +105,7 @@ class PdfService
                 $pdf = $numbered_pdf;
             }
 
-            if ($this->config->entity_string == "invoice" && $this->config->settings->enable_e_invoice) {
+            if ($this->config->entity_string == 'invoice' && $this->config->settings->enable_e_invoice) {
                 $pdf = $this->checkEInvoice($pdf);
             }
 
@@ -120,15 +121,12 @@ class PdfService
 
     /**
      * Renders the dom document to HTML
-     *
-     * @return string
-     *
      */
     public function getHtml(): string
     {
         // If JSON design was used, return the pre-generated HTML
         if ($this->json_design_html !== null) {
-            $html = \App\Services\Pdf\Purify::clean($this->json_design_html);
+            $html = Purify::clean($this->json_design_html);
 
             if (config('ninja.log_pdf_html')) {
                 nlog($html);
@@ -137,19 +135,17 @@ class PdfService
             return $html;
         }
 
-        $html = \App\Services\Pdf\Purify::clean($this->builder->document->saveHTML());
+        $html = Purify::clean($this->builder->document->saveHTML());
 
         if (config('ninja.log_pdf_html')) {
             nlog($html);
         }
-        
+
         return $html;
     }
 
     /**
      * Initialize all the services to build the PDF
-     *
-     * @return self
      */
     public function init(): self
     {
@@ -157,13 +153,13 @@ class PdfService
 
         $this->config = (new PdfConfiguration($this))->init();
 
-        $this->html_variables = ($this->invitation instanceof \App\Models\PurchaseOrderInvitation)
+        $this->html_variables = ($this->invitation instanceof PurchaseOrderInvitation)
                                     ? (new VendorHtmlEngine($this->invitation))->generateLabelsAndValues()
                                     : (new HtmlEngine($this->invitation))->generateLabelsAndValues();
 
         // Check if this is a JSON-based design
         if ($this->isJsonDesign()) {
-            nlog("Using JSON Design Service for PDF generation");
+            nlog('Using JSON Design Service for PDF generation');
             $this->buildWithJsonDesign();
         } else {
             // Traditional flow
@@ -176,8 +172,6 @@ class PdfService
 
     /**
      * Check if the current design is a JSON-based design
-     *
-     * @return bool
      */
     private function isJsonDesign(): bool
     {
@@ -189,6 +183,7 @@ class PdfService
 
         if ($design->is_custom && is_object($design->design)) {
             $designData = json_decode(json_encode($design->design), true);
+
             return isset($designData['blocks']);
         }
 
@@ -197,8 +192,6 @@ class PdfService
 
     /**
      * Build PDF using JSON Design Service
-     *
-     * @return void
      */
     private function buildWithJsonDesign(): void
     {
@@ -220,19 +213,19 @@ class PdfService
                 'lineHeight' => '1.5',
                 'backgroundColor' => '#ffffff',
             ];
-            nlog("No pageSettings found, using defaults");
+            nlog('No pageSettings found, using defaults');
         }
 
-        nlog("Attempting to build PDF with JSON Design Service");
-        nlog("Design data keys: " . json_encode(array_keys($designData)));
-        nlog("Blocks count: " . count($designData['blocks'] ?? []));
+        nlog('Attempting to build PDF with JSON Design Service');
+        nlog('Design data keys: ' . json_encode(array_keys($designData)));
+        nlog('Blocks count: ' . count($designData['blocks'] ?? []));
 
         // Create JSON design service
         $jsonService = new JsonDesignService($this, $designData);
 
         // Validate the design
         if (!$jsonService->isValid()) {
-            nlog("Invalid JSON design structure - cannot use JSON designer or traditional fallback");
+            nlog('Invalid JSON design structure - cannot use JSON designer or traditional fallback');
             throw new \Exception("Invalid JSON design structure. Design must have 'blocks' and valid block structure.");
         }
 
@@ -245,51 +238,49 @@ class PdfService
 
         // Build the HTML using JSON design service
         try {
-            nlog("Building HTML with JSON Design Service");
-            nlog("HTML variables count: " . count($this->html_variables['values'] ?? []));
-            nlog("Sample variables: " . json_encode(array_slice($this->html_variables['values'] ?? [], 0, 5)));
+            nlog('Building HTML with JSON Design Service');
+            nlog('HTML variables count: ' . count($this->html_variables['values'] ?? []));
+            nlog('Sample variables: ' . json_encode(array_slice($this->html_variables['values'] ?? [], 0, 5)));
 
             $this->json_design_html = $jsonService->build();
 
-            nlog("JSON Design Service build completed successfully");
-            nlog("HTML length: " . strlen($this->json_design_html));
+            nlog('JSON Design Service build completed successfully');
+            nlog('HTML length: ' . strlen($this->json_design_html));
 
             // Check if variables were replaced
             $hasUnreplacedVars = preg_match('/\$company\.|invoice\.|client\./', $this->json_design_html);
-            nlog("Has unreplaced variables: " . ($hasUnreplacedVars ? 'YES ⚠️' : 'NO ✓'));
+            nlog('Has unreplaced variables: ' . ($hasUnreplacedVars ? 'YES ⚠️' : 'NO ✓'));
 
             if ($hasUnreplacedVars) {
-                nlog("WARNING: Variables were not replaced! Checking first 500 chars:");
+                nlog('WARNING: Variables were not replaced! Checking first 500 chars:');
                 nlog(substr($this->json_design_html, 0, 500));
             }
         } catch (\Exception $e) {
-            nlog("JSON Design Service failed: " . $e->getMessage());
-            nlog("Stack trace: " . $e->getTraceAsString());
+            nlog('JSON Design Service failed: ' . $e->getMessage());
+            nlog('Stack trace: ' . $e->getTraceAsString());
             throw $e; // Re-throw instead of falling back since traditional flow won't work with JSON structure
         }
 
         // Create a minimal builder instance for compatibility
         // Initialize it with a minimal DOM document to prevent null errors
         $this->builder = new PdfBuilder($this);
-        $this->builder->document = new \DOMDocument();
+        $this->builder->document = new \DOMDocument;
         $this->builder->document->loadHTML('<!DOCTYPE html><html><body></body></html>');
 
-        nlog("JSON Design build complete");
+        nlog('JSON Design build complete');
     }
 
     /**
      * resolvePdfEngine
-     *
-     * @return mixed
      */
     public function resolvePdfEngine(string $html): mixed
     {
         if (config('ninja.phantomjs_pdf_generation') || config('ninja.pdf_generator') == 'phantom') {
-            $pdf = (new Phantom())->convertHtmlToPdf($html);
+            $pdf = (new Phantom)->convertHtmlToPdf($html);
         } elseif (config('ninja.invoiceninja_hosted_pdf_generation') || config('ninja.pdf_generator') == 'hosted_ninja') {
-            $pdf = (new NinjaPdf())->build($html);
+            $pdf = (new NinjaPdf)->build($html);
         } elseif (config('ninja.pdf_generator') == 'gotenberg') {
-            $pdf = (new GotenbergPdf())->convertHtmlToPdf($html);
+            $pdf = (new GotenbergPdf)->convertHtmlToPdf($html);
         } else {
             $pdf = $this->makePdf(null, null, $html);
         }
@@ -299,9 +290,6 @@ class PdfService
 
     /**
      * Switch to determine if we need to embed the xml into the PDF itself
-     *
-     * @param  string $pdf
-     * @return string
      */
     private function checkEInvoice(string $pdf): string
     {
@@ -312,18 +300,18 @@ class PdfService
         $e_invoice_type = $this->config->settings->e_invoice_type;
 
         switch ($e_invoice_type) {
-            case "EN16931":
-            case "XInvoice_2_2":
-            case "XInvoice_2_1":
-            case "XInvoice_2_0":
-            case "XInvoice_1_0":
-            case "XInvoice-Extended":
-            case "XInvoice-BasicWL":
-            case "XInvoice-Basic":
+            case 'EN16931':
+            case 'XInvoice_2_2':
+            case 'XInvoice_2_1':
+            case 'XInvoice_2_0':
+            case 'XInvoice_1_0':
+            case 'XInvoice-Extended':
+            case 'XInvoice-BasicWL':
+            case 'XInvoice-Basic':
                 return $this->embedEInvoiceZuGFerD($pdf) ?? $pdf;
-                //case "Facturae_3.2":
-                //case "Facturae_3.2.1":
-                //case "Facturae_3.2.2":
+                // case "Facturae_3.2":
+                // case "Facturae_3.2.1":
+                // case "Facturae_3.2.2":
                 //
             default:
                 return $pdf;
@@ -333,9 +321,6 @@ class PdfService
 
     /**
      * Embed the .xml file into the PDF
-     *
-     * @param  string $pdf
-     * @return string
      */
     private function embedEInvoiceZuGFerD(string $pdf): string
     {
@@ -348,10 +333,9 @@ class PdfService
             return $pdfBuilder->downloadString();
 
         } catch (\Throwable $th) {
-            nlog("E_Invoice Merge failed - " . $th->getMessage());
+            nlog('E_Invoice Merge failed - ' . $th->getMessage());
         }
 
         return $pdf;
     }
-
 }

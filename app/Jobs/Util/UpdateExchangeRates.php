@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -33,8 +32,6 @@ class UpdateExchangeRates implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {
@@ -50,7 +47,7 @@ class UpdateExchangeRates implements ShouldQueue
             foreach (MultiDB::$dbs as $db) {
                 MultiDB::setDB($db);
 
-                $client = new Client();
+                $client = new Client;
                 $response = $client->get($cc_endpoint);
 
                 $currency_api = json_decode($response->getBody());
@@ -70,7 +67,7 @@ class UpdateExchangeRates implements ShouldQueue
                 Cache::forever('currencies', $currencies);
             }
         } else {
-            $client = new Client();
+            $client = new Client;
             $response = $client->get($cc_endpoint);
 
             $currency_api = json_decode($response->getBody());

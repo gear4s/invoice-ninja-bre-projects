@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,6 +19,7 @@ namespace App\Models;
  * @property string|null $remote_id
  * @property int $bank_library_id
  * @property string|null $config
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|Bank newModelQuery()
@@ -30,6 +30,7 @@ namespace App\Models;
  * @method static \Illuminate\Database\Eloquent\Builder|Bank whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Bank whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Bank whereRemoteId($value)
+ *
  * @mixin \Eloquent
  */
 #[\AllowDynamicProperties]
@@ -41,8 +42,6 @@ class Bank extends StaticModel
     public $timestamps = false;
 
     /**
-     * @param $finance
-     *
      * @return \App\Libraries\Bank
      */
     public function getOFXBank($finance)

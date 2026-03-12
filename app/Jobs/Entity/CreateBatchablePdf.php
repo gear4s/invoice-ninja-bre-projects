@@ -6,19 +6,18 @@
  * @link https://github.com/entityninja/entityninja source repository
  *
  * @copyright Copyright (c) 2022. Entity Ninja LLC (https://entityninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Entity;
 
+use App\Libraries\MultiDB;
 use Illuminate\Bus\Batchable;
-use App\Jobs\Entity\CreateRawPdf;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 
 class CreateBatchablePdf implements ShouldQueue
 {
@@ -31,9 +30,6 @@ class CreateBatchablePdf implements ShouldQueue
 
     private $invitation;
 
-    /**
-     * @param $invitation
-     */
     public function __construct($invitation, $batch_key)
     {
         $this->invitation = $invitation;
@@ -42,7 +38,7 @@ class CreateBatchablePdf implements ShouldQueue
 
     public function handle()
     {
-        \App\Libraries\MultiDB::setDb($this->invitation->company->db);
+        MultiDB::setDb($this->invitation->company->db);
 
         $pdf = (new CreateRawPdf($this->invitation))->handle();
 

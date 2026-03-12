@@ -6,22 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal\Authentication;
 
-use Livewire\Component;
-use App\Models\Subscription;
-use App\Models\ClientContact;
-use App\Utils\Traits\MakesHash;
 use App\Jobs\Mail\NinjaMailerJob;
-use Livewire\Attributes\Computed;
-use App\Mail\Subscription\OtpCode;
 use App\Jobs\Mail\NinjaMailerObject;
+use App\Mail\Subscription\OtpCode;
+use App\Models\ClientContact;
+use App\Models\Country;
+use App\Models\Subscription;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class RegisterOrLogin extends Component
 {
@@ -63,7 +64,6 @@ class RegisterOrLogin extends Component
 
         $this->state['initial_completed'] = true;
 
-
         if (!$this->subscription()->registration_required) {
 
             $service = new ClientRegisterService(
@@ -75,6 +75,7 @@ class RegisterOrLogin extends Component
             $contact = $service->createClientContact(['email' => $this->email], $client);
             auth()->guard('contact')->loginUsingId($contact->id, true);
             $this->dispatch('purchase.next');
+
             return;
 
         }
@@ -128,6 +129,7 @@ class RegisterOrLogin extends Component
 
         if ($contact === null) {
             $this->registerForm();
+
             return;
         }
 
@@ -136,10 +138,10 @@ class RegisterOrLogin extends Component
 
         Cache::put($email_hash, $code, 600);
 
-        $cc = new ClientContact();
+        $cc = new ClientContact;
         $cc->email = $this->email;
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new OtpCode($this->subscription()->company, $contact, $code);
         $nmo->company = $this->subscription()->company;
         $nmo->settings = $this->subscription()->company->settings;
@@ -162,7 +164,7 @@ class RegisterOrLogin extends Component
 
         $code = Cache::get("subscriptions:otp:{$this->email}");
 
-        if ($this->otp != $code) { //loose comparison prevents edge cases
+        if ($this->otp != $code) { // loose comparison prevents edge cases
             $errors = $this->getErrorBag();
             $errors->add('otp', ctrans('texts.invalid_code'));
 
@@ -214,7 +216,7 @@ class RegisterOrLogin extends Component
     public function registerForm()
     {
         $count = collect($this->subscription()->company->client_registration_fields ?? [])
-            ->filter(fn($field) => $field['required'] === true || $field['visible'] === true)
+            ->filter(fn ($field) => $field['required'] === true || $field['visible'] === true)
             ->count();
 
         if ($count === 0) {
@@ -249,12 +251,11 @@ class RegisterOrLogin extends Component
                     return;
                 }
 
-                $i = collect($this->register_fields)->search(fn($field) => $field['key'] == $mapping);
+                $i = collect($this->register_fields)->search(fn ($field) => $field['key'] == $mapping);
 
                 if ($i !== false) {
                     $this->register_fields[$i]['visible'] = true;
                     $this->register_fields[$i]['required'] = true;
-
 
                     $this->additional_fields[] = $this->register_fields[$i];
                 } else {
@@ -278,6 +279,7 @@ class RegisterOrLogin extends Component
 
         if (auth()->guard('contact')->check()) {
             $this->dispatch('purchase.next');
+
             return;
         }
 
@@ -286,7 +288,7 @@ class RegisterOrLogin extends Component
     public function render()
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         return view('billing-portal.v3.authentication.register-or-login', [

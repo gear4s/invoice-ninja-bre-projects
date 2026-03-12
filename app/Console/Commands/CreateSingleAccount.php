@@ -6,66 +6,74 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Console\Commands;
 
-use stdClass;
-use Carbon\Carbon;
-use Faker\Factory;
-use App\Models\Task;
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Models\Quote;
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Vendor;
+use App\DataMapper\ClientRegistrationFields;
+use App\DataMapper\ClientSettings;
+use App\DataMapper\CompanySettings;
+use App\DataMapper\FeesAndLimits;
+use App\Events\Invoice\InvoiceWasCreated;
+use App\Events\RecurringInvoice\RecurringInvoiceWasCreated;
+use App\Factory\GroupSettingFactory;
+use App\Factory\InvoiceFactory;
+use App\Factory\InvoiceItemFactory;
+use App\Factory\RecurringInvoiceFactory;
+use App\Factory\SubscriptionFactory;
+use App\Helpers\Invoice\InvoiceSum;
+use App\Jobs\Company\CreateCompanyTaskStatuses;
+use App\Libraries\MultiDB;
 use App\Models\Account;
+use App\Models\BankIntegration;
+use App\Models\BankTransaction;
+use App\Models\BankTransactionRule;
+use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Company;
+use App\Models\CompanyGateway;
+use App\Models\CompanyToken;
 use App\Models\Country;
+use App\Models\Credit;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Project;
-use App\Models\TaxRate;
-use App\Libraries\MultiDB;
-use App\Models\TaskStatus;
-use App\Models\CompanyToken;
-use App\Models\Subscription;
-use App\Models\ClientContact;
-use App\Models\VendorContact;
-use App\Models\CompanyGateway;
-use App\Factory\InvoiceFactory;
-use App\Models\BankIntegration;
-use App\Models\BankTransaction;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Console\Command;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use App\DataMapper\FeesAndLimits;
-use App\DataMapper\ClientSettings;
-use App\DataMapper\CompanySettings;
-use App\Factory\InvoiceItemFactory;
-use App\Helpers\Invoice\InvoiceSum;
-use App\Models\BankTransactionRule;
-use App\Factory\GroupSettingFactory;
-use App\Factory\SubscriptionFactory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
-use App\Utils\Traits\GeneratesCounter;
-use Illuminate\Support\Facades\Schema;
+use App\Models\Subscription;
+use App\Models\Task;
+use App\Models\TaskStatus;
+use App\Models\TaxRate;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Models\VendorContact;
+use App\Repositories\ClientContactRepository;
+use App\Repositories\ClientRepository;
+use App\Repositories\CreditRepository;
+use App\Repositories\ExpenseRepository;
 use App\Repositories\InvoiceRepository;
-use App\Factory\RecurringInvoiceFactory;
-use App\Events\Invoice\InvoiceWasCreated;
-use App\DataMapper\ClientRegistrationFields;
-use App\Jobs\Company\CreateCompanyTaskStatuses;
-use App\Events\RecurringInvoice\RecurringInvoiceWasCreated;
+use App\Repositories\QuoteRepository;
+use App\Repositories\RecurringInvoiceRepository;
+use App\Repositories\TaskRepository;
+use App\Repositories\VendorContactRepository;
+use App\Repositories\VendorRepository;
+use App\Utils\Ninja;
+use App\Utils\Traits\GeneratesCounter;
+use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Faker\Factory;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Modules\Ronin\app\Models\Admin;
+use stdClass;
 
 class CreateSingleAccount extends Command
 {
-    use MakesHash;
     use GeneratesCounter;
+    use MakesHash;
 
     protected $description = 'Create Single Sample Account';
 
@@ -78,6 +86,7 @@ class CreateSingleAccount extends Command
     protected $gateway;
 
     public $faker;
+
     /**
      * Execute the console command.
      *
@@ -91,7 +100,7 @@ class CreateSingleAccount extends Command
             return;
         }
 
-        $this->invoice_repo = new InvoiceRepository();
+        $this->invoice_repo = new InvoiceRepository;
 
         MultiDB::setDb($this->option('database'));
 
@@ -101,11 +110,10 @@ class CreateSingleAccount extends Command
 
         $this->createSmallAccount();
 
-
         try {
             $pdo = \DB::connection('ronin')->getPdo();
 
-            if (class_exists(\Modules\Ronin\app\Models\Admin::class)) {
+            if (class_exists(Admin::class)) {
                 $this->info('Creating Ronin Account');
                 $this->createRoninAccount();
             }
@@ -118,7 +126,7 @@ class CreateSingleAccount extends Command
 
     private function createRoninAccount()
     {
-        $admin = \Modules\Ronin\app\Models\Admin::create([
+        $admin = Admin::create([
             'first_name' => 'small',
             'last_name' => 'example',
             'email' => 'small@example.com',
@@ -145,12 +153,12 @@ class CreateSingleAccount extends Command
             'track_inventory' => true,
         ]);
 
-        $custom_fields = new \stdClass();
+        $custom_fields = new stdClass;
         $custom_fields->client1 = 'CKey|single_line_text';
         $custom_fields->client2 = 'AKey|single_line_text';
         $company->custom_fields = $custom_fields;
 
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $settings = $company->settings;
         $settings->invoice_terms = 'Default company invoice terms';
@@ -186,7 +194,7 @@ class CreateSingleAccount extends Command
 
         $user = User::whereEmail('small@example.com')->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $account->id,
                 'email' => 'small@example.com',
@@ -194,7 +202,7 @@ class CreateSingleAccount extends Command
             ]);
         }
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -217,7 +225,6 @@ class CreateSingleAccount extends Command
             'user_id' => $user->id,
             'company_id' => $company->id,
         ]);
-
 
         TaxRate::factory()->create([
             'user_id' => $user->id,
@@ -276,7 +283,6 @@ class CreateSingleAccount extends Command
             'email' => 'cypress@example.com',
             'password' => Hash::make('password'),
         ]);
-
 
         $this->info('Creating ' . $this->count . ' clients');
 
@@ -344,49 +350,47 @@ class CreateSingleAccount extends Command
 
         $this->createSubsData($company, $user);
 
-
-        $repo = new \App\Repositories\TaskRepository();
+        $repo = new TaskRepository;
 
         Task::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\ExpenseRepository();
+        $repo = new ExpenseRepository;
 
         Expense::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\VendorRepository(new \App\Repositories\VendorContactRepository());
+        $repo = new VendorRepository(new VendorContactRepository);
         Vendor::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\ClientRepository(new \App\Repositories\ClientContactRepository());
+        $repo = new ClientRepository(new ClientContactRepository);
         Client::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\RecurringInvoiceRepository();
+        $repo = new RecurringInvoiceRepository;
         RecurringInvoice::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\InvoiceRepository();
+        $repo = new InvoiceRepository;
         Invoice::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\QuoteRepository();
+        $repo = new QuoteRepository;
         Quote::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
 
-        $repo = new \App\Repositories\CreditRepository();
+        $repo = new CreditRepository;
         Credit::query()->cursor()->each(function ($t) use ($repo) {
             $repo->save([], $t);
         });
-
 
         Project::query()->with('client')->whereNotNull('client_id')->cursor()->each(function ($p) {
 
@@ -403,14 +407,14 @@ class CreateSingleAccount extends Command
         $cc->email = 'user@example.com';
         $cc->save();
 
-        $this->info("finished");
+        $this->info('finished');
 
     }
 
     private function createSubsData($company, $user)
     {
         $gs = GroupSettingFactory::create($company->id, $user->id);
-        $gs->name = "plans";
+        $gs->name = 'plans';
         $gs->save();
 
         $p1 = Product::factory()->create([
@@ -423,7 +427,6 @@ class CreateSingleAccount extends Command
             'quantity' => 1,
         ]);
 
-        
         $p1a = Product::factory()->create([
             'user_id' => $user->id,
             'company_id' => $company->id,
@@ -433,7 +436,6 @@ class CreateSingleAccount extends Command
             'price' => 120,
             'quantity' => 1,
         ]);
-
 
         $p2 = Product::factory()->create([
             'user_id' => $user->id,
@@ -485,7 +487,6 @@ class CreateSingleAccount extends Command
             'quantity' => 1,
         ]);
 
-
         $p4 = Product::factory()->create([
             'user_id' => $user->id,
             'company_id' => $company->id,
@@ -495,7 +496,6 @@ class CreateSingleAccount extends Command
             'price' => 6,
             'quantity' => 1,
         ]);
-
 
         $p5 = Product::factory()->create([
             'user_id' => $user->id,
@@ -514,7 +514,7 @@ class CreateSingleAccount extends Command
         ];
 
         $sub = SubscriptionFactory::create($company->id, $user->id);
-        $sub->name = "Pro Plan";
+        $sub->name = 'Pro Plan';
         $sub->group_id = $gs->id;
         $sub->recurring_product_ids = "{$p1->hashed_id}";
         $sub->webhook_configuration = $webhook_config;
@@ -523,7 +523,7 @@ class CreateSingleAccount extends Command
         $sub->save();
 
         $sub = SubscriptionFactory::create($company->id, $user->id);
-        $sub->name = "Enterprise Plan";
+        $sub->name = 'Enterprise Plan';
         $sub->group_id = $gs->id;
         $sub->recurring_product_ids = "{$p2->hashed_id}";
         $sub->webhook_configuration = $webhook_config;
@@ -532,7 +532,7 @@ class CreateSingleAccount extends Command
         $sub->save();
 
         $sub = SubscriptionFactory::create($company->id, $user->id);
-        $sub->name = "Free Plan";
+        $sub->name = 'Free Plan';
         $sub->group_id = $gs->id;
         $sub->recurring_product_ids = "{$p3->hashed_id}";
         $sub->webhook_configuration = $webhook_config;
@@ -540,11 +540,11 @@ class CreateSingleAccount extends Command
         $sub->frequency_id = RecurringInvoice::FREQUENCY_MONTHLY;
         $sub->save();
 
-        if (!\App\Models\Subscription::find(6)) {
+        if (!Subscription::find(6)) {
 
             $sub = SubscriptionFactory::create($company->id, $user->id);
             $sub->id = 6;
-            $sub->name = " PRO Pro Plan";
+            $sub->name = ' PRO Pro Plan';
             $sub->group_id = $gs->id;
             $sub->recurring_product_ids = "{$p1->hashed_id}";
             $sub->webhook_configuration = $webhook_config;
@@ -554,11 +554,11 @@ class CreateSingleAccount extends Command
 
         }
 
-        if (!\App\Models\Subscription::find(11)) {
+        if (!Subscription::find(11)) {
 
             $sub = SubscriptionFactory::create($company->id, $user->id);
             $sub->id = 11;
-            $sub->name = " EEE Enterprise Plan";
+            $sub->name = ' EEE Enterprise Plan';
             $sub->group_id = $gs->id;
             $sub->recurring_product_ids = "{$p2->hashed_id}";
             $sub->webhook_configuration = $webhook_config;
@@ -569,11 +569,10 @@ class CreateSingleAccount extends Command
             $sub->save();
 
         }
-       
 
         $sub = SubscriptionFactory::create($company->id, $user->id);
         $sub->id = 66;
-        $sub->name = " PRO Pro Plan Annual";
+        $sub->name = ' PRO Pro Plan Annual';
         $sub->group_id = $gs->id;
         $sub->recurring_product_ids = "{$p1a->hashed_id}";
         $sub->webhook_configuration = $webhook_config;
@@ -581,10 +580,9 @@ class CreateSingleAccount extends Command
         $sub->frequency_id = RecurringInvoice::FREQUENCY_ANNUALLY;
         $sub->save();
 
-
         $_sub = $sub->replicate();
         $_sub->id = 41;
-        $_sub->name = "Enterprise Plan 3-5 Users";
+        $_sub->name = 'Enterprise Plan 3-5 Users';
         $_sub->recurring_product_ids = "{$pe5->hashed_id}";
         $_sub->max_seats_limit = 5;
         $_sub->per_seat_enabled = true;
@@ -592,7 +590,7 @@ class CreateSingleAccount extends Command
 
         $_sub = $sub->replicate();
         $_sub->id = 46;
-        $_sub->name = "Enterprise Plan 6-10 Users";
+        $_sub->name = 'Enterprise Plan 6-10 Users';
         $_sub->recurring_product_ids = "{$pe10->hashed_id}";
         $_sub->max_seats_limit = 10;
         $_sub->per_seat_enabled = true;
@@ -600,15 +598,14 @@ class CreateSingleAccount extends Command
 
         $_sub = $sub->replicate();
         $_sub->id = 51;
-        $_sub->name = "Enterprise Plan 11-20 Users";
+        $_sub->name = 'Enterprise Plan 11-20 Users';
         $_sub->recurring_product_ids = "{$pe20->hashed_id}";
         $_sub->max_seats_limit = 20;
         $_sub->per_seat_enabled = true;
         $_sub->save();
 
-
         $sub = SubscriptionFactory::create($company->id, $user->id);
-        $sub->name = "DocuNinja Monthly Plan";
+        $sub->name = 'DocuNinja Monthly Plan';
         $sub->group_id = $gs->id;
         $sub->recurring_product_ids = "{$p4->hashed_id}";
         $sub->webhook_configuration = $webhook_config;
@@ -617,14 +614,13 @@ class CreateSingleAccount extends Command
         $sub->save();
 
         $sub = SubscriptionFactory::create($company->id, $user->id);
-        $sub->name = "DocuNinja Annual Plan";
+        $sub->name = 'DocuNinja Annual Plan';
         $sub->group_id = $gs->id;
         $sub->recurring_product_ids = "{$p5->hashed_id}";
         $sub->webhook_configuration = $webhook_config;
         $sub->allow_plan_changes = true;
         $sub->frequency_id = RecurringInvoice::FREQUENCY_ANNUALLY;
         $sub->save();
-
 
         if ($config = config('admin-api.products')) {
 
@@ -660,9 +656,7 @@ class CreateSingleAccount extends Command
 
         }
 
-
     }
-
 
     private function createClient($company, $user)
     {
@@ -691,7 +685,7 @@ class CreateSingleAccount extends Command
         $client->number = $this->getNextClientNumber($client);
 
         $settings = $client->settings;
-        $settings->currency_id = "1";
+        $settings->currency_id = '1';
 
         $client->settings = $settings;
 
@@ -795,7 +789,7 @@ class CreateSingleAccount extends Command
     {
         $faker = Factory::create();
 
-        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); //stub the company and user_id
+        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
         $dateable = Carbon::now()->subDays(rand(0, 90));
         $invoice->date = $dateable;
@@ -832,7 +826,7 @@ class CreateSingleAccount extends Command
             $invoice->amount = 100; // Braintree sandbox only allows payments under 2,000 to complete successfully.
         }
 
-        /** @var \App\Models\Invoice $invoice */
+        /** @var Invoice $invoice */
         $invoice->save();
         $invoice->service()->createInvitations()->markSent();
 
@@ -860,7 +854,7 @@ class CreateSingleAccount extends Command
 
         $credit = $invoice_calc->getCredit();
 
-        /** @var \App\Models\Credit $credit */
+        /** @var Credit $credit */
         $credit->save();
         $credit->service()->markSent()->save();
         $credit->service()->createInvitations();
@@ -903,11 +897,10 @@ class CreateSingleAccount extends Command
 
         $quote->save();
 
-        /** @var \App\Models\Quote $quote */
+        /** @var Quote $quote */
         $quote->service()->markSent()->save();
         $quote->service()->createInvitations();
     }
-
 
     private function buildCreditItem()
     {
@@ -929,10 +922,8 @@ class CreateSingleAccount extends Command
 
         $line_items[] = $item;
 
-
         return $line_items;
     }
-
 
     private function buildLineItems($count = 1)
     {
@@ -941,7 +932,7 @@ class CreateSingleAccount extends Command
         for ($x = 0; $x < $count; $x++) {
             $item = InvoiceItemFactory::create();
             $item->quantity = 1;
-            //$item->cost = 10;
+            // $item->cost = 10;
 
             if (rand(0, 1)) {
                 $item->tax_name1 = 'GST';
@@ -977,7 +968,7 @@ class CreateSingleAccount extends Command
     private function createGateways($company, $user)
     {
         if (config('ninja.testvars.stripe') && ($this->gateway == 'all' || $this->gateway == 'stripe')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -990,8 +981,8 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
@@ -1019,7 +1010,7 @@ class CreateSingleAccount extends Command
         // }
 
         if (config('ninja.testvars.paypal_rest') && ($this->gateway == 'all' || $this->gateway == 'paypal_rest')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '80af24a6a691230bbec33e930ab40665';
@@ -1032,17 +1023,15 @@ class CreateSingleAccount extends Command
 
             // $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{3} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{3} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
-
-
         if (config('ninja.testvars.checkout') && ($this->gateway == 'all' || $this->gateway == 'checkout')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '3758e7f7c6f4cecf0f4f348b9a00f456';
@@ -1053,17 +1042,17 @@ class CreateSingleAccount extends Command
             $cg->config = encrypt(config('ninja.testvars.checkout'));
             $cg->save();
 
-            $gateway_types = $cg->driver(new Client())->gatewayTypes();
+            $gateway_types = $cg->driver(new Client)->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.authorize') && ($this->gateway == 'all' || $this->gateway == 'authorizenet')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '3b6621f970ab18887c4f6dca78d3f8bb';
@@ -1074,17 +1063,17 @@ class CreateSingleAccount extends Command
             $cg->config = encrypt(config('ninja.testvars.authorize'));
             $cg->save();
 
-            $gateway_types = $cg->driver(new Client())->gatewayTypes();
+            $gateway_types = $cg->driver(new Client)->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.braintree') && ($this->gateway == 'all' || $this->gateway == 'braintree')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'f7ec488676d310683fb51802d076d713';
@@ -1097,16 +1086,15 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
-
         if (config('ninja.testvars.paytrace') && ($this->gateway == 'all' || $this->gateway == 'paytrace')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'bbd736b3254b0aabed6ad7fda1298c88';
@@ -1118,18 +1106,17 @@ class CreateSingleAccount extends Command
 
             $cg->save();
 
-
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.mollie') && ($this->gateway == 'all' || $this->gateway == 'mollie')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '1bd651fb213ca0c9d66ae3c336dc77e8';
@@ -1142,15 +1129,15 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.square') && ($this->gateway == 'all' || $this->gateway == 'square')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '65faab2ab6e3223dbe848b1686490baz';
@@ -1163,15 +1150,15 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.eway') && ($this->gateway == 'all' || $this->gateway == 'eway')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '944c20175bbe6b9972c05bcfe294c2c7';
@@ -1184,13 +1171,12 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
-
 
         if (config('ninja.testvars.gocardless') && ($this->gateway == 'all' || $this->gateway == 'gocardless')) {
 
@@ -1205,7 +1191,7 @@ class CreateSingleAccount extends Command
                 'settings' => $c_settings,
             ]);
 
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'b9886f9257f0c6ee7c302f1c74475f6c';
@@ -1218,15 +1204,15 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver($client)->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.forte') && ($this->gateway == 'all' || $this->gateway == 'forte')) {
-            $cg = new CompanyGateway();
+            $cg = new CompanyGateway;
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'kivcvjexxvdiyqtj3mju5d6yhpeht2xs';
@@ -1239,14 +1225,12 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass();
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+            $fees_and_limits = new stdClass;
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
-
-
 
     }
 
@@ -1254,7 +1238,7 @@ class CreateSingleAccount extends Command
     {
         $faker = Factory::create();
 
-        $invoice = RecurringInvoiceFactory::create($client->company_id, $client->user_id); //stub the company and user_id
+        $invoice = RecurringInvoiceFactory::create($client->company_id, $client->user_id); // stub the company and user_id
         $invoice->client_id = $client->id;
         $dateable = Carbon::now()->subDays(rand(0, 90));
         $invoice->date = $dateable;
@@ -1293,7 +1277,6 @@ class CreateSingleAccount extends Command
         event(new RecurringInvoiceWasCreated($invoice, $invoice->company, Ninja::eventVars()));
     }
 
-
     private function countryClients($company, $user)
     {
 
@@ -1326,10 +1309,9 @@ class CreateSingleAccount extends Command
             'shipping_postal_code' => '8001',
             'shipping_country_id' => '756', // Switzerland
             'settings' => ClientSettings::Defaults(),
-            'client_hash' => \Illuminate\Support\Str::random(32),
+            'client_hash' => Str::random(32),
             'routing_id' => '',
         ]);
 
     }
-
 }

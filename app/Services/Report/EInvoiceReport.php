@@ -2,20 +2,18 @@
 
 namespace App\Services\Report;
 
-use Carbon\Carbon;
-use App\Utils\Ninja;
-use App\Utils\Number;
-use League\Csv\Writer;
+use App\Export\CSV\BaseExport;
+use App\Libraries\MultiDB;
+use App\Models\Activity;
 use App\Models\Company;
 use App\Models\Expense;
 use App\Models\Invoice;
-use App\Models\Activity;
-use App\Utils\Translator;
-use App\Libraries\MultiDB;
-use App\Export\CSV\BaseExport;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Facades\App;
-use Illuminate\Database\Query\Builder;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class EInvoiceReport extends BaseExport
 {
@@ -40,14 +38,14 @@ class EInvoiceReport extends BaseExport
     ];
 
     /**
-     * @param array $input
-     * [
-     *     'date_range',
-     *     'start_date',
-     *     'end_date',
-     *     'clients',
-     *     'client_id',
-     * ]
+     * @param  array  $input
+     *                        [
+     *                        'date_range',
+     *                        'start_date',
+     *                        'end_date',
+     *                        'clients',
+     *                        'client_id',
+     *                        ]
      */
     public function __construct(public Company $company, public array $input) {}
 
@@ -60,7 +58,7 @@ class EInvoiceReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
@@ -114,7 +112,7 @@ class EInvoiceReport extends BaseExport
         $query = $this->addDateRange($query, 'activities');
 
         $expenseActivityIds = $query->pluck('expense_id')
-                                    ->toArray();
+            ->toArray();
 
         $expenses = Expense::query()
             ->where('company_id', $this->company->id)

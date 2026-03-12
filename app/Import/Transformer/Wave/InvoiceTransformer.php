@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://clientninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,8 +21,6 @@ use App\Models\Invoice;
 class InvoiceTransformer extends BaseTransformer
 {
     /**
-     * @param $line_items_data
-     *
      * @return bool|array
      */
     public function transform($line_items_data)
@@ -55,13 +52,13 @@ class InvoiceTransformer extends BaseTransformer
         }
 
         $transformed = [
-            'company_id'  => $this->company->id,
-            'client_id'   => $this->getClient($customer_name = $this->getString($invoice_data, $customer_key), null),
-            'number'      => $invoice_number = $this->getString($invoice_data, 'Invoice Number'),
-            'date'        => $this->parseDate($invoice_data[$date_key]) ?: now()->format('Y-m-d'), //27-01-2022
+            'company_id' => $this->company->id,
+            'client_id' => $this->getClient($customer_name = $this->getString($invoice_data, $customer_key), null),
+            'number' => $invoice_number = $this->getString($invoice_data, 'Invoice Number'),
+            'date' => $this->parseDate($invoice_data[$date_key]) ?: now()->format('Y-m-d'), // 27-01-2022
             // 'currency_id' => $this->getCurrencyByCode($invoice_data, 'Currency'),
-            'status_id'   => Invoice::STATUS_SENT,
-            'due_date'	  => array_key_exists('Due Date', $invoice_data) ? $this->parseDate($invoice_data['Due Date']) : null,
+            'status_id' => Invoice::STATUS_SENT,
+            'due_date' => array_key_exists('Due Date', $invoice_data) ? $this->parseDate($invoice_data['Due Date']) : null,
         ];
 
         $line_items = [];
@@ -80,8 +77,8 @@ class InvoiceTransformer extends BaseTransformer
                 }
 
                 $line_items[] = [
-                    'notes'     => $description,
-                    'cost'      => $this->getFloat($record, 'Amount Before Sales Tax'),
+                    'notes' => $description,
+                    'cost' => $this->getFloat($record, 'Amount Before Sales Tax'),
                     'tax_name1' => $this->getString($record, 'Sales Tax Name'),
                     'tax_rate1' => $this->getFloat($record, 'Sales Tax Amount'),
 
@@ -90,11 +87,11 @@ class InvoiceTransformer extends BaseTransformer
             } elseif (array_key_exists('Account Type', $record) && $record['Account Type'] === 'System Receivable Invoice') {
                 // This is a payment
                 $payments[] = [
-                    'date'   => $this->parseDate($invoice_data[$date_key]),
+                    'date' => $this->parseDate($invoice_data[$date_key]),
                     'amount' => $this->getFloat($record, 'Amount (One column)'),
                 ];
             } else {
-                //could be a generate invoices.csv file
+                // could be a generate invoices.csv file
 
                 $calculated_tax_rate = 0;
 
@@ -103,8 +100,8 @@ class InvoiceTransformer extends BaseTransformer
                 }
 
                 $line_items[] = [
-                    'notes'     => 'Imported Invoice',
-                    'cost'      => $this->getFloat($record, 'Invoice Total'),
+                    'notes' => 'Imported Invoice',
+                    'cost' => $this->getFloat($record, 'Invoice Total'),
                     'tax_name1' => 'Tax',
                     'tax_rate1' => $calculated_tax_rate,
                     'quantity' => 1,
@@ -112,7 +109,7 @@ class InvoiceTransformer extends BaseTransformer
 
                 if (array_key_exists('Invoice Paid', $record) && $record['Invoice Paid'] > 0) {
                     $payments[] = [
-                        'date'   => $this->parseDate($record['Last Payment Date']),
+                        'date' => $this->parseDate($record['Last Payment Date']),
                         'amount' => $this->getFloat($record, 'Invoice Paid'),
                     ];
                 }

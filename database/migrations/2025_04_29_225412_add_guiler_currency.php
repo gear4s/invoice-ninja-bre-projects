@@ -1,10 +1,8 @@
 <?php
 
 use App\Models\Currency;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -13,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if(!Currency::find(143)){
+        if (!Currency::find(143)) {
 
-            
             Model::unguard();
 
-            $currency =  ['id' => 143, 'name' => 'Caribbean guilder', 'code' => 'XCG', 'symbol' => 'Cg', 'precision' => '2', 'thousand_separator' => '.', 'decimal_separator' => ','];
+            $currency = ['id' => 143, 'name' => 'Caribbean guilder', 'code' => 'XCG', 'symbol' => 'Cg', 'precision' => '2', 'thousand_separator' => '.', 'decimal_separator' => ','];
 
             Currency::create($currency);
 

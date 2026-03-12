@@ -6,20 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models\Traits;
 
+use App\Models\BaseModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * @method static Builder scopeExclude(array $columns)
  * @method static Builder exclude(array $columns)
+ *
  * @template TModelClass of \Illuminate\Database\Eloquent\Model
- * @extends \Illuminate\Database\Eloquent\Builder<TModelClass>
- * @mixin \Illuminate\Database\Eloquent\Builder
+ *
+ * @extends Builder<TModelClass>
+ *
+ * @mixin Builder
  */
 trait Excludable
 {
@@ -30,7 +34,7 @@ trait Excludable
      */
     private function getTableColumns()
     {
-        /** @var Schema|\App\Models\BaseModel $this */
+        /** @var Schema|BaseModel $this */
         return $this->getConnection()->getSchemaBuilder()->getColumnListing($this->getTable());
     }
 
@@ -40,14 +44,12 @@ trait Excludable
      * @method static \Illuminate\Database\Eloquent\Builder<static> exclude($columns)
      * @method static \Illuminate\Database\Eloquent\Builder<static> exclude($columns)
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array $columns
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @param  array  $columns
      */
-    public function scopeExclude($query, $columns): \Illuminate\Database\Eloquent\Builder
+    public function scopeExclude($query, $columns): Builder
     {
-        /** @var \Illuminate\Database\Eloquent\Builder|static $query */
+        /** @var Builder|static $query */
         return $query->select(array_diff($this->getTableColumns(), (array) $columns));
     }
 }

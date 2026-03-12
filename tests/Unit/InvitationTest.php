@@ -6,26 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use Tests\MockAccountData;
+use App\Factory\InvoiceInvitationFactory;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use App\Factory\InvoiceInvitationFactory;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class InvitationTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
     use MakesHash;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -42,7 +40,7 @@ class InvitationTest extends TestCase
         Model::reguard();
     }
 
-    public function testInvitationSanity()
+    public function test_invitation_sanity()
     {
         $this->assertEquals($this->invoice->invitations->count(), 2);
 
@@ -67,7 +65,7 @@ class InvitationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $data);
+        ])->putJson('/api/v1/invoices/' . $this->invoice->hashed_id, $data);
 
         $response->assertStatus(200);
 
@@ -75,7 +73,7 @@ class InvitationTest extends TestCase
 
         $this->assertEquals(2, count($arr['data']['invitations']));
 
-        //test pushing a contact invitation back on
+        // test pushing a contact invitation back on
 
         $contact = $this->invoice->client->contacts->where('is_primary', false)->first();
 
@@ -95,8 +93,8 @@ class InvitationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/invoices/'.$this->encodePrimaryKey($this->invoice->id), $this->invoice->toArray())
-        ->assertStatus(200);
+        ])->putJson('/api/v1/invoices/' . $this->encodePrimaryKey($this->invoice->id), $this->invoice->toArray())
+            ->assertStatus(200);
 
         $arr = $response->json();
 

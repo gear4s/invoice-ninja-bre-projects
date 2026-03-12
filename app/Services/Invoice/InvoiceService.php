@@ -6,29 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Models\Task;
-use App\Utils\Ninja;
-use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Subscription;
-use App\Models\CompanyGateway;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
-use App\Jobs\Entity\CreateRawPdf;
-use App\Services\Invoice\LocationData;
-use App\Jobs\EDocument\CreateEDocument;
-use Illuminate\Support\Facades\Storage;
 use App\Events\Invoice\InvoiceWasArchived;
+use App\Jobs\EDocument\CreateEDocument;
+use App\Jobs\Entity\CreateRawPdf;
 use App\Jobs\Inventory\AdjustProductInventory;
 use App\Libraries\Currency\Conversion\CurrencyApi;
+use App\Models\ClientContact;
+use App\Models\CompanyGateway;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\InvoiceInvitation;
+use App\Models\Payment;
+use App\Models\Subscription;
+use App\Models\Task;
+use App\Services\EDocument\Standards\Verifactu;
 use App\Services\EDocument\Standards\Verifactu\SendToAeat;
+use App\Utils\BcMath;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
+use InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja;
 
 class InvoiceService
 {
@@ -39,6 +42,7 @@ class InvoiceService
     /**
      * Marks as invoice as paid
      * and executes child sub functions.
+     *
      * @return $this InvoiceService object
      */
     public function markPaid(?string $reference = null)
@@ -53,9 +57,7 @@ class InvoiceService
     /**
      * applyPaymentAmount
      *
-     * @param  float $amount
-     * @param  ?string $reference
-     * @return self
+     * @param  float  $amount
      */
     public function applyPaymentAmount($amount, ?string $reference = null): self
     {
@@ -66,6 +68,7 @@ class InvoiceService
 
     /**
      * Applies the invoice number.
+     *
      * @return $this InvoiceService object
      */
     public function applyNumber()
@@ -89,7 +92,7 @@ class InvoiceService
         $company_currency = $this->invoice->company->settings->currency_id;
 
         if ($company_currency != $client_currency) {
-            $exchange_rate = new CurrencyApi();
+            $exchange_rate = new CurrencyApi;
 
             $this->invoice->exchange_rate = 1 / $exchange_rate->exchangeRate($client_currency, $company_currency, now());
         }
@@ -99,6 +102,7 @@ class InvoiceService
 
     /**
      * Applies the recurring invoice number.
+     *
      * @return $this InvoiceService object
      */
     public function applyRecurringNumber()
@@ -112,9 +116,10 @@ class InvoiceService
      * Apply a payment amount to an invoice.
      *
      * *** does not create a paymentable ****
-     * @param  Payment $payment        The Payment
-     * @param  float   $payment_amount The Payment amount
-     * @return InvoiceService          Parent class object
+     *
+     * @param  Payment  $payment  The Payment
+     * @param  float  $payment_amount  The Payment amount
+     * @return InvoiceService Parent class object
      */
     public function applyPayment(Payment $payment, float $payment_amount)
     {
@@ -137,11 +142,10 @@ class InvoiceService
     /**
      * Update an invoice balance.
      *
-     * @param  float $balance_adjustment The amount to adjust the invoice by
-     * a negative amount will REDUCE the invoice balance, a positive amount will INCREASE
-     * the invoice balance
-     *
-     * @return InvoiceService                     Parent class object
+     * @param  float  $balance_adjustment  The amount to adjust the invoice by
+     *                                     a negative amount will REDUCE the invoice balance, a positive amount will INCREASE
+     *                                     the invoice balance
+     * @return InvoiceService Parent class object
      */
     public function updateBalance($balance_adjustment, bool $is_draft = false)
     {
@@ -153,7 +157,7 @@ class InvoiceService
 
         $this->invoice->balance += $balance_adjustment;
 
-        if (round($this->invoice->balance, 2) == 0 && ! $is_draft) {
+        if (round($this->invoice->balance, 2) == 0 && !$is_draft) {
             $this->invoice->status_id = Invoice::STATUS_PAID;
         }
 
@@ -204,7 +208,7 @@ class InvoiceService
         return (new CreateRawPdf($invitation))->handle();
     }
 
-    public function getInvoiceDeliveryNote(Invoice $invoice, ?\App\Models\ClientContact $contact = null)
+    public function getInvoiceDeliveryNote(Invoice $invoice, ?ClientContact $contact = null)
     {
         return (new GenerateDeliveryNote($invoice, $contact))->run();
     }
@@ -298,7 +302,7 @@ class InvoiceService
             return $this;
         }
 
-        //12-10-2022
+        // 12-10-2022
         if ($this->invoice->partial > 0 && !$this->invoice->partial_due_date) {
             $this->invoice->partial_due_date = Carbon::parse($this->invoice->date)->addDays((int) $this->invoice->client->getSetting('payment_terms'));
         } else {
@@ -315,8 +319,6 @@ class InvoiceService
      * We can _ONLY_ call this _IF_ a partial
      * amount has been paid, otherwise we end up wiping
      * all reminders regardless
-     *
-     * @return self
      */
     public function checkReminderStatus(): self
     {
@@ -385,13 +387,13 @@ class InvoiceService
         if ($payment_hash_string) {
 
             $this->invoice->line_items = collect($this->invoice->line_items)
-                                                ->map(function ($item) use ($payment_hash_string) {
-                                                    if ($item->type_id == '3' && (($item->unit_code ?? '') == $payment_hash_string)) {
-                                                        $item->type_id = '4';
-                                                    }
+                ->map(function ($item) use ($payment_hash_string) {
+                    if ($item->type_id == '3' && (($item->unit_code ?? '') == $payment_hash_string)) {
+                        $item->type_id = '4';
+                    }
 
-                                                    return $item;
-                                                })->toArray();
+                    return $item;
+                })->toArray();
 
             $this->deleteEInvoice();
 
@@ -400,13 +402,13 @@ class InvoiceService
         }
 
         $this->invoice->line_items = collect($this->invoice->line_items)
-                                     ->map(function ($item) {
-                                         if ($item->type_id == '3') {
-                                             $item->type_id = '4';
-                                         }
+            ->map(function ($item) {
+                if ($item->type_id == '3') {
+                    $item->type_id = '4';
+                }
 
-                                         return $item;
-                                     })->toArray();
+                return $item;
+            })->toArray();
 
         $this->deleteEInvoice();
 
@@ -417,7 +419,7 @@ class InvoiceService
     {
         $this->invoice->load('invitations');
 
-        //30-06-2023
+        // 30-06-2023
         $this->invoice->invitations->each(function ($invitation) {
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->invoice_filepath($invitation).$this->invoice->numberFormatter().'.pdf')) {
@@ -442,10 +444,10 @@ class InvoiceService
 
         $this->invoice->invitations->each(function ($invitation) {
             try {
-                Storage::disk(config('filesystems.default'))->delete($this->invoice->client->e_document_filepath($invitation) . $this->invoice->getFileName("xml"));
+                Storage::disk(config('filesystems.default'))->delete($this->invoice->client->e_document_filepath($invitation) . $this->invoice->getFileName('xml'));
 
                 if (Ninja::isHosted()) {
-                    Storage::disk('public')->delete($this->invoice->client->e_document_filepath($invitation) . $this->invoice->getFileName("xml"));
+                    Storage::disk('public')->delete($this->invoice->client->e_document_filepath($invitation) . $this->invoice->getFileName('xml'));
                 }
             } catch (\Exception $e) {
                 nlog($e->getMessage());
@@ -459,17 +461,17 @@ class InvoiceService
     {
         $balance = $this->invoice->balance;
 
-        //return early if type three does not exist.
-        if ($this->invoice->status_id == Invoice::STATUS_PAID || ! collect($this->invoice->line_items)->contains('type_id', 3)) {
+        // return early if type three does not exist.
+        if ($this->invoice->status_id == Invoice::STATUS_PAID || !collect($this->invoice->line_items)->contains('type_id', 3)) {
             return $this;
         }
 
         $pre_count = count((array) $this->invoice->line_items);
 
         $items = collect((array) $this->invoice->line_items)
-                    ->filter(function ($item) {
-                        return $item->type_id != '3';
-                    })->toArray();
+            ->filter(function ($item) {
+                return $item->type_id != '3';
+            })->toArray();
 
         $this->invoice->line_items = array_values($items);
 
@@ -485,8 +487,8 @@ class InvoiceService
             $adjustment = $balance - $new_balance;
 
             $this->invoice
-            ->ledger()
-            ->updateInvoiceBalance($adjustment * -1, 'Adjustment for removing gateway fee');
+                ->ledger()
+                ->updateInvoiceBalance($adjustment * -1, 'Adjustment for removing gateway fee');
 
             $this->invoice->client->service()->updateBalance($adjustment * -1);
 
@@ -495,7 +497,7 @@ class InvoiceService
         return $this;
     }
 
-    /*Set partial value and due date to null*/
+    /* Set partial value and due date to null */
     public function clearPartial()
     {
         $this->invoice->partial = null;
@@ -504,7 +506,7 @@ class InvoiceService
         return $this;
     }
 
-    /*Update the partial amount of a invoice*/
+    /* Update the partial amount of a invoice */
     public function updatePartial($amount)
     {
         $this->invoice->partial += $amount;
@@ -512,7 +514,7 @@ class InvoiceService
         return $this;
     }
 
-    /*When a reminder is sent we want to touch the dates they were sent*/
+    /* When a reminder is sent we want to touch the dates they were sent */
     public function touchReminder(string $reminder_template)
     {
         nrlog(now()->format('Y-m-d h:i:s') . " INV #{$this->invoice->number} : Touching Reminder => {$reminder_template}");
@@ -548,10 +550,10 @@ class InvoiceService
 
     public function linkEntities()
     {
-        //set all task.invoice_ids = 0
+        // set all task.invoice_ids = 0
         $this->invoice->tasks()->update(['invoice_id' => null]);
 
-        //set all tasks.invoice_ids = x with the current  line_items
+        // set all tasks.invoice_ids = x with the current  line_items
         $tasks = collect($this->invoice->line_items)->map(function ($item) {
             if (isset($item->task_id)) {
                 $item->task_id = $this->decodePrimaryKey($item->task_id);
@@ -573,7 +575,7 @@ class InvoiceService
     public function unlockDocuments(): self
     {
 
-        //2025-02-20 ** Feature to allow documents to be visible / attachable after payment **
+        // 2025-02-20 ** Feature to allow documents to be visible / attachable after payment **
         if ($this->invoice->status_id == Invoice::STATUS_PAID && $this->invoice->client->getSetting('unlock_invoice_documents_after_payment')) {
             $this->invoice->documents()->update(['is_public' => true]);
         }
@@ -588,24 +590,24 @@ class InvoiceService
 
         $settings = $this->invoice->client->getMergedSettings();
 
-        if (! $this->invoice->design_id) {
+        if (!$this->invoice->design_id) {
             $this->invoice->design_id = intval($this->decodePrimaryKey($settings->invoice_design_id));
         }
 
-        if (! isset($this->invoice->footer) || empty($this->invoice->footer)) {
+        if (!isset($this->invoice->footer) || empty($this->invoice->footer)) {
             $this->invoice->footer = $settings->invoice_footer;
         }
 
-        if (! isset($this->invoice->terms) || empty($this->invoice->terms)) {
+        if (!isset($this->invoice->terms) || empty($this->invoice->terms)) {
             $this->invoice->terms = $settings->invoice_terms;
         }
 
-        if (! isset($this->invoice->public_notes) || empty($this->invoice->public_notes)) {
+        if (!isset($this->invoice->public_notes) || empty($this->invoice->public_notes)) {
             $this->invoice->public_notes = $this->invoice->client->public_notes;
         }
 
-        /* If client currency differs from the company default currency, then insert the client exchange rate on the model.*/
-        if (! isset($this->invoice->exchange_rate) && $this->invoice->client->currency()->id != (int) $this->invoice->company->settings->currency_id) {
+        /* If client currency differs from the company default currency, then insert the client exchange rate on the model. */
+        if (!isset($this->invoice->exchange_rate) && $this->invoice->client->currency()->id != (int) $this->invoice->company->settings->currency_id) {
             $this->invoice->exchange_rate = $this->invoice->client->setExchangeRate();
         }
 
@@ -676,21 +678,19 @@ class InvoiceService
 
     }
 
-    public function getDocuNinjaSignable(?\App\Models\InvoiceInvitation $invite = null)
+    public function getDocuNinjaSignable(?InvoiceInvitation $invite = null)
     {
 
-        if (class_exists(\InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
-        {
+        if (class_exists(DocuNinja::class)) {
             $invite = $invite ?: $this->invoice->invitations->first();
-            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($invite);
+
+            return (new DocuNinja)->signable->get($invite);
         }
-        
+
     }
 
     /**
      * sendVerifactu
-     *
-     * @return self
      */
     public function sendVerifactu(): self
     {
@@ -701,8 +701,6 @@ class InvoiceService
 
     /**
      * cancelVerifactu
-     *
-     * @return self
      */
     public function cancelVerifactu(): self
     {
@@ -713,10 +711,6 @@ class InvoiceService
 
     /**
      * Handles all requirements for verifactu saves
-     *
-     * @param  array $invoice_array
-     * @param  bool $new_model
-     * @return self
      */
     public function modifyVerifactuWorkflow(array $invoice_array, bool $new_model): self
     {
@@ -726,13 +720,11 @@ class InvoiceService
          * in some cases we DO NOT send into AEAT, these are:
          *
          * - Sales to foreign consumers
-         *
          */
         /** New Invoice - F1 Type */
-
         if ($new_model && $this->invoice->amount >= 0) {
             $this->invoice->backup->document_type = 'F1';
-            $this->invoice->backup->adjustable_amount = (new \App\Services\EDocument\Standards\Verifactu($this->invoice))->run()->registro_alta->calc->getTotal();
+            $this->invoice->backup->adjustable_amount = (new Verifactu($this->invoice))->run()->registro_alta->calc->getTotal();
             $this->invoice->backup->parent_invoice_number = $this->invoice->number ?? '&';
             $this->invoice->saveQuietly();
         } elseif ($this->invoice->backup->parent_invoice_number == '&') { // ensure we ALWAYS have a parent invoice number - handles cases where the invoice number is only set when SENT not when SAVED.
@@ -748,7 +740,7 @@ class InvoiceService
                 throw new \Exception('Modified invoice not found');
             }
 
-            if (\App\Utils\BcMath::lessThan(abs($this->invoice->amount), $modified_invoice->amount)) {
+            if (BcMath::lessThan(abs($this->invoice->amount), $modified_invoice->amount)) {
                 $document_type = 'R1'; // <- If The adjustment amount is less than the original invoice amount, we are doing a partial rectification
             }
 
@@ -761,12 +753,12 @@ class InvoiceService
             $modified_invoice->save();
 
             $this->markSent();
-            //Update the client balance by the delta amount from the previous invoice to this one.
+            // Update the client balance by the delta amount from the previous invoice to this one.
             $this->invoice->backup->parent_invoice_id = $modified_invoice->hashed_id;
             $this->invoice->backup->document_type = $document_type;
             // $this->invoice->backup->adjustable_amount = $this->invoice->amount; // <- Amount available to be adjusted
 
-            $this->invoice->backup->adjustable_amount = (new \App\Services\EDocument\Standards\Verifactu($this->invoice))->run()->registro_alta->calc->getTotal();
+            $this->invoice->backup->adjustable_amount = (new Verifactu($this->invoice))->run()->registro_alta->calc->getTotal();
             $this->invoice->backup->parent_invoice_number = $modified_invoice->number;
             $this->invoice->saveQuietly();
 
@@ -774,12 +766,12 @@ class InvoiceService
             $this->sendVerifactu();
 
             $child_invoice_amounts = Invoice::withTrashed()
-                                        ->whereIn('id', $this->transformKeys($modified_invoice->backup->child_invoice_ids->toArray()))
-                                        ->get()
-                                        ->sum('backup.adjustable_amount');
+                ->whereIn('id', $this->transformKeys($modified_invoice->backup->child_invoice_ids->toArray()))
+                ->get()
+                ->sum('backup.adjustable_amount');
 
-            //@todo verifactu - this won't be accurate as the invoice->amount will be the ex IPRF amount. modified->amount may not have the correct totals due to IRPF.
-            if (\App\Utils\BcMath::greaterThan(abs($child_invoice_amounts), $modified_invoice->amount)) {
+            // @todo verifactu - this won't be accurate as the invoice->amount will be the ex IPRF amount. modified->amount may not have the correct totals due to IRPF.
+            if (BcMath::greaterThan(abs($child_invoice_amounts), $modified_invoice->amount)) {
                 $modified_invoice->status_id = Invoice::STATUS_CANCELLED;
                 $modified_invoice->saveQuietly();
             }
@@ -790,6 +782,7 @@ class InvoiceService
 
     /**
      * Saves the invoice.
+     *
      * @return Invoice object
      */
     public function save(): ?Invoice

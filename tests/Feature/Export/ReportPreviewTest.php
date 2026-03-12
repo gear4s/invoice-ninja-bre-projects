@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,27 +18,33 @@ use App\Export\CSV\CreditExport;
 use App\Export\CSV\DocumentExport;
 use App\Export\CSV\ExpenseExport;
 use App\Export\CSV\InvoiceExport;
+use App\Export\CSV\InvoiceItemExport;
 use App\Export\CSV\PaymentExport;
 use App\Export\CSV\ProductExport;
 use App\Export\CSV\PurchaseOrderExport;
+use App\Export\CSV\PurchaseOrderItemExport;
 use App\Export\CSV\QuoteExport;
+use App\Export\CSV\QuoteItemExport;
 use App\Jobs\Report\PreviewReport;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\Quote;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Cache;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class ReportPreviewTest extends TestCase
 {
     use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -53,10 +58,9 @@ class ReportPreviewTest extends TestCase
 
     }
 
-
-    public function testProductJsonExport()
+    public function test_product_json_export()
     {
-        \App\Models\Product::factory()->count(5)->create([
+        Product::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
         ]);
@@ -73,7 +77,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/products?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, ProductExport::class, '123'))->handle();
 
@@ -85,10 +89,9 @@ class ReportPreviewTest extends TestCase
 
     }
 
-
-    public function testPaymentJsonExport()
+    public function test_payment_json_export()
     {
-        \App\Models\Payment::factory()->count(5)->create([
+        Payment::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
@@ -106,7 +109,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/payments?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, PaymentExport::class, '123'))->handle();
 
@@ -118,10 +121,9 @@ class ReportPreviewTest extends TestCase
 
     }
 
-
-    public function testPurchaseOrderItemJsonExport()
+    public function test_purchase_order_item_json_export()
     {
-        \App\Models\PurchaseOrder::factory()->count(5)->create([
+        PurchaseOrder::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'vendor_id' => $this->vendor->id,
@@ -139,9 +141,9 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/purchase_order_items?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
-        $p = (new PreviewReport($this->company, $data, \App\Export\CSV\PurchaseOrderItemExport::class, '123'))->handle();
+        $p = (new PreviewReport($this->company, $data, PurchaseOrderItemExport::class, '123'))->handle();
 
         $this->assertNull($p);
 
@@ -149,13 +151,13 @@ class ReportPreviewTest extends TestCase
 
         $this->assertNotNull($r);
 
-        //nlog($r);
+        // nlog($r);
 
     }
 
-    public function testQuoteItemJsonExport()
+    public function test_quote_item_json_export()
     {
-        \App\Models\Quote::factory()->count(5)->create([
+        Quote::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
@@ -173,9 +175,9 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/quote_items?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
-        $p = (new PreviewReport($this->company, $data, \App\Export\CSV\QuoteItemExport::class, '123'))->handle();
+        $p = (new PreviewReport($this->company, $data, QuoteItemExport::class, '123'))->handle();
 
         $this->assertNull($p);
 
@@ -183,14 +185,13 @@ class ReportPreviewTest extends TestCase
 
         $this->assertNotNull($r);
 
-        //nlog($r);
+        // nlog($r);
 
     }
 
-
-    public function testInvoiceItemJsonExport()
+    public function test_invoice_item_json_export()
     {
-        \App\Models\Invoice::factory()->count(5)->create([
+        Invoice::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
@@ -208,9 +209,9 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/invoice_items?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
-        $p = (new PreviewReport($this->company, $data, \App\Export\CSV\InvoiceItemExport::class, '123'))->handle();
+        $p = (new PreviewReport($this->company, $data, InvoiceItemExport::class, '123'))->handle();
 
         $this->assertNull($p);
 
@@ -218,15 +219,13 @@ class ReportPreviewTest extends TestCase
 
         $this->assertNotNull($r);
 
-        //nlog($r);
+        // nlog($r);
 
     }
 
-
-
-    public function testPurchaseOrderJsonExport()
+    public function test_purchase_order_json_export()
     {
-        \App\Models\PurchaseOrder::factory()->count(5)->create([
+        PurchaseOrder::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'vendor_id' => $this->vendor->id,
@@ -244,7 +243,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/purchase_orders?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, PurchaseOrderExport::class, '123'))->handle();
 
@@ -256,9 +255,9 @@ class ReportPreviewTest extends TestCase
 
     }
 
-    public function testQuoteJsonExport()
+    public function test_quote_json_export()
     {
-        \App\Models\Quote::factory()->count(5)->create([
+        Quote::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
@@ -276,7 +275,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/quotes?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, QuoteExport::class, '123'))->handle();
 
@@ -288,9 +287,9 @@ class ReportPreviewTest extends TestCase
 
     }
 
-    public function testInvoiceJsonExport()
+    public function test_invoice_json_export()
     {
-        \App\Models\Invoice::factory()->count(5)->create([
+        Invoice::factory()->count(5)->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
@@ -308,7 +307,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/invoices?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, InvoiceExport::class, '123'))->handle();
 
@@ -320,7 +319,7 @@ class ReportPreviewTest extends TestCase
 
     }
 
-    public function testExpenseJsonExport()
+    public function test_expense_json_export()
     {
         Expense::factory()->count(5)->create([
             'company_id' => $this->company->id,
@@ -339,7 +338,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/expenses?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, ExpenseExport::class, '123'))->handle();
 
@@ -348,10 +347,10 @@ class ReportPreviewTest extends TestCase
         $r = Cache::pull('123');
 
         $this->assertNotNull($r);
-        //nlog($r);
+        // nlog($r);
     }
 
-    public function testDocumentJsonExport()
+    public function test_document_json_export()
     {
         Document::factory()->count(5)->create([
             'company_id' => $this->company->id,
@@ -372,7 +371,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/documents?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, DocumentExport::class, '123'))->handle();
 
@@ -381,10 +380,10 @@ class ReportPreviewTest extends TestCase
         $r = Cache::pull('123');
 
         $this->assertNotNull($r);
-        //nlog($r);
+        // nlog($r);
     }
 
-    public function testClientExportJson()
+    public function test_client_export_json()
     {
         $data = [
             'send_email' => false,
@@ -392,22 +391,21 @@ class ReportPreviewTest extends TestCase
             'report_keys' => [],
             'include_deleted' => false,
             'user_id' => $this->user->id,
-                ];
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/clients?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $data = [
             'send_email' => false,
             'date_range' => 'all',
-            'report_keys' => ['client.name','client.balance'],
+            'report_keys' => ['client.name', 'client.balance'],
             'include_deleted' => false,
             'user_id' => $this->user->id,
         ];
-
 
         $p = (new PreviewReport($this->company, $data, ClientExport::class, 'client_export1'))->handle();
 
@@ -417,10 +415,9 @@ class ReportPreviewTest extends TestCase
 
         $this->assertNotNull($r);
 
-
     }
 
-    public function testClientContactExportJsonLimitedKeys()
+    public function test_client_contact_export_json_limited_keys()
     {
 
         $data = [
@@ -435,12 +432,12 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/client_contacts?output=json', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $data = [
             'send_email' => false,
             'date_range' => 'all',
-            'report_keys' => ['client.name','client.balance','contact.email'],
+            'report_keys' => ['client.name', 'client.balance', 'contact.email'],
             'include_deleted' => false,
             'user_id' => $this->user->id,
         ];
@@ -455,7 +452,7 @@ class ReportPreviewTest extends TestCase
 
     }
 
-    public function testActivityCSVExportJson()
+    public function test_activity_csv_export_json()
     {
         $data = [
             'send_email' => false,
@@ -469,8 +466,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/activities?output=json', $data)
-        ->assertStatus(200);
-
+            ->assertStatus(200);
 
         $p = (new PreviewReport($this->company, $data, ActivityExport::class, '123'))->handle();
 
@@ -480,10 +476,9 @@ class ReportPreviewTest extends TestCase
 
         $this->assertNotNull($r);
 
-
     }
 
-    public function testCreditExportPreview()
+    public function test_credit_export_preview()
     {
 
         $data = [
@@ -504,7 +499,7 @@ class ReportPreviewTest extends TestCase
 
     }
 
-    public function testCreditPreview()
+    public function test_credit_preview()
     {
         $data = [
             'send_email' => false,
@@ -518,8 +513,7 @@ class ReportPreviewTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/reports/credits?output=json', $data)
-        ->assertStatus(200);
-
+            ->assertStatus(200);
 
     }
 }

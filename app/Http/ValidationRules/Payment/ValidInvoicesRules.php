@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,8 @@ class ValidInvoicesRules implements Rule
     use MakesHash;
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     private $error_msg;
@@ -44,7 +43,7 @@ class ValidInvoicesRules implements Rule
 
     private function checkInvoicesAreHomogenous()
     {
-        if (! array_key_exists('client_id', $this->input)) {
+        if (!array_key_exists('client_id', $this->input)) {
             $this->error_msg = ctrans('texts.client_id_required');
 
             return false;
@@ -52,23 +51,23 @@ class ValidInvoicesRules implements Rule
 
         $unique_array = [];
 
-        /////
+        // ///
         $inv_collection = Invoice::withTrashed()->whereIn('id', array_column($this->input['invoices'], 'invoice_id'))->get();
 
-        //todo optimize this into a single query
+        // todo optimize this into a single query
         foreach ($this->input['invoices'] as $invoice) {
             $unique_array[] = $invoice['invoice_id'];
 
-            if (! array_key_exists('amount', $invoice)) {
+            if (!array_key_exists('amount', $invoice)) {
                 $this->error_msg = ctrans('texts.amount') . ' required';
 
                 return false;
             }
 
-            /////
+            // ///
             $inv = $inv_collection->firstWhere('id', $invoice['invoice_id']);
 
-            if (! $inv) {
+            if (!$inv) {
                 $this->error_msg = ctrans('texts.invoice_not_found');
 
                 return false;
@@ -81,26 +80,31 @@ class ValidInvoicesRules implements Rule
             }
 
             if ($inv->status_id == Invoice::STATUS_DRAFT && $invoice['amount'] <= $inv->amount) {
-                //catch here nothing to do - we need this to prevent the last elseif triggering
+                // catch here nothing to do - we need this to prevent the last elseif triggering
             } elseif ($invoice['amount'] <= 0 && $inv->amount > 0) {
                 $this->error_msg = 'Amount cannot be less than or equal to zero';
+
                 return false;
             } elseif ($inv->status_id == Invoice::STATUS_DRAFT && floatval($invoice['amount']) > floatval($inv->amount)) {
                 $this->error_msg = 'Amount cannot be greater than invoice balance';
+
                 return false;
             } elseif ($invoice['amount'] < 0 && $inv->amount >= 0) {
                 $this->error_msg = 'Amount cannot be negative';
+
                 return false;
             } elseif (floatval($invoice['amount']) > floatval($inv->balance)) {
                 $this->error_msg = ctrans('texts.amount_greater_than_balance_v5');
+
                 return false;
             } elseif ($inv->is_deleted) {
                 $this->error_msg = 'One or more invoices in this request have since been deleted';
+
                 return false;
             }
         }
 
-        if (! (array_unique($unique_array) == $unique_array)) {
+        if (!(array_unique($unique_array) == $unique_array)) {
             $this->error_msg = ctrans('texts.duplicate_invoices_submitted');
 
             return false;

@@ -6,15 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Models;
 
 use App\Factory\TaxRateFactory;
-use App\Models\TaxRate;
 use App\Interfaces\SyncInterface;
+use App\Models\TaxRate;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\TaxRateTransformer;
 
@@ -24,7 +23,7 @@ class QbTaxRate implements SyncInterface
 
     public function __construct(public QuickbooksService $service)
     {
-        $this->tax_rate_transformer = new TaxRateTransformer();
+        $this->tax_rate_transformer = new TaxRateTransformer;
     }
 
     public function find(string $id): mixed
@@ -42,7 +41,7 @@ class QbTaxRate implements SyncInterface
             ->keyBy('id')
             ->merge(
                 collect($records)
-                    ->map(fn($record) => $this->tax_rate_transformer->transform($record))
+                    ->map(fn ($record) => $this->tax_rate_transformer->transform($record))
                     ->keyBy('id')
             )
             ->values()

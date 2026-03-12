@@ -11,7 +11,9 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class DesgloseRectificacion extends BaseXmlModel
 {
     protected float $baseRectificada;
+
     protected float $cuotaRectificada;
+
     protected ?float $cuotaRecargoRectificado = null;
 
     public function __construct(float $baseRectificada, float $cuotaRectificada, ?float $cuotaRecargoRectificado = null)
@@ -29,6 +31,7 @@ class DesgloseRectificacion extends BaseXmlModel
     public function setBaseRectificada(float $baseRectificada): self
     {
         $this->baseRectificada = $baseRectificada;
+
         return $this;
     }
 
@@ -40,6 +43,7 @@ class DesgloseRectificacion extends BaseXmlModel
     public function setCuotaRectificada(float $cuotaRectificada): self
     {
         $this->cuotaRectificada = $cuotaRectificada;
+
         return $this;
     }
 
@@ -51,6 +55,7 @@ class DesgloseRectificacion extends BaseXmlModel
     public function setCuotaRecargoRectificado(?float $cuotaRecargoRectificado): self
     {
         $this->cuotaRecargoRectificado = $cuotaRecargoRectificado;
+
         return $this;
     }
 
@@ -88,6 +93,7 @@ class DesgloseRectificacion extends BaseXmlModel
     protected static function getElementText(\DOMElement $element, string $tagName): ?string
     {
         $node = $element->getElementsByTagNameNS(self::XML_NAMESPACE, $tagName)->item(0);
+
         return $node ? $node->nodeValue : null;
     }
 }

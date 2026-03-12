@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,43 +13,42 @@ namespace App\PaymentDrivers\CBAPowerBoard\Models;
 
 class PaymentSource
 {
-    /** @var ?string */
     public ?string $_id;
-    /** @var string */
+
     public string $type;
-    /** @var string */
+
     public string $vault_token;
-    /** @var string */
+
     public string $card_name;
-    /** @var string */
+
     public string $card_number_bin;
-    /** @var string */
+
     public string $card_number_last4;
-    /** @var string */
+
     public string $card_scheme;
-    /** @var string|null */
+
     public ?string $address_line1;
-    /** @var string|null */
+
     public ?string $address_line2;
-    /** @var string|null */
+
     public ?string $address_city;
-    /** @var string|null */
+
     public ?string $address_country;
-    /** @var string|null */
+
     public ?string $address_state;
-    /** @var int */
+
     public int $expire_month;
-    /** @var int */
+
     public int $expire_year;
-    /** @var ?string */
+
     public ?string $status;
-    /** @var ?string */
+
     public ?string $created_at;
-    /** @var ?string */
+
     public ?string $updated_at;
-    /** @var ?string */
+
     public ?string $vault_type;
-    /** @var ?string */
+
     public ?string $gateway_id;
 
     public function __construct(

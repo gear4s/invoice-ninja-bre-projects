@@ -6,14 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
 use App\Libraries\MultiDB;
-use App\Models\Company;
 use App\Models\Payment;
 use App\Utils\Traits\WithSorting;
 use Livewire\Component;
@@ -21,8 +19,8 @@ use Livewire\WithPagination;
 
 class PaymentsTable extends Component
 {
-    use WithSorting;
     use WithPagination;
+    use WithSorting;
 
     public int $per_page = 10;
 

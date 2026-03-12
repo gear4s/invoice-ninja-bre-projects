@@ -6,33 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Credit;
 
 use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
-use App\Utils\Traits\CleanLineItems;
-use App\Utils\Traits\ChecksEntityStatus;
 use App\Http\ValidationRules\EInvoice\ValidCreditScheme;
+use App\Models\User;
+use App\Utils\Traits\ChecksEntityStatus;
+use App\Utils\Traits\CleanLineItems;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 
 class UpdateCreditRequest extends Request
 {
-    use MakesHash;
-    use CleanLineItems;
     use ChecksEntityStatus;
+    use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->credit);
@@ -45,7 +44,7 @@ class UpdateCreditRequest extends Request
      */
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -55,7 +54,7 @@ class UpdateCreditRequest extends Request
 
         $rules['number'] = ['bail', 'sometimes', 'nullable', Rule::unique('credits')->where('company_id', $user->company()->id)->ignore($this->credit->id)];
 
-        $rules['client_id'] = ['bail', 'sometimes',Rule::in([$this->credit->client_id])];
+        $rules['client_id'] = ['bail', 'sometimes', Rule::in([$this->credit->client_id])];
 
         $rules['invitations'] = 'sometimes|bail|array';
         $rules['invitations.*.client_contact_id'] = 'bail|required|distinct';
@@ -80,9 +79,9 @@ class UpdateCreditRequest extends Request
         $rules['custom_surcharge3'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['custom_surcharge4'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->credit->client_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->credit->client_id)];
 
-        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidCreditScheme()];
+        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidCreditScheme];
 
         return $rules;
     }
@@ -100,7 +99,7 @@ class UpdateCreditRequest extends Request
             unset($input['documents']);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -120,16 +119,16 @@ class UpdateCreditRequest extends Request
         $input['id'] = $this->credit->id;
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
 
         $this->replace($input);

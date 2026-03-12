@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,14 +21,15 @@ use App\Models\Quote;
 use App\Models\QuoteInvitation;
 use App\Models\RecurringInvoice;
 use App\Models\RecurringInvoiceInvitation;
+use App\Models\User;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Validation\Rule;
 
 class PreviewInvoiceRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     private string $entity_plural = '';
 
@@ -37,26 +37,24 @@ class PreviewInvoiceRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        return $user->hasIntersectPermissionsOrAdmin(['view_invoice', 'view_quote', 'view_recurring_invoice', 'view_credit', 'create_invoice', 'create_quote', 'create_recurring_invoice', 'create_credit','edit_invoice', 'edit_quote', 'edit_recurring_invoice', 'edit_credit']);
+        return $user->hasIntersectPermissionsOrAdmin(['view_invoice', 'view_quote', 'view_recurring_invoice', 'view_credit', 'create_invoice', 'create_quote', 'create_recurring_invoice', 'create_credit', 'edit_invoice', 'edit_quote', 'edit_recurring_invoice', 'edit_credit']);
     }
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return [
             'number' => 'nullable',
             'entity' => 'bail|sometimes|in:invoice,quote,credit,recurring_invoice',
-            'entity_id' => ['bail','sometimes','integer',Rule::exists($this->entity_plural, 'id')->where('is_deleted', 0)->where('company_id', $user->company()->id)],
+            'entity_id' => ['bail', 'sometimes', 'integer', Rule::exists($this->entity_plural, 'id')->where('is_deleted', 0)->where('company_id', $user->company()->id)],
             'client_id' => ['required', Rule::exists(Client::class, 'id')->where('is_deleted', 0)->where('company_id', $user->company()->id)],
         ];
 
@@ -65,7 +63,7 @@ class PreviewInvoiceRequest extends Request
     public function prepareForValidation()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
@@ -91,7 +89,7 @@ class PreviewInvoiceRequest extends Request
         $invitation = false;
 
         /** @phpstan-ignore-next-line */
-        if (! $this->entity_id ?? false) {
+        if (!$this->entity_id ?? false) {
             return $this->stubInvitation();
         }
 
@@ -170,11 +168,11 @@ class PreviewInvoiceRequest extends Request
         $entity = false;
 
         match ($this->entity) {
-            'invoice' => $entity = Invoice::factory()->make(['client_id' => $client->id,'user_id' => $client->user_id, 'company_id' => $client->company_id]),
-            'quote' => $entity = Quote::factory()->make(['client_id' => $client->id,'user_id' => $client->user_id, 'company_id' => $client->company_id]),
-            'credit' => $entity = Credit::factory()->make(['client_id' => $client->id,'user_id' => $client->user_id, 'company_id' => $client->company_id]),
-            'recurring_invoice' => $entity = RecurringInvoice::factory()->make(['client_id' => $client->id,'user_id' => $client->user_id, 'company_id' => $client->company_id]),
-            default => $entity = Invoice::factory()->make(['client_id' => $client->id,'user_id' => $client->user_id, 'company_id' => $client->company_id]),
+            'invoice' => $entity = Invoice::factory()->make(['client_id' => $client->id, 'user_id' => $client->user_id, 'company_id' => $client->company_id]),
+            'quote' => $entity = Quote::factory()->make(['client_id' => $client->id, 'user_id' => $client->user_id, 'company_id' => $client->company_id]),
+            'credit' => $entity = Credit::factory()->make(['client_id' => $client->id, 'user_id' => $client->user_id, 'company_id' => $client->company_id]),
+            'recurring_invoice' => $entity = RecurringInvoice::factory()->make(['client_id' => $client->id, 'user_id' => $client->user_id, 'company_id' => $client->company_id]),
+            default => $entity = Invoice::factory()->make(['client_id' => $client->id, 'user_id' => $client->user_id, 'company_id' => $client->company_id]),
         };
 
         $entity->setRelation('client', $client);
@@ -190,20 +188,24 @@ class PreviewInvoiceRequest extends Request
         switch ($entity) {
             case 'invoice':
                 $this->entity_plural = 'invoices';
+
                 return $this;
             case 'quote':
                 $this->entity_plural = 'quotes';
+
                 return $this;
             case 'credit':
                 $this->entity_plural = 'credits';
+
                 return $this;
             case 'recurring_invoice':
                 $this->entity_plural = 'recurring_invoices';
+
                 return $this;
             default:
                 $this->entity_plural = 'invoices';
+
                 return $this;
         }
     }
-
 }

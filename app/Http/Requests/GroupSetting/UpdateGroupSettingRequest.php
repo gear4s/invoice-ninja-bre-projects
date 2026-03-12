@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,17 +15,16 @@ use App\DataMapper\CompanySettings;
 use App\DataMapper\Settings\SettingsData;
 use App\Http\Requests\Request;
 use App\Http\ValidationRules\ValidClientGroupSettingsRule;
+use App\Models\User;
 
 class UpdateGroupSettingRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->group_setting);
@@ -36,11 +34,10 @@ class UpdateGroupSettingRequest extends Request
     {
 
         return [
-            'settings' => [new ValidClientGroupSettingsRule()],
+            'settings' => [new ValidClientGroupSettingsRule],
         ];
 
     }
-
 
     public function withValidator($validator)
     {
@@ -55,7 +52,6 @@ class UpdateGroupSettingRequest extends Request
 
         });
     }
-
 
     public function prepareForValidation()
     {
@@ -75,29 +71,28 @@ class UpdateGroupSettingRequest extends Request
      * down to the free plan setting properties which
      * are saveable
      *
-     * @param  object $settings
+     * @param  object  $settings
      * @return array $settings
      */
     private function filterSaveableSettings($settings)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        $settings_data = new SettingsData();
+        $settings_data = new SettingsData;
         $settings = $settings_data->cast($settings)->toObject();
-
 
         // Do not allow a user to force pdf variables on the client settings.
         unset($settings->pdf_variables);
 
-        if (! $user->account->isFreeHostedClient()) {
+        if (!$user->account->isFreeHostedClient()) {
             return (array) $settings;
         }
 
         $saveable_casts = CompanySettings::$free_plan_casts;
 
         foreach ($settings as $key => $value) {
-            if (! array_key_exists($key, $saveable_casts)) {
+            if (!array_key_exists($key, $saveable_casts)) {
                 unset($settings->{$key});
             }
         }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,10 +21,10 @@ use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
+use Stripe\PaymentIntent;
 
 class SEPA implements LivewireMethodInterface
 {
-    /** @var StripePaymentDriver */
     public StripePaymentDriver $stripe;
 
     public function __construct(StripePaymentDriver $stripe)
@@ -124,7 +123,7 @@ class SEPA implements LivewireMethodInterface
         try {
             $method = $this->stripe->getStripePaymentMethod($intent->payment_method);
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) \sprintf('%s (%s)', $method->sepa_debit->bank_code, ctrans('texts.sepa'));
             $payment_meta->last4 = (string) $method->sepa_debit->last4;
             $payment_meta->state = 'authorized';
@@ -163,7 +162,6 @@ class SEPA implements LivewireMethodInterface
         $data['country'] = $this->stripe->client->country->iso_3166_2;
         $data['payment_hash'] = $this->stripe->payment_hash->hash;
 
-
         /** if the iban and client country don't match (OR UK IBAN) - need to inject billing details also */
         // $data['billing_details'] = [
         //     'name' => $this->stripe->client->present()->name(),
@@ -178,7 +176,6 @@ class SEPA implements LivewireMethodInterface
         //     ]
         // ];
 
-
         $intent_data = [
             'amount' => $data['stripe_amount'],
             'currency' => 'eur',
@@ -192,7 +189,7 @@ class SEPA implements LivewireMethodInterface
             ],
         ];
 
-        $intent = \Stripe\PaymentIntent::create($intent_data, array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid("st", true)]));
+        $intent = PaymentIntent::create($intent_data, array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid('st', true)]));
 
         $data['pi_client_secret'] = $intent->client_secret;
 

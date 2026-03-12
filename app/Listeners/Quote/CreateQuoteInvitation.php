@@ -6,7 +6,6 @@
  * @link https://github.com/creditninja/creditninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://creditninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -40,17 +39,17 @@ class CreateQuoteInvitation implements ShouldQueue
 
         $contacts->each(function ($contact) use ($quote) {
             $invitation = QuoteInvitation::whereCompanyId($quote->company_id)
-                                        ->whereClientContactId($contact->id)
-                                        ->whereQuoteId($quote->id)
-                                        ->first();
+                ->whereClientContactId($contact->id)
+                ->whereQuoteId($quote->id)
+                ->first();
 
-            if (! $invitation && $contact->send_credit) {
+            if (!$invitation && $contact->send_credit) {
                 $ii = QuoteInvitationFactory::create($quote->company_id, $quote->user_id);
                 $ii->key = $this->createDbHash($quote->company->db);
                 $ii->quote_id = $quote->id;
                 $ii->client_contact_id = $contact->id;
                 $ii->save();
-            } elseif ($invitation && ! $contact->send_credit) {
+            } elseif ($invitation && !$contact->send_credit) {
                 $invitation->delete();
             }
         });

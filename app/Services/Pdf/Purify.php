@@ -40,7 +40,6 @@ class Purify
         'polygon', 'g', 'text', 'tspan', 'defs', 'use', 'title',
     ];
 
-
     private static array $allowed_attributes = [
         // Global Attributes
         'class' => ['*'],
@@ -55,7 +54,7 @@ class Purify
         'data-element' => ['*'],
         'data-state' => ['*'],
 
-        //SVG
+        // SVG
         'd' => ['*'],
         'viewBox' => ['*'],
         'xmlns' => ['http://www.w3.org/2000/svg'],
@@ -250,7 +249,7 @@ class Purify
 
     public static function clean(string $html): string
     {
-        
+
         if (config('ninja.disable_purify_html') || strlen($html) <= 1) {
             return str_replace('%24', '$', $html);
         }
@@ -258,7 +257,7 @@ class Purify
         $html = str_replace('%24', '$', $html);
         libxml_use_internal_errors(true);
 
-        $document = new \DOMDocument();
+        $document = new \DOMDocument;
         $html = '<?xml encoding="UTF-8">' . $html;
         @$document->loadHTML(htmlspecialchars_decode(htmlspecialchars($html, ENT_QUOTES, 'UTF-8')), LIBXML_NONET);
 
@@ -292,12 +291,14 @@ class Purify
                     if ($node->parentNode) {
                         $node->parentNode->removeChild($node);
                     }
+
                     return;
                 }
 
                 // Sanitize <style> block content to protect whitelabel logo
                 if (strtolower($node->tagName) === 'style') {
                     $node->textContent = self::sanitizeStyleBlockContent($node->textContent);
+
                     return;
                 }
 
@@ -326,7 +327,6 @@ class Purify
                     //     $node->removeAttribute($attr->nodeName);
                     // }
 
-
                     if ($node instanceof \DOMElement) {
                         // Create a list of attributes to remove
                         $attributes_to_remove = [];
@@ -352,18 +352,21 @@ class Purify
                         if (!empty($filtered_css)) {
                             $node->setAttribute($name, $filtered_css);
                         }
+
                         continue;
                     }
 
                     // Handle data-* attributes
                     if (strpos($attr_name, 'data-') === 0 && isset($allowed_attributes['data-*'])) {
                         $node->setAttribute($name, $value);
+
                         continue;
                     }
 
                     // Handle aria-* attributes
                     if (strpos($attr_name, 'aria-') === 0 && isset($allowed_attributes['aria-*'])) {
                         $node->setAttribute($name, $value);
+
                         continue;
                     }
 
@@ -407,12 +410,14 @@ class Purify
                             $node->setAttribute($name, $value);
                         } else {
                         }
+
                         continue;
                     }
 
                     // For attributes that allow all values
                     if ($allowed_values === ['*']) {
                         $node->setAttribute($name, $value);
+
                         continue;
                     }
 
@@ -445,5 +450,4 @@ class Purify
         }
 
     }
-
 }

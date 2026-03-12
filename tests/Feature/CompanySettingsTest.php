@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,18 +22,17 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Utils\Traits\CompanySettingsSaver
  */
 class CompanySettingsTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     // use RefreshDatabase;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -46,7 +44,7 @@ class CompanySettingsTest extends TestCase
         Model::reguard();
     }
 
-    public function testClientNumberCantBeModified()
+    public function test_client_number_cant_be_modified()
     {
         $settings = $this->company->settings;
 
@@ -60,7 +58,7 @@ class CompanySettingsTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-Token' => $this->token,
-            ])->putJson('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $this->company->toArray());
+            ])->putJson('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $this->company->toArray());
         } catch (ValidationException $e) {
             $message = json_decode($e->validator->getMessageBag(), 1);
         }
@@ -74,7 +72,7 @@ class CompanySettingsTest extends TestCase
         }
     }
 
-    public function testNullValuesInSettings()
+    public function test_null_values_in_settings()
     {
         $settings = $this->company->settings;
 
@@ -86,9 +84,9 @@ class CompanySettingsTest extends TestCase
 
         try {
             $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-Token' => $this->token,
-                ])->putJson('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $this->company->toArray());
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-Token' => $this->token,
+            ])->putJson('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $this->company->toArray());
         } catch (ValidationException $e) {
             $message = json_decode($e->validator->getMessageBag(), 1);
             nlog($message);
@@ -101,7 +99,7 @@ class CompanySettingsTest extends TestCase
         $this->assertEquals($arr['data']['settings']['reset_counter_date'], '');
     }
 
-    public function testIntegerEdgeCases()
+    public function test_integer_edge_cases()
     {
         $settings = $this->company->settings;
 
@@ -113,9 +111,9 @@ class CompanySettingsTest extends TestCase
         $this->company->saveSettings($settings, $this->company);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-Token' => $this->token,
-            ])->putJson('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $this->company->toArray());
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-Token' => $this->token,
+        ])->putJson('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $this->company->toArray());
 
         $response->assertStatus(200);
 
@@ -127,7 +125,7 @@ class CompanySettingsTest extends TestCase
         $this->assertTrue(is_int($arr['data']['settings']['credit_number_counter']));
     }
 
-    public function testFloatEdgeCases()
+    public function test_float_edge_cases()
     {
         $settings = $this->company->settings;
 
@@ -139,9 +137,9 @@ class CompanySettingsTest extends TestCase
         $this->company->saveSettings($settings, $this->company);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-Token' => $this->token,
-            ])->putJson('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $this->company->toArray());
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-Token' => $this->token,
+        ])->putJson('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $this->company->toArray());
 
         $response->assertStatus(200);
 
@@ -153,7 +151,7 @@ class CompanySettingsTest extends TestCase
         $this->assertEquals($arr['data']['settings']['tax_rate3'], 10.5);
     }
 
-    public function testBoolEdgeCases()
+    public function test_bool_edge_cases()
     {
         $settings = $this->company->settings;
 
@@ -166,9 +164,9 @@ class CompanySettingsTest extends TestCase
         $this->company->saveSettings($settings, $this->company);
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-Token' => $this->token,
-            ])->putJson('/api/v1/companies/'.$this->encodePrimaryKey($this->company->id), $this->company->toArray());
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-Token' => $this->token,
+        ])->putJson('/api/v1/companies/' . $this->encodePrimaryKey($this->company->id), $this->company->toArray());
 
         $response->assertStatus(200);
 
@@ -181,7 +179,7 @@ class CompanySettingsTest extends TestCase
         $this->assertFalse($arr['data']['settings']['enable_client_portal_tasks']);
     }
 
-    public function testCompanyNullValueMatrixPOST()
+    public function test_company_null_value_matrix_post()
     {
 
         $settings = CompanySettings::defaults();
@@ -200,7 +198,7 @@ class CompanySettingsTest extends TestCase
         $this->assertEquals($arr['data'][0]['company']['settings']['reset_counter_date'], '');
     }
 
-    public function testCompanyWrongValueMatrixPOST()
+    public function test_company_wrong_value_matrix_post()
     {
         $settings = CompanySettings::defaults();
         $settings->reset_counter_date = 1;
@@ -218,7 +216,7 @@ class CompanySettingsTest extends TestCase
         $this->assertEquals($arr['data'][0]['company']['settings']['reset_counter_date'], '');
     }
 
-    public function testCompanyWrong2ValueMatrixPOST()
+    public function test_company_wrong2_value_matrix_post()
     {
         $settings = CompanySettings::defaults();
         $settings->reset_counter_date = '1';
@@ -236,7 +234,7 @@ class CompanySettingsTest extends TestCase
         $this->assertEquals($arr['data'][0]['company']['settings']['reset_counter_date'], '1');
     }
 
-    public function testCompanyrightValueMatrixPOST()
+    public function test_companyright_value_matrix_post()
     {
         $settings = CompanySettings::defaults();
         $settings->reset_counter_date = '1/1/2000';

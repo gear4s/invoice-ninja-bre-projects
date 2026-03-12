@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,7 +20,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\PreviewController
  */
 class LiveDesignTest extends TestCase
@@ -44,16 +42,16 @@ class LiveDesignTest extends TestCase
         }
     }
 
-    public function testSyntheticInvitations()
+    public function test_synthetic_invitations()
     {
         $this->assertGreaterThanOrEqual(1, $this->client->contacts->count());
 
         $ii = InvoiceInvitation::factory()
-        ->for($this->invoice)
-        ->for($this->client->contacts->first(), 'contact')
-        ->for($this->company)
-        ->for($this->user)
-        ->make();
+            ->for($this->invoice)
+            ->for($this->client->contacts->first(), 'contact')
+            ->for($this->company)
+            ->for($this->user)
+            ->make();
 
         $this->assertInstanceOf(InvoiceInvitation::class, $ii);
 
@@ -67,12 +65,12 @@ class LiveDesignTest extends TestCase
 
     }
 
-    public function testDesignRoute200()
+    public function test_design_route200()
     {
         $data = [
             'entity_type' => 'invoice',
             'settings_type' => 'company',
-            'settings' => (array)$this->company->settings,
+            'settings' => (array) $this->company->settings,
         ];
 
         $response = $this->withHeaders([
@@ -83,17 +81,16 @@ class LiveDesignTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testDesignWithCustomDesign()
+    public function test_design_with_custom_design()
     {
 
         $d = Design::find(1);
 
-
         $data = [
             'entity_type' => 'invoice',
             'settings_type' => 'company',
-            'settings' => (array)$this->company->settings,
-            'design' => (array)$d->design,
+            'settings' => (array) $this->company->settings,
+            'design' => (array) $d->design,
         ];
 
         $response = $this->withHeaders([

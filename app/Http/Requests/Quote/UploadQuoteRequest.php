@@ -6,24 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Quote;
 
 use App\Http\Requests\Request;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 class UploadQuoteRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->quote);
@@ -45,11 +44,11 @@ class UploadQuoteRequest extends Request
     {
         $input = $this->all();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 

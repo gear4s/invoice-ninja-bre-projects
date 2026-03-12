@@ -6,18 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\ValidationRules;
 
-use Tests\TestCase;
 use App\Http\ValidationRules\Account\BlackListRule;
 use App\Http\ValidationRules\Account\EmailBlackListRule;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\ValidationRules\Account\BlackListRule
  */
 class BlacklistValidationTest extends TestCase
@@ -27,10 +25,10 @@ class BlacklistValidationTest extends TestCase
         parent::setUp();
     }
 
-    public function testValidEmailRule3()
+    public function test_valid_email_rule3()
     {
         $rules = [
-            'email' => [new EmailBlackListRule()],
+            'email' => [new EmailBlackListRule],
         ];
 
         $data = [
@@ -41,11 +39,10 @@ class BlacklistValidationTest extends TestCase
         $this->assertTrue($v->passes());
     }
 
-
-    public function testValidEmailRule2()
+    public function test_valid_email_rule2()
     {
         $rules = [
-            'email' => [new EmailBlackListRule()],
+            'email' => [new EmailBlackListRule],
         ];
 
         $data = [
@@ -56,10 +53,10 @@ class BlacklistValidationTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testValidEmailRule()
+    public function test_valid_email_rule()
     {
         $rules = [
-            'email' => [new BlackListRule()],
+            'email' => [new BlackListRule],
         ];
 
         $data = [
@@ -70,10 +67,10 @@ class BlacklistValidationTest extends TestCase
         $this->assertTrue($v->passes());
     }
 
-    public function testInValidEmailRule()
+    public function test_in_valid_email_rule()
     {
         $rules = [
-            'email' => [new BlackListRule()],
+            'email' => [new BlackListRule],
         ];
 
         $data = [
@@ -84,10 +81,10 @@ class BlacklistValidationTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testInValidEmailRule2()
+    public function test_in_valid_email_rule2()
     {
         $rules = [
-            'email' => [new BlackListRule()],
+            'email' => [new BlackListRule],
         ];
 
         $data = [
@@ -98,10 +95,10 @@ class BlacklistValidationTest extends TestCase
         $this->assertFalse($v->passes());
     }
 
-    public function testInValidEmailRule3()
+    public function test_in_valid_email_rule3()
     {
         $rules = [
-            'email' => [new BlackListRule()],
+            'email' => [new BlackListRule],
         ];
 
         $data = [

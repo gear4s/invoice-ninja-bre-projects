@@ -2,14 +2,11 @@
 
 namespace Tests\Feature\EInvoice\Validation;
 
-use Tests\TestCase;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\EInvoice\Peppol\AddTaxIdentifierRequest;
-use App\Models\Company;
-use App\Models\CompanyToken;
-use App\Models\CompanyUser;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Validator;
 use Tests\MockAccountData;
+use Tests\TestCase;
 
 class AddTaxIdentifierRequestTest extends TestCase
 {
@@ -21,8 +18,7 @@ class AddTaxIdentifierRequestTest extends TestCase
     {
         parent::setUp();
 
-        $this->request = new AddTaxIdentifierRequest();
-
+        $this->request = new AddTaxIdentifierRequest;
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -31,7 +27,7 @@ class AddTaxIdentifierRequestTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testValidInput()
+    public function test_valid_input()
     {
         $this->actingAs($this->user);
 
@@ -46,7 +42,7 @@ class AddTaxIdentifierRequestTest extends TestCase
         $this->assertTrue($validator->passes());
     }
 
-    public function testInvalidCountry()
+    public function test_invalid_country()
     {
         $this->actingAs($this->user);
 
@@ -63,7 +59,7 @@ class AddTaxIdentifierRequestTest extends TestCase
         $this->assertArrayHasKey('country', $validator->errors()->toArray());
     }
 
-    public function testInvalidVatNumber()
+    public function test_invalid_vat_number()
     {
         $this->actingAs($this->user);
 
@@ -79,7 +75,7 @@ class AddTaxIdentifierRequestTest extends TestCase
         $this->assertArrayHasKey('vat_number', $validator->errors()->toArray());
     }
 
-    public function testMissingCountry()
+    public function test_missing_country()
     {
         $this->actingAs($this->user);
 
@@ -94,7 +90,7 @@ class AddTaxIdentifierRequestTest extends TestCase
         $this->assertArrayHasKey('country', $validator->errors()->toArray());
     }
 
-    public function testMissingVatNumber()
+    public function test_missing_vat_number()
     {
         $this->actingAs($this->user);
 
@@ -109,7 +105,7 @@ class AddTaxIdentifierRequestTest extends TestCase
         $this->assertArrayHasKey('vat_number', $validator->errors()->toArray());
     }
 
-    public function testSameCountryFails()
+    public function test_same_country_fails()
     {
         $this->actingAs($this->user);
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,11 @@ namespace App\Services\PurchaseOrder;
 
 use App\Jobs\EDocument\CreateEDocument;
 use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderInvitation;
 use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Storage;
+use InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja;
 
 class PurchaseOrderService
 {
@@ -42,7 +43,7 @@ class PurchaseOrderService
     {
         $settings = $this->purchase_order->company->settings;
 
-        if (! $this->purchase_order->design_id) {
+        if (!$this->purchase_order->design_id) {
             $this->purchase_order->design_id = $this->decodePrimaryKey($settings->purchase_order_design_id);
         }
 
@@ -50,11 +51,11 @@ class PurchaseOrderService
             $this->purchase_order->footer = $settings->purchase_order_footer;
         }
 
-        if (!isset($this->purchase_order->terms)  || empty($this->purchase_order->terms)) {
+        if (!isset($this->purchase_order->terms) || empty($this->purchase_order->terms)) {
             $this->purchase_order->terms = $settings->purchase_order_terms;
         }
 
-        if (!isset($this->purchase_order->public_notes)  || empty($this->purchase_order->public_notes)) {
+        if (!isset($this->purchase_order->public_notes) || empty($this->purchase_order->public_notes)) {
             $this->purchase_order->public_notes = $this->purchase_order->vendor->public_notes;
         }
 
@@ -81,6 +82,7 @@ class PurchaseOrderService
     {
         return (new CreateEDocument($this->purchase_order))->handle();
     }
+
     public function getEDocument($contact = null)
     {
         return $this->getEPurchaseOrder($contact);
@@ -93,12 +95,12 @@ class PurchaseOrderService
         $this->purchase_order->invitations->each(function ($invitation) {
             try {
                 // if (Storage::disk(config('filesystems.default'))->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
-                Storage::disk(config('filesystems.default'))->delete($this->purchase_order->vendor->e_document_filepath($invitation) . $this->purchase_order->getFileName("xml"));
+                Storage::disk(config('filesystems.default'))->delete($this->purchase_order->vendor->e_document_filepath($invitation) . $this->purchase_order->getFileName('xml'));
                 // }
 
                 // if (Ninja::isHosted() && Storage::disk('public')->exists($this->invoice->client->e_invoice_filepath($invitation).$this->invoice->getFileName("xml"))) {
                 if (Ninja::isHosted()) {
-                    Storage::disk('public')->delete($this->purchase_order->vendor->e_document_filepath($invitation) . $this->purchase_order->getFileName("xml"));
+                    Storage::disk('public')->delete($this->purchase_order->vendor->e_document_filepath($invitation) . $this->purchase_order->getFileName('xml'));
                 }
             } catch (\Exception $e) {
                 nlog($e->getMessage());
@@ -160,20 +162,19 @@ class PurchaseOrderService
         return $send_email->run();
     }
 
-    public function getDocuNinjaSignable(?\App\Models\PurchaseOrderInvitation $invite = null)
+    public function getDocuNinjaSignable(?PurchaseOrderInvitation $invite = null)
     {
 
-        if (class_exists(\InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja::class))
-        {
+        if (class_exists(DocuNinja::class)) {
             $invite = $invite ?: $this->purchase_order->invitations->first();
-            return (new \InvoiceNinja\AdminApi\Services\DocuNinja\DocuNinja())->signable->get($invite);
+
+            return (new DocuNinja)->signable->get($invite);
         }
-        
+
     }
 
     /**
      * Saves the purchase order.
-     * @return \App\Models\PurchaseOrder
      */
     public function save(): ?PurchaseOrder
     {

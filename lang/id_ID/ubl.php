@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'free_export_item' => 'Item ekspor gratis', // Free export item
     'outside_tax_scope' => 'Di luar cakupan pajak', // Outside tax scope
     'eea_goods_and_services' => 'Barang dan jasa EEA', // EEA goods and services
@@ -23,6 +23,6 @@ $lang = array(
     'canary_islands_tax' => 'Pajak Kepulauan Canary', // Canary Islands tax
     'tax_ceuta_melilla' => 'Pajak Ceuta Melilla', // Tax Ceuta Melilla
     'services_outside_scope' => 'Layanan di luar cakupan', // Services outside scope
-);
+];
 
 return $lang;

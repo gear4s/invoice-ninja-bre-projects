@@ -2,7 +2,6 @@
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class Party
@@ -63,30 +62,35 @@ class Party
     public function setCompanyName(?string $company_name): self
     {
         $this->company_name = $company_name;
+
         return $this;
     }
 
     public function setRegistrationName(?string $registration_name): self
     {
         $this->registration_name = $registration_name;
+
         return $this;
     }
 
     public function setClassificationCode(?string $classification_code): self
     {
         $this->classification_code = $classification_code;
+
         return $this;
     }
 
     public function setAddress(?Address $address): self
     {
         $this->address = $address;
+
         return $this;
     }
 
     public function setContact(?Contact $contact): self
     {
         $this->contact = $contact;
+
         return $this;
     }
 }

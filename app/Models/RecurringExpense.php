@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Services\Recurring\RecurringService;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -70,15 +71,16 @@ use Illuminate\Support\Carbon;
  * @property string|null $next_send_date
  * @property int|null $remaining_cycles
  * @property string|null $next_send_date_client
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company $company
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read User|null $assigned_user
+ * @property-read Client|null $client
+ * @property-read Company $company
+ * @property-read Collection<int, Document> $documents
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor|null $vendor
- * @property-read \App\Models\ExpenseCategory|null $category
+ * @property-read User $user
+ * @property-read Vendor|null $vendor
+ * @property-read ExpenseCategory|null $category
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\RecurringExpenseFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringExpense filter(\App\Filters\QueryFilters $filters)
@@ -140,13 +142,15 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringExpense whereVendorId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringExpense withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringExpense withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ *
+ * @property-read Collection<int, Document> $documents
+ *
  * @mixin \Eloquent
  */
 class RecurringExpense extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     protected $fillable = [
         'client_id',
@@ -222,7 +226,7 @@ class RecurringExpense extends BaseModel
         return $this->belongsTo(User::class, 'assigned_user_id', 'id');
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -237,11 +241,10 @@ class RecurringExpense extends BaseModel
         return $this->belongsTo(Client::class);
     }
 
-    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function category(): BelongsTo
     {
         return $this->belongsTo(ExpenseCategory::class)->withTrashed();
     }
-
 
     /**
      * Service entry points.
@@ -253,7 +256,7 @@ class RecurringExpense extends BaseModel
 
     public function nextSendDate(): ?Carbon
     {
-        if (! $this->next_send_date) {
+        if (!$this->next_send_date) {
             return null;
         }
 
@@ -289,7 +292,7 @@ class RecurringExpense extends BaseModel
 
     public function nextSendDateClient(): ?Carbon
     {
-        if (! $this->next_send_date) {
+        if (!$this->next_send_date) {
             return null;
         }
 
@@ -339,11 +342,11 @@ class RecurringExpense extends BaseModel
         /* Return early if nothing to send back! */
         if ($this->status_id == RecurringInvoice::STATUS_COMPLETED
             || $this->remaining_cycles == 0
-            || ! $this->next_send_date) {
+            || !$this->next_send_date) {
             return [];
         }
 
-        /* Endless - lets send 10 back*/
+        /* Endless - lets send 10 back */
         $iterations = $this->remaining_cycles;
 
         if ($this->remaining_cycles == -1) {
@@ -352,7 +355,7 @@ class RecurringExpense extends BaseModel
 
         $data = [];
 
-        if (! Carbon::parse($this->next_send_date)) {
+        if (!Carbon::parse($this->next_send_date)) {
             return $data;
         }
 

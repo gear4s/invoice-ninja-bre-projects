@@ -22,8 +22,6 @@ class RefundCancelledAccount implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
-     * @param Account $account
      */
     public function __construct(Account $account)
     {
@@ -44,7 +42,7 @@ class RefundCancelledAccount implements ShouldQueue
 
         $plan_details = $this->account->getPlanDetails();
 
-        if (! $plan_details) {
+        if (!$plan_details) {
             return;
         }
 
@@ -54,7 +52,7 @@ class RefundCancelledAccount implements ShouldQueue
         }
 
         /* Is the plan Active? */
-        if (! $plan_details['active']) {
+        if (!$plan_details['active']) {
             return;
         }
 
@@ -69,7 +67,7 @@ class RefundCancelledAccount implements ShouldQueue
 
         /* Are there any edge cases? */
 
-        //@TODO process refund by refunding directly to the payment_id;
+        // @TODO process refund by refunding directly to the payment_id;
     }
 
     private function calculateRefundAmount($amount, $plan_expires)

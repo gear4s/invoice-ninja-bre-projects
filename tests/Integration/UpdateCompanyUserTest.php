@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,14 +19,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\CompanyUserController
  */
 class UpdateCompanyUserTest extends TestCase
 {
+    use DatabaseTransactions;
     use MakesHash;
     use MockAccountData;
-    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -36,8 +34,7 @@ class UpdateCompanyUserTest extends TestCase
         $this->makeTestData();
     }
 
-
-    public function testUpdatingCompanyUserReactSettings()
+    public function test_updating_company_user_react_settings()
     {
 
         $company_user = CompanyUser::whereUserId($this->user->id)->whereCompanyId($this->company->id)->first();
@@ -47,7 +44,7 @@ class UpdateCompanyUserTest extends TestCase
         $settings = [
             'react_settings' => [
                 'show_pdf_preview' => true,
-                'react_notification_link' => false
+                'react_notification_link' => false,
             ],
         ];
 
@@ -56,8 +53,7 @@ class UpdateCompanyUserTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/company_users/'.$this->encodePrimaryKey($this->user->id).'/preferences?include=company_user', $settings);
-
+        ])->putJson('/api/v1/company_users/' . $this->encodePrimaryKey($this->user->id) . '/preferences?include=company_user', $settings);
 
         $response->assertStatus(200);
 
@@ -69,7 +65,7 @@ class UpdateCompanyUserTest extends TestCase
         $settings = [
             'react_settings' => [
                 'show_pdf_preview' => false,
-                'react_notification_link' => true
+                'react_notification_link' => true,
             ],
         ];
 
@@ -78,7 +74,7 @@ class UpdateCompanyUserTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/company_users/'.$this->encodePrimaryKey($this->user->id).'/preferences?include=company_user', $settings);
+        ])->putJson('/api/v1/company_users/' . $this->encodePrimaryKey($this->user->id) . '/preferences?include=company_user', $settings);
 
         $response->assertStatus(200);
 
@@ -88,7 +84,6 @@ class UpdateCompanyUserTest extends TestCase
         $this->assertTrue($arr['data']['company_user']['react_settings']['react_notification_link']);
 
     }
-
 
     // public function testUpdatingCompanyUserAsAdmin()
     // {
@@ -123,6 +118,5 @@ class UpdateCompanyUserTest extends TestCase
 
     //     $this->assertEquals('ninja', $arr['data']['settings']['invoice']);
     // }
-
 
 }

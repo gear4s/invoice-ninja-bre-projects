@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,20 +22,22 @@ use App\Http\Requests\GroupSetting\UpdateGroupSettingRequest;
 use App\Http\Requests\GroupSetting\UploadGroupSettingRequest;
 use App\Models\Account;
 use App\Models\GroupSetting;
+use App\Models\User;
 use App\Repositories\GroupSettingRepository;
 use App\Transformers\GroupSettingTransformer;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\SavesDocuments;
 use App\Utils\Traits\Uploadable;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class GroupSettingController extends BaseController
 {
     use DispatchesJobs;
-    use Uploadable;
     use MakesHash;
     use SavesDocuments;
+    use Uploadable;
 
     protected $entity_type = GroupSetting::class;
 
@@ -51,14 +52,11 @@ class GroupSettingController extends BaseController
         $this->group_setting_repo = $group_setting_repo;
     }
 
-
     /**
      * Show the form for creating a new resource.
      *
-     * @param GroupSettingFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-    */
+     * @return Response| JsonResponse
+     */
     public function index(GroupSettingFilters $filters)
     {
         $group_settings = GroupSetting::filter($filters);
@@ -69,13 +67,11 @@ class GroupSettingController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateGroupSettingRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-    */
+     * @return Response| JsonResponse
+     */
     public function create(CreateGroupSettingRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $group_setting = GroupSettingFactory::create($user->company()->id, $user->id);
@@ -86,13 +82,11 @@ class GroupSettingController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreGroupSettingRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function store(StoreGroupSettingRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $group_setting = GroupSettingFactory::create($user->company()->id, $user->id);
@@ -107,10 +101,7 @@ class GroupSettingController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowGroupSettingRequest $request
-     * @param GroupSetting $group_setting
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function show(ShowGroupSettingRequest $request, GroupSetting $group_setting)
     {
@@ -120,10 +111,7 @@ class GroupSettingController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditGroupSettingRequest $request
-     * @param GroupSetting $group_setting
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function edit(EditGroupSettingRequest $request, GroupSetting $group_setting)
     {
@@ -133,10 +121,7 @@ class GroupSettingController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateGroupSettingRequest $request
-     * @param GroupSetting $group_setting
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function update(UpdateGroupSettingRequest $request, GroupSetting $group_setting)
     {
@@ -157,10 +142,7 @@ class GroupSettingController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyGroupSettingRequest $request
-     * @param GroupSetting $group_setting
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @throws \Exception
      */
@@ -174,8 +156,7 @@ class GroupSettingController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function bulk()
     {
@@ -189,7 +170,7 @@ class GroupSettingController extends BaseController
             return response()->json(['message' => ctrans('texts.no_group_settings_found')]);
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         /*
@@ -209,14 +190,11 @@ class GroupSettingController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UploadGroupSettingRequest $request
-     * @param GroupSetting $group_setting
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      */
     public function upload(UploadGroupSettingRequest $request, GroupSetting $group_setting)
     {
-        if (! $this->checkFeature(Account::FEATURE_DOCUMENTS)) {
+        if (!$this->checkFeature(Account::FEATURE_DOCUMENTS)) {
             return $this->featureFailure();
         }
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,7 +17,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\PreviewController
  */
 class PreviewTest extends TestCase
@@ -42,7 +40,7 @@ class PreviewTest extends TestCase
 
     }
 
-    public function testPreviewRoute()
+    public function test_preview_route()
     {
         $data = $this->getData();
 
@@ -54,32 +52,31 @@ class PreviewTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testPurchaseOrderPreviewRoute()
+    public function test_purchase_order_preview_route()
     {
         $data = $this->getData();
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/preview/purchase_order', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/preview/purchase_order', $data);
 
         $response->assertStatus(200);
     }
 
-    public function testPurchaseOrderPreviewHtmlResponse()
+    public function test_purchase_order_preview_html_response()
     {
         $data = $this->getData();
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/preview/purchase_order?html=true', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/preview/purchase_order?html=true', $data);
 
         $response->assertStatus(200);
     }
 
-
-    public function testPreviewHtmlResponse()
+    public function test_preview_html_response()
     {
         $data = $this->getData();
 

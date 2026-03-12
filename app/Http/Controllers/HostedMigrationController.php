@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\CompanyToken;
 use Illuminate\Http\Request;
+use Modules\Admin\Jobs\Account\TransferAccountPlan;
 
 class HostedMigrationController extends Controller
 {
@@ -74,8 +74,7 @@ class HostedMigrationController extends Controller
 
         $company = $account->companies->first();
 
-        /** @var \App\Models\CompanyToken $company_token **/
-
+        /** @var CompanyToken $company_token * */
         $company_token = CompanyToken::where('user_id', auth()->user()->id)
             ->where('company_id', $company->id)
             ->first();
@@ -93,12 +92,12 @@ class HostedMigrationController extends Controller
 
         MultiDB::findAndSetDbByCompanyKey($input['account_key']);
 
-        /** @var \App\Models\Company $company **/
+        /** @var Company $company * */
         $company = Company::with('account')->where('company_key', $input['account_key'])->first();
 
         $forward_url = $company->domain();
 
-        $billing_transferred = (new \Modules\Admin\Jobs\Account\TransferAccountPlan($input))->handle();
+        $billing_transferred = (new TransferAccountPlan($input))->handle();
 
         return response()->json(['forward_url' => $forward_url, 'billing_transferred' => $billing_transferred], 200);
     }

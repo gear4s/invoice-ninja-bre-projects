@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -50,14 +49,14 @@ class CreateInvitations extends AbstractService
                 ->withTrashed()
                 ->first();
 
-            if (! $invitation) {
+            if (!$invitation) {
                 $ii = CreditInvitationFactory::create($this->credit->company_id, $this->credit->user_id);
                 $ii->key = $this->createDbHash($this->credit->company->db);
                 $ii->credit_id = $this->credit->id;
                 $ii->client_contact_id = $contact->id;
                 $ii->can_sign = $contact->can_sign;
                 $ii->save();
-            } elseif (! $contact->send_email) {
+            } elseif (!$contact->send_email) {
                 $invitation->delete();
             }
         });
@@ -69,10 +68,10 @@ class CreateInvitations extends AbstractService
                 $contact = $contacts->first();
 
                 $invitation = CreditInvitation::query()->where('company_id', $this->credit->company_id)
-                                ->where('client_contact_id', $contact->id)
-                                ->where('credit_id', $this->credit->id)
-                                ->withTrashed()
-                                ->first();
+                    ->where('client_contact_id', $contact->id)
+                    ->where('credit_id', $this->credit->id)
+                    ->withTrashed()
+                    ->first();
 
                 if ($invitation) {
                     $invitation->restore();
@@ -89,9 +88,9 @@ class CreateInvitations extends AbstractService
             $ii->save();
         }
 
-        if($this->credit->invitations()->where('can_sign', true)->count() == 0){
-            
-            $ii = $this->credit->invitations()->whereHas('contact', function ($q){
+        if ($this->credit->invitations()->where('can_sign', true)->count() == 0) {
+
+            $ii = $this->credit->invitations()->whereHas('contact', function ($q) {
                 $q->where('is_primary', true);
             })->first() ?? $this->credit->invitations()->first();
 

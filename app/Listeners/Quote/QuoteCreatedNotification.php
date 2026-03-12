@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
 use App\Libraries\MultiDB;
 use App\Mail\Admin\EntityCreatedObject;
+use App\Models\CompanyUser;
 use App\Notifications\Admin\EntitySentNotification;
 use App\Utils\Traits\Notifications\UserNotifies;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,6 +24,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 class QuoteCreatedNotification implements ShouldQueue
 {
     use UserNotifies;
+
     public $delay = 5;
 
     public function __construct() {}
@@ -42,14 +43,13 @@ class QuoteCreatedNotification implements ShouldQueue
 
         $quote = $event->quote;
 
-
         /* We loop through each user and determine whether they need to be notified */
-        /** @var \App\Models\CompanyUser $company_user */
+        /** @var CompanyUser $company_user */
         foreach ($event->company->company_users as $company_user) {
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 
@@ -69,7 +69,7 @@ class QuoteCreatedNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new EntityCreatedObject($quote, 'quote', $company_user->portalType()))->build());
                 $nmo->company = $quote->company;
                 $nmo->settings = $quote->company->settings;

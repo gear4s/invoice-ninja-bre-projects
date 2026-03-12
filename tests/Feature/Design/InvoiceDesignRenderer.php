@@ -33,11 +33,17 @@ class InvoiceDesignRenderer
      * Grid system constants (must match frontend exactly)
      */
     const GRID_COLS = 12;
+
     const ROW_HEIGHT = 60;        // pixels
+
     const CANVAS_WIDTH = 794;     // pixels (210mm at 96dpi)
+
     const MARGIN_H = 10;          // horizontal margin between columns
+
     const MARGIN_V = 10;          // vertical margin between rows
+
     const PADDING_H = 30;         // container horizontal padding
+
     const PADDING_V = 30;         // container vertical padding
 
     /**
@@ -85,8 +91,8 @@ class InvoiceDesignRenderer
      * Render complete HTML document from blocks using flow-based layout
      * This ensures content can grow and push other elements down naturally
      *
-     * @param array $blocks Array of block objects from frontend
-     * @param array|null $pageSettings Optional page settings override
+     * @param  array  $blocks  Array of block objects from frontend
+     * @param  array|null  $pageSettings  Optional page settings override
      * @return string Complete HTML document
      */
     public function render(array $blocks, ?array $pageSettings = null): string
@@ -96,10 +102,11 @@ class InvoiceDesignRenderer
             $this->pageSettings = array_merge(self::DEFAULT_PAGE_SETTINGS, $pageSettings);
         }
         // Sort blocks by Y position, then by X position
-        usort($blocks, function($a, $b) {
+        usort($blocks, function ($a, $b) {
             if ($a['gridPosition']['y'] !== $b['gridPosition']['y']) {
                 return $a['gridPosition']['y'] - $b['gridPosition']['y'];
             }
+
             return $a['gridPosition']['x'] - $b['gridPosition']['x'];
         });
 
@@ -124,7 +131,7 @@ class InvoiceDesignRenderer
 
         foreach ($blocks as $block) {
             $blockY = $block['gridPosition']['y'];
-            
+
             if ($currentY === -1 || abs($blockY - $currentY) >= 1) {
                 if (!empty($currentRow)) {
                     $rows[] = $currentRow;
@@ -183,7 +190,7 @@ class InvoiceDesignRenderer
                 }
             }
         }
-        
+
         return "<div class=\"{$rowClass}\" style=\"{$rowStyle}\">{$blocksHTML}</div>\n";
     }
 
@@ -198,13 +205,14 @@ class InvoiceDesignRenderer
         if ($pageSize === 'custom') {
             $width = $this->pageSettings['customWidth'] ?? '210mm';
             $height = $this->pageSettings['customHeight'] ?? '297mm';
+
             return "{$width} {$height}";
         }
 
         $size = self::PAGE_SIZES[$pageSize] ?? self::PAGE_SIZES['a4'];
         $width = $orientation === 'landscape' ? $size['height'] : $size['width'];
         $height = $orientation === 'landscape' ? $size['width'] : $size['height'];
-        
+
         return "{$width}mm {$height}mm";
     }
 
@@ -217,7 +225,7 @@ class InvoiceDesignRenderer
         $right = $this->pageSettings['marginRight'] ?? '10mm';
         $bottom = $this->pageSettings['marginBottom'] ?? '10mm';
         $left = $this->pageSettings['marginLeft'] ?? '10mm';
-        
+
         return "{$top} {$right} {$bottom} {$left}";
     }
 
@@ -228,11 +236,11 @@ class InvoiceDesignRenderer
     {
         $padding = self::PADDING_V . 'px ' . self::PADDING_H . 'px';
         $marginBottom = self::MARGIN_V . 'px';
-        
+
         // Page settings
         $pageSize = $this->getPageSizeCSS();
         $pageMargins = $this->getPageMarginsCSS();
-        $fontFamily = $this->pageSettings['fontFamily'] ?? "Inter, sans-serif";
+        $fontFamily = $this->pageSettings['fontFamily'] ?? 'Inter, sans-serif';
         $fontSize = $this->pageSettings['fontSize'] ?? '12px';
         $textColor = $this->pageSettings['textColor'] ?? '#374151';
         $lineHeight = $this->pageSettings['lineHeight'] ?? '1.5';
@@ -444,22 +452,22 @@ HTML;
         $gridPos = $block['gridPosition'];
         $blockId = $block['id'] ?? $this->generateBlockId($block['type']);
         $blockType = $block['type'];
-        
+
         $content = $this->renderBlockContent($block, $blockId);
-        
+
         // Calculate width as percentage of 12 columns
         $widthPercent = ($gridPos['w'] / self::GRID_COLS) * 100;
         $isFullWidth = $gridPos['w'] === self::GRID_COLS;
-        
+
         // Expandable blocks (tables, totals) should not have min-height constraints
         $isExpandable = in_array($blockType, ['table', 'total', 'invoice-details']);
-        
+
         // CSS classes for targeting
         $classes = ['block', "block-{$blockType}"];
         if ($isFullWidth) {
             $classes[] = 'full-width';
         }
-        
+
         $styles = [];
         if (!$isFullWidth) {
             $styles[] = "width: {$widthPercent}%";
@@ -468,11 +476,11 @@ HTML;
             $minHeight = $gridPos['h'] * self::ROW_HEIGHT;
             $styles[] = "min-height: {$minHeight}px";
         }
-        
+
         // Add custom block styles
         $blockStyles = $this->generateBlockStyles($block);
         $styles = array_merge($styles, $blockStyles);
-        
+
         $classAttr = implode(' ', $classes);
         $styleAttr = !empty($styles) ? ' style="' . implode('; ', $styles) . ';"' : '';
 
@@ -486,6 +494,7 @@ HTML;
     {
         static $counter = 0;
         $counter++;
+
         return "{$type}-{$counter}";
     }
 
@@ -497,7 +506,7 @@ HTML;
         $type = $block['type'];
         $props = $block['properties'];
 
-        return match($type) {
+        return match ($type) {
             'text' => $this->renderText($props, $blockId),
             'logo', 'image' => $this->renderImage($props, $type, $blockId),
             'company-info' => $this->renderCompanyInfo($props, $blockId),
@@ -521,7 +530,7 @@ HTML;
     {
         $content = $props['content'] ?? '';
         $lines = explode("\n", $content);
-        
+
         $containerStyle = $this->buildStyle([
             'font-size' => $props['fontSize'] ?? '14px',
             'font-weight' => $props['fontWeight'] ?? 'normal',
@@ -532,11 +541,11 @@ HTML;
         ]);
 
         $html = "<div class=\"text-content\" style=\"{$containerStyle}\">";
-        
+
         foreach ($lines as $index => $line) {
             $lineId = "{$blockId}-line-{$index}";
             $escapedLine = $this->escape(trim($line));
-            
+
             // Use span for inline elements, div for block-level lines
             if (empty(trim($line))) {
                 $html .= "<div class=\"text-line text-line-empty\" id=\"{$lineId}\">&nbsp;</div>";
@@ -544,8 +553,9 @@ HTML;
                 $html .= "<div class=\"text-line\" id=\"{$lineId}\">{$escapedLine}</div>";
             }
         }
-        
+
         $html .= '</div>';
+
         return $html;
     }
 
@@ -563,6 +573,7 @@ HTML;
 
         if (empty($source)) {
             $placeholder = $type === 'logo' ? 'Company Logo' : 'Image';
+
             return sprintf(
                 '<div id="%s" class="image-placeholder" style="%s">%s</div>',
                 $imageId,
@@ -634,7 +645,7 @@ HTML;
     {
         $content = $props['content'] ?? '';
         $fieldConfigs = $props['fieldConfigs'] ?? null;
-        
+
         $containerStyle = $this->buildStyle([
             'font-size' => $props['fontSize'] ?? '12px',
             'font-weight' => $props['fontWeight'] ?? 'normal',
@@ -645,7 +656,7 @@ HTML;
         ]);
 
         $html = "<div class=\"company-info-content\" style=\"{$containerStyle}\">";
-        
+
         if ($fieldConfigs && is_array($fieldConfigs)) {
             // New structured format with fieldConfigs
             foreach ($fieldConfigs as $index => $config) {
@@ -653,7 +664,7 @@ HTML;
                 $prefix = $this->escape($config['prefix'] ?? '');
                 $variable = $config['variable'] ?? '';
                 $suffix = $this->escape($config['suffix'] ?? '');
-                
+
                 $html .= "<div class=\"info-field\" id=\"{$fieldId}\">";
                 if (!empty($prefix)) {
                     $html .= "<span class=\"field-prefix\">{$prefix}</span>";
@@ -662,7 +673,7 @@ HTML;
                 if (!empty($suffix)) {
                     $html .= "<span class=\"field-suffix\">{$suffix}</span>";
                 }
-                $html .= "</div>";
+                $html .= '</div>';
             }
         } else {
             // Legacy content string - split by lines
@@ -677,8 +688,9 @@ HTML;
                 $html .= "<div class=\"info-field\" id=\"{$fieldId}\">{$line}</div>";
             }
         }
-        
+
         $html .= '</div>';
+
         return $html;
     }
 
@@ -690,7 +702,7 @@ HTML;
     {
         $content = $props['content'] ?? '';
         $fieldConfigs = $props['fieldConfigs'] ?? null;
-        
+
         $html = '<div class="client-info-wrapper">';
 
         // Optional title
@@ -719,7 +731,7 @@ HTML;
         ]);
 
         $html .= "<div class=\"client-info-content\" style=\"{$containerStyle}\">";
-        
+
         if ($fieldConfigs && is_array($fieldConfigs)) {
             // New structured format with fieldConfigs
             foreach ($fieldConfigs as $index => $config) {
@@ -727,7 +739,7 @@ HTML;
                 $prefix = $this->escape($config['prefix'] ?? '');
                 $variable = $config['variable'] ?? '';
                 $suffix = $this->escape($config['suffix'] ?? '');
-                
+
                 $html .= "<div class=\"info-field\" id=\"{$fieldId}\">";
                 if (!empty($prefix)) {
                     $html .= "<span class=\"field-prefix\">{$prefix}</span>";
@@ -736,7 +748,7 @@ HTML;
                 if (!empty($suffix)) {
                     $html .= "<span class=\"field-suffix\">{$suffix}</span>";
                 }
-                $html .= "</div>";
+                $html .= '</div>';
             }
         } else {
             // Legacy content string - split by lines
@@ -751,9 +763,10 @@ HTML;
                 $html .= "<div class=\"info-field\" id=\"{$fieldId}\">{$line}</div>";
             }
         }
-        
+
         $html .= '</div>';
         $html .= '</div>';
+
         return $html;
     }
 
@@ -775,7 +788,7 @@ HTML;
 
         // Check if we have items array (new format) or content string (legacy)
         $items = $props['items'] ?? null;
-        
+
         $styleContext = [
             'align' => $align,
             'fontSize' => $fontSize,
@@ -786,22 +799,23 @@ HTML;
             'labelWidth' => $labelWidth,
             'blockId' => $blockId,
         ];
-        
+
         if ($items && is_array($items) && $displayAsGrid) {
             return $this->renderInvoiceDetailsTable($items, $styleContext);
         }
 
         // Legacy format: parse content string
         $content = $props['content'] ?? '';
-        
+
         if ($displayAsGrid && !empty($content)) {
             $parsedItems = $this->parseInvoiceDetailsContent($content);
+
             return $this->renderInvoiceDetailsTable($parsedItems, $styleContext);
         }
 
         // Fallback: render each line as a div
         $lines = explode("\n", $content);
-        $html = "<div class=\"invoice-details-content\">";
+        $html = '<div class="invoice-details-content">';
         foreach ($lines as $index => $line) {
             $line = trim($line);
             if (empty($line)) {
@@ -811,6 +825,7 @@ HTML;
             $html .= "<div class=\"details-line\" id=\"{$lineId}\" style=\"font-size: {$fontSize}; line-height: {$lineHeight}; color: {$color};\">{$line}</div>";
         }
         $html .= '</div>';
+
         return $html;
     }
 
@@ -821,13 +836,13 @@ HTML;
     {
         $items = [];
         $lines = explode("\n", $content);
-        
+
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) {
                 continue;
             }
-            
+
             $colonPos = strpos($line, ':');
             if ($colonPos !== false) {
                 $label = trim(substr($line, 0, $colonPos + 1));
@@ -845,7 +860,7 @@ HTML;
                 ];
             }
         }
-        
+
         return $items;
     }
 
@@ -856,8 +871,8 @@ HTML;
     {
         $blockId = $styles['blockId'] ?? 'invoice-details';
         $tableId = "{$blockId}-table";
-        
-        $tableAlign = match($styles['align']) {
+
+        $tableAlign = match ($styles['align']) {
             'right' => 'margin-left: auto;',
             'center' => 'margin: 0 auto;',
             default => '',
@@ -915,12 +930,13 @@ HTML;
         }
 
         $html .= '</tbody></table>';
+
         return $html;
     }
 
     /**
      * TABLE BLOCK
-     * 
+     *
      * Column fields use "item.field" notation (e.g., "item.product_key").
      * The entire table body is wrapped in <ninja> tags with Twig loop syntax.
      */
@@ -989,7 +1005,7 @@ HTML;
 
         foreach ($columns as $col) {
             $twigVar = '{{ ' . $col['field'] . ' }}';
-            
+
             $html .= sprintf(
                 '<td class="table-cell" style="%s">%s</td>',
                 $this->buildStyle([
@@ -1015,8 +1031,8 @@ HTML;
     private function renderTotal(array $props, string $blockId): string
     {
         $tableId = "{$blockId}-table";
-        
-        $tableAlign = match($props['align']) {
+
+        $tableAlign = match ($props['align']) {
             'right' => 'margin-left: auto;',
             'center' => 'margin: 0 auto;',
             default => '',
@@ -1043,8 +1059,12 @@ HTML;
             $isBalance = $item['isBalance'] ?? false;
             $rowId = "{$blockId}-row-{$rowIndex}";
             $rowClass = 'totals-row';
-            if ($isTotal) $rowClass .= ' totals-row-total';
-            if ($isBalance) $rowClass .= ' totals-row-balance';
+            if ($isTotal) {
+                $rowClass .= ' totals-row-total';
+            }
+            if ($isBalance) {
+                $rowClass .= ' totals-row-balance';
+            }
 
             $fontSize = $isTotal ? $props['totalFontSize'] : $props['fontSize'];
             $fontWeight = $isTotal ? $props['totalFontWeight'] : 'normal';
@@ -1107,6 +1127,7 @@ HTML;
         }
 
         $html .= '</tbody></table>';
+
         return $html;
     }
 
@@ -1199,6 +1220,7 @@ HTML;
         }
 
         $html .= '</div>';
+
         return $html;
     }
 

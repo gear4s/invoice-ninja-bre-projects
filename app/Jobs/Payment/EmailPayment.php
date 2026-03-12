@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -42,10 +41,7 @@ class EmailPayment implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param Payment $payment
-     * @param $email_builder
-     * @param $contact
-     * @param $company
+     * @param  $email_builder
      */
     public function __construct(public Payment $payment, private Company $company, private ?ClientContact $contact)
     {
@@ -69,7 +65,8 @@ class EmailPayment implements ShouldQueue
         }
 
         if ($this->company->is_disabled) {
-            nlog("company disabled");
+            nlog('company disabled');
+
             return;
         }
 
@@ -77,6 +74,7 @@ class EmailPayment implements ShouldQueue
 
         if ($this->payment->client->getSetting('payment_email_all_contacts') && $this->payment->invoices && $this->payment->invoices->count() >= 1) {
             $this->emailAllContacts();
+
             return;
         }
 
@@ -84,15 +82,15 @@ class EmailPayment implements ShouldQueue
 
         $invitation = null;
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
 
         if ($this->payment->invoices && $this->payment->invoices->count() >= 1) {
 
             if ($this->contact) {
                 $invitation = $this->payment->invoices->first()->invitations()->where('client_contact_id', $this->contact->id)->first();
-            } 
+            }
 
-            if(!$invitation) {
+            if (!$invitation) {
                 $invitation = $this->payment->invoices->first()->invitations()->first();
             }
 
@@ -122,10 +120,9 @@ class EmailPayment implements ShouldQueue
             return $invite->contact->send_email && filter_var($invite->contact->email, FILTER_VALIDATE_EMAIL) !== false;
         })->each(function ($invite) {
 
-
             $email_builder = (new PaymentEmailEngine($this->payment, $invite->contact))->build();
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new TemplateEmail($email_builder, $invite->contact, $invite);
             $nmo->to_user = $invite->contact;
             $nmo->settings = $this->settings;

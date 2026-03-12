@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,7 +30,7 @@ class LicenseController extends BaseController
     /**
      * Claim a white label license.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/claim_license",
@@ -39,6 +38,7 @@ class LicenseController extends BaseController
      *      tags={"claim_license"},
      *      summary="Attempts to claim a white label license",
      *      description="Attempts to claim a white label license",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(
      *          name="license_key",
@@ -46,38 +46,47 @@ class LicenseController extends BaseController
      *          description="The license hash",
      *          example="d87sh-s755s-s7d76-sdsd8",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Parameter(
      *          name="product_id",
      *          in="query",
      *          description="The ID of the product purchased.",
      *          example="1",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Success!",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
 
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -86,7 +95,7 @@ class LicenseController extends BaseController
     {
         $this->checkLicense();
 
-        nlog("License Check::");
+        nlog('License Check::');
         nlog(config('ninja.environment'));
         nlog(request()->has('license_key'));
         nlog(request()->input('license_key', 'No License Found'));
@@ -106,7 +115,7 @@ class LicenseController extends BaseController
             if ($data == Account::RESULT_FAILURE) {
                 $error = [
                     'message' => trans('texts.invalid_white_label_license'),
-                    'errors' => new stdClass(),
+                    'errors' => new stdClass,
                 ];
 
                 return response()->json($error, 400);
@@ -116,7 +125,7 @@ class LicenseController extends BaseController
                 if ($date < date_create()) {
                     $error = [
                         'message' => trans('texts.invalid_white_label_license'),
-                        'errors' => new stdClass(),
+                        'errors' => new stdClass,
                     ];
                     $account = auth()->user()->account;
                     $account->plan_term = Account::PLAN_TERM_YEARLY;
@@ -137,7 +146,7 @@ class LicenseController extends BaseController
 
                     $error = [
                         'message' => trans('texts.bought_white_label'),
-                        'errors' => new stdClass(),
+                        'errors' => new stdClass,
                     ];
 
                     return response()->json($error, 200);
@@ -145,18 +154,18 @@ class LicenseController extends BaseController
             } else {
                 $error = [
                     'message' => 'There was an issue connecting to the license server. Please check your network.',
-                    'errors' => new stdClass(),
+                    'errors' => new stdClass,
                 ];
 
                 return response()->json($error, 400);
             }
         }
 
-        nlog("No license key or environment not set to selfhost");
+        nlog('No license key or environment not set to selfhost');
 
         $error = [
             'message' => ctrans('texts.invoice_license_or_environment', ['environment' => config('ninja.environment')]),
-            'errors' => new stdClass(),
+            'errors' => new stdClass,
         ];
 
         return response()->json($error, 400);
@@ -170,20 +179,20 @@ class LicenseController extends BaseController
         if (config('ninja.environment') == 'selfhost') {
 
             if (config('ninja.license_key')) {
-                nlog("License key found in config - using that instead");
+                nlog('License key found in config - using that instead');
                 $license_key = config('ninja.license_key');
             }
 
-            nlog("Claiming v5 license");
+            nlog('Claiming v5 license');
 
-            $response = Http::get("https://invoicing.co/claim_license", [
+            $response = Http::get('https://invoicing.co/claim_license', [
                 'license_key' => $license_key,
                 'product_id' => 3,
             ]);
 
             $payload = $response->json();
 
-            nlog("Ninja Server Response");
+            nlog('Ninja Server Response');
             nlog($payload);
 
             if ($response->successful() && is_array($payload)) {
@@ -197,30 +206,29 @@ class LicenseController extends BaseController
 
                 $error = [
                     'message' => trans('texts.bought_white_label'),
-                    'errors' => new \stdClass(),
+                    'errors' => new stdClass,
                 ];
 
                 return response()->json($error, 200);
             } else {
                 $error = [
                     'message' => trans('texts.white_label_license_error'),
-                    'errors' => new stdClass(),
+                    'errors' => new stdClass,
                 ];
 
                 return response()->json($error, 400);
             }
         }
 
-        nlog("Environment not set to selfhost - failing");
+        nlog('Environment not set to selfhost - failing');
 
         $error = [
             'message' => ctrans('texts.invoice_license_or_environment', ['environment' => config('ninja.environment')]),
-            'errors' => new stdClass(),
+            'errors' => new stdClass,
         ];
 
         return response()->json($error, 400);
     }
-
 
     private function checkLicense()
     {
@@ -235,7 +243,7 @@ class LicenseController extends BaseController
 
     public function check(CheckRequest $request): Response|JsonResponse
     {
-        if (! config('ninja.license_key')) {
+        if (!config('ninja.license_key')) {
             return response()->json(['message' => ctrans('texts.white_label_license_not_present')], status: 422);
         }
 

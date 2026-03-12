@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,8 +17,10 @@ use App\Models\Company;
 use App\Models\Invoice;
 use App\Transformers\InvoiceTransformer;
 use App\Utils\Ninja;
+use App\Utils\Number;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class InvoiceExport extends BaseExport
@@ -38,8 +39,8 @@ class InvoiceExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->invoice_transformer = new InvoiceTransformer();
-        $this->decorator = new Decorator();
+        $this->invoice_transformer = new InvoiceTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -58,13 +59,12 @@ class InvoiceExport extends BaseExport
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = Invoice::query()
-                        ->withTrashed()
-                        ->with('client')
-                        ->whereHas('client', function ($q) {
-                            $q->where('is_deleted', false);
-                        })
-                        ->where('company_id', $this->company->id);
-
+            ->withTrashed()
+            ->with('client')
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            })
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {// @phpstan-ignore-line
             $query->where('is_deleted', 0);
@@ -83,7 +83,6 @@ class InvoiceExport extends BaseExport
         }
 
         $query = $this->filterByUserPermissions($query);
-
 
         if ($this->input['document_email_attachment'] ?? false) {
             $this->queueDocuments($query);
@@ -108,12 +107,13 @@ class InvoiceExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\Invoice $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var Invoice $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
@@ -122,9 +122,9 @@ class InvoiceExport extends BaseExport
     {
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         if ($tax_amount_position = array_search('invoice.total_taxes', $this->input['report_keys'])) {
             $first_part = array_slice($this->input['report_keys'], 0, $tax_amount_position + 1);
@@ -135,30 +135,31 @@ class InvoiceExport extends BaseExport
                 ->flatMap(function ($invoice) {
                     $taxes = [];
 
-                    /** @var \App\Models\Invoice $invoice */
+                    /** @var Invoice $invoice */
                     // Invoice level taxes
                     if (strlen($invoice->tax_name1 ?? '') > 1 && $invoice->tax_rate1 > 0) {
-                        $taxes[] = trim($invoice->tax_name1) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate1), $invoice->client) . '%';
+                        $taxes[] = trim($invoice->tax_name1) . ' ' . Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate1), $invoice->client) . '%';
                     }
                     if (strlen($invoice->tax_name2 ?? '') > 1 && $invoice->tax_rate2 > 0) {
-                        $taxes[] = trim($invoice->tax_name2) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate2), $invoice->client) . '%';
+                        $taxes[] = trim($invoice->tax_name2) . ' ' . Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate2), $invoice->client) . '%';
                     }
                     if (strlen($invoice->tax_name3 ?? '') > 1 && $invoice->tax_rate3 > 0) {
-                        $taxes[] = trim($invoice->tax_name3) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate3), $invoice->client) . '%';
+                        $taxes[] = trim($invoice->tax_name3) . ' ' . Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate3), $invoice->client) . '%';
                     }
 
                     // Line item taxes
                     $line_taxes = collect($invoice->line_items)->flatMap(function ($item) use ($invoice) {
                         $taxes = [];
                         if (strlen($item->tax_name1 ?? '') > 1 && $item->tax_rate1 > 0) {
-                            $taxes[] = trim($item->tax_name1) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($item->tax_rate1), $invoice->client) . '%';
+                            $taxes[] = trim($item->tax_name1) . ' ' . Number::formatValueNoTrailingZeroes(floatval($item->tax_rate1), $invoice->client) . '%';
                         }
                         if (strlen($item->tax_name2 ?? '') > 1 && $item->tax_rate2 > 0) {
-                            $taxes[] = trim($item->tax_name2) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($item->tax_rate2), $invoice->client) . '%';
+                            $taxes[] = trim($item->tax_name2) . ' ' . Number::formatValueNoTrailingZeroes(floatval($item->tax_rate2), $invoice->client) . '%';
                         }
                         if (strlen($item->tax_name3 ?? '') > 1 && $item->tax_rate3 > 0) {
-                            $taxes[] = trim($item->tax_name3) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($item->tax_rate3), $invoice->client) . '%';
+                            $taxes[] = trim($item->tax_name3) . ' ' . Number::formatValueNoTrailingZeroes(floatval($item->tax_rate3), $invoice->client) . '%';
                         }
+
                         return $taxes;
                     });
 
@@ -167,7 +168,6 @@ class InvoiceExport extends BaseExport
                 ->unique()
                 ->toArray();
 
-
             foreach ($this->tax_names as $tax_name) {
                 $labels[] = 'tax.' . $tax_name;
             }
@@ -175,13 +175,13 @@ class InvoiceExport extends BaseExport
             $this->input['report_keys'] = array_merge($first_part, $labels, $second_part);
         }
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($invoice) {
 
-                /** @var \App\Models\Invoice $invoice */
+                /** @var Invoice $invoice */
                 $this->csv->insertOne($this->buildRow($invoice));
             });
 
@@ -208,7 +208,6 @@ class InvoiceExport extends BaseExport
 
         }
 
-
         if (count($this->tax_names) > 0) {
 
             $calc = $invoice->calc();
@@ -225,7 +224,7 @@ class InvoiceExport extends BaseExport
 
         $entity = $this->decorateAdvancedFields($invoice, $entity);
 
-        return  $this->convertFloats($entity);
+        return $this->convertFloats($entity);
     }
 
     private function decorateAdvancedFields(Invoice $invoice, array $entity): array

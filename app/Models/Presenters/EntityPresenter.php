@@ -6,21 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models\Presenters;
 
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\Vendor;
+use App\Models\VendorContact;
 use App\Utils\Traits\MakesHash;
 use Laracasts\Presenter\Presenter;
 
 /**
  * Class EntityPresenter.
  *
- * @property \App\Models\Company | \App\Models\Client | \App\Models\ClientContact | \App\Models\Vendor | \App\Models\VendorContact $entity
- * @property \App\Models\Client $client
- * @property \App\Models\Company $company
+ * @property Company | Client | ClientContact | Vendor | VendorContact $entity
+ * @property Client $client
+ * @property Company $company
  */
 class EntityPresenter extends Presenter
 {
@@ -41,7 +45,7 @@ class EntityPresenter extends Presenter
     public function editUrl() {}
 
     /**
-     * @param bool $label
+     * @param  bool  $label
      */
     public function statusLabel($label = false) {}
 
@@ -52,7 +56,7 @@ class EntityPresenter extends Presenter
     public function titledName() {}
 
     /**
-     * @param bool $subColors
+     * @param  bool  $subColors
      */
     public function calendarEvent($subColors = false) {}
 

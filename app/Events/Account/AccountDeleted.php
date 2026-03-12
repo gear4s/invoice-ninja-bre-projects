@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,13 +26,12 @@ class AccountDeleted
     use InteractsWithSockets;
     use SerializesModels;
 
-
     /**
      * Create a new event instance.
      *
-     * @param $user
-     * @param $company
-     * @param $event_vars
+     * @param  $user
+     * @param  $company
+     * @param  $event_vars
      */
     public function __construct(public string $account_key, public string $email, public string $ip) {}
 

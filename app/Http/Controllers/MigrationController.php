@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,9 +20,12 @@ use App\Mail\ExistingMigration;
 use App\Mail\Migration\MaxCompanies;
 use App\Models\Company;
 use App\Models\CompanyToken;
+use App\Models\User;
 use App\Utils\Ninja;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
@@ -48,6 +50,7 @@ class MigrationController extends BaseController
      *      tags={"migration"},
      *      summary="Attempts to purge a company record and all its child records",
      *      description="Attempts to purge a company record and all its child records",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(
@@ -56,31 +59,39 @@ class MigrationController extends BaseController
      *          description="The Company Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Success",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param Company $company
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     *
+     * @return JsonResponse|Response
+     *
      * @throws \Exception
      */
     public function purgeCompany(Company $company)
@@ -94,7 +105,7 @@ class MigrationController extends BaseController
 
         $company->delete();
 
-        /*Update the new default company if necessary*/
+        /* Update the new default company if necessary */
         if ($company_id == $account->default_company_id && $account->companies->count() >= 1) {
             $new_default_company = $account->companies->first();
 
@@ -118,7 +129,7 @@ class MigrationController extends BaseController
 
         $company->delete();
 
-        /*Update the new default company if necessary*/
+        /* Update the new default company if necessary */
         if ($company_id == $account->default_company_id && $account->companies->count() >= 1) {
             $new_default_company = $account->companies->first();
 
@@ -138,6 +149,7 @@ class MigrationController extends BaseController
      *      tags={"migration"},
      *      summary="Attempts to purge a companies child records but save the company record and its settings",
      *      description="Attempts to purge a companies child records but save the company record and its settings",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(
@@ -146,32 +158,38 @@ class MigrationController extends BaseController
      *          description="The Company Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Success",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param Request $request
-     * @param Company $company
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     *
+     * @return JsonResponse|Response
      */
     public function purgeCompanySaveSettings(Request $request, Company $company)
     {
@@ -222,6 +240,7 @@ class MigrationController extends BaseController
      *      tags={"migration"},
      *      summary="Starts the migration from previous version of Invoice Ninja",
      *      description="Starts the migration from previous version of Invoice Ninja",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/X-API-PASSWORD"),
@@ -231,31 +250,38 @@ class MigrationController extends BaseController
      *          description="The migraton file",
      *          example="migration.zip",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="object",
      *              format="file",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Success",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response|void
+     *
+     * @return JsonResponse|Response|void
      */
     public function startMigration(Request $request)
     {
@@ -266,10 +292,10 @@ class MigrationController extends BaseController
         }
 
         if ($request->companies) {
-            //handle Laravel 5.5 UniHTTP
+            // handle Laravel 5.5 UniHTTP
             $companies = json_decode($request->companies, true);
         } else {
-            //handle Laravel 6 Guzzle
+            // handle Laravel 6 Guzzle
             $companies = [];
 
             foreach ($request->all() as $input) {
@@ -281,7 +307,7 @@ class MigrationController extends BaseController
         }
 
         foreach ($companies as $company) {
-            if (! is_array($company)) {
+            if (!is_array($company)) {
                 continue;
             }
 
@@ -300,8 +326,8 @@ class MigrationController extends BaseController
             $t->replace(Ninja::transformTranslations($user->account->companies()->first()->settings));
             App::setLocale($user->account->companies()->first()->getLocale());
 
-            if (! $existing_company && $company_count >= 10) {
-                $nmo = new NinjaMailerObject();
+            if (!$existing_company && $company_count >= 10) {
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new MaxCompanies($user->account->companies()->first());
                 $nmo->company = $user->account->companies()->first();
                 $nmo->settings = $user->account->companies()->first()->settings;
@@ -313,7 +339,7 @@ class MigrationController extends BaseController
 
                 return;
             } elseif ($existing_company && $company_count > 10) {
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new MaxCompanies($user->account->companies()->first());
                 $nmo->company = $user->account->companies()->first();
                 $nmo->settings = $user->account->companies()->first()->settings;
@@ -335,7 +361,7 @@ class MigrationController extends BaseController
             if ($checks['existing_company'] == true && $checks['force'] == false) {
                 nlog('Migrating: Existing company without force. (CASE_01)');
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new ExistingMigration($existing_company);
                 $nmo->company = $user->account->companies()->first();
                 $nmo->settings = $user->account->companies()->first();
@@ -358,14 +384,14 @@ class MigrationController extends BaseController
                 $this->purgeCompanyWithForceFlag($existing_company);
 
                 $account = auth()->user()->account;
-                $fresh_company = (new ImportMigrations())->getCompany($account);
+                $fresh_company = (new ImportMigrations)->getCompany($account);
                 $fresh_company->is_disabled = true;
                 $fresh_company->save();
 
                 $account->default_company_id = $fresh_company->id;
                 $account->save();
 
-                $fresh_company_token = new CompanyToken();
+                $fresh_company_token = new CompanyToken;
                 $fresh_company_token->user_id = $user->id;
                 $fresh_company_token->company_id = $fresh_company->id;
                 $fresh_company_token->account_id = $account->id;
@@ -374,7 +400,7 @@ class MigrationController extends BaseController
                 $fresh_company_token->is_system = true;
                 $fresh_company_token->save();
 
-                /** @var \App\Models\User $user */
+                /** @var User $user */
                 $user->companies()->attach($fresh_company->id, [
                     'account_id' => $account->id,
                     'is_owner' => 1,
@@ -391,12 +417,12 @@ class MigrationController extends BaseController
                 nlog('creating fresh company');
 
                 $account = auth()->user()->account;
-                $fresh_company = (new ImportMigrations())->getCompany($account);
+                $fresh_company = (new ImportMigrations)->getCompany($account);
 
                 $fresh_company->is_disabled = true;
                 $fresh_company->save();
 
-                $fresh_company_token = new CompanyToken();
+                $fresh_company_token = new CompanyToken;
                 $fresh_company_token->user_id = $user->id;
                 $fresh_company_token->company_id = $fresh_company->id;
                 $fresh_company_token->account_id = $account->id;
@@ -406,7 +432,7 @@ class MigrationController extends BaseController
 
                 $fresh_company_token->save();
 
-                /** @var \App\Models\User $user */
+                /** @var User $user */
                 $user->companies()->attach($fresh_company->id, [
                     'account_id' => $account->id,
                     'is_owner' => 1,
@@ -419,11 +445,11 @@ class MigrationController extends BaseController
             }
 
             $migration_file = $request->file($company['company_index'])
-            ->storeAs(
-                'migrations',
-                $request->file($company['company_index'])->getClientOriginalName(),
-                'public'
-            );
+                ->storeAs(
+                    'migrations',
+                    $request->file($company['company_index'])->getClientOriginalName(),
+                    'public'
+                );
 
             if (app()->environment() == 'testing') {
                 nlog('environment is testing = bailing out now');

@@ -6,30 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Providers;
 
-use App\Utils\Ninja;
-use Livewire\Livewire;
+use App\Helpers\Mail\GmailTransport;
+use App\Helpers\Mail\Office365MailTransport;
+use App\Http\Middleware\SetDomainNameDb;
 use App\Models\Invoice;
 use App\Models\Proposal;
+use App\Utils\Ninja;
 use App\Utils\TruthSource;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Mail\Mailer;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\App;
-use App\Helpers\Mail\GmailTransport;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use App\Http\Middleware\SetDomainNameDb;
-use Illuminate\Queue\Events\JobProcessing;
-use App\Helpers\Mail\Office365MailTransport;
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Livewire\Livewire;
 use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
 use Symfony\Component\Mailer\Transport\Dsn;
 
@@ -78,7 +77,7 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::setUpdateRoute(function ($handle) {
             return Route::post('/livewire/update', $handle)
-                ->middleware(['client','throttle:1000,1']);
+                ->middleware(['client', 'throttle:1000,1']);
         });
 
         /* Ensure we don't have stale state in jobs */
@@ -86,16 +85,16 @@ class AppServiceProvider extends ServiceProvider
             App::forgetInstance(TruthSource::class);
         });
 
-        app()->instance(TruthSource::class, new TruthSource());
+        app()->instance(TruthSource::class, new TruthSource);
 
         /* Extension for custom mailers */
 
         Mail::extend('gmail', function () {
-            return new GmailTransport();
+            return new GmailTransport;
         });
 
         Mail::extend('office365', function () {
-            return new Office365MailTransport();
+            return new Office365MailTransport;
         });
 
         Mailer::macro('postmark_config', function (string $postmark_key) {
@@ -121,9 +120,8 @@ class AppServiceProvider extends ServiceProvider
             return $this;
         });
 
-
         Mail::extend('brevo', function () {
-            return (new BrevoTransportFactory())->create(
+            return (new BrevoTransportFactory)->create(
                 new Dsn(
                     'brevo+api',
                     'default',
@@ -134,7 +132,7 @@ class AppServiceProvider extends ServiceProvider
         Mailer::macro('brevo_config', function (string $brevo_secret) {
             // @phpstan-ignore /** @phpstan-ignore-next-line **/
             Mailer::setSymfonyTransport(
-                (new BrevoTransportFactory())->create(
+                (new BrevoTransportFactory)->create(
                     new Dsn(
                         'brevo+api',
                         'default',
@@ -165,10 +163,8 @@ class AppServiceProvider extends ServiceProvider
             return $this;
         });
 
-
-        //Prevents destructive commands from being run in hosted environments
+        // Prevents destructive commands from being run in hosted environments
         \DB::prohibitDestructiveCommands(Ninja::isHosted());
-
 
     }
 

@@ -6,44 +6,42 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Scheduler;
 
-use Carbon\Carbon;
-use Tests\TestCase;
-use App\Models\Task;
-use App\Models\Client;
-use App\Models\Invoice;
-use App\Models\Scheduler;
-use Tests\MockAccountData;
-use App\Utils\Traits\MakesHash;
-use App\Models\RecurringInvoice;
-use App\Factory\SchedulerFactory;
-use App\Services\Scheduler\EmailReport;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use App\DataMapper\Schedule\EmailStatement;
-use Illuminate\Validation\ValidationException;
+use App\Factory\SchedulerFactory;
+use App\Models\Client;
+use App\Models\Credit;
+use App\Models\Invoice;
+use App\Models\RecurringInvoice;
+use App\Models\Scheduler;
+use App\Models\Task;
+use App\Services\Scheduler\EmailReport;
 use App\Services\Scheduler\EmailStatementService;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Services\Scheduler\InvoiceOutstandingTasksService;
-use App\Http\Requests\TaskScheduler\PaymentScheduleRequest;
 use App\Utils\Traits\MakesDates;
+use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *   App\Services\Scheduler\SchedulerService
  */
 class SchedulerTest extends TestCase
 {
-    use MakesHash;
-    use MockAccountData;
     use DatabaseTransactions;
     use MakesDates;
+    use MakesHash;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -59,8 +57,7 @@ class SchedulerTest extends TestCase
 
     }
 
-
-    public function testPaymentScheduleCalculationsIsPercentageWithAutoBill()
+    public function test_payment_schedule_calculations_is_percentage_with_auto_bill()
     {
         $settings = $this->company->settings;
         $settings->use_credits_payment = 'off';
@@ -68,7 +65,7 @@ class SchedulerTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-        \App\Models\Credit::where('client_id', $this->client->id)->delete();
+        Credit::where('client_id', $this->client->id)->delete();
 
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -83,31 +80,30 @@ class SchedulerTest extends TestCase
             'status_id' => Invoice::STATUS_SENT,
         ]);
 
-
         $data = [
-           'name' => 'A test payment schedule scheduler',
-           'frequency_id' => 0,
-           'next_run' => now()->format('Y-m-d'),
-           'template' => 'payment_schedule',
-           'parameters' => [
-               'invoice_id' => $invoice->hashed_id,
-               'auto_bill' => true,
-               'schedule' => [
-                [
-                    'id' => 1,
-                    'date' => now()->format('Y-m-d'),
-                    'amount' => 10,
-                    'is_amount' => false,
+            'name' => 'A test payment schedule scheduler',
+            'frequency_id' => 0,
+            'next_run' => now()->format('Y-m-d'),
+            'template' => 'payment_schedule',
+            'parameters' => [
+                'invoice_id' => $invoice->hashed_id,
+                'auto_bill' => true,
+                'schedule' => [
+                    [
+                        'id' => 1,
+                        'date' => now()->format('Y-m-d'),
+                        'amount' => 10,
+                        'is_amount' => false,
+                    ],
+                    [
+                        'id' => 2,
+                        'date' => now()->addDays(30)->format('Y-m-d'),
+                        'amount' => 90,
+                        'is_amount' => false,
+                    ],
                 ],
-                [
-                    'id' => 2,
-                    'date' => now()->addDays(30)->format('Y-m-d'),
-                    'amount' => 90,
-                    'is_amount' => false,
-                ]
-               ],
-           ],
-       ];
+            ],
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -145,8 +141,7 @@ class SchedulerTest extends TestCase
         $this->travelBack();
     }
 
-
-    public function testPaymentScheduleCalculationsIsAmountWithAutoBill()
+    public function test_payment_schedule_calculations_is_amount_with_auto_bill()
     {
         $settings = $this->company->settings;
         $settings->use_credits_payment = 'off';
@@ -154,7 +149,7 @@ class SchedulerTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-        \App\Models\Credit::where('client_id', $this->client->id)->delete();
+        Credit::where('client_id', $this->client->id)->delete();
 
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -169,31 +164,30 @@ class SchedulerTest extends TestCase
             'status_id' => Invoice::STATUS_SENT,
         ]);
 
-
         $data = [
-           'name' => 'A test payment schedule scheduler',
-           'frequency_id' => 0,
-           'next_run' => now()->format('Y-m-d'),
-           'template' => 'payment_schedule',
-           'parameters' => [
-               'invoice_id' => $invoice->hashed_id,
-               'auto_bill' => true,
-               'schedule' => [
-                [
-                    'id' => 1,
-                    'date' => now()->format('Y-m-d'),
-                    'amount' => 40,
-                    'is_amount' => true,
+            'name' => 'A test payment schedule scheduler',
+            'frequency_id' => 0,
+            'next_run' => now()->format('Y-m-d'),
+            'template' => 'payment_schedule',
+            'parameters' => [
+                'invoice_id' => $invoice->hashed_id,
+                'auto_bill' => true,
+                'schedule' => [
+                    [
+                        'id' => 1,
+                        'date' => now()->format('Y-m-d'),
+                        'amount' => 40,
+                        'is_amount' => true,
+                    ],
+                    [
+                        'id' => 2,
+                        'date' => now()->addDays(30)->format('Y-m-d'),
+                        'amount' => 60.00,
+                        'is_amount' => true,
+                    ],
                 ],
-                [
-                    'id' => 2,
-                    'date' => now()->addDays(30)->format('Y-m-d'),
-                    'amount' => 60.00,
-                    'is_amount' => true,
-                ]
-               ],
-           ],
-       ];
+            ],
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -231,8 +225,7 @@ class SchedulerTest extends TestCase
         $this->travelBack();
     }
 
-
-    public function testPaymentScheduleCalculationsIsAmount()
+    public function test_payment_schedule_calculations_is_amount()
     {
         $settings = $this->company->settings;
         $settings->use_credits_payment = 'off';
@@ -253,31 +246,30 @@ class SchedulerTest extends TestCase
             'status_id' => Invoice::STATUS_SENT,
         ]);
 
-
         $data = [
-           'name' => 'A test payment schedule scheduler',
-           'frequency_id' => 0,
-           'next_run' => now()->format('Y-m-d'),
-           'template' => 'payment_schedule',
-           'parameters' => [
-               'invoice_id' => $invoice->hashed_id,
-               'auto_bill' => false,
-               'schedule' => [
-                [
-                    'id' => 1,
-                    'date' => now()->format('Y-m-d'),
-                    'amount' => 40,
-                    'is_amount' => true,
+            'name' => 'A test payment schedule scheduler',
+            'frequency_id' => 0,
+            'next_run' => now()->format('Y-m-d'),
+            'template' => 'payment_schedule',
+            'parameters' => [
+                'invoice_id' => $invoice->hashed_id,
+                'auto_bill' => false,
+                'schedule' => [
+                    [
+                        'id' => 1,
+                        'date' => now()->format('Y-m-d'),
+                        'amount' => 40,
+                        'is_amount' => true,
+                    ],
+                    [
+                        'id' => 2,
+                        'date' => now()->addDays(30)->format('Y-m-d'),
+                        'amount' => 60.00,
+                        'is_amount' => true,
+                    ],
                 ],
-                [
-                    'id' => 2,
-                    'date' => now()->addDays(30)->format('Y-m-d'),
-                    'amount' => 60.00,
-                    'is_amount' => true,
-                ]
-               ],
-           ],
-       ];
+            ],
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -304,7 +296,7 @@ class SchedulerTest extends TestCase
         $this->assertEquals(now()->addDays(30)->format('Y-m-d'), $scheduler->next_run->format('Y-m-d'));
     }
 
-    public function testPaymentScheduleCalculationsIsPercentage()
+    public function test_payment_schedule_calculations_is_percentage()
     {
         $settings = $this->company->settings;
         $settings->use_credits_payment = 'off';
@@ -325,31 +317,30 @@ class SchedulerTest extends TestCase
             'status_id' => Invoice::STATUS_SENT,
         ]);
 
-
         $data = [
-           'name' => 'A test payment schedule scheduler',
-           'frequency_id' => 0,
-           'next_run' => now()->format('Y-m-d'),
-           'template' => 'payment_schedule',
-           'parameters' => [
-               'invoice_id' => $invoice->hashed_id,
-               'auto_bill' => false,
-               'schedule' => [
-                [
-                    'id' => 1,
-                    'date' => now()->format('Y-m-d'),
-                    'amount' => 40,
-                    'is_amount' => false,
+            'name' => 'A test payment schedule scheduler',
+            'frequency_id' => 0,
+            'next_run' => now()->format('Y-m-d'),
+            'template' => 'payment_schedule',
+            'parameters' => [
+                'invoice_id' => $invoice->hashed_id,
+                'auto_bill' => false,
+                'schedule' => [
+                    [
+                        'id' => 1,
+                        'date' => now()->format('Y-m-d'),
+                        'amount' => 40,
+                        'is_amount' => false,
+                    ],
+                    [
+                        'id' => 2,
+                        'date' => now()->addDays(30)->format('Y-m-d'),
+                        'amount' => 60.00,
+                        'is_amount' => false,
+                    ],
                 ],
-                [
-                    'id' => 2,
-                    'date' => now()->addDays(30)->format('Y-m-d'),
-                    'amount' => 60.00,
-                    'is_amount' => false,
-                ]
-               ],
-           ],
-       ];
+            ],
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -372,7 +363,7 @@ class SchedulerTest extends TestCase
         $this->assertEquals(now()->format('Y-m-d'), $invoice->partial_due_date->format('Y-m-d'));
     }
 
-    public function testDuplicateInvoicePaymentSchedule()
+    public function test_duplicate_invoice_payment_schedule()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -387,29 +378,29 @@ class SchedulerTest extends TestCase
         $invoice->service()->markSent()->save();
 
         $data = [
-           'name' => 'A test payment schedule scheduler',
-           'frequency_id' => 0,
-           'next_run' => now()->format('Y-m-d'),
-           'template' => 'payment_schedule',
-           'parameters' => [
-               'invoice_id' => $invoice->hashed_id,
-               'auto_bill' => true,
-               'schedule' => [
-                [
-                    'id' => 1,
-                    'date' => now()->format('Y-m-d'),
-                    'amount' => 40,
-                    'is_amount' => false,
+            'name' => 'A test payment schedule scheduler',
+            'frequency_id' => 0,
+            'next_run' => now()->format('Y-m-d'),
+            'template' => 'payment_schedule',
+            'parameters' => [
+                'invoice_id' => $invoice->hashed_id,
+                'auto_bill' => true,
+                'schedule' => [
+                    [
+                        'id' => 1,
+                        'date' => now()->format('Y-m-d'),
+                        'amount' => 40,
+                        'is_amount' => false,
+                    ],
+                    [
+                        'id' => 2,
+                        'date' => now()->addDays(30)->format('Y-m-d'),
+                        'amount' => 60.00,
+                        'is_amount' => false,
+                    ],
                 ],
-                [
-                    'id' => 2,
-                    'date' => now()->addDays(30)->format('Y-m-d'),
-                    'amount' => 60.00,
-                    'is_amount' => false,
-                ]
-               ],
-           ],
-       ];
+            ],
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -427,7 +418,7 @@ class SchedulerTest extends TestCase
 
     }
 
-    public function testPaymentScheduleWithPercentageBasedScheduleAndFailingValidation()
+    public function test_payment_schedule_with_percentage_based_schedule_and_failing_validation()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -454,7 +445,7 @@ class SchedulerTest extends TestCase
                     'date' => now()->addDays(30)->format('Y-m-d'),
                     'amount' => 50.00,
                     'is_amount' => false,
-                ]
+                ],
             ],
             'auto_bill' => true,
         ];
@@ -462,13 +453,13 @@ class SchedulerTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule?show_schedule=true', $data);
+        ])->postJson('/api/v1/invoices/' . $invoice->hashed_id . '/payment_schedule?show_schedule=true', $data);
 
         $response->assertStatus(422);
 
     }
 
-    public function testPaymentScheduleWithPercentageBasedSchedule()
+    public function test_payment_schedule_with_percentage_based_schedule()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -495,16 +486,16 @@ class SchedulerTest extends TestCase
                     'date' => now()->addDays(30)->format('Y-m-d'),
                     'amount' => 60.00,
                     'is_amount' => false,
-                ]
+                ],
             ],
             'auto_bill' => true,
             'next_run' => now()->addDay()->format('Y-m-d'),
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule?show_schedule=true', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/' . $invoice->hashed_id . '/payment_schedule?show_schedule=true', $data);
 
         $response->assertStatus(200);
 
@@ -515,8 +506,7 @@ class SchedulerTest extends TestCase
         $this->assertEquals(now()->addDays(30)->format($this->company->date_format()), $arr['data']['schedule'][1]['date']);
     }
 
-
-    public function testPaymentScheduleRequestValidation()
+    public function test_payment_schedule_request_validation()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -543,16 +533,16 @@ class SchedulerTest extends TestCase
                     'date' => now()->addDays(30)->format('Y-m-d'),
                     'amount' => 200.00,
                     'is_amount' => true,
-                ]
+                ],
             ],
             'auto_bill' => true,
             'next_run' => now()->addDay()->format('Y-m-d'),
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule?show_schedule=true', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/' . $invoice->hashed_id . '/payment_schedule?show_schedule=true', $data);
 
         $response->assertStatus(200);
 
@@ -563,7 +553,7 @@ class SchedulerTest extends TestCase
         $this->assertEquals(now()->addDays(30)->format($this->company->date_format()), $arr['data']['schedule'][1]['date']);
     }
 
-    public function testPaymentScheduleRequestWithFrequency()
+    public function test_payment_schedule_request_with_frequency()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -577,7 +567,6 @@ class SchedulerTest extends TestCase
 
         $invoice->service()->markSent()->save();
 
-
         $data = [
             'frequency_id' => 5, // Monthly
             'remaining_cycles' => 3,
@@ -586,9 +575,9 @@ class SchedulerTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule?show_schedule=true', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/' . $invoice->hashed_id . '/payment_schedule?show_schedule=true', $data);
 
         $response->assertStatus(200);
 
@@ -602,23 +591,23 @@ class SchedulerTest extends TestCase
         $this->assertEquals($date->addMonthNoOverflow()->format($this->company->date_format()), $arr['data']['schedule'][2]['date']);
     }
 
-    public function testPaymentSchedule()
+    public function test_payment_schedule()
     {
         $data = [
             [
-            'date' => now()->format('Y-m-d'),
-            'amount' => 100,
-            'percentage' => 100,
+                'date' => now()->format('Y-m-d'),
+                'amount' => 100,
+                'percentage' => 100,
             ],
             [
-            'date' => now()->addDays(1)->format('Y-m-d'),
-            'amount' => 100,
-            'percentage' => 100,
+                'date' => now()->addDays(1)->format('Y-m-d'),
+                'amount' => 100,
+                'percentage' => 100,
             ],
             [
-            'date' => now()->addDays(2)->format('Y-m-d'),
-            'amount' => 100,
-            'percentage' => 100,
+                'date' => now()->addDays(2)->format('Y-m-d'),
+                'amount' => 100,
+                'percentage' => 100,
             ],
         ];
 
@@ -644,7 +633,7 @@ class SchedulerTest extends TestCase
 
     }
 
-    public function testInvoiceOutstandingTasks()
+    public function test_invoice_outstanding_tasks()
     {
 
         $start = now()->subMonth()->addDays(1)->timestamp;
@@ -655,7 +644,7 @@ class SchedulerTest extends TestCase
             'client_id' => $this->client->id,
             'user_id' => $this->user->id,
             'description' => 'Test task',
-            'time_log' => '[['.$start.','.$end.',null,false]]',
+            'time_log' => '[[' . $start . ',' . $end . ',null,false]]',
             'rate' => 100,
         ]);
 
@@ -675,9 +664,9 @@ class SchedulerTest extends TestCase
         $response = false;
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/task_schedulers', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/task_schedulers', $data);
 
         $response->assertStatus(200);
 
@@ -686,18 +675,16 @@ class SchedulerTest extends TestCase
         $id = $this->decodePrimaryKey($arr['data']['id']);
         $scheduler = Scheduler::find($id);
         $user = $scheduler->user;
-        $user->email = "{rand(5,555555}@gmail.com";
+        $user->email = '{rand(5,555555}@gmail.com';
         $user->save();
 
         $this->assertNotNull($scheduler);
 
         $export = (new InvoiceOutstandingTasksService($scheduler))->run();
 
-
     }
 
-
-    public function testReportValidationRulesForStartAndEndDate()
+    public function test_report_validation_rules_for_start_and_end_date()
     {
         $data = [
             'name' => 'A test product sales scheduler',
@@ -716,15 +703,15 @@ class SchedulerTest extends TestCase
         $response = false;
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/task_schedulers', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/task_schedulers', $data);
 
         $response->assertStatus(422);
 
     }
 
-    public function testReportValidationRules()
+    public function test_report_validation_rules()
     {
         $data = [
             'name' => 'A test product sales scheduler',
@@ -743,16 +730,15 @@ class SchedulerTest extends TestCase
         $response = false;
 
         $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->postJson('/api/v1/task_schedulers', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/task_schedulers', $data);
 
         $response->assertStatus(422);
 
     }
 
-
-    public function testProductSalesReportGenerationOneClientSeparateParam()
+    public function test_product_sales_report_generation_one_client_separate_param()
     {
         $data = [
             'name' => 'A test product sales scheduler',
@@ -783,20 +769,19 @@ class SchedulerTest extends TestCase
         $id = $this->decodePrimaryKey($arr['data']['id']);
         $scheduler = Scheduler::find($id);
         $user = $scheduler->user;
-        $user->email = "{rand(5,555555}@gmail.com";
+        $user->email = '{rand(5,555555}@gmail.com';
         $user->save();
 
         $this->assertNotNull($scheduler);
 
         $export = (new EmailReport($scheduler))->run();
 
-
         // nlog($scheduler->fresh()->toArray());
         $this->assertEquals(now()->startOfDay()->addMonthNoOverflow()->format('Y-m-d'), $scheduler->next_run->format('Y-m-d'));
 
     }
 
-    public function testProductSalesReportGenerationOneClient()
+    public function test_product_sales_report_generation_one_client()
     {
         $data = [
             'name' => 'A test product sales scheduler',
@@ -822,13 +807,12 @@ class SchedulerTest extends TestCase
 
         $response->assertStatus(200);
 
-
         $arr = $response->json();
 
         $id = $this->decodePrimaryKey($arr['data']['id']);
         $scheduler = Scheduler::find($id);
         $user = $scheduler->user;
-        $user->email = "{rand(5,555555}@gmail.com";
+        $user->email = '{rand(5,555555}@gmail.com';
         $user->save();
 
         $this->assertNotNull($scheduler);
@@ -839,7 +823,7 @@ class SchedulerTest extends TestCase
 
     }
 
-    public function testProductSalesReportGeneration()
+    public function test_product_sales_report_generation()
     {
         $data = [
             'name' => 'A test product sales scheduler',
@@ -865,7 +849,6 @@ class SchedulerTest extends TestCase
 
         $response->assertStatus(200);
 
-
         $arr = $response->json();
 
         $id = $this->decodePrimaryKey($arr['data']['id']);
@@ -879,7 +862,7 @@ class SchedulerTest extends TestCase
 
     }
 
-    public function testProductSalesReportStore()
+    public function test_product_sales_report_store()
     {
         $data = [
             'name' => 'A test product sales scheduler',
@@ -902,18 +885,16 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-    public function testSchedulerGet3()
+    public function test_scheduler_get3()
     {
 
         $scheduler = SchedulerFactory::create($this->company->id, $this->user->id);
-        $scheduler->name = "hello";
+        $scheduler->name = 'hello';
         $scheduler->save();
 
         $scheduler = SchedulerFactory::create($this->company->id, $this->user->id);
-        $scheduler->name = "goodbye";
+        $scheduler->name = 'goodbye';
         $scheduler->save();
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -929,7 +910,7 @@ class SchedulerTest extends TestCase
 
     }
 
-    public function testSchedulerGet2()
+    public function test_scheduler_get2()
     {
 
         $scheduler = SchedulerFactory::create($this->company->id, $this->user->id);
@@ -937,13 +918,12 @@ class SchedulerTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/task_schedulers/'.$this->encodePrimaryKey($scheduler->id));
+        ])->get('/api/v1/task_schedulers/' . $this->encodePrimaryKey($scheduler->id));
 
         $response->assertStatus(200);
     }
 
-
-    public function testCustomDateRanges()
+    public function test_custom_date_ranges()
     {
         $data = [
             'name' => 'A test statement scheduler',
@@ -958,7 +938,7 @@ class SchedulerTest extends TestCase
                 'status' => 'paid',
                 'clients' => [],
                 'start_date' => now()->format('Y-m-d'),
-                'end_date' => now()->addDays(4)->format('Y-m-d')
+                'end_date' => now()->addDays(4)->format('Y-m-d'),
             ],
         ];
 
@@ -970,7 +950,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testCustomDateRangesFails()
+    public function test_custom_date_ranges_fails()
     {
         $data = [
             'name' => 'A test statement scheduler',
@@ -985,7 +965,7 @@ class SchedulerTest extends TestCase
                 'status' => 'paid',
                 'clients' => [],
                 'start_date' => now()->format('Y-m-d'),
-                'end_date' => now()->subDays(4)->format('Y-m-d')
+                'end_date' => now()->subDays(4)->format('Y-m-d'),
             ],
         ];
 
@@ -995,7 +975,6 @@ class SchedulerTest extends TestCase
         ])->postJson('/api/v1/task_schedulers', $data);
 
         $response->assertStatus(422);
-
 
         $data = [
             'name' => 'A test statement scheduler',
@@ -1045,8 +1024,6 @@ class SchedulerTest extends TestCase
 
         $response->assertStatus(422);
 
-
-
         $data = [
             'name' => 'A test statement scheduler',
             'frequency_id' => RecurringInvoice::FREQUENCY_MONTHLY,
@@ -1073,20 +1050,20 @@ class SchedulerTest extends TestCase
 
     }
 
-    public function testClientCountResolution()
+    public function test_client_count_resolution()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'number' => rand(1000, 100000),
-            'name' => 'A fancy client'
+            'name' => 'A fancy client',
         ]);
 
         $c2 = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'number' => rand(1000, 100000),
-            'name' => 'A fancy client'
+            'name' => 'A fancy client',
         ]);
 
         $data = [
@@ -1101,7 +1078,7 @@ class SchedulerTest extends TestCase
                 'status' => 'paid',
                 'clients' => [
                     $c2->hashed_id,
-                    $c->hashed_id
+                    $c->hashed_id,
                 ],
             ],
         ];
@@ -1123,27 +1100,27 @@ class SchedulerTest extends TestCase
         $this->assertCount(2, $scheduler->parameters['clients']);
 
         $q = Client::query()
-              ->where('company_id', $scheduler->company_id)
-              ->whereIn('id', $this->transformKeys($scheduler->parameters['clients']))
-              ->cursor();
+            ->where('company_id', $scheduler->company_id)
+            ->whereIn('id', $this->transformKeys($scheduler->parameters['clients']))
+            ->cursor();
 
         $this->assertCount(2, $q);
     }
 
-    public function testClientsValidationInScheduledTask()
+    public function test_clients_validation_in_scheduled_task()
     {
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'number' => rand(1000, 10000000),
-            'name' => 'A fancy client'
+            'name' => 'A fancy client',
         ]);
 
         $c2 = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
             'number' => rand(1000, 10000000),
-            'name' => 'A fancy client'
+            'name' => 'A fancy client',
         ]);
 
         $data = [
@@ -1158,7 +1135,7 @@ class SchedulerTest extends TestCase
                 'status' => 'paid',
                 'clients' => [
                     $c2->hashed_id,
-                    $c->hashed_id
+                    $c->hashed_id,
                 ],
             ],
         ];
@@ -1195,7 +1172,6 @@ class SchedulerTest extends TestCase
 
         $response->assertStatus(200);
 
-
         $data = [
             'name' => 'An invalid Client',
             'frequency_id' => RecurringInvoice::FREQUENCY_MONTHLY,
@@ -1220,8 +1196,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(422);
     }
 
-
-    public function testCalculateNextRun()
+    public function test_calculate_next_run()
     {
         $scheduler = SchedulerFactory::create($this->company->id, $this->user->id);
 
@@ -1249,7 +1224,7 @@ class SchedulerTest extends TestCase
         $this->assertEquals(now()->startOfDay()->addMonthNoOverflow()->addSeconds($offset)->format('Y-m-d'), $scheduler->next_run->format('Y-m-d'));
     }
 
-    public function testCalculateStartAndEndDates()
+    public function test_calculate_start_and_end_dates()
     {
         $this->travelTo(Carbon::parse('2023-01-01'));
 
@@ -1258,7 +1233,7 @@ class SchedulerTest extends TestCase
         $data = [
             'name' => 'A test statement scheduler',
             'frequency_id' => RecurringInvoice::FREQUENCY_MONTHLY,
-            'next_run' => "2023-01-01",
+            'next_run' => '2023-01-01',
             'template' => 'client_statement',
             'parameters' => [
                 'date_range' => EmailStatement::LAST_MONTH,
@@ -1282,10 +1257,10 @@ class SchedulerTest extends TestCase
 
         $this->assertEquals(EmailStatement::LAST_MONTH, $scheduler->parameters['date_range']);
 
-        $this->assertEqualsCanonicalizing(['2022-12-01','2022-12-31'], $method);
+        $this->assertEqualsCanonicalizing(['2022-12-01', '2022-12-31'], $method);
     }
 
-    public function testCalculateStatementProperties()
+    public function test_calculate_statement_properties()
     {
         $scheduler = SchedulerFactory::create($this->company->id, $this->user->id);
 
@@ -1316,17 +1291,17 @@ class SchedulerTest extends TestCase
         $this->assertEquals('paid', $method['status']);
     }
 
-    public function testGetThisMonthRange()
+    public function test_get_this_month_range()
     {
         $this->travelTo(Carbon::parse('2023-01-14'));
 
-        $this->assertEqualsCanonicalizing(['2023-01-01','2023-01-31'], $this->getDateRange(EmailStatement::THIS_MONTH));
-        $this->assertEqualsCanonicalizing(['2023-01-01','2023-03-31'], $this->getDateRange(EmailStatement::THIS_QUARTER));
-        $this->assertEqualsCanonicalizing(['2023-01-01','2023-12-31'], $this->getDateRange(EmailStatement::THIS_YEAR));
+        $this->assertEqualsCanonicalizing(['2023-01-01', '2023-01-31'], $this->getDateRange(EmailStatement::THIS_MONTH));
+        $this->assertEqualsCanonicalizing(['2023-01-01', '2023-03-31'], $this->getDateRange(EmailStatement::THIS_QUARTER));
+        $this->assertEqualsCanonicalizing(['2023-01-01', '2023-12-31'], $this->getDateRange(EmailStatement::THIS_YEAR));
 
-        $this->assertEqualsCanonicalizing(['2022-12-01','2022-12-31'], $this->getDateRange(EmailStatement::LAST_MONTH));
-        $this->assertEqualsCanonicalizing(['2022-10-01','2022-12-31'], $this->getDateRange(EmailStatement::LAST_QUARTER));
-        $this->assertEqualsCanonicalizing(['2022-01-01','2022-12-31'], $this->getDateRange(EmailStatement::LAST_YEAR));
+        $this->assertEqualsCanonicalizing(['2022-12-01', '2022-12-31'], $this->getDateRange(EmailStatement::LAST_MONTH));
+        $this->assertEqualsCanonicalizing(['2022-10-01', '2022-12-31'], $this->getDateRange(EmailStatement::LAST_QUARTER));
+        $this->assertEqualsCanonicalizing(['2022-01-01', '2022-12-31'], $this->getDateRange(EmailStatement::LAST_YEAR));
 
         $this->travelBack();
     }
@@ -1348,7 +1323,7 @@ class SchedulerTest extends TestCase
         };
     }
 
-    public function testClientStatementGeneration()
+    public function test_client_statement_generation()
     {
         $data = [
             'name' => 'A test statement scheduler',
@@ -1372,8 +1347,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-    public function testDeleteSchedule()
+    public function test_delete_schedule()
     {
         $data = [
             'ids' => [$this->scheduler->hashed_id],
@@ -1383,32 +1357,7 @@ class SchedulerTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/task_schedulers/bulk?action=delete', $data)
-        ->assertStatus(200);
-
-
-        $data = [
-            'ids' => [$this->scheduler->hashed_id],
-        ];
-
-        $response = $this->withHeaders([
-            'X-API-SECRET' => config('ninja.api_secret'),
-            'X-API-TOKEN' => $this->token,
-        ])->postJson('/api/v1/task_schedulers/bulk?action=restore', $data)
-        ->assertStatus(200);
-    }
-
-    public function testRestoreSchedule()
-    {
-        $data = [
-            'ids' => [$this->scheduler->hashed_id],
-        ];
-
-        $response = $this->withHeaders([
-            'X-API-SECRET' => config('ninja.api_secret'),
-            'X-API-TOKEN' => $this->token,
-        ])->postJson('/api/v1/task_schedulers/bulk?action=archive', $data)
-        ->assertStatus(200);
-
+            ->assertStatus(200);
 
         $data = [
             'ids' => [$this->scheduler->hashed_id],
@@ -1418,10 +1367,10 @@ class SchedulerTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/task_schedulers/bulk?action=restore', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
     }
 
-    public function testArchiveSchedule()
+    public function test_restore_schedule()
     {
         $data = [
             'ids' => [$this->scheduler->hashed_id],
@@ -1431,10 +1380,33 @@ class SchedulerTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/task_schedulers/bulk?action=archive', $data)
-        ->assertStatus(200);
+            ->assertStatus(200);
+
+        $data = [
+            'ids' => [$this->scheduler->hashed_id],
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/task_schedulers/bulk?action=restore', $data)
+            ->assertStatus(200);
     }
 
-    public function testSchedulerPost()
+    public function test_archive_schedule()
+    {
+        $data = [
+            'ids' => [$this->scheduler->hashed_id],
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/task_schedulers/bulk?action=archive', $data)
+            ->assertStatus(200);
+    }
+
+    public function test_scheduler_post()
     {
         $data = [
             'name' => 'A different Name',
@@ -1452,7 +1424,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testSchedulerPut()
+    public function test_scheduler_put()
     {
         $data = [
             'name' => 'A different Name',
@@ -1465,12 +1437,12 @@ class SchedulerTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/task_schedulers/'.$this->scheduler->hashed_id, $data);
+        ])->putJson('/api/v1/task_schedulers/' . $this->scheduler->hashed_id, $data);
 
         $response->assertStatus(200);
     }
 
-    public function testSchedulerGet()
+    public function test_scheduler_get()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -1480,7 +1452,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testSchedulerCreate()
+    public function test_scheduler_create()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -1490,9 +1462,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-
-    public function testInvoiceWithNoExistingScheduleAllowsCreation()
+    public function test_invoice_with_no_existing_schedule_allows_creation()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
@@ -1530,7 +1500,7 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testInvoiceWithExistingScheduleBlocksCreation()
+    public function test_invoice_with_existing_schedule_blocks_creation()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,

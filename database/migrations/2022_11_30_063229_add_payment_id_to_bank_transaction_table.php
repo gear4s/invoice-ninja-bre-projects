@@ -3,9 +3,11 @@
 use App\Utils\Traits\AppSetup;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     use AppSetup;
 
     /**
@@ -19,7 +21,7 @@ return new class extends Migration {
             $table->unsignedInteger('payment_id')->nullable();
         });
 
-        \Illuminate\Support\Facades\Artisan::call('ninja:design-update');
+        Artisan::call('ninja:design-update');
 
     }
 
@@ -28,7 +30,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

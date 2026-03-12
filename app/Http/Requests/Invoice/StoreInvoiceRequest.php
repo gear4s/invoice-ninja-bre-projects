@@ -6,33 +6,35 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Invoice;
 
-use App\Models\Invoice;
 use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
-use App\Utils\Traits\CleanLineItems;
-use App\Http\ValidationRules\Project\ValidProjectForClient;
 use App\Http\ValidationRules\Invoice\VerifactuAmountCheck;
+use App\Http\ValidationRules\Project\ValidProjectForClient;
+use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\User;
+use App\Utils\Traits\CleanLineItems;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class StoreInvoiceRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Invoice::class);
@@ -41,7 +43,7 @@ class StoreInvoiceRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -61,7 +63,7 @@ class StoreInvoiceRequest extends Request
         $rules['is_amount_discount'] = ['boolean'];
 
         $rules['date'] = 'bail|sometimes|date:Y-m-d';
-        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', Rule::requiredIf(fn() => strlen($this->partial_due_date ?? '') > 1), 'date'];
+        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', Rule::requiredIf(fn () => strlen($this->partial_due_date ?? '') > 1), 'date'];
 
         $rules['line_items'] = ['bail', 'array'];
         // $rules['line_items.*.notes'] = 'nullable|string';
@@ -86,7 +88,7 @@ class StoreInvoiceRequest extends Request
         $rules['custom_surcharge2'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['custom_surcharge3'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['custom_surcharge4'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
-        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
 
         // $rules['modified_invoice_id'] = ['bail', 'sometimes', 'nullable', new CanGenerateModificationInvoice()];
 
@@ -96,17 +98,17 @@ class StoreInvoiceRequest extends Request
     public function prepareForValidation()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $client_id = is_string($this->input('client_id', '')) ? $this->input('client_id') : '';
-        $key = $this->ip() . "|INVOICE|" . $client_id . "|" . $user->company()->company_key;
+        $key = $this->ip() . '|INVOICE|' . $client_id . '|' . $user->company()->company_key;
 
-        if (\Illuminate\Support\Facades\Cache::has($key)) {
+        if (Cache::has($key)) {
             usleep(200000);
         }
 
-        \Illuminate\Support\Facades\Cache::put($key, 1);
+        Cache::put($key, 1);
 
         $input = $this->all();
 
@@ -115,11 +117,11 @@ class StoreInvoiceRequest extends Request
         $input['amount'] = 0;
         $input['balance'] = 0;
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -148,37 +150,37 @@ class StoreInvoiceRequest extends Request
         if (!isset($input['date'])) {
             $input['date'] = now()->addSeconds($user->company()->utc_offset())->format('Y-m-d');
         }
-        //handles edge case where we need for force set the due date of the invoice.
+        // handles edge case where we need for force set the due date of the invoice.
         if (isset($input['client_id']) && (isset($input['partial_due_date']) && strlen($input['partial_due_date']) > 1) && (!array_key_exists('due_date', $input) || (empty($input['due_date']) && empty($this->invoice->due_date)))) {
-            $client = \App\Models\Client::withTrashed()->find($input['client_id']);
+            $client = Client::withTrashed()->find($input['client_id']);
 
             if ($client) {
-                $input['due_date'] = \Illuminate\Support\Carbon::parse($input['date'])->addDays((int) $client->getSetting('payment_terms'))->format('Y-m-d');
+                $input['due_date'] = Carbon::parse($input['date'])->addDays((int) $client->getSetting('payment_terms'))->format('Y-m-d');
             }
         }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
 
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
 
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
 
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
 
         $input['lock_key'] = $key;
 
-        if(isset($input['sync'])){
+        if (isset($input['sync'])) {
             unset($input['sync']);
         }
-        
+
         $this->replace($input);
     }
 }

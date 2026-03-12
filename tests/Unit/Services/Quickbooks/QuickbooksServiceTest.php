@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\Services\Quickbooks;
 
+use App\DataMapper\QuickbooksSettings;
+use App\Models\Company;
+use App\Services\Quickbooks\QuickbooksService;
 use Mockery;
+use QuickBooksOnline\API\DataService\DataService;
 use ReflectionClass;
 use Tests\TestCase;
-use App\Models\Company;
-use App\DataMapper\QuickbooksSettings;
-use App\Services\Quickbooks\QuickbooksService;
-use QuickBooksOnline\API\DataService\DataService;
 
 class QuickbooksServiceTest extends TestCase
 {

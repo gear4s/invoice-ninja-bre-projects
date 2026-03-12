@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,14 +22,13 @@ class TaskObserver
     /**
      * Handle the task "created" event.
      *
-     * @param Task $task
      * @return void
      */
     public function created(Task $task)
     {
         $subscriptions = Webhook::where('company_id', $task->company_id)
-                        ->where('event_id', Webhook::EVENT_CREATE_TASK)
-                        ->exists();
+            ->where('event_id', Webhook::EVENT_CREATE_TASK)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_TASK, $task, $task->company)->delay(0);
@@ -40,7 +38,6 @@ class TaskObserver
     /**
      * Handle the task "updated" event.
      *
-     * @param Task $task
      * @return void
      */
     public function updated(Task $task)
@@ -56,8 +53,8 @@ class TaskObserver
         }
 
         $subscriptions = Webhook::where('company_id', $task->company_id)
-                                    ->where('event_id', $event)
-                                    ->exists();
+            ->where('event_id', $event)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $task, $task->company)->delay(0);
@@ -67,7 +64,6 @@ class TaskObserver
     /**
      * Handle the task "deleted" event.
      *
-     * @param Task $task
      * @return void
      */
     public function deleted(Task $task)
@@ -77,8 +73,8 @@ class TaskObserver
         }
 
         $subscriptions = Webhook::where('company_id', $task->company_id)
-                        ->where('event_id', Webhook::EVENT_ARCHIVE_TASK)
-                        ->exists();
+            ->where('event_id', Webhook::EVENT_ARCHIVE_TASK)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_ARCHIVE_TASK, $task, $task->company)->delay(0);
@@ -89,7 +85,6 @@ class TaskObserver
     /**
      * Handle the task "restored" event.
      *
-     * @param Task $task
      * @return void
      */
     public function restored(Task $task)
@@ -100,7 +95,6 @@ class TaskObserver
     /**
      * Handle the task "force deleted" event.
      *
-     * @param Task $task
      * @return void
      */
     public function forceDeleted(Task $task)

@@ -6,18 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Models;
 
-use Carbon\Carbon;
-use App\Models\Payment;
 use App\DataMapper\PaymentSync;
+use App\Enum\SyncDirection;
 use App\Interfaces\SyncInterface;
+use App\Models\Payment;
+use App\Services\Payment\DeletePaymentV2;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
+use Carbon\Carbon;
 
 class QbPayment implements SyncInterface
 {
@@ -55,9 +56,6 @@ class QbPayment implements SyncInterface
      * Push payments from Invoice Ninja to QuickBooks.
      *
      * Handles create, update, and void operations.
-     *
-     * @param array $records
-     * @return void
      */
     public function syncToForeign(array $records): void
     {
@@ -71,12 +69,14 @@ class QbPayment implements SyncInterface
             // Skip immutable payments (QB closed period)
             if ($payment->sync && $payment->sync->qb_immutable) {
                 nlog("QuickBooks: Skipping immutable payment {$payment->id}");
+
                 continue;
             }
 
             // Handle deletion/cancellation → void in QB
             if ($payment->is_deleted || $payment->status_id === Payment::STATUS_CANCELLED) {
                 $this->voidInQuickbooks($payment);
+
                 continue;
             }
 
@@ -109,7 +109,7 @@ class QbPayment implements SyncInterface
                     $result = $this->service->sdk->Update($qb_payment);
 
                     // Update sync metadata
-                    $sync = $payment->sync ?? new PaymentSync();
+                    $sync = $payment->sync ?? new PaymentSync;
                     $sync->qb_sync_token = data_get($result, 'SyncToken') ?? '';
                     $sync->last_synced_at = now()->toIso8601String();
                     $payment->sync = $sync;
@@ -121,7 +121,7 @@ class QbPayment implements SyncInterface
                     $qb_payment = \QuickBooksOnline\API\Facades\Payment::create($qb_payment_data);
                     $result = $this->service->sdk->Add($qb_payment);
 
-                    $sync = $payment->sync ?? new PaymentSync();
+                    $sync = $payment->sync ?? new PaymentSync;
                     $sync->qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value') ?? '';
                     $sync->qb_sync_token = data_get($result, 'SyncToken') ?? '';
                     $sync->last_synced_at = now()->toIso8601String();
@@ -142,9 +142,6 @@ class QbPayment implements SyncInterface
      *
      * Handles closed-period errors gracefully by flagging the payment
      * as immutable rather than retrying.
-     *
-     * @param Payment $payment
-     * @return void
      */
     private function voidInQuickbooks(Payment $payment): void
     {
@@ -157,6 +154,7 @@ class QbPayment implements SyncInterface
 
             if (!$qb_payment) {
                 nlog("QuickBooks: Payment QB ID {$payment->sync->qb_id} not found in QB, skipping void");
+
                 return;
             }
 
@@ -168,6 +166,7 @@ class QbPayment implements SyncInterface
                 $sync->qb_sync_token = '';
                 $payment->sync = $sync;
                 $payment->saveQuietly();
+
                 return;
             }
 
@@ -213,21 +212,21 @@ class QbPayment implements SyncInterface
     /**
      * Handle QB webhook update/create events (pull direction).
      *
-     * @param string $id QB Payment ID
-     * @param string $last_updated ISO8601 timestamp from QB webhook
-     * @return void
+     * @param  string  $id  QB Payment ID
+     * @param  string  $last_updated  ISO8601 timestamp from QB webhook
      */
     public function sync(string $id, string $last_updated): void
     {
         $qb_record = $this->find($id);
 
-        if (!$this->service->syncable('payment', \App\Enum\SyncDirection::PULL)) {
+        if (!$this->service->syncable('payment', SyncDirection::PULL)) {
             return;
         }
 
         // Voided in QB → delete in Ninja
         if (data_get($qb_record, 'TxnStatus') === 'Voided') {
             $this->delete($id);
+
             return;
         }
 
@@ -246,6 +245,7 @@ class QbPayment implements SyncInterface
             } finally {
                 unset(QuickbooksService::$importing[$this->service->company->id]);
             }
+
             return;
         }
 
@@ -266,12 +266,11 @@ class QbPayment implements SyncInterface
     /**
      * Handle QB webhook delete/void events (pull direction).
      *
-     * @param string $id QB Payment ID
-     * @return void
+     * @param  string  $id  QB Payment ID
      */
     public function delete(string $id): void
     {
-        if (!$this->service->syncable('payment', \App\Enum\SyncDirection::PULL)) {
+        if (!$this->service->syncable('payment', SyncDirection::PULL)) {
             return;
         }
 
@@ -286,7 +285,7 @@ class QbPayment implements SyncInterface
             try {
                 $payment->sync = null;
                 $payment->saveQuietly();
-                (new \App\Services\Payment\DeletePaymentV2($payment, true))->run();
+                (new DeletePaymentV2($payment, true))->run();
             } finally {
                 unset(QuickbooksService::$importing[$this->service->company->id]);
             }
@@ -295,9 +294,6 @@ class QbPayment implements SyncInterface
 
     /**
      * Detect if a QB error is due to a closed accounting period.
-     *
-     * @param string $errorMessage
-     * @return bool
      */
     private function isClosedPeriodError(string $errorMessage): bool
     {
@@ -324,9 +320,6 @@ class QbPayment implements SyncInterface
 
     /**
      * Extract a human-readable error from the SDK's raw exception message.
-     *
-     * @param string $rawMessage
-     * @return string
      */
     private function extractReadableError(string $rawMessage): string
     {
@@ -355,5 +348,4 @@ class QbPayment implements SyncInterface
 
         return mb_substr($cleaned, 0, 500);
     }
-
 }

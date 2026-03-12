@@ -2,11 +2,10 @@
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use DateTime;
+use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
-use Symfony\Component\Serializer\Attribute\Context;
 
 class Invoice
 {
@@ -30,8 +29,11 @@ class Invoice
     public $accounting_cost;
 
     public ?string $accounting_currency_exchange_rate;
+
     public ?string $accounting_currency_taxable_amount;
+
     public ?string $accounting_currency_tax_amount;
+
     public ?string $accounting_currency_tax_amount_currency;
 
     #[SerializedPath('[cac:AccountingSupplierParty]')]
@@ -42,7 +44,7 @@ class Invoice
     /** @var AllowanceCharges[]|null */
     public ?array $allowance_charges = [];
 
-    //this is an experimental prop
+    // this is an experimental prop
     // #[SerializedPath('[cac:LegalMonetaryTotal][cbc:TaxInclusiveAmount][#]')]
     // #[Context(['path_type' => 'tax'])]
     public $amount_including_tax;
@@ -54,12 +56,12 @@ class Invoice
     /** @var Attachments[]|null */
     public ?array $attachments;
 
-    public ?bool $consumer_tax_mode; //toggle this to TRUE if we are using a secondary identifier ie. when German company is taxing French company and therefore using the additional Vat identifier
+    public ?bool $consumer_tax_mode; // toggle this to TRUE if we are using a secondary identifier ie. when German company is taxing French company and therefore using the additional Vat identifier
 
     #[SerializedName('[cac:Delivery][0]')]
     public ?Delivery $delivery;
 
-    //no mapping
+    // no mapping
     public ?DeliveryTerms $delivery_terms;
 
     #[SerializedPath('[cbc:DocumentCurrencyCode][#]')]
@@ -70,19 +72,19 @@ class Invoice
     // #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     public ?string $due_date;
 
-    //may need something custom for this
+    // may need something custom for this
     public ?string $invoice_period;
 
-    //no mapping
+    // no mapping
     public ?array $issue_reasons;
 
-    //no mapping
+    // no mapping
     public ?string $issue_time;
 
     #[SerializedPath('[cbc:Note]')]
     public $note;
 
-    //no mapping
+    // no mapping
     public ?string $payable_rounding_amount;
 
     #[SerializedPath('[cac:PaymentMeans]')]
@@ -98,54 +100,60 @@ class Invoice
     #[SerializedPath('[cac:LegalMonetaryTotal][cbc:PrepaidAmount]')]
     public ?string $prepaid_amount;
 
-    //no mapping
+    // no mapping
     // 'price_mode_gross' can only be used for sender countries ES, IT and PT
     public ?string $price_mode;
 
     /** @var References[]|null */
     public ?array $references;
 
-    //AU/NZ and JP. - only available intra country ie AU - AU
+    // AU/NZ and JP. - only available intra country ie AU - AU
     public ?bool $self_billing_mode;
 
-    //readonly prop for received documents
+    // readonly prop for received documents
     public ?string $sub_type;
 
-    //proxy of issue date
+    // proxy of issue date
     public ?string $tax_point_date;
 
     #[SerializedPath('[cac:TaxTotal][0][cac:TaxSubtotal]')]
     /** @var TaxSubtotals[]|null */
     public $tax_subtotals;
 
-    //storecove - no mappings - tax_line_percentages
+    // storecove - no mappings - tax_line_percentages
     public ?string $tax_system;
 
-    //italy only - invoice level
+    // italy only - invoice level
     /** @var TaxesDutiesFees[]|null */
     public ?array $taxes_duties_fees;
 
-    //no mapping
+    // no mapping
     public ?string $time_zone;
 
     // india only enum (b2b, sezwp, sezwop, expwp, expwop, dexp)
     public ?string $transaction_type;
 
-    //no mapping
+    // no mapping
     public ?array $ubl_extensions;
 
-    //no mapping
+    // no mapping
     public ?string $x2y;
 
-    //not found in schema
+    // not found in schema
     public ?bool $vat_reverse_charge;
+
     public ?string $tax_exempt_reason;
+
     public ?string $invoice_type;
+
     public ?string $payment_means_iban;
+
     public ?string $payment_means_bic;
+
     public ?string $payment_means_code;
+
     public ?string $payment_means_payment_id;
-    //not found in schema
+    // not found in schema
 
     #[SerializedPath('[cbc:BuyerReference]')]
     public ?string $buyer_reference;
@@ -570,345 +578,398 @@ class Invoice
     public function setInvoiceNumber(?string $invoice_number): self
     {
         $this->invoice_number = $invoice_number;
+
         return $this;
     }
 
     public function setIssueDate($issue_date): self
     {
         $this->issue_date = $issue_date;
+
         return $this;
     }
 
     public function setAccountingCustomerParty(?AccountingCustomerParty $accounting_customer_party): self
     {
         $this->accounting_customer_party = $accounting_customer_party;
+
         return $this;
     }
 
     /**
-     * @param InvoiceLines[] $invoice_lines
+     * @param  InvoiceLines[]  $invoice_lines
      */
     public function setInvoiceLines(?array $invoice_lines): self
     {
         $this->invoice_lines = $invoice_lines;
+
         return $this;
     }
 
     public function setAccountingCost(?string $accounting_cost): self
     {
         $this->accounting_cost = $accounting_cost;
+
         return $this;
     }
 
     public function setAccountingCurrencyExchangeRate(?string $accounting_currency_exchange_rate): self
     {
         $this->accounting_currency_exchange_rate = $accounting_currency_exchange_rate;
+
         return $this;
     }
 
     public function setAccountingCurrencyTaxableAmount(?string $accounting_currency_taxable_amount): self
     {
         $this->accounting_currency_taxable_amount = $accounting_currency_taxable_amount;
+
         return $this;
     }
 
     public function setAccountingCurrencyTaxAmount(?string $accounting_currency_tax_amount): self
     {
         $this->accounting_currency_tax_amount = $accounting_currency_tax_amount;
+
         return $this;
     }
 
     public function setAccountingCurrencyTaxAmountCurrency(?string $accounting_currency_tax_amount_currency): self
     {
         $this->accounting_currency_tax_amount_currency = $accounting_currency_tax_amount_currency;
+
         return $this;
     }
 
     public function setAccountingSupplierParty(?AccountingSupplierParty $accounting_supplier_party): self
     {
         $this->accounting_supplier_party = $accounting_supplier_party;
+
         return $this;
     }
 
     /**
-     * @param AllowanceCharges[] $allowance_charges
+     * @param  AllowanceCharges[]  $allowance_charges
      */
     public function setAllowanceCharges(?array $allowance_charges): self
     {
         $this->allowance_charges = $allowance_charges;
+
         return $this;
     }
 
     public function setAmountIncludingTax(?float $amount_including_tax): self
     {
         $this->amount_including_tax = $amount_including_tax;
+
         return $this;
     }
 
     public function setAmountIncludingVat(?float $amount_including_vat): self
     {
         $this->amount_including_vat = $amount_including_vat;
+
         return $this;
     }
 
     /**
-     * @param Attachments[] $attachments
+     * @param  Attachments[]  $attachments
      */
     public function setAttachments(?array $attachments): self
     {
         $this->attachments = $attachments;
+
         return $this;
     }
 
     public function setConsumerTaxMode(?bool $consumer_tax_mode): self
     {
         $this->consumer_tax_mode = $consumer_tax_mode;
+
         return $this;
     }
 
     public function setDelivery(?Delivery $delivery): self
     {
         $this->delivery = $delivery;
+
         return $this;
     }
 
     public function setDeliveryTerms(?DeliveryTerms $delivery_terms): self
     {
         $this->delivery_terms = $delivery_terms;
+
         return $this;
     }
 
     public function setDocumentCurrencyCode(?string $document_currency_code): self
     {
         $this->document_currency_code = $document_currency_code;
+
         return $this;
     }
 
     public function setDueDate(?string $due_date): self
     {
         $this->due_date = $due_date;
+
         return $this;
     }
 
     public function setInvoicePeriod(?string $invoice_period): self
     {
         $this->invoice_period = $invoice_period;
+
         return $this;
     }
 
     /**
-     * @param string[] $issue_reasons
+     * @param  string[]  $issue_reasons
      */
     public function setIssueReasons(?array $issue_reasons): self
     {
         $this->issue_reasons = $issue_reasons;
+
         return $this;
     }
 
     public function setIssueTime(?string $issue_time): self
     {
         $this->issue_time = $issue_time;
+
         return $this;
     }
 
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
         return $this;
     }
 
     public function setPayableRoundingAmount(?string $payable_rounding_amount): self
     {
         $this->payable_rounding_amount = $payable_rounding_amount;
+
         return $this;
     }
 
     /**
-     * @param PaymentMeansArray[] $payment_means_array
+     * @param  PaymentMeansArray[]  $payment_means_array
      */
     public function setPaymentMeansArray(?array $payment_means_array): self
     {
         $this->payment_means_array = $payment_means_array;
+
         return $this;
     }
 
     public function setPaymentTerms(?PaymentTerms $payment_terms): self
     {
         $this->payment_terms = $payment_terms;
+
         return $this;
     }
 
     public function setPreferredInvoiceType(?string $preferred_invoice_type): self
     {
         $this->preferred_invoice_type = $preferred_invoice_type;
+
         return $this;
     }
 
     public function setPrepaidAmount(?string $prepaid_amount): self
     {
         $this->prepaid_amount = $prepaid_amount;
+
         return $this;
     }
 
     public function setPriceMode(?string $price_mode): self
     {
         $this->price_mode = $price_mode;
+
         return $this;
     }
 
     /**
-     * @param References[] $references
+     * @param  References[]  $references
      */
     public function setReferences(?array $references): self
     {
         $this->references = $references;
+
         return $this;
     }
 
     public function setSelfBillingMode(?bool $self_billing_mode): self
     {
         $this->self_billing_mode = $self_billing_mode;
+
         return $this;
     }
 
     public function setSubType(?string $sub_type): self
     {
         $this->sub_type = $sub_type;
+
         return $this;
     }
 
     public function setTaxPointDate(?string $tax_point_date): self
     {
         $this->tax_point_date = $tax_point_date;
+
         return $this;
     }
 
     /**
-     * @param TaxSubtotals[] $tax_subtotals
+     * @param  TaxSubtotals[]  $tax_subtotals
      */
     public function setTaxSubtotals(?array $tax_subtotals): self
     {
         $this->tax_subtotals = $tax_subtotals;
+
         return $this;
     }
 
     public function setTaxSystem(?string $tax_system): self
     {
         $this->tax_system = $tax_system;
+
         return $this;
     }
 
     /**
-     * @param TaxesDutiesFees[] $taxes_duties_fees
+     * @param  TaxesDutiesFees[]  $taxes_duties_fees
      */
     public function setTaxesDutiesFees(?array $taxes_duties_fees): self
     {
         $this->taxes_duties_fees = $taxes_duties_fees;
+
         return $this;
     }
 
     public function setTimeZone(?string $time_zone): self
     {
         $this->time_zone = $time_zone;
+
         return $this;
     }
 
     public function setTransactionType(?string $transaction_type): self
     {
         $this->transaction_type = $transaction_type;
+
         return $this;
     }
 
     /**
-     * @param string[] $ubl_extensions
+     * @param  string[]  $ubl_extensions
      */
     public function setUblExtensions(?array $ubl_extensions): self
     {
         $this->ubl_extensions = $ubl_extensions;
+
         return $this;
     }
 
     public function setX2y(?string $x2y): self
     {
         $this->x2y = $x2y;
+
         return $this;
     }
 
     public function setVatReverseCharge(?bool $vat_reverse_charge): self
     {
         $this->vat_reverse_charge = $vat_reverse_charge;
+
         return $this;
     }
 
     public function setTaxExemptReason(?string $tax_exempt_reason): self
     {
         $this->tax_exempt_reason = $tax_exempt_reason;
+
         return $this;
     }
 
     public function setInvoiceType(?string $invoice_type): self
     {
         $this->invoice_type = $invoice_type;
+
         return $this;
     }
 
     public function setBuyerReference(?string $buyer_reference): self
     {
         $this->buyer_reference = $buyer_reference;
+
         return $this;
     }
 
     public function setOrderReference(?string $order_reference): self
     {
         $this->order_reference = $order_reference;
+
         return $this;
     }
 
     public function setSalesOrderId(?string $sales_order_id): self
     {
         $this->sales_order_id = $sales_order_id;
+
         return $this;
     }
 
     public function setBillingReference(?string $billing_reference): self
     {
         $this->billing_reference = $billing_reference;
+
         return $this;
     }
 
     public function setContractDocumentReference(?string $contract_document_reference): self
     {
         $this->contract_document_reference = $contract_document_reference;
+
         return $this;
     }
 
     public function setProjectReference(?string $project_reference): self
     {
         $this->project_reference = $project_reference;
+
         return $this;
     }
 
     public function setPaymentMeansIban(?string $payment_means_iban): self
     {
         $this->payment_means_iban = $payment_means_iban;
+
         return $this;
     }
 
     public function setPaymentMeansBic(?string $payment_means_bic): self
     {
         $this->payment_means_bic = $payment_means_bic;
+
         return $this;
     }
 
     public function setPaymentMeansCode(?string $payment_means_code): self
     {
         $this->payment_means_code = $payment_means_code;
+
         return $this;
     }
 
     public function setPaymentMeansPaymentId(?string $payment_means_payment_id): self
     {
         $this->payment_means_payment_id = $payment_means_payment_id;
+
         return $this;
     }
 }

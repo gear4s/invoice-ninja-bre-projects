@@ -4,15 +4,14 @@ use App\Models\GatewayType;
 use App\Models\PaymentType;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up(): void
     {
-        $type = new PaymentType();
+        $type = new PaymentType;
 
         $type->id = PaymentType::INSTANT_BANK_PAY;
         $type->name = 'Instant Bank Pay';

@@ -14,11 +14,10 @@ namespace App\Http\ValidationRules\EInvoice;
 
 use App\Services\EDocument\Standards\Validation\Peppol\CreditLevel;
 use Closure;
-use InvoiceNinja\EInvoice\EInvoice;
-use Illuminate\Validation\Validator;
-use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
+use Illuminate\Validation\Validator;
+use InvoiceNinja\EInvoice\EInvoice;
 
 /**
  * Class ValidScheme.
@@ -35,10 +34,9 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
 
-
         if (isset($value['CreditNote'])) {
 
-            $r = new EInvoice();
+            $r = new EInvoice;
 
             if (data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.IssueDate') === null
                 || data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.IssueDate') === '') {
@@ -60,8 +58,8 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
                 || data_get($value, 'CreditNote.BillingReference.0.InvoiceDocumentReference.ID') === '') {
 
                 $this->validator->errors()->add(
-                    "e_invoice.BillingReference.0.InvoiceDocumentReference.ID",
-                    "Invoice Reference/Number is required"
+                    'e_invoice.BillingReference.0.InvoiceDocumentReference.ID',
+                    'Invoice Reference/Number is required'
                 );
 
             }
@@ -69,12 +67,11 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
             if (isset($value['CreditNote']['BillingReference'][0]['InvoiceDocumentReference']['IssueDate']) && strlen($value['CreditNote']['BillingReference'][0]['InvoiceDocumentReference']['IssueDate']) > 1 && !$this->isValidDateSyntax($value['CreditNote']['BillingReference'][0]['InvoiceDocumentReference']['IssueDate'])) {
 
                 $this->validator->errors()->add(
-                    "e_invoice.BillingReference.0.InvoiceDocumentReference.IssueDate",
-                    "Invoice Issue Date is required"
+                    'e_invoice.BillingReference.0.InvoiceDocumentReference.IssueDate',
+                    'Invoice Issue Date is required'
                 );
 
             }
-
 
         }
 
@@ -92,6 +89,7 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
         // Ensure the formatted date matches the input (catches overflow)
         return $date->format('Y-m-d') === $date_string;
     }
+
     /**
      * Set the current validator.
      */
@@ -101,6 +99,4 @@ class ValidCreditScheme implements ValidationRule, ValidatorAwareRule
 
         return $this;
     }
-
-
 }

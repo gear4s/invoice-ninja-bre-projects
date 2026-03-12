@@ -6,20 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Util;
 
 use App\Utils\Ninja;
-use Illuminate\Http\File;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\File;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class UploadAvatar implements ShouldQueue
 {
@@ -29,13 +28,14 @@ class UploadAvatar implements ShouldQueue
     use SerializesModels;
 
     public function __construct(protected mixed $file, protected string $directory) {}
+
     public function handle(): ?string
     {
 
         $url = null;
 
         try {
-            $tmp_file = sha1(time()) . '.png'; //@phpstan-ignore-line
+            $tmp_file = sha1(time()) . '.png'; // @phpstan-ignore-line
 
             $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
 

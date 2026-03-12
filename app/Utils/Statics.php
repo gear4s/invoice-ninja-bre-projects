@@ -6,12 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils;
 
+use App\Models\Client;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Expense;
+use App\Models\Industry;
+use App\Models\Language;
+use App\Models\PaymentType;
+use App\Models\RecurringInvoice;
+use App\Models\Task;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -21,6 +30,7 @@ class Statics
 {
     /**
      * Date format types.
+     *
      * @var array
      */
     public static $date = [
@@ -41,6 +51,7 @@ class Statics
 
     /**
      * Date Time Format types.
+     *
      * @var array
      */
     public static $date_time = [
@@ -61,14 +72,15 @@ class Statics
 
     /**
      * Company statics.
-     * @param  string|bool $locale The user locale
-     * @return array          Array of statics
+     *
+     * @param  string|bool  $locale  The user locale
+     * @return array Array of statics
      */
     public static function company($locale = 'en'): array
     {
         $data = [];
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Industry> */
+        /** @var Collection<Industry> */
         $industries = app('industries');
 
         $data['industries'] = $industries->each(function ($industry) {
@@ -77,7 +89,7 @@ class Statics
             return $industry->name;
         })->values();
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $data['countries'] = $countries->each(function ($country) {
@@ -86,8 +98,7 @@ class Statics
             return $country->name;
         })->values();
 
-
-        /** @var \Illuminate\Support\Collection<\App\Models\PaymentType> */
+        /** @var Collection<PaymentType> */
         $payment_types = app('payment_types');
 
         $data['payment_types'] = $payment_types->each(function ($pType) {
@@ -97,7 +108,7 @@ class Statics
             return $pType->name;
         })->values();
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+        /** @var Collection<Language> */
         $languages = app('languages');
 
         $data['languages'] = $languages->each(function ($lang) {
@@ -106,8 +117,7 @@ class Statics
             return $lang->name;
         })->values();
 
-
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         $data['currencies'] = $currencies->each(function ($currency) {
@@ -124,10 +134,10 @@ class Statics
         $data['templates'] = app('templates');
 
         $data['bulk_updates'] = [
-            'client' => \App\Models\Client::$bulk_update_columns,
-            'expense' => \App\Models\Expense::$bulk_update_columns,
-            'recurring_invoice' => \App\Models\RecurringInvoice::$bulk_update_columns,
-            'task' => \App\Models\Task::$bulk_update_columns,
+            'client' => Client::$bulk_update_columns,
+            'expense' => Expense::$bulk_update_columns,
+            'recurring_invoice' => RecurringInvoice::$bulk_update_columns,
+            'task' => Task::$bulk_update_columns,
         ];
 
         return $data;

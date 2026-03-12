@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Design;
 
-use Tests\TestCase;
-use Tests\MockAccountData;
 use App\Models\Design;
 use App\Services\Pdf\PdfService;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
  * Test that JSON designs are properly detected and used in PdfService
@@ -27,15 +27,16 @@ class JsonDesignerIntegrationTest extends TestCase
         $jsonPath = base_path('tests/Feature/Design/stubs/test_design_1.json');
         $designJson = @file_get_contents($jsonPath) ?? '';
 
-        if(empty($designJson)) {
+        if (empty($designJson)) {
             $this->markTestSkipped('Failed to load test JSON design');
+
             return;
         }
 
         $designData = json_decode($designJson, true);
 
         // Create a custom design with JSON structure
-        $design = new Design();
+        $design = new Design;
         $design->company_id = $this->company->id;
         $design->user_id = $this->user->id;
         $design->is_custom = true;
@@ -51,7 +52,7 @@ class JsonDesignerIntegrationTest extends TestCase
 
         // Get an invitation
         $invitation = $this->invoice->invitations()->first();
-        $this->assertNotNull($invitation, "Invoice should have an invitation");
+        $this->assertNotNull($invitation, 'Invoice should have an invitation');
 
         // Create PDF service
         $pdfService = new PdfService($invitation, 'product');
@@ -75,13 +76,13 @@ class JsonDesignerIntegrationTest extends TestCase
 
         echo "\n\n✅ JSON Designer Integration Test Passed!\n";
         echo "📄 HTML output saved to: {$outputPath}\n";
-        echo "📏 HTML size: " . strlen($html) . " bytes\n\n";
+        echo '📏 HTML size: ' . strlen($html) . " bytes\n\n";
     }
 
     public function test_traditional_design_still_works()
     {
         // Use a traditional design (not JSON-based)
-        $traditionalDesign = new Design();
+        $traditionalDesign = new Design;
         $traditionalDesign->company_id = $this->company->id;
         $traditionalDesign->user_id = $this->user->id;
         $traditionalDesign->is_custom = false;
@@ -108,13 +109,13 @@ class JsonDesignerIntegrationTest extends TestCase
         $this->assertNotEmpty($html);
 
         echo "\n\n✅ Traditional Design Test Passed!\n";
-        echo "📏 HTML size: " . strlen($html) . " bytes\n\n";
+        echo '📏 HTML size: ' . strlen($html) . " bytes\n\n";
     }
 
     public function test_invalid_json_design_falls_back()
     {
         // Create an invalid JSON design (missing required keys)
-        $invalidDesign = new Design();
+        $invalidDesign = new Design;
         $invalidDesign->company_id = $this->company->id;
         $invalidDesign->user_id = $this->user->id;
         $invalidDesign->is_custom = true;
@@ -145,6 +146,6 @@ class JsonDesignerIntegrationTest extends TestCase
         $this->assertNotEmpty($html);
 
         echo "\n\n✅ Fallback Test Passed!\n";
-        echo "📏 HTML size: " . strlen($html) . " bytes\n\n";
+        echo '📏 HTML size: ' . strlen($html) . " bytes\n\n";
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -41,15 +40,15 @@ trait DefaultResourceBroadcast
     {
         $entity = $this->broadcastModel();
 
-        $manager = new Manager();
+        $manager = new Manager;
 
-        $manager->setSerializer(new ArraySerializer());
+        $manager->setSerializer(new ArraySerializer);
 
         $manager->parseIncludes($this->broadcastIncludes());
 
         $class = sprintf('App\\Transformers\\%sTransformer', class_basename($entity));
 
-        $transformer = new $class();
+        $transformer = new $class;
 
         $resource = new Item($entity, $transformer, $entity->getEntityType());
 

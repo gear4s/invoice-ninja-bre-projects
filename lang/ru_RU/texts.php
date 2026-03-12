@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Организация',
     'name' => 'Имя',
     'website' => 'Веб-сайт',
@@ -1177,7 +1177,6 @@ $lang = array(
     'enterprise_plan_features' => 'План Enterprise добавляет поддержку нескольких пользователей и прикрепленных файлов, :link к см. полный список функций.',
     'return_to_app' => 'Возврат к приложению',
 
-
     // Payment updates
     'refund_payment' => 'Возврат Платеж',
     'refund_max' => 'Макс:',
@@ -1706,7 +1705,6 @@ $lang = array(
     'lang_Serbian' => 'сербский',
     'lang_Bulgarian' => 'болгарский',
     'lang_Russian (Russia)' => 'Русский (Россия)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Бухгалтерский учет и юриспруденция',
@@ -2364,7 +2362,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Золотая тройская унция',
     'currency_nicaraguan_córdoba' => 'Никарагуанская Кордова',
     'currency_malagasy_ariary' => 'малагасийский ариари',
-    "currency_tongan_pa_anga" => "Тонганский Паанга",
+    'currency_tongan_pa_anga' => 'Тонганский Паанга',
 
     'review_app_help' => 'Надеемся, вам нравится пользоваться приложением.<br/> Если вы рассмотрите вариант :link мы будем очень признательны!',
     'writing_a_review' => 'написание обзора',
@@ -4364,7 +4362,7 @@ $lang = array(
     'activity_122' => ':user архивированный Повторяющийся расходы :recurring_expense',
     'activity_123' => ':user Удалён Повторяющийся расходы :recurring_expense',
     'activity_124' => ':user Восстановлен Повторяющийся расходы :recurring_expense',
-    'fpx' => "ФПХ",
+    'fpx' => 'ФПХ',
     'to_view_entity_set_password' => 'к Смотреть :entity вам нужно к пароль.',
     'unsubscribe' => 'Отписаться',
     'unsubscribed' => 'Отменена подписка',
@@ -4870,7 +4868,7 @@ $lang = array(
     'payment_type_Klarna' => 'Кларна',
     'payment_type_Interac E Transfer' => 'Interac E Передача',
     'xinvoice_payable' => 'Оплачивается в течение :payeddue дней нетто до :paydate',
-    'xinvoice_no_buyers_reference' => "Ссылка на покупателя не указана",
+    'xinvoice_no_buyers_reference' => 'Ссылка на покупателя не указана',
     'xinvoice_online_payment' => 'Счет к оплатить онлайн по предоставленной ссылке.',
     'pre_payment' => 'Pre Платеж',
     'number_of_payments' => 'Количество Платежи',
@@ -4975,8 +4973,8 @@ $lang = array(
     'e_invoice' => 'E- Счет',
     'light_dark_mode' => 'Светлый/Темный режим',
     'activities' => 'Деятельность',
-    'recent_transactions' => "Недавние транзакции",
-    'country_Palestine' => "Палестина",
+    'recent_transactions' => 'Недавние транзакции',
+    'country_Palestine' => 'Палестина',
     'country_Taiwan' => 'Тайвань',
     'duties' => 'Обязанности',
     'order_number' => 'Номер заказа',
@@ -5193,7 +5191,7 @@ $lang = array(
     'rff' => 'Обязательные поля формы',
     'add_step' => 'Добавить шаг',
     'steps' => 'Шаги',
-    'steps_order_help' =>  'Порядок шагов важен. Первый шаг не должен зависеть от другого шага. Второй шаг должен зависеть от первого шага и т. д.',
+    'steps_order_help' => 'Порядок шагов важен. Первый шаг не должен зависеть от другого шага. Второй шаг должен зависеть от первого шага и т. д.',
     'other_steps' => 'Другие шаги',
     'use_available_payments' => 'Используйте Доступные Платежи',
     'test_email_sent' => 'Успешно отправлено E-mail',
@@ -5402,7 +5400,7 @@ $lang = array(
     'credit_updated' => 'Кредит обновлен',
     'payment_updated' => 'Платеж обновлен',
     'search_placeholder' => 'Найдите Счета , Клиенты и т. д.',
-    'invalid_vat_number' => "Номер НДС недействителен для выбранной страны. Формат должен быть Код страны, за которым следует только номер, например, DE123456789",
+    'invalid_vat_number' => 'Номер НДС недействителен для выбранной страны. Формат должен быть Код страны, за которым следует только номер, например, DE123456789',
     'acts_as_sender' => 'Отправить E- Счета',
     'acts_as_receiver' => 'Получить E- Счета',
     'peppol_token_generated' => 'Токен PEPPOL Успешно сгенерирован.',
@@ -5705,7 +5703,7 @@ $lang = array(
     'custom_document_completed' => 'Custom Document completed',
     'email_client_when_custom_document_completed' => 'Email client when a Custom Document has been signed',
     'sender' => 'Sender',
-     'create_template' => 'Create Template',
+    'create_template' => 'Create Template',
     'edit_template' => 'Edit Template',
     'delete_template' => 'Delete Template',
     'template_created' => 'Template created',
@@ -5911,7 +5909,7 @@ $lang = array(
     'access_key' => 'Access Key',
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Bank Transfer',
-    
-);
+
+];
 
 return $lang;

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,6 +23,7 @@ namespace App\Models;
  * @property string $code
  * @property bool $swap_currency_symbol
  * @property float $exchange_rate
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|Currency newModelQuery()
@@ -38,6 +38,7 @@ namespace App\Models;
  * @method static \Illuminate\Database\Eloquent\Builder|Currency whereSwapCurrencySymbol($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Currency whereSymbol($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Currency whereThousandSeparator($value)
+ *
  * @mixin \Eloquent
  */
 #[\AllowDynamicProperties]

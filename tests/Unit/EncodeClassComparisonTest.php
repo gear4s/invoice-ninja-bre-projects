@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Utils\Encode;
+use Tests\TestCase;
 
 /**
  * Direct comparison showing why the Encode class is necessary
@@ -11,12 +11,12 @@ use App\Utils\Encode;
  */
 class EncodeClassComparisonTest extends TestCase
 {
-    private string $problematicSubject = "Rappel facture impayée (\$invoice) 🚀";
+    private string $problematicSubject = 'Rappel facture impayée ($invoice) 🚀';
 
     /**
      * Demonstrate the difference: WITH Encode class vs WITHOUT
      */
-    public function testWithVsWithoutEncodeClass()
+    public function test_with_vs_without_encode_class()
     {
         $original = $this->problematicSubject;
 
@@ -27,30 +27,30 @@ class EncodeClassComparisonTest extends TestCase
         $withoutEncodeClass = mb_convert_encoding($original, 'UTF-8', 'WINDOWS-1252');
 
         // Results comparison
-        $this->assertEquals($original, $withEncodeClass, "Encode class should preserve original");
-        $this->assertNotEquals($original, $withoutEncodeClass, "Direct conversion should corrupt content");
+        $this->assertEquals($original, $withEncodeClass, 'Encode class should preserve original');
+        $this->assertNotEquals($original, $withoutEncodeClass, 'Direct conversion should corrupt content');
 
         // Emoji preservation
-        $this->assertStringContainsString('🚀', $withEncodeClass, "Encode class preserves emoji");
-        $this->assertStringNotContainsString('🚀', $withoutEncodeClass, "Direct conversion corrupts emoji");
+        $this->assertStringContainsString('🚀', $withEncodeClass, 'Encode class preserves emoji');
+        $this->assertStringNotContainsString('🚀', $withoutEncodeClass, 'Direct conversion corrupts emoji');
 
         // Accented character preservation
-        $this->assertStringContainsString('impayée', $withEncodeClass, "Encode class preserves accents");
-        $this->assertStringNotContainsString('impayée', $withoutEncodeClass, "Direct conversion corrupts accents");
+        $this->assertStringContainsString('impayée', $withEncodeClass, 'Encode class preserves accents');
+        $this->assertStringNotContainsString('impayée', $withoutEncodeClass, 'Direct conversion corrupts accents');
 
         // Show the actual corruption
-        $this->assertStringContainsString('ðŸš€', $withoutEncodeClass, "Should contain corrupted emoji");
-        $this->assertStringContainsString('Ã©', $withoutEncodeClass, "Should contain corrupted accent");
+        $this->assertStringContainsString('ðŸš€', $withoutEncodeClass, 'Should contain corrupted emoji');
+        $this->assertStringContainsString('Ã©', $withoutEncodeClass, 'Should contain corrupted accent');
 
         // UTF-8 validity
-        $this->assertTrue(mb_check_encoding($withEncodeClass, 'UTF-8'), "Encode class result is valid UTF-8");
-        $this->assertTrue(mb_check_encoding($withoutEncodeClass, 'UTF-8'), "Corrupted result is still UTF-8 but wrong");
+        $this->assertTrue(mb_check_encoding($withEncodeClass, 'UTF-8'), 'Encode class result is valid UTF-8');
+        $this->assertTrue(mb_check_encoding($withoutEncodeClass, 'UTF-8'), 'Corrupted result is still UTF-8 but wrong');
     }
 
     /**
      * Show multiple common failure approaches vs the Encode class
      */
-    public function testMultipleFailureApproachesVsEncodeClass()
+    public function test_multiple_failure_approaches_vs_encode_class()
     {
         $original = $this->problematicSubject;
 
@@ -83,7 +83,7 @@ class EncodeClassComparisonTest extends TestCase
     /**
      * Gmail email header compatibility test
      */
-    public function testGmailHeaderCompatibility()
+    public function test_gmail_header_compatibility()
     {
         $original = $this->problematicSubject;
 
@@ -91,11 +91,11 @@ class EncodeClassComparisonTest extends TestCase
         $encodedSubject = Encode::convert($original);
 
         // Create a proper email header (RFC 2047 encoding would be done by email library)
-        $properHeader = "Subject: " . $encodedSubject;
+        $properHeader = 'Subject: ' . $encodedSubject;
 
         // ❌ WRONG: Direct use without encoding
         $corruptedSubject = mb_convert_encoding($original, 'UTF-8', 'WINDOWS-1252');
-        $badHeader = "Subject: " . $corruptedSubject;
+        $badHeader = 'Subject: ' . $corruptedSubject;
 
         // Proper header should contain correct characters
         $this->assertStringContainsString('🚀', $properHeader);
@@ -111,7 +111,7 @@ class EncodeClassComparisonTest extends TestCase
     /**
      * Performance comparison: Encode class vs naive approaches
      */
-    public function testPerformanceComparison()
+    public function test_performance_comparison()
     {
         $original = $this->problematicSubject;
 
@@ -126,8 +126,8 @@ class EncodeClassComparisonTest extends TestCase
         $naiveTime = microtime(true) - $start;
 
         // Both should be fast (under 10ms)
-        $this->assertLessThan(0.01, $encodeClassTime, "Encode class should be fast");
-        $this->assertLessThan(0.01, $naiveTime, "Naive approach should also be fast");
+        $this->assertLessThan(0.01, $encodeClassTime, 'Encode class should be fast');
+        $this->assertLessThan(0.01, $naiveTime, 'Naive approach should also be fast');
 
         // But only Encode class preserves content
         $this->assertEquals($original, $result);
@@ -137,15 +137,15 @@ class EncodeClassComparisonTest extends TestCase
     /**
      * Real-world email scenario test
      */
-    public function testRealWorldEmailScenario()
+    public function test_real_world_email_scenario()
     {
         // Simulate various real-world email subjects that would fail without Encode class
         $realWorldSubjects = [
             $this->problematicSubject,
-            "Café Newsletter 📧 March 2024",
-            "Paiement reçu ✅ Facture #123",
-            "Señor García - Cotización €1,500 💼",
-            "Müller GmbH → Status Update 🎯",
+            'Café Newsletter 📧 March 2024',
+            'Paiement reçu ✅ Facture #123',
+            'Señor García - Cotización €1,500 💼',
+            'Müller GmbH → Status Update 🎯',
         ];
 
         foreach ($realWorldSubjects as $subject) {
@@ -169,19 +169,19 @@ class EncodeClassComparisonTest extends TestCase
     /**
      * Test what happens with edge cases
      */
-    public function testEdgeCaseComparison()
+    public function test_edge_case_comparison()
     {
         $edgeCases = [
             // Only emoji
-            "🚀",
+            '🚀',
             // Only accents
-            "impayée",
+            'impayée',
             // Mixed complex
-            "🇫🇷 François & José 💼 €500",
+            '🇫🇷 François & José 💼 €500',
             // Empty
-            "",
+            '',
             // ASCII only
-            "Invoice 123",
+            'Invoice 123',
         ];
 
         foreach ($edgeCases as $testCase) {

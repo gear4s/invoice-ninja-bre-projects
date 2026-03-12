@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organizata',
     'name' => 'Emri',
     'website' => 'Website',
@@ -1177,7 +1177,6 @@ Fushat e njësive në faturë',
     'enterprise_plan_features' => 'The Enterprise Plan adds support for multiple users and file attachments, :link to see the full list of features.',
     'return_to_app' => 'Return To App',
 
-
     // Payment updates
     'refund_payment' => 'Rimburso pagesën',
     'refund_max' => 'Maksimumi:',
@@ -1706,7 +1705,6 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Russian (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Kontabilitet & Ligjore',
@@ -2364,7 +2362,7 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'currency_gold_troy_ounce' => 'Gold Troy Ounce',
     'currency_nicaraguan_córdoba' => 'Nicaraguan Córdoba',
     'currency_malagasy_ariary' => 'Malagasy ariary',
-    "currency_tongan_pa_anga" => "Tongan Pa'anga",
+    'currency_tongan_pa_anga' => "Tongan Pa'anga",
 
     'review_app_help' => 'We hope you\'re enjoying using the app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'writing a review',
@@ -4366,7 +4364,7 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'activity_122' => ':user archived recurring expense :recurring_expense',
     'activity_123' => ':user deleted recurring expense :recurring_expense',
     'activity_124' => ':user restored recurring expense :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'To view the :entity you need to set a password.',
     'unsubscribe' => 'Unsubscribe',
     'unsubscribed' => 'Unsubscribed',
@@ -4976,7 +4974,7 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'light_dark_mode' => 'Light/Dark Mode',
     'activities' => 'Activities',
     'recent_transactions' => "Here are your company's most recent transactions:",
-    'country_Palestine' => "Palestine",
+    'country_Palestine' => 'Palestine',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Duties',
     'order_number' => 'Order Number',
@@ -5193,7 +5191,7 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'rff' => 'Required fields form',
     'add_step' => 'Add step',
     'steps' => 'Steps',
-    'steps_order_help' =>  'The order of the steps is important. The first step should not depend on any other step. The second step should depend on the first step, and so on.',
+    'steps_order_help' => 'The order of the steps is important. The first step should not depend on any other step. The second step should depend on the first step, and so on.',
     'other_steps' => 'Other steps',
     'use_available_payments' => 'Use Available Payments',
     'test_email_sent' => 'Successfully sent email',
@@ -5404,7 +5402,7 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'credit_updated' => 'Credit Updated',
     'payment_updated' => 'Payment Updated',
     'search_placeholder' => 'Find invoices, clients, and more',
-    'invalid_vat_number' => "The VAT number is not valid for the selected country. Format should be Country Code followed by number only ie, DE123456789",
+    'invalid_vat_number' => 'The VAT number is not valid for the selected country. Format should be Country Code followed by number only ie, DE123456789',
     'acts_as_sender' => 'Send E-Invoices',
     'acts_as_receiver' => 'Receive E-Invoices',
     'peppol_token_generated' => 'PEPPOL token successfully generated.',
@@ -5494,6 +5492,6 @@ Pasi të keni pranuar shumat, kthehuni në faqen e metodave të pagesës dhe kli
     'einvoice_token_not_found' => 'E-invoicing token not found. Please go to Settings > E-invoice and regenerate token.',
     'regenerate' => 'Regenerate',
 
-);
+];
 
 return $lang;

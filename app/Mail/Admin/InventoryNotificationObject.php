@@ -6,9 +6,7 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
-
-* @license https://www.elastic.co/licensing/elastic-license
+ * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Mail\Admin;
@@ -25,20 +23,21 @@ class InventoryNotificationObject
     public function build()
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->product->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->product->company->settings));
 
-        $mail_obj = new stdClass();
+        $mail_obj = new stdClass;
         $mail_obj->amount = $this->getAmount();
         $mail_obj->subject = $this->getSubject();
         $mail_obj->data = $this->getData();
         $mail_obj->markdown = 'email.admin.generic';
         $mail_obj->tag = $this->product->company->company_key;
         $mail_obj->text_view = 'email.template.text';
+
         return $mail_obj;
     }
 

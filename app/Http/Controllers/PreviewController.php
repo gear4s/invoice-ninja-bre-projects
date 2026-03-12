@@ -6,31 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Utils\Ninja;
-use Illuminate\Support\Str;
-use Twig\Error\SyntaxError;
-use App\Services\Pdf\PdfMock;
-use App\Utils\Traits\MakesHash;
-use App\Services\Pdf\PdfService;
-use App\Models\InvoiceInvitation;
-use Illuminate\Support\Facades\App;
-use App\Utils\Traits\GeneratesCounter;
-use App\Utils\Traits\MakesInvoiceHtml;
-use Turbo124\Beacon\Facades\LightLogs;
-use App\Models\PurchaseOrderInvitation;
-use App\Utils\Traits\Pdf\PageNumbering;
-use Illuminate\Support\Facades\Response;
 use App\DataMapper\Analytics\LivePreview;
-use App\Services\Template\TemplateService;
-use App\Http\Requests\Preview\ShowPreviewRequest;
 use App\Http\Requests\Preview\DesignPreviewRequest;
 use App\Http\Requests\Preview\PreviewInvoiceRequest;
+use App\Http\Requests\Preview\ShowPreviewRequest;
+use App\Models\Company;
+use App\Models\Design;
+use App\Models\InvoiceInvitation;
+use App\Models\PurchaseOrderInvitation;
+use App\Models\User;
+use App\Services\Pdf\PdfMock;
+use App\Services\Pdf\PdfService;
+use App\Services\Template\TemplateService;
+use App\Utils\Ninja;
+use App\Utils\Traits\GeneratesCounter;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\MakesInvoiceHtml;
+use App\Utils\Traits\Pdf\PageNumbering;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
+use Turbo124\Beacon\Facades\LightLogs;
+use Twig\Error\SyntaxError;
 
 class PreviewController extends BaseController
 {
@@ -53,14 +55,14 @@ class PreviewController extends BaseController
         $invitation = $request->resolveInvitation();
         $client = $request->getClient();
         $settings = $client->getMergedSettings();
-        $entity_prop = str_replace("recurring_", "", $request->entity);
+        $entity_prop = str_replace('recurring_', '', $request->entity);
         $entity_obj = $invitation->{$request->entity};
         $entity_obj->fill($request->all());
 
         if (!$entity_obj->id || $request->entity == 'recurring_invoice') {
-            $entity_obj->design_id = $entity_obj->design_id ?: intval($this->decodePrimaryKey($settings->{$entity_prop . "_design_id"}));
-            $entity_obj->footer = empty($entity_obj->footer) ? $settings->{$entity_prop . "_footer"} : $entity_obj->footer;
-            $entity_obj->terms = empty($entity_obj->terms) ? $settings->{$entity_prop . "_terms"} : $entity_obj->terms;
+            $entity_obj->design_id = $entity_obj->design_id ?: intval($this->decodePrimaryKey($settings->{$entity_prop . '_design_id'}));
+            $entity_obj->footer = empty($entity_obj->footer) ? $settings->{$entity_prop . '_footer'} : $entity_obj->footer;
+            $entity_obj->terms = empty($entity_obj->terms) ? $settings->{$entity_prop . '_terms'} : $entity_obj->terms;
             $entity_obj->public_notes = empty($entity_obj->public_notes) ? $request->getClient()->public_notes : $entity_obj->public_notes;
 
             $entity_obj->custom_surcharge_tax1 = $client->company->custom_surcharge_taxes1;
@@ -79,9 +81,9 @@ class PreviewController extends BaseController
         $pdf = $ps->boot()->getPdf();
 
         if (Ninja::isHosted()) {
-            LightLogs::create(new LivePreview())
-                        ->increment()
-                        ->batch();
+            LightLogs::create(new LivePreview)
+                ->increment()
+                ->batch();
         }
 
         /** Return PDF */
@@ -95,7 +97,7 @@ class PreviewController extends BaseController
             'Server-Timing' => (string) (microtime(true) - $start),
         ]);
 
-        //@2025-06-25 - streamDownload forces attachment, which is not what we want. ->stream() is better.
+        // @2025-06-25 - streamDownload forces attachment, which is not what we want. ->stream() is better.
         // return response()->streamDownload(function () use ($pdf) {
         //     echo $pdf;
         // }, 'preview.pdf', [
@@ -111,9 +113,6 @@ class PreviewController extends BaseController
      * Returns the mocked PDF for the invoice design preview.
      *
      * Only used in Settings > Invoice Design as a general overview
-     *
-     * @param  DesignPreviewRequest $request
-     * @return mixed
      */
     public function design(DesignPreviewRequest $request): mixed
     {
@@ -123,10 +122,10 @@ class PreviewController extends BaseController
             return $this->liveTemplate($request->all());
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $user->company();
 
         $pdf = (new PdfMock($request->all(), $company))->build()->getPdf();
@@ -142,11 +141,11 @@ class PreviewController extends BaseController
      * Returns a template filled with entity variables.
      *
      * Used in the Custom Designer to preview design changes
+     *
      * @return mixed
      */
     public function show(ShowPreviewRequest $request)
     {
-
 
         if ($request->input('design.is_template')) {
             return $this->template();
@@ -157,7 +156,7 @@ class PreviewController extends BaseController
 
             $design_object = json_decode(json_encode($request->input('design')));
 
-            if (! is_object($design_object)) {
+            if (!is_object($design_object)) {
                 return response()->json(['message' => ctrans('texts.invalid_design_object')], 400);
             }
 
@@ -167,7 +166,7 @@ class PreviewController extends BaseController
 
             $entity_obj = $class::whereId($this->decodePrimaryKey($request->input('entity_id')))->company()->first();
 
-            if (! $entity_obj) {
+            if (!$entity_obj) {
                 return $this->blankEntity();
             }
 
@@ -190,15 +189,15 @@ class PreviewController extends BaseController
             $ps = new PdfService($invitation, 'product', [
                 'client' => $entity_obj->client ?? false,
                 'vendor' => $entity_obj->vendor ?? false,
-                $request->input('entity') . "s" => [$entity_obj],
+                $request->input('entity') . 's' => [$entity_obj],
             ]);
 
             $ps->boot()
-            ->designer
-            ->buildFromPartials($request->design['design']);
+                ->designer
+                ->buildFromPartials($request->design['design']);
 
             $ps->builder
-            ->build();
+                ->build();
 
             if ($request->query('html') == 'true') {
                 return $ps->getHtml();
@@ -214,7 +213,6 @@ class PreviewController extends BaseController
                 'Cache-Control:' => 'no-cache',
             ]);
 
-
         }
 
         return $this->blankEntity();
@@ -223,17 +221,17 @@ class PreviewController extends BaseController
     private function liveTemplate(array $request_data)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $user->company();
-        $design = \App\Models\Design::query()
-                    ->where('id', $request_data['design_id'])
-                    ->where(function ($q) use ($user) {
-                        $q->whereNull('company_id')->orWhere('company_id', $user->companyId());
-                    })
-                    ->first();
+        $design = Design::query()
+            ->where('id', $request_data['design_id'])
+            ->where(function ($q) use ($user) {
+                $q->whereNull('company_id')->orWhere('company_id', $user->companyId());
+            })
+            ->first();
 
         $ts = (new TemplateService($design));
 
@@ -260,15 +258,15 @@ class PreviewController extends BaseController
     private function template()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $user->company();
 
         $design_object = json_decode(json_encode(request()->input('design')), true);
 
-        $ts = (new TemplateService());
+        $ts = (new TemplateService);
 
         try {
 
@@ -295,10 +293,10 @@ class PreviewController extends BaseController
     private function blankEntity()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $user->company();
 
         App::forgetInstance('translator');
@@ -311,18 +309,18 @@ class PreviewController extends BaseController
             $invitation = PurchaseOrderInvitation::where('company_id', $company->id)->orderBy('id', 'desc')->first();
             $entity_string = 'purchase_order';
         } else {
-            /** @var \App\Models\InvoiceInvitation $invitation */
+            /** @var InvoiceInvitation $invitation */
             $invitation = InvoiceInvitation::where('company_id', $company->id)->orderBy('id', 'desc')->first();
         }
 
         /* If we don't have a valid invitation in the system - create a mock using transactions */
-        if (! $invitation) {
+        if (!$invitation) {
             return $this->mockEntity();
         }
 
         $design_object = json_decode(json_encode(request()->input('design')), true);
 
-        if (! is_array($design_object)) {
+        if (!is_array($design_object)) {
             return response()->json(['message' => 'Invalid custom design object'], 400);
         }
 
@@ -333,12 +331,11 @@ class PreviewController extends BaseController
         ]);
 
         $ps->boot()
-        ->designer
-        ->buildFromPartials($design_object['design']);
+            ->designer
+            ->buildFromPartials($design_object['design']);
 
         $ps->builder
-        ->build();
-
+            ->build();
 
         if (request()->query('html') == 'true') {
             return $ps->getHtml();
@@ -356,14 +353,13 @@ class PreviewController extends BaseController
 
     }
 
-
     private function mockEntity()
     {
 
         $start = microtime(true);
         $user = auth()->user();
 
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $user->company();
 
         $request = request()->input('design');
@@ -384,5 +380,4 @@ class PreviewController extends BaseController
         return $response;
 
     }
-
 }

@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organização',
     'name' => 'Nome',
     'website' => 'Site',
@@ -1173,7 +1173,6 @@ $lang = array(
     'enterprise_plan_features' => 'O Plano Enterprise adiciona suporte para vários usuários e anexos de arquivo, :link para ver a lista completa de recursos.',
     'return_to_app' => 'Voltar ao App',
 
-
     // Payment updates
     'refund_payment' => 'Reembolsar Pagamento',
     'refund_max' => 'Máx:',
@@ -1702,7 +1701,6 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'lang_Serbian' => 'Sérvia',
     'lang_Bulgarian' => 'Búlgaro ',
     'lang_Russian (Russia)' => 'Russo',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Contabilidade & Jurídico',
@@ -2360,7 +2358,7 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'currency_gold_troy_ounce' => 'Onça Troy de Ouro',
     'currency_nicaraguan_córdoba' => 'Córdoba Nicaraguense',
     'currency_malagasy_ariary' => 'Ariário malgaxe',
-    "currency_tongan_pa_anga" => "Pa&#39;anga de Tonga",
+    'currency_tongan_pa_anga' => 'Pa&#39;anga de Tonga',
 
     'review_app_help' => 'Esperamos que esteja aproveitando o app. <br/>Se você considerar :link agradeceríamos bastante!',
     'writing_a_review' => 'Escrevendo uma avaliação',
@@ -4360,7 +4358,7 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'activity_122' => ':user despesa recorrente arquivada :recurring_expense',
     'activity_123' => ':user excluiu despesa recorrente :recurring_expense',
     'activity_124' => ':user despesa recorrente restaurada :recurring_expense',
-    'fpx' => "FPS",
+    'fpx' => 'FPS',
     'to_view_entity_set_password' => 'Para visualizar o :entity você precisa definir uma senha.',
     'unsubscribe' => 'Cancelar subscrição',
     'unsubscribed' => 'Inscrição cancelada',
@@ -4866,7 +4864,7 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Transferência Interac E',
     'xinvoice_payable' => 'A pagar dentro de :payeddue dias líquidos até :paydate',
-    'xinvoice_no_buyers_reference' => "Nenhuma referência do comprador fornecida",
+    'xinvoice_no_buyers_reference' => 'Nenhuma referência do comprador fornecida',
     'xinvoice_online_payment' => 'A fatura precisa ser paga on-line através do link fornecido',
     'pre_payment' => 'Pré-pagamento',
     'number_of_payments' => 'Número de pagamentos',
@@ -4971,8 +4969,8 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'e_invoice' => 'Fatura eletrônica',
     'light_dark_mode' => 'Modo claro/escuro',
     'activities' => 'Atividades',
-    'recent_transactions' => "Transações recentes",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Transações recentes',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Obrigações',
     'order_number' => 'Número do pedido',
@@ -5189,7 +5187,7 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'rff' => 'Formulário de campos obrigatórios',
     'add_step' => 'Adicionar etapa',
     'steps' => 'Passos',
-    'steps_order_help' =>  'A ordem das etapas é importante. O primeiro passo não deve depender de nenhum outro passo. A segunda etapa deve depender da primeira etapa e assim por diante.',
+    'steps_order_help' => 'A ordem das etapas é importante. O primeiro passo não deve depender de nenhum outro passo. A segunda etapa deve depender da primeira etapa e assim por diante.',
     'other_steps' => 'Outras etapas',
     'use_available_payments' => 'Use pagamentos disponíveis',
     'test_email_sent' => 'E-mail enviado com sucesso',
@@ -5398,7 +5396,7 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'credit_updated' => 'Crédito Atualizado',
     'payment_updated' => 'Pagamento Atualizado',
     'search_placeholder' => 'Encontre faturas, clientes e muito mais',
-    'invalid_vat_number' => "O número de IVA não é válido para o país selecionado. O formato deve ser Código do país seguido apenas por número, ou seja, DE123456789",
+    'invalid_vat_number' => 'O número de IVA não é válido para o país selecionado. O formato deve ser Código do país seguido apenas por número, ou seja, DE123456789',
     'acts_as_sender' => 'Enviar faturas eletrônicas',
     'acts_as_receiver' => 'Receber faturas eletrônicas',
     'peppol_token_generated' => 'Token PEPPOL gerado com sucesso.',
@@ -5535,7 +5533,7 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'pro_plan_feature_10' => 'Configurar e-mails de lembrete automático',
     'pro_plan_feature_11' => 'Fatura anexada automaticamente em PDF a e-mails',
     'pro_plan_feature_12' => 'Exibir assinatura eletrônica de clientes em faturas',
-    'pro_plan_feature_13' => "Habilitar uma caixa de seleção &quot;Aprovar termos&quot;",
+    'pro_plan_feature_13' => 'Habilitar uma caixa de seleção &quot;Aprovar termos&quot;',
     'pro_plan_feature_14' => 'Relatórios: Faturas, Despesas, P&amp;L, mais',
     'pro_plan_feature_15' => 'Faturas em massa por e-mail, orçamentos e créditos',
     'pro_plan_feature_16' => 'Interlink 10 empresas com 1 login',
@@ -5910,6 +5908,6 @@ Quando tiver as quantias, volte a esta página de formas de pagamento e clique "
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Transferência bancária Stripe',
     'activity_164' => 'A sincronização do QuickBooks falhou. :notes',
-);
+];
 
 return $lang;

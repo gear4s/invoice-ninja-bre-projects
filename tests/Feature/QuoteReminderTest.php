@@ -6,40 +6,38 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Utils\Ninja;
-use App\Models\Client;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Quote;
-use Tests\MockAccountData;
-use App\Models\CompanyToken;
-use App\Models\ClientContact;
-use App\Jobs\Util\ReminderJob;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Quote;
+use App\Models\User;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Jobs\Util\QuoteReminderJob
  */
 class QuoteReminderTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -53,6 +51,7 @@ class QuoteReminderTest extends TestCase
 
         $this->withoutExceptionHandling();
     }
+
     public $company;
 
     public $user;
@@ -82,7 +81,7 @@ class QuoteReminderTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         if (!$settings) {
@@ -105,9 +104,9 @@ class QuoteReminderTest extends TestCase
         $this->cu->is_locked = false;
         $this->cu->save();
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
@@ -128,15 +127,15 @@ class QuoteReminderTest extends TestCase
         ]);
 
         ClientContact::factory()->create([
-                'user_id' => $this->user->id,
-                'client_id' => $this->client->id,
-                'company_id' => $this->company->id,
-                'is_primary' => 1,
-                'first_name' => 'john',
-                'last_name' => 'doe',
-                'email' => 'john@doe.com',
-                'send_email' => true,
-            ]);
+            'user_id' => $this->user->id,
+            'client_id' => $this->client->id,
+            'company_id' => $this->company->id,
+            'is_primary' => 1,
+            'first_name' => 'john',
+            'last_name' => 'doe',
+            'email' => 'john@doe.com',
+            'send_email' => true,
+        ]);
 
         $this->quote = Quote::factory()->create([
             'user_id' => $this->user->id,
@@ -154,8 +153,7 @@ class QuoteReminderTest extends TestCase
 
     }
 
-
-    public function testNullReminder()
+    public function test_null_reminder()
     {
 
         $settings = $this->company->settings;
@@ -178,7 +176,7 @@ class QuoteReminderTest extends TestCase
 
     }
 
-    public function testBeforeValidReminder()
+    public function test_before_valid_reminder()
     {
 
         $settings = $this->company->settings;
@@ -195,7 +193,6 @@ class QuoteReminderTest extends TestCase
         $this->quote->next_send_date = null;
         $this->quote->save();
 
-
         $this->assertTrue($this->quote->canRemind());
 
         $this->quote->service()->setReminder($settings)->save();
@@ -208,6 +205,4 @@ class QuoteReminderTest extends TestCase
         $this->assertEquals(now()->addMonths(2)->subDay()->format('Y-m-d'), \Carbon\Carbon::parse($this->quote->next_send_date)->addSeconds($this->quote->client->timezone_offset())->format('Y-m-d'));
 
     }
-
-
 }

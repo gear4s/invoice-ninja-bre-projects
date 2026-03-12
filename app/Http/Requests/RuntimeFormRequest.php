@@ -11,7 +11,7 @@ trait RuntimeFormRequest
     {
         $value = self::getMockedRequestByParameters($value);
 
-        $validator = self::createFrom($value, new self());
+        $validator = self::createFrom($value, new self);
 
         $validator->setContainer(app());
 

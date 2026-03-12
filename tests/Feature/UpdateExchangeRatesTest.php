@@ -6,23 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Currency;
-use Tests\MockAccountData;
-use App\Utils\Traits\MakesHash;
 use App\Jobs\Util\UpdateExchangeRates;
-use Illuminate\Support\Facades\Artisan;
 use App\Libraries\Currency\Conversion\CurrencyApi;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Models\Currency;
+use App\Utils\Traits\MakesHash;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
 
 /**
- *
  *  App\Jobs\Util\UpdateExchangeRates
  */
 class UpdateExchangeRatesTest extends TestCase
@@ -34,7 +31,7 @@ class UpdateExchangeRatesTest extends TestCase
         parent::setUp();
 
         if (empty(config('ninja.currency_converter_api_key'))) {
-            $this->markTestSkipped("no currency key set");
+            $this->markTestSkipped('no currency key set');
         }
 
         if (Currency::count() == 0) {
@@ -43,25 +40,25 @@ class UpdateExchangeRatesTest extends TestCase
 
     }
 
-    public function testExchangeRate()
+    public function test_exchange_rate()
     {
         $cc_endpoint = sprintf('https://openexchangerates.org/api/latest.json?app_id=%s', config('ninja.currency_converter_api_key'));
 
-        $client = new \GuzzleHttp\Client();
+        $client = new Client;
         $response = $client->get($cc_endpoint);
 
         $currency_api = json_decode($response->getBody());
 
-        (new UpdateExchangeRates())->handle();
+        (new UpdateExchangeRates)->handle();
 
-        $gbp_currency = \App\Models\Currency::find(2);
+        $gbp_currency = Currency::find(2);
 
         $this->assertNotNull($gbp_currency);
         $this->assertEquals($currency_api->rates->GBP, $gbp_currency->exchange_rate);
 
     }
 
-    public function testExchangeRateConversion()
+    public function test_exchange_rate_conversion()
     {
         $usd = Currency::find(1);
         $gbp = Currency::find(2);
@@ -72,14 +69,14 @@ class UpdateExchangeRatesTest extends TestCase
         $gbp->exchange_rate = 0.5;
         $gbp->save();
 
-        $currency_api = new CurrencyApi();
+        $currency_api = new CurrencyApi;
 
         $convert_to_gbp = $currency_api->convert(10, 1, 2);
 
         $this->assertEquals($convert_to_gbp, 5);
     }
 
-    public function testSyntheticExchangeRate()
+    public function test_synthetic_exchange_rate()
     {
         $usd = Currency::find(1);
         $gbp = Currency::find(2);
@@ -94,7 +91,7 @@ class UpdateExchangeRatesTest extends TestCase
         $aud->exchange_rate = 1.5;
         $aud->save();
 
-        $currency_api = new CurrencyApi();
+        $currency_api = new CurrencyApi;
 
         $convert_to_aud = $currency_api->convert(10, 1, 12);
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,8 +21,6 @@ class RecurringQuoteFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -32,11 +29,11 @@ class RecurringQuoteFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('custom_value1', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value2', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value3', 'like', '%' . $filter . '%')
-                          ->orWhere('custom_value4', 'like', '%' . $filter . '%');
+                ->orWhere('custom_value2', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value3', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value4', 'like', '%' . $filter . '%');
         });
     }
 
@@ -52,8 +49,7 @@ class RecurringQuoteFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
@@ -70,8 +66,6 @@ class RecurringQuoteFilters extends QueryFilters
 
     /**
      * Filters the query by the users company ID.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {

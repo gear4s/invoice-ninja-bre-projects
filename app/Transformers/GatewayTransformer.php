@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,14 +24,10 @@ class GatewayTransformer extends EntityTransformer
     protected array $defaultIncludes = [
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
     ];
 
     /**
-     * @param Gateway $gateway
      * @return array
      */
     public function transform(Gateway $gateway)

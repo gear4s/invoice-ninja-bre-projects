@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,6 +28,7 @@ class JobFailureAnalytics extends GenericMixedMetric
 
     /**
      * The name of the counter.
+     *
      * @var string
      */
     public $name = 'job.failed';
@@ -37,7 +37,6 @@ class JobFailureAnalytics extends GenericMixedMetric
      * The datetime of the counter measurement.
      *
      * date("Y-m-d H:i:s")
-     *
      */
     public $datetime;
 
@@ -48,6 +47,7 @@ class JobFailureAnalytics extends GenericMixedMetric
      * @var string
      */
     public $string_metric5 = 'name';
+
     public $string_metric6 = 'exception';
 
     public $int_metric1 = 1;

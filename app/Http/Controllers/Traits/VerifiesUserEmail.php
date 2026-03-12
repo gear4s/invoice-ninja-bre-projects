@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,42 +14,43 @@ namespace App\Http\Controllers\Traits;
 use App\Models\User;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\UserSessionAttributes;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\View\View;
 
 /**
  * Class VerifiesUserEmail.
  */
 trait VerifiesUserEmail
 {
-    use UserSessionAttributes;
     use MakesHash;
+    use UserSessionAttributes;
 
     /**
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function confirm()
     {
         $user = User::where('confirmation_code', request()->confirmation_code)->first();
         $react = request()->has('react') ? true : false;
 
-        \Illuminate\Support\Facades\Auth::guard('web')->logout();
-        \Illuminate\Support\Facades\Auth::guard('contact')->logout();
+        Auth::guard('web')->logout();
+        Auth::guard('contact')->logout();
 
         // Clear session data
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
         // Clear any auth cookies
-        request()->cookies->remove(\Illuminate\Support\Facades\Auth::guard('web')->getRecallerName());
-        request()->cookies->remove(\Illuminate\Support\Facades\Auth::guard('contact')->getRecallerName());
+        request()->cookies->remove(Auth::guard('web')->getRecallerName());
+        request()->cookies->remove(Auth::guard('contact')->getRecallerName());
 
-        if (! $user) {
+        if (!$user) {
             return $this->render('auth.confirmed', [
                 'root' => 'themes',
                 'message' => ctrans('texts.wrong_confirmation'),
-                'redirect_url' => $react ? config('ninja.react_url') . "/#/" : url('/')]);
+                'redirect_url' => $react ? config('ninja.react_url') . '/#/' : url('/')]);
         }
 
         $user->email_verified_at = now();
@@ -60,18 +60,18 @@ trait VerifiesUserEmail
             return $this->render('auth.confirmed', [
                 'root' => 'themes',
                 'message' => ctrans('texts.security_confirmation'),
-                'redirect_url' => $react ? config('ninja.react_url') . "/#/" : url('/'),
+                'redirect_url' => $react ? config('ninja.react_url') . '/#/' : url('/'),
             ]);
         }
 
         if (is_null($user->password) || empty($user->password) || Hash::check('', $user->password)) {
-            return $this->render('auth.confirmation_with_password', ['root' => 'themes', 'user_id' => $user->hashed_id, 'redirect_url' => $react ? config('ninja.react_url') . "/#/" : url('/')]);
+            return $this->render('auth.confirmation_with_password', ['root' => 'themes', 'user_id' => $user->hashed_id, 'redirect_url' => $react ? config('ninja.react_url') . '/#/' : url('/')]);
         }
 
         return $this->render('auth.confirmed', [
             'root' => 'themes',
             'message' => ctrans('texts.security_confirmation'),
-            'redirect_url' => $react ? config('ninja.react_url') . "/#/" : url('/'),
+            'redirect_url' => $react ? config('ninja.react_url') . '/#/' : url('/'),
         ]);
     }
 
@@ -87,8 +87,8 @@ trait VerifiesUserEmail
 
         if ($validator->fails()) {
             return back()
-                        ->withErrors($validator)
-                        ->withInput();
+                ->withErrors($validator)
+                ->withInput();
         }
 
         $user->password = Hash::make(request()->password);
@@ -97,21 +97,21 @@ trait VerifiesUserEmail
         $user->confirmation_code = null;
         $user->save();
 
-        \Illuminate\Support\Facades\Auth::guard('web')->logout();
-        \Illuminate\Support\Facades\Auth::guard('contact')->logout();
+        Auth::guard('web')->logout();
+        Auth::guard('contact')->logout();
 
         // Clear session data
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
         // Clear any auth cookies
-        request()->cookies->remove(\Illuminate\Support\Facades\Auth::guard('web')->getRecallerName());
-        request()->cookies->remove(\Illuminate\Support\Facades\Auth::guard('contact')->getRecallerName());
+        request()->cookies->remove(Auth::guard('web')->getRecallerName());
+        request()->cookies->remove(Auth::guard('contact')->getRecallerName());
 
         return $this->render('auth.confirmed', [
             'root' => 'themes',
             'message' => ctrans('texts.security_confirmation'),
-            'redirect_url' => $react ? config('ninja.react_url') . "/#/" : url('/'),
+            'redirect_url' => $react ? config('ninja.react_url') . '/#/' : url('/'),
         ]);
     }
 }

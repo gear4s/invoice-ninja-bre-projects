@@ -6,45 +6,45 @@ return [
 
     'greeting' => 'Dobrodošli v E-Računih, :name!',
 
-    'intro' => "Ta storitev vam omogoča:",
-    'intro_items' => "
+    'intro' => 'Ta storitev vam omogoča:',
+    'intro_items' => '
         • Pošiljanje in prejemanje računov elektronsko<br>
         • Zagotavljanje skladnosti z davčnimi predpisi<br>
         • Pospešitev obdelave plačil<br>
         • Zmanjšanje ročnega vnosa podatkov in napak<br>
-    ",
+    ',
 
     'requirements_title' => 'Pomembne Zahteve',
     'requirements_intro' => 'Za uspešno uporabo e-računov preverite te ključne poslovne podatke:',
-    'requirements_items' => "
+    'requirements_items' => '
             • Uradno ime podjetja - Mora natančno ustrezati vaši uradni registraciji<br>
             • Davčna številka/ID za DDV - Mora biti veljavna in potrjena<br>
             • Poslovni identifikatorji (ABN/EORI/GLN) - Morajo biti točni in aktivni<br>
             • Poslovni naslov - Mora ustrezati uradnim evidencam<br>
             • Kontaktni podatki - Morajo biti ažurni in spremljani<br>
-        ",
+        ',
 
     'validation_title' => 'Zakaj so Natančni Podatki Pomembni',
-    'validation_items' => "
+    'validation_items' => '
             • Napačni podatki lahko povzročijo zavrnitev računa<br>
             • Davčni organi zahtevajo natančno ujemanje registracijskih številk<br>
             • Plačilni sistemi se zanašajo na pravilne poslovne identifikatorje<br>
             • Pravna skladnost je odvisna od točnih poslovnih podatkov<br>
-        ",
+        ',
 
     'next_steps' => 'Naslednji Koraki',
-    'next_steps_items' => "
+    'next_steps_items' => '
             1. Preglejte podatke svojega podjetja v nastavitvah računa<br>
             2. Posodobite zastarele informacije<br>
             3. Preverite davčne registracijske številke<br>
             4. Pošljite testni e-račun<br>
-        ",
+        ',
     'support_title' => 'Potrebujete Pomoč?',
-    'support_message' => "Naša podpora vam je na voljo za vsa vprašanja glede zahtev ali nastavitve e-računov.<br>
+    'support_message' => 'Naša podpora vam je na voljo za vsa vprašanja glede zahtev ali nastavitve e-računov.<br>
                     Kontaktirajte podporo: :email<br>
                     Hvala, ker ste izbrali našo storitev e-računov.<br>
-    ",
-    "text" => "
+    ',
+    'text' => '
     Aktivacija E-Računov
 
 Dobrodošli v E-Računih.
@@ -87,5 +87,5 @@ Naša podpora vam je na voljo za vsa vprašanja glede zahtev ali nastavitve e-ra
 Kontaktirajte podporo: contact@invoiceninja.com
 
 Hvala, ker ste izbrali našo storitev e-računov.
-    "
+    ',
 ];

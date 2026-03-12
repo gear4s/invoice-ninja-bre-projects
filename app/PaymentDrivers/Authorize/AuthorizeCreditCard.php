@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -45,10 +44,10 @@ class AuthorizeCreditCard implements LivewireMethodInterface
     public function paymentData(array $data): array
     {
         $tokens = ClientGatewayToken::where('client_id', $this->authorize->client->id)
-                                    ->where('company_gateway_id', $this->authorize->company_gateway->id)
-                                    ->where('gateway_type_id', GatewayType::CREDIT_CARD)
-                                    ->orderBy('is_default', 'desc')
-                                    ->get();
+            ->where('company_gateway_id', $this->authorize->company_gateway->id)
+            ->where('gateway_type_id', GatewayType::CREDIT_CARD)
+            ->orderBy('is_default', 'desc')
+            ->get();
 
         $data['tokens'] = $tokens;
         $data['gateway'] = $this->authorize;
@@ -80,7 +79,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
         if ($request->has('store_card') && $request->input('store_card') === true) {
 
             $authorise_payment_method = new AuthorizePaymentMethod($this->authorize);
-            $authorise_payment_method->setPaymentMethodId(\App\Models\GatewayType::CREDIT_CARD);
+            $authorise_payment_method->setPaymentMethodId(GatewayType::CREDIT_CARD);
 
             $payment_profile = $authorise_payment_method->addPaymentMethodToClient($gateway_customer_reference, $data);
             $payment_profile_id = $payment_profile->getPaymentProfile()->getCustomerPaymentProfileId();
@@ -106,7 +105,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
 
     private function removePaymentProfile($customer_profile_id, $customer_payment_profile_id)
     {
-        $request = new DeleteCustomerPaymentProfileRequest();
+        $request = new DeleteCustomerPaymentProfileRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setCustomerProfileId($customer_profile_id);
         $request->setCustomerPaymentProfileId($customer_payment_profile_id);
@@ -141,7 +140,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
             ->where('company_id', auth()->guard('contact')->user()->client->company_id)
             ->first();
 
-        if (! $client_gateway_token) {
+        if (!$client_gateway_token) {
             throw new PaymentFailed(ctrans('texts.payment_token_not_found'), 401);
         }
 
@@ -234,7 +233,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
     private function processSuccessfulResponse($data, $request)
     {
         $payment_hash = PaymentHash::where('hash', $request->input('payment_hash'))->firstOrFail();
-        $payment = $this->storePayment($payment_hash, $data, \App\Models\GatewayType::CREDIT_CARD);
+        $payment = $this->storePayment($payment_hash, $data, GatewayType::CREDIT_CARD);
 
         $vars = [
             'invoices' => $payment_hash->invoices(),

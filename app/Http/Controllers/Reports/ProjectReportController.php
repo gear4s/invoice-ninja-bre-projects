@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,8 +15,10 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\Report\ProjectReportRequest;
 use App\Jobs\Report\PreviewReport;
 use App\Jobs\Report\SendToAdmin;
+use App\Models\User;
 use App\Services\Report\ProjectReport;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Str;
 
 class ProjectReportController extends BaseController
 {
@@ -29,9 +30,10 @@ class ProjectReportController extends BaseController
     {
         parent::__construct();
     }
+
     public function __invoke(ProjectReportRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if ($request->has('send_email') && $request->get('send_email') && $request->missing('output')) {
@@ -40,7 +42,7 @@ class ProjectReportController extends BaseController
             return response()->json(['message' => 'working...'], 200);
         }
 
-        $hash = \Illuminate\Support\Str::uuid();
+        $hash = Str::uuid();
 
         PreviewReport::dispatch($user->company(), $request->all(), ProjectReport::class, $hash);
 

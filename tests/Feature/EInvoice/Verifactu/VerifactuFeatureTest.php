@@ -2,50 +2,54 @@
 
 namespace Tests\Feature\EInvoice\Verifactu;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Invoice;
-use Faker\Factory as Faker;
-use Illuminate\Support\Str;
-use App\Models\CompanyToken;
-use App\Models\VerifactuLog;
-use App\Models\ClientContact;
-use App\DataMapper\InvoiceItem;
-use App\Factory\InvoiceFactory;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
+use App\DataMapper\InvoiceItem;
 use App\Factory\CompanyUserFactory;
-use Illuminate\Support\Facades\Http;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Invoice;
+use App\Models\User;
+use App\Models\VerifactuLog;
 use App\Repositories\InvoiceRepository;
+use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
 use App\Services\EDocument\Standards\Verifactu;
-use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\AeatAuthority;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
-use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
-use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
-use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
-use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
-use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
-use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
+use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
+use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
+use App\Services\EDocument\Standards\Verifactu\Signing\SigningService;
+use Faker\Factory as Faker;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
 class VerifactuFeatureTest extends TestCase
 {
-    /** @var Account $account */
     private Account $account;
+
     private $company;
+
     private $user;
+
     private $cu;
+
     private $token;
+
     private $client;
+
     private $faker;
 
     // private string $nombre_razon = 'CERTIFICADO ENTIDAD PRUEBAS'; //must match the cert name
-    private string $nombre_razon = 'CERTIFICADO FISICA PRUEBAS'; //must match the cert name
+    private string $nombre_razon = 'CERTIFICADO FISICA PRUEBAS'; // must match the cert name
 
     private string $test_company_nif = 'A39200019';
 
@@ -63,7 +67,7 @@ class VerifactuFeatureTest extends TestCase
     /**
      * Helper to stub test data.
      *
-     * @param  mixed $settings
+     * @param  mixed  $settings
      * @return Invoice $invoice
      */
     private function buildData($settings = null)
@@ -120,9 +124,9 @@ class VerifactuFeatureTest extends TestCase
         $this->cu->is_locked = false;
         $this->cu->save();
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
@@ -155,19 +159,19 @@ class VerifactuFeatureTest extends TestCase
         $this->client = $client;
 
         ClientContact::factory()->create([
-                'user_id' => $this->user->id,
-                'client_id' => $this->client->id,
-                'company_id' => $this->company->id,
-                'is_primary' => 1,
-                'first_name' => 'john',
-                'last_name' => 'doe',
-                'email' => 'john@doe.com',
-                'send_email' => true,
-            ]);
+            'user_id' => $this->user->id,
+            'client_id' => $this->client->id,
+            'company_id' => $this->company->id,
+            'is_primary' => 1,
+            'first_name' => 'john',
+            'last_name' => 'doe',
+            'email' => 'john@doe.com',
+            'send_email' => true,
+        ]);
 
         $line_items = [];
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->product_key = '1234567890';
         $item->quantity = 1;
         $item->cost = 100;
@@ -203,10 +207,10 @@ class VerifactuFeatureTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()
-                        ->getInvoice()
-                        ->service()
-                        ->markSent()
-                        ->save();
+            ->getInvoice()
+            ->service()
+            ->markSent()
+            ->save();
 
         return $invoice;
     }
@@ -215,12 +219,13 @@ class VerifactuFeatureTest extends TestCase
      * test_construction_and_validation
      *
      * tests building / validating / sending a NEW invoice in a chain
+     *
      * @return void
      */
     public function test_construction_and_validation()
     {
         // - current previous hash - 10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C
-        //BE95547AA8B973A3D6A860B36833FBDE3C8AB853F4B8F05872574A5DA7314A23
+        // BE95547AA8B973A3D6A860B36833FBDE3C8AB853F4B8F05872574A5DA7314A23
         // - current previous invoice number - TEST0033343443
 
         $invoice = $this->buildData();
@@ -253,12 +258,11 @@ class VerifactuFeatureTest extends TestCase
         $verifactu = new Verifactu($invoice);
         $verifactu->run();
         $verifactu->setTestMode()
-                ->setPreviousHash('E5A23515881D696FCD1CA8EE4902632BFC6D892BA8EB79CB656A5F84963079D3');
+            ->setPreviousHash('E5A23515881D696FCD1CA8EE4902632BFC6D892BA8EB79CB656A5F84963079D3');
 
-        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($verifactu->getEnvelope());
+        $validator = new VerifactuDocumentValidator($verifactu->getEnvelope());
         $validator->validate();
         $errors = $validator->getVerifactuErrors();
-
 
         if (!empty($errors)) {
 
@@ -299,7 +303,7 @@ class VerifactuFeatureTest extends TestCase
      *
      * @return void
      */
-    public function testBuildInvoiceCancellation()
+    public function test_build_invoice_cancellation()
     {
         $invoice = $this->buildData();
 
@@ -336,17 +340,17 @@ class VerifactuFeatureTest extends TestCase
         $soapXml = $cancellation->toSoapEnvelope();
 
         $response = Http::withHeaders([
-                    'Content-Type' => 'text/xml; charset=utf-8',
-                    'SOAPAction' => '',
-                ])
-                ->withOptions([
-                    'cert' => storage_path('aeat-cert5.pem'),
-                    'ssl_key' => storage_path('aeat-key5.pem'),
-                    'verify' => false,
-                    'timeout' => 30,
-                ])
-                ->withBody($soapXml, 'text/xml')
-                ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+            'Content-Type' => 'text/xml; charset=utf-8',
+            'SOAPAction' => '',
+        ])
+            ->withOptions([
+                'cert' => storage_path('aeat-cert5.pem'),
+                'ssl_key' => storage_path('aeat-key5.pem'),
+                'verify' => false,
+                'timeout' => 30,
+            ])
+            ->withBody($soapXml, 'text/xml')
+            ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
 
         nlog('Request with AEAT official test data:');
         nlog($soapXml);
@@ -355,7 +359,7 @@ class VerifactuFeatureTest extends TestCase
         nlog('Response Headers: ' . json_encode($response->headers()));
         nlog('Response Body: ' . $response->body());
 
-        $r = new ResponseProcessor();
+        $r = new ResponseProcessor;
         $rx = $r->processResponse($response->body());
         $this->assertTrue($rx['success']);
 
@@ -363,12 +367,11 @@ class VerifactuFeatureTest extends TestCase
 
     }
 
-
-
     /**
      * test_invoice_modification_validation
      *
      * Test that the modified invoice passes the validation rules
+     *
      * @return void
      */
     public function test_invoice_modification_validation()
@@ -384,7 +387,7 @@ class VerifactuFeatureTest extends TestCase
             'date' => '2025-08-10',
             'status_id' => Invoice::STATUS_SENT,
             'uses_inclusive_taxes' => false,
-            'number' => 'Replaceable Invoice #'.rand(1000000000, 9999999999),
+            'number' => 'Replaceable Invoice #' . rand(1000000000, 9999999999),
         ]);
 
         $invoice->number = 'TEST0033343460-R4';
@@ -399,7 +402,7 @@ class VerifactuFeatureTest extends TestCase
 
         $invoice->line_items = $items;
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save($invoice->toArray(), $invoice);
         $invoice = $invoice->service()->markSent()->save();
 
@@ -407,15 +410,15 @@ class VerifactuFeatureTest extends TestCase
 
         $verifactu2 = new Verifactu($invoice);
         $document2 = $verifactu2->setTestMode()
-                ->setPreviousHash($previous_huella)
-                ->run()
-                ->getInvoice();
+            ->setPreviousHash($previous_huella)
+            ->run()
+            ->getInvoice();
 
         $soapXml = $document2->toSoapEnvelope();
 
         $this->assertNotNull($document2->getHuella());
 
-        nlog("huella: " . $document2->getHuella());
+        nlog('huella: ' . $document2->getHuella());
 
         nlog($soapXml);
 
@@ -460,9 +463,9 @@ class VerifactuFeatureTest extends TestCase
 
         $verifactu = new Verifactu($invoice);
         $document = $verifactu->setTestMode()
-                ->setPreviousHash($previous_huella)
-                ->run()
-                ->getInvoice();
+            ->setPreviousHash($previous_huella)
+            ->run()
+            ->getInvoice();
 
         nlog($document->toSoapEnvelope());
 
@@ -492,7 +495,7 @@ class VerifactuFeatureTest extends TestCase
         $data['client_id'] = $invoice->client_id;
         unset($data['id']);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice2 = $repo->save($data, $invoice2);
         $invoice2 = $invoice2->service()->markSent()->save();
 
@@ -500,9 +503,9 @@ class VerifactuFeatureTest extends TestCase
 
         $verifactu2 = new Verifactu($invoice2);
         $document2 = $verifactu2->setTestMode()
-                ->setPreviousHash($document->getHuella())
-                ->run()
-                ->getInvoice();
+            ->setPreviousHash($document->getHuella())
+            ->run()
+            ->getInvoice();
 
         nlog($document2->toSoapEnvelope());
 
@@ -512,7 +515,7 @@ class VerifactuFeatureTest extends TestCase
         $this->assertArrayHasKey('success', $response);
         $this->assertTrue($response['success']);
 
-        //Lets try and cancel the credit note now - we should fail!!
+        // Lets try and cancel the credit note now - we should fail!!
         $verifactu = new Verifactu($invoice2);
         $document = (new RegistroAlta($invoice2))->run()->getInvoice();
         $huella = $this->cancellationHash($document, $document2->getHuella());
@@ -525,12 +528,12 @@ class VerifactuFeatureTest extends TestCase
         nlog($soapXml);
 
         $response = $verifactu->setTestMode()
-                        ->setInvoice($document)
-                        ->setHuella($huella)
-                        ->setPreviousHash($document2->getHuella())
-                        ->send($soapXml);
+            ->setInvoice($document)
+            ->setHuella($huella)
+            ->setPreviousHash($document2->getHuella())
+            ->send($soapXml);
 
-        nlog("CANCELLATION RESPONSE");
+        nlog('CANCELLATION RESPONSE');
         nlog($response);
 
         $this->assertNotNull($response);
@@ -546,7 +549,7 @@ class VerifactuFeatureTest extends TestCase
 
     public function test_rectification_invoice()
     {
-        $soapXml = <<<XML
+        $soapXml = <<<'XML'
                     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
                     <soapenv:Header/>
                     <soapenv:Body>
@@ -623,7 +626,6 @@ class VerifactuFeatureTest extends TestCase
 
         XML;
 
-
         $xslt = new VerifactuDocumentValidator($soapXml);
         $xslt->validate();
         $errors = $xslt->getVerifactuErrors();
@@ -637,17 +639,17 @@ class VerifactuFeatureTest extends TestCase
         $this->assertCount(0, $errors);
 
         $response = Http::withHeaders([
-                    'Content-Type' => 'text/xml; charset=utf-8',
-                    'SOAPAction' => '',
-                ])
-                ->withOptions([
-                    'cert' => storage_path('aeat-cert5.pem'),
-                    'ssl_key' => storage_path('aeat-key5.pem'),
-                    'verify' => false,
-                    'timeout' => 30,
-                ])
-                ->withBody($soapXml, 'text/xml')
-                ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+            'Content-Type' => 'text/xml; charset=utf-8',
+            'SOAPAction' => '',
+        ])
+            ->withOptions([
+                'cert' => storage_path('aeat-cert5.pem'),
+                'ssl_key' => storage_path('aeat-key5.pem'),
+                'verify' => false,
+                'timeout' => 30,
+            ])
+            ->withBody($soapXml, 'text/xml')
+            ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
 
         nlog('Request with AEAT official test data:');
         nlog($soapXml);
@@ -656,14 +658,12 @@ class VerifactuFeatureTest extends TestCase
         nlog('Response Headers: ' . json_encode($response->headers()));
         nlog('Response Body: ' . $response->body());
 
-        $r = new ResponseProcessor();
+        $r = new ResponseProcessor;
         $rx = $r->processResponse($response->body());
 
         nlog($rx);
 
     }
-
-
 
     /**
      * Test that R1 invoice XML structure is exactly as expected with proper element order
@@ -671,12 +671,12 @@ class VerifactuFeatureTest extends TestCase
     public function test_r1_invoice_xml_structure_exact_match(): void
     {
         // Create a complete R1 invoice with all required elements matching the exact XML structure
-        $invoice = new VerifactuInvoice();
+        $invoice = new VerifactuInvoice;
 
         // Set required properties using setter methods to match the expected XML exactly
         $invoice->setIdVersion('1.0');
 
-        $idFactura = new IDFactura();
+        $idFactura = new IDFactura;
         $idFactura->setIdEmisorFactura('A39200019');
         $idFactura->setNumSerieFactura('TEST0033343444');
         $idFactura->setFechaExpedicionFactura('09-08-2025');
@@ -695,24 +695,23 @@ class VerifactuFeatureTest extends TestCase
         // Set up rectification details exactly as in the expected XML
         $invoice->setRectifiedInvoice('A39200019', 'TEST0033343443', '09-08-2025');
 
-
         $importeRectificacion = [
             'BaseRectificada' => 100.00,
             'CuotaRectificada' => 21.00,
-            'CuotaRecargoRectificado' => 0.00
+            'CuotaRecargoRectificado' => 0.00,
         ];
 
         $invoice->setRectificationAmounts($importeRectificacion);
 
         // Set up desglose exactly as in the expected XML
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseFactura([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'TipoImpositivo' => 21.00,
             'BaseImponible' => 97.00,
-            'Cuota' => 20.37
+            'Cuota' => 20.37,
         ]);
         $invoice->setDesglose($desglose);
 
@@ -753,7 +752,7 @@ class VerifactuFeatureTest extends TestCase
             'SistemaInformatico',
             'FechaHoraHusoGenRegistro',
             'TipoHuella',
-            'Huella'
+            'Huella',
         ];
 
         $xmlLines = explode("\n", $soapXml);
@@ -833,8 +832,7 @@ class VerifactuFeatureTest extends TestCase
         $this->assertStringContainsString('</soapenv:Envelope>', $soapXml);
     }
 
-
-    ////////////////////////////////////////////////
+    // //////////////////////////////////////////////
     private function cancellationHash($document, $huella)
     {
 
@@ -849,26 +847,24 @@ class VerifactuFeatureTest extends TestCase
             "Huella={$huella}&" .
             "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
 
-        nlog("Cancellation Huella: " . $hashInput);
+        nlog('Cancellation Huella: ' . $hashInput);
 
         return strtoupper(hash('sha256', $hashInput));
 
     }
 
-
-    //@todo - need to test that the user has granted power of attorney to the system
-    //@todo - data must be written to the database to confirm this.
+    // @todo - need to test that the user has granted power of attorney to the system
+    // @todo - data must be written to the database to confirm this.
     public function test_verifactu_authority()
     {
-        $authority = new AeatAuthority();
+        $authority = new AeatAuthority;
         $authority->setTestMode();
         $success = $authority->run('A39200019');
 
         $this->assertTrue($success);
     }
 
-
-    //@todo - need to confirm that building the xml and sending works.
+    // @todo - need to confirm that building the xml and sending works.
     public function test_verifactu_invoice_model_can_build_xml()
     {
 
@@ -877,7 +873,7 @@ class VerifactuFeatureTest extends TestCase
 
         nlog($currentTimestamp);
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
             ->setIdFactura('FAC2023002')
@@ -892,27 +888,26 @@ class VerifactuFeatureTest extends TestCase
             ->setTipoHuella('01')
             ->setHuella('PLACEHOLDER_HUELLA');
         // Add emitter
-        $emisor = new PersonaFisicaJuridica();
+        $emisor = new PersonaFisicaJuridica;
         $emisor
             ->setNif('A39200019')
             ->setRazonSocial('Empresa Ejemplo SL');
         $invoice->setTercero($emisor);
 
         // Add breakdown
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseFactura([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'BaseImponibleOimporteNoSujeto' => 1000.00,
             'TipoImpositivo' => 21,
-            'CuotaRepercutida' => 210.00
+            'CuotaRepercutida' => 210.00,
         ]);
         $invoice->setDesglose($desglose);
 
-
         $destinatarios = [];
-        $destinatario = new PersonaFisicaJuridica();
+        $destinatario = new PersonaFisicaJuridica;
 
         $destinatario
             ->setNif('A39200020')
@@ -923,7 +918,7 @@ class VerifactuFeatureTest extends TestCase
         $invoice->setDestinatarios($destinatarios);
 
         // Add information system
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('A39200019')
@@ -934,7 +929,7 @@ class VerifactuFeatureTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add chain
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
@@ -945,7 +940,7 @@ class VerifactuFeatureTest extends TestCase
         nlog($soapXml);
     }
 
-    //@todo - need to confirm that building the xml and sending works.
+    // @todo - need to confirm that building the xml and sending works.
     public function test_generated_invoice_xml_can_send_to_web_service()
     {
 
@@ -957,7 +952,7 @@ class VerifactuFeatureTest extends TestCase
 
         nlog($currentTimestamp);
 
-        $invoice = new Invoice();
+        $invoice = new Invoice;
         $invoice
             ->setIdVersion('1.0')
             ->setIdFactura('FAC2023002')
@@ -973,29 +968,26 @@ class VerifactuFeatureTest extends TestCase
             ->setHuella('PLACEHOLDER_HUELLA');
 
         // Add emitter
-        $emisor = new PersonaFisicaJuridica();
+        $emisor = new PersonaFisicaJuridica;
         $emisor
             ->setNif('A39200019')
             ->setRazonSocial('Empresa Ejemplo SL');
         $invoice->setTercero($emisor);
 
-
-
-
         // Add breakdown
-        $desglose = new Desglose();
+        $desglose = new Desglose;
         $desglose->setDesgloseFactura([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
             'BaseImponibleOimporteNoSujeto' => 1000.00,
             'TipoImpositivo' => 21,
-            'CuotaRepercutida' => 210.00
+            'CuotaRepercutida' => 210.00,
         ]);
         $invoice->setDesglose($desglose);
 
         // Add information system
-        $sistema = new SistemaInformatico();
+        $sistema = new SistemaInformatico;
         $sistema
             ->setNombreRazon('Sistema de Facturación')
             ->setNif('A39200019')
@@ -1006,7 +998,7 @@ class VerifactuFeatureTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         // Add chain
-        $encadenamiento = new Encadenamiento();
+        $encadenamiento = new Encadenamiento;
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
@@ -1028,20 +1020,20 @@ class VerifactuFeatureTest extends TestCase
         // Replace the placeholder with the correct hash
         $soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
 
-        nlog("test_generated_invoice_xml_can_send_to_web_service");
+        nlog('test_generated_invoice_xml_can_send_to_web_service');
         nlog('Calculated hash for XML: ' . $correctHash);
 
         // Sign the XML before sending
         $certPath = storage_path('aeat-cert5.pem');
         $keyPath = storage_path('aeat-key5.pem');
-        $signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
+        $signingService = new SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
         $soapXml = $signingService->sign();
 
         // Try direct HTTP approach instead of SOAP client
         $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-                'SOAPAction' => '',
-            ])
+            'Content-Type' => 'text/xml; charset=utf-8',
+            'SOAPAction' => '',
+        ])
             ->withOptions([
                 'cert' => storage_path('aeat-cert5.pem'),
                 'ssl_key' => storage_path('aeat-key5.pem'),
@@ -1067,8 +1059,7 @@ class VerifactuFeatureTest extends TestCase
 
     }
 
-
-    //Confirmed, this works. requires us to track the previous hash for each company to be used in subsequent calls.
+    // Confirmed, this works. requires us to track the previous hash for each company to be used in subsequent calls.
     public function test_send_aeat_example_to_verifactu()
     {
         // Generate current timestamp in the correct format
@@ -1177,16 +1168,16 @@ class VerifactuFeatureTest extends TestCase
         // Sign the XML before sending
         $certPath = storage_path('aeat-cert5.pem');
         $keyPath = storage_path('aeat-key5.pem');
-        $signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
+        $signingService = new SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
         $soapXml = $signingService->sign();
 
         nlog($soapXml);
 
         // Try direct HTTP approach instead of SOAP client
         $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-                'SOAPAction' => '',
-            ])
+            'Content-Type' => 'text/xml; charset=utf-8',
+            'SOAPAction' => '',
+        ])
             ->withOptions([
                 'cert' => storage_path('aeat-cert5.pem'),
                 'ssl_key' => storage_path('aeat-key5.pem'),
@@ -1210,8 +1201,7 @@ class VerifactuFeatureTest extends TestCase
 
         $this->assertTrue($response->successful());
 
-
-        $responseProcessor = new ResponseProcessor();
+        $responseProcessor = new ResponseProcessor;
         $responseProcessor->processResponse($response->body());
 
         nlog($responseProcessor->getSummary());
@@ -1249,5 +1239,4 @@ class VerifactuFeatureTest extends TestCase
         // Calculate SHA256 hash and return in uppercase
         return strtoupper(hash('sha256', $hashInput));
     }
-
 }

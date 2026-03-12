@@ -6,34 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models\Presenters;
 
+use App\DataMapper\CompanySettings;
+use App\Models\Company;
 use App\Models\Country;
+use App\Utils\Ninja;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
  * Class CompanyPresenter.
- * @property \App\DataMapper\CompanySettings $settings
+ *
+ * @property CompanySettings $settings
  */
 class CompanyPresenter extends EntityPresenter
 {
-    /**
-     * @return string
-     */
     public function name(): string
     {
         return $this->settings->name ?: ctrans('texts.untitled_account');
     }
 
-
     public function logo($settings = null)
     {
-        if (! $settings) {
+        if (!$settings) {
             $settings = $this->entity->settings;
         }
 
@@ -48,7 +48,7 @@ class CompanyPresenter extends EntityPresenter
 
     public function logoDocker($settings = null)
     {
-        if (! $settings) {
+        if (!$settings) {
             $settings = $this->entity->settings;
         }
 
@@ -61,7 +61,7 @@ class CompanyPresenter extends EntityPresenter
             return $this->logo($settings);
         }
 
-        return "data:image/png;base64, " . base64_encode($logo);
+        return 'data:image/png;base64, ' . base64_encode($logo);
     }
 
     /**
@@ -69,33 +69,34 @@ class CompanyPresenter extends EntityPresenter
      */
     public function logo_base64($settings = null)
     {
-        if (! $settings) {
+        if (!$settings) {
             $settings = $this->entity->settings;
         }
 
         if (config('ninja.is_docker') || config('ninja.local_download')) {
             return $this->logoDocker($settings);
         }
-        
-        $basename = basename($settings->company_logo);
-        $disk = \App\Utils\Ninja::isHosted() ? 'backup' : config('filesystems.default');
 
-        try{
+        $basename = basename($settings->company_logo);
+        $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
+
+        try {
             $logo = Storage::disk($disk)->get($this->company_key . '/' . $basename);
 
-            if(!empty($logo)){
-                return "data:image/png;base64," . base64_encode($logo);
+            if (!empty($logo)) {
+                return 'data:image/png;base64,' . base64_encode($logo);
             }
 
-        }catch(\Throwable $e){
-            //fall through
-        }
-      
-        try {
-            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($settings->company_logo);
-            return $response->successful() ? "data:image/png;base64," . base64_encode($response->body()) : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
         } catch (\Throwable $e) {
-            return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+            // fall through
+        }
+
+        try {
+            $response = Http::timeout(5)->get($settings->company_logo);
+
+            return $response->successful() ? 'data:image/png;base64,' . base64_encode($response->body()) : 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+        } catch (\Throwable $e) {
+            return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
         }
 
     }
@@ -104,9 +105,9 @@ class CompanyPresenter extends EntityPresenter
     {
 
         $context_options = [
-            "ssl" => [
-                "verify_peer" => false,
-                "verify_peer_name" => false,
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
             ],
         ];
 
@@ -122,8 +123,8 @@ class CompanyPresenter extends EntityPresenter
 
     public function email()
     {
-        /** @var \App\Models\Company $this */
-        if (str_contains($this->settings->email, "@")) {
+        /** @var Company $this */
+        if (str_contains($this->settings->email, '@')) {
             return $this->settings->email;
         }
 
@@ -136,7 +137,7 @@ class CompanyPresenter extends EntityPresenter
         $str = '';
         $company = $this->entity;
 
-        if (! $settings) {
+        if (!$settings) {
             $settings = $this->entity->settings;
         }
 
@@ -164,7 +165,7 @@ class CompanyPresenter extends EntityPresenter
 
     public function getCompanyCityState($settings = null)
     {
-        if (! $settings) {
+        if (!$settings) {
             $settings = $this->entity->settings;
         }
 
@@ -212,9 +213,7 @@ class CompanyPresenter extends EntityPresenter
     {
         $settings = $this->entity->settings;
 
-        return
-
-        "SPC\n0200\n1\n{$user_iban}\nK\n{$this->name}\n{$settings->address1}\n{$settings->postal_code} {$settings->city}\n\n\nCH\n\n\n\n\n\n\n\n{$balance_due_raw}\n{$client_currency}\n\n\n\n\n\n\n\nNON\n\n{$invoice_number}\nEPD\n";
+        return "SPC\n0200\n1\n{$user_iban}\nK\n{$this->name}\n{$settings->address1}\n{$settings->postal_code} {$settings->city}\n\n\nCH\n\n\n\n\n\n\n\n{$balance_due_raw}\n{$client_currency}\n\n\n\n\n\n\n\nNON\n\n{$invoice_number}\nEPD\n";
     }
 
     public function size()
@@ -224,8 +223,6 @@ class CompanyPresenter extends EntityPresenter
 
     /**
      * Return company website URL.
-     *
-     * @return string
      */
     public function website(): string
     {

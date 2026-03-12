@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -45,25 +44,24 @@ class QuoteCheckExpired implements ShouldQueue
      */
     public function handle()
     {
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             Quote::query()
-                 ->where('quotes.status_id', Quote::STATUS_SENT)
-                 ->where('quotes.is_deleted', false)
-                 ->whereNull('quotes.deleted_at')
-                 ->whereNotNull('quotes.due_date')
-                 ->whereHas('client', function ($query) {
-                     $query->where('is_deleted', 0)
-                            ->where('deleted_at', null);
-                 })
-                    ->whereHas('company', function ($query) {
-                        $query->where('is_disabled', 0);
-                    })
-
-                 ->whereBetween('quotes.due_date', [now()->subDay()->startOfDay(), now()->startOfDay()->subSecond()])
-                 ->cursor()
-                 ->each(function ($quote) {
-                     $this->queueExpiredQuoteNotification($quote);
-                 });
+                ->where('quotes.status_id', Quote::STATUS_SENT)
+                ->where('quotes.is_deleted', false)
+                ->whereNull('quotes.deleted_at')
+                ->whereNotNull('quotes.due_date')
+                ->whereHas('client', function ($query) {
+                    $query->where('is_deleted', 0)
+                        ->where('deleted_at', null);
+                })
+                ->whereHas('company', function ($query) {
+                    $query->where('is_disabled', 0);
+                })
+                ->whereBetween('quotes.due_date', [now()->subDay()->startOfDay(), now()->startOfDay()->subSecond()])
+                ->cursor()
+                ->each(function ($quote) {
+                    $this->queueExpiredQuoteNotification($quote);
+                });
         } else {
             foreach (MultiDB::$dbs as $db) {
                 MultiDB::setDB($db);
@@ -75,11 +73,11 @@ class QuoteCheckExpired implements ShouldQueue
                     ->whereNotNull('quotes.due_date')
                     ->whereHas('client', function ($query) {
                         $query->where('is_deleted', 0)
-                               ->where('deleted_at', null);
+                            ->where('deleted_at', null);
                     })
-                       ->whereHas('company', function ($query) {
-                           $query->where('is_disabled', 0);
-                       })
+                    ->whereHas('company', function ($query) {
+                        $query->where('is_disabled', 0);
+                    })
 
                     ->whereBetween('quotes.due_date', [now()->subDay()->startOfDay(), now()->startOfDay()->subSecond()])
                     ->cursor()
@@ -94,7 +92,7 @@ class QuoteCheckExpired implements ShouldQueue
 
     private function queueExpiredQuoteNotification(Quote $quote)
     {
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->company = $quote->company;
         $nmo->settings = $quote->company->settings;
 
@@ -103,7 +101,7 @@ class QuoteCheckExpired implements ShouldQueue
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 

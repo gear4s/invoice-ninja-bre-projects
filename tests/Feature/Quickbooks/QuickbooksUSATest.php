@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,18 +22,23 @@ use App\Factory\PaymentFactory;
 use App\Factory\ProductFactory;
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\Product;
+use App\Models\Paymentable;
 use App\Models\PaymentType;
+use App\Models\Product;
 use App\Models\TaxRate;
 use App\Models\User;
-use App\Services\Quickbooks\Models\QbInvoice;
+use App\Services\Quickbooks\Models\QbPayment;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\ClientTransformer;
 use App\Services\Quickbooks\Transformers\InvoiceTransformer;
+use App\Services\Quickbooks\Transformers\PaymentTransformer;
 use App\Services\Quickbooks\Transformers\ProductTransformer;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use QuickBooksOnline\API\Facades\Customer;
+use QuickBooksOnline\API\Facades\Item;
 use Tests\TestCase;
 
 /**
@@ -53,11 +57,15 @@ class QuickbooksUSATest extends TestCase
     use DatabaseTransactions;
 
     private ClientTransformer $client_transformer;
+
     private ProductTransformer $product_transformer;
+
     private InvoiceTransformer $invoice_transformer;
+
     private QuickbooksService $qb;
 
     private ?Company $company;
+
     private ?User $user;
 
     /** QB entity IDs created during tests, for cleanup */
@@ -84,8 +92,8 @@ class QuickbooksUSATest extends TestCase
     private function configureUSCompany(): void
     {
         $this->company = Company::query()
-                        ->where('settings->name', 'QBUS')
-                        ->first();
+            ->where('settings->name', 'QBUS')
+            ->first();
 
         if (!$this->company) {
             $this->markTestSkipped('No US company found');
@@ -543,7 +551,7 @@ class QuickbooksUSATest extends TestCase
     //  INVOICE TRANSFORMER TESTS — US TAX HANDLING (AST)
     // ──────────────────────────────────────────────────────────────────────
 
-    public function test_invoice_ninjaToQb_uses_tax_non_for_us()
+    public function test_invoice_ninja_to_qb_uses_tax_non_for_us()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Widget A', 100.00, 'Sales Tax', 8.25),
@@ -562,7 +570,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals('TAX', $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_exempt_line_uses_non_code()
+    public function test_invoice_ninja_to_qb_exempt_line_uses_non_code()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Exempt Item', 30.00, '', 0, '5'), // tax_id=5 = Exempt
@@ -577,7 +585,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals('NON', $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_zero_rated_uses_non_code()
+    public function test_invoice_ninja_to_qb_zero_rated_uses_non_code()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Zero Rated Export', 500.00, '', 0, '8'), // tax_id=8 = Zero-rated
@@ -592,7 +600,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals('NON', $tax_code_ref);
     }
 
-    public function test_invoice_ninjaToQb_mixed_taxable_and_exempt_lines()
+    public function test_invoice_ninja_to_qb_mixed_taxable_and_exempt_lines()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Taxable Widget', 100.00, 'Sales Tax', 8.25),
@@ -614,7 +622,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals('TAX', $qb_data['Line'][2]['SalesItemLineDetail']['TaxCodeRef']['value']);
     }
 
-    public function test_invoice_ninjaToQb_global_tax_calculation_for_ast()
+    public function test_invoice_ninja_to_qb_global_tax_calculation_for_ast()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 100.00, 'Sales Tax', 8.25),
@@ -633,7 +641,7 @@ class QuickbooksUSATest extends TestCase
         }
     }
 
-    public function test_invoice_ninjaToQb_no_txn_tax_detail_with_ast()
+    public function test_invoice_ninja_to_qb_no_txn_tax_detail_with_ast()
     {
         $ast = $this->company->quickbooks->settings->automatic_taxes;
 
@@ -651,7 +659,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertArrayNotHasKey('TxnTaxDetail', $qb_data);
     }
 
-    public function test_invoice_ninjaToQb_has_txn_tax_detail_without_ast()
+    public function test_invoice_ninja_to_qb_has_txn_tax_detail_without_ast()
     {
         $ast = $this->company->quickbooks->settings->automatic_taxes;
 
@@ -669,7 +677,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertArrayHasKey('TxnTaxDetail', $qb_data);
     }
 
-    public function test_invoice_ninjaToQb_line_item_amounts_correct()
+    public function test_invoice_ninja_to_qb_line_item_amounts_correct()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Item A', 50.00, 'Sales Tax', 8.25, '1', 3),
@@ -689,7 +697,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(200.00, $qb_data['Line'][1]['Amount']);
     }
 
-    public function test_invoice_ninjaToQb_line_numbers_sequential()
+    public function test_invoice_ninja_to_qb_line_numbers_sequential()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('One', 10.00, 'Sales Tax', 8.25),
@@ -704,7 +712,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(3, $qb_data['Line'][2]['LineNum']);
     }
 
-    public function test_invoice_ninjaToQb_includes_metadata()
+    public function test_invoice_ninja_to_qb_includes_metadata()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 100.00, 'Sales Tax', 8.25),
@@ -730,13 +738,13 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(50.00, $qb_data['Deposit']);
     }
 
-    public function test_invoice_ninjaToQb_includes_qb_id_for_updates()
+    public function test_invoice_ninja_to_qb_includes_qb_id_for_updates()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 100.00, 'Sales Tax', 8.25),
         ]);
 
-        $sync = new InvoiceSync();
+        $sync = new InvoiceSync;
         $sync->qb_id = '888';
         $invoice->sync = $sync;
         $invoice->saveQuietly();
@@ -746,7 +754,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals('888', $qb_data['Id']);
     }
 
-    public function test_invoice_ninjaToQb_no_id_for_new_invoice()
+    public function test_invoice_ninja_to_qb_no_id_for_new_invoice()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 100.00, 'Sales Tax', 8.25),
@@ -757,7 +765,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertArrayNotHasKey('Id', $qb_data);
     }
 
-    public function test_invoice_ninjaToQb_discount_line()
+    public function test_invoice_ninja_to_qb_discount_line()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 100.00, 'Sales Tax', 8.25),
@@ -780,7 +788,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(10.00, $discount_line['Amount']);
     }
 
-    public function test_invoice_ninjaToQb_percentage_discount()
+    public function test_invoice_ninja_to_qb_percentage_discount()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 200.00, 'Sales Tax', 8.25),
@@ -799,7 +807,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(15.0, $discount_line['DiscountLineDetail']['DiscountPercent']);
     }
 
-    public function test_invoice_ninjaToQb_apply_tax_after_discount()
+    public function test_invoice_ninja_to_qb_apply_tax_after_discount()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('Product', 100.00, 'Sales Tax', 8.25),
@@ -810,7 +818,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertTrue($qb_data['ApplyTaxAfterDiscount']);
     }
 
-    public function test_invoice_ninjaToQb_empty_lines_throws_exception()
+    public function test_invoice_ninja_to_qb_empty_lines_throws_exception()
     {
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('no valid line items');
@@ -829,7 +837,7 @@ class QuickbooksUSATest extends TestCase
         $this->invoice_transformer->ninjaToQb($invoice, $this->qb);
     }
 
-    public function test_invoice_ninjaToQb_no_tax_line_item()
+    public function test_invoice_ninja_to_qb_no_tax_line_item()
     {
         [$invoice, $qb_service] = $this->createUSInvoice([
             $this->makeLineItem('No Tax Item', 100.00, '', 0),
@@ -851,7 +859,7 @@ class QuickbooksUSATest extends TestCase
         }
     }
 
-    public function test_invoice_ninjaToQb_us_never_uses_numeric_tax_codes()
+    public function test_invoice_ninja_to_qb_us_never_uses_numeric_tax_codes()
     {
         // Verify that US companies NEVER output numeric TaxCodeRef values
         [$invoice, $qb_service] = $this->createUSInvoice([
@@ -1033,7 +1041,7 @@ class QuickbooksUSATest extends TestCase
     public function test_client_sync_qb_id_stored_and_retrieved()
     {
         $client = ClientFactory::create($this->company->id, $this->user->id);
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = 'QB-US-CLIENT-123';
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1046,7 +1054,7 @@ class QuickbooksUSATest extends TestCase
     {
         $product = ProductFactory::create($this->company->id, $this->user->id);
         $product->product_key = 'test_sync_product_us';
-        $sync = new ProductSync();
+        $sync = new ProductSync;
         $sync->qb_id = 'QB-US-PROD-456';
         $product->sync = $sync;
         $product->saveQuietly();
@@ -1061,7 +1069,7 @@ class QuickbooksUSATest extends TestCase
 
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $client->id;
-        $sync = new InvoiceSync();
+        $sync = new InvoiceSync;
         $sync->qb_id = 'QB-US-INV-789';
         $invoice->sync = $sync;
         $invoice->saveQuietly();
@@ -1414,7 +1422,7 @@ class QuickbooksUSATest extends TestCase
         $client->city = 'Los Angeles';
         $client->state = 'CA';
         $client->postal_code = '90001';
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1460,7 +1468,7 @@ class QuickbooksUSATest extends TestCase
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $client_qb_id];
 
         // Store the QB ID on the client
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $client_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1511,7 +1519,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($lines);
 
         // Filter to SalesItemLineDetail lines only (QB adds SubTotalLineDetail automatically)
-        $sales_lines = collect($lines)->filter(fn($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
+        $sales_lines = collect($lines)->filter(fn ($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
         $this->assertCount(2, $sales_lines);
 
         // Verify first line: 100 * 2 = 200
@@ -1620,7 +1628,7 @@ class QuickbooksUSATest extends TestCase
 
         // 6. Verify the product item ref on the line
         $lines = collect(data_get($qb_inv, 'Line'))
-            ->filter(fn($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
+            ->filter(fn ($l) => data_get($l, 'DetailType') === 'SalesItemLineDetail');
         $this->assertCount(1, $lines);
 
         $line = $lines->first();
@@ -1677,7 +1685,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($client_qb_id);
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $client_qb_id];
 
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $client_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -1705,7 +1713,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -1812,7 +1820,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -1914,7 +1922,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2019,7 +2027,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($invoice_qb_id);
         $this->qb_cleanup[] = ['type' => 'Invoice', 'id' => $invoice_qb_id];
 
-        $invoice_sync = new InvoiceSync();
+        $invoice_sync = new InvoiceSync;
         $invoice_sync->qb_id = $invoice_qb_id;
         $invoice->sync = $invoice_sync;
         $invoice->saveQuietly();
@@ -2409,7 +2417,7 @@ class QuickbooksUSATest extends TestCase
         $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
         // PaymentMethodRef should be set if the payment_method_map has a Cash entry
         $method_map = $this->company->quickbooks->settings->payment_method_map ?? [];
-        $has_cash = collect($method_map)->contains(fn($m) => strcasecmp($m['name'] ?? '', 'Cash') === 0);
+        $has_cash = collect($method_map)->contains(fn ($m) => strcasecmp($m['name'] ?? '', 'Cash') === 0);
         if ($has_cash) {
             $this->assertNotEmpty($payment_method_ref, 'Cash payment should have PaymentMethodRef');
         }
@@ -2448,7 +2456,7 @@ class QuickbooksUSATest extends TestCase
 
         // Verify PaymentMethodRef exists if map has credit card entry
         $method_map = $this->company->quickbooks->settings->payment_method_map ?? [];
-        $has_cc = collect($method_map)->contains(fn($m) => strcasecmp($m['type'] ?? '', 'CREDIT_CARD') === 0);
+        $has_cc = collect($method_map)->contains(fn ($m) => strcasecmp($m['type'] ?? '', 'CREDIT_CARD') === 0);
         if ($has_cc) {
             $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
             $this->assertNotEmpty($payment_method_ref, 'Credit card payment should have PaymentMethodRef');
@@ -2487,7 +2495,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotNull($qb_payment);
 
         $method_map = $this->company->quickbooks->settings->payment_method_map ?? [];
-        $has_check = collect($method_map)->contains(fn($m) => strcasecmp($m['name'] ?? '', 'Check') === 0);
+        $has_check = collect($method_map)->contains(fn ($m) => strcasecmp($m['name'] ?? '', 'Check') === 0);
         if ($has_check) {
             $payment_method_ref = data_get($qb_payment, 'PaymentMethodRef');
             $this->assertNotEmpty($payment_method_ref, 'Check payment should have PaymentMethodRef');
@@ -2541,7 +2549,7 @@ class QuickbooksUSATest extends TestCase
         // Create a client with QB ID for the transformer to resolve
         $client = $this->createClientWithQbId('QB-US-CREDIT-MEMO');
 
-        $transformer = new \App\Services\Quickbooks\Transformers\PaymentTransformer($this->company);
+        $transformer = new PaymentTransformer($this->company);
 
         // Simulate a QB payment with amount=0 (credit memo)
         $qb_payment_data = [
@@ -2570,7 +2578,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(PaymentType::CREDIT, $payment->type_id, 'Credit memo should have CREDIT type');
 
         // Verify credit was created
-        $credit = \App\Models\Credit::where('client_id', $client->id)
+        $credit = Credit::where('client_id', $client->id)
             ->where('amount', 50.00)
             ->first();
 
@@ -2579,8 +2587,8 @@ class QuickbooksUSATest extends TestCase
         $this->assertEquals(4, $credit->status_id, 'Credit should be completed');
 
         // Verify paymentable links payment to credit
-        $paymentable = \App\Models\Paymentable::where('payment_id', $payment->id)
-            ->where('paymentable_type', \App\Models\Credit::class)
+        $paymentable = Paymentable::where('payment_id', $payment->id)
+            ->where('paymentable_type', Credit::class)
             ->first();
         $this->assertNotNull($paymentable, 'Paymentable should link payment to credit');
         $this->assertEquals(50.00, $paymentable->amount, 'Paymentable amount should match credit');
@@ -2593,7 +2601,7 @@ class QuickbooksUSATest extends TestCase
     {
         $client = $this->createClientWithQbId('QB-US-NO-CREDIT');
 
-        $transformer = new \App\Services\Quickbooks\Transformers\PaymentTransformer($this->company);
+        $transformer = new PaymentTransformer($this->company);
 
         $qb_payment_data = [
             'Id' => 'PAY-NORM-' . time(),
@@ -2674,7 +2682,7 @@ class QuickbooksUSATest extends TestCase
     public function test_closed_period_error_detection()
     {
         // Use reflection to test the private method
-        $qb_payment = new \App\Services\Quickbooks\Models\QbPayment($this->qb);
+        $qb_payment = new QbPayment($this->qb);
         $method = new \ReflectionMethod($qb_payment, 'isClosedPeriodError');
 
         $this->assertTrue($method->invoke($qb_payment, 'The period has been closed'), 'Should detect "period has been closed"');
@@ -2691,7 +2699,7 @@ class QuickbooksUSATest extends TestCase
      */
     public function test_extract_readable_error_from_xml()
     {
-        $qb_payment = new \App\Services\Quickbooks\Models\QbPayment($this->qb);
+        $qb_payment = new QbPayment($this->qb);
         $method = new \ReflectionMethod($qb_payment, 'extractReadableError');
 
         // Test XML parsing
@@ -2978,7 +2986,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($qb_id, "Failed to push client '{$name}' to QuickBooks");
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $qb_id];
 
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $qb_id;
         $client->sync = $sync;
         $client->saveQuietly();
@@ -3053,7 +3061,7 @@ class QuickbooksUSATest extends TestCase
                             }
                         }
 
-                        $update = \QuickBooksOnline\API\Facades\Customer::create($update_data);
+                        $update = Customer::create($update_data);
                         $this->qb->sdk->Update($update);
                     }
                 } elseif ($type === 'Item') {
@@ -3075,7 +3083,7 @@ class QuickbooksUSATest extends TestCase
                             $update_data['ExpenseAccountRef'] = $expense_account_ref;
                         }
 
-                        $update = \QuickBooksOnline\API\Facades\Item::create($update_data);
+                        $update = Item::create($update_data);
                         $this->qb->sdk->Update($update);
                     }
                 } elseif ($type === 'Payment') {
@@ -3124,7 +3132,7 @@ class QuickbooksUSATest extends TestCase
     /**
      * Create an invoice with line items using the real QuickbooksService.
      *
-     * @param array $line_items Array of stdClass line items
+     * @param  array  $line_items  Array of stdClass line items
      * @return array [Invoice, QuickbooksService]
      */
     private function createUSInvoice(array $line_items): array
@@ -3178,8 +3186,7 @@ class QuickbooksUSATest extends TestCase
         $this->assertNotEmpty($actual_qb_id, "Failed to push client '{$client->name}' to QuickBooks");
         $this->qb_cleanup[] = ['type' => 'Customer', 'id' => $actual_qb_id];
 
-
-        $sync = new ClientSync();
+        $sync = new ClientSync;
         $sync->qb_id = $actual_qb_id;
         $client->sync = $sync;
         $client->saveQuietly();

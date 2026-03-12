@@ -6,46 +6,43 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Currency;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\CompanyToken;
-use App\Models\GroupSetting;
-use App\Models\ClientContact;
-use App\Utils\Traits\MakesHash;
-use Tests\Unit\GroupSettingsTest;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
 use App\DataMapper\DefaultSettings;
-use App\Factory\InvoiceItemFactory;
 use App\Factory\GroupSettingFactory;
+use App\Factory\InvoiceItemFactory;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
+use App\Models\CompanyToken;
+use App\Models\Credit;
+use App\Models\Currency;
+use App\Models\User;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ClientController
  */
 class ClientTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     public $client_id;
 
     protected function setUp(): void
@@ -67,8 +64,7 @@ class ClientTest extends TestCase
         $this->makeTestData();
     }
 
-
-    public function testClientClone()
+    public function test_client_clone()
     {
         $settings = $this->client->settings;
         $settings->currency_id = 12;
@@ -117,7 +113,7 @@ class ClientTest extends TestCase
         $this->assertCount(count($arr['contacts']), $this->client->contacts);
     }
 
-    public function testNameValidation4()
+    public function test_name_validation4()
     {
         $data = [
             'name' => '',
@@ -132,7 +128,7 @@ class ClientTest extends TestCase
 
     }
 
-    public function testNameValidation3()
+    public function test_name_validation3()
     {
         $data = [
             'vat_number' => 'JohnDoe123',
@@ -147,7 +143,7 @@ class ClientTest extends TestCase
 
     }
 
-    public function testNameValidation2()
+    public function test_name_validation2()
     {
         $data = [
             'name' => 'John Doe',
@@ -162,13 +158,13 @@ class ClientTest extends TestCase
 
     }
 
-    public function testNameValidation()
+    public function test_name_validation()
     {
         $data = [
             'name' => [
                 'first_name' => 'John',
                 'last_name' => 'Doe',
-            ]
+            ],
         ];
 
         $response = $this->withHeaders([
@@ -180,7 +176,7 @@ class ClientTest extends TestCase
 
     }
 
-    public function testBulkGroupAssignment()
+    public function test_bulk_group_assignment()
     {
         Client::factory()->count(5)->create(['user_id' => $this->user->id, 'company_id' => $this->company->id])->each(function ($c) {
             ClientContact::factory()->create([
@@ -209,7 +205,7 @@ class ClientTest extends TestCase
 
         $arr = $response->json();
 
-        Client::query()->whereIn('id', $this->transformKeys($ids))->cursor()->each(function ($c) use ($gs, $arr) {
+        Client::query()->whereIn('id', $this->transformKeys($ids))->cursor()->each(function ($c) use ($gs) {
             $this->assertEquals($gs->id, $c->group_settings_id);
         });
 
@@ -219,17 +215,17 @@ class ClientTest extends TestCase
         }
     }
 
-    public function testClientExchangeRateCalculation()
+    public function test_client_exchange_rate_calculation()
     {
         $settings = ClientSettings::defaults();
         $settings->currency_id = 12;
 
         $c = Client::factory()
-                ->create([
-                    'company_id' => $this->company->id,
-                    'user_id' => $this->user->id,
-                    'settings' => $settings
-                ]);
+            ->create([
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'settings' => $settings,
+            ]);
 
         $settings = $this->company->settings;
         $settings->currency_id = '3';
@@ -247,29 +243,29 @@ class ClientTest extends TestCase
 
     }
 
-    public function testClientIsPrimaryScalarTransform()
+    public function test_client_is_primary_scalar_transform()
     {
         $data = [
 
-                'address1' => '105 Drive',
-                'address2' => '122',
-                'city' => 'NoRoses',
-                'contacts' => [
-                    '0' => [
-                        'email' => 'craig@gmail.za',
-                        'first_name' => 'Leon',
-                        'last_name' => 'Labagne'
-                    ],
-                    'is_primary' => true,
-                    'send_email' => false
+            'address1' => '105 Drive',
+            'address2' => '122',
+            'city' => 'NoRoses',
+            'contacts' => [
+                '0' => [
+                    'email' => 'craig@gmail.za',
+                    'first_name' => 'Leon',
+                    'last_name' => 'Labagne',
                 ],
-                'country_id' => 710,
-                'id_number' => '2003/028851/06',
-                'name' => 'Targas Ltd',
-                'postal_code' => '2196',
-                'private_notes' => 'DMARC Client | Tenant ID: 45 | Team Name: Targas',
-                'state' => 'Gauteng',
-                'vat_number' => 'VAT: 33'
+                'is_primary' => true,
+                'send_email' => false,
+            ],
+            'country_id' => 710,
+            'id_number' => '2003/028851/06',
+            'name' => 'Targas Ltd',
+            'postal_code' => '2196',
+            'private_notes' => 'DMARC Client | Tenant ID: 45 | Team Name: Targas',
+            'state' => 'Gauteng',
+            'vat_number' => 'VAT: 33',
 
         ];
 
@@ -282,19 +278,18 @@ class ClientTest extends TestCase
 
     }
 
-    public function testStoreClientFixes2()
+    public function test_store_client_fixes2()
     {
         $data = [
-            "contacts" => [
+            'contacts' => [
                 [
-                "email" => "tenda@gmail.com",
-                "first_name" => "Tenda",
-                "last_name" => "Bavuma",
+                    'email' => 'tenda@gmail.com',
+                    'first_name' => 'Tenda',
+                    'last_name' => 'Bavuma',
                 ],
             ],
-            "name" => "Tenda Bavuma",
-            ];
-
+            'name' => 'Tenda Bavuma',
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -309,26 +304,24 @@ class ClientTest extends TestCase
 
     }
 
-
-    public function testStoreClientFixes()
+    public function test_store_client_fixes()
     {
         $data = [
-            "contacts" => [
-            [
-            "email" => "tenda@gmail.com",
-            "first_name" => "Tenda",
-            "is_primary" => true,
-            "last_name" => "Bavuma",
-            "password" => null,
-            "send_email" => true
+            'contacts' => [
+                [
+                    'email' => 'tenda@gmail.com',
+                    'first_name' => 'Tenda',
+                    'is_primary' => true,
+                    'last_name' => 'Bavuma',
+                    'password' => null,
+                    'send_email' => true,
+                ],
             ],
-        ],
-            "country_id" => "356",
-            "display_name" => "Tenda Bavuma",
-            "name" => "Tenda Bavuma",
-            "shipping_country_id" => "356",
-            ];
-
+            'country_id' => '356',
+            'display_name' => 'Tenda Bavuma',
+            'name' => 'Tenda Bavuma',
+            'shipping_country_id' => '356',
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -338,7 +331,7 @@ class ClientTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testClientMergeContactDrop()
+    public function test_client_merge_contact_drop()
     {
 
         $c = Client::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id]);
@@ -355,7 +348,6 @@ class ClientTest extends TestCase
             'client_id' => $c->id,
             'company_id' => $this->company->id,
         ]);
-
 
         $c1 = Client::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id]);
 
@@ -376,9 +368,8 @@ class ClientTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $c1->id,
             'company_id' => $this->company->id,
-            'email' => ''
+            'email' => '',
         ]);
-
 
         $this->assertEquals(2, $c->contacts->count());
         $this->assertEquals(3, $c1->contacts->count());
@@ -408,7 +399,7 @@ class ClientTest extends TestCase
         return $line_items;
     }
 
-    public function testCreditBalance()
+    public function test_credit_balance()
     {
         $this->client->credit_balance = 0;
         $this->client->save();
@@ -429,7 +420,7 @@ class ClientTest extends TestCase
             'custom_value4' => 0,
             'status' => 1,
             'client_id' => $this->encodePrimaryKey($this->client->id),
-            'line_items' => $this->buildLineItems()
+            'line_items' => $this->buildLineItems(),
         ];
 
         $response = $this->withHeaders([
@@ -453,7 +444,7 @@ class ClientTest extends TestCase
         $this->assertEquals(20, $credit->balance);
         $this->assertEquals(20, $credit->client->fresh()->credit_balance);
 
-        //lets now update the credit and increase its balance, this should also increase the credit balance
+        // lets now update the credit and increase its balance, this should also increase the credit balance
 
         $data = [
             'number' => 'dfdfd',
@@ -468,13 +459,13 @@ class ClientTest extends TestCase
             'custom_value4' => 0,
             'status' => 1,
             'client_id' => $this->encodePrimaryKey($this->client->id),
-            'line_items' => $this->buildLineItems(3)
+            'line_items' => $this->buildLineItems(3),
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/credits/'.$credit->hashed_id, $data)
+        ])->putJson('/api/v1/credits/' . $credit->hashed_id, $data)
             ->assertStatus(200);
 
         $credit = $credit->fresh();
@@ -483,7 +474,7 @@ class ClientTest extends TestCase
         $this->assertEquals(30, $credit->client->fresh()->credit_balance);
     }
 
-    public function testStoreClientUsingCountryCode()
+    public function test_store_client_using_country_code()
     {
         $data = [
             'name' => 'Country Code Name',
@@ -537,7 +528,7 @@ class ClientTest extends TestCase
         $this->assertEquals(12, $client->settings->currency_id);
     }
 
-    public function testClientList()
+    public function test_client_list()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -550,7 +541,7 @@ class ClientTest extends TestCase
     /*
      *  ClientController
      */
-    public function testClientRestEndPoints()
+    public function test_client_rest_end_points()
     {
         Client::factory()->count(3)->create(['user_id' => $this->user->id, 'company_id' => $this->company->id])->each(function ($c) {
             ClientContact::factory()->create([
@@ -570,14 +561,14 @@ class ClientTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/clients/'.$this->encodePrimaryKey($this->client->id));
+        ])->get('/api/v1/clients/' . $this->encodePrimaryKey($this->client->id));
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/clients/'.$this->encodePrimaryKey($this->client->id).'/edit');
+        ])->get('/api/v1/clients/' . $this->encodePrimaryKey($this->client->id) . '/edit');
 
         $response->assertStatus(200);
 
@@ -588,13 +579,13 @@ class ClientTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$this->encodePrimaryKey($this->client->id), $client_update)
+        ])->putJson('/api/v1/clients/' . $this->encodePrimaryKey($this->client->id), $client_update)
             ->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/clients/'.$this->encodePrimaryKey($this->client->id));
+        ])->delete('/api/v1/clients/' . $this->encodePrimaryKey($this->client->id));
 
         $response->assertStatus(200);
 
@@ -616,11 +607,11 @@ class ClientTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$this->encodePrimaryKey($this->client->id), $client_update)
+        ])->putJson('/api/v1/clients/' . $this->encodePrimaryKey($this->client->id), $client_update)
             ->assertStatus(400);
     }
 
-    public function testDefaultTimeZoneFromClientModel()
+    public function test_default_time_zone_from_client_model()
     {
         $account = Account::factory()->create();
         $company = Company::factory()->create([
@@ -676,17 +667,17 @@ class ClientTest extends TestCase
 
         $this->assertNotNull($this->client);
 
-        /* Make sure we have a valid settings object*/
+        /* Make sure we have a valid settings object */
         $this->assertEquals($this->client->getSetting('timezone_id'), 1);
 
         /* Make sure we are harvesting valid data */
         $this->assertEquals($this->client->timezone()->name, 'Pacific/Midway');
 
-        /* Make sure NULL settings return the correct count (0) instead of throwing an exception*/
+        /* Make sure NULL settings return the correct count (0) instead of throwing an exception */
         $this->assertEquals($this->client->contacts->count(), 3);
     }
 
-    public function testClientCreationWithIllegalContactObject()
+    public function test_client_creation_with_illegal_contact_object()
     {
         $account = Account::factory()->create();
         $company = Company::factory()->create([
@@ -713,11 +704,11 @@ class ClientTest extends TestCase
             'is_locked' => 0,
         ]);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
-        $company_token->name = $user->first_name.' '.$user->last_name;
+        $company_token->name = $user->first_name . ' ' . $user->last_name;
         $company_token->token = Str::random(64);
         $company_token->is_system = true;
 
@@ -727,7 +718,7 @@ class ClientTest extends TestCase
 
         $data = [
             'name' => 'A loyal Client',
-            'contacts' => \Illuminate\Support\Str::random(32)."@example.com",
+            'contacts' => Str::random(32) . '@example.com',
         ];
 
         // try {
@@ -743,7 +734,7 @@ class ClientTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function testCreatingClientAndContacts()
+    public function test_creating_client_and_contacts()
     {
         $account = Account::factory()->create();
         $company = Company::factory()->create([
@@ -770,11 +761,11 @@ class ClientTest extends TestCase
             'is_locked' => 0,
         ]);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
-        $company_token->name = $user->first_name.' '.$user->last_name;
+        $company_token->name = $user->first_name . ' ' . $user->last_name;
         $company_token->token = Str::random(64);
         $company_token->is_system = true;
         $company_token->save();
@@ -784,7 +775,7 @@ class ClientTest extends TestCase
         $data = [
             'name' => 'A loyal Client',
             'contacts' => [
-                ['email' => \Illuminate\Support\Str::random(32)."@example.com"],
+                ['email' => Str::random(32) . '@example.com'],
             ],
         ];
 
@@ -792,7 +783,7 @@ class ClientTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data)
-                ->assertStatus(200);
+            ->assertStatus(200);
 
         // $arr = $response->json();
 
@@ -800,7 +791,7 @@ class ClientTest extends TestCase
             'name' => 'A loyal Client',
             'contacts' => [
                 [
-                    'email' => \Illuminate\Support\Str::random(32)."@example.com",
+                    'email' => Str::random(32) . '@example.com',
                     'password' => '*****',
                 ],
             ],
@@ -810,13 +801,13 @@ class ClientTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data)
-                ->assertStatus(200);
+            ->assertStatus(200);
 
         $data = [
             'name' => 'A loyal Client',
             'contacts' => [
                 [
-                    'email' => \Illuminate\Support\Str::random(32)."@example.com",
+                    'email' => Str::random(32) . '@example.com',
                     'password' => '1',
                 ],
             ],
@@ -840,7 +831,7 @@ class ClientTest extends TestCase
             'name' => 'A loyal Client',
             'contacts' => [
                 [
-                    'email' => \Illuminate\Support\Str::random(32)."@example.com",
+                    'email' => Str::random(32) . '@example.com',
                     'password' => '1Qajsj...33',
                 ],
             ],
@@ -863,11 +854,11 @@ class ClientTest extends TestCase
             'name' => 'A loyal Client',
             'contacts' => [
                 [
-                    'email' => \Illuminate\Support\Str::random(32)."@example.com",
+                    'email' => Str::random(32) . '@example.com',
                     'password' => '1Qajsj...33',
                 ],
                 [
-                    'email' => \Illuminate\Support\Str::random(32)."@example.com",
+                    'email' => Str::random(32) . '@example.com',
                     'password' => '1234AAAAAaaaaa',
                 ],
             ],
@@ -894,11 +885,11 @@ class ClientTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$this->client_id, $data)->assertStatus(200);
+        ])->putJson('/api/v1/clients/' . $this->client_id, $data)->assertStatus(200);
 
         $arr = $response->json();
 
-        $safe_email = \Illuminate\Support\Str::random(32)."@example.com";
+        $safe_email = Str::random(32) . '@example.com';
 
         $data = [
             'name' => 'A loyal Client',
@@ -932,7 +923,7 @@ class ClientTest extends TestCase
 
         $this->assertEquals(0, strlen($contact->password));
 
-        $safe_email = \Illuminate\Support\Str::random(32)."@example.com";
+        $safe_email = Str::random(32) . '@example.com';
 
         $data = [
             'name' => 'A loyal Client',
@@ -985,7 +976,7 @@ class ClientTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$this->client->hashed_id, $data);
+        ])->putJson('/api/v1/clients/' . $this->client->hashed_id, $data);
         // } catch (ValidationException $e) {
         //     $message = json_decode($e->validator->getMessageBag(), 1);
         //     $this->assertNotNull($message);

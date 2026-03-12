@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,8 +19,6 @@ class NinjaMailer extends Mailable
 
     /**
      * Create a new message instance.
-     *
-     * @param $mail_obj
      */
     public function __construct($mail_obj)
     {
@@ -43,8 +40,8 @@ class NinjaMailer extends Mailable
         }
 
         $ninja_mailable = $this->from(config('mail.from.address'), $from_name)
-                    ->subject($this->mail_obj->subject)
-                    ->view($this->mail_obj->markdown, $this->mail_obj->data);
+            ->subject($this->mail_obj->subject)
+            ->view($this->mail_obj->markdown, $this->mail_obj->data);
 
         if (property_exists($this->mail_obj, 'text_view')) {
             $ninja_mailable->text($this->mail_obj->text_view, $this->mail_obj->data);

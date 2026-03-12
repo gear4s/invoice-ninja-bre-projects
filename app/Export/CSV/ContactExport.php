@@ -6,23 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Export\CSV;
 
-use App\Utils\Ninja;
-use App\Models\Client;
-use League\Csv\Writer;
-use App\Models\Company;
-use App\Libraries\MultiDB;
-use App\Models\ClientContact;
-use Illuminate\Support\Facades\App;
 use App\Export\Decorators\Decorator;
-use App\Transformers\ClientTransformer;
+use App\Libraries\MultiDB;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
 use App\Transformers\ClientContactTransformer;
+use App\Transformers\ClientTransformer;
+use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class ContactExport extends BaseExport
 {
@@ -40,9 +40,9 @@ class ContactExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->client_transformer = new ClientTransformer();
-        $this->contact_transformer = new ClientContactTransformer();
-        $this->decorator = new Decorator();
+        $this->client_transformer = new ClientTransformer;
+        $this->contact_transformer = new ClientContactTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -59,10 +59,10 @@ class ContactExport extends BaseExport
         }
 
         $query = ClientContact::query()
-                        ->where('company_id', $this->company->id)
-                        ->whereHas('client', function ($q) {
-                            $q->where('is_deleted', false);
-                        });
+            ->where('company_id', $this->company->id)
+            ->whereHas('client', function ($q) {
+                $q->where('is_deleted', false);
+            });
 
         $query = $this->addDateRange($query, 'client_contacts');
         $query = $this->filterByUserPermissions($query);
@@ -76,21 +76,20 @@ class ContactExport extends BaseExport
 
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()->each(function ($contact) {
-            /** @var \App\Models\ClientContact $contact */
+            /** @var ClientContact $contact */
             $this->csv->insertOne($this->buildRow($contact));
         });
 
         return $this->csv->toString();
     }
-
 
     public function returnJson()
     {
@@ -103,15 +102,15 @@ class ContactExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($contact) {
-                    /** @var \App\Models\ClientContact $contact */
-                    $row = $this->buildRow($contact);
-                    return $this->processMetaData($row, $contact);
-                })->toArray();
+            ->map(function ($contact) {
+                /** @var ClientContact $contact */
+                $row = $this->buildRow($contact);
+
+                return $this->processMetaData($row, $contact);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
-
 
     private function buildRow(ClientContact $contact): array
     {
@@ -159,13 +158,12 @@ class ContactExport extends BaseExport
         }
 
         if (in_array('client.user_id', $this->input['report_keys'])) {
-            $entity['client.user_id'] = $client->user ? $client->user->present()->name() : '';// @phpstan-ignore-line
+            $entity['client.user_id'] = $client->user ? $client->user->present()->name() : ''; // @phpstan-ignore-line
         }
 
         if (in_array('client.assigned_user_id', $this->input['report_keys'])) {
             $entity['client.assigned_user_id'] = $client->assigned_user ? $client->assigned_user->present()->name() : '';
         }
-
 
         return $entity;
     }

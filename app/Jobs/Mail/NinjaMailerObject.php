@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,18 +22,18 @@ class NinjaMailerObject
     /* @var Company $company */
     public $company;
 
-    public $from_user; //not yet used
+    public $from_user; // not yet used
 
     public $to_user;
 
     public $settings;
 
-    public $transport; //Used to force the mailer
+    public $transport; // Used to force the mailer
 
     /* Variable for cascading notifications */
     public $entity_string = false;
 
-    /* @var App\Models\InvoiceInvitation | App\Models\QuoteInvitation | App\Models\CreditInvitation | App\Models\RecurringInvoiceInvitation | App\Models\PurchaseOrderInvitation | \bool $invitation*/
+    /* @var App\Models\InvoiceInvitation | App\Models\QuoteInvitation | App\Models\CreditInvitation | App\Models\RecurringInvoiceInvitation | App\Models\PurchaseOrderInvitation | \bool $invitation */
     public $invitation = false;
 
     public $template = false;

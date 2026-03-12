@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  *
  * Documentation of Api-Usage: https://developer.gocardless.com/bank-account-data/overview
@@ -20,16 +19,19 @@
 
 namespace App\Helpers\Bank\Nordigen;
 
+use App\Helpers\Bank\Nordigen\Transformer\AccountTransformer;
+use App\Helpers\Bank\Nordigen\Transformer\TransactionTransformer;
+use App\Models\BankIntegration;
 use App\Models\Company;
 use App\Services\Email\Email;
-use App\Models\BankIntegration;
 use App\Services\Email\EmailObject;
+use GuzzleHttp\Exception\ClientException;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Mail\Mailables\Address;
-use App\Helpers\Bank\Nordigen\Transformer\AccountTransformer;
-use App\Helpers\Bank\Nordigen\Transformer\TransactionTransformer;
+use Nordigen\NordigenPHP\API\NordigenClient;
+use Nordigen\NordigenPHP\Exceptions\NordigenExceptions\NordigenException;
 
 class Nordigen
 {
@@ -37,7 +39,7 @@ class Nordigen
 
     public string $sandbox_institutionId = 'SANDBOXFINANCE_SFIN0000';
 
-    protected \Nordigen\NordigenPHP\API\NordigenClient $client;
+    protected NordigenClient $client;
 
     public function __construct()
     {
@@ -47,7 +49,7 @@ class Nordigen
             throw new \Exception('missing nordigen credentials');
         }
 
-        $this->client = new \Nordigen\NordigenPHP\API\NordigenClient(config('ninja.nordigen.secret_id'), config('ninja.nordigen.secret_key'));
+        $this->client = new NordigenClient(config('ninja.nordigen.secret_id'), config('ninja.nordigen.secret_key'));
 
         $this->client->createAccessToken();
     }
@@ -124,10 +126,7 @@ class Nordigen
     /**
      * Create a new End User Agreement with the given parameters
      *
-     * @param array{id: string, transaction_total_days: int, max_access_valid_for_days: int} $institution
-     *
-     * @throws \Nordigen\NordigenPHP\Exceptions\NordigenExceptions\NordigenException
-     *
+     * @param  array{id: string, transaction_total_days: int, max_access_valid_for_days: int}  $institution
      * @return array{
      *   id: string,
      *   created: string,
@@ -137,6 +136,8 @@ class Nordigen
      *   access_scope: string[],
      *   accepted: string
      * } Agreement details
+     *
+     * @throws NordigenException
      */
     public function createAgreement(array $institution, int $accessDays, int $transactionDays): array
     {
@@ -154,8 +155,8 @@ class Nordigen
     /**
      * Create a new Bank Requisition
      *
-     * @param array{id: ?string} $institution,
-     * @param array{id: ?string, transaction_total_days: int} $agreement
+     * @param  array{id: ?string}  $institution,
+     * @param  array{id: ?string, transaction_total_days: int}  $agreement
      */
     public function createRequisition(
         string $redirect,
@@ -177,18 +178,19 @@ class Nordigen
         );
     }
 
-
     /**
      * validAgreement
-     * @param string $institution_id
-     * @param array $_accounts
+     *
+     * @param  string  $institution_id
+     * @param  array  $_accounts
      * @return array|null
+     *
      * @todo - very expensive!
      */
     public function validAgreement($institution_id, $_accounts)
     {
 
-        $nc = new \App\Helpers\Bank\Nordigen\Http\NordigenClient($this->client->getAccessToken());
+        $nc = new Http\NordigenClient($this->client->getAccessToken());
         $requisitions = $nc->getAllRequisitions();
 
         $requisition = $requisitions->filter(function ($requisition) use ($institution_id, $_accounts) {
@@ -197,7 +199,7 @@ class Nordigen
             }
         });
 
-        return $requisition->first()->toArray() ??  null;
+        return $requisition->first()->toArray() ?? null;
 
     }
 
@@ -218,7 +220,7 @@ class Nordigen
     public function getAccount(string $account_id)
     {
         try {
-            $out = new \stdClass();
+            $out = new \stdClass;
 
             $out->metadata = $this->client->account($account_id)->getAccountMetaData();
             $out->institution = $this->client->institution->getInstitution($out->metadata['institution_id']);
@@ -244,20 +246,23 @@ class Nordigen
             ];
             // }
 
-            $it = new AccountTransformer();
+            $it = new AccountTransformer;
+
             return $it->transform($out);
 
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $response = $e->getResponse();
             $statusCode = $response->getStatusCode();
 
             if ($statusCode === 429) {
                 nlog("Nordigen Rate Limit hit for account {$account_id}");
+
                 return ['error' => 'Nordigen Institution Rate Limit Reached', 'code' => 429];
             }
         } catch (\Exception $e) {
 
             nlog("Nordigen getAccount() failed => {$account_id} => " . $e->getMessage());
+
             return ['error' => $e->getMessage(), 'requisition' => true, 'code' => 401];
 
         }
@@ -265,9 +270,6 @@ class Nordigen
 
     /**
      * isAccountActive
-     *
-     * @param  string $account_id
-     * @return array
      */
     public function isAccountActive(string $account_id): array
     {
@@ -292,19 +294,15 @@ class Nordigen
         }
     }
 
-
     /**
      * getTransactions
-     *
-     * @param  string $accountId
-     * @param  ?string $dateFrom
-     * @return array
      */
     public function getTransactions(Company $company, string $accountId, ?string $dateFrom = null): array
     {
         $transactionResponse = $this->client->account($accountId)->getAccountTransactions($dateFrom);
 
         $it = new TransactionTransformer($company);
+
         return $it->transform($transactionResponse);
     }
 
@@ -320,7 +318,7 @@ class Nordigen
 
         App::setLocale($bank_integration->company->getLocale());
 
-        $mo = new EmailObject();
+        $mo = new EmailObject;
         $mo->subject = ctrans('texts.nordigen_requisition_subject');
         $mo->body = ctrans('texts.nordigen_requisition_body');
         $mo->text_body = ctrans('texts.nordigen_requisition_body');
@@ -332,8 +330,5 @@ class Nordigen
 
         Email::dispatch($mo, $bank_integration->company);
 
-
-
     }
-
 }

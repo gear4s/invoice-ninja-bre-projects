@@ -14,11 +14,10 @@ namespace App\Http\ValidationRules\EInvoice;
 
 use App\Services\EDocument\Standards\Validation\Peppol\InvoiceLevel;
 use Closure;
-use InvoiceNinja\EInvoice\EInvoice;
-use Illuminate\Validation\Validator;
-use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
+use Illuminate\Validation\Validator;
+use InvoiceNinja\EInvoice\EInvoice;
 
 /**
  * Class ValidScheme.
@@ -37,7 +36,7 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
 
         if (isset($value['Invoice'])) {
 
-            $r = new EInvoice();
+            $r = new EInvoice;
 
             $errors = $r->validateRequest($value['Invoice'], InvoiceLevel::class);
 
@@ -58,14 +57,14 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
                     if (!$this->isValidDateSyntax($parts[0])) {
 
                         $this->validator->errors()->add(
-                            "e_invoice.InvoicePeriod.Description.0.StartDate",
+                            'e_invoice.InvoicePeriod.Description.0.StartDate',
                             ctrans('texts.invalid_date_create_syntax')
                         );
 
                     } elseif (!$this->isValidDateSyntax($parts[1])) {
 
                         $this->validator->errors()->add(
-                            "e_invoice.InvoicePeriod.Description.0.EndDate",
+                            'e_invoice.InvoicePeriod.Description.0.EndDate',
                             ctrans('texts.invalid_date_create_syntax')
                         );
 
@@ -73,7 +72,7 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
 
                 } elseif ($parts_count == 1 && strlen($value['Invoice']['InvoicePeriod'][0]['Description']) > 2) {
                     $this->validator->errors()->add(
-                        "e_invoice.InvoicePeriod.Description.0.StartDate",
+                        'e_invoice.InvoicePeriod.Description.0.StartDate',
                         ctrans('texts.start_and_end_date_required')
                     );
                 }
@@ -86,6 +85,7 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
     {
         try {
             $date = date_create($date_string);
+
             return $date !== false && $date instanceof \DateTime;
         } catch (\Exception $e) {
             return false;
@@ -101,6 +101,4 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
 
         return $this;
     }
-
-
 }

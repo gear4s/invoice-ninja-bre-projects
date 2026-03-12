@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\ClientPortal;
 
-use App\Utils\Ninja;
+use App\Http\ValidationRules\Turnstile\Turnstile;
+use App\Libraries\MultiDB;
 use App\Models\Account;
 use App\Models\Company;
-use App\Libraries\MultiDB;
-use Illuminate\Validation\Rule;
+use App\Utils\Ninja;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Http\ValidationRules\Turnstile\Turnstile;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
@@ -34,8 +33,6 @@ class RegisterRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -43,7 +40,7 @@ class RegisterRequest extends FormRequest
 
         foreach ($this->company()->client_registration_fields as $field) {
             if ($field['visible'] ?? true) {
-                $rules[$field['key']] = $field['required'] ? ['bail','required'] : ['sometimes'];
+                $rules[$field['key']] = $field['required'] ? ['bail', 'required'] : ['sometimes'];
             }
         }
 
@@ -61,14 +58,14 @@ class RegisterRequest extends FormRequest
             $rules['terms'] = ['required'];
         }
 
-        $rules['cf-turnstile-response'] = ['sometimes', new Turnstile()];
+        $rules['cf-turnstile-response'] = ['sometimes', new Turnstile];
 
         return $rules;
     }
 
     public function company()
     {
-        //this should be all we need, the rest SHOULD be redundant because of our Middleware
+        // this should be all we need, the rest SHOULD be redundant because of our Middleware
         if ($this->key) {
             return Company::query()->where('company_key', $this->key)->first();
         }
@@ -77,10 +74,10 @@ class RegisterRequest extends FormRequest
             return Company::query()->where('company_key', $this->company_key)->firstOrFail();
         }
 
-        if (! $this->route()->parameter('company_key') && Ninja::isSelfHost()) {
+        if (!$this->route()->parameter('company_key') && Ninja::isSelfHost()) {
             $company = Account::query()->first()->default_company;
 
-            if (! $company->client_can_register) {
+            if (!$company->client_can_register) {
                 abort(403, 'This page is restricted');
             }
 

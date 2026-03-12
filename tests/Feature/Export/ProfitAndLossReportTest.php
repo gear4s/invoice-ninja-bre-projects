@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,11 +24,12 @@ use App\Models\Invoice;
 use App\Models\User;
 use App\Services\Report\ProfitLoss;
 use App\Utils\Traits\MakesHash;
+use Faker\Factory;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- *
  *  App\Services\Report\ProfitLoss
  */
 class ProfitAndLossReportTest extends TestCase
@@ -42,7 +42,7 @@ class ProfitAndLossReportTest extends TestCase
     {
         parent::setUp();
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -89,7 +89,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -111,7 +111,7 @@ class ProfitAndLossReportTest extends TestCase
         ];
     }
 
-    public function testProfitLossInstance()
+    public function test_profit_loss_instance()
     {
         $this->buildData();
 
@@ -122,7 +122,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testExpenseResolution()
+    public function test_expense_resolution()
     {
         $this->buildData();
 
@@ -150,7 +150,7 @@ class ProfitAndLossReportTest extends TestCase
 
     }
 
-    public function testMultiCurrencyInvoiceIncome()
+    public function test_multi_currency_invoice_income()
     {
         $this->buildData();
 
@@ -161,9 +161,8 @@ class ProfitAndLossReportTest extends TestCase
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'is_deleted' => 0,
-            'settings' => $settings
+            'settings' => $settings,
         ]);
-
 
         $client2 = Client::factory()->create([
             'user_id' => $this->user->id,
@@ -189,7 +188,7 @@ class ProfitAndLossReportTest extends TestCase
             'tax_name2' => '',
             'tax_name3' => '',
             'uses_inclusive_taxes' => false,
-            'exchange_rate' => 2
+            'exchange_rate' => 2,
         ]);
 
         Invoice::factory()->create([
@@ -210,9 +209,8 @@ class ProfitAndLossReportTest extends TestCase
             'tax_name2' => '',
             'tax_name3' => '',
             'uses_inclusive_taxes' => false,
-            'exchange_rate' => 1
+            'exchange_rate' => 1,
         ]);
-
 
         $pl = new ProfitLoss($this->company, $this->payload);
         $pl->build();
@@ -224,7 +222,7 @@ class ProfitAndLossReportTest extends TestCase
 
     }
 
-    public function testSimpleInvoiceIncome()
+    public function test_simple_invoice_income()
     {
         $this->buildData();
 
@@ -263,7 +261,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleInvoiceIncomeWithInclusivesTaxes()
+    public function test_simple_invoice_income_with_inclusives_taxes()
     {
         $this->buildData();
 
@@ -302,7 +300,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleInvoiceIncomeWithForeignExchange()
+    public function test_simple_invoice_income_with_foreign_exchange()
     {
         $this->buildData();
 
@@ -346,7 +344,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleInvoicePaymentIncome()
+    public function test_simple_invoice_payment_income()
     {
         $this->buildData();
 
@@ -404,7 +402,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleExpense()
+    public function test_simple_expense()
     {
         $this->buildData();
 
@@ -427,7 +425,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleExpenseAmountTax()
+    public function test_simple_expense_amount_tax()
     {
         $this->buildData();
 
@@ -451,7 +449,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleExpenseTaxRateExclusive()
+    public function test_simple_expense_tax_rate_exclusive()
     {
         $this->buildData();
 
@@ -476,7 +474,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleExpenseTaxRateInclusive()
+    public function test_simple_expense_tax_rate_inclusive()
     {
         $this->buildData();
 
@@ -501,7 +499,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleExpenseBreakdown()
+    public function test_simple_expense_breakdown()
     {
         $this->buildData();
 
@@ -526,7 +524,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleExpenseCategoriesBreakdown()
+    public function test_simple_expense_categories_breakdown()
     {
         $this->buildData();
 
@@ -570,7 +568,7 @@ class ProfitAndLossReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testCsvGeneration()
+    public function test_csv_generation()
     {
         $this->buildData();
 

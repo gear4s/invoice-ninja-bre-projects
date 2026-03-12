@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,14 +26,14 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\QuoteController
  */
 class QuoteTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -50,7 +49,7 @@ class QuoteTest extends TestCase
 
     }
 
-    public function testQuoteDueDateInjectionValidationLayer()
+    public function test_quote_due_date_injection_validation_layer()
     {
 
         $data = [
@@ -61,9 +60,9 @@ class QuoteTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/quotes', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/quotes', $data);
 
         $arr = $response->json();
         // nlog($arr);
@@ -72,7 +71,7 @@ class QuoteTest extends TestCase
 
     }
 
-    public function testNullDueDates()
+    public function test_null_due_dates()
     {
 
         $data = [
@@ -81,9 +80,9 @@ class QuoteTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/quotes', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/quotes', $data);
 
         $response->assertStatus(200);
 
@@ -92,9 +91,9 @@ class QuoteTest extends TestCase
         $this->assertEmpty($arr['data']['due_date']);
 
         $response = $this->withHeaders([
-                            'X-API-SECRET' => config('ninja.api_secret'),
-                            'X-API-TOKEN' => $this->token,
-                        ])->putJson('/api/v1/quotes/'.$arr['data']['id'], $arr['data']);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson('/api/v1/quotes/' . $arr['data']['id'], $arr['data']);
 
         $response->assertStatus(200);
 
@@ -104,8 +103,7 @@ class QuoteTest extends TestCase
 
     }
 
-
-    public function testNonNullDueDates()
+    public function test_non_null_due_dates()
     {
 
         $data = [
@@ -114,9 +112,9 @@ class QuoteTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/quotes', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/quotes', $data);
 
         $response->assertStatus(200);
 
@@ -125,9 +123,9 @@ class QuoteTest extends TestCase
         $this->assertNotEmpty($arr['data']['due_date']);
 
         $response = $this->withHeaders([
-                            'X-API-SECRET' => config('ninja.api_secret'),
-                            'X-API-TOKEN' => $this->token,
-                        ])->putJson('/api/v1/quotes/'.$arr['data']['id'], $arr['data']);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson('/api/v1/quotes/' . $arr['data']['id'], $arr['data']);
 
         $response->assertStatus(200);
 
@@ -137,7 +135,7 @@ class QuoteTest extends TestCase
 
     }
 
-    public function testPartialDueDates()
+    public function test_partial_due_dates()
     {
 
         $data = [
@@ -146,9 +144,9 @@ class QuoteTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/quotes', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/quotes', $data);
 
         $response->assertStatus(200);
 
@@ -166,9 +164,9 @@ class QuoteTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/quotes', $data);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/quotes', $data);
 
         $response->assertStatus(200);
 
@@ -179,9 +177,9 @@ class QuoteTest extends TestCase
         $this->assertEquals(1, $arr['data']['partial']);
 
         $response = $this->withHeaders([
-                    'X-API-SECRET' => config('ninja.api_secret'),
-                    'X-API-TOKEN' => $this->token,
-                ])->putJson('/api/v1/quotes/'.$arr['data']['id'], $arr['data']);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson('/api/v1/quotes/' . $arr['data']['id'], $arr['data']);
 
         $response->assertStatus(200);
 
@@ -193,7 +191,7 @@ class QuoteTest extends TestCase
 
     }
 
-    public function testQuoteToProjectConversion2()
+    public function test_quote_to_project_conversion2()
     {
         $settings = ClientSettings::defaults();
         $settings->default_task_rate = 41;
@@ -249,17 +247,16 @@ class QuoteTest extends TestCase
 
         $this->assertEquals(100, $t->rate);
 
-
     }
 
-    public function testQuoteToProjectConversion()
+    public function test_quote_to_project_conversion()
     {
         $project = $this->quote->service()->convertToProject();
 
         $this->assertInstanceOf('\App\Models\Project', $project);
     }
 
-    public function testQuoteConversion()
+    public function test_quote_conversion()
     {
         $invoice = $this->quote->service()->convertToInvoice();
 
@@ -271,7 +268,7 @@ class QuoteTest extends TestCase
 
     }
 
-    public function testQuoteDownloadPDF()
+    public function test_quote_download_pdf()
     {
         $i = $this->quote->invitations->first();
 
@@ -284,7 +281,7 @@ class QuoteTest extends TestCase
         $this->assertTrue($response->headers->get('content-type') == 'application/pdf');
     }
 
-    public function testQuoteListApproved()
+    public function test_quote_list_approved()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -294,8 +291,7 @@ class QuoteTest extends TestCase
         $response->assertStatus(200);
     }
 
-
-    public function testQuoteConvertToProject()
+    public function test_quote_convert_to_project()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -310,10 +306,10 @@ class QuoteTest extends TestCase
 
         $project = Project::find($this->decodePrimaryKey($res['data'][0]['project_id']));
 
-        $this->assertEquals($project->name, ctrans('texts.quote_number_short') . " " . $this->quote->number." [{$this->quote->client->present()->name()}]");
+        $this->assertEquals($project->name, ctrans('texts.quote_number_short') . ' ' . $this->quote->number . " [{$this->quote->client->present()->name()}]");
     }
 
-    public function testQuoteList()
+    public function test_quote_list()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -323,7 +319,7 @@ class QuoteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testQuoteRESTEndPoints()
+    public function test_quote_rest_end_points()
     {
         $response = null;
 
@@ -331,7 +327,7 @@ class QuoteTest extends TestCase
             $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
-            ])->get('/api/v1/quotes/'.$this->encodePrimaryKey($this->quote->id));
+            ])->get('/api/v1/quotes/' . $this->encodePrimaryKey($this->quote->id));
         } catch (ValidationException $e) {
             $message = json_decode($e->validator->getMessageBag(), 1);
         }
@@ -345,14 +341,14 @@ class QuoteTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/quotes/'.$this->encodePrimaryKey($this->quote->id).'/edit');
+        ])->get('/api/v1/quotes/' . $this->encodePrimaryKey($this->quote->id) . '/edit');
 
         $response->assertStatus(200);
 
         $quote_update = [
             'status_id' => Quote::STATUS_APPROVED,
             'client_id' => $this->encodePrimaryKey($this->quote->client_id),
-            'number'    => 'Rando',
+            'number' => 'Rando',
         ];
 
         $this->assertNotNull($this->quote);
@@ -360,14 +356,14 @@ class QuoteTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/quotes/'.$this->encodePrimaryKey($this->quote->id), $quote_update);
+        ])->put('/api/v1/quotes/' . $this->encodePrimaryKey($this->quote->id), $quote_update);
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/quotes/'.$this->encodePrimaryKey($this->quote->id), $quote_update);
+        ])->put('/api/v1/quotes/' . $this->encodePrimaryKey($this->quote->id), $quote_update);
 
         $response->assertStatus(200);
 
@@ -381,7 +377,7 @@ class QuoteTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/quotes/'.$this->encodePrimaryKey($this->quote->id));
+        ])->delete('/api/v1/quotes/' . $this->encodePrimaryKey($this->quote->id));
 
         $response->assertStatus(200);
 

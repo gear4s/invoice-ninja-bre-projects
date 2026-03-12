@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,13 +27,13 @@ class UniqueExpenseNumberRule implements Rule
     }
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-        return $this->checkIfExpenseNumberUnique(); //if it exists, return false!
+        return $this->checkIfExpenseNumberUnique(); // if it exists, return false!
     }
 
     /**
@@ -45,9 +44,6 @@ class UniqueExpenseNumberRule implements Rule
         return ctrans('texts.expense_number_taken');
     }
 
-    /**
-     * @return bool
-     */
     private function checkIfExpenseNumberUnique(): bool
     {
         if (empty($this->input['number'])) {
@@ -55,8 +51,8 @@ class UniqueExpenseNumberRule implements Rule
         }
 
         $expense = Expense::query()
-                          ->where('number', $this->input['number'])
-                          ->withTrashed();
+            ->where('number', $this->input['number'])
+            ->withTrashed();
 
         return $expense->exists();
     }

@@ -6,7 +6,7 @@ return [
 
     'greeting' => 'Benvenuto nel sistema di Fatturazione Elettronica, :name!',
 
-    'intro' => "Questo servizio ti permette di:",
+    'intro' => 'Questo servizio ti permette di:',
     'intro_items' => "
         • Inviare e ricevere fatture elettronicamente<br>
         • Garantire la conformità fiscale<br>
@@ -16,13 +16,13 @@ return [
 
     'requirements_title' => 'Requisiti Importanti',
     'requirements_intro' => 'Per garantire una fatturazione elettronica efficace, verifica questi dati aziendali essenziali:',
-    'requirements_items' => "
+    'requirements_items' => '
             • Ragione Sociale - Deve corrispondere esattamente alla registrazione ufficiale<br>
             • Partita IVA/Codice Fiscale - Deve essere aggiornata e verificata<br>
             • Identificativi Aziendali (REA/EORI/GLN) - Devono essere accurati e attivi<br>
             • Indirizzo Aziendale - Deve corrispondere ai registri ufficiali<br>
             • Informazioni di Contatto - Devono essere aggiornate e monitorate<br>
-        ",
+        ',
 
     'validation_title' => 'Perché le Informazioni Accurate sono Importanti',
     'validation_items' => "
@@ -40,11 +40,11 @@ return [
             4. Invia una fattura elettronica di prova<br>
         ",
     'support_title' => 'Hai Bisogno di Aiuto?',
-    'support_message' => "Il nostro team di supporto è pronto ad aiutarti con qualsiasi domanda sui requisiti o sulla configurazione della fatturazione elettronica.<br>
+    'support_message' => 'Il nostro team di supporto è pronto ad aiutarti con qualsiasi domanda sui requisiti o sulla configurazione della fatturazione elettronica.<br>
                     Contatta il supporto: :email<br>
                     Grazie per aver scelto il nostro servizio di fatturazione elettronica.<br>
-    ",
-    "text" => "
+    ',
+    'text' => "
     Attivazione della Fatturazione Elettronica
 
 Benvenuto nel sistema di Fatturazione Elettronica.
@@ -87,6 +87,6 @@ Il nostro team di supporto è pronto ad aiutarti con qualsiasi domanda sui requi
 Contatta il supporto: contact@invoiceninja.com
 
 Grazie per aver scelto il nostro servizio di fatturazione elettronica.
-    "
+    ",
 
 ];

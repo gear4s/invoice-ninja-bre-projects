@@ -6,21 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
+use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Credit;
+use App\Models\Document;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\Activity;
-use App\Models\Document;
 use App\Models\Paymentable;
 use App\Models\PaymentType;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class PaymentTransformer extends EntityTransformer
 {
@@ -49,9 +50,7 @@ class PaymentTransformer extends EntityTransformer
     }
 
     /**
-     * @param Payment $payment
-     *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return Response|JsonResponse
      */
     public function includeActivities(Payment $payment)
     {
@@ -97,12 +96,12 @@ class PaymentTransformer extends EntityTransformer
 
     public function includeType(Payment $payment)
     {
-        return $this->includeItem($payment, new PaymentTypeTransformer(), PaymentType::class);
+        return $this->includeItem($payment, new PaymentTypeTransformer, PaymentType::class);
     }
 
     public function transform(Payment $payment)
     {
-        return  [
+        return [
             'id' => $this->encodePrimaryKey($payment->id),
             'user_id' => $this->encodePrimaryKey($payment->user_id),
             'assigned_user_id' => $this->encodePrimaryKey($payment->assigned_user_id),

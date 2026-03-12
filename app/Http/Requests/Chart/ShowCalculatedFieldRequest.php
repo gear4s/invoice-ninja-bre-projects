@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,12 +20,10 @@ class ShowCalculatedFieldRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /**@var \App\Models\User auth()->user */
+        /** @var \App\Models\User auth()->user */
         $user = auth()->user();
 
         return $user->isAdmin() || $user->hasPermission('view_dashboard');
@@ -48,7 +45,7 @@ class ShowCalculatedFieldRequest extends Request
     public function prepareForValidation()
     {
 
-        /**@var \App\Models\User auth()->user */
+        /** @var \App\Models\User auth()->user */
         $user = auth()->user();
 
         $input = $this->all();
@@ -59,11 +56,11 @@ class ShowCalculatedFieldRequest extends Request
             $input['end_date'] = $dates[1];
         }
 
-        if (! isset($input['start_date'])) {
+        if (!isset($input['start_date'])) {
             $input['start_date'] = now()->subDays(20)->format('Y-m-d');
         }
 
-        if (! isset($input['end_date'])) {
+        if (!isset($input['end_date'])) {
             $input['end_date'] = now()->format('Y-m-d');
         }
 

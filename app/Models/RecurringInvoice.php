@@ -6,24 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use App\Utils\Number;
-use Elastic\ScoutDriverPlus\Searchable;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
 use App\Helpers\Invoice\InvoiceSum;
+use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Models\Presenters\RecurringInvoicePresenter;
+use App\Services\Recurring\RecurringService;
+use App\Utils\Number;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\Recurring\HasRecurrence;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Laracasts\Presenter\PresentableTrait;
-use App\Helpers\Invoice\InvoiceSumInclusive;
-use App\Services\Recurring\RecurringService;
-use App\Utils\Traits\Recurring\HasRecurrence;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Presenters\RecurringInvoicePresenter;
 
 /**
  * Class for Recurring Invoices.
@@ -92,27 +95,28 @@ use App\Models\Presenters\RecurringInvoicePresenter;
  * @property float $paid_to_date
  * @property int|null $subscription_id
  * @property string|null $next_send_date_client
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ * @property-read Collection<int, Activity> $activities
  * @property-read int|null $activities_count
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Client $client
- * @property-read \App\Models\Company $company
- * @property \App\Models\RecurringInvoiceInvitation $invitation
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read User|null $assigned_user
+ * @property-read Client $client
+ * @property-read Company $company
+ * @property RecurringInvoiceInvitation $invitation
+ * @property-read Collection<int, Document> $documents
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
  * @property-read mixed $status
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
+ * @property-read Collection<int, Backup> $history
  * @property-read int|null $history_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringInvoiceInvitation> $invitations
+ * @property-read Collection<int, RecurringInvoiceInvitation> $invitations
  * @property-read int|null $invitations_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
+ * @property-read Collection<int, Invoice> $invoices
  * @property-read int|null $invoices_count
- * @property-read \App\Models\Project|null $project
- * @property-read \App\Models\Subscription|null $subscription
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor|null $vendor
- * @property-read \App\Models\Location|null $location
+ * @property-read Project|null $project
+ * @property-read Subscription|null $subscription
+ * @property-read User $user
+ * @property-read Vendor|null $vendor
+ * @property-read Location|null $location
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\RecurringInvoiceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoice filter(\App\Filters\QueryFilters $filters)
@@ -123,23 +127,24 @@ use App\Models\Presenters\RecurringInvoicePresenter;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoice withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoice withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringInvoiceInvitation> $invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
+ *
+ * @property-read Collection<int, Activity> $activities
+ * @property-read Collection<int, Document> $documents
+ * @property-read Collection<int, Backup> $history
+ * @property-read Collection<int, RecurringInvoiceInvitation> $invitations
+ * @property-read Collection<int, Invoice> $invoices
  * @property bool $is_proforma
+ *
  * @mixin \Eloquent
  */
 class RecurringInvoice extends BaseModel
 {
-    use MakesHash;
-    use SoftDeletes;
     use Filterable;
     use HasRecurrence;
+    use MakesHash;
     use PresentableTrait;
     use Searchable;
-
+    use SoftDeletes;
 
     protected $presenter = RecurringInvoicePresenter::class;
 
@@ -273,11 +278,8 @@ class RecurringInvoice extends BaseModel
         'remaining_cycles',
     ];
 
-
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -327,8 +329,8 @@ class RecurringInvoice extends BaseModel
         }
 
         return [
-            'id' => $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.recurring_invoice') . " " . $this->number . " | " . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
+            'id' => $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.recurring_invoice') . ' ' . $this->number . ' | ' . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'is_deleted' => $this->is_deleted,
@@ -348,9 +350,8 @@ class RecurringInvoice extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
-
 
     public function getEntityType()
     {
@@ -359,7 +360,7 @@ class RecurringInvoice extends BaseModel
 
     public function getDateAttribute($value)
     {
-        if (! empty($value)) {
+        if (!empty($value)) {
             return (new Carbon($value))->format('Y-m-d');
         }
 
@@ -368,7 +369,7 @@ class RecurringInvoice extends BaseModel
 
     public function getDueDateAttribute($value)
     {
-        if (! empty($value)) {
+        if (!empty($value)) {
             return (new Carbon($value))->format('Y-m-d');
         }
 
@@ -377,14 +378,14 @@ class RecurringInvoice extends BaseModel
 
     public function getPartialDueDateAttribute($value)
     {
-        if (! empty($value)) {
+        if (!empty($value)) {
             return (new Carbon($value))->format('Y-m-d');
         }
 
         return $value;
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
@@ -399,47 +400,47 @@ class RecurringInvoice extends BaseModel
         return $this->hasManyThrough(Backup::class, Activity::class);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class)->withTrashed();
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class)->withTrashed();
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class, 'recurring_id', 'id')->withTrashed();
     }
 
-    public function invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invitations(): HasMany
     {
         return $this->hasMany(RecurringInvoiceInvitation::class);
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
@@ -460,10 +461,10 @@ class RecurringInvoice extends BaseModel
      *
      * We only apply the pending status on new models, we never revert an invoice back to
      * pending.
-     * @param  bool $new_model
+     *
      * @return int
      */
-    public function calculateStatus(bool $new_model = false) //15-02-2024 - $new_model needed
+    public function calculateStatus(bool $new_model = false) // 15-02-2024 - $new_model needed
     {
 
         if ($this->remaining_cycles == 0) {
@@ -480,7 +481,7 @@ class RecurringInvoice extends BaseModel
 
     public function nextSendDate(): ?Carbon
     {
-        if (! $this->next_send_date_client) {
+        if (!$this->next_send_date_client) {
             return null;
         }
 
@@ -489,7 +490,7 @@ class RecurringInvoice extends BaseModel
         /* If this setting is enabled, the recurring invoice may be set in the past */
 
         if ($this->company->stop_on_unpaid_recurring) {
-            /* Lets set the next send date to now so we increment from today, rather than in the past*/
+            /* Lets set the next send date to now so we increment from today, rather than in the past */
             if (Carbon::parse($this->next_send_date)->lt(now()->subDays(3))) {
                 $this->next_send_date_client = now()->format('Y-m-d');
             }
@@ -527,14 +528,14 @@ class RecurringInvoice extends BaseModel
 
     public function nextSendDateClient(): ?Carbon
     {
-        if (! $this->next_send_date_client) {
+        if (!$this->next_send_date_client) {
             return null;
         }
 
         /* If this setting is enabled, the recurring invoice may be set in the past */
 
         if ($this->company->stop_on_unpaid_recurring) {
-            /* Lets set the next send date to now so we increment from today, rather than in the past*/
+            /* Lets set the next send date to now so we increment from today, rather than in the past */
             if (Carbon::parse($this->next_send_date)->lt(now()->subDays(3))) {
                 $this->next_send_date_client = now()->format('Y-m-d');
             }
@@ -603,7 +604,6 @@ class RecurringInvoice extends BaseModel
                 return null;
         }
     }
-
 
     public function nextDateByFrequencyNoOffset(Carbon $carbon)
     {
@@ -755,11 +755,11 @@ class RecurringInvoice extends BaseModel
         /* Return early if nothing to send back! */
         if ($this->status_id == self::STATUS_COMPLETED
             || $this->remaining_cycles == 0
-            || ! $this->next_send_date) {
+            || !$this->next_send_date) {
             return [];
         }
 
-        /* Endless - lets send 10 back*/
+        /* Endless - lets send 10 back */
         $iterations = $this->remaining_cycles;
 
         if ($this->remaining_cycles == -1) {
@@ -768,7 +768,7 @@ class RecurringInvoice extends BaseModel
 
         $data = [];
 
-        if (! Carbon::parse($this->next_send_date_client)) {
+        if (!Carbon::parse($this->next_send_date_client)) {
             return $data;
         }
 
@@ -813,8 +813,9 @@ class RecurringInvoice extends BaseModel
                 // 2025-01-23 - Reverting this back, this is tightly linked to recurring invoice generation and
                 // the timezone offset of the client AND when it was generated.
                 $date = Carbon::parse($date);
+
                 // $date = now()->addSeconds($this->client->timezone_offset());
-                //$date = Carbon::parse($date)->addSeconds($this->client->timezone_offset());
+                // $date = Carbon::parse($date)->addSeconds($this->client->timezone_offset());
                 return $this->setDayOfMonth($date, $this->due_date_days);
         }
     }
@@ -822,8 +823,8 @@ class RecurringInvoice extends BaseModel
     /**
      * Calculates a date based on the client payment terms.
      *
-     * @param  Carbon $date A given date
-     * @return null|Carbon  The date
+     * @param  Carbon  $date  A given date
+     * @return null|Carbon The date
      */
     public function calculateDateFromTerms($date)
     {
@@ -831,24 +832,22 @@ class RecurringInvoice extends BaseModel
 
         $client_payment_terms = $this->client->getSetting('payment_terms');
 
-        if ($client_payment_terms == '') {//no due date! return null;
+        if ($client_payment_terms == '') {// no due date! return null;
             return null;
         }
 
-        return $new_date->addDays((int) $client_payment_terms); //add the number of days in the payment terms to the date
+        return $new_date->addDays((int) $client_payment_terms); // add the number of days in the payment terms to the date
     }
 
     /**
      * service
-     *
-     * @return RecurringService
      */
     public function service(): RecurringService
     {
         return new RecurringService($this);
     }
 
-    public function subscription(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class)->withTrashed();
     }

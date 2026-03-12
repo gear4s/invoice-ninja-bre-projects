@@ -6,39 +6,38 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Invoice;
 
-use App\Utils\Ninja;
-use App\Utils\Number;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use Illuminate\Bus\Queueable;
 use App\Jobs\Mail\NinjaMailer;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesDates;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
-use Illuminate\Queue\SerializesModels;
+use App\Libraries\MultiDB;
 use App\Mail\Admin\InvoiceOverdueObject;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Mail\Admin\InvoiceOverdueSummaryObject;
+use App\Models\Company;
+use App\Models\Invoice;
+use App\Utils\Ninja;
+use App\Utils\Number;
+use App\Utils\Traits\MakesDates;
+use App\Utils\Traits\Notifications\UserNotifies;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Mail\Admin\InvoiceOverdueSummaryObject;
-use App\Utils\Traits\Notifications\UserNotifies;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 
 class InvoiceCheckOverdue implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesDates;
     use Queueable;
     use SerializesModels;
     use UserNotifies;
-    use MakesDates;
 
     /**
      * Create a new job instance.
@@ -52,7 +51,7 @@ class InvoiceCheckOverdue implements ShouldQueue
      */
     public function handle()
     {
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->processOverdueInvoices();
         } else {
             foreach (MultiDB::$dbs as $db) {
@@ -75,8 +74,8 @@ class InvoiceCheckOverdue implements ShouldQueue
             ->when(Ninja::isHosted(), function ($query) {
                 $query->whereHas('account', function ($q) {
                     $q->where('is_flagged', false)
-                      ->whereIn('plan', ['enterprise', 'pro'])
-                      ->where('plan_expires', '>', now()->subHours(12));
+                        ->whereIn('plan', ['enterprise', 'pro'])
+                        ->where('plan_expires', '>', now()->subHours(12));
                 });
             })
             ->cursor()
@@ -122,27 +121,27 @@ class InvoiceCheckOverdue implements ShouldQueue
             ->where('balance', '>', 0)
             ->where(function ($query) use ($yesterday) {
                 $query->where('due_date', $yesterday)
-                      ->orWhere('partial_due_date', $yesterday);
+                    ->orWhere('partial_due_date', $yesterday);
             })
             ->whereHas('client', function ($query) {
                 $query->where('is_deleted', 0)
-                       ->whereNull('deleted_at');
+                    ->whereNull('deleted_at');
             })
             // Check for overdue conditions based on partial or full invoice
             ->where(function ($query) use ($yesterday) {
                 // Case 1: Partial payment is overdue (partial > 0 and partial_due_date was yesterday)
                 $query->where(function ($q) use ($yesterday) {
                     $q->where('partial', '>', 0)
-                      ->where('partial_due_date', $yesterday);
+                        ->where('partial_due_date', $yesterday);
                 })
                 // Case 2: Full invoice is overdue (partial == 0 and due_date was yesterday)
-                ->orWhere(function ($q) use ($yesterday) {
-                    $q->where(function ($subq) {
-                        $subq->where('partial', '=', 0)
-                             ->orWhereNull('partial');
-                    })
-                      ->where('due_date', $yesterday);
-                });
+                    ->orWhere(function ($q) use ($yesterday) {
+                        $q->where(function ($subq) {
+                            $subq->where('partial', '=', 0)
+                                ->orWhereNull('partial');
+                        })
+                            ->where('due_date', $yesterday);
+                    });
             })
             ->cursor()
             ->map(function ($invoice) {
@@ -174,7 +173,7 @@ class InvoiceCheckOverdue implements ShouldQueue
             return;
         }
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->company = $company;
         $nmo->settings = $company->settings;
 
@@ -183,7 +182,7 @@ class InvoiceCheckOverdue implements ShouldQueue
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 
@@ -202,12 +201,13 @@ class InvoiceCheckOverdue implements ShouldQueue
             if (isset($company_user->notifications->email) && is_array($company_user->notifications->email) && in_array('invoice_late_user', $company_user->notifications->email)) {
 
                 $overdue_invoices_collection = collect($overdue_invoices)
-                            ->filter(function ($overdue_invoice) use ($user) {
-                                $invoice = Invoice::withTrashed()->find($overdue_invoice['id']);
-                                // nlog([$invoice->user_id, $user->id, $invoice->assigned_user_id, $user->id]);
-                                return $invoice->user_id == $user->id || $invoice->assigned_user_id == $user->id;
-                            })
-                        ->toArray();
+                    ->filter(function ($overdue_invoice) use ($user) {
+                        $invoice = Invoice::withTrashed()->find($overdue_invoice['id']);
+
+                        // nlog([$invoice->user_id, $user->id, $invoice->assigned_user_id, $user->id]);
+                        return $invoice->user_id == $user->id || $invoice->assigned_user_id == $user->id;
+                    })
+                    ->toArray();
 
                 if (count($overdue_invoices_collection) === 0) {
                     continue;
@@ -227,7 +227,6 @@ class InvoiceCheckOverdue implements ShouldQueue
                 ['all_notifications', 'invoice_late', 'invoice_late_all', 'invoice_late_user']
             );
 
-
             /* If one of the methods is email then we fire the mailer */
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
@@ -242,12 +241,13 @@ class InvoiceCheckOverdue implements ShouldQueue
 
     /**
      * Send notifications for an overdue invoice to all relevant company users.
+     *
      * @deprecated in favour of sendOverdueNotifications to send a summary email to all users
      */
     /** @phpstan-ignore-next-line */
     private function notifyOverdueInvoice(Invoice $invoice): void
     {
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->company = $invoice->company;
         $nmo->settings = $invoice->company->settings;
 
@@ -256,7 +256,7 @@ class InvoiceCheckOverdue implements ShouldQueue
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 

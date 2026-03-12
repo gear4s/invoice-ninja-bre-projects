@@ -1,11 +1,11 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +17,15 @@ use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\Company;
 use App\Models\User;
+use App\Utils\Traits\MakesHash;
+use Faker\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UsersTableSeeder extends Seeder
 {
-    use \App\Utils\Traits\MakesHash;
+    use MakesHash;
 
     /**
      * Run the database seeds.
@@ -36,7 +38,7 @@ class UsersTableSeeder extends Seeder
 
         Model::unguard();
 
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $account = Account::factory()->create();
         $company = Company::factory()->create([

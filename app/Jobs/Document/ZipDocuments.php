@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,14 +29,16 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
+use PhpZip\Exception\ZipException;
+use PhpZip\ZipFile;
 
 class ZipDocuments implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesDates;
     use Queueable;
     use SerializesModels;
-    use MakesDates;
 
     public $document_ids;
 
@@ -50,9 +51,8 @@ class ZipDocuments implements ShouldQueue
     public $tries = 1;
 
     /**
-     * @param array $document_ids
-     * @param Company $company
-     * @param User $user
+     * @param  array  $document_ids
+     *
      * @deprecated confirm to be deleted
      * Create a new job instance.
      */
@@ -82,7 +82,7 @@ class ZipDocuments implements ShouldQueue
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         // create new zip object
-        $zipFile = new \PhpZip\ZipFile();
+        $zipFile = new ZipFile;
         $file_name = date('Y-m-d') . '_' . str_replace(' ', '_', trans('texts.documents')) . '.zip';
         $path = $this->company->file_path();
 
@@ -95,7 +95,7 @@ class ZipDocuments implements ShouldQueue
 
             Storage::put($path . $file_name, $zipFile->outputAsString());
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new DownloadDocuments(Storage::url($path . $file_name), $this->company);
             $nmo->to_user = $this->user;
             $nmo->settings = $this->settings;
@@ -104,7 +104,7 @@ class ZipDocuments implements ShouldQueue
             NinjaMailerJob::dispatch($nmo);
 
             UnlinkFile::dispatch(config('filesystems.default'), $path . $file_name)->delay(now()->addHours(1));
-        } catch (\PhpZip\Exception\ZipException $e) {
+        } catch (ZipException $e) {
             nlog('could not make zip => ' . $e->getMessage());
         } finally {
             $zipFile->close();

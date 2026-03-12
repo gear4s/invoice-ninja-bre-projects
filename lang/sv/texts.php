@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organisation',
     'name' => 'Namn',
     'website' => 'Hemsida',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Enterprise Plan lägger till stöd för flera användare och filbilagor, :link för att se hela listan med funktioner.',
     'return_to_app' => 'Återgå till Appen',
 
-
     // Payment updates
     'refund_payment' => 'Återbetala betalning',
     'refund_max' => 'Max:',
@@ -1711,7 +1710,6 @@ Nya Kaledonien',
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Ryska',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Redovisning & Legala',
@@ -2371,7 +2369,7 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'currency_gold_troy_ounce' => 'Guld Troy Ounce',
     'currency_nicaraguan_córdoba' => 'Nicaraguanska Córdoba',
     'currency_malagasy_ariary' => 'Madagaskar ariary',
-    "currency_tongan_pa_anga" => "tonganska Pa&#39;anga",
+    'currency_tongan_pa_anga' => 'tonganska Pa&#39;anga',
 
     'review_app_help' => 'We hope you\'re enjoying using the app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'writing a review',
@@ -4371,7 +4369,7 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'activity_122' => ':user arkiverad återkommande utgift :recurring_expense',
     'activity_123' => ':user raderade återkommande utgifter :recurring_expense',
     'activity_124' => ':user återställd återkommande utgift :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'För att se :entity måste du ange ett lösenord.',
     'unsubscribe' => 'Säga upp',
     'unsubscribed' => 'Avslutad prenumeration',
@@ -4877,7 +4875,7 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Betalning inom :payeddue dagar netto till :paydate',
-    'xinvoice_no_buyers_reference' => "Ingen köparens referens ges",
+    'xinvoice_no_buyers_reference' => 'Ingen köparens referens ges',
     'xinvoice_online_payment' => 'Fakturan måste betalas online via den angivna länken',
     'pre_payment' => 'Förskottsbetalning',
     'number_of_payments' => 'Antal betalningar',
@@ -4982,8 +4980,8 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'e_invoice' => 'E-faktura',
     'light_dark_mode' => 'Ljus/mörkt läge',
     'activities' => 'Aktiviteter',
-    'recent_transactions' => "Senaste transaktioner",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Senaste transaktioner',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'plikter',
     'order_number' => 'Ordernummer',
@@ -5200,7 +5198,7 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'rff' => 'Obligatoriska fält formulär',
     'add_step' => 'Lägg till steg',
     'steps' => 'Steg',
-    'steps_order_help' =>  'Ordningen på stegen är viktig. Det första steget bör inte bero på något annat steg. Det andra steget bör bero på det första steget, och så vidare.',
+    'steps_order_help' => 'Ordningen på stegen är viktig. Det första steget bör inte bero på något annat steg. Det andra steget bör bero på det första steget, och så vidare.',
     'other_steps' => 'Andra steg',
     'use_available_payments' => 'Använd tillgängliga betalningar',
     'test_email_sent' => 'Skickat e-postmeddelande',
@@ -5409,7 +5407,7 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'credit_updated' => 'Kredit uppdaterad',
     'payment_updated' => 'Betalning uppdaterad',
     'search_placeholder' => 'Hitta fakturor, kunder och mer',
-    'invalid_vat_number' => "Momsnumret är inte giltigt för det valda landet. Formatet bör vara landskod följt av endast nummer, dvs. DE123456789",
+    'invalid_vat_number' => 'Momsnumret är inte giltigt för det valda landet. Formatet bör vara landskod följt av endast nummer, dvs. DE123456789',
     'acts_as_sender' => 'Skicka e-fakturor',
     'acts_as_receiver' => 'Ta emot e-fakturor',
     'peppol_token_generated' => 'PEPPOL-token har genererats.',
@@ -5710,7 +5708,7 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'custom_document_completed' => 'Custom Document completed',
     'email_client_when_custom_document_completed' => 'Email client when a Custom Document has been signed',
     'sender' => 'Sender',
-     'create_template' => 'Create Template',
+    'create_template' => 'Create Template',
     'edit_template' => 'Edit Template',
     'delete_template' => 'Delete Template',
     'template_created' => 'Template created',
@@ -5775,6 +5773,6 @@ Den här funktionen kräver att en produkt skapas och en betalningsgateway är k
     'tour_toolbox_description' => 'On the right is the toolbox. Use it to add fields and elements for signatories to interact with. The signature field is already selected. Click to continue.',
     'tour_document_canvas' => 'This is your document canvas. Place and position fields for your signatories here.',
     'tour_save_document' => 'When you’re finished, click here to save your document.',
-);
+];
 
 return $lang;

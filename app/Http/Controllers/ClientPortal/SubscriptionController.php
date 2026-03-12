@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,15 +15,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClientPortal\RecurringInvoices\ShowRecurringInvoiceRequest;
 use App\Models\RecurringInvoice;
 use App\Utils\Ninja;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
 
 class SubscriptionController extends Controller
 {
     /**
      * This function is used to display the subscription page.
      *
-     * @return \Illuminate\View\View|\Illuminate\Contracts\View\Factory
+     * @return View|Factory
      */
-
     public function index()
     {
         // if (Ninja::isHosted()) {
@@ -47,9 +47,6 @@ class SubscriptionController extends Controller
 
     /**
      * Display the recurring invoice.
-     *
-     * @param ShowRecurringInvoiceRequest $request
-     * @param RecurringInvoice $recurring_invoice
      */
     public function show(ShowRecurringInvoiceRequest $request, RecurringInvoice $recurring_invoice)
     {

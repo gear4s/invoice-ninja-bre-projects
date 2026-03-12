@@ -6,15 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\DataMapper\ExpenseSync;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * App\Models\ExpenseCategory
@@ -29,9 +28,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_deleted
  * @property string $color
  * @property int|null $bank_category_id
- * @property-read \App\Models\Expense|null $expense
+ * @property-read Expense|null $expense
  * @property-read mixed $hashed_id
- * @property \App\DataMapper\ExpenseSync|null $sync
+ * @property ExpenseSync|null $sync
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\ExpenseCategoryFactory factory($count = null, $state = [])
@@ -53,12 +53,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|ExpenseCategory whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ExpenseCategory withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|ExpenseCategory withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class ExpenseCategory extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',

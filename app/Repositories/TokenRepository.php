@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,10 +18,9 @@ class TokenRepository extends BaseRepository
     /**
      * Saves the companytoken.
      *
-     * @param      array  $data    The data
-     * @param CompanyToken $company_token  The company_token
-     *
-     * @return     CompanyToken|null  CompanyToken Object
+     * @param  array  $data  The data
+     * @param  CompanyToken  $company_token  The company_token
+     * @return CompanyToken|null CompanyToken Object
      */
     public function save(array $data, CompanyToken $company_token)
     {

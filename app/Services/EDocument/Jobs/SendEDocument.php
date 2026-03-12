@@ -6,34 +6,34 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Jobs;
 
-use Mail;
-use App\Utils\Ninja;
-use App\Models\Invoice;
-use App\Models\Credit;
-use App\Models\Activity;
-use App\Models\SystemLog;
-use App\Libraries\MultiDB;
-use App\Models\EInvoicingLog;
-use App\Services\Email\Email;
-use Illuminate\Bus\Queueable;
 use App\Jobs\Util\SystemLogger;
+use App\Libraries\MultiDB;
+use App\Models\Activity;
+use App\Models\Credit;
+use App\Models\EInvoicingLog;
+use App\Models\Invoice;
+use App\Models\SystemLog;
+use App\Services\EDocument\Gateway\Storecove\Storecove;
+use App\Services\EDocument\Standards\Peppol;
+use App\Services\Email\Email;
 use App\Services\Email\EmailObject;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Utils\Ninja;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\EDocument\Standards\Peppol;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use App\Services\EDocument\Gateway\Storecove\Storecove;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Modules\Admin\Jobs\Account\SuspendESendReceive;
 
 class SendEDocument implements ShouldQueue
 {
@@ -61,19 +61,22 @@ class SendEDocument implements ShouldQueue
 
         $model = $this->entity::withTrashed()->find($this->id);
 
-        if(!$model){
-            nlog("model not found");
+        if (!$model) {
+            nlog('model not found');
+
             return; // Model not found.
         }
 
         if (isset($model->backup->guid) && is_string($model->backup->guid) && strlen($model->backup->guid) > 3) {
-            nlog("already sent!");
-            return; //Do not double send.
+            nlog('already sent!');
+
+            return; // Do not double send.
         }
 
         if ($model->company->account->is_flagged) {
-            nlog("Bad Actor");
-            return; //Bad Actor present.
+            nlog('Bad Actor');
+
+            return; // Bad Actor present.
         }
 
         $model = $model->service()->markSent()->save();
@@ -87,12 +90,13 @@ class SendEDocument implements ShouldQueue
 
         if (count($result['errors']) > 0) {
             nlog($result);
+
             return $result['errors'];
         }
 
         $payload = [
             'legal_entity_id' => $model->company->legal_entity_id,
-            "idempotencyGuid" => \Illuminate\Support\Str::uuid(),
+            'idempotencyGuid' => Str::uuid(),
             'document' => [
                 'document_type' => 'invoice',
                 'invoice' => $result['document'],
@@ -103,11 +107,11 @@ class SendEDocument implements ShouldQueue
             'e_invoicing_token' => $model->company->account->e_invoicing_token,
         ];
 
-        //Self Hosted Sending Code Path
+        // Self Hosted Sending Code Path
         if (Ninja::isSelfHost() && ($model instanceof Invoice || $model instanceof Credit) && $model->company->peppolSendingEnabled()) {
 
             $r = Http::withHeaders([...$this->getHeaders(), 'X-EInvoice-Token' => $model->company->account->e_invoicing_token])
-                ->post(config('ninja.hosted_ninja_url') . "/api/einvoice/submission", $payload);
+                ->post(config('ninja.hosted_ninja_url') . '/api/einvoice/submission', $payload);
 
             if ($r->successful()) {
 
@@ -119,6 +123,7 @@ class SendEDocument implements ShouldQueue
 
                 nlog("Model {$model->number} was successfully sent for third party processing via hosted Invoice Ninja");
                 $data = $r->json();
+
                 return $this->writeActivity($model, Activity::EINVOICE_DELIVERY_SUCCESS, $data['guid']);
             }
 
@@ -142,12 +147,12 @@ class SendEDocument implements ShouldQueue
             return;
         }
 
-        //Run this check outside of the next loop as it will never send otherwise.
+        // Run this check outside of the next loop as it will never send otherwise.
         if ($model->company->account->e_invoice_quota == 0 && $model->company->legal_entity_id) {
             $key = "e_invoice_quota_exhausted_{$model->company->account->key}";
 
-            if (! Cache::has($key)) {
-                $mo = new EmailObject();
+            if (!Cache::has($key)) {
+                $mo = new EmailObject;
                 $mo->subject = ctrans('texts.notification_no_credits');
                 $mo->body = ctrans('texts.notification_no_credits_text');
                 $mo->text_body = ctrans('texts.notification_no_credits_text');
@@ -164,13 +169,13 @@ class SendEDocument implements ShouldQueue
             return;
         }
 
-        //Hosted Sending Code Path.
+        // Hosted Sending Code Path.
         if (($model instanceof Invoice || $model instanceof Credit) && $model->company->peppolSendingEnabled()) {
             if ($model->company->account->e_invoice_quota <= config('ninja.e_invoice_quota_warning')) {
                 $key = "e_invoice_quota_low_{$model->company->account->key}";
 
-                if (! Cache::has($key)) {
-                    $mo = new EmailObject();
+                if (!Cache::has($key)) {
+                    $mo = new EmailObject;
                     $mo->subject = ctrans('texts.notification_credits_low');
                     $mo->body = ctrans('texts.notification_credits_low_text');
                     $mo->text_body = ctrans('texts.notification_credits_low_text');
@@ -185,7 +190,7 @@ class SendEDocument implements ShouldQueue
                 }
             }
 
-            $sc = new \App\Services\EDocument\Gateway\Storecove\Storecove();
+            $sc = new Storecove;
             $r = $sc->sendJsonDocument($payload);
 
             // Successful send - update quota!
@@ -203,8 +208,8 @@ class SendEDocument implements ShouldQueue
                     'counter' => -1,
                 ]);
 
-                if ($account->e_invoice_quota == 0 && class_exists(\Modules\Admin\Jobs\Account\SuspendESendReceive::class)) {
-                    \Modules\Admin\Jobs\Account\SuspendESendReceive::dispatch($account->key);
+                if ($account->e_invoice_quota == 0 && class_exists(SuspendESendReceive::class)) {
+                    SuspendESendReceive::dispatch($account->key);
                 }
 
                 return $this->writeActivity($model, Activity::EINVOICE_DELIVERY_SUCCESS, $r);
@@ -213,6 +218,7 @@ class SendEDocument implements ShouldQueue
             if ($r->failed()) {
                 nlog("Model {$model->number} failed to be accepted by invoice ninja, error follows:");
                 $notes = data_get($r->json(), 'errors.0.details', 'Unhandled errors, check logs');
+
                 return $this->writeActivity($model, Activity::EINVOICE_DELIVERY_FAILURE, $notes);
             }
 
@@ -222,7 +228,7 @@ class SendEDocument implements ShouldQueue
 
     private function writeActivity($model, int $activity_id, string $notes = '')
     {
-        $activity = new Activity();
+        $activity = new Activity;
         $activity->user_id = $model->user_id;
         $activity->client_id = $model->client_id ?? $model->vendor_id;
         $activity->company_id = $model->company_id;
@@ -252,15 +258,15 @@ class SendEDocument implements ShouldQueue
     {
         return [
             'X-API-SELF-HOST-TOKEN' => config('ninja.license_key'),
-            "X-Requested-With" => "XMLHttpRequest",
-            "Content-Type" => "application/json",
+            'X-Requested-With' => 'XMLHttpRequest',
+            'Content-Type' => 'application/json',
         ];
     }
 
     public function failed($exception = null)
     {
         if ($exception) {
-            nlog("EXCEPTION:: SENDEDOCUMENT::");
+            nlog('EXCEPTION:: SENDEDOCUMENT::');
             nlog($exception->getMessage());
         }
 

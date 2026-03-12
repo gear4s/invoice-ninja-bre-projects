@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,22 +19,39 @@ class Threeds
 class Transaction
 {
     public ?Threeds $_3ds;
+
     public ?string $gateway_specific_code;
+
     public ?string $gateway_specific_description;
+
     public ?string $error_message;
+
     public ?string $error_code;
+
     public ?string $status_code;
+
     public ?string $status_code_description;
+
     public ?string $type;
+
     public ?string $status;
+
     public float $amount;
+
     public ?string $currency;
+
     public ?string $_id;
+
     public ?string $created_at;
+
     public ?string $updated_at;
+
     public ?string $processed_at;
+
     public ?string $external_id;
+
     public ?string $external_reference;
+
     public ?string $authorization_code;
 
     public function __construct(

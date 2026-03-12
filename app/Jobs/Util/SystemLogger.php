@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -53,7 +52,7 @@ class SystemLogger implements ShouldQueue
 
     public function handle(): void
     {
-        if (! $this->company) {
+        if (!$this->company) {
             nlog('SystemLogger:: No company');
 
             return;
@@ -63,7 +62,7 @@ class SystemLogger implements ShouldQueue
 
         $client_id = $this->client ? $this->client->id : null;
 
-        if (! $this->client && ! $this->company->owner()) {
+        if (!$this->client && !$this->company->owner()) {
             nlog('SystemLogger:: could not find client and/or company owner');
 
             return;
@@ -81,13 +80,14 @@ class SystemLogger implements ShouldQueue
             'type_id' => $this->type_id,
         ];
 
-        if (! $this->log) {
+        if (!$this->log) {
             nlog('SystemLogger:: no log to store');
             $this->category_id = null;
             $this->event_id = null;
             $this->type_id = null;
             $this->client = null;
             $this->company = null;
+
             return;
         }
 

@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organització',
     'name' => 'Nom',
     'website' => 'Lloc web',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'El pla empresarial afegeix suport per a diversos usuaris i fitxers adjunts, :link per veure la llista completa de funcions.',
     'return_to_app' => 'Return To App',
 
-
     // Payment updates
     'refund_payment' => 'Refund Payment',
     'refund_max' => 'Max:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Russian (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Accounting & Legal',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Unça Troia d&#39;or',
     'currency_nicaraguan_córdoba' => 'Còrdova nicaragüenca',
     'currency_malagasy_ariary' => 'ariary malgaix',
-    "currency_tongan_pa_anga" => "Pa&#39;anga de Tonga",
+    'currency_tongan_pa_anga' => 'Pa&#39;anga de Tonga',
 
     'review_app_help' => 'We hope you\'re enjoying using the app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'escriu una ressenya',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ':user archived recurring expense :recurring_expense',
     'activity_123' => ':user deleted recurring expense :recurring_expense',
     'activity_124' => ':user restored recurring expense :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Per a veure :entity haureu d\'establir una contrasenya.',
     'unsubscribe' => 'Unsubscribe',
     'unsubscribed' => 'Unsubscribed',
@@ -4869,7 +4867,7 @@ $lang = array(
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Transferència Interac E',
     'xinvoice_payable' => 'Pagament dins de :payeddue dies nets fins a :paydate',
-    'xinvoice_no_buyers_reference' => "No s&#39;ha donat cap referència del comprador",
+    'xinvoice_no_buyers_reference' => 'No s&#39;ha donat cap referència del comprador',
     'xinvoice_online_payment' => 'La factura s&#39;ha de pagar en línia mitjançant l&#39;enllaç proporcionat',
     'pre_payment' => 'Prepagament',
     'number_of_payments' => 'Nombre de pagaments',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'Factura electrònica',
     'light_dark_mode' => 'Mode clar/fosc',
     'activities' => 'Activitats',
-    'recent_transactions' => "Transaccions recents",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Transaccions recents',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Deures',
     'order_number' => 'Número d&#39;ordre',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'Formulari de camps obligatoris',
     'add_step' => 'Afegeix un pas',
     'steps' => 'Passos',
-    'steps_order_help' =>  'L&#39;ordre dels passos és important. El primer pas no ha de dependre de cap altre pas. El segon pas hauria de dependre del primer pas, i així successivament.',
+    'steps_order_help' => 'L&#39;ordre dels passos és important. El primer pas no ha de dependre de cap altre pas. El segon pas hauria de dependre del primer pas, i així successivament.',
     'other_steps' => 'Altres passos',
     'use_available_payments' => 'Utilitzeu els pagaments disponibles',
     'test_email_sent' => 'Correu electrònic enviat correctament',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'Crèdit actualitzat',
     'payment_updated' => 'Pagament actualitzat',
     'search_placeholder' => 'Trobeu factures, clients i molt més',
-    'invalid_vat_number' => "El número d&#39;IVA no és vàlid per al país seleccionat. El format hauria de ser el codi del país seguit només del número, és a dir, DE123456789",
+    'invalid_vat_number' => 'El número d&#39;IVA no és vàlid per al país seleccionat. El format hauria de ser el codi del país seguit només del número, és a dir, DE123456789',
     'acts_as_sender' => 'Enviar factures electròniques',
     'acts_as_receiver' => 'Rebre factures electròniques',
     'peppol_token_generated' => 'El testimoni PEPPOL s&#39;ha generat correctament.',
@@ -5538,7 +5536,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Configura correus electrònics de recordatori automàtic',
     'pro_plan_feature_11' => 'PDF de factura adjunt automàticament als correus electrònics',
     'pro_plan_feature_12' => 'Mostrar la signatura electrònica dels clients a les factures',
-    'pro_plan_feature_13' => "Activeu la casella de selecció &quot;Aprova els termes&quot;",
+    'pro_plan_feature_13' => 'Activeu la casella de selecció &quot;Aprova els termes&quot;',
     'pro_plan_feature_14' => 'Informes: Factures, Despeses, Comptes de Pèrdues i Més',
     'pro_plan_feature_15' => 'Factures, pressupostos i crèdits per correu electrònic en massa',
     'pro_plan_feature_16' => 'Interconnecta 10 empreses amb 1 inici de sessió',
@@ -5913,6 +5911,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Transferència bancària de Stripe',
     'activity_164' => 'La sincronització de QuickBooks ha fallat. :notes',
-);
+];
 
 return $lang;

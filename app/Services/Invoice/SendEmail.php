@@ -6,22 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Utils\Ninja;
+use App\Events\General\EntityWasEmailed;
+use App\Models\ClientContact;
 use App\Models\Invoice;
 use App\Models\Webhook;
-use App\Models\ClientContact;
-use App\Services\Email\Email;
-use App\Jobs\Entity\EmailEntity;
 use App\Services\AbstractService;
+use App\Services\Email\Email;
 use App\Services\Email\EmailObject;
-use App\Events\General\EntityWasEmailed;
-use App\Events\Invoice\InvoiceWasEmailed;
+use App\Utils\Ninja;
 
 class SendEmail extends AbstractService
 {
@@ -32,7 +29,7 @@ class SendEmail extends AbstractService
      */
     public function run()
     {
-        if (! $this->reminder_template) {
+        if (!$this->reminder_template) {
             $this->reminder_template = $this->invoice->calculateTemplate('invoice');
         }
 
@@ -49,18 +46,18 @@ class SendEmail extends AbstractService
                     $sq->whereNotNull('email')
                         ->orWhere('email', '!=', '');
                 })->where('is_locked', false)
-                ->withoutTrashed();
+                    ->withoutTrashed();
             })
             ->when($this->contact, function ($query) {
                 $query->where('client_contact_id', $this->contact->id);
             })
             ->each(function ($invitation) use ($base_template) {
 
-                $mo = new EmailObject();
+                $mo = new EmailObject;
                 $mo->entity_id = $invitation->invoice_id;
                 $mo->template = $this->reminder_template;
                 $mo->email_template_body = $this->reminder_template;
-                $mo->email_template_subject = str_replace("template", "subject", $this->reminder_template);
+                $mo->email_template_subject = str_replace('template', 'subject', $this->reminder_template);
 
                 $mo->entity_class = get_class($invitation->invoice);
                 $mo->invitation_id = $invitation->id;
@@ -75,10 +72,9 @@ class SendEmail extends AbstractService
 
         event(new EntityWasEmailed($this->invoice->invitations->first(), $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), 'invoice'));
 
-        $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
+        $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, 'client');
 
     }
-
 
     private function resolveTemplateString(string $template): string
     {
@@ -92,9 +88,8 @@ class SendEmail extends AbstractService
             'custom1' => 'email_template_custom1',
             'custom2' => 'email_template_custom2',
             'custom3' => 'email_template_custom3',
-            default => "email_template_invoice",
+            default => 'email_template_invoice',
         };
 
     }
-
 }

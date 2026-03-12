@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,10 +28,10 @@ trait ChartCalculations
         $result = 0;
 
         $q = Invoice::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [2,3,4]);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->whereIn('status_id', [2, 3, 4]);
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -54,10 +53,10 @@ trait ChartCalculations
         $result = 0;
 
         $q = Invoice::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [2,3]);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->whereIn('status_id', [2, 3]);
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -79,10 +78,10 @@ trait ChartCalculations
         $result = 0;
 
         $q = Payment::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0)
-                    ->where('status_id', 4);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->where('status_id', 4);
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -104,10 +103,10 @@ trait ChartCalculations
         $result = 0;
 
         $q = Payment::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [5,6]);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->whereIn('status_id', [5, 6]);
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -129,13 +128,13 @@ trait ChartCalculations
         $result = 0;
 
         $q = Quote::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [2,3])
-                    ->where(function ($qq) {
-                        $qq->where('due_date', '>=', now()->toDateString())->orWhereNull('due_date');
-                    });
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->whereIn('status_id', [2, 3])
+            ->where(function ($qq) {
+                $qq->where('due_date', '>=', now()->toDateString())->orWhereNull('due_date');
+            });
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -157,13 +156,13 @@ trait ChartCalculations
         $result = 0;
 
         $q = Quote::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [2])
-                    ->where(function ($qq) {
-                        $qq->where('due_date', '>=', now()->toDateString())->orWhereNull('due_date');
-                    });
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0)
+            ->whereIn('status_id', [2])
+            ->where(function ($qq) {
+                $qq->where('due_date', '>=', now()->toDateString())->orWhereNull('due_date');
+            });
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -220,7 +219,6 @@ trait ChartCalculations
         return $this->expenseCalculations($q, $data);
     }
 
-
     /**
      * Expenses that should be invoiced - but are not yet invoiced.
      */
@@ -229,6 +227,7 @@ trait ChartCalculations
 
         $q = $this->expenseQuery($data);
         $q->where('should_be_invoiced', true)->whereNull('invoice_id');
+
         return $this->expenseCalculations($q, $data);
     }
 
@@ -240,6 +239,7 @@ trait ChartCalculations
 
         $q = $this->expenseQuery($data);
         $q->whereNotNull('invoice_id');
+
         return $this->expenseCalculations($q, $data);
     }
 
@@ -251,6 +251,7 @@ trait ChartCalculations
 
         $q = $this->expenseQuery($data);
         $q->whereNotNull('payment_date');
+
         return $this->expenseCalculations($q, $data);
     }
 
@@ -262,6 +263,7 @@ trait ChartCalculations
 
         $q = $this->expenseQuery($data);
         $q->whereNotNull('invoice_id')->whereNotNull('payment_date');
+
         return $this->expenseCalculations($q, $data);
     }
 
@@ -280,37 +282,36 @@ trait ChartCalculations
 
         return $result;
 
-
     }
 
     private function expenseCalculator(Builder $query, array $data)
     {
 
         return $query->get()
-                    ->when($data['currency_id'] == '999', function ($collection) {
-                        return $collection->map(function ($e) {
-                            /** @var \App\Models\Expense $e */
-                            return $e->amount * $e->exchange_rate;
-                        });
-                    })
-                    ->when($data['currency_id'] != '999', function ($collection) {
+            ->when($data['currency_id'] == '999', function ($collection) {
+                return $collection->map(function ($e) {
+                    /** @var Expense $e */
+                    return $e->amount * $e->exchange_rate;
+                });
+            })
+            ->when($data['currency_id'] != '999', function ($collection) {
 
-                        return $collection->map(function ($e) {
+                return $collection->map(function ($e) {
 
-                            /** @var \App\Models\Expense $e */
-                            return $e->amount;
-                        });
+                    /** @var Expense $e */
+                    return $e->amount;
+                });
 
-                    });
+            });
 
     }
 
     private function expenseQuery($data): Builder
     {
         $query = Expense::query()
-                        ->withTrashed()
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0);
 
         if (in_array($data['period'], ['current,previous'])) {
             $query->whereBetween('date', [$data['start_date'], $data['end_date']]);
@@ -319,32 +320,32 @@ trait ChartCalculations
         return $query;
     }
 
-    ////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////
     private function taskMoneyCalculator($query, $data)
     {
 
         return $query->get()
-                    ->when($data['currency_id'] == '999', function ($collection) {
-                        $collection->map(function ($t) {
-                            return $t->taskCompanyValue();
-                        });
-                    })
-                    ->when($data['currency_id'] != '999', function ($collection) {
+            ->when($data['currency_id'] == '999', function ($collection) {
+                $collection->map(function ($t) {
+                    return $t->taskCompanyValue();
+                });
+            })
+            ->when($data['currency_id'] != '999', function ($collection) {
 
-                        $collection->map(function ($t) {
-                            return $t->taskValue();
-                        });
+                $collection->map(function ($t) {
+                    return $t->taskValue();
+                });
 
-                    });
+            });
 
     }
 
     private function taskQuery($data): Builder
     {
         $q = Task::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('is_deleted', 0);
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('is_deleted', 0);
 
         if (in_array($data['period'], ['current,previous'])) {
             $q->whereBetween('calculated_start_date', [$data['start_date'], $data['end_date']]);
@@ -389,5 +390,4 @@ trait ChartCalculations
         return $result;
 
     }
-
 }

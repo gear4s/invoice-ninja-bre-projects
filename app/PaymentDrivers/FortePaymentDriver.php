@@ -6,40 +6,42 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace App\PaymentDrivers;
 
 use App\Exceptions\PaymentFailed;
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\ClientContact;
 use App\Factory\ClientFactory;
 use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
+use App\Models\ClientContact;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\PaymentType;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Factory\ForteCustomerFactory;
 use App\PaymentDrivers\Forte\ACH;
-use Illuminate\Support\Facades\Http;
-use App\Repositories\ClientRepository;
 use App\PaymentDrivers\Forte\CreditCard;
 use App\Repositories\ClientContactRepository;
-use App\PaymentDrivers\Factory\ForteCustomerFactory;
+use App\Repositories\ClientRepository;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Http;
 
 class FortePaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = true; //does this gateway support refunds?
+    public $refundable = true; // does this gateway support refunds?
 
-    public $token_billing = true; //does this gateway support token billing?
+    public $token_billing = true; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = true; //does this gateway support authorizations?
+    public $can_authorise_credit_card = true; // does this gateway support authorizations?
 
-    public $gateway; //initialized gateway
+    public $gateway; // initialized gateway
 
-    public $payment_method; //initialized payment method
+    public $payment_method; // initialized payment method
 
     public static $methods = [
         GatewayType::CREDIT_CARD => CreditCard::class,
@@ -59,12 +61,13 @@ class FortePaymentDriver extends BaseDriver
         return $types;
     }
 
-    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_FORTE; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_FORTE; // define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
 
     public function setPaymentMethod($payment_method_id)
     {
         $class = self::$methods[$payment_method_id];
         $this->payment_method = new $class($this);
+
         return $this;
     }
 
@@ -90,9 +93,9 @@ class FortePaymentDriver extends BaseDriver
 
     public function refund(Payment $payment, $amount, $return_client_response = false)
     {
-        $forte_base_uri = "https://sandbox.forte.net/api/v3/";
+        $forte_base_uri = 'https://sandbox.forte.net/api/v3/';
         if ($this->company_gateway->getConfigField('testMode') == false) {
-            $forte_base_uri = "https://api.forte.net/v3/";
+            $forte_base_uri = 'https://api.forte.net/v3/';
         }
         $forte_api_access_id = $this->company_gateway->getConfigField('apiAccessId');
         $forte_secure_key = $this->company_gateway->getConfigField('secureKey');
@@ -191,15 +194,15 @@ class FortePaymentDriver extends BaseDriver
         ];
     }
 
-    ////////////////////////////////////////////
+    // //////////////////////////////////////////
     // DB
-    ///////////////////////////////////////////
+    // /////////////////////////////////////////
     public function auth(): string
     {
 
-        $forte_base_uri = "https://sandbox.forte.net/api/v3/";
+        $forte_base_uri = 'https://sandbox.forte.net/api/v3/';
         if ($this->company_gateway->getConfigField('testMode') == false) {
-            $forte_base_uri = "https://api.forte.net/v3/";
+            $forte_base_uri = 'https://api.forte.net/v3/';
         }
         $forte_api_access_id = $this->company_gateway->getConfigField('apiAccessId');
         $forte_secure_key = $this->company_gateway->getConfigField('secureKey');
@@ -208,8 +211,8 @@ class FortePaymentDriver extends BaseDriver
         $forte_location_id = $this->company_gateway->getConfigField('locationId');
 
         $response = Http::withBasicAuth($forte_api_access_id, $forte_secure_key)
-                    ->withHeaders(['X-Forte-Auth-Organization-Id' => $forte_organization_id])
-                    ->get("{$forte_base_uri}/organizations/{$forte_organization_id}/locations/{$forte_location_id}/customers/");
+            ->withHeaders(['X-Forte-Auth-Organization-Id' => $forte_organization_id])
+            ->get("{$forte_base_uri}/organizations/{$forte_organization_id}/locations/{$forte_location_id}/customers/");
 
         $error = $response->json()['response']['response_desc'] ?? 'error';
 
@@ -220,9 +223,9 @@ class FortePaymentDriver extends BaseDriver
     public function baseUri(): string
     {
 
-        $forte_base_uri = "https://sandbox.forte.net/api/v3/";
+        $forte_base_uri = 'https://sandbox.forte.net/api/v3/';
         if ($this->company_gateway->getConfigField('testMode') == false) {
-            $forte_base_uri = "https://api.forte.net/v3/";
+            $forte_base_uri = 'https://api.forte.net/v3/';
         }
 
         return $forte_base_uri;
@@ -246,7 +249,7 @@ class FortePaymentDriver extends BaseDriver
         $forte_auth_organization_id = $this->company_gateway->getConfigField('authOrganizationId');
 
         return Http::withBasicAuth($forte_api_access_id, $forte_secure_key)
-                    ->withHeaders(['X-Forte-Auth-Organization-Id' => $this->getOrganisationId()]);
+            ->withHeaders(['X-Forte-Auth-Organization-Id' => $this->getOrganisationId()]);
     }
 
     private function getClient(?string $email)
@@ -256,12 +259,12 @@ class FortePaymentDriver extends BaseDriver
         }
 
         return ClientContact::query()
-                     ->where('company_id', $this->company_gateway->company_id)
-                     ->where('email', $email)
-                     ->first();
+            ->where('company_id', $this->company_gateway->company_id)
+            ->where('email', $email)
+            ->first();
     }
 
-    public function tokenBilling(\App\Models\ClientGatewayToken $cgt, \App\Models\PaymentHash $payment_hash)
+    public function tokenBilling(ClientGatewayToken $cgt, PaymentHash $payment_hash)
     {
 
         $amount_with_fee = $payment_hash->data->amount_with_fee;
@@ -269,27 +272,27 @@ class FortePaymentDriver extends BaseDriver
 
         $data
         = [
-            "action" => "sale",
-            "authorization_amount" => $amount_with_fee,
-            "paymethod_token" => $cgt->token,
-            "billing_address" => [
-                "first_name" => $this->client->present()->first_name(),
-                "last_name" => $this->client->present()->last_name(),
+            'action' => 'sale',
+            'authorization_amount' => $amount_with_fee,
+            'paymethod_token' => $cgt->token,
+            'billing_address' => [
+                'first_name' => $this->client->present()->first_name(),
+                'last_name' => $this->client->present()->last_name(),
             ],
         ];
 
         if ($cgt->gateway_type_id == GatewayType::BANK_TRANSFER) {
-            $data["echeck"] = [
-                "sec_code" => "WEB",
+            $data['echeck'] = [
+                'sec_code' => 'WEB',
             ];
         }
 
         if ($fee_total > 0) {
-            $data["service_fee_amount"] = $fee_total;
+            $data['service_fee_amount'] = $fee_total;
         }
 
         $response = $this->stubRequest()
-                        ->post("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/transactions", $data);
+            ->post("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/transactions", $data);
 
         $forte_response = $response->object();
 
@@ -297,7 +300,7 @@ class FortePaymentDriver extends BaseDriver
 
             $data = [
                 'payment_method' => $cgt->gateway_type_id,
-                'payment_type' => $cgt->gateway_type_id == 2 ? \App\Models\PaymentType::ACH : \App\Models\PaymentType::CREDIT_CARD_OTHER,
+                'payment_type' => $cgt->gateway_type_id == 2 ? PaymentType::ACH : PaymentType::CREDIT_CARD_OTHER,
                 'amount' => $payment_hash->data->amount_with_fee,
                 'transaction_reference' => $forte_response->transaction_id,
                 'gateway_type_id' => $cgt->gateway_type_id,
@@ -339,15 +342,14 @@ class FortePaymentDriver extends BaseDriver
         );
 
         throw new PaymentFailed($forte_response->response->response_desc, 500);
-
     }
 
     public function getLocation()
     {
 
         $response = $this->stubRequest()
-                    ->withQueryParameters(['page_size' => 10000])
-                    ->get("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}");
+            ->withQueryParameters(['page_size' => 10000])
+            ->get("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}");
 
         if ($response->successful()) {
             return $response->json();
@@ -391,35 +393,34 @@ class FortePaymentDriver extends BaseDriver
     public function findOrCreateCustomer()
     {
 
-        $client_gateway_token = \App\Models\ClientGatewayToken::query()
-                                                    ->where('client_id', $this->client->id)
-                                                    ->where('company_gateway_id', $this->company_gateway->id)
-                                                    ->whereNotLike('token', 'ott_%')
-                                                    ->first();
+        $client_gateway_token = ClientGatewayToken::query()
+            ->where('client_id', $this->client->id)
+            ->where('company_gateway_id', $this->company_gateway->id)
+            ->whereNotLike('token', 'ott_%')
+            ->first();
 
         if ($client_gateway_token) {
             return $client_gateway_token->gateway_customer_reference;
         } else {
 
-            $factory = new ForteCustomerFactory();
+            $factory = new ForteCustomerFactory;
             $data = $factory->convertToForte($this->client);
 
             $response = $this->stubRequest()
                 ->post("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/customers/", $data);
 
-
-            //create customer
+            // create customer
             if ($response->successful()) {
                 $customer = $response->object();
                 nlog($customer);
+
                 return $customer->customer_token;
             }
 
             nlog($response->body());
 
-            throw new PaymentFailed("Unable to create customer in Forte", 400);
-
-            //@todo add syslog here
+            throw new PaymentFailed('Unable to create customer in Forte', 400);
+            // @todo add syslog here
         }
 
     }
@@ -428,15 +429,15 @@ class FortePaymentDriver extends BaseDriver
     {
 
         $response = $this->stubRequest()
-                    ->withQueryParameters(['page_size' => 10000])
-                    ->get("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/customers");
+            ->withQueryParameters(['page_size' => 10000])
+            ->get("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/customers");
 
         if ($response->successful()) {
 
             foreach ($response->json()['results'] as $customer) {
 
-                $client_repo = new ClientRepository(new ClientContactRepository());
-                $factory = new ForteCustomerFactory();
+                $client_repo = new ClientRepository(new ClientContactRepository);
+                $factory = new ForteCustomerFactory;
 
                 $data = $factory->convertToNinja($customer, $this->company_gateway->company);
 
@@ -446,10 +447,9 @@ class FortePaymentDriver extends BaseDriver
 
                 $client_repo->save($data, ClientFactory::create($this->company_gateway->company_id, $this->company_gateway->user_id));
 
-                //persist any payment methods here!
+                // persist any payment methods here!
             }
         }
 
     }
-
 }

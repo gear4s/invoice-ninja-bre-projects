@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\EInvoice;
 
-use Tests\TestCase;
 use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
+use Saxon\SaxonProcessor;
+use Tests\TestCase;
 
 class PeppolXmlValidationTest extends TestCase
 {
-
-private string $xml = '<?xml version="1.0" encoding="UTF-8"?>
+    private string $xml = '<?xml version="1.0" encoding="UTF-8"?>
   <Invoice xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
       xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
       xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
@@ -343,24 +343,23 @@ private string $xml = '<?xml version="1.0" encoding="UTF-8"?>
   </Invoice>
 ';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
 
-public function setUp(): void
-{
-    parent::setUp();
+        try {
+            $processor = new SaxonProcessor;
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('saxon not installed');
+        }
 
-    try {
-        $processor = new \Saxon\SaxonProcessor();
-    } catch (\Throwable $e) {
-        $this->markTestSkipped('saxon not installed');
     }
 
-}
+    public function test_peppol_xml_validation()
+    {
 
-public function testPeppolXmlValidation()
-{
-        
         try {
-            $processor = new \Saxon\SaxonProcessor();
+            $processor = new SaxonProcessor;
         } catch (\Throwable $e) {
             $this->markTestSkipped('saxon not installed');
         }

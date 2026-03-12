@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,9 +15,6 @@ use App\Models\Currency;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
-/**
- *
- */
 class RedisVsDatabaseTest extends TestCase
 {
     protected function setUp(): void
@@ -28,7 +24,7 @@ class RedisVsDatabaseTest extends TestCase
         // $this->markTestSkipped('Skip test no company gateways installed');
     }
 
-    public function testRedisSpeed()
+    public function test_redis_speed()
     {
         app('currencies');
 
@@ -44,10 +40,10 @@ class RedisVsDatabaseTest extends TestCase
 
         $this->assertTrue(true);
         // nlog($total_time);
-        //0.0012960433959961
+        // 0.0012960433959961
     }
 
-    public function testDbSpeed()
+    public function test_db_speed()
     {
         $start = microtime(true);
 

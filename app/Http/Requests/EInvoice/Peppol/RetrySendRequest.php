@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice\Peppol;
 
+use App\Http\Requests\Request;
+use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use App\Http\Requests\Request;
 
 class RetrySendRequest extends Request
 {
@@ -22,7 +23,7 @@ class RetrySendRequest extends Request
 
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if (config('ninja.app_env') == 'local') {
@@ -33,15 +34,15 @@ class RetrySendRequest extends Request
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        /** @var \App\Models\User $user **/
+        /** @var User $user * */
         $user = auth()->user();
 
         return [
-            'entity' => ['bail','required','in:App\Models\Invoice,App\Models\Quote,App\Models\Credit,App\Models\PurchaseOrder'],
+            'entity' => ['bail', 'required', 'in:App\Models\Invoice,App\Models\Quote,App\Models\Credit,App\Models\PurchaseOrder'],
             'entity_id' => ['bail', 'required', Rule::exists($this->entity_plural, 'id')->where('company_id', $user->company()->id)],
         ];
     }
@@ -51,12 +52,11 @@ class RetrySendRequest extends Request
 
         $input = $this->all();
 
-
         if (array_key_exists('entity_id', $input)) {
             $input['entity_id'] = $this->decodePrimaryKey($input['entity_id']);
         }
 
-        if (isset($input['entity']) && in_array($input['entity'], ['invoice','quote','credit','purchase_order'])) {
+        if (isset($input['entity']) && in_array($input['entity'], ['invoice', 'quote', 'credit', 'purchase_order'])) {
             $this->entity_plural = Str::plural($input['entity']);
             $input['entity'] = "App\Models\\" . ucfirst(Str::camel($input['entity']));
         }

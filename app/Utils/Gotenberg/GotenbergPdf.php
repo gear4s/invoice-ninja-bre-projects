@@ -9,8 +9,8 @@ class GotenbergPdf
     /**
      * Convert HTML to PDF using Gotenberg service
      *
-     * @param string $html
      * @return string PDF content
+     *
      * @throws \Exception
      */
     public function convertHtmlToPdf(string $html): string
@@ -33,11 +33,10 @@ class GotenbergPdf
                 return $response->body();
             }
 
-            throw new \Exception("Gotenberg PDF generation failed: " . $response->status() . " - " . $response->body());
-
+            throw new \Exception('Gotenberg PDF generation failed: ' . $response->status() . ' - ' . $response->body());
         } catch (\Exception $e) {
-            nlog("Gotenberg Error: " . $e->getMessage());
-            throw new \Exception("Failed to generate PDF via Gotenberg: " . $e->getMessage());
+            nlog('Gotenberg Error: ' . $e->getMessage());
+            throw new \Exception('Failed to generate PDF via Gotenberg: ' . $e->getMessage());
         }
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,12 +22,12 @@ class ZeroCostProduct extends AbstractService
     private $data;
 
     /**
-    * $data = [
-    *     'email' => $this->email ?? $this->contact->email,
-    *     'quantity' => $this->quantity,
-    *     'contact_id' => $this->contact->id,
-    *     'client_id' => $this->contact->client->id,
-    * ];
+     * $data = [
+     *     'email' => $this->email ?? $this->contact->email,
+     *     'quantity' => $this->quantity,
+     *     'contact_id' => $this->contact->id,
+     *     'client_id' => $this->contact->client->id,
+     * ];
      */
     public function __construct(Subscription $subscription, array $data)
     {
@@ -39,21 +38,21 @@ class ZeroCostProduct extends AbstractService
 
     public function run()
     {
-        //create a zero dollar invoice.
+        // create a zero dollar invoice.
 
         $invoice = $this->subscription->service()->createInvoice($this->data);
 
         $invoice = $invoice->service()
-                           ->markPaid()
-                           ->save();
+            ->markPaid()
+            ->save();
 
         $redirect_url = "/client/invoices/{$invoice->hashed_id}";
 
-        //create a recurring zero dollar invoice attached to this subscription.
+        // create a recurring zero dollar invoice attached to this subscription.
 
         if (strlen($this->subscription->recurring_product_ids) >= 1) {
             $recurring_invoice = $this->subscription->service()->convertInvoiceToRecurring($this->data['client_id']);
-            $recurring_invoice_repo = new RecurringInvoiceRepository();
+            $recurring_invoice_repo = new RecurringInvoiceRepository;
 
             $recurring_invoice->next_send_date = now();
             $recurring_invoice = $recurring_invoice_repo->save([], $recurring_invoice);
@@ -64,8 +63,8 @@ class ZeroCostProduct extends AbstractService
 
             /* Start the recurring service */
             $recurring_invoice->service()
-                              ->start()
-                              ->save();
+                ->start()
+                ->save();
 
             $invoice->recurring_id = $recurring_invoice->id;
             $invoice->save();

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,7 +42,7 @@ class ApplyPayment
 
     public function run(): Credit
     {
-        //$available_credit_balance = $this->credit->balance;
+        // $available_credit_balance = $this->credit->balance;
         $applicable_amount = min($this->amount, $this->credit->balance);
         $invoice_balance = $this->invoice->balance;
         $credit_balance = $this->credit->balance;
@@ -87,7 +86,7 @@ class ApplyPayment
 
     private function applyPaymentToCredit()
     {
-        $credit_item = new InvoiceItem();
+        $credit_item = new InvoiceItem;
         $credit_item->type_id = '1';
         $credit_item->product_key = ctrans('texts.credit');
         $credit_item->notes = ctrans('texts.credit_payment', ['invoice_number' => $this->invoice->number]);
@@ -114,35 +113,35 @@ class ApplyPayment
         $this->payment->service()->applyNumber()->save();
 
         $this->payment
-             ->invoices()
-             ->attach($this->invoice->id, ['amount' => $this->amount_applied]);
+            ->invoices()
+            ->attach($this->invoice->id, ['amount' => $this->amount_applied]);
 
         $this->payment
-             ->credits()
-             ->attach($this->credit->id, ['amount' => $this->amount_applied]);
+            ->credits()
+            ->attach($this->credit->id, ['amount' => $this->amount_applied]);
 
         // $this->payment
         //          ->ledger()
         //          ->updatePaymentBalance($this->amount_applied * -1, "ApplyPaymentCredit"); // this duplicated the company ledger paid to date amount.
 
         $this->payment
-                 ->client
-                 ->service()
-                 ->updateBalance($this->amount_applied * -1)
-                 ->adjustCreditBalance($this->amount_applied * -1)
-                 ->updatePaidToDate($this->amount_applied)
-                 ->save();
+            ->client
+            ->service()
+            ->updateBalance($this->amount_applied * -1)
+            ->adjustCreditBalance($this->amount_applied * -1)
+            ->updatePaidToDate($this->amount_applied)
+            ->save();
 
         $this->invoice
-                 ->service()
-                 ->updateBalance($this->amount_applied * -1)
-                 ->updatePaidToDate($this->amount_applied)
-                 ->updateStatus()
-                 ->save();
+            ->service()
+            ->updateBalance($this->amount_applied * -1)
+            ->updatePaidToDate($this->amount_applied)
+            ->updateStatus()
+            ->save();
 
         $this->credit
-                 ->ledger()
-                 ->updateCreditBalance(($this->amount_applied * -1), "Credit payment applied to Invoice {$this->invoice->number}");
+            ->ledger()
+            ->updateCreditBalance(($this->amount_applied * -1), "Credit payment applied to Invoice {$this->invoice->number}");
 
         event(new InvoiceWasUpdated($this->invoice, $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 

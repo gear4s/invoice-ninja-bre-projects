@@ -6,17 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\ValidationRules\Invoice;
 
 use App\Models\Invoice;
+use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Rule;
 
 /**
  * Class LockedInvoiceRule.
+ *
  * @deprecated
  */
 class LockedInvoiceRule implements Rule
@@ -29,13 +30,13 @@ class LockedInvoiceRule implements Rule
     }
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-        return $this->checkIfInvoiceLocked(); //if it exists, return false!
+        return $this->checkIfInvoiceLocked(); // if it exists, return false!
     }
 
     /**
@@ -46,9 +47,6 @@ class LockedInvoiceRule implements Rule
         return ctrans('texts.locked_invoice');
     }
 
-    /**
-     * @return bool
-     */
     private function checkIfInvoiceLocked(): bool
     {
         $lock_invoices = $this->invoice->client->getSetting('lock_invoices');
@@ -70,9 +68,9 @@ class LockedInvoiceRule implements Rule
 
                 return true;
 
-                //if now is greater than the end of month the invoice was dated - do not modify
+                // if now is greater than the end of month the invoice was dated - do not modify
             case 'end_of_month':
-                if (\Carbon\Carbon::parse($this->invoice->date)->setTimezone($this->invoice->company->timezone()->name)->endOfMonth()->lte(now())) {
+                if (Carbon::parse($this->invoice->date)->setTimezone($this->invoice->company->timezone()->name)->endOfMonth()->lte(now())) {
                     return false;
                 }
 

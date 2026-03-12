@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,17 +26,23 @@ use App\Models\CompanyToken;
 use App\Models\Credit;
 use App\Models\Expense;
 use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\Quote;
+use App\Models\RecurringInvoice;
+use App\Models\Task;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Repositories\InvoiceRepository;
 use App\Utils\Traits\MakesHash;
+use Faker\Factory;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use League\Csv\Reader;
 use Tests\TestCase;
 
-/**
- *
- */
 class ReportCsvGenerationTest extends TestCase
 {
     use MakesHash;
@@ -48,7 +53,7 @@ class ReportCsvGenerationTest extends TestCase
     {
         parent::setUp();
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -80,67 +85,67 @@ class ReportCsvGenerationTest extends TestCase
 
     public $cu;
 
-    private $all_client_report_keys =  [
-        "client.name",
-        "client.user",
-        "client.assigned_user",
-        "client.balance",
-        "client.address1",
-        "client.address2",
-        "client.city",
-        "client.country_id",
-        "client.currency_id",
-        "client.custom_value1",
-        "client.custom_value2",
-        "client.custom_value3",
-        "client.custom_value4",
-        "client.industry_id",
-        "client.id_number",
-        "client.paid_to_date",
-        "client.payment_terms",
-        "client.phone",
-        "client.postal_code",
-        "client.private_notes",
-        "client.public_notes",
-        "client.size_id",
-        "client.shipping_address1",
-        "client.shipping_address2",
-        "client.shipping_city",
-        "client.shipping_state",
-        "client.shipping_postal_code",
-        "client.shipping_country_id",
-        "client.state",
-        "client.vat_number",
-        "client.website",
-        "contact.first_name",
-        "contact.last_name",
-        "contact.email",
-        "contact.phone",
-        "contact.custom_value1",
-        "contact.custom_value2",
-        "contact.custom_value3",
-        "contact.custom_value4",
+    private $all_client_report_keys = [
+        'client.name',
+        'client.user',
+        'client.assigned_user',
+        'client.balance',
+        'client.address1',
+        'client.address2',
+        'client.city',
+        'client.country_id',
+        'client.currency_id',
+        'client.custom_value1',
+        'client.custom_value2',
+        'client.custom_value3',
+        'client.custom_value4',
+        'client.industry_id',
+        'client.id_number',
+        'client.paid_to_date',
+        'client.payment_terms',
+        'client.phone',
+        'client.postal_code',
+        'client.private_notes',
+        'client.public_notes',
+        'client.size_id',
+        'client.shipping_address1',
+        'client.shipping_address2',
+        'client.shipping_city',
+        'client.shipping_state',
+        'client.shipping_postal_code',
+        'client.shipping_country_id',
+        'client.state',
+        'client.vat_number',
+        'client.website',
+        'contact.first_name',
+        'contact.last_name',
+        'contact.email',
+        'contact.phone',
+        'contact.custom_value1',
+        'contact.custom_value2',
+        'contact.custom_value3',
+        'contact.custom_value4',
     ];
 
     private $all_payment_report_keys = [
-            'payment.date',
-            'payment.amount',
-            'payment.refunded',
-            'payment.applied',
-            'payment.transaction_reference',
-            'payment.currency',
-            'payment.exchange_rate',
-            'payment.number',
-            'payment.method',
-            'payment.status',
-            'payment.private_notes',
-            'payment.custom_value1',
-            'payment.custom_value2',
-            'payment.custom_value3',
-            'payment.custom_value4',
-            'payment.user_id',
-            'payment.assigned_user_id'
-        ];
+        'payment.date',
+        'payment.amount',
+        'payment.refunded',
+        'payment.applied',
+        'payment.transaction_reference',
+        'payment.currency',
+        'payment.exchange_rate',
+        'payment.number',
+        'payment.method',
+        'payment.status',
+        'payment.private_notes',
+        'payment.custom_value1',
+        'payment.custom_value2',
+        'payment.custom_value3',
+        'payment.custom_value4',
+        'payment.user_id',
+        'payment.assigned_user_id',
+    ];
 
     private $all_invoice_report_keys = [
         'invoice.number',
@@ -197,7 +202,7 @@ class ReportCsvGenerationTest extends TestCase
             $this->account->forceDelete();
         }
 
-        /** @var \App\Models\Account $account */
+        /** @var Account $account */
         $this->account = Account::factory()->create([
             'hosted_client_count' => 1000,
             'hosted_company_count' => 1000,
@@ -209,7 +214,7 @@ class ReportCsvGenerationTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -230,9 +235,9 @@ class ReportCsvGenerationTest extends TestCase
         $this->cu->is_locked = false;
         $this->cu->save();
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $this->account->id;
@@ -262,31 +267,31 @@ class ReportCsvGenerationTest extends TestCase
         ]);
 
         ClientContact::factory()->create([
-                'user_id' => $this->user->id,
-                'client_id' => $this->client->id,
-                'company_id' => $this->company->id,
-                'is_primary' => 1,
-                'first_name' => 'john',
-                'last_name' => 'doe',
-                'email' => 'john@doe.com'
-            ]);
+            'user_id' => $this->user->id,
+            'client_id' => $this->client->id,
+            'company_id' => $this->company->id,
+            'is_primary' => 1,
+            'first_name' => 'john',
+            'last_name' => 'doe',
+            'email' => 'john@doe.com',
+        ]);
 
     }
 
-    public function testContactProps()
+    public function test_contact_props()
     {
 
         Invoice::factory()->count(5)->create([
-                'client_id' => $this->client->id,
-                'company_id' => $this->company->id,
-                'user_id' => $this->user->id
-            ]);
+            'client_id' => $this->client->id,
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ['invoice.number','client.name', 'contact.email'],
+            'report_keys' => ['invoice.number', 'client.name', 'contact.email'],
             'send_email' => false,
-            'client_id' => $this->client->hashed_id
+            'client_id' => $this->client->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -310,19 +315,19 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testForcedInsertionOfMandatoryColumns()
+    public function test_forced_insertion_of_mandatory_columns()
     {
         $forced = ['client.name'];
 
-        $report_keys = ['invoice.number','client.name', 'invoice.amount'];
+        $report_keys = ['invoice.number', 'client.name', 'invoice.amount'];
         $array = array_merge($report_keys, array_diff($forced, $report_keys));
 
         $this->assertEquals('client.name', $array[1]);
 
-        $report_keys = ['invoice.number','invoice.amount'];
+        $report_keys = ['invoice.number', 'invoice.amount'];
         $array = array_merge($report_keys, array_diff($forced, $report_keys));
 
-        $this->assertEquals('client.name', $array[2]); //@phpstan-ignore-line
+        $this->assertEquals('client.name', $array[2]); // @phpstan-ignore-line
 
         $this->account->forceDelete();
 
@@ -331,21 +336,20 @@ class ReportCsvGenerationTest extends TestCase
     private function poll($hash)
     {
         $response = Http::retry(100, 200, throw: false)
-                    ->withHeaders([
-                        'X-API-SECRET' => config('ninja.api_secret'),
-                        'X-API-TOKEN' => $this->token,
-                    ])->post(config('ninja.app_url')."/api/v1/exports/preview/{$hash}");
+            ->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->post(config('ninja.app_url') . "/api/v1/exports/preview/{$hash}");
 
         return $response;
     }
 
-
-    public function testProductJsonFiltering()
+    public function test_product_json_filtering()
     {
 
         $query = Invoice::query();
 
-        $products = explode(",", "clown,joker,batman,bob the builder");
+        $products = explode(',', 'clown,joker,batman,bob the builder');
 
         foreach ($products as $product) {
             $query->where(function ($q) use ($product) {
@@ -366,7 +370,7 @@ class ReportCsvGenerationTest extends TestCase
                 'company_id' => $this->company->id,
                 'user_id' => $this->user->id,
                 'client_id' => $this->client->id,
-                'line_items' => $line_items
+                'line_items' => $line_items,
             ]
         );
 
@@ -394,7 +398,7 @@ class ReportCsvGenerationTest extends TestCase
                 'company_id' => $this->company->id,
                 'user_id' => $this->user->id,
                 'client_id' => $this->client->id,
-                'line_items' => $line_items
+                'line_items' => $line_items,
             ]
         );
 
@@ -416,12 +420,11 @@ class ReportCsvGenerationTest extends TestCase
 
         $this->assertEquals(1, $query->count());
 
-
         $this->account->forceDelete();
 
     }
 
-    public function testProductKeyFilterQueries()
+    public function test_product_key_filter_queries()
     {
 
         $item = InvoiceItemFactory::create();
@@ -439,7 +442,7 @@ class ReportCsvGenerationTest extends TestCase
                 'company_id' => $this->company->id,
                 'user_id' => $this->user->id,
                 'client_id' => $this->client->id,
-                'line_items' => $line_items
+                'line_items' => $line_items,
             ]
         );
 
@@ -452,7 +455,7 @@ class ReportCsvGenerationTest extends TestCase
                 'company_id' => $this->company->id,
                 'user_id' => $this->user->id,
                 'client_id' => $this->client->id,
-                'line_items' => $line_items
+                'line_items' => $line_items,
             ]
         );
 
@@ -472,7 +475,7 @@ class ReportCsvGenerationTest extends TestCase
                 'company_id' => $this->company->id,
                 'user_id' => $this->user->id,
                 'client_id' => $this->client->id,
-                'line_items' => $line_items
+                'line_items' => $line_items,
             ]
         );
 
@@ -482,11 +485,11 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testVendorCsvGeneration()
+    public function test_vendor_csv_generation()
     {
 
         $vendor =
-        \App\Models\Vendor::factory()->create(
+        Vendor::factory()->create(
             [
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
@@ -559,20 +562,19 @@ class ReportCsvGenerationTest extends TestCase
         $this->assertEquals('vendor.address1', $this->traverseJson($data, '0.0.identifier'));
         $this->assertEquals('address1', $this->traverseJson($data, '0.0.display_value'));
 
-
         $this->account->forceDelete();
 
     }
 
-    public function testVendorCustomColumnCsvGeneration()
+    public function test_vendor_custom_column_csv_generation()
     {
 
-        \App\Models\Vendor::query()->cursor()->each(function ($t) {
+        Vendor::query()->cursor()->each(function ($t) {
             $t->forceDelete();
         });
 
         $vendor =
-        \App\Models\Vendor::factory()->create(
+        Vendor::factory()->create(
             [
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
@@ -591,7 +593,7 @@ class ReportCsvGenerationTest extends TestCase
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["vendor.name", "vendor.city", "vendor.number"],
+            'report_keys' => ['vendor.name', 'vendor.city', 'vendor.number'],
             'send_email' => false,
             'include_deleted' => false,
             'user_id' => $this->user->id,
@@ -611,7 +613,6 @@ class ReportCsvGenerationTest extends TestCase
         $response = $this->poll($hash);
 
         $csv = $response->body();
-
 
         $this->assertEquals('Vendor 1', $this->getFirstValueByColumn($csv, 'Vendor Name'));
         $this->assertEquals('1234', $this->getFirstValueByColumn($csv, 'Vendor Number'));
@@ -636,11 +637,10 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testTaskCustomColumnsCsvGeneration()
+    public function test_task_custom_columns_csv_generation()
     {
 
-        $invoice = \App\Models\Invoice::factory()->create([
+        $invoice = Invoice::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -667,17 +667,16 @@ class ReportCsvGenerationTest extends TestCase
                     'custom_value1' => 'Custom 1',
                     'custom_value2' => 'Custom 2',
                     'custom_value3' => 'Custom 3',
-                ]
-            ]
-            ]);
+                ],
+            ],
+        ]);
 
-
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save([], $invoice);
 
-        $log =  '[[1689547165,1689550765,"sumtin",true]]';
+        $log = '[[1689547165,1689550765,"sumtin",true]]';
 
-        \App\Models\Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -759,16 +758,14 @@ class ReportCsvGenerationTest extends TestCase
             'user_id' => $this->user->id,
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/tasks', $data)->assertStatus(200);
 
-
         $data = [
             'date_range' => 'all',
-            'report_keys' => array_merge(["task.date","task.number"], $this->all_invoice_report_keys),
+            'report_keys' => array_merge(['task.date', 'task.number'], $this->all_invoice_report_keys),
             'send_email' => false,
         ];
 
@@ -789,19 +786,18 @@ class ReportCsvGenerationTest extends TestCase
 
         $this->account->forceDelete();
 
-
     }
 
-    public function testTasksCsvGeneration()
+    public function test_tasks_csv_generation()
     {
 
-        \App\Models\Task::query()->cursor()->each(function ($t) {
+        Task::query()->cursor()->each(function ($t) {
             $t->forceDelete();
         });
 
-        $log =  '[[1689547165,1689550765,"sumtin",true]]';
+        $log = '[[1689547165,1689550765,"sumtin",true]]';
 
-        \App\Models\Task::factory()->create([
+        Task::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -847,10 +843,10 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testProductsCsvGeneration()
+    public function test_products_csv_generation()
     {
 
-        \App\Models\Product::factory()->create([
+        Product::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'product_key' => 'product_key',
@@ -886,7 +882,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals('product_key', $this->getFirstValueByColumn($csv, 'Product'));
         $this->assertEquals('notes', $this->getFirstValueByColumn($csv, 'Notes'));
         $this->assertEquals(100, $this->getFirstValueByColumn($csv, 'Cost'));
@@ -914,11 +909,10 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testPaymentCsvGeneration()
+    public function test_payment_csv_generation()
     {
 
-        $invoice = \App\Models\Invoice::factory()->create([
+        $invoice = Invoice::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -932,7 +926,7 @@ class ReportCsvGenerationTest extends TestCase
             'public_notes' => 'Public',
             'private_notes' => 'Private',
             'terms' => 'Terms',
-             'tax_rate1' => 0,
+            'tax_rate1' => 0,
             'tax_rate2' => 0,
             'tax_rate3' => 0,
             'line_items' => [
@@ -944,31 +938,29 @@ class ReportCsvGenerationTest extends TestCase
                     'custom_value1' => 'Custom 1',
                     'custom_value2' => 'Custom 2',
                     'custom_value3' => 'Custom 3',
-                ]
-            ]
-            ]);
+                ],
+            ],
+        ]);
 
         $invoice->client->balance = 100;
         $invoice->client->paid_to_date = 0;
         $invoice->push();
 
-
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save([], $invoice);
-
 
         $invoice->service()->markPaid()->save();
 
         $data = [
             'date_range' => 'all',
             'report_keys' => [
-                "payment.date",
-                "payment.amount",
-                "invoice.number",
-                "invoice.amount",
-                "client.name",
-                "client.balance",
-                "client.paid_to_date"
+                'payment.date',
+                'payment.amount',
+                'invoice.number',
+                'invoice.amount',
+                'client.name',
+                'client.balance',
+                'client.paid_to_date',
             ],
             'send_email' => false,
             'include_deleted' => false,
@@ -1014,12 +1006,10 @@ class ReportCsvGenerationTest extends TestCase
         // $this->assertEquals(4, $this->traverseJson($data, 'columns.4.identifier'));
         $this->assertEquals('Client Name', $this->traverseJson($data, 'columns.4.display_value'));
 
-
         $this->assertEquals('payment', $this->traverseJson($data, '0.0.entity'));
         $this->assertEquals('date', $this->traverseJson($data, '0.0.id'));
         $this->assertNull($this->traverseJson($data, '0.0.hashed_id'));
         $this->assertEquals('payment.date', $this->traverseJson($data, '0.0.identifier'));
-
 
         $data = [
             'date_range' => 'all',
@@ -1028,17 +1018,14 @@ class ReportCsvGenerationTest extends TestCase
             'user_id' => $this->user->id,
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/payments', $data)->assertStatus(200);
 
-
-
         $data = [
             'date_range' => 'all',
-            'report_keys' => array_merge(["payment.amount","payment.date"], $this->all_invoice_report_keys),
+            'report_keys' => array_merge(['payment.amount', 'payment.date'], $this->all_invoice_report_keys),
             'send_email' => false,
             'user_id' => $this->user->id,
         ];
@@ -1058,16 +1045,14 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->account->forceDelete();
 
     }
 
-
-    public function testPaymentCustomFieldsCsvGeneration()
+    public function test_payment_custom_fields_csv_generation()
     {
 
-        \App\Models\Payment::factory()->create([
+        Payment::factory()->create([
             'amount' => 500,
             'date' => '2020-01-01',
             'user_id' => $this->user->id,
@@ -1098,7 +1083,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals(500, $this->getFirstValueByColumn($csv, 'Payment Amount'));
         $this->assertEquals(0, $this->getFirstValueByColumn($csv, 'Payment Applied'));
         $this->assertEquals(0, $this->getFirstValueByColumn($csv, 'Payment Refunded'));
@@ -1109,8 +1093,7 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testClientCsvGeneration()
+    public function test_client_csv_generation()
     {
 
         $data = [
@@ -1151,12 +1134,12 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testClientCustomColumnsCsvGeneration()
+    public function test_client_custom_columns_csv_generation()
     {
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","client.user","client.assigned_user","client.balance","client.paid_to_date","client.currency_id"],
+            'report_keys' => ['client.name', 'client.user', 'client.assigned_user', 'client.balance', 'client.paid_to_date', 'client.currency_id'],
             'send_email' => false,
         ];
 
@@ -1175,7 +1158,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals('bob', $this->getFirstValueByColumn($csv, 'Name'));
         $this->assertEquals(100, $this->getFirstValueByColumn($csv, 'Balance'));
         $this->assertEquals(50, $this->getFirstValueByColumn($csv, 'Paid to Date'));
@@ -1187,28 +1169,28 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testCreditJsonReport()
+    public function test_credit_json_report()
     {
 
         config(['queue.default' => 'redis']);
 
         Credit::factory()->count(100)->create([
-                'user_id' => $this->user->id,
-                'company_id' => $this->company->id,
-                'client_id' => $this->client->id,
-                'amount' => 100,
-                'balance' => 50,
-                'status_id' => 2,
-                'discount' => 10,
-                'po_number' => '1234',
-                'public_notes' => 'Public',
-                'private_notes' => 'Private',
-                'terms' => 'Terms',
-            ]);
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","credit.number","credit.amount","payment.date", "payment.amount"],
+            'report_keys' => ['client.name', 'credit.number', 'credit.amount', 'payment.date', 'payment.amount'],
             'send_email' => false,
         ];
 
@@ -1224,7 +1206,7 @@ class ReportCsvGenerationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->postJson('/api/v1/reports/preview/'.$arr['message']);
+        ])->postJson('/api/v1/reports/preview/' . $arr['message']);
 
         $response->assertStatus(409);
 
@@ -1232,27 +1214,27 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testCreditCustomColumnsCsvGeneration()
+    public function test_credit_custom_columns_csv_generation()
     {
 
         Credit::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-       ]);
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","credit.number","credit.amount","payment.date", "payment.amount"],
+            'report_keys' => ['client.name', 'credit.number', 'credit.amount', 'payment.date', 'payment.amount'],
             'send_email' => false,
         ];
 
@@ -1292,22 +1274,22 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testInvoiceCustomColumnsCsvGeneration()
+    public function test_invoice_custom_columns_csv_generation()
     {
 
-        $invoice = \App\Models\Invoice::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
+        $invoice = Invoice::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
             'tax_rate1' => 0,
             'tax_rate2' => 0,
             'tax_rate3' => 0,
@@ -1320,17 +1302,16 @@ class ReportCsvGenerationTest extends TestCase
                     'custom_value1' => 'Custom 1',
                     'custom_value2' => 'Custom 2',
                     'custom_value3' => 'Custom 3',
-                ]
-            ]
-       ]);
+                ],
+            ],
+        ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save([], $invoice);
-
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","invoice.number","invoice.amount","payment.date", "payment.amount","invoice.user"],
+            'report_keys' => ['client.name', 'invoice.number', 'invoice.amount', 'payment.date', 'payment.amount', 'invoice.user'],
             'send_email' => false,
         ];
 
@@ -1376,28 +1357,28 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testRecurringInvoiceCustomColumnsCsvGeneration()
+    public function test_recurring_invoice_custom_columns_csv_generation()
     {
 
-        \App\Models\RecurringInvoice::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-           'frequency_id' => 1,
-       ]);
+        RecurringInvoice::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+            'frequency_id' => 1,
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","recurring_invoice.number","recurring_invoice.amount", "recurring_invoice.frequency_id"],
+            'report_keys' => ['client.name', 'recurring_invoice.number', 'recurring_invoice.amount', 'recurring_invoice.frequency_id'],
             'send_email' => false,
         ];
 
@@ -1422,7 +1403,6 @@ class ReportCsvGenerationTest extends TestCase
             'send_email' => false,
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -1432,25 +1412,24 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testRecurringInvoiceColumnsCsvGeneration()
+    public function test_recurring_invoice_columns_csv_generation()
     {
 
-        \App\Models\RecurringInvoice::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-           'frequency_id' => 1,
-       ]);
+        RecurringInvoice::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+            'frequency_id' => 1,
+        ]);
 
         $data = [
             'date_range' => 'all',
@@ -1481,49 +1460,48 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testInvoiceItemsCustomColumnsCsvGeneration()
+    public function test_invoice_items_custom_columns_csv_generation()
     {
 
-        $invoice = \App\Models\Invoice::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 0,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-           'line_items' => [
+        $invoice = Invoice::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 0,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+            'line_items' => [
                 [
-                'quantity' => 10,
-                'cost' => 100,
-                'line_total' => 1000,
-                'is_amount_discount' => true,
-                'discount' => 0,
-                'notes' => 'item notes',
-                'product_key' => 'product key',
-                'custom_value1' => 'custom 1',
-                'custom_value2' => 'custom 2',
-                'custom_value3' => 'custom 3',
-                'custom_value4' => 'custom 4',
-                'tax_name1' => 'GST',
-                'tax_rate1' => 10.00,
-                'type_id' => '1',
+                    'quantity' => 10,
+                    'cost' => 100,
+                    'line_total' => 1000,
+                    'is_amount_discount' => true,
+                    'discount' => 0,
+                    'notes' => 'item notes',
+                    'product_key' => 'product key',
+                    'custom_value1' => 'custom 1',
+                    'custom_value2' => 'custom 2',
+                    'custom_value3' => 'custom 3',
+                    'custom_value4' => 'custom 4',
+                    'tax_name1' => 'GST',
+                    'tax_rate1' => 10.00,
+                    'type_id' => '1',
                 ],
-           ]
-       ]);
+            ],
+        ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save([], $invoice);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","invoice.number","invoice.amount","payment.date", "payment.amount", "item.quantity", "item.cost", "item.line_total", "item.discount", "item.notes", "item.product_key", "item.custom_value1", "item.tax_name1", "item.tax_rate1",],
+            'report_keys' => ['client.name', 'invoice.number', 'invoice.amount', 'payment.date', 'payment.amount', 'item.quantity', 'item.cost', 'item.line_total', 'item.discount', 'item.notes', 'item.product_key', 'item.custom_value1', 'item.tax_name1', 'item.tax_rate1'],
             'send_email' => false,
         ];
 
@@ -1565,7 +1543,6 @@ class ReportCsvGenerationTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/invoice_items', $data)->assertStatus(200);
 
-
         $data = [
             'date_range' => 'all',
             'report_keys' => $this->all_payment_report_keys,
@@ -1577,13 +1554,12 @@ class ReportCsvGenerationTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/invoice_items', $data)->assertStatus(200);
 
-
         $data = [
-                    'date_range' => 'all',
-                    'report_keys' => $this->all_payment_report_keys,
-                    'send_email' => false,
-                    'product_key' => 'haloumi,cheese',
-                ];
+            'date_range' => 'all',
+            'report_keys' => $this->all_payment_report_keys,
+            'send_email' => false,
+            'product_key' => 'haloumi,cheese',
+        ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -1594,46 +1570,45 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testQuoteItemsCustomColumnsCsvGeneration()
+    public function test_quote_items_custom_columns_csv_generation()
     {
 
-        $q = \App\Models\Quote::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-           'line_items' => [
+        $q = Quote::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+            'line_items' => [
                 [
-                'quantity' => 10,
-                'cost' => 100,
-                'line_total' => 1000,
-                'is_amount_discount' => true,
-                'discount' => 0,
-                'notes' => 'item notes',
-                'product_key' => 'product key',
-                'custom_value1' => 'custom 1',
-                'custom_value2' => 'custom 2',
-                'custom_value3' => 'custom 3',
-                'custom_value4' => 'custom 4',
-                'tax_name1' => 'GST',
-                'tax_rate1' => 10.00,
-                'type_id' => '1',
+                    'quantity' => 10,
+                    'cost' => 100,
+                    'line_total' => 1000,
+                    'is_amount_discount' => true,
+                    'discount' => 0,
+                    'notes' => 'item notes',
+                    'product_key' => 'product key',
+                    'custom_value1' => 'custom 1',
+                    'custom_value2' => 'custom 2',
+                    'custom_value3' => 'custom 3',
+                    'custom_value4' => 'custom 4',
+                    'tax_name1' => 'GST',
+                    'tax_rate1' => 10.00,
+                    'type_id' => '1',
                 ],
-           ]
-       ]);
+            ],
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","quote.number","quote.amount", "item.quantity", "item.cost", "item.line_total", "item.discount", "item.notes", "item.product_key", "item.custom_value1", "item.tax_name1", "item.tax_rate1",],
+            'report_keys' => ['client.name', 'quote.number', 'quote.amount', 'item.quantity', 'item.cost', 'item.line_total', 'item.discount', 'item.notes', 'item.product_key', 'item.custom_value1', 'item.tax_name1', 'item.tax_rate1'],
             'send_email' => false,
         ];
 
@@ -1670,7 +1645,6 @@ class ReportCsvGenerationTest extends TestCase
             'send_email' => false,
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -1680,12 +1654,11 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testPurchaseOrderCsvGeneration()
+    public function test_purchase_order_csv_generation()
     {
 
         $vendor =
-        \App\Models\Vendor::factory()->create(
+        Vendor::factory()->create(
             [
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
@@ -1693,7 +1666,7 @@ class ReportCsvGenerationTest extends TestCase
             ]
         );
 
-        \App\Models\PurchaseOrder::factory()->create([
+        PurchaseOrder::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'vendor_id' => $vendor->id,
@@ -1718,7 +1691,6 @@ class ReportCsvGenerationTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/purchase_orders', $data);
 
-
         $response->assertStatus(200);
 
         $arr = $response->json();
@@ -1741,12 +1713,11 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testPurchaseOrderItemsCustomColumnsCsvGeneration()
+    public function test_purchase_order_items_custom_columns_csv_generation()
     {
 
         $vendor =
-        \App\Models\Vendor::factory()->create(
+        Vendor::factory()->create(
             [
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
@@ -1754,43 +1725,43 @@ class ReportCsvGenerationTest extends TestCase
             ]
         );
 
-        \App\Models\PurchaseOrder::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'vendor_id' => $vendor->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'po_number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-           'line_items' => [
+        PurchaseOrder::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'vendor_id' => $vendor->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'po_number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+            'line_items' => [
                 [
-                'quantity' => 10,
-                'cost' => 100,
-                'line_total' => 1000,
-                'is_amount_discount' => true,
-                'discount' => 0,
-                'notes' => 'item notes',
-                'product_key' => 'product key',
-                'custom_value1' => 'custom 1',
-                'custom_value2' => 'custom 2',
-                'custom_value3' => 'custom 3',
-                'custom_value4' => 'custom 4',
-                'tax_name1' => 'GST',
-                'tax_rate1' => 10.00,
-                'type_id' => '1',
+                    'quantity' => 10,
+                    'cost' => 100,
+                    'line_total' => 1000,
+                    'is_amount_discount' => true,
+                    'discount' => 0,
+                    'notes' => 'item notes',
+                    'product_key' => 'product key',
+                    'custom_value1' => 'custom 1',
+                    'custom_value2' => 'custom 2',
+                    'custom_value3' => 'custom 3',
+                    'custom_value4' => 'custom 4',
+                    'tax_name1' => 'GST',
+                    'tax_rate1' => 10.00,
+                    'type_id' => '1',
                 ],
-           ]
-       ]);
+            ],
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["vendor.name","purchase_order.number","purchase_order.amount", "item.quantity", "item.cost", "item.line_total", "item.discount", "item.notes", "item.product_key", "item.custom_value1", "item.tax_name1", "item.tax_rate1",],
+            'report_keys' => ['vendor.name', 'purchase_order.number', 'purchase_order.amount', 'item.quantity', 'item.cost', 'item.line_total', 'item.discount', 'item.notes', 'item.product_key', 'item.custom_value1', 'item.tax_name1', 'item.tax_rate1'],
             'send_email' => false,
         ];
 
@@ -1809,7 +1780,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals('Vendor 1', $this->getFirstValueByColumn($csv, 'Vendor Name'));
         $this->assertEquals('1234', $this->getFirstValueByColumn($csv, 'Purchase Order Number'));
         $this->assertEquals('10', $this->getFirstValueByColumn($csv, 'Item Quantity'));
@@ -1826,27 +1796,27 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testQuoteCustomColumnsCsvGeneration()
+    public function test_quote_custom_columns_csv_generation()
     {
 
-        \App\Models\Quote::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'amount' => 100,
-           'balance' => 50,
-           'number' => '1234',
-           'status_id' => 2,
-           'discount' => 10,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-       ]);
+        Quote::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'amount' => 100,
+            'balance' => 50,
+            'number' => '1234',
+            'status_id' => 2,
+            'discount' => 10,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+        ]);
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","quote.number","quote.amount"],
+            'report_keys' => ['client.name', 'quote.number', 'quote.amount'],
             'send_email' => false,
         ];
 
@@ -1865,11 +1835,9 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals('bob', $this->getFirstValueByColumn($csv, 'Client Name'));
         $this->assertEquals(floatval(1234), $this->getFirstValueByColumn($csv, 'Quote Number'));
         $this->assertEquals(floatval(100), $this->getFirstValueByColumn($csv, 'Quote Amount'));
-
 
         $data = [
             'date_range' => 'all',
@@ -1877,36 +1845,33 @@ class ReportCsvGenerationTest extends TestCase
             'send_email' => false,
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/quotes', $data)->assertStatus(200);
 
-
         $this->account->forceDelete();
 
     }
 
-
-    public function testInvoicePaidCustomColumnsCsvGeneration()
+    public function test_invoice_paid_custom_columns_csv_generation()
     {
 
-        $invoice = \App\Models\Invoice::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'client_id' => $this->client->id,
-           'date' => '2023-01-01',
-           'amount' => 100,
-           'balance' => 100,
-           'number' => '12345',
-           'status_id' => 2,
-           'discount' => 0,
-           'po_number' => '1234',
-           'public_notes' => 'Public',
-           'private_notes' => 'Private',
-           'terms' => 'Terms',
-           'tax_rate1' => 0,
+        $invoice = Invoice::factory()->create([
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'date' => '2023-01-01',
+            'amount' => 100,
+            'balance' => 100,
+            'number' => '12345',
+            'status_id' => 2,
+            'discount' => 0,
+            'po_number' => '1234',
+            'public_notes' => 'Public',
+            'private_notes' => 'Private',
+            'terms' => 'Terms',
+            'tax_rate1' => 0,
             'tax_rate2' => 0,
             'tax_rate3' => 0,
             'line_items' => [
@@ -1918,19 +1883,18 @@ class ReportCsvGenerationTest extends TestCase
                     'custom_value1' => 'Custom 1',
                     'custom_value2' => 'Custom 2',
                     'custom_value3' => 'Custom 3',
-                ]
-            ]
-       ]);
+                ],
+            ],
+        ]);
 
-        $repo = new InvoiceRepository();
+        $repo = new InvoiceRepository;
         $invoice = $repo->save([], $invoice);
-
 
         $invoice->service()->markPaid()->save();
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ["client.name","invoice.number","invoice.amount", "payment.date", "payment.amount"],
+            'report_keys' => ['client.name', 'invoice.number', 'invoice.amount', 'payment.date', 'payment.amount'],
             'send_email' => false,
         ];
 
@@ -1958,7 +1922,7 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testClientContactCsvGeneration()
+    public function test_client_contact_csv_generation()
     {
 
         $data = [
@@ -1981,7 +1945,6 @@ class ReportCsvGenerationTest extends TestCase
         $response = $this->poll($hash);
 
         $csv = $response->body();
-
 
         $reader = Reader::fromString($csv);
         $reader->setHeaderOffset(0);
@@ -2023,7 +1986,7 @@ class ReportCsvGenerationTest extends TestCase
         return $res[1];
     }
 
-    public function testCreditCsvGeneration()
+    public function test_credit_csv_generation()
     {
 
         Credit::factory()->create([
@@ -2050,8 +2013,8 @@ class ReportCsvGenerationTest extends TestCase
                     'custom_value1' => 'Custom 1',
                     'custom_value2' => 'Custom 2',
                     'custom_value3' => 'Custom 3',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         $data = [
@@ -2075,7 +2038,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals(floatval(100), $this->getFirstValueByColumn($csv, 'Credit Amount'));
         $this->assertEquals(floatval(50), $this->getFirstValueByColumn($csv, 'Credit Balance'));
         $this->assertEquals(floatval(10), $this->getFirstValueByColumn($csv, 'Credit Discount'));
@@ -2084,20 +2046,16 @@ class ReportCsvGenerationTest extends TestCase
         $this->assertEquals('Private', $this->getFirstValueByColumn($csv, 'Credit Private Notes'));
         $this->assertEquals('Terms', $this->getFirstValueByColumn($csv, 'Credit Terms'));
 
-
         $data = [
             'date_range' => 'all',
             'report_keys' => $this->all_client_report_keys,
             'send_email' => false,
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/reports/credits', $data)->assertStatus(200);
-
-
 
         $data = [
             'date_range' => 'all',
@@ -2114,7 +2072,7 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testInvoiceCsvGeneration()
+    public function test_invoice_csv_generation()
     {
 
         Invoice::factory()->create([
@@ -2171,7 +2129,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals(floatval(100), $this->getFirstValueByColumn($csv, 'Invoice Amount'));
         $this->assertEquals(floatval(50), $this->getFirstValueByColumn($csv, 'Invoice Balance'));
         $this->assertEquals(floatval(10), $this->getFirstValueByColumn($csv, 'Invoice Discount'));
@@ -2200,10 +2157,10 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testRecurringInvoiceCsvGeneration()
+    public function test_recurring_invoice_csv_generation()
     {
 
-        \App\Models\RecurringInvoice::factory()->create([
+        RecurringInvoice::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -2255,7 +2212,6 @@ class ReportCsvGenerationTest extends TestCase
 
         $csv = $response->body();
 
-
         $this->assertEquals(floatval(100), $this->getFirstValueByColumn($csv, 'Recurring Invoice Amount'));
         $this->assertEquals(floatval(50), $this->getFirstValueByColumn($csv, 'Recurring Invoice Balance'));
         $this->assertEquals(floatval(10), $this->getFirstValueByColumn($csv, 'Recurring Invoice Discount'));
@@ -2284,11 +2240,10 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testQuoteCsvGeneration()
+    public function test_quote_csv_generation()
     {
 
-        $quote = \App\Models\Quote::factory()->create([
+        $quote = Quote::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
@@ -2368,8 +2323,7 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-
-    public function testExpenseCsvGeneration()
+    public function test_expense_csv_generation()
     {
         Expense::factory()->create([
             'user_id' => $this->user->id,
@@ -2421,10 +2375,10 @@ class ReportCsvGenerationTest extends TestCase
 
     }
 
-    public function testExpenseCustomColumnsCsvGeneration()
+    public function test_expense_custom_columns_csv_generation()
     {
         $vendor =
-        \App\Models\Vendor::factory()->create(
+        Vendor::factory()->create(
             [
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
@@ -2445,7 +2399,7 @@ class ReportCsvGenerationTest extends TestCase
 
         $data = [
             'date_range' => 'all',
-            'report_keys' => ['client.name','vendor.name','expense.amount','expense.currency_id'],
+            'report_keys' => ['client.name', 'vendor.name', 'expense.amount', 'expense.currency_id'],
             'send_email' => false,
         ];
 
@@ -2469,6 +2423,4 @@ class ReportCsvGenerationTest extends TestCase
         $this->account->forceDelete();
 
     }
-
-
 }

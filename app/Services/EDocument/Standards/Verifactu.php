@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,15 +14,15 @@ namespace App\Services\EDocument\Standards;
 use App\Models\Invoice;
 use App\Models\VerifactuLog;
 use App\Services\AbstractService;
-use Endroid\QrCode\Builder\Builder;
-use Endroid\QrCode\Writer\PngWriter;
-use Endroid\QrCode\Encoding\Encoding;
 use App\Services\EDocument\Standards\Verifactu\AeatClient;
-use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
+use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
+use App\Utils\Traits\MakesHash;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Label\Font\OpenSans;
-use App\Utils\Traits\MakesHash;
+use Endroid\QrCode\Writer\PngWriter;
 
 class Verifactu extends AbstractService
 {
@@ -33,25 +32,23 @@ class Verifactu extends AbstractService
 
     private string $soapXml;
 
-    //store the current document state
+    // store the current document state
     private VerifactuInvoice $_document;
 
     public RegistroAlta $registro_alta;
 
-    //store the current huella
+    // store the current huella
     private string $_huella;
 
     private string $_previous_huella;
 
     public function __construct(public Invoice $invoice)
     {
-        $this->aeat_client = new AeatClient();
+        $this->aeat_client = new AeatClient;
     }
 
     /**
      * Entry point for building document
-     *
-     * @return self
      */
     public function run(): self
     {
@@ -70,7 +67,7 @@ class Verifactu extends AbstractService
 
         $document = $registro_alta->getInvoice();
 
-        //keep this state for logging later on successful send
+        // keep this state for logging later on successful send
         $this->_document = $document;
 
         $this->_previous_huella = '';
@@ -92,13 +89,11 @@ class Verifactu extends AbstractService
     /**
      * setHuella
      * We need this for cancellation documents.
-     *
-     * @param  string $huella
-     * @return self
      */
     public function setHuella(string $huella): self
     {
         $this->_huella = $huella;
+
         return $this;
     }
 
@@ -110,6 +105,7 @@ class Verifactu extends AbstractService
     public function setInvoice(VerifactuInvoice $invoice): self
     {
         $this->_document = $invoice;
+
         return $this;
     }
 
@@ -121,24 +117,26 @@ class Verifactu extends AbstractService
     public function setTestMode(): self
     {
         $this->aeat_client->setTestMode();
+
         return $this;
     }
+
     /**
      * setPreviousHash
      *
      * **only used for testing**
-     * @param  string $previous_hash
-     * @return self
      */
     public function setPreviousHash(string $previous_hash): self
     {
         $this->_previous_huella = $previous_hash;
+
         return $this;
     }
 
     private function setEnvelope(string $soapXml): self
     {
         $this->soapXml = $soapXml;
+
         return $this;
     }
 
@@ -157,12 +155,11 @@ class Verifactu extends AbstractService
             'status' => $response['guid'],
         ]);
     }
+
     /**
      * calculateHash
      *
-     * @param  mixed $document
-     * @param  string $huella
-     * @return string
+     * @param  mixed  $document
      */
     public function calculateHash($document, string $huella): string
     {
@@ -186,7 +183,6 @@ class Verifactu extends AbstractService
 
         return strtoupper(hash('sha256', $hashInput));
     }
-
 
     public function calculateQrCode(VerifactuLog $log)
     {
@@ -225,7 +221,7 @@ class Verifactu extends AbstractService
             );
 
             $result = Builder::create()
-                ->writer(new PngWriter())
+                ->writer(new PngWriter)
                 ->data($url)
                 ->encoding(new Encoding('UTF-8'))
                 ->errorCorrectionLevel(ErrorCorrectionLevel::Medium) // AEAT: level M or higher
@@ -238,16 +234,17 @@ class Verifactu extends AbstractService
             return $result->getString();
 
         } catch (\Exception $e) {
-            nlog("VERIFACTU ERROR: [qr]" . $e->getMessage());
+            nlog('VERIFACTU ERROR: [qr]' . $e->getMessage());
+
             return '';
         }
     }
 
     public function send(string $soapXml): array
     {
-        nlog("VERIFACTU: [send]" . $soapXml);
+        nlog('VERIFACTU: [send]' . $soapXml);
 
-        $response =  $this->aeat_client->send($soapXml);
+        $response = $this->aeat_client->send($soapXml);
 
         if ($response['success'] || $response['status'] == 'ParcialmenteCorrecto') {
             $this->writeLog($response);

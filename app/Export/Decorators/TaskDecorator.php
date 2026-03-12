@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ use Carbon\Carbon;
 
 class TaskDecorator extends Decorator implements DecoratorInterface
 {
-    //@todo - we do not handle iterating through the timelog here.
+    // @todo - we do not handle iterating through the timelog here.
     public function transform(string $key, mixed $entity): mixed
     {
         $task = false;
@@ -61,6 +60,7 @@ class TaskDecorator extends Decorator implements DecoratorInterface
 
         if (is_array($logs)) {
             $item = $logs[0];
+
             return Carbon::createFromTimeStamp((int) $item[0])->setTimezone($timezone_name)->format($date_format_default);
         }
 
@@ -90,6 +90,7 @@ class TaskDecorator extends Decorator implements DecoratorInterface
 
         if (is_array($logs)) {
             $item = $logs[1];
+
             return Carbon::createFromTimeStamp((int) $item[1])->setTimezone($timezone_name)->format($date_format_default);
         }
 
@@ -109,6 +110,7 @@ class TaskDecorator extends Decorator implements DecoratorInterface
 
     /**
      * items_notes
+     *
      * @todo
      */
     public function items_notes(Task $task)

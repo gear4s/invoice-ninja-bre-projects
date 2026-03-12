@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,14 +17,15 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\CompanyToken;
 use App\Models\CompanyUser;
+use App\Models\Country;
 use App\Models\Invoice;
 use App\Models\RecurringInvoice;
 use App\Models\User;
+use Faker\Factory;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
-/**
- *
- */
 class PermissionsTest extends TestCase
 {
     public User $user;
@@ -44,11 +44,11 @@ class PermissionsTest extends TestCase
     {
         parent::setUp();
 
-        if (\App\Models\Country::count() == 0) {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        if (Country::count() == 0) {
+            Artisan::call('db:seed', ['--force' => true]);
         }
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
         $acc = Account::factory()->create([
             'hosted_client_count' => 1000,
@@ -65,7 +65,7 @@ class PermissionsTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $acc->id,
             'confirmation_code' => '123',
-            'email' =>  $this->faker->safeEmail(),
+            'email' => $this->faker->safeEmail(),
         ]);
 
         $this->cu = CompanyUserFactory::create($this->user->id, $this->company->id, $acc->id);
@@ -75,9 +75,9 @@ class PermissionsTest extends TestCase
         $this->cu->permissions = '["view_client"]';
         $this->cu->save();
 
-        $this->token = \Illuminate\Support\Str::random(64);
+        $this->token = Str::random(64);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $this->user->id;
         $company_token->company_id = $this->company->id;
         $company_token->account_id = $acc->id;
@@ -89,13 +89,13 @@ class PermissionsTest extends TestCase
         $this->account = $acc;
     }
 
-    public function testClientOverviewPermissions()
+    public function test_client_overview_permissions()
     {
         /** @var User $u */
         $u = User::factory()->create([
             'account_id' => $this->company->account_id,
             'confirmation_code' => '123',
-            'email' =>  $this->faker->safeEmail(),
+            'email' => $this->faker->safeEmail(),
         ]);
 
         /** @var Client $c */
@@ -108,13 +108,12 @@ class PermissionsTest extends TestCase
             'company_id' => $this->company->id,
             'client_id' => $c->id,
             'user_id' => $u->id,
-            'status_id' => 2
+            'status_id' => 2,
         ]);
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["edit_client","create_client","create_invoice","edit_invoice","create_quote","edit_quote"]';
         $low_cu->save();
-
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -143,123 +142,116 @@ class PermissionsTest extends TestCase
         $this->account->forceDelete();
     }
 
-
-    public function testHasExcludedPermissions()
+    public function test_has_excluded_permissions()
     {
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_client"]';
         $low_cu->save();
 
-        $this->assertTrue($this->user->hasExcludedPermissions(["view_client"]));
+        $this->assertTrue($this->user->hasExcludedPermissions(['view_client']));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = 'view_client';
         $low_cu->save();
 
-        $this->assertTrue($this->user->hasExcludedPermissions(["view_client"]));
-
+        $this->assertTrue($this->user->hasExcludedPermissions(['view_client']));
 
         $this->account->forceDelete();
 
-
     }
 
-    public function testHasExcludedPermissions2()
+    public function test_has_excluded_permissions2()
     {
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_client","edit_all"]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasExcludedPermissions(["view_client"], ['edit_all']));
+        $this->assertFalse($this->user->hasExcludedPermissions(['view_client'], ['edit_all']));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = 'view_client,edit_all';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasExcludedPermissions(["view_client"], ['edit_all']));
+        $this->assertFalse($this->user->hasExcludedPermissions(['view_client'], ['edit_all']));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = 'view_client,view_all';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasExcludedPermissions(["view_client"], ['view_all']));
-
+        $this->assertFalse($this->user->hasExcludedPermissions(['view_client'], ['view_all']));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = 'view_client,view_invoice';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasExcludedPermissions(["view_client"], ['view_invoice']));
+        $this->assertFalse($this->user->hasExcludedPermissions(['view_client'], ['view_invoice']));
 
         $this->account->forceDelete();
 
     }
 
-    public function testIntersectPermissions()
+    public function test_intersect_permissions()
     {
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_client"]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasIntersectPermissions(["viewclient"]));
-        $this->assertTrue($this->user->hasIntersectPermissions(["view_client"]));
-
+        $this->assertFalse($this->user->hasIntersectPermissions(['viewclient']));
+        $this->assertTrue($this->user->hasIntersectPermissions(['view_client']));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_all"]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasIntersectPermissions(["viewclient"]));
-        $this->assertTrue($this->user->hasIntersectPermissions(["view_client"]));
+        $this->assertFalse($this->user->hasIntersectPermissions(['viewclient']));
+        $this->assertTrue($this->user->hasIntersectPermissions(['view_client']));
 
-        $this->assertFalse($this->user->hasIntersectPermissions(["viewbank_transaction"]));
-        $this->assertTrue($this->user->hasIntersectPermissions(["view_bank_transaction"]));
+        $this->assertFalse($this->user->hasIntersectPermissions(['viewbank_transaction']));
+        $this->assertTrue($this->user->hasIntersectPermissions(['view_bank_transaction']));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["create_all"]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasIntersectPermissions(["createclient"]));
-        $this->assertTrue($this->user->hasIntersectPermissions(["create_client"]));
+        $this->assertFalse($this->user->hasIntersectPermissions(['createclient']));
+        $this->assertTrue($this->user->hasIntersectPermissions(['create_client']));
 
-        $this->assertFalse($this->user->hasIntersectPermissions(["createbank_transaction"]));
-        $this->assertTrue($this->user->hasIntersectPermissions(["create_bank_transaction"]));
-        $this->assertTrue($this->user->hasIntersectPermissions(['create_bank_transaction','edit_bank_transaction','view_bank_transaction']));
-
+        $this->assertFalse($this->user->hasIntersectPermissions(['createbank_transaction']));
+        $this->assertTrue($this->user->hasIntersectPermissions(['create_bank_transaction']));
+        $this->assertTrue($this->user->hasIntersectPermissions(['create_bank_transaction', 'edit_bank_transaction', 'view_bank_transaction']));
 
         $this->account->forceDelete();
 
     }
 
-    public function testViewClientPermission()
+    public function test_view_client_permission()
     {
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_client"]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasPermission("viewclient"));
+        $this->assertFalse($this->user->hasPermission('viewclient'));
 
         // this is aberrant
-        $this->assertFalse($this->user->hasPermission("view____client"));
+        $this->assertFalse($this->user->hasPermission('view____client'));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["edit_client"]';
         $low_cu->save();
 
-        $this->assertTrue($this->user->hasPermission("view_client"));
-
+        $this->assertTrue($this->user->hasPermission('view_client'));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["edit_all"]';
         $low_cu->save();
 
-        $this->assertTrue($this->user->hasPermission("view_client"));
+        $this->assertTrue($this->user->hasPermission('view_client'));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_all"]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasPermission("edit_client"));
+        $this->assertFalse($this->user->hasPermission('edit_client'));
 
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["edit_all"]';
@@ -279,7 +271,6 @@ class PermissionsTest extends TestCase
         $this->assertTrue($this->user->hasPermission('view_expense'));
         $this->assertTrue($this->user->hasPermission('view_bank_transaction'));
 
-
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["edit_recurring_invoice"]';
         $low_cu->save();
@@ -290,116 +281,115 @@ class PermissionsTest extends TestCase
 
     }
 
-    public function testPermissionResolution()
+    public function test_permission_resolution()
     {
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(Invoice::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(Invoice::class)));
 
         $this->assertEquals('view_invoice', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(Client::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(Client::class)));
         $this->assertEquals('view_client', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(RecurringInvoice::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(RecurringInvoice::class)));
         $this->assertEquals('view_recurring_invoice', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Product::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Product::class)));
         $this->assertEquals('view_product', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Payment::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Payment::class)));
         $this->assertEquals('view_payment', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Quote::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Quote::class)));
         $this->assertEquals('view_quote', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Credit::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Credit::class)));
         $this->assertEquals('view_credit', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Project::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Project::class)));
         $this->assertEquals('view_project', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Task::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Task::class)));
         $this->assertEquals('view_task', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Vendor::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Vendor::class)));
         $this->assertEquals('view_vendor', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\PurchaseOrder::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\PurchaseOrder::class)));
         $this->assertEquals('view_purchase_order', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\Expense::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\Expense::class)));
         $this->assertEquals('view_expense', $class);
 
-        $class = 'view'.lcfirst(class_basename(\Illuminate\Support\Str::snake(App\Models\BankTransaction::class)));
+        $class = 'view' . lcfirst(class_basename(Str::snake(App\Models\BankTransaction::class)));
         $this->assertEquals('view_bank_transaction', $class);
 
-        $this->assertEquals('invoice', \Illuminate\Support\Str::snake(class_basename(Invoice::class)));
+        $this->assertEquals('invoice', Str::snake(class_basename(Invoice::class)));
 
-        $this->assertEquals('recurring_invoice', \Illuminate\Support\Str::snake(class_basename(RecurringInvoice::class)));
+        $this->assertEquals('recurring_invoice', Str::snake(class_basename(RecurringInvoice::class)));
 
         $this->account->forceDelete();
     }
 
-    public function testExactPermissions()
+    public function test_exact_permissions()
     {
-        $this->assertTrue($this->user->hasExactPermissionAndAll("view_client"));
-        $this->assertFalse($this->user->hasExactPermissionAndAll("view_all"));
+        $this->assertTrue($this->user->hasExactPermissionAndAll('view_client'));
+        $this->assertFalse($this->user->hasExactPermissionAndAll('view_all'));
     }
 
-    public function testMissingPermissions()
+    public function test_missing_permissions()
     {
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '[""]';
         $low_cu->save();
 
-        $this->assertFalse($this->user->hasExactPermissionAndAll("view_client"));
-        $this->assertFalse($this->user->hasExactPermissionAndAll("view_all"));
+        $this->assertFalse($this->user->hasExactPermissionAndAll('view_client'));
+        $this->assertFalse($this->user->hasExactPermissionAndAll('view_all'));
 
         $this->account->forceDelete();
 
     }
 
-    public function testViewAllValidPermissions()
+    public function test_view_all_valid_permissions()
     {
         $low_cu = CompanyUser::where(['company_id' => $this->company->id, 'user_id' => $this->user->id])->first();
         $low_cu->permissions = '["view_all"]';
         $low_cu->save();
 
-        $this->assertTrue($this->user->hasExactPermissionAndAll("view_client"));
-        $this->assertTrue($this->user->hasExactPermissionAndAll("view_all"));
+        $this->assertTrue($this->user->hasExactPermissionAndAll('view_client'));
+        $this->assertTrue($this->user->hasExactPermissionAndAll('view_all'));
 
         $this->account->forceDelete();
 
     }
 
-    public function testReturnTypesOfStripos()
+    public function test_return_types_of_stripos()
     {
-        $this->assertEquals(0, stripos("view_client", ''));
+        $this->assertEquals(0, stripos('view_client', ''));
 
         $all_permission = '[]';
-        $this->assertFalse(stripos($all_permission, "view_client") !== false);
-        $this->assertTrue(stripos($all_permission, "view_client") == 0);
-        $this->assertFalse(is_int(stripos($all_permission, "view_client")));
+        $this->assertFalse(stripos($all_permission, 'view_client') !== false);
+        $this->assertTrue(stripos($all_permission, 'view_client') == 0);
+        $this->assertFalse(is_int(stripos($all_permission, 'view_client')));
 
         $all_permission = ' ';
-        $this->assertFalse(stripos($all_permission, "view_client") !== false);
-        $this->assertFalse(is_int(stripos($all_permission, "view_client")));
+        $this->assertFalse(stripos($all_permission, 'view_client') !== false);
+        $this->assertFalse(is_int(stripos($all_permission, 'view_client')));
 
-        $all_permission = "";//problems are empty strings
+        $all_permission = ''; // problems are empty strings
         $this->assertTrue(empty($all_permission));
 
-        $this->assertFalse(stripos($all_permission, "view_client") !== false);
-        $this->assertFalse(is_int(stripos($all_permission, "view_client")));
+        $this->assertFalse(stripos($all_permission, 'view_client') !== false);
+        $this->assertFalse(is_int(stripos($all_permission, 'view_client')));
 
-        $all_permission = 'view';//will always pass currently
-        $this->assertFalse(stripos($all_permission, "view_client") !== false);
-        $this->assertFalse(is_int(stripos($all_permission, "view_client")));
+        $all_permission = 'view'; // will always pass currently
+        $this->assertFalse(stripos($all_permission, 'view_client') !== false);
+        $this->assertFalse(is_int(stripos($all_permission, 'view_client')));
 
-        $all_permission = "view_client";
-        $this->assertTrue(stripos($all_permission, "view_client") !== false);
-        $this->assertTrue(is_int(stripos($all_permission, "view_client")) !== false);
+        $all_permission = 'view_client';
+        $this->assertTrue(stripos($all_permission, 'view_client') !== false);
+        $this->assertTrue(is_int(stripos($all_permission, 'view_client')) !== false);
 
-        $this->assertTrue(is_int(stripos($all_permission, "view_client")));
-
+        $this->assertTrue(is_int(stripos($all_permission, 'view_client')));
 
         $this->account->forceDelete();
 

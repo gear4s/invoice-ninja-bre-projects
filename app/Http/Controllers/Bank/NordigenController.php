@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,8 +20,8 @@ use App\Models\BankIntegration;
 use App\Models\Company;
 use App\Utils\Ninja;
 use Cache;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,7 +57,7 @@ class NordigenController extends BaseController
             return $this->failed('not-available', $context, $company);
         }
 
-        $nordigen = new Nordigen();
+        $nordigen = new Nordigen;
         $institutions = $nordigen->getInstitutions();
 
         // show bank_selection_screen, when institution_id is not present
@@ -78,9 +77,9 @@ class NordigenController extends BaseController
         }))[0];
 
         try {
-            $txDays = $data['tx_days'] ?? $institution['transaction_total_days'] ?? 90; //@phpstan-ignore-line
+            $txDays = $data['tx_days'] ?? $institution['transaction_total_days'] ?? 90; // @phpstan-ignore-line
 
-            $agreement = $nordigen->createAgreement($institution, $institution['max_access_valid_for_days'], $txDays);//@2025-07-01: this is the correct way to get the access days
+            $agreement = $nordigen->createAgreement($institution, $institution['max_access_valid_for_days'], $txDays); // @2025-07-01: this is the correct way to get the access days
 
         } catch (\Exception $e) {
             $debug = "{$e->getMessage()} ({$e->getCode()})";
@@ -95,7 +94,7 @@ class NordigenController extends BaseController
             $requisition = $nordigen->createRequisition(
                 config('ninja.app_url') . '/nordigen/confirm',
                 $institution,
-                $agreement, //@phpstan-ignore-line
+                $agreement, // @phpstan-ignore-line
                 $request->token,
                 $lang,
             );
@@ -152,7 +151,7 @@ class NordigenController extends BaseController
         }
 
         // fetch requisition
-        $nordigen = new Nordigen();
+        $nordigen = new Nordigen;
         $requisition = $nordigen->getRequisition($context['requisitionId']);
 
         // check validity of requisition
@@ -162,10 +161,9 @@ class NordigenController extends BaseController
         if ($requisition['status'] != 'LN') {
             return $this->failed('requisition-invalid-status&status=' . $requisition['status'], $context, $company);
         }
-        if (sizeof($requisition['accounts']) == 0) {
+        if (count($requisition['accounts']) == 0) {
             return $this->failed('requisition-no-accounts', $context, $company);
         }
-
 
         // connect new accounts
         $bank_integration_ids = [];
@@ -183,7 +181,7 @@ class NordigenController extends BaseController
 
                 $bank_integration->deleted_at = null;
             } catch (ModelNotFoundException $e) {
-                $bank_integration = new BankIntegration();
+                $bank_integration = new BankIntegration;
 
                 $bank_integration->integration_type = BankIntegration::INTEGRATION_TYPE_NORDIGEN;
                 $bank_integration->company_id = $company->id;
@@ -231,7 +229,6 @@ class NordigenController extends BaseController
 
     /**
      * Handles failure scenarios for Nordigen bank integrations
-     *
      */
     private function failed(string $reason, array $context, $company = null): View
     {
@@ -253,8 +250,8 @@ class NordigenController extends BaseController
     /**
      * Find the first available Bank Integration from its Nordigen account or institution.
      *
-     * @param 'account'|'institution' $key
-     * @param array{id: string} $accountOrInstitution
+     * @param  'account'|'institution'  $key
+     * @param  array{id: string}  $accountOrInstitution
      */
     private function findIntegrationBy(
         string $key,
@@ -277,26 +274,34 @@ class NordigenController extends BaseController
      *      tags={"nordigen"},
      *      summary="Getting available institutions from nordigen",
      *      description="Used to determine the available institutions for sending and creating a new connect-link",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Api-Token"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Credit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -307,9 +312,8 @@ class NordigenController extends BaseController
             return response()->json(['message' => 'Not yet authenticated with Nordigen Bank Integration service'], 400);
         }
 
-        $nordigen = new Nordigen();
+        $nordigen = new Nordigen;
 
         return response()->json($nordigen->getInstitutions());
     }
-
 }

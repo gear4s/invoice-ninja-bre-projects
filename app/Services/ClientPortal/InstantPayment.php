@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,12 +14,12 @@ namespace App\Services\ClientPortal;
 use App\Exceptions\PaymentFailed;
 use App\Jobs\Invoice\InjectSignature;
 use App\Jobs\Util\SystemLogger;
+use App\Models\ClientContact;
 use App\Models\CompanyGateway;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\SystemLog;
-use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 use App\Utils\Traits\MakesHash;
@@ -30,8 +29,8 @@ use Illuminate\Support\Str;
 
 class InstantPayment
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     /** $request mixed */
     public Request $request;
@@ -43,7 +42,7 @@ class InstantPayment
 
     public function run()
     {
-        /** @var \App\Models\ClientContact $cc */
+        /** @var ClientContact $cc */
         $cc = auth()->guard('contact')->user();
         $cc->first_name = $this->request->contact_first_name;
         $cc->last_name = $this->request->contact_last_name;
@@ -75,9 +74,9 @@ class InstantPayment
 
         $invoices->each(function ($invoice) {
             $invoice->service()
-                    ->markSent()
-                    ->removeUnpaidGatewayFees()
-                    ->save();
+                ->markSent()
+                ->removeUnpaidGatewayFees()
+                ->save();
         });
 
         /* pop non payable invoice from the $payable_invoices array */
@@ -86,7 +85,7 @@ class InstantPayment
             return $invoices->where('hashed_id', $payable_invoice['invoice_id'])->first()->isPayable();
         });
 
-        /*return early if no invoices*/
+        /* return early if no invoices */
 
         if ($payable_invoices->count() == 0) {
             return redirect()
@@ -102,7 +101,7 @@ class InstantPayment
         /* This loop checks for under / over payments and returns the user if a check fails */
 
         foreach ($payable_invoices as $payable_invoice) {
-            /*Match the payable invoice to the Model Invoice*/
+            /* Match the payable invoice to the Model Invoice */
 
             $invoice = $invoices->first(function ($inv) use ($payable_invoice) {
                 return $payable_invoice['invoice_id'] == $inv->hashed_id;
@@ -116,13 +115,13 @@ class InstantPayment
             $payable_amount = Number::roundValue(Number::parseFloat($payable_invoice['amount']), $client->currency()->precision);
             $invoice_balance = Number::roundValue(($invoice->partial > 0 ? $invoice->partial : $invoice->balance), $client->currency()->precision);
 
-            /*If we don't allow under/over payments force the payable amount - prevents inspect element adjustments in JS*/
+            /* If we don't allow under/over payments force the payable amount - prevents inspect element adjustments in JS */
 
             if ($settings->client_portal_allow_under_payment == false && $settings->client_portal_allow_over_payment == false) {
                 $payable_invoice['amount'] = Number::roundValue(($invoice->partial > 0 ? $invoice->partial : $invoice->balance), $client->currency()->precision);
             }
 
-            if (! $settings->client_portal_allow_under_payment && $payable_amount < $invoice_balance) {
+            if (!$settings->client_portal_allow_under_payment && $payable_amount < $invoice_balance) {
                 return redirect()
                     ->route('client.invoices.index')
                     ->with('message', ctrans('texts.minimum_required_payment', ['amount' => $invoice_balance]));
@@ -148,16 +147,16 @@ class InstantPayment
 
             /* If we don't allow over payments and the amount exceeds the balance */
 
-            if (! $settings->client_portal_allow_over_payment && $payable_amount > $invoice_balance) {
+            if (!$settings->client_portal_allow_over_payment && $payable_amount > $invoice_balance) {
                 return redirect()
                     ->route('client.invoices.index')
                     ->with('message', ctrans('texts.over_payments_disabled'));
             }
         }
 
-        /*Iterate through invoices and add gateway fees and other payment metadata*/
+        /* Iterate through invoices and add gateway fees and other payment metadata */
 
-        //$payable_invoices = $payable_invoices->map(function ($payable_invoice) use ($invoices, $settings) {
+        // $payable_invoices = $payable_invoices->map(function ($payable_invoice) use ($invoices, $settings) {
         $payable_invoice_collection = collect();
 
         foreach ($payable_invoices as $payable_invoice) {
@@ -186,7 +185,7 @@ class InstantPayment
             $payable_invoice_collection->push($payable_invoice);
         }
 
-        if ($this->request->has('signature') && ! is_null($this->request->signature) && ! empty($this->request->signature)) {
+        if ($this->request->has('signature') && !is_null($this->request->signature) && !empty($this->request->signature)) {
 
             $contact_id = auth()->guard('contact')->user() ? auth()->guard('contact')->user()->id : null;
 
@@ -223,7 +222,7 @@ class InstantPayment
                 ->get();
         }
 
-        if (! $is_credit_payment) {
+        if (!$is_credit_payment) {
             $credit_totals = 0;
         }
 
@@ -248,7 +247,7 @@ class InstantPayment
             }
         }
 
-        $payment_hash = new PaymentHash();
+        $payment_hash = new PaymentHash;
         $payment_hash->hash = $payment_hash_string;
         $payment_hash->data = $hash_data;
         $payment_hash->fee_total = $fee_totals;

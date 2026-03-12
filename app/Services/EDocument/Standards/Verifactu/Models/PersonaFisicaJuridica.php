@@ -6,23 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
-use App\Services\EDocument\Standards\Verifactu\Models\BaseXmlModel;
-
 class PersonaFisicaJuridica extends BaseXmlModel
 {
     protected ?string $nif = null;
+
     protected ?string $nombreRazon = null;
+
     protected ?string $apellidos = null;
+
     protected ?string $nombre = null;
+
     protected ?string $razonSocial = null;
+
     protected ?string $tipoIdentificacion = null;
+
     protected ?IDOtro $idOtro = null;
+
     protected ?string $pais = null;
 
     public function getNif(): ?string
@@ -36,6 +40,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
             throw new \InvalidArgumentException('NIF must be exactly 9 characters long');
         }
         $this->nif = $nif;
+
         return $this;
     }
 
@@ -47,6 +52,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setNombreRazon(?string $nombreRazon): self
     {
         $this->nombreRazon = $nombreRazon;
+
         return $this;
     }
 
@@ -58,6 +64,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setApellidos(?string $apellidos): self
     {
         $this->apellidos = $apellidos;
+
         return $this;
     }
 
@@ -69,6 +76,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setNombre(?string $nombre): self
     {
         $this->nombre = $nombre;
+
         return $this;
     }
 
@@ -80,6 +88,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setRazonSocial(?string $razonSocial): self
     {
         $this->razonSocial = $razonSocial;
+
         return $this;
     }
 
@@ -91,6 +100,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setTipoIdentificacion(?string $tipoIdentificacion): self
     {
         $this->tipoIdentificacion = $tipoIdentificacion;
+
         return $this;
     }
 
@@ -102,6 +112,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setIdOtro(IDOtro $idOtro): self
     {
         $this->idOtro = $idOtro;
+
         return $this;
     }
 
@@ -113,6 +124,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public function setPais(?string $pais): self
     {
         $this->pais = $pais;
+
         return $this;
     }
 
@@ -161,7 +173,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     public static function fromXml($xml): BaseXmlModel
     {
         if (is_string($xml)) {
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             $doc->loadXML($xml);
             $element = $doc->documentElement;
         } else {
@@ -173,7 +185,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $persona = new self();
+        $persona = new self;
 
         $nifElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'NIF')->item(0);
         if ($nifElement) {

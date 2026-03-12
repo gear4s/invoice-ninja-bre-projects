@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,8 @@ namespace App\Jobs\Subscription;
 
 use App\Libraries\MultiDB;
 use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\PaymentHash;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,24 +29,21 @@ class CleanStaleInvoiceOrder implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
+
     /**
      * Create a new job instance.
-     *
      */
     public function __construct() {}
 
-    /**
-     * @param InvoiceRepository $repo
-     * @return void
-     */
     public function handle(InvoiceRepository $repo): void
     {
-        nlog("Cleaning Stale Invoices:");
+        nlog('Cleaning Stale Invoices:');
 
         Auth::logout();
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->run($repo);
+
             return;
         }
 
@@ -61,31 +59,30 @@ class CleanStaleInvoiceOrder implements ShouldQueue
 
     private function run($repo)
     {
-        $proforma =Invoice::query()
-                        ->withTrashed()
-                        ->where('status_id', Invoice::STATUS_SENT)
-                        ->where('is_proforma', 1)
-                        ->whereBetween('created_at', [now()->subHours(3), now()->subHour()])
-                        ->get();
-        
+        $proforma = Invoice::query()
+            ->withTrashed()
+            ->where('status_id', Invoice::STATUS_SENT)
+            ->where('is_proforma', 1)
+            ->whereBetween('created_at', [now()->subHours(3), now()->subHour()])
+            ->get();
+
         $proforma->each(function ($invoice) use ($repo) {
             $invoice->is_proforma = false;
             $invoice->save();
             $repo->delete($invoice);
         });
-        
 
         $stale = Invoice::query()
-                        ->withTrashed()
-                        ->whereBetween('updated_at', [now()->subDay(), now()->subHour()])
-                        ->where('status_id', Invoice::STATUS_SENT)
-                        ->where('balance', '>', 0)
-                        ->get();
+            ->withTrashed()
+            ->whereBetween('updated_at', [now()->subDay(), now()->subHour()])
+            ->where('status_id', Invoice::STATUS_SENT)
+            ->where('balance', '>', 0)
+            ->get();
 
-            //    ->whereJsonContains('line_items', ['type_id' => '3'])
-            $stale->each(function ($invoice) {
-                $invoice->service()->removeUnpaidGatewayFees();
-            });
+        //    ->whereJsonContains('line_items', ['type_id' => '3'])
+        $stale->each(function ($invoice) {
+            $invoice->service()->removeUnpaidGatewayFees();
+        });
 
         $confirmed = Invoice::query()
             ->withTrashed()
@@ -93,27 +90,27 @@ class CleanStaleInvoiceOrder implements ShouldQueue
             ->whereBetween('updated_at', [now()->subHours(3), now()->subHour()])
             ->get();
 
-            //    ->whereJsonContains('line_items', ['type_id' => '3'])
-            //    ->cursor()
-            $confirmed->each(function ($invoice) {
+        //    ->whereJsonContains('line_items', ['type_id' => '3'])
+        //    ->cursor()
+        $confirmed->each(function ($invoice) {
 
-                $items = $invoice->line_items;
+            $items = $invoice->line_items;
 
-                foreach ($items as $key => $value) {
+            foreach ($items as $key => $value) {
 
-                    if ($value->type_id == "3" && isset($value->unit_code) && $ph = \App\Models\PaymentHash::where('hash', $value->unit_code)->first()) {
+                if ($value->type_id == '3' && isset($value->unit_code) && $ph = PaymentHash::where('hash', $value->unit_code)->first()) {
 
-                        if ($ph->payment_id && in_array($ph->payment?->status_id, [\App\Models\Payment::STATUS_COMPLETED, \App\Models\Payment::STATUS_PENDING])) {
-                            $items[$key]->type_id = "4";
-                        }
+                    if ($ph->payment_id && in_array($ph->payment?->status_id, [Payment::STATUS_COMPLETED, Payment::STATUS_PENDING])) {
+                        $items[$key]->type_id = '4';
                     }
-
                 }
 
-                $invoice->line_items = array_values($items);
-                $invoice = $invoice->calc()->getInvoice();
-                $invoice->service()->removeUnpaidGatewayFees();
-            });
+            }
+
+            $invoice->line_items = array_values($items);
+            $invoice = $invoice->calc()->getInvoice();
+            $invoice->service()->removeUnpaidGatewayFees();
+        });
 
     }
 

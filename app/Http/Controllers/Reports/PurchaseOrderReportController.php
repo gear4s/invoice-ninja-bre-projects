@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2024. PurchaseOrder Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,7 +16,9 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\Report\GenericReportRequest;
 use App\Jobs\Report\PreviewReport;
 use App\Jobs\Report\SendToAdmin;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Str;
 
 class PurchaseOrderReportController extends BaseController
 {
@@ -33,9 +34,8 @@ class PurchaseOrderReportController extends BaseController
     public function __invoke(GenericReportRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
-
 
         if ($request->has('send_email') && $request->get('send_email') && $request->missing('output')) {
             SendToAdmin::dispatch($user->company(), $request->all(), PurchaseOrderExport::class, $this->filename);
@@ -43,7 +43,7 @@ class PurchaseOrderReportController extends BaseController
             return response()->json(['message' => 'working...'], 200);
         }
 
-        $hash = \Illuminate\Support\Str::uuid();
+        $hash = Str::uuid();
 
         PreviewReport::dispatch($user->company(), $request->all(), PurchaseOrderExport::class, $hash);
 

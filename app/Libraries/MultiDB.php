@@ -6,23 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Libraries;
 
-use App\Models\User;
-use App\Models\Client;
+use App\DataProviders\SMSNumbers;
 use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Company;
+use App\Models\CompanyToken;
 use App\Models\Document;
 use App\Models\PaymentHash;
-use Illuminate\Support\Str;
-use App\Models\CompanyToken;
-use App\Models\ClientContact;
+use App\Models\User;
 use App\Models\VendorContact;
-use App\DataProviders\SMSNumbers;
+use Illuminate\Support\Str;
 
 /**
  * Class MultiDB.
@@ -76,9 +75,6 @@ class MultiDB
 
     private static $protected_expense_mailboxes = [];
 
-    /**
-     * @return array
-     */
     public static function getDbs(): array
     {
         return self::$dbs;
@@ -114,7 +110,7 @@ class MultiDB
     {
 
         if (!config('ninja.db.multi_db_enabled')) {
-            return !Company::where("expense_mailbox", $expense_mailbox)->exists();
+            return !Company::where('expense_mailbox', $expense_mailbox)->exists();
         }
 
         if (in_array($expense_mailbox, self::$protected_expense_mailboxes)) {
@@ -124,7 +120,7 @@ class MultiDB
         $current_db = config('database.default');
 
         foreach (self::$dbs as $db) {
-            if (Company::on($db)->where("expense_mailbox", $expense_mailbox)->exists()) {
+            if (Company::on($db)->where('expense_mailbox', $expense_mailbox)->exists()) {
                 self::setDb($current_db);
 
                 return false;
@@ -166,9 +162,9 @@ class MultiDB
      * If no user is found, then we also return true as this must be
      * a new user request.
      *
-     * @param  string $email       The user email
-     * @param  string $company_key The company key
-     * @return bool             True|False
+     * @param  string  $email  The user email
+     * @param  string  $company_key  The company key
+     * @return bool True|False
      */
     public static function checkUserAndCompanyCoExist($email, $company_key): bool
     {
@@ -193,10 +189,6 @@ class MultiDB
         return true;
     }
 
-    /**
-     * @param array $data
-     * @return User|null
-     */
     public static function hasUser(array $data): ?User
     {
         if (!config('ninja.db.multi_db_enabled')) {
@@ -217,10 +209,6 @@ class MultiDB
         return null;
     }
 
-    /**
-     * @param string $email
-     * @return ClientContact|null
-     */
     public static function hasContact(string $email): ?ClientContact
     {
         if (!config('ninja.db.multi_db_enabled')) {
@@ -244,10 +232,6 @@ class MultiDB
         return null;
     }
 
-    /**
-     * @param array $search
-     * @return ClientContact|null
-     */
     public static function findContact(array $search): ?ClientContact
     {
         if (!config('ninja.db.multi_db_enabled')) {
@@ -292,7 +276,7 @@ class MultiDB
     {
         $current_db = config('database.default');
 
-        //multi-db active
+        // multi-db active
         foreach (self::$dbs as $db) {
             if (User::on($db)->where('email', $email)->withTrashed()->exists()) {
                 self::setDb($db);
@@ -310,7 +294,7 @@ class MultiDB
     {
         $current_db = config('database.default');
 
-        //multi-db active
+        // multi-db active
         foreach (self::$dbs as $db) {
             if (Document::on($db)->where('hash', $hash)->exists()) {
                 self::setDb($db);
@@ -469,7 +453,6 @@ class MultiDB
         return false;
     }
 
-
     public static function findAndSetDbByContactKey($contact_key): bool
     {
         $current_db = config('database.default');
@@ -521,7 +504,6 @@ class MultiDB
         return false;
     }
 
-
     public static function findUserByReferralCode(string $referral_code): ?User
     {
         $current_db = config('database.default');
@@ -529,6 +511,7 @@ class MultiDB
         foreach (self::$dbs as $db) {
             if ($user = User::on($db)->where('referral_code', $referral_code)->first()) {
                 self::setDb($db);
+
                 return $user;
             }
         }
@@ -578,14 +561,14 @@ class MultiDB
     public static function findAndSetDbByExpenseMailbox($expense_mailbox)
     {
         if (!config('ninja.db.multi_db_enabled')) {
-            return Company::where("expense_mailbox", $expense_mailbox)->first();
+            return Company::where('expense_mailbox', $expense_mailbox)->first();
         }
 
         $current_db = config('database.default');
 
         foreach (self::$dbs as $db) {
             self::setDb($db);
-            if ($company = Company::where("expense_mailbox", $expense_mailbox)->first()) {
+            if ($company = Company::where('expense_mailbox', $expense_mailbox)->first()) {
                 return $company;
             }
         }
@@ -624,6 +607,7 @@ class MultiDB
         foreach (self::$dbs as $db) {
             if ($invite = $class::on($db)->where('key', $invitation_key)->exists()) {
                 self::setDb($db);
+
                 return true;
             }
         }
@@ -633,10 +617,6 @@ class MultiDB
         return false;
     }
 
-    /**
-     * @param string $phone
-     * @return bool
-     */
     public static function hasPhoneNumber(string $phone): bool
     {
         if (!config('ninja.db.multi_db_enabled')) {
@@ -653,6 +633,7 @@ class MultiDB
             self::setDB($db);
             if ($exists = Account::on($db)->where('account_sms_verification_number', $phone)->where('account_sms_verified', true)->exists()) {
                 self::setDb($current_db);
+
                 return true;
             }
         }
@@ -661,8 +642,6 @@ class MultiDB
 
         return false;
     }
-
-
 
     public static function randomSubdomainGenerator(): string
     {
@@ -707,10 +686,6 @@ class MultiDB
         return $string;
     }
 
-    /**
-     * @param $database
-     * @return void
-     */
     public static function setDB(string $database): void
     {
         /* This will set the database connection for the request */

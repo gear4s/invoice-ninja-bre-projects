@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,9 +27,9 @@ class ApplePayDomainController extends Controller
 
         if (Ninja::isSelfHost()) {
             $cgs = CompanyGateway::query()
-                                 ->whereIn('gateway_key', $this->stripe_keys)
-                                 ->where('is_deleted', false)
-                                 ->get();
+                ->whereIn('gateway_key', $this->stripe_keys)
+                ->where('is_deleted', false)
+                ->get();
 
             foreach ($cgs as $cg) {
                 if ($cg->getConfigField('appleDomainVerification')) {
@@ -73,9 +72,9 @@ class ApplePayDomainController extends Controller
     private function resolveAppleMerchantId($company)
     {
         $cgs = $company->company_gateways()
-                       ->whereIn('gateway_key', $this->stripe_keys)
-                       ->where('is_deleted', false)
-                       ->get();
+            ->whereIn('gateway_key', $this->stripe_keys)
+            ->where('is_deleted', false)
+            ->get();
 
         foreach ($cgs as $cg) {
             if ($cg->getConfigField('appleDomainVerification')) {

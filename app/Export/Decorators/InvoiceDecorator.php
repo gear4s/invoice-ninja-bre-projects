@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,34 +42,42 @@ class InvoiceDecorator extends Decorator implements DecoratorInterface
     {
         return $invoice->date ?? '';
     }
+
     public function due_date(Invoice $invoice)
     {
         return $invoice->due_date ?? '';
     }
+
     public function terms(Invoice $invoice)
     {
         return strip_tags($invoice->terms ?? '');
     }
+
     public function footer(Invoice $invoice)
     {
         return strip_tags($invoice->footer ?? '');
     }
+
     public function status(Invoice $invoice)
     {
         return $invoice->stringStatus($invoice->status_id);
     }
+
     public function public_notes(Invoice $invoice)
     {
         return strip_tags($invoice->public_notes ?? '');
     }
+
     public function private_notes(Invoice $invoice)
     {
         return $invoice->private_notes ?? '';
     }
+
     public function uses_inclusive_taxes(Invoice $invoice)
     {
         return $invoice->uses_inclusive_taxes ? ctrans('texts.yes') : ctrans('texts.no');
     }
+
     public function is_amount_discount(Invoice $invoice)
     {
         return $invoice->is_amount_discount ? ctrans('texts.yes') : ctrans('texts.no');
@@ -85,6 +92,7 @@ class InvoiceDecorator extends Decorator implements DecoratorInterface
     {
         return $invoice->assigned_user ? $invoice->assigned_user->present()->name() : '';
     }
+
     public function user_id(Invoice $invoice)
     {
         return $invoice->user ? $invoice->user->present()->name() : '';
@@ -99,5 +107,4 @@ class InvoiceDecorator extends Decorator implements DecoratorInterface
     {
         return $invoice->auto_bill_enabled ? ctrans('texts.yes') : ctrans('texts.no');
     }
-
 }

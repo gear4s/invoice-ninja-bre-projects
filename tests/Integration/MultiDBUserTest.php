@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,11 +20,10 @@ use App\Models\CompanyUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- *
  *   App\Libraries\MultiDB
  *
  * Proves that we can reliably switch database connections at runtime
@@ -33,13 +31,14 @@ use Tests\TestCase;
 class MultiDBUserTest extends TestCase
 {
     protected $token;
+
     protected $company_token;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             $this->markTestSkipped('Multi DB not enabled - skipping');
         }
 
@@ -49,7 +48,6 @@ class MultiDBUserTest extends TestCase
             if ($u) {
                 $u->account->delete();
             }
-
 
             $u = User::where('email', 'db2@example.com')->first();
             if ($u) {
@@ -88,7 +86,7 @@ class MultiDBUserTest extends TestCase
             'phone' => '55555',
             'email_verified_at' => now(),
             'password' => Hash::make('ALongAndBriliantPassword'), // secret
-            'remember_token' => \Illuminate\Support\Str::random(10),
+            'remember_token' => Str::random(10),
             'email' => 'db1@example.com',
             'oauth_user_id' => '123',
             //     'account_id' => $account->id,
@@ -96,14 +94,14 @@ class MultiDBUserTest extends TestCase
 
         $user2 = [
             'account_id' => $account2->id,
-            'first_name'        => 'user_db_2',
-            'last_name'         => 'user_db_2-s',
-            'phone'             => '55555',
+            'first_name' => 'user_db_2',
+            'last_name' => 'user_db_2-s',
+            'phone' => '55555',
             'email_verified_at' => now(),
             'password' => 'ALongAndBriliantPassword', // secret
-            'remember_token'    => \Illuminate\Support\Str::random(10),
-            'email'             => 'db2@example.com',
-            'oauth_user_id'     => 'abc',
+            'remember_token' => Str::random(10),
+            'email' => 'db2@example.com',
+            'oauth_user_id' => 'abc',
             //      'account_id' => $account2->id,
 
         ];
@@ -134,7 +132,7 @@ class MultiDBUserTest extends TestCase
             'is_admin' => true,
         ]);
 
-        $this->token = \Illuminate\Support\Str::random(40);
+        $this->token = Str::random(40);
 
         /** @var CompanyToken $company_token */
         $company_token = CompanyToken::on('db-ninja-01')->create([
@@ -190,7 +188,7 @@ class MultiDBUserTest extends TestCase
 
     public function test_cross_db_user_linking_fails_appropriately()
     {
-        //$this->withoutExceptionHandling();
+        // $this->withoutExceptionHandling();
 
         $data = [
             'first_name' => 'hey',
@@ -211,7 +209,6 @@ class MultiDBUserTest extends TestCase
             'X-API-PASSWORD' => 'ALongAndBriliantPassword',
         ])->postJson('/api/v1/users?include=company_user', $data);
 
-
         $response->assertStatus(422);
 
     }
@@ -223,7 +220,7 @@ class MultiDBUserTest extends TestCase
             $this->cleanupTestData();
         } catch (\Exception $e) {
             // Log error but don't fail teardown
-            error_log("Error during test cleanup: " . $e->getMessage());
+            error_log('Error during test cleanup: ' . $e->getMessage());
         }
 
         parent::tearDown();
@@ -264,7 +261,7 @@ class MultiDBUserTest extends TestCase
             }
         } catch (\Exception $e) {
             // Log error but don't fail cleanup
-            error_log("Error during database cleanup: " . $e->getMessage());
+            error_log('Error during database cleanup: ' . $e->getMessage());
         }
     }
 }

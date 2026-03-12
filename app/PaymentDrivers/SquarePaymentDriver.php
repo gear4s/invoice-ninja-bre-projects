@@ -6,62 +6,74 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
+use App\Factory\ClientFactory;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
+use App\Jobs\Util\SystemLogger;
+use App\Models\ClientContact;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Models\ClientContact;
-use App\Factory\ClientFactory;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use Square\Utils\WebhooksHelper;
-use App\Models\ClientGatewayToken;
-use App\Repositories\ClientRepository;
-use Square\Models\WebhookSubscription;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Factory\SquareCustomerFactory;
 use App\PaymentDrivers\Square\CreditCard;
 use App\PaymentDrivers\Square\SquareWebhook;
 use App\Repositories\ClientContactRepository;
-use Square\Models\CreateWebhookSubscriptionRequest;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
-use App\PaymentDrivers\Factory\SquareCustomerFactory;
+use App\Repositories\ClientRepository;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Str;
+use Square\Environment;
+use Square\Models\Address;
 use Square\Models\Builders\RefundPaymentRequestBuilder;
+use Square\Models\CreateCustomerRequest;
+use Square\Models\CreatePaymentRequest;
+use Square\Models\CreateWebhookSubscriptionRequest;
+use Square\Models\CustomerFilter;
+use Square\Models\CustomerQuery;
+use Square\Models\CustomerTextFilter;
+use Square\Models\Error;
+use Square\Models\Money;
+use Square\Models\SearchCustomersRequest;
+use Square\Models\TestWebhookSubscriptionRequest;
+use Square\Models\WebhookSubscription;
+use Square\SquareClient;
+use Square\Utils\WebhooksHelper;
 
 class SquarePaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = false; //does this gateway support refunds?
+    public $refundable = false; // does this gateway support refunds?
 
-    public $token_billing = true; //does this gateway support token billing?
+    public $token_billing = true; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = true; //does this gateway support authorizations?
+    public $can_authorise_credit_card = true; // does this gateway support authorizations?
 
     public $square;
 
     public $payment_method;
 
     public static $methods = [
-        GatewayType::CREDIT_CARD => CreditCard::class, //maps GatewayType => Implementation class
+        GatewayType::CREDIT_CARD => CreditCard::class, // maps GatewayType => Implementation class
     ];
 
     public const SYSTEM_LOG_TYPE = SystemLog::TYPE_SQUARE;
 
     public function init()
     {
-        $this->square = new \Square\SquareClient([
+        $this->square = new SquareClient([
             'accessToken' => $this->company_gateway->getConfigField('accessToken'),
-            'environment' => $this->company_gateway->getConfigField('testMode') ? \Square\Environment::SANDBOX : \Square\Environment::PRODUCTION,
+            'environment' => $this->company_gateway->getConfigField('testMode') ? Environment::SANDBOX : Environment::PRODUCTION,
         ]);
 
-        return $this; /* This is where you boot the gateway with your auth credentials*/
+        return $this; /* This is where you boot the gateway with your auth credentials */
     }
 
     /* Returns an array of gateway types for the payment gateway */
@@ -85,22 +97,22 @@ class SquarePaymentDriver extends BaseDriver
 
     public function authorizeView(array $data)
     {
-        return $this->payment_method->authorizeView($data); //this is your custom implementation from here
+        return $this->payment_method->authorizeView($data); // this is your custom implementation from here
     }
 
     public function authorizeResponse($request)
     {
-        return $this->payment_method->authorizeResponse($request);  //this is your custom implementation from here
+        return $this->payment_method->authorizeResponse($request);  // this is your custom implementation from here
     }
 
     public function processPaymentView(array $data)
     {
-        return $this->payment_method->paymentView($data);  //this is your custom implementation from here
+        return $this->payment_method->paymentView($data);  // this is your custom implementation from here
     }
 
     public function processPaymentResponse($request)
     {
-        return $this->payment_method->paymentResponse($request); //this is your custom implementation from here
+        return $this->payment_method->paymentResponse($request); // this is your custom implementation from here
     }
 
     public function refund(Payment $payment, $amount, $return_client_response = false)
@@ -108,14 +120,14 @@ class SquarePaymentDriver extends BaseDriver
         $this->init();
         $this->client = $payment->client;
 
-        $amount_money = new \Square\Models\Money();
+        $amount_money = new Money;
         $amount_money->setAmount($this->convertAmount($amount));
         $amount_money->setCurrency($this->client->currency()->code);
 
-        $body = RefundPaymentRequestBuilder::init(\Illuminate\Support\Str::random(32), $amount_money)
-                ->paymentId($payment->transaction_reference)
-                ->reason('Refund Request')
-                ->build();
+        $body = RefundPaymentRequestBuilder::init(Str::random(32), $amount_money)
+            ->paymentId($payment->transaction_reference)
+            ->reason('Refund Request')
+            ->build();
 
         $apiResponse = $this->square->getRefundsApi()->refundPayment($body);
 
@@ -126,12 +138,11 @@ class SquarePaymentDriver extends BaseDriver
             nlog($refundPaymentResponse);
 
             /**
-            * - `PENDING` - Awaiting approval.
-            * - `COMPLETED` - Successfully completed.
-            * - `REJECTED` - The refund was rejected.
-            * - `FAILED` - An error occurred.
-            */
-
+             * - `PENDING` - Awaiting approval.
+             * - `COMPLETED` - Successfully completed.
+             * - `REJECTED` - The refund was rejected.
+             * - `FAILED` - An error occurred.
+             */
             $status = $refundPaymentResponse->getRefund()->getStatus();
 
             if (in_array($status, ['COMPLETED', 'PENDING'])) {
@@ -188,8 +199,8 @@ class SquarePaymentDriver extends BaseDriver
 
         } else {
 
-            /** @var \Square\Models\Error $error */
-            $error = end($apiResponse->getErrors()); //@phpstan-ignore-line
+            /** @var Error $error */
+            $error = end($apiResponse->getErrors()); // @phpstan-ignore-line
 
             $data = [
                 'transaction_reference' => $payment->transaction_reference,
@@ -231,11 +242,11 @@ class SquarePaymentDriver extends BaseDriver
             $description = "Payment with no invoice for amount {$amount} for client {$this->client->present()->name()}";
         }
 
-        $amount_money = new \Square\Models\Money();
+        $amount_money = new Money;
         $amount_money->setAmount($amount);
         $amount_money->setCurrency($this->client->currency()->code);
 
-        $body = new \Square\Models\CreatePaymentRequest($cgt->token, \Illuminate\Support\Str::random(32));
+        $body = new CreatePaymentRequest($cgt->token, Str::random(32));
         $body->setCustomerId($cgt->gateway_customer_reference);
         $body->setAmountMoney($amount_money);
         $body->setReferenceId($payment_hash->hash);
@@ -296,7 +307,7 @@ class SquarePaymentDriver extends BaseDriver
 
         if ($api_response->isSuccess()) {
 
-            //array of WebhookSubscription objects
+            // array of WebhookSubscription objects
             foreach ($api_response->getResult()->getSubscriptions() ?? [] as $subscription) {
                 if ($subscription->getName() == 'Invoice_Ninja_Webhook_Subscription') {
                     return $subscription->getId();
@@ -306,6 +317,7 @@ class SquarePaymentDriver extends BaseDriver
         } else {
             $errors = $api_response->getErrors();
             nlog($errors);
+
             return false;
         }
 
@@ -339,7 +351,7 @@ class SquarePaymentDriver extends BaseDriver
         $this->init();
 
         $event_types = ['payment.created', 'payment.updated'];
-        $subscription = new WebhookSubscription();
+        $subscription = new WebhookSubscription;
         $subscription->setName('Invoice_Ninja_Webhook_Subscription');
         $subscription->setEventTypes($event_types);
 
@@ -349,7 +361,7 @@ class SquarePaymentDriver extends BaseDriver
         // $subscription->setApiVersion('2021-12-15');
 
         $body = new CreateWebhookSubscriptionRequest($subscription);
-        $body->setIdempotencyKey(\Illuminate\Support\Str::uuid());
+        $body->setIdempotencyKey(Str::uuid());
 
         $api_response = $this->square->getWebhookSubscriptionsApi()->createWebhookSubscription($body);
 
@@ -368,7 +380,7 @@ class SquarePaymentDriver extends BaseDriver
 
     public function processWebhookRequest(PaymentWebhookRequest $request)
     {
-        nlog("square webhook");
+        nlog('square webhook');
 
         $signature_key = $this->company_gateway->getConfigField('signatureKey');
         $notification_url = $this->company_gateway->webhookUrl();
@@ -382,7 +394,7 @@ class SquarePaymentDriver extends BaseDriver
         if (WebhooksHelper::isValidWebhookEventSignature($body, $request->header('x-square-hmacsha256-signature'), $signature_key, $notification_url)) {
             SquareWebhook::dispatch($request->all(), $request->company_key, $this->company_gateway->id)->delay(5);
         } else {
-            nlog("Square Hash Mismatch");
+            nlog('Square Hash Mismatch');
             nlog($request->all());
         }
 
@@ -394,14 +406,15 @@ class SquarePaymentDriver extends BaseDriver
     {
         $this->init();
 
-        $body = new \Square\Models\TestWebhookSubscriptionRequest();
+        $body = new TestWebhookSubscriptionRequest;
         $body->setEventType('payment.created');
 
-        //getsubscriptionid here
+        // getsubscriptionid here
         $subscription_id = $this->checkWebhooks();
 
         if (!$subscription_id) {
             nlog('No Subscription Found');
+
             return;
         }
 
@@ -440,10 +453,9 @@ class SquarePaymentDriver extends BaseDriver
     {
 
         $api_response = $this->init()
-                    ->square
-                    ->getCustomersApi()
-                    ->listCustomers();
-
+            ->square
+            ->getCustomersApi()
+            ->listCustomers();
 
         return (bool) count($api_response->getErrors()) == 0 ? 'ok' : 'error';
 
@@ -455,14 +467,14 @@ class SquarePaymentDriver extends BaseDriver
         $limit = 100;
 
         $api_response = $this->init()
-                    ->square
-                    ->getCustomersApi()
-                    ->listCustomers(
-                        null,
-                        $limit,
-                        'DEFAULT',
-                        'DESC'
-                    );
+            ->square
+            ->getCustomersApi()
+            ->listCustomers(
+                null,
+                $limit,
+                'DEFAULT',
+                'DESC'
+            );
 
         if ($api_response->isSuccess()) {
 
@@ -470,11 +482,11 @@ class SquarePaymentDriver extends BaseDriver
 
                 $customers = $api_response->getResult()->getCustomers();
 
-                $client_repo = new ClientRepository(new ClientContactRepository());
+                $client_repo = new ClientRepository(new ClientContactRepository);
 
                 foreach ($customers as $customer) {
 
-                    $data = (new SquareCustomerFactory())->convertToNinja($customer, $this->company_gateway->company);
+                    $data = (new SquareCustomerFactory)->convertToNinja($customer, $this->company_gateway->company);
                     $client = ClientContact::where('company_id', $this->company_gateway->company_id)->where('email', $customer->getEmailAddress())->first()->client ?? false;
 
                     if (!$client) {
@@ -510,7 +522,6 @@ class SquarePaymentDriver extends BaseDriver
                     break;
                 }
 
-
             }
 
         }
@@ -521,22 +532,22 @@ class SquarePaymentDriver extends BaseDriver
 
         $email_address_string = $email ?? $this->client->present()->email();
 
-        $email_address = new \Square\Models\CustomerTextFilter();
+        $email_address = new CustomerTextFilter;
         $email_address->setExact($email_address_string);
 
-        $filter = new \Square\Models\CustomerFilter();
+        $filter = new CustomerFilter;
         $filter->setEmailAddress($email_address);
 
-        $query = new \Square\Models\CustomerQuery();
+        $query = new CustomerQuery;
         $query->setFilter($filter);
 
-        $body = new \Square\Models\SearchCustomersRequest();
+        $body = new SearchCustomersRequest;
         $body->setQuery($query);
 
         $api_response = $this->init()
-                            ->square
-                            ->getCustomersApi()
-                            ->searchCustomers($body);
+            ->square
+            ->getCustomersApi()
+            ->searchCustomers($body);
 
         $customers = false;
 
@@ -573,7 +584,7 @@ class SquarePaymentDriver extends BaseDriver
         $country = $this->client->country ? $this->client->country->iso_3166_2 : $this->client->company->country()->iso_3166_2;
 
         /* Step two - create the customer */
-        $billing_address = new \Square\Models\Address();
+        $billing_address = new Address;
         $billing_address->setAddressLine1($this->client->address1);
         $billing_address->setAddressLine2($this->client->address2);
         $billing_address->setLocality($this->client->city);
@@ -581,7 +592,7 @@ class SquarePaymentDriver extends BaseDriver
         $billing_address->setPostalCode($this->client->postal_code);
         $billing_address->setCountry($country);
 
-        $body = new \Square\Models\CreateCustomerRequest();
+        $body = new CreateCustomerRequest;
         $body->setGivenName($this->client->present()->name());
         $body->setFamilyName('');
         $body->setEmailAddress($this->client->present()->email());
@@ -590,9 +601,9 @@ class SquarePaymentDriver extends BaseDriver
         $body->setNote('Created by Invoice Ninja.');
 
         $api_response = $this->init()
-                             ->square
-                             ->getCustomersApi()
-                             ->createCustomer($body);
+            ->square
+            ->getCustomersApi()
+            ->createCustomer($body);
 
         if ($api_response->isSuccess()) {
             $result = $api_response->getResult();
@@ -614,29 +625,4 @@ class SquarePaymentDriver extends BaseDriver
 
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

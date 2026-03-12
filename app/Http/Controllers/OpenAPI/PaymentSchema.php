@@ -4,6 +4,7 @@
  * @OA\Schema(
  *   schema="Payment",
  *   type="object",
+ *
  *       @OA\Property(property="id", type="string", example="Opnel5aKBz", description="The payment hashed id"),
  *       @OA\Property(property="client_id", type="string", example="Opnel5aKBz", description="The client hashed id"),
  *       @OA\Property(property="invitation_id", type="string", example="Opnel5aKBz", description="The invitation hashed id"),
@@ -26,14 +27,17 @@
  *       	property="invoices",
  *        	type="array",
  *        	description="",
+ *
  *        	@OA\Items(
  *           	ref="#/components/schemas/InvoicePaymentable",
  *          ),
  *       ),
+ *
  *       @OA\Property(
  *       	property="credits",
  *        	type="array",
  *        	description="",
+ *
  *        	@OA\Items(
  *           	ref="#/components/schemas/CreditPaymentable",
  *          ),

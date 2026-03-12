@@ -6,34 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration\Einvoice\Storecove;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
-use App\Models\Account;
-use App\Models\Company;
-use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Models\CompanyToken;
-use App\Models\ClientContact;
-use App\DataMapper\InvoiceItem;
-use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
-use App\Factory\CompanyUserFactory;
-use App\Services\EDocument\Standards\Peppol;
-use InvoiceNinja\EInvoice\Models\Peppol\PaymentMeans;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Models\Account;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
 use App\Services\EDocument\Standards\Validation\Peppol\EntityLevel;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class EInvoiceValidationTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -41,7 +32,7 @@ class EInvoiceValidationTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testInvalidCompanySettings()
+    public function test_invalid_company_settings()
     {
 
         $account = Account::factory()->create();
@@ -52,14 +43,14 @@ class EInvoiceValidationTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkCompany($company);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testValidBusinessCompanySettings()
+    public function test_valid_business_company_settings()
     {
 
         $settings = CompanySettings::defaults();
@@ -81,17 +72,16 @@ class EInvoiceValidationTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkCompany($company);
 
-        $this->assertTrue(isset($company->legal_entity_id)); 
+        $this->assertTrue(isset($company->legal_entity_id));
         $this->assertTrue(intval($company->legal_entity_id) > 0);
         $this->assertTrue($validation['passes']);
 
     }
 
-
-    public function testInValidBusinessCompanySettingsNoVat()
+    public function test_in_valid_business_company_settings_no_vat()
     {
 
         $settings = CompanySettings::defaults();
@@ -113,14 +103,14 @@ class EInvoiceValidationTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkCompany($company);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testValidIndividualCompanySettingsNoVat()
+    public function test_valid_individual_company_settings_no_vat()
     {
 
         $settings = CompanySettings::defaults();
@@ -143,14 +133,14 @@ class EInvoiceValidationTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkCompany($company);
 
         $this->assertTrue($validation['passes']);
 
     }
 
-    public function testInValidBusinessCompanySettingsNoLegalEntity()
+    public function test_in_valid_business_company_settings_no_legal_entity()
     {
 
         $settings = CompanySettings::defaults();
@@ -171,14 +161,14 @@ class EInvoiceValidationTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkCompany($company);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettings()
+    public function test_invalid_client_settings()
     {
 
         $company = Company::factory()->create([
@@ -193,14 +183,14 @@ class EInvoiceValidationTest extends TestCase
             'vat_number' => '',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettingsNoCountry()
+    public function test_invalid_client_settings_no_country()
     {
 
         $company = Company::factory()->create([
@@ -215,14 +205,14 @@ class EInvoiceValidationTest extends TestCase
             'country_id' => null,
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettingsMissingAddress()
+    public function test_invalid_client_settings_missing_address()
     {
 
         $company = Company::factory()->create([
@@ -237,14 +227,14 @@ class EInvoiceValidationTest extends TestCase
             'country_id' => null,
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettingsMissingAddressOnlyCountry()
+    public function test_invalid_client_settings_missing_address_only_country()
     {
 
         $company = Company::factory()->create([
@@ -264,14 +254,14 @@ class EInvoiceValidationTest extends TestCase
             'postal_code' => '',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettingsMissingAddressOnlyCountryAndAddress1()
+    public function test_invalid_client_settings_missing_address_only_country_and_address1()
     {
 
         $company = Company::factory()->create([
@@ -291,14 +281,14 @@ class EInvoiceValidationTest extends TestCase
             'postal_code' => '',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettingsMissingAddressOnlyCountryAndAddress1AndCity()
+    public function test_invalid_client_settings_missing_address_only_country_and_address1_and_city()
     {
 
         $company = Company::factory()->create([
@@ -318,15 +308,14 @@ class EInvoiceValidationTest extends TestCase
             'postal_code' => '',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
-
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testInvalidClientSettingsMissingAddressOnlyCountryAndAddress1AndCityAndState()
+    public function test_invalid_client_settings_missing_address_only_country_and_address1_and_city_and_state()
     {
 
         $company = Company::factory()->create([
@@ -346,15 +335,14 @@ class EInvoiceValidationTest extends TestCase
             'postal_code' => '',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
-
 
         $this->assertFalse($validation['passes']);
 
     }
 
-    public function testValidIndividualClient()
+    public function test_valid_individual_client()
     {
 
         $company = Company::factory()->create([
@@ -383,7 +371,7 @@ class EInvoiceValidationTest extends TestCase
             'email' => 'wasa@b.com',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         if (!$validation['passes']) {
@@ -394,7 +382,7 @@ class EInvoiceValidationTest extends TestCase
 
     }
 
-    public function testValidBusinessClient()
+    public function test_valid_business_client()
     {
 
         $company = Company::factory()->create([
@@ -414,7 +402,6 @@ class EInvoiceValidationTest extends TestCase
             'postal_code' => '2113',
         ]);
 
-
         $cc = ClientContact::factory()->create([
             'client_id' => $client->id,
             'user_id' => $this->user->id,
@@ -424,15 +411,14 @@ class EInvoiceValidationTest extends TestCase
             'email' => 'wasa@b.com',
         ]);
 
-
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertTrue($validation['passes']);
 
     }
 
-    public function testInValidBusinessClientNoVat()
+    public function test_in_valid_business_client_no_vat()
     {
 
         $company = Company::factory()->create([
@@ -452,7 +438,6 @@ class EInvoiceValidationTest extends TestCase
             'postal_code' => '2113',
         ]);
 
-
         $cc = ClientContact::factory()->create([
             'client_id' => $client->id,
             'user_id' => $this->user->id,
@@ -462,7 +447,7 @@ class EInvoiceValidationTest extends TestCase
             'email' => 'wasa@b.com',
         ]);
 
-        $el = new EntityLevel();
+        $el = new EntityLevel;
         $validation = $el->checkClient($client);
 
         $this->assertEquals(0, strlen($client->vat_number));

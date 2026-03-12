@@ -6,13 +6,10 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
-
-use App\Services\EDocument\Standards\Verifactu\Models\BaseXmlModel;
 
 class IDOtro extends BaseXmlModel
 {
@@ -33,9 +30,9 @@ class IDOtro extends BaseXmlModel
     /**
      * __construct
      *
-     * @param  string $codigoPais ISO 3166-1 alpha-2 country code (e.g., ES, FR, US)
-     * @param  string $idType AEAT ID type code (e.g., '07' = Person without identification code)
-     * @param  string $id Identifier value, e.g., passport number, tax ID, or placeholder
+     * @param  string  $codigoPais  ISO 3166-1 alpha-2 country code (e.g., ES, FR, US)
+     * @param  string  $idType  AEAT ID type code (e.g., '07' = Person without identification code)
+     * @param  string  $id  Identifier value, e.g., passport number, tax ID, or placeholder
      * @return void
      */
     public function __construct(private string $codigoPais = 'ES', private string $idType = '06', private string $id = 'NO_DISPONIBLE') {}
@@ -63,24 +60,28 @@ class IDOtro extends BaseXmlModel
     public function setNombreRazon(string $nombreRazon): self
     {
         $this->nombreRazon = $nombreRazon;
+
         return $this;
     }
 
     public function setCodigoPais(string $codigoPais): self
     {
         $this->codigoPais = strtoupper($codigoPais);
+
         return $this;
     }
 
     public function setIdType(string $idType): self
     {
         $this->idType = $idType;
+
         return $this;
     }
 
     public function setId(string $id): self
     {
         $this->id = $id;
+
         return $this;
     }
 
@@ -91,8 +92,8 @@ class IDOtro extends BaseXmlModel
     {
         return [
             'CodigoPais' => $this->codigoPais,
-            'IDType'     => $this->idType,
-            'ID'         => $this->id,
+            'IDType' => $this->idType,
+            'ID' => $this->id,
         ];
     }
 
@@ -111,12 +112,12 @@ class IDOtro extends BaseXmlModel
     }
 
     /**
-    * Create a PersonaFisicaJuridica instance from XML string or DOMElement
-    */
+     * Create a PersonaFisicaJuridica instance from XML string or DOMElement
+     */
     public static function fromXml($xml): BaseXmlModel
     {
         if (is_string($xml)) {
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             $doc->loadXML($xml);
             $element = $doc->documentElement;
         } else {
@@ -128,7 +129,7 @@ class IDOtro extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $idOtro = new self();
+        $idOtro = new self;
 
         $codigoPaisElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'CodigoPais')->item(0);
         if ($codigoPaisElement) {

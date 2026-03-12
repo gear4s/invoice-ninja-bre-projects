@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\PaymentHash
@@ -23,12 +24,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $fee_invoice_id
  * @property \stdClass|array $data
  * @property int|null $payment_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Invoice|null $fee_invoice
- * @property-read \App\Models\Payment|null $payment
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Invoice|null $fee_invoice
+ * @property-read Payment|null $payment
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentHash newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PaymentHash query()
+ *
  * @mixin \Eloquent
  */
 class PaymentHash extends Model
@@ -40,13 +43,15 @@ class PaymentHash extends Model
     ];
 
     /**
-    * @class \App\Models\PaymentHash $this
-    * @property \App\Models\PaymentHash $data
-    * @property \App\Modes\PaymentHash $hash 32 char length AlphaNum
-    * @class \stdClass $data
-    * @property string $raw_value
-    */
-
+     * @class \App\Models\PaymentHash $this
+     *
+     * @property PaymentHash $data
+     * @property \App\Modes\PaymentHash $hash 32 char length AlphaNum
+     *
+     * @class \stdClass $data
+     *
+     * @property string $raw_value
+     */
 
     /**
      * @return mixed
@@ -72,12 +77,12 @@ class PaymentHash extends Model
         return $this->data->credits ?? 0;
     }
 
-    public function payment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class)->withTrashed();
     }
 
-    public function fee_invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function fee_invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class, 'fee_invoice_id', 'id')->withTrashed();
     }
@@ -85,7 +90,8 @@ class PaymentHash extends Model
     public function withData(string $property, $value): self
     {
         $this->data = array_merge((array) $this->data, [$property => $value]); // @phpstan-ignore-line
-        $this->save();// @phpstan-ignore-line
+        $this->save(); // @phpstan-ignore-line
+
         return $this; // @phpstan-ignore-line
     }
 }

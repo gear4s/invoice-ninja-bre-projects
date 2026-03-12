@@ -6,18 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal\Authentication;
 
-use Livewire\Component;
-use App\Models\Subscription;
 use App\Models\ClientContact;
+use App\Models\Subscription;
 use App\Utils\Traits\MakesHash;
-use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class Register extends Component
 {
@@ -44,11 +43,10 @@ class Register extends Component
 
     public array $additional_fields = [];
 
-
     #[Computed()]
     public function subscription()
     {
-        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration','steps']);
+        return Subscription::find($this->decodePrimaryKey($this->subscription_id))->withoutRelations()->makeHidden(['webhook_configuration', 'steps']);
     }
 
     public function initial(): void
@@ -99,7 +97,7 @@ class Register extends Component
     public function registerForm()
     {
         $count = collect($this->subscription()->company->client_registration_fields ?? [])
-            ->filter(fn($field) => $field['required'] === true || $field['visible'] === true)
+            ->filter(fn ($field) => $field['required'] === true || $field['visible'] === true)
             ->count();
 
         if ($count === 0) {
@@ -134,12 +132,11 @@ class Register extends Component
                     return;
                 }
 
-                $i = collect($this->register_fields)->search(fn($field) => $field['key'] == $mapping);
+                $i = collect($this->register_fields)->search(fn ($field) => $field['key'] == $mapping);
 
                 if ($i !== false) {
                     $this->register_fields[$i]['visible'] = true;
                     $this->register_fields[$i]['required'] = true;
-
 
                     $this->additional_fields[] = $this->register_fields[$i];
                 } else {

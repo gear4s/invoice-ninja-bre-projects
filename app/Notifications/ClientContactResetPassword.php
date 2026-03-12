@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-//@deprecated
+// @deprecated
 class ClientContactResetPassword extends Notification
 {
     // use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -63,7 +62,6 @@ class ClientContactResetPassword extends Notification
      * Build the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     *
      */
     public function toMail($notifiable) {}
 

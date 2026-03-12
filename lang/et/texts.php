@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organisatsioon',
     'name' => 'Nimi',
     'website' => 'Kodulehekülg',
@@ -1177,7 +1177,6 @@ $lang = array(
     'enterprise_plan_features' => 'Ettevõtlusplaan lisab toe mitmele kasutajale ja failimanustele :link , et näha funktsioonide täielikku loendit.',
     'return_to_app' => 'Tagasi rakenduse juurde',
 
-
     // Payment updates
     'refund_payment' => 'Tagasimakse',
     'refund_max' => 'Max:',
@@ -1705,7 +1704,6 @@ $lang = array(
     'lang_Serbian' => 'Serbia keel',
     'lang_Bulgarian' => 'Bulgaaria keel',
     'lang_Russian (Russia)' => 'Vene keel',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Raamatupidamine & Õigusabi',
@@ -2363,7 +2361,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Kuldne Troy unts',
     'currency_nicaraguan_córdoba' => 'Nicaragua Córdoba',
     'currency_malagasy_ariary' => 'Madagaskari ariaar',
-    "currency_tongan_pa_anga" => "Tonga Paanga",
+    'currency_tongan_pa_anga' => 'Tonga Paanga',
 
     'review_app_help' => 'Loodame, et teile meeldib rakenduse kasutamine.<br/>Kui kaaluksite :link, oleksime selle eest väga tänulikud!',
     'writing_a_review' => 'arvustuse kirjutamine',
@@ -4363,7 +4361,7 @@ $lang = array(
     'activity_122' => ':user arhiveeritud Perioodiline kulu :recurring_expense',
     'activity_123' => ':user kustutatud Perioodiline kulu :recurring_expense',
     'activity_124' => ':user taastatud Perioodiline kulu :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Faili :entity vaatamiseks peate määrama parooli.',
     'unsubscribe' => 'Loobu tellimusest',
     'unsubscribed' => 'Tellimus on tühistatud',
@@ -4869,7 +4867,7 @@ $lang = array(
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E ülekanne',
     'xinvoice_payable' => 'Tasutakse :payeddue päeva jooksul, kuni :paydate',
-    'xinvoice_no_buyers_reference' => "Ostja viidet pole antud",
+    'xinvoice_no_buyers_reference' => 'Ostja viidet pole antud',
     'xinvoice_online_payment' => 'Arve tuleb tasuda veebis antud lingi kaudu',
     'pre_payment' => 'Pre Makse',
     'number_of_payments' => 'Maksed arv',
@@ -4974,8 +4972,8 @@ $lang = array(
     'e_invoice' => 'E- Arve',
     'light_dark_mode' => 'Hele/tume režiim',
     'activities' => 'Tegevused',
-    'recent_transactions' => "Viimased tehingud",
-    'country_Palestine' => "Palestiina",
+    'recent_transactions' => 'Viimased tehingud',
+    'country_Palestine' => 'Palestiina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Kohustused',
     'order_number' => 'Tellimuse number',
@@ -5192,7 +5190,7 @@ $lang = array(
     'rff' => 'Nõutavad väljad',
     'add_step' => 'Lisa samm',
     'steps' => 'Sammud',
-    'steps_order_help' =>  'Tähtis on sammude järjekord. Esimene samm ei tohiks sõltuda ühestki teisest sammust. Teine samm peaks sõltuma esimesest etapist jne.',
+    'steps_order_help' => 'Tähtis on sammude järjekord. Esimene samm ei tohiks sõltuda ühestki teisest sammust. Teine samm peaks sõltuma esimesest etapist jne.',
     'other_steps' => 'Muud sammud',
     'use_available_payments' => 'Kasuta Saadaval Maksed',
     'test_email_sent' => 'e-post edukalt saadetud',
@@ -5401,7 +5399,7 @@ $lang = array(
     'credit_updated' => 'Krediit uuendatud',
     'payment_updated' => 'Makse uuendatud',
     'search_placeholder' => 'Otsige üles Arved , Kliendid ja palju muud',
-    'invalid_vat_number' => "Käibemaksukohustuslase number ei kehti valitud riigis. Vorming peaks olema riigikood, millele järgneb ainult number, st DE123456789",
+    'invalid_vat_number' => 'Käibemaksukohustuslase number ei kehti valitud riigis. Vorming peaks olema riigikood, millele järgneb ainult number, st DE123456789',
     'acts_as_sender' => 'Saada E- Arved',
     'acts_as_receiver' => 'Saa E- Arved',
     'peppol_token_generated' => 'PEPPOLi tunnus edukalt genereeritud.',
@@ -5538,7 +5536,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Automaatsete meeldetuletuste meilide seadistamine',
     'pro_plan_feature_11' => 'Arve PDF -failide automaatne manustamine meilidele',
     'pro_plan_feature_12' => 'Kuva Kliendid E-allkiri Arved',
-    'pro_plan_feature_13' => "Märkige ruut „Kinnita Tingimused ”",
+    'pro_plan_feature_13' => 'Märkige ruut „Kinnita Tingimused ”',
     'pro_plan_feature_14' => 'Aruanded: Arved , kulud, kasumiaruanne ja muu',
     'pro_plan_feature_15' => 'Massiline e-post Arved , tsitaadid, autorite tsitaadid',
     'pro_plan_feature_16' => 'Ühenda 10 ettevõtet ühe sisselogimisega',
@@ -5913,6 +5911,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe&#39;i pangaülekanne',
     'activity_164' => 'QuickBooksi sünkroonimine nurjus. :notes',
-);
+];
 
 return $lang;

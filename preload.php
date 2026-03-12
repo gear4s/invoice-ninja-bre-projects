@@ -1,4 +1,5 @@
 <?php
+
 /**
  * No-op OPcache preload file.
  *

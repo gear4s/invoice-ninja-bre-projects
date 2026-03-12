@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34,17 +33,17 @@ use Illuminate\Mail\Mailables\Address;
  */
 class EmailObject
 {
-    /** @var array[string] $args */
+    /** @var array[string] */
     public array $to = [];
 
     public ?Address $from = null;
 
     public array $reply_to = [];
 
-    /** @var array[Address] $args */
+    /** @var array[Address] */
     public array $cc = [];
 
-    /** @var array[Address] $args */
+    /** @var array[Address] */
     public array $bcc = [];
 
     public ?string $subject = null;
@@ -53,7 +52,7 @@ class EmailObject
 
     public string $text_body = '';
 
-    /** @var array{key: value} $args */
+    /** @var array{key: value} */
     public array $attachments = [];
 
     public string $company_key;
@@ -92,7 +91,7 @@ class EmailObject
 
     public ?int $client_contact_id = null;
 
-    public ClientContact|VendorContact|null  $contact;
+    public ClientContact|VendorContact|null $contact;
 
     public ?int $vendor_contact_id = null;
 
@@ -104,22 +103,22 @@ class EmailObject
 
     public ?string $text_template = 'email.template.text';
 
-    /** @var array{key: value} $args */
+    /** @var array{key: value} */
     public array $headers = [];
 
     public ?string $entity_class = null;
 
-    /** @var array{key: value} $args */
+    /** @var array{key: value} */
     public array $variables = [];
 
     public bool $override = false;
 
     public ?string $invitation_key = null;
 
-    /** @var array[int] $args */
+    /** @var array[int] */
     public array $documents = [];
 
-    public ?string $template = null; //invoice //quote //reminder1
+    public ?string $template = null; // invoice //quote //reminder1
 
     public array $links = [];
 

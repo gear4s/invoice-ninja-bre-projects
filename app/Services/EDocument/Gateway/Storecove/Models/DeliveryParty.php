@@ -5,11 +5,12 @@ namespace App\Services\EDocument\Gateway\Storecove\Models;
 class DeliveryParty
 {
     public ?Party $party;
+
     /** @var PublicIdentifiers[]|null */
     public ?array $public_identifiers;
 
     /**
-     * @param PublicIdentifiers[] $public_identifiers
+     * @param  PublicIdentifiers[]  $public_identifiers
      */
     public function __construct(?Party $party, ?array $public_identifiers)
     {
@@ -33,15 +34,17 @@ class DeliveryParty
     public function setParty(?Party $party): self
     {
         $this->party = $party;
+
         return $this;
     }
 
     /**
-     * @param PublicIdentifiers[] $public_identifiers
+     * @param  PublicIdentifiers[]  $public_identifiers
      */
     public function setPublicIdentifiers(?array $public_identifiers): self
     {
         $this->public_identifiers = $public_identifiers;
+
         return $this;
     }
 }

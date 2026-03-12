@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,13 +19,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Jobs\Util\UploadFile
  */
 class UploadFileTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -39,7 +37,7 @@ class UploadFileTest extends TestCase
         );
     }
 
-    public function testFileUploadWorks()
+    public function test_file_upload_works()
     {
         $image = UploadedFile::fake()->image('avatar.jpg');
 

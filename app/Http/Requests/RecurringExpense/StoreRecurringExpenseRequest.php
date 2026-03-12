@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,9 @@ namespace App\Http\Requests\RecurringExpense;
 
 use App\Http\Requests\Request;
 use App\Models\RecurringExpense;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreRecurringExpenseRequest extends Request
@@ -23,12 +24,10 @@ class StoreRecurringExpenseRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', RecurringExpense::class);
@@ -37,7 +36,7 @@ class StoreRecurringExpenseRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -46,7 +45,7 @@ class StoreRecurringExpenseRequest extends Request
             $rules['number'] = Rule::unique('recurring_expenses')->where('company_id', $user->company()->id);
         }
 
-        if (! empty($this->client_id)) {
+        if (!empty($this->client_id)) {
             $rules['client_id'] = 'bail|sometimes|exists:clients,id,company_id,' . $user->company()->id;
         }
 
@@ -68,18 +67,18 @@ class StoreRecurringExpenseRequest extends Request
     public function prepareForValidation()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
 
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -87,7 +86,7 @@ class StoreRecurringExpenseRequest extends Request
             $input['next_send_date_client'] = $input['next_send_date'];
         }
 
-        if (! array_key_exists('currency_id', $input) || strlen($input['currency_id']) == 0) {
+        if (!array_key_exists('currency_id', $input) || strlen($input['currency_id']) == 0) {
             $input['currency_id'] = (string) $user->company()->settings->currency_id;
         }
 

@@ -6,24 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\TaskScheduler;
 
-use App\Utils\BcMath;
 use App\Http\Requests\Request;
-use App\Models\RecurringQuote;
-use Illuminate\Support\Carbon;
 use App\Models\RecurringInvoice;
+use App\Utils\BcMath;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class PaymentScheduleRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -78,11 +75,11 @@ class PaymentScheduleRequest extends Request
             if ($first_map['is_amount'] && !BcMath::equal($schedule_map->sum('amount'), $this->invoice->amount)) {
                 $validator = \Validator::make([], []);
                 $validator->errors()->add('schedule', 'The total amount of the schedule does not match the invoice amount.');
-                throw new \Illuminate\Validation\ValidationException($validator);
+                throw new ValidationException($validator);
             } elseif (!$first_map['is_amount'] && !BcMath::equal($schedule_map->sum('amount'), 100)) {
                 $validator = \Validator::make([], []);
                 $validator->errors()->add('schedule', 'The total percentage amount of the schedule does not match 100%.');
-                throw new \Illuminate\Validation\ValidationException($validator);
+                throw new ValidationException($validator);
             } else {
                 $input['parameters']['schedule'] = $schedule_map->toArray();
             }
@@ -105,14 +102,13 @@ class PaymentScheduleRequest extends Request
     private function generateSchedule(int $frequency_id, int $remaining_cycles, Carbon $due_date)
     {
 
-
         $amount = round($this->invoice->amount / $remaining_cycles, 2);
 
         $delta = round($amount * $remaining_cycles, 2);
         $adjustment = 0;
 
         if (!BcMath::equal($delta, $this->invoice->amount)) {
-            $adjustment = round(floatval($this->invoice->amount) - floatval($delta), 2); //adjustment to make the total amount equal to the invoice amount
+            $adjustment = round(floatval($this->invoice->amount) - floatval($delta), 2); // adjustment to make the total amount equal to the invoice amount
         }
 
         $schedule = [];

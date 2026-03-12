@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,13 +18,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *   App\Helpers\Invoice\InvoiceItemSumInclusive
  */
 class InvoiceItemInclusiveTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,14 +32,14 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testInvoiceItemTotalSimpleX()
+    public function test_invoice_item_total_simple_x()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = 10;
         $item->is_amount_discount = true;
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -52,7 +51,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getLineTotal(), 10);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscount()
+    public function test_invoice_item_total_simple_with_discount()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -62,7 +61,7 @@ class InvoiceItemInclusiveTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -72,7 +71,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getLineTotal(), 8);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscountWithPrecision()
+    public function test_invoice_item_total_simple_with_discount_with_precision()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -82,7 +81,7 @@ class InvoiceItemInclusiveTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -92,7 +91,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getLineTotal(), 7.48);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscountWithPrecisionWithSingleInclusiveTax()
+    public function test_invoice_item_total_simple_with_discount_with_precision_with_single_inclusive_tax()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -101,7 +100,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $item->discount = 0;
         $item->tax_rate1 = 10;
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -114,7 +113,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getSubTotal(), 10);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscountWithPrecisionWithSingleInclusiveTax2()
+    public function test_invoice_item_total_simple_with_discount_with_precision_with_single_inclusive_tax2()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -123,7 +122,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $item->discount = 2;
         $item->tax_rate1 = 10;
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -136,7 +135,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getSubTotal(), 8);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscountWithPrecisionWithDoubleInclusiveTax()
+    public function test_invoice_item_total_simple_with_discount_with_precision_with_double_inclusive_tax()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -148,7 +147,7 @@ class InvoiceItemInclusiveTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -159,7 +158,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getSubTotal(), 10);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscountWithDoubleInclusiveTax()
+    public function test_invoice_item_total_simple_with_discount_with_double_inclusive_tax()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
@@ -171,7 +170,7 @@ class InvoiceItemInclusiveTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -182,7 +181,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getTotalTaxes(), 2.16);
     }
 
-    public function testInvoiceItemTotalSimpleWithDiscountWithDoubleInclusiveTaxMultiQuantity()
+    public function test_invoice_item_total_simple_with_discount_with_double_inclusive_tax_multi_quantity()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 2;
@@ -194,7 +193,7 @@ class InvoiceItemInclusiveTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -205,7 +204,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->assertEquals($item_calc->getTotalTaxes(), 4.56);
     }
 
-    public function testInvoiceItemTotalSimpleWithPercentDiscountWithDoubleInclusiveTaxMultiQuantity()
+    public function test_invoice_item_total_simple_with_percent_discount_with_double_inclusive_tax_multi_quantity()
     {
         $item = InvoiceItemFactory::create();
         $item->quantity = 2;
@@ -218,7 +217,7 @@ class InvoiceItemInclusiveTest extends TestCase
         $this->invoice->line_items = [$item];
         $this->invoice->is_amount_discount = false;
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 

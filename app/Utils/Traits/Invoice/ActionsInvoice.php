@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -38,7 +37,7 @@ trait ActionsInvoice
 
     public function invoiceDeletable($invoice): bool
     {
-        //Cancelled invoices are not deletable if verifactu is enabled
+        // Cancelled invoices are not deletable if verifactu is enabled
         if ($invoice->company->verifactuEnabled() && $invoice->status_id == Invoice::STATUS_DRAFT && $invoice->is_deleted == false) {
             return true;
         } elseif ($invoice->company->verifactuEnabled()) {

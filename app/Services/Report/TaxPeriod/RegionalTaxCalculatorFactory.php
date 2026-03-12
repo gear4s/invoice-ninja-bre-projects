@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -40,12 +39,12 @@ class RegionalTaxCalculatorFactory
 
         foreach (self::CALCULATORS as $calculator_class) {
             if ($calculator_class::supports($country_iso)) {
-                return new $calculator_class();
+                return new $calculator_class;
             }
         }
 
         // Fallback to generic (should never reach here due to GenericTaxCalculator)
-        return new GenericTaxCalculator();
+        return new GenericTaxCalculator;
     }
 
     /**
@@ -54,6 +53,7 @@ class RegionalTaxCalculatorFactory
     public static function hasRegionalCalculator(Company $company): bool
     {
         $calculator = self::create($company);
+
         return !($calculator instanceof GenericTaxCalculator);
     }
 }

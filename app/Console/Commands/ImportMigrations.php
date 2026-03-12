@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,8 +34,8 @@ use ZipArchive;
 
 class ImportMigrations extends Command
 {
-    use MakesHash;
     use AppSetup;
+    use MakesHash;
 
     /**
      * The name and signature of the console command.
@@ -87,11 +86,11 @@ class ImportMigrations extends Command
 
                 $this->info('Started processing: ' . $file->getBasename() . ' at ' . now());
 
-                $zip = new ZipArchive();
+                $zip = new ZipArchive;
                 $archive = $zip->open($file->getRealPath());
 
                 try {
-                    if (! $archive) {
+                    if (!$archive) {
                         throw new ProcessingMigrationArchiveFailed('Processing migration archive failed. Migration file is possibly corrupted.');
                     }
 
@@ -161,7 +160,7 @@ class ImportMigrations extends Command
             'is_disabled' => true,
         ]);
 
-        if (! $account->default_company_id) {
+        if (!$account->default_company_id) {
             $account->default_company_id = $company->id;
             $account->save();
         }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,7 +42,7 @@ class PaymentHtmlEngine
         $this->contact = $contact ?: $this->client->contacts()->first();
         $this->contact->load('client.company');
         $this->settings = $this->client->getMergedSettings();
-        $this->helpers = new Helpers();
+        $this->helpers = new Helpers;
     }
 
     public function setSettings($settings): self
@@ -152,7 +151,7 @@ class PaymentHtmlEngine
         $data['$company.city'] = ['value' => $this->settings->city ?: ' ', 'label' => ctrans('texts.city')];
         $data['$company.state'] = ['value' => $this->settings->state ?: ' ', 'label' => ctrans('texts.state')];
         $data['$company.postal_code'] = ['value' => $this->settings->postal_code ?: ' ', 'label' => ctrans('texts.postal_code')];
-        //$data['$company.country'] = ['value' => $this->getCountryName(), 'label' => ctrans('texts.country')];
+        // $data['$company.country'] = ['value' => $this->getCountryName(), 'label' => ctrans('texts.country')];
         $data['$company.phone'] = ['value' => $this->settings->phone ?: ' ', 'label' => ctrans('texts.phone')];
         $data['$company.email'] = ['value' => $this->settings->email ?: ' ', 'label' => ctrans('texts.email')];
         $data['$company.vat_number'] = ['value' => $this->settings->vat_number ?: ' ', 'label' => ctrans('texts.vat_number')];
@@ -174,7 +173,7 @@ class PaymentHtmlEngine
         $data['$viewButton'] = &$data['$view_link'];
         $data['$viewLink'] = &$data['$view_link'];
         $data['$paymentLink'] = &$data['$view_link'];
-        $data['$portalButton'] = ['value' =>  $this->buildViewButton($this->payment->getPortalLink(), ctrans('texts.login')), 'label' => ''];
+        $data['$portalButton'] = ['value' => $this->buildViewButton($this->payment->getPortalLink(), ctrans('texts.login')), 'label' => ''];
         $data['$portal_url'] = &$data['$portalButton'];
 
         $data['$view_url'] = ['value' => $this->payment->getLink(), 'label' => ctrans('texts.view_payment')];
@@ -304,8 +303,6 @@ class PaymentHtmlEngine
 
     /**
      * generateLabelsAndValues
-     *
-     * @return array
      */
     public function generateLabelsAndValues(): array
     {
@@ -323,10 +320,6 @@ class PaymentHtmlEngine
 
     /**
      * buildViewButton
-     *
-     * @param  string $link
-     * @param  string $text
-     * @return string
      */
     private function buildViewButton(string $link, string $text): string
     {
@@ -354,7 +347,6 @@ class PaymentHtmlEngine
 <![endif]-->
 </div>
         ';
-
 
         // return '
         //     <table border="0" cellspacing="0" cellpadding="0" align="center">

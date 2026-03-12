@@ -6,17 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers\ClientPortal;
 
 use App\Http\Controllers\Controller;
+use App\Models\Language;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class SubscriptionPurchaseController extends Controller
@@ -64,7 +64,7 @@ class SubscriptionPurchaseController extends Controller
             session()->put('url.intended', route('client.subscription.upgrade', ['subscription' => $subscription->hashed_id]));
 
             return redirect()->route('client.register', ['company_key' => $subscription->company->company_key]);
-        } elseif (!auth()->guard('contact')->check() && $subscription->registration_required && ! $subscription->company->client_can_register) {
+        } elseif (!auth()->guard('contact')->check() && $subscription->registration_required && !$subscription->company->client_can_register) {
             return render('generic.subscription_blocked', ['account' => $subscription->company->account, 'company' => $subscription->company]);
         }
 
@@ -87,18 +87,15 @@ class SubscriptionPurchaseController extends Controller
 
     /**
      * Set locale for incoming request.
-     *
-     * @param string $locale
-     * @return string
      */
     private function setLocale(string $locale): string
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+        /** @var Collection<Language> */
         $languages = app('languages');
 
         $record = $languages->first(function ($item) use ($locale) {
-            /** @var \App\Models\Language $item */
+            /** @var Language $item */
             return $item->locale == $locale;
         });
 

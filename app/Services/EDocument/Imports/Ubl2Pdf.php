@@ -6,39 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Imports;
 
-use App\Utils\Ninja;
-use App\Utils\Number;
-use App\Models\Vendor;
 use App\Models\Company;
 use App\Models\Country;
-use App\Models\Expense;
 use App\Models\Currency;
-use App\Factory\VendorFactory;
-use App\Factory\ExpenseFactory;
 use App\Services\AbstractService;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\App;
-use InvoiceNinja\EInvoice\EInvoice;
-use App\Utils\Traits\SavesDocuments;
-use App\Factory\VendorContactFactory;
-use App\Repositories\ExpenseRepository;
 use App\Services\Template\TemplateService;
+use App\Utils\Ninja;
+use App\Utils\Number;
+use Illuminate\Support\Facades\App;
+use InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
+use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 
 class Ubl2Pdf extends AbstractService
 {
-    /** @var \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote */
-    public \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice;
+    public \InvoiceNinja\EInvoice\Models\Peppol\Invoice|CreditNote $invoice;
 
     /**
      * @throws \Throwable
      */
-    public function __construct(\InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $invoice, public Company $company)
+    public function __construct(Invoice|CreditNote $invoice, public Company $company)
     {
         $this->invoice = $invoice;
     }
@@ -66,13 +57,13 @@ class Ubl2Pdf extends AbstractService
             'css' => $this->customCss(),
         ];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         $ts_instance = $ts->setCompany($this->company)
-                    ->setData($data)
-                    ->setRawTemplate($template)
-                    ->parseNinjaBlocks()
-                    ->save();
+            ->setData($data)
+            ->setRawTemplate($template)
+            ->parseNinjaBlocks()
+            ->save();
 
         nlog($ts_instance->getHtml());
 
@@ -160,12 +151,12 @@ class Ubl2Pdf extends AbstractService
     private function customCss(): string
     {
         $css = '';
-        $css .= "." . str_replace(" ", "", ctrans('texts.product_key')) . " { width: 15%;} ";
-        $css .= "." . str_replace(" ", "", ctrans('texts.quantity')) . " { width: 8%;} ";
-        $css .= "." . str_replace(" ", "", ctrans('texts.notes')) . " { width: 40%; } ";
-        $css .= "." . str_replace(" ", "", ctrans('texts.cost')) . " { width:10%;} ";
-        $css .= "." . str_replace(" ", "", ctrans('texts.tax')) . " { width:10%;} ";
-        $css .= "." . str_replace(" ", "", ctrans('texts.line_total')) . " { width:15%;} ";
+        $css .= '.' . str_replace(' ', '', ctrans('texts.product_key')) . ' { width: 15%;} ';
+        $css .= '.' . str_replace(' ', '', ctrans('texts.quantity')) . ' { width: 8%;} ';
+        $css .= '.' . str_replace(' ', '', ctrans('texts.notes')) . ' { width: 40%; } ';
+        $css .= '.' . str_replace(' ', '', ctrans('texts.cost')) . ' { width:10%;} ';
+        $css .= '.' . str_replace(' ', '', ctrans('texts.tax')) . ' { width:10%;} ';
+        $css .= '.' . str_replace(' ', '', ctrans('texts.line_total')) . ' { width:15%;} ';
 
         return $css;
 
@@ -176,7 +167,7 @@ class Ubl2Pdf extends AbstractService
 
         $data = $this->processValues([
             ctrans('texts.currency') => data_get($this->invoice, 'DocumentCurrencyCode.value', $this->company->currency()->code),
-            ctrans('texts.currency_code') => data_get($this->invoice, 'InvoiceTypeCode.value', "380"),
+            ctrans('texts.currency_code') => data_get($this->invoice, 'InvoiceTypeCode.value', '380'),
             ctrans('texts.number') => data_get($this->invoice, 'ID.value', ''),
             ctrans('texts.date') => data_get($this->invoice, 'IssueDate', ''),
             ctrans('texts.due_date') => data_get($this->invoice, 'DueDate', ''),
@@ -209,9 +200,9 @@ class Ubl2Pdf extends AbstractService
         $payment_means[] = data_get($this->invoice, 'PaymentTerms.0.Note', false);
 
         $private_notes = collect($payment_means)
-                                ->reject(function ($means) {
-                                    return $means === false;
-                                })->implode("\n");
+            ->reject(function ($means) {
+                return $means === false;
+            })->implode("\n");
 
         return $private_notes;
 
@@ -226,7 +217,7 @@ class Ubl2Pdf extends AbstractService
                 ctrans('texts.product_key') => data_get($line, 'Item.Name', ''),
                 // ctrans('texts.ocde') => data_get($line, 'InvoicedQuantity.UnitCode',''),
                 ctrans('texts.quantity') => Number::formatValue(data_get($line, 'InvoicedQuantity.amount', 0), $this->company->currency()),
-                ctrans('texts.notes') =>  data_get($line, 'Item.Description', ''),
+                ctrans('texts.notes') => data_get($line, 'Item.Description', ''),
                 ctrans('texts.cost') => Number::formatValue(data_get($line, 'Price.PriceAmount.amount', 0), $this->company->currency()),
                 'tax_name1' => data_get($line, 'Item.ClassifiedTaxCategory.0.TaxScheme.ID.value', ''),
                 'tax_rate1' => data_get($line, 'Item.ClassifiedTaxCategory.0.Percent', 0),
@@ -273,7 +264,6 @@ class Ubl2Pdf extends AbstractService
     //                         ->orWhere('iso_3166_3', $iso_country_code)
     //                         ->first()?->id ?? (int)$this->company->settings->country_id;
     //     }
-
 
     //     private function resolveCurrencyId(string $currency_code): int
     //     {

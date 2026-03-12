@@ -1,9 +1,12 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -11,13 +14,13 @@ return new class extends Migration {
      */
     public function up()
     {
-        Schema::table('company_user', function (Illuminate\Database\Schema\Blueprint $table) {
+        Schema::table('company_user', function (Blueprint $table) {
             $table->mediumText('react_settings')->nullable();
         });
 
-        \Illuminate\Support\Facades\Artisan::call('ninja:design-update');
+        Artisan::call('ninja:design-update');
 
-        Schema::table('schedulers', function (Illuminate\Database\Schema\Blueprint $table) {
+        Schema::table('schedulers', function (Blueprint $table) {
             $table->integer('remaining_cycles')->nullable();
         });
     }
@@ -27,7 +30,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

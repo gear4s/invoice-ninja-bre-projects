@@ -6,14 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
 use Symfony\Component\Serializer\Attribute\Context;
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class AllowanceCharges
@@ -49,7 +47,7 @@ class AllowanceCharges
     public ?string $reason_code;
 
     /**
-     * @param TaxesDutiesFees[] $taxes_duties_fees
+     * @param  TaxesDutiesFees[]  $taxes_duties_fees
      */
     public function __construct(
         ?float $amount_excluding_vat,
@@ -119,51 +117,59 @@ class AllowanceCharges
     public function setAmountExcludingVat(?float $amount_excluding_vat): self
     {
         $this->amount_excluding_vat = $amount_excluding_vat;
+
         return $this;
     }
 
     public function setAmountExcludingTax(?float $amount_excluding_tax): self
     {
         $this->amount_excluding_tax = $amount_excluding_tax;
+
         return $this;
     }
 
     public function setBaseAmountExcludingTax(?float $base_amount_excluding_tax): self
     {
         $this->base_amount_excluding_tax = $base_amount_excluding_tax;
+
         return $this;
     }
 
     public function setAmountIncludingTax(?float $amount_including_tax): self
     {
         $this->amount_including_tax = $amount_including_tax;
+
         return $this;
     }
 
     public function setBaseAmountIncludingTax(?float $base_amount_including_tax): self
     {
         $this->base_amount_including_tax = $base_amount_including_tax;
+
         return $this;
     }
 
     /**
-     * @param TaxesDutiesFees[] $taxes_duties_fees
+     * @param  TaxesDutiesFees[]  $taxes_duties_fees
      */
     public function setTaxesDutiesFees(?array $taxes_duties_fees): self
     {
         $this->taxes_duties_fees = $taxes_duties_fees;
+
         return $this;
     }
 
     public function setReason(?string $reason): self
     {
         $this->reason = $reason;
+
         return $this;
     }
 
     public function setReasonCode(?string $reason_code): self
     {
         $this->reason_code = $reason_code;
+
         return $this;
     }
 }

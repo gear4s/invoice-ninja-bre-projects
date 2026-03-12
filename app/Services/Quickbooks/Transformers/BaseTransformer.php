@@ -6,15 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
 use App\Models\Client;
-use App\Models\Vendor;
 use App\Models\Company;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Timezone;
+use App\Models\Vendor;
 
 /**
  * Class BaseTransformer.
@@ -25,10 +27,10 @@ class BaseTransformer
 
     public function resolveCountry(?string $iso_3_code): string
     {
-        /** @var \App\Models\Country $country */
+        /** @var Country $country */
         $country = app('countries')->first(function ($c) use ($iso_3_code) {
 
-            /** @var \App\Models\Country $c */
+            /** @var Country $c */
             return $c->iso_3166_3 == $iso_3_code || $c->name == $iso_3_code;
         });
 
@@ -38,10 +40,10 @@ class BaseTransformer
     public function resolveCurrency(string $currency_code): string
     {
 
-        /** @var \App\Models\Currency $currency */
+        /** @var Currency $currency */
         $currency = app('currencies')->first(function ($c) use ($currency_code) {
 
-            /** @var \App\Models\Currency $c */
+            /** @var Currency $c */
             return $c->code == strtoupper($currency_code);
         });
 
@@ -54,9 +56,9 @@ class BaseTransformer
             return (string) $this->company->settings->timezone_id;
         }
 
-        /** @var \App\Models\Timezone $timezone */
+        /** @var Timezone $timezone */
         $timezone = app('timezones')->first(function ($t) use ($timezone_name) {
-            /** @var \App\Models\Timezone $t */
+            /** @var Timezone $t */
             return $t->name === $timezone_name;
         });
 
@@ -76,11 +78,11 @@ class BaseTransformer
     public function getClientId($customer_reference_id): ?int
     {
         $client = Client::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
                     // ->where('number', $customer_reference_id)
-                    ->where('sync->qb_id', $customer_reference_id)
-                    ->first();
+            ->where('sync->qb_id', $customer_reference_id)
+            ->first();
 
         return $client ? $client->id : null;
     }
@@ -88,10 +90,10 @@ class BaseTransformer
     public function getVendorId($customer_reference_id): ?int
     {
         $vendor = Vendor::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('number', $customer_reference_id)
-                    ->first();
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->where('number', $customer_reference_id)
+            ->first();
 
         return $vendor ? $vendor->id : null;
     }

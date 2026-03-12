@@ -6,42 +6,40 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Carbon\Carbon;
-use Tests\TestCase;
-use App\Models\Client;
-use App\Utils\Helpers;
-use App\Models\Product;
-use Tests\MockAccountData;
-use App\Models\Subscription;
-use App\Models\ClientContact;
-use App\Utils\Traits\MakesHash;
-use App\Models\RecurringInvoice;
 use App\Factory\InvoiceItemFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use App\Factory\RecurringInvoiceFactory;
-use Database\Factories\SubscriptionFactory;
-use App\Jobs\RecurringInvoice\UpdateRecurring;
 use App\Factory\InvoiceToRecurringInvoiceFactory;
+use App\Factory\RecurringInvoiceFactory;
 use App\Factory\RecurringInvoiceToInvoiceFactory;
-use Illuminate\Routing\Middleware\ThrottleRequests;
+use App\Jobs\RecurringInvoice\UpdateRecurring;
+use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Product;
+use App\Models\RecurringInvoice;
+use App\Models\Subscription;
+use App\Utils\Helpers;
+use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\RecurringInvoiceController
  */
 class RecurringInvoiceTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -56,7 +54,7 @@ class RecurringInvoiceTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testUniqueNumber()
+    public function test_unique_number()
     {
 
         $data = [
@@ -82,11 +80,11 @@ class RecurringInvoiceTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/recurring_invoices', $data)
-        ->assertStatus(422);
+            ->assertStatus(422);
 
     }
 
-    public function testBulkUpdatesTaxes()
+    public function test_bulk_updates_taxes()
     {
         RecurringInvoice::factory(5)->create([
             'user_id' => $this->user->id,
@@ -96,9 +94,9 @@ class RecurringInvoiceTest extends TestCase
         ]);
 
         $ri = RecurringInvoice::query()
-                            ->where('company_id', $this->company->id)
-                            ->where('client_id', $this->client->id)
-                            ->where('vendor_id', $this->vendor->id);
+            ->where('company_id', $this->company->id)
+            ->where('client_id', $this->client->id)
+            ->where('vendor_id', $this->vendor->id);
 
         $this->assertCount(5, $ri->get());
 
@@ -115,7 +113,6 @@ class RecurringInvoiceTest extends TestCase
         ])->postJson('/api/v1/recurring_invoices/bulk', $data);
 
         $response->assertStatus(200);
-
 
         $ri->cursor()->each(function ($e) {
             $this->assertEquals('GST', $e->tax_name1);
@@ -139,7 +136,6 @@ class RecurringInvoiceTest extends TestCase
         $ri->cursor()->each(function ($e) {
             $this->assertEquals('CUSTOMCUSTOM123', $e->custom_value1);
         });
-
 
         $data = [
             'action' => 'bulk_update',
@@ -174,7 +170,7 @@ class RecurringInvoiceTest extends TestCase
         $response->assertStatus(200);
 
         $ri->cursor()->each(function ($e) {
-            $this->assertTrue((bool)$e->uses_inclusive_taxes);
+            $this->assertTrue((bool) $e->uses_inclusive_taxes);
         });
 
         $data = [
@@ -213,16 +209,9 @@ class RecurringInvoiceTest extends TestCase
             $this->assertEquals('TESTEST123', $e->private_notes);
         });
 
-
-
     }
 
-
-
-
-
-
-    public function testDateValidations()
+    public function test_date_validations()
     {
         $data = [
             'client_id' => $this->client->hashed_id,
@@ -234,22 +223,20 @@ class RecurringInvoiceTest extends TestCase
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/recurring_invoices', $data)
-          ->assertStatus(422);
+            ->assertStatus(422);
 
     }
 
-    public function testLinkingSubscription()
+    public function test_linking_subscription()
     {
         $s = Subscription::factory()
-        ->create(['company_id' => $this->company->id, 'user_id' => $this->user->id]);
-
+            ->create(['company_id' => $this->company->id, 'user_id' => $this->user->id]);
 
         $s2 = Subscription::factory()
-        ->create(['company_id' => $this->company->id, 'user_id' => $this->user->id]);
-
+            ->create(['company_id' => $this->company->id, 'user_id' => $this->user->id]);
 
         $r = RecurringInvoice::factory()
-        ->create(['company_id' => $this->company->id, 'user_id' => $this->user->id,'client_id' => $this->client->id]);
+            ->create(['company_id' => $this->company->id, 'user_id' => $this->user->id, 'client_id' => $this->client->id]);
 
         $rr = $r->service()->setPaymentLink($s->hashed_id)->save();
 
@@ -262,10 +249,10 @@ class RecurringInvoiceTest extends TestCase
         ];
 
         $response = $this->withHeaders([
-           'X-API-SECRET' => config('ninja.api_secret'),
-           'X-API-TOKEN' => $this->token,
-       ])->postJson('/api/v1/recurring_invoices/bulk', $data)
-       ->assertStatus(200);
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/recurring_invoices/bulk', $data)
+            ->assertStatus(200);
 
         $arr = $response->json();
 
@@ -273,10 +260,9 @@ class RecurringInvoiceTest extends TestCase
 
         $this->assertEquals($s2->id, $r->subscription_id);
 
-
     }
 
-    public function testStartDate()
+    public function test_start_date()
     {
         $line_items = [];
 
@@ -285,10 +271,9 @@ class RecurringInvoiceTest extends TestCase
         $item->cost = 10;
         $item->task_id = $this->encodePrimaryKey($this->task->id);
         $item->expense_id = $this->encodePrimaryKey($this->expense->id);
-        $item->notes = "Hello this is the month of :MONTH";
+        $item->notes = 'Hello this is the month of :MONTH';
 
         $line_items[] = $item;
-
 
         $data = [
             'frequency_id' => 1,
@@ -322,7 +307,7 @@ class RecurringInvoiceTest extends TestCase
 
     }
 
-    public function testNextSendDateCatch()
+    public function test_next_send_date_catch()
     {
         $line_items = [];
 
@@ -331,10 +316,9 @@ class RecurringInvoiceTest extends TestCase
         $item->cost = 10;
         $item->task_id = $this->encodePrimaryKey($this->task->id);
         $item->expense_id = $this->encodePrimaryKey($this->expense->id);
-        $item->notes = "Hello this is the month of :MONTH";
+        $item->notes = 'Hello this is the month of :MONTH';
 
         $line_items[] = $item;
-
 
         $data = [
             'frequency_id' => 1,
@@ -366,7 +350,7 @@ class RecurringInvoiceTest extends TestCase
 
     }
 
-    public function testBulkIncreasePriceWithJob()
+    public function test_bulk_increase_price_with_job()
     {
 
         $recurring_invoice = RecurringInvoiceFactory::create($this->company->id, $this->user->id);
@@ -395,7 +379,7 @@ class RecurringInvoiceTest extends TestCase
 
     }
 
-    public function testBulkUpdateWithJob()
+    public function test_bulk_update_with_job()
     {
         $p = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -431,7 +415,7 @@ class RecurringInvoiceTest extends TestCase
 
     }
 
-    public function testBulkUpdatePrices()
+    public function test_bulk_update_prices()
     {
         $p = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -477,10 +461,9 @@ class RecurringInvoiceTest extends TestCase
 
         $this->assertEquals(22, $recurring_invoice->amount);
 
-
     }
 
-    public function testBulkUpdateMultiPrices()
+    public function test_bulk_update_multi_prices()
     {
         $p1 = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -491,11 +474,11 @@ class RecurringInvoiceTest extends TestCase
         ]);
 
         $p2 = Product::factory()->create([
-           'company_id' => $this->company->id,
-           'user_id' => $this->user->id,
-           'cost' => 20,
-           'price' => 20,
-           'product_key' => 'floyd',
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'cost' => 20,
+            'price' => 20,
+            'product_key' => 'floyd',
         ]);
 
         $recurring_invoice = RecurringInvoiceFactory::create($this->company->id, $this->user->id);
@@ -560,18 +543,16 @@ class RecurringInvoiceTest extends TestCase
 
     }
 
-
-    public function testRecurringGetStatus()
+    public function test_recurring_get_status()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/recurring_invoices?client_status=active')
-          ->assertStatus(200);
+            ->assertStatus(200);
     }
 
-
-    public function testPostRecurringInvoiceWithPlaceholderVariables()
+    public function test_post_recurring_invoice_with_placeholder_variables()
     {
         $line_items = [];
 
@@ -580,10 +561,9 @@ class RecurringInvoiceTest extends TestCase
         $item->cost = 10;
         $item->task_id = $this->encodePrimaryKey($this->task->id);
         $item->expense_id = $this->encodePrimaryKey($this->expense->id);
-        $item->notes = "Hello this is the month of :MONTH";
+        $item->notes = 'Hello this is the month of :MONTH';
 
         $line_items[] = $item;
-
 
         $data = [
             'frequency_id' => 1,
@@ -617,8 +597,7 @@ class RecurringInvoiceTest extends TestCase
         $this->assertTrue(str_contains($notes, ':MONTH'));
     }
 
-
-    public function testPostRecurringInvoice()
+    public function test_post_recurring_invoice()
     {
         $data = [
             'frequency_id' => 1,
@@ -648,7 +627,7 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals(RecurringInvoice::STATUS_DRAFT, $arr['data']['status_id']);
     }
 
-    public function testPostRecurringInvoiceWithStartAndStop()
+    public function test_post_recurring_invoice_with_start_and_stop()
     {
         $data = [
             'frequency_id' => 1,
@@ -681,14 +660,14 @@ class RecurringInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_invoices/'.$arr['data']['id'].'?stop=true', $data)
+        ])->put('/api/v1/recurring_invoices/' . $arr['data']['id'] . '?stop=true', $data)
             ->assertStatus(200);
 
         $arr = $response->json();
         $this->assertEquals(RecurringInvoice::STATUS_PAUSED, $arr['data']['status_id']);
     }
 
-    public function testRecurringInvoiceList()
+    public function test_recurring_invoice_list()
     {
         Client::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id])->each(function ($c) {
             ClientContact::factory()->create([
@@ -717,7 +696,7 @@ class RecurringInvoiceTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testRecurringInvoiceRESTEndPoints()
+    public function test_recurring_invoice_rest_end_points()
     {
         Client::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id])->each(function ($c) {
             ClientContact::factory()->create([
@@ -744,14 +723,14 @@ class RecurringInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_invoices/'.$this->encodePrimaryKey($RecurringInvoice->id));
+        ])->get('/api/v1/recurring_invoices/' . $this->encodePrimaryKey($RecurringInvoice->id));
 
         $response->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_invoices/'.$this->encodePrimaryKey($RecurringInvoice->id).'/edit');
+        ])->get('/api/v1/recurring_invoices/' . $this->encodePrimaryKey($RecurringInvoice->id) . '/edit');
 
         $response->assertStatus(200);
 
@@ -766,7 +745,7 @@ class RecurringInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_invoices/'.$this->encodePrimaryKey($RecurringInvoice->id), $RecurringInvoice_update)
+        ])->put('/api/v1/recurring_invoices/' . $this->encodePrimaryKey($RecurringInvoice->id), $RecurringInvoice_update)
             ->assertStatus(200);
 
         $arr = $response->json();
@@ -776,7 +755,7 @@ class RecurringInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/recurring_invoices/'.$this->encodePrimaryKey($RecurringInvoice->id), $RecurringInvoice_update)
+        ])->put('/api/v1/recurring_invoices/' . $this->encodePrimaryKey($RecurringInvoice->id), $RecurringInvoice_update)
             ->assertStatus(200);
 
         $response = $this->withHeaders([
@@ -788,19 +767,19 @@ class RecurringInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/recurring_invoices/'.$this->encodePrimaryKey($RecurringInvoice->id));
+        ])->delete('/api/v1/recurring_invoices/' . $this->encodePrimaryKey($RecurringInvoice->id));
 
         $response->assertStatus(200);
     }
 
-    public function testSubscriptionIdPassesToInvoice()
+    public function test_subscription_id_passes_to_invoice()
     {
         $recurring_invoice = InvoiceToRecurringInvoiceFactory::create($this->invoice);
         $recurring_invoice->user_id = $this->user->id;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->status_id = RecurringInvoice::STATUS_ACTIVE;
         $recurring_invoice->remaining_cycles = 2;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->save();
 
         $recurring_invoice->number = $this->getNextRecurringInvoiceNumber($this->invoice->client, $this->invoice);
@@ -812,17 +791,16 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals(10, $invoice->subscription_id);
     }
 
-    public function testRecurringDatePassesToInvoice()
+    public function test_recurring_date_passes_to_invoice()
     {
-        $noteText = "Hello this is for :MONTH_AFTER";
-        $recurringDate = \Carbon\Carbon::now()->timezone($this->client->timezone()->name)->subDays(10);
+        $noteText = 'Hello this is for :MONTH_AFTER';
+        $recurringDate = Carbon::now()->timezone($this->client->timezone()->name)->subDays(10);
 
         $item = InvoiceItemFactory::create();
         $item->cost = 10;
         $item->notes = $noteText;
 
         $recurring_invoice = InvoiceToRecurringInvoiceFactory::create($this->invoice);
-
 
         $recurring_invoice->user_id = $this->user->id;
         $recurring_invoice->next_send_date = $recurringDate;
@@ -843,14 +821,14 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals($expectedNote, $invoice->line_items[0]->notes);
     }
 
-    public function testSubscriptionIdPassesToInvoiceIfNull()
+    public function test_subscription_id_passes_to_invoice_if_null()
     {
         $recurring_invoice = InvoiceToRecurringInvoiceFactory::create($this->invoice);
         $recurring_invoice->user_id = $this->user->id;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->status_id = RecurringInvoice::STATUS_ACTIVE;
         $recurring_invoice->remaining_cycles = 2;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->save();
 
         $recurring_invoice->number = $this->getNextRecurringInvoiceNumber($this->invoice->client, $this->invoice);
@@ -861,14 +839,14 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals(null, $invoice->subscription_id);
     }
 
-    public function testSubscriptionIdPassesToInvoiceIfNothingSet()
+    public function test_subscription_id_passes_to_invoice_if_nothing_set()
     {
         $recurring_invoice = InvoiceToRecurringInvoiceFactory::create($this->invoice);
         $recurring_invoice->user_id = $this->user->id;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->status_id = RecurringInvoice::STATUS_ACTIVE;
         $recurring_invoice->remaining_cycles = 2;
-        $recurring_invoice->next_send_date = \Carbon\Carbon::now()->addDays(10);
+        $recurring_invoice->next_send_date = Carbon::now()->addDays(10);
         $recurring_invoice->save();
 
         $recurring_invoice->number = $this->getNextRecurringInvoiceNumber($this->invoice->client, $this->invoice);
@@ -879,7 +857,7 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals(null, $invoice->subscription_id);
     }
 
-    public function testFilterProductKey()
+    public function test_filter_product_key()
     {
         $p1 = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -954,7 +932,7 @@ class RecurringInvoiceTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->get('/api/v1/recurring_invoices?product_key=' . $p1->product_key .',' . $p2->product_key)
+        ])->get('/api/v1/recurring_invoices?product_key=' . $p1->product_key . ',' . $p2->product_key)
             ->assertStatus(200);
 
         $arr = $response->json();
@@ -962,7 +940,7 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals('2', $arr['meta']['pagination']['total']);
     }
 
-    public function testFilterFrequency()
+    public function test_filter_frequency()
     {
         $p1 = Product::factory()->create([
             'company_id' => $this->company->id,
@@ -1037,7 +1015,7 @@ class RecurringInvoiceTest extends TestCase
         $this->assertEquals('1', $arr['meta']['pagination']['total']);
     }
 
-    public function testFilterNextDateBetween()
+    public function test_filter_next_date_between()
     {
         $p1 = Product::factory()->create([
             'company_id' => $this->company->id,

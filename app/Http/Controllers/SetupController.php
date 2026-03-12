@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,6 @@ use App\Jobs\Account\CreateAccount;
 use App\Jobs\Util\SchedulerCheck;
 use App\Jobs\Util\VersionCheck;
 use App\Models\Account;
-use App\Utils\CurlUtils;
 use App\Utils\Ninja;
 use App\Utils\SystemHealth;
 use App\Utils\Traits\AppSetup;
@@ -158,7 +156,7 @@ class SetupController extends Controller
                 (new CreateAccount($request->all(), $request->getClientIp()))->handle();
             }
 
-            (new VersionCheck())->handle();
+            (new VersionCheck)->handle();
 
             return redirect('/');
         } catch (Exception $e) {
@@ -176,7 +174,6 @@ class SetupController extends Controller
     /**
      * Return status based on database check.
      *
-     * @param CheckDatabaseRequest $request
      * @return Application|ResponseFactory|JsonResponse|Response
      */
     public function checkDB(CheckDatabaseRequest $request)
@@ -191,7 +188,7 @@ class SetupController extends Controller
 
             return response($status, 400);
         } catch (Exception $e) {
-            nlog("failed?");
+            nlog('failed?');
             nlog($e->getMessage());
             nlog(['message' => $e->getMessage(), 'action' => 'SetupController::checkDB()']);
 
@@ -202,7 +199,6 @@ class SetupController extends Controller
     /**
      * Return status based on check of SMTP connection.
      *
-     * @param CheckMailRequest $request
      * @return Application|ResponseFactory|JsonResponse|Response
      */
     public function checkMail(CheckMailRequest $request)
@@ -258,7 +254,7 @@ class SetupController extends Controller
 
     public function update()
     {
-        if (! request()->has('secret') || (request()->input('secret') != config('ninja.update_secret'))) {
+        if (!request()->has('secret') || (request()->input('secret') != config('ninja.update_secret'))) {
             return redirect('/');
         }
 
@@ -288,7 +284,7 @@ class SetupController extends Controller
         Artisan::call('db:seed', ['--force' => true]);
         Artisan::call('cache:clear');
 
-        (new SchedulerCheck())->handle();
+        (new SchedulerCheck)->handle();
 
         return redirect('/');
     }

@@ -4,13 +4,12 @@ namespace App\Http\Requests\Expense;
 
 use App\Http\Requests\Request;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 class EDocumentRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -33,12 +32,11 @@ class EDocumentRequest extends Request
     {
         $input = $this->all();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
         $this->replace($input);
 
     }
-
 }

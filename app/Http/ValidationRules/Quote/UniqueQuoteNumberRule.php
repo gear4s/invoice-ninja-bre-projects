@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,13 +27,13 @@ class UniqueQuoteNumberRule implements Rule
     }
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-        return $this->checkIfQuoteNumberUnique(); //if it exists, return false!
+        return $this->checkIfQuoteNumberUnique(); // if it exists, return false!
     }
 
     /**
@@ -45,15 +44,12 @@ class UniqueQuoteNumberRule implements Rule
         return ctrans('texts.quote_number_taken');
     }
 
-    /**
-     * @return bool
-     */
     private function checkIfQuoteNumberUnique(): bool
     {
         $quote = Quote::query()->where('client_id', $this->input['client_id'])
-                        ->where('number', $this->input['number'])
-                        ->withTrashed()
-                        ->exists();
+            ->where('number', $this->input['number'])
+            ->withTrashed()
+            ->exists();
 
         if ($quote) {
             return false;

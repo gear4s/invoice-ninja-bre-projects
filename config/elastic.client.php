@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 return [
     'default' => env('ELASTIC_CONNECTION', 'default'),
@@ -19,7 +21,7 @@ return [
                 'timeout' => 2,
                 'verify_host' => false,  // Disable SSL verification
                 'verify_peer' => false,
-                
+
             ],
         ],
     ],

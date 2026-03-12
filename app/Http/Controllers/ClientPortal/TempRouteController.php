@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,13 +13,15 @@ namespace App\Http\Controllers\ClientPortal;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 class TempRouteController extends Controller
 {
     /**
      * Logs a user into the client portal using their contact_key
-     * @param  string $hash  The hash
-     * @return \Illuminate\View\View
+     *
+     * @param  string  $hash  The hash
+     * @return View
      */
     public function index(string $hash)
     {

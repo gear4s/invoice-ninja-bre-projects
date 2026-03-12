@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Utils\Traits\Inviteable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -36,14 +36,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property boolean $can_sign
+ * @property bool $can_sign
  * @property string|null $signature_ip
  * @property string|null $email_status
- * @property \App\Models\Company $company
- * @property \App\Models\ClientContact $contact
+ * @property Company $company
+ * @property ClientContact $contact
  * @property mixed $hashed_id
- * @property \App\Models\Invoice $invoice
- * @property \App\Models\User $user
+ * @property Invoice $invoice
+ * @property User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\InvoiceInvitationFactory factory($count = null, $state = [])
@@ -74,12 +75,13 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|InvoiceInvitation withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|InvoiceInvitation withoutTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|InvoiceInvitation where()
+ *
  * @mixin \Eloquent
  */
 class InvoiceInvitation extends BaseModel
 {
-    use SoftDeletes;
     use Inviteable;
+    use SoftDeletes;
 
     protected $fillable = [
         'client_contact_id',
@@ -107,34 +109,34 @@ class InvoiceInvitation extends BaseModel
         return Invoice::class;
     }
 
-    public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class)->withTrashed();
     }
 
-    public function getEntity(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function getEntity(): BelongsTo
     {
         return $this->belongsTo(Invoice::class)->withTrashed();
     }
 
-    public function contact(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function contact(): BelongsTo
     {
         return $this->belongsTo(ClientContact::class, 'client_contact_id', 'id')->withTrashed();
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
     public function signatureDiv()
     {
-        if (! $this->signature_base64) {
+        if (!$this->signature_base64) {
             return false;
         }
 
@@ -158,5 +160,4 @@ class InvoiceInvitation extends BaseModel
         $this->opened_date = Carbon::now();
         $this->save();
     }
-
 }

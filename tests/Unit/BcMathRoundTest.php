@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,142 +30,142 @@ class BcMathRoundTest extends TestCase
     // BcMath::round() — string-based rounding
     // ==========================================
 
-    public function testRoundHalfUp()
+    public function test_round_half_up()
     {
         $this->assertEquals('492.77', BcMath::round('492.765', 2));
     }
 
-    public function testRoundHalfDown()
+    public function test_round_half_down()
     {
         $this->assertEquals('492.76', BcMath::round('492.764', 2));
     }
 
-    public function testRoundExactHalf()
+    public function test_round_exact_half()
     {
         $this->assertEquals('492.78', BcMath::round('492.775', 2));
     }
 
-    public function testRoundNegativeHalfUp()
+    public function test_round_negative_half_up()
     {
         $this->assertEquals('-492.77', BcMath::round('-492.765', 2));
     }
 
-    public function testRoundNegativeHalfDown()
+    public function test_round_negative_half_down()
     {
         $this->assertEquals('-492.76', BcMath::round('-492.764', 2));
     }
 
-    public function testRoundZero()
+    public function test_round_zero()
     {
         $this->assertEquals('0.00', BcMath::round('0', 2));
     }
 
-    public function testRoundPrecisionZeroUp()
+    public function test_round_precision_zero_up()
     {
         $this->assertEquals('493', BcMath::round('492.5', 0));
     }
 
-    public function testRoundPrecisionZeroDown()
+    public function test_round_precision_zero_down()
     {
         $this->assertEquals('492', BcMath::round('492.4', 0));
     }
 
-    public function testRoundPrecisionFour()
+    public function test_round_precision_four()
     {
         $this->assertEquals('0.1235', BcMath::round('0.12345', 4));
     }
 
-    public function testRoundSmallValueAtBoundary()
+    public function test_round_small_value_at_boundary()
     {
         $this->assertEquals('0.01', BcMath::round('0.005', 2));
     }
 
-    public function testRoundCarryOver()
+    public function test_round_carry_over()
     {
         $this->assertEquals('1000000.00', BcMath::round('999999.995', 2));
     }
 
-    public function testRoundAlreadyRounded()
+    public function test_round_already_rounded()
     {
         $this->assertEquals('492.77', BcMath::round('492.77', 2));
     }
 
-    public function testRoundTrailingZeros()
+    public function test_round_trailing_zeros()
     {
         $this->assertEquals('10.10', BcMath::round('10.10', 2));
     }
 
-    public function testRoundInteger()
+    public function test_round_integer()
     {
         $this->assertEquals('500.00', BcMath::round('500', 2));
     }
 
-    public function testRoundPrecisionThreeUp()
+    public function test_round_precision_three_up()
     {
         $this->assertEquals('1.235', BcMath::round('1.2345', 3));
     }
 
-    public function testRoundPrecisionThreeDown()
+    public function test_round_precision_three_down()
     {
         $this->assertEquals('1.234', BcMath::round('1.2344', 3));
     }
 
-    public function testRoundHalfAtPrecisionZero()
+    public function test_round_half_at_precision_zero()
     {
         $this->assertEquals('3', BcMath::round('2.5', 0));
     }
 
-    public function testRoundNegativeHalfAtPrecisionZero()
+    public function test_round_negative_half_at_precision_zero()
     {
         $this->assertEquals('-3', BcMath::round('-2.5', 0));
     }
 
-    public function testRoundCascadeCarry()
+    public function test_round_cascade_carry()
     {
         $this->assertEquals('10.00', BcMath::round('9.999', 2));
     }
 
-    public function testRoundNinesAboveBoundary()
+    public function test_round_nines_above_boundary()
     {
         $this->assertEquals('2.00', BcMath::round('1.9999', 2));
     }
 
-    public function testRoundNinesBelowBoundary()
+    public function test_round_nines_below_boundary()
     {
         $this->assertEquals('1.99', BcMath::round('1.9949', 2));
     }
 
-    public function testRoundExactHalfWithTrailingZeros()
+    public function test_round_exact_half_with_trailing_zeros()
     {
         $this->assertEquals('2.00', BcMath::round('1.9950', 2));
     }
 
-    public function testRoundNegativeSmallValue()
+    public function test_round_negative_small_value()
     {
         $this->assertEquals('-1', BcMath::round('-0.5', 0));
     }
 
-    public function testRoundPositiveSmallValue()
+    public function test_round_positive_small_value()
     {
         $this->assertEquals('1', BcMath::round('0.5', 0));
     }
 
-    public function testRoundSubCentPositive()
+    public function test_round_sub_cent_positive()
     {
         $this->assertEquals('0', BcMath::round('0.05', 0));
     }
 
-    public function testRoundLargeNumber()
+    public function test_round_large_number()
     {
         $this->assertEquals('1234567890.12', BcMath::round('1234567890.123', 2));
     }
 
-    public function testRoundLargeNumberUp()
+    public function test_round_large_number_up()
     {
         $this->assertEquals('1234567890.13', BcMath::round('1234567890.125', 2));
     }
 
-    public function testRoundPiToFive()
+    public function test_round_pi_to_five()
     {
         $this->assertEquals('3.14159', BcMath::round('3.141592653589793', 5));
     }
@@ -183,7 +182,7 @@ class BcMathRoundTest extends TestCase
      * A computed float that displays as 492.765 but is stored as 492.764999...
      * Native round() on PHP 8.4 returns 492.76; BcMath must return 492.77.
      */
-    public function testPHP84RegressionOriginalCase()
+    public function test_ph_p84_regression_original_case()
     {
         $this->assertEquals('492.77', BcMath::round('492.765', 2));
         $this->assertEquals(492.77, Number::roundValue(492.765, 2));
@@ -194,7 +193,7 @@ class BcMathRoundTest extends TestCase
      * 6570 * 7.5 / 100 = 492.75 (exact), but multi-step float
      * arithmetic can drift.
      */
-    public function testTaxCalculationPrecision()
+    public function test_tax_calculation_precision()
     {
         $amount = 6570.20;
         $rate = 7.5;
@@ -207,7 +206,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Classic problematic case: 0.1 + 0.2 != 0.3 in IEEE 754
      */
-    public function testIEEE754ClassicDrift()
+    public function test_iee_e754_classic_drift()
     {
         $value = 0.1 + 0.2; // 0.30000000000000004
         $result = Number::roundValue($value, 2);
@@ -218,7 +217,7 @@ class BcMathRoundTest extends TestCase
      * Division that produces a value at the .5 boundary
      * 7380 / 28800 * 100 = 25.625 but float stores as 25.624999...
      */
-    public function testDivisionBoundaryDrift()
+    public function test_division_boundary_drift()
     {
         $value = (7380 / 28800) * 100;
         $result = Number::roundValue($value, 2);
@@ -228,7 +227,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Multiplication that lands on .5 boundary
      */
-    public function testMultiplicationBoundaryDrift()
+    public function test_multiplication_boundary_drift()
     {
         $value = 1.15 * 100; // Should be 115.0 but can drift
         $result = Number::roundValue($value, 2);
@@ -239,7 +238,7 @@ class BcMathRoundTest extends TestCase
      * Inclusive tax reverse calculation
      * amount - (amount / (1 + rate/100))
      */
-    public function testInclusiveTaxReverseCalculation()
+    public function test_inclusive_tax_reverse_calculation()
     {
         $amount = 107.50;
         $rate = 7.5;
@@ -252,42 +251,42 @@ class BcMathRoundTest extends TestCase
     // Number::roundValue() — float wrapper
     // ==========================================
 
-    public function testNumberRoundValueBasic()
+    public function test_number_round_value_basic()
     {
         $this->assertEquals(492.77, Number::roundValue(492.765, 2));
     }
 
-    public function testNumberRoundValueDown()
+    public function test_number_round_value_down()
     {
         $this->assertEquals(492.76, Number::roundValue(492.764, 2));
     }
 
-    public function testNumberRoundValueNegative()
+    public function test_number_round_value_negative()
     {
         $this->assertEquals(-492.77, Number::roundValue(-492.765, 2));
     }
 
-    public function testNumberRoundValueDefaultPrecision()
+    public function test_number_round_value_default_precision()
     {
         $this->assertEquals(492.77, Number::roundValue(492.765));
     }
 
-    public function testNumberRoundValuePrecisionThree()
+    public function test_number_round_value_precision_three()
     {
         $this->assertEquals(3.145, Number::roundValue(3.144944444444, 3));
     }
 
-    public function testNumberRoundValuePrecisionThreeLow()
+    public function test_number_round_value_precision_three_low()
     {
         $this->assertEquals(3.144, Number::roundValue(3.144444444444, 3));
     }
 
-    public function testNumberRoundValueZero()
+    public function test_number_round_value_zero()
     {
         $this->assertEquals(0.00, Number::roundValue(0.0, 2));
     }
 
-    public function testNumberRoundValueSmallAmount()
+    public function test_number_round_value_small_amount()
     {
         $this->assertEquals(0.01, Number::roundValue(0.005, 2));
     }
@@ -296,7 +295,7 @@ class BcMathRoundTest extends TestCase
      * Ensures Number::roundValue matches PHP_ROUND_HALF_UP behavior
      * for values where native round() is unambiguous (no drift)
      */
-    public function testNumberRoundValueMatchesNativeForCleanValues()
+    public function test_number_round_value_matches_native_for_clean_values()
     {
         $cases = [
             [1.5, 0, 2.0],
@@ -331,7 +330,7 @@ class BcMathRoundTest extends TestCase
      * Comprehensive data set ensuring BcMath::round() matches the
      * mathematically correct result for exact decimal strings.
      */
-    public function testBcMathRoundComprehensiveDataSet()
+    public function test_bc_math_round_comprehensive_data_set()
     {
         $cases = [
             // [input_string, precision, expected]
@@ -393,7 +392,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Typical invoice: cost * qty with tax
      */
-    public function testInvoiceLineItemWithTax()
+    public function test_invoice_line_item_with_tax()
     {
         $cost = 49.50;
         $qty = 3;
@@ -412,7 +411,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Discount calculation: percentage discount on line total
      */
-    public function testDiscountCalculation()
+    public function test_discount_calculation()
     {
         $line_total = 250.00;
         $discount = 12.5; // percent
@@ -426,7 +425,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Gateway fee: typical credit card fee calculation
      */
-    public function testGatewayFeeCalculation()
+    public function test_gateway_fee_calculation()
     {
         $amount = 1500.00;
         $fee_percent = 2.9;
@@ -441,7 +440,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Pro-rata calculation: partial period billing
      */
-    public function testProRataCalculation()
+    public function test_pro_rata_calculation()
     {
         $annual = 1200.00;
         $days_used = 45;
@@ -456,7 +455,7 @@ class BcMathRoundTest extends TestCase
     /**
      * Currency with 0 precision (JPY)
      */
-    public function testZeroPrecisionCurrency()
+    public function test_zero_precision_currency()
     {
         $this->assertEquals(493.0, Number::roundValue(492.5, 0));
         $this->assertEquals(492.0, Number::roundValue(492.4, 0));

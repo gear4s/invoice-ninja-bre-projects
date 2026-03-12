@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Credit Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,7 +36,9 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
     private ?string $from_date;
 
     public Company $company;
+
     public Nordigen $nordigen;
+
     public bool $nordigen_account = false;
 
     /**
@@ -59,14 +60,14 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
     public function handle()
     {
         if ($this->bank_integration->integration_type != BankIntegration::INTEGRATION_TYPE_NORDIGEN) {
-            throw new \Exception("Invalid BankIntegration Type");
+            throw new \Exception('Invalid BankIntegration Type');
         }
 
         if (!(config('ninja.nordigen.secret_id') && config('ninja.nordigen.secret_key'))) {
-            throw new \Exception("Missing credentials for bank_integration service nordigen");
+            throw new \Exception('Missing credentials for bank_integration service nordigen');
         }
 
-        $this->nordigen = new Nordigen();
+        $this->nordigen = new Nordigen;
 
         set_time_limit(0);
 
@@ -81,7 +82,7 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
 
             $content = [
                 "Processing transactions for account: {$this->bank_integration->nordigen_account_id} failed",
-                "Exception Details => ",
+                'Exception Details => ',
                 $e->getMessage(),
             ];
 
@@ -107,7 +108,7 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
 
             $content = [
                 "Processing transactions for account: {$this->bank_integration->nordigen_account_id} failed",
-                "Exception Details => ",
+                'Exception Details => ',
                 $e->getMessage(),
             ];
 
@@ -130,16 +131,16 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
     {
         $account_status = $this->nordigen->isAccountActive($this->bank_integration->nordigen_account_id);
 
-        //Return early if the account status is not in a good state
-        if (isset($account_status['status']) && in_array($account_status['status'], ['EXPIRED','DELETED'])) {
+        // Return early if the account status is not in a good state
+        if (isset($account_status['status']) && in_array($account_status['status'], ['EXPIRED', 'DELETED'])) {
 
             $this->bank_integration->disabled_upstream = true;
             $this->bank_integration->bank_account_status = $account_status['status'];
             $this->bank_integration->save();
 
-            nlog("Nordigen: account inactive: " . $this->bank_integration->nordigen_account_id);
+            nlog('Nordigen: account inactive: ' . $this->bank_integration->nordigen_account_id);
 
-            //Need requisition refresh!
+            // Need requisition refresh!
             if ($account_status['status'] == 'EXPIRED') {
                 $this->nordigen->disabledAccountEmail($this->bank_integration);
             }
@@ -147,15 +148,16 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
             return;
 
         } elseif (isset($account_status['status']) && $account_status['status'] != 'READY') {
-            //There may be other issues, return and await retry
-            nlog($account_status['id'] . " Nordigen account status == " . $account_status['status']);
+            // There may be other issues, return and await retry
+            nlog($account_status['id'] . ' Nordigen account status == ' . $account_status['status']);
+
             return;
 
         }
 
         $this->nordigen_account = true;
         $this->bank_integration->disabled_upstream = false;
-        $this->bank_integration->bank_account_status = "READY";
+        $this->bank_integration->bank_account_status = 'READY';
         // $this->bank_integration->bank_account_status = $account['account_status'];
         // $this->bank_integration->balance = $account['current_balance'];
         $this->bank_integration->save();
@@ -164,12 +166,12 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
 
     private function processTransactions()
     {
-        //Get transaction count object
+        // Get transaction count object
         $transactions = [];
 
         $transactions = $this->nordigen->getTransactions($this->company, $this->bank_integration->nordigen_account_id, $this->from_date);
 
-        //if no transactions, update the from_date and move on
+        // if no transactions, update the from_date and move on
         if (count($transactions) == 0) {
 
             $this->bank_integration->from_date = now()->subDays(5);
@@ -179,11 +181,11 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
             return;
         }
 
-        //Harvest the company
+        // Harvest the company
 
         MultiDB::setDb($this->company->db);
 
-        /*Get the user */
+        /* Get the user */
         $user_id = $this->company->owner()->id;
 
         /* Unguard the model to perform batch inserts */
@@ -194,15 +196,15 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
         foreach ($transactions as $transaction) {
 
             if (BankTransaction::where('nordigen_transaction_id', $transaction['nordigen_transaction_id'])
-                            ->where('company_id', $this->company->id)
-                            ->where('bank_integration_id', $this->bank_integration->id)
-                            ->where('is_deleted', 0)
-                            ->withTrashed()
-                            ->exists()) {
+                ->where('company_id', $this->company->id)
+                ->where('bank_integration_id', $this->bank_integration->id)
+                ->where('is_deleted', 0)
+                ->withTrashed()
+                ->exists()) {
                 continue;
             }
 
-            //this should be much faster to insert than using ::create()
+            // this should be much faster to insert than using ::create()
             \DB::table('bank_transactions')->insert(
                 array_merge($transaction, [
                     'company_id' => $this->company->id,

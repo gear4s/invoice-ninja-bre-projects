@@ -6,14 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal\Payments;
 
-use Livewire\Component;
 use Illuminate\Support\Facades\Http;
+use Livewire\Component;
 
 class BlockonomicsPriceDisplay extends Component
 {

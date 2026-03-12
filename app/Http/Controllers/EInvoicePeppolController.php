@@ -6,32 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Response;
-use Illuminate\Http\JsonResponse;
-use App\Services\EDocument\Jobs\SendEDocument;
-use App\Http\Requests\EInvoice\Peppol\RetrySendRequest;
-use App\Services\EDocument\Gateway\Storecove\Storecove;
+use App\Http\Requests\EInvoice\Peppol\AddTaxIdentifierRequest;
 use App\Http\Requests\EInvoice\Peppol\DisconnectRequest;
+use App\Http\Requests\EInvoice\Peppol\RemoveTaxIdentifierRequest;
+use App\Http\Requests\EInvoice\Peppol\RetrySendRequest;
 use App\Http\Requests\EInvoice\Peppol\ShowEntityRequest;
 use App\Http\Requests\EInvoice\Peppol\StoreEntityRequest;
 use App\Http\Requests\EInvoice\Peppol\UpdateEntityRequest;
+use App\Models\Company;
+use App\Services\EDocument\Gateway\Storecove\Storecove;
+use App\Services\EDocument\Jobs\SendEDocument;
 use App\Services\EDocument\Standards\Verifactu\SendToAeat;
-use App\Http\Requests\EInvoice\Peppol\AddTaxIdentifierRequest;
-use App\Http\Requests\EInvoice\Peppol\RemoveTaxIdentifierRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class EInvoicePeppolController extends BaseController
 {
     /**
      * Returns the legal entity ID
-     *
-     * @param  ShowEntityRequest $request
-     * @return JsonResponse
      */
     public function show(ShowEntityRequest $request, Storecove $storecove): JsonResponse
     {
@@ -46,14 +43,12 @@ class EInvoicePeppolController extends BaseController
      * Create a legal entity id, response will be
      * the same as show()
      *
-     * @param  StoreEntityRequest $request
-     * @param  Storecove $storecove
      * @return Response
      */
     public function setup(StoreEntityRequest $request, Storecove $storecove): Response|JsonResponse
     {
         /**
-         * @var \App\Models\Company
+         * @var Company
          */
         $company = auth()->user()->company();
 
@@ -112,9 +107,6 @@ class EInvoicePeppolController extends BaseController
 
     /**
      * Update legal properties such as acting as sender or receiver.
-     *
-     * @param \App\Http\Requests\EInvoice\Peppol\UpdateEntityRequest $request
-     * @return JsonResponse
      */
     public function updateLegalEntity(UpdateEntityRequest $request, Storecove $storecove): JsonResponse
     {
@@ -143,14 +135,11 @@ class EInvoicePeppolController extends BaseController
 
     /**
      * Removed the legal identity from the Peppol network
-     *
-     * @param  DisconnectRequest $request
-     *
      */
     public function disconnect(DisconnectRequest $request, Storecove $storecove): JsonResponse
     {
         /**
-         * @var \App\Models\Company $company
+         * @var Company $company
          */
         $company = auth()->user()->company();
 
@@ -181,10 +170,6 @@ class EInvoicePeppolController extends BaseController
      * an existing legal entity id
      *
      * Response will be the same as show()
-     *
-     * @param  AddTaxIdentifierRequest $request
-     * @param  Storecove $storecove
-     * @return \Illuminate\Http\JsonResponse
      */
     public function addAdditionalTaxIdentifier(AddTaxIdentifierRequest $request, Storecove $storecove): JsonResponse
     {
@@ -228,7 +213,7 @@ class EInvoicePeppolController extends BaseController
 
     public function removeAdditionalTaxIdentifier(RemoveTaxIdentifierRequest $request, Storecove $storecove): JsonResponse
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = auth()->user()->company();
         $tax_data = $company->tax_data;
 
@@ -280,7 +265,7 @@ class EInvoicePeppolController extends BaseController
         if (isset($taxData->regions->EU->subregions)) {
             foreach ($taxData->regions->EU->subregions as $country => $data) {
                 if (isset($data->vat_number)) {
-                    $newData = new \stdClass();
+                    $newData = new \stdClass;
                     if (is_object($data)) {
                         $dataArray = get_object_vars($data);
                         foreach ($dataArray as $key => $value) {

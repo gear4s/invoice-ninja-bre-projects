@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::table('recurring_invoices', function (Blueprint $table) {
             $table->mediumText('e_invoice')->nullable();
         });
@@ -21,8 +21,5 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        
-    }
+    public function down(): void {}
 };

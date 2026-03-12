@@ -6,20 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Stripe\Connect;
 
+use Stripe\AccountLink;
+use Stripe\Exception\ApiErrorException;
+use Stripe\StripeClient;
+
 class Account
 {
     /**
-     * @throws \Stripe\Exception\ApiErrorException
+     * @throws ApiErrorException
      */
     public static function create(array $payload): \Stripe\Account
     {
-        $stripe = new \Stripe\StripeClient(
+        $stripe = new StripeClient(
             config('ninja.ninja_stripe_key')
         );
 
@@ -31,11 +34,11 @@ class Account
     }
 
     /**
-     * @throws \Stripe\Exception\ApiErrorException
+     * @throws ApiErrorException
      */
-    public static function link(string $account_id, string $token): \Stripe\AccountLink
+    public static function link(string $account_id, string $token): AccountLink
     {
-        $stripe = new \Stripe\StripeClient(
+        $stripe = new StripeClient(
             config('ninja.ninja_stripe_key')
         );
 

@@ -2,13 +2,14 @@
 
 namespace Tests\Feature\Quickbooks;
 
-use Tests\TestCase;
 use App\DataMapper\QuickbooksSettings;
 use App\Jobs\Quickbooks\BatchPushToQuickbooks;
+use App\Jobs\Quickbooks\FlushQuickbooksBatch;
 use App\Jobs\Quickbooks\PushToQuickbooks;
 use App\Services\Quickbooks\QuickbooksBatchCollector;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
+use Tests\TestCase;
 
 /**
  * Integration tests for complete QuickBooks batching flow
@@ -19,7 +20,9 @@ use Illuminate\Support\Facades\Queue;
 class QuickbooksBatchingIntegrationTest extends TestCase
 {
     private \stdClass $company1;
+
     private \stdClass $company2;
+
     private \stdClass $user;
 
     protected function setUp(): void
@@ -31,11 +34,11 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         Queue::fake();
 
         // Create simple objects for tests (not database records)
-        $this->user = new \stdClass();
+        $this->user = new \stdClass;
         $this->user->id = 1;
 
         // Company 1
-        $this->company1 = new \stdClass();
+        $this->company1 = new \stdClass;
         $this->company1->id = 100;
         $this->company1->db = 'test-db-1';
         $this->company1->quickbooks = new QuickbooksSettings([
@@ -50,7 +53,7 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         ]);
 
         // Company 2 (different realm)
-        $this->company2 = new \stdClass();
+        $this->company2 = new \stdClass;
         $this->company2->id = 200;
         $this->company2->db = 'test-db-2';
         $this->company2->quickbooks = new QuickbooksSettings([
@@ -72,7 +75,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         parent::tearDown();
     }
 
-    
     public function test_complete_flow_batches_entities_from_same_realm()
     {
         // Simulate 10 client updates from same company
@@ -96,10 +98,9 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(10, $batchSize);
 
         // Flush batch should schedule a job
-        Queue::assertPushed(\App\Jobs\Quickbooks\FlushQuickbooksBatch::class);
+        Queue::assertPushed(FlushQuickbooksBatch::class);
     }
 
-    
     public function test_it_separates_batches_by_realm()
     {
         // Add clients from company 1
@@ -130,7 +131,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(10, $batch2Size);
     }
 
-    
     public function test_immediate_priority_bypasses_batching()
     {
         QuickbooksBatchCollector::collect(
@@ -149,7 +149,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         Queue::assertNotPushed(BatchPushToQuickbooks::class);
     }
 
-    
     public function test_max_batch_size_triggers_immediate_dispatch()
     {
         // Add 50 clients (MAX_BATCH_SIZE)
@@ -177,7 +176,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(0, $batchSize);
     }
 
-    
     public function test_it_handles_mixed_entity_types_separately()
     {
         // Add clients
@@ -198,7 +196,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(5, $invoiceBatchSize);
     }
 
-    
     public function test_it_handles_mixed_priorities_separately()
     {
         // Add normal priority clients
@@ -242,7 +239,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(5, $lowBatchSize);
     }
 
-    
     public function test_multi_tenant_scenario_with_same_company_ids()
     {
         // Simulate multi-tenant: same company ID in different databases
@@ -275,7 +271,6 @@ class QuickbooksBatchingIntegrationTest extends TestCase
         $this->assertEquals(10, QuickbooksBatchCollector::getBatchSize('client', $db2, $companyId));
     }
 
-    
     public function test_deduplication_works_across_multiple_collects()
     {
         // Add same client multiple times

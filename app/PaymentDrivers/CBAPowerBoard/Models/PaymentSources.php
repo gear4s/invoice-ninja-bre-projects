@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,6 @@ namespace App\PaymentDrivers\CBAPowerBoard\Models;
 
 class PaymentSources
 {
-    /** @var \App\PaymentDrivers\CBAPowerBoard\Models\PaymentSources[] */
+    /** @var PaymentSources[] */
     public array $payment_sources;
 }

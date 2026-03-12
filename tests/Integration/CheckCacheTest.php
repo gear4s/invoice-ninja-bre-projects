@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,10 @@ use Illuminate\Support\Facades\Cache;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class CheckCacheTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
@@ -32,14 +28,14 @@ class CheckCacheTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testWarmedUpCache()
+    public function test_warmed_up_cache()
     {
         $date_formats = Cache::get('date_formats');
 
         $this->assertNotNull($date_formats);
     }
 
-    public function testCacheCount()
+    public function test_cache_count()
     {
         $date_formats = Cache::get('date_formats');
 

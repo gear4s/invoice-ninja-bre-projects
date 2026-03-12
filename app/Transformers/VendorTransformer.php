@@ -6,18 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Transformers;
 
-use App\Models\Vendor;
 use App\Models\Activity;
 use App\Models\Document;
 use App\Models\Location;
+use App\Models\Vendor;
 use App\Models\VendorContact;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 /**
  * class VendorTransformer.
@@ -31,18 +32,13 @@ class VendorTransformer extends EntityTransformer
         'documents',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'activities',
         'locations',
     ];
 
     /**
-     * @param Vendor $vendor
-     *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return Response|JsonResponse
      */
     public function includeActivities(Vendor $vendor)
     {
@@ -52,9 +48,7 @@ class VendorTransformer extends EntityTransformer
     }
 
     /**
-     * @param Vendor $vendor
-     *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return Response|JsonResponse
      */
     public function includeContacts(Vendor $vendor)
     {
@@ -71,9 +65,7 @@ class VendorTransformer extends EntityTransformer
     }
 
     /**
-     * @param Vendor $vendor
-     *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return Response|JsonResponse
      */
     public function includeLocations(Vendor $vendor)
     {
@@ -83,8 +75,6 @@ class VendorTransformer extends EntityTransformer
     }
 
     /**
-     * @param Vendor $vendor
-     *
      * @return array
      */
     public function transform(Vendor $vendor)

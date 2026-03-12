@@ -4,23 +4,23 @@
 
 namespace Tests\Unit\Services\Import\Quickbooks;
 
-use Mockery;
-use Tests\TestCase;
-use Illuminate\Support\Arr;
 use App\Services\Quickbooks\Contracts\SdkInterface;
 use App\Services\Quickbooks\SdkWrapper as QuickbookSDK;
+use Illuminate\Support\Arr;
+use Mockery;
+use Tests\TestCase;
 
 class SdkWrapperTest extends TestCase
 {
     protected $sdk;
+
     protected $sdkMock;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-
-        $this->markTestSkipped("no bueno");
+        $this->markTestSkipped('no bueno');
 
         $this->sdkMock = Mockery::mock(\stdClass::class);
         $this->sdk = new QuickbookSDK($this->sdkMock);
@@ -28,12 +28,12 @@ class SdkWrapperTest extends TestCase
         $this->markTestSkipped('no resource');
     }
 
-    public function testIsInstanceOf()
+    public function test_is_instance_of()
     {
         $this->assertInstanceOf(SdkInterface::class, $this->sdk);
     }
 
-    public function testMethodFetchRecords()
+    public function test_method_fetch_records()
     {
         $data = json_decode(
             file_get_contents(base_path('tests/Mock/Quickbooks/Data/customers.json')),

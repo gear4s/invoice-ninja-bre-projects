@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,8 +19,11 @@ use App\Models\User;
 use App\Transformers\ClientContactLoginTransformer;
 use App\Utils\Traits\UserSessionAttributes;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends BaseController
@@ -57,10 +59,10 @@ class LoginController extends BaseController
     /**
      * Login via API.
      *
-     * @param Request $request The request
+     * @param  Request  $request  The request
+     * @return JsonResponse|Response
      *
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function apiLogin(Request $request)
     {
@@ -86,12 +88,11 @@ class LoginController extends BaseController
     /**
      * Redirect the user to the provider authentication page.
      *
-     * @param string $provider
      * @return mixed
      */
     public function redirectToProvider(string $provider)
     {
-        //'https://www.googleapis.com/auth/gmail.send','email','profile','openid'
+        // 'https://www.googleapis.com/auth/gmail.send','email','profile','openid'
         $scopes = [];
 
         if ($provider == 'google') {
@@ -132,7 +133,7 @@ class LoginController extends BaseController
     {
         $user = false;
 
-        $oauth = new OAuth();
+        $oauth = new OAuth;
 
         $user = $oauth->getProvider(request()->input('provider'))->getTokenResponse(request()->input('token'));
 

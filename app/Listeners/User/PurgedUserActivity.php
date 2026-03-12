@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,6 @@ class PurgedUserActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activityRepo
      */
     public function __construct(ActivityRepository $activityRepo)
     {
@@ -42,14 +39,14 @@ class PurgedUserActivity implements ShouldQueue
     {
         MultiDB::setDb($event->company->db);
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $fields->user_id = $event->admin_user->id;
         $fields->company_id = $event->company->id;
         $fields->activity_type_id = Activity::PURGE_USER;
         $fields->account_id = $event->company->account_id;
         $fields->notes = $event->purged_user_name;
-        
+
         $this->activityRepo->save($fields, $event->admin_user, $event->event_vars);
     }
 }

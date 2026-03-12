@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,7 +23,7 @@ class QuoteSyncCast implements CastsAttributes
         }
 
         $data = json_decode($value, true);
-   
+
         if (!is_array($data) || empty($data)) {
             return null; // Return null if decoded data is not an array or is empty
         }
@@ -44,7 +43,7 @@ class QuoteSyncCast implements CastsAttributes
                 'invitations' => $value->invitations,
                 'dn_completed' => $value->dn_completed,
                 'dn_document_hashed_id' => $value->dn_document_hashed_id,
-            ])
+            ]),
         ];
     }
 }

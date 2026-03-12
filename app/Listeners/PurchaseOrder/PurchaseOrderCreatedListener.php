@@ -6,7 +6,6 @@
  * @link https://github.com/purchase_orderninja/purchase_orderninja source repository
  *
  * @copyright Copyright (c) 2022. PurchaseOrder Ninja LLC (https://purchase_orderninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -33,7 +32,6 @@ class PurchaseOrderCreatedListener implements ShouldQueue
     /**
      * Handle the event.
      *
-     * @param  PurchaseOrderWasCreated $event
      * @return void
      */
     public function handle(PurchaseOrderWasCreated $event)
@@ -49,7 +47,7 @@ class PurchaseOrderCreatedListener implements ShouldQueue
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 
@@ -63,7 +61,7 @@ class PurchaseOrderCreatedListener implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new EntityCreatedObject($purchase_order, 'purchase_order', $company_user->portalType()))->build());
                 $nmo->company = $purchase_order->company;
                 $nmo->settings = $purchase_order->company->settings;

@@ -6,25 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Export\CSV;
 
-use App\Models\Task;
-use App\Utils\Ninja;
-use League\Csv\Writer;
-use App\Models\Company;
-use App\Models\Timezone;
+use App\Export\Decorators\Decorator;
 use App\Libraries\MultiDB;
+use App\Models\Company;
 use App\Models\DateFormat;
+use App\Models\Task;
+use App\Models\Timezone;
+use App\Transformers\TaskTransformer;
+use App\Utils\Ninja;
 use Carbon\CarbonInterval;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
-use App\Export\Decorators\Decorator;
-use App\Transformers\TaskTransformer;
-use Illuminate\Database\Eloquent\Builder;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class TaskExport extends BaseExport
 {
@@ -46,8 +46,8 @@ class TaskExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->entity_transformer = new TaskTransformer();
-        $this->decorator = new Decorator();
+        $this->entity_transformer = new TaskTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -67,8 +67,8 @@ class TaskExport extends BaseExport
         }
 
         $query = Task::query()
-                        ->withTrashed()
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -103,25 +103,24 @@ class TaskExport extends BaseExport
 
         $query = $this->init();
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-              ->each(function ($entity) {
+            ->each(function ($entity) {
 
-                  /** @var \App\Models\Task $entity*/
-                  $this->buildRow($entity);
-              });
+                /** @var Task $entity */
+                $this->buildRow($entity);
+            });
 
         $this->csv->insertAll($this->storage_array);
 
         return $this->csv->toString();
     }
-
 
     public function returnJson()
     {
@@ -134,17 +133,17 @@ class TaskExport extends BaseExport
         })->toArray();
 
         $query->cursor()
-                ->each(function ($resource) {
+            ->each(function ($resource) {
 
-                    /** @var \App\Models\Task $resource*/
-                    $this->buildRow($resource);
+                /** @var Task $resource */
+                $this->buildRow($resource);
 
-                    foreach ($this->storage_array as $row) {
-                        $this->storage_item_array[] = $this->processMetaData($row, $resource);
-                    }
+                foreach ($this->storage_array as $row) {
+                    $this->storage_item_array[] = $this->processMetaData($row, $resource);
+                }
 
-                    $this->storage_array = [];
-                });
+                $this->storage_array = [];
+            });
 
         return array_merge(['columns' => $header], $this->storage_item_array);
     }
@@ -225,11 +224,11 @@ class TaskExport extends BaseExport
             }
 
             if (in_array('task.time_log_duration_words', $this->input['report_keys']) || in_array('time_log_duration_words', $this->input['report_keys'])) {
-                $entity['task.time_log_duration_words'] =  is_int($time_log_entry) ? CarbonInterval::seconds($time_log_entry)->locale($this->company->locale())->cascade()->forHumans() : $time_log_entry;
+                $entity['task.time_log_duration_words'] = is_int($time_log_entry) ? CarbonInterval::seconds($time_log_entry)->locale($this->company->locale())->cascade()->forHumans() : $time_log_entry;
             }
 
             if (in_array('task.duration_words', $this->input['report_keys']) || in_array('duration_words', $this->input['report_keys'])) {
-                $entity['task.duration_words'] =  $seconds > 86400 ? CarbonInterval::seconds($seconds)->locale($this->company->locale())->cascade()->forHumans() : now()->startOfDay()->addSeconds($seconds)->format('H:i:s');
+                $entity['task.duration_words'] = $seconds > 86400 ? CarbonInterval::seconds($seconds)->locale($this->company->locale())->cascade()->forHumans() : now()->startOfDay()->addSeconds($seconds)->format('H:i:s');
             }
 
             if (in_array('task.billable', $this->input['report_keys']) || in_array('billable', $this->input['report_keys'])) {
@@ -239,7 +238,6 @@ class TaskExport extends BaseExport
             if (in_array('task.item_notes', $this->input['report_keys']) || in_array('item_notes', $this->input['report_keys'])) {
                 $entity['task.item_notes'] = isset($item[2]) ? (string) $item[2] : '';
             }
-
 
             $this->storage_array[] = $entity;
 
@@ -260,10 +258,6 @@ class TaskExport extends BaseExport
 
     /**
      * Add Task Status Filter
-     *
-     * @param  Builder $query
-     * @param  string $status
-     * @return Builder
      */
     protected function addTaskStatusFilter(Builder $query, string $status): Builder
     {
@@ -314,7 +308,6 @@ class TaskExport extends BaseExport
         if (in_array('task.assigned_user_id', $this->input['report_keys'])) {
             $entity['task.assigned_user_id'] = $task->assigned_user ? $task->assigned_user->present()->name() : '';
         }
-
 
         return $entity;
     }

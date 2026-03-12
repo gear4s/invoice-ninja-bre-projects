@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -31,6 +30,8 @@ use App\Utils\Traits\MakesHash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Stripe\Customer;
+use Stripe\SetupIntent;
 use Turbo124\Beacon\Facades\LightLogs;
 
 class NinjaPlanController extends Controller
@@ -42,10 +43,10 @@ class NinjaPlanController extends Controller
         MultiDB::findAndSetDbByCompanyKey($account_or_company_key);
         $company = Company::query()->where('company_key', $account_or_company_key)->first();
 
-        if (! $company) {
+        if (!$company) {
             MultiDB::findAndSetDbByAccountKey($account_or_company_key);
 
-            /** @var \App\Models\Account $account **/
+            /** @var Account $account * */
             $account = Account::query()->where('key', $account_or_company_key)->first();
         } else {
             $account = $company->account;
@@ -74,7 +75,7 @@ class NinjaPlanController extends Controller
 
         $customer = $gateway_driver->findOrCreateCustomer();
 
-        $setupIntent = \Stripe\SetupIntent::create([
+        $setupIntent = SetupIntent::create([
             'payment_method_types' => ['card'],
             'usage' => 'off_session',
             'customer' => $customer->id,
@@ -88,23 +89,23 @@ class NinjaPlanController extends Controller
 
     public function trial_confirmation(Request $request)
     {
-        $trial_started = "Trial Started @ " . now()->format('Y-m-d H:i:s');
+        $trial_started = 'Trial Started @ ' . now()->format('Y-m-d H:i:s');
 
-        auth()->guard('contact')->user()->fill($request->only(['first_name','last_name']))->save();
+        auth()->guard('contact')->user()->fill($request->only(['first_name', 'last_name']))->save();
 
         $client = auth()->guard('contact')->user()->client;
         $client->private_notes = $trial_started;
         $client->fill($request->all());
         $client->save();
 
-        //store payment method
+        // store payment method
         $gateway = CompanyGateway::on('db-ninja-01')->find(config('ninja.ninja_default_company_gateway_id'));
         $gateway_driver = $gateway->driver(auth()->guard('contact')->user()->client)->init();
 
         $stripe_response = json_decode($request->input('gateway_response'));
         $customer = $gateway_driver->findOrCreateCustomer();
 
-        //27-08-2022 Ensure customer is updated appropriately
+        // 27-08-2022 Ensure customer is updated appropriately
         $update_client_object['name'] = $client->present()->name();
         $update_client_object['phone'] = substr($client->present()->phone(), 0, 20);
 
@@ -123,12 +124,12 @@ class NinjaPlanController extends Controller
         $update_client_object['shipping']['address']['state'] = $client->shipping_state ?: '';
         $update_client_object['shipping']['address']['country'] = $client->shipping_country ? $client->shipping_country->iso_3166_2 : '';
 
-        \Stripe\Customer::update($customer->id, $update_client_object, $gateway_driver->stripe_connect_auth);
+        Customer::update($customer->id, $update_client_object, $gateway_driver->stripe_connect_auth);
 
         $gateway_driver->attach($stripe_response->payment_method, $customer);
         $method = $gateway_driver->getStripePaymentMethod($stripe_response->payment_method);
 
-        $payment_meta = new \stdClass();
+        $payment_meta = new \stdClass;
         $payment_meta->exp_month = (string) $method->card->exp_month;
         $payment_meta->exp_year = (string) $method->card->exp_year;
         $payment_meta->brand = (string) $method->card->brand;
@@ -143,11 +144,11 @@ class NinjaPlanController extends Controller
 
         $gateway_driver->storeGatewayToken($data, ['gateway_customer_reference' => $customer->id]);
 
-        //set free trial
+        // set free trial
         if (auth()->guard('contact')->user()->client->custom_value2) {
             MultiDB::findAndSetDbByAccountKey(auth()->guard('contact')->user()->client->custom_value2);
 
-            /** @var \App\Models\Account $account **/
+            /** @var Account $account * */
             $account = Account::where('key', auth()->guard('contact')->user()->client->custom_value2)->first();
             // $account->trial_started = now();
             // $account->trial_plan = 'pro';
@@ -165,10 +166,10 @@ class NinjaPlanController extends Controller
 
         MultiDB::setDB('db-ninja-01');
 
-        //create recurring invoice
-        $subscription_repo = new SubscriptionRepository();
+        // create recurring invoice
+        $subscription_repo = new SubscriptionRepository;
 
-        /** @var \App\Models\Subscription $subscription **/
+        /** @var Subscription $subscription * */
         $subscription = Subscription::find(6);
 
         $recurring_invoice = RecurringInvoiceFactory::create($subscription->company_id, $subscription->user_id);
@@ -189,18 +190,18 @@ class NinjaPlanController extends Controller
 
         $recurring_invoice->service()->applyNumber()->start()->save();
 
-        LightLogs::create(new TrialStarted())
-                 ->increment()
-                 ->queue();
+        LightLogs::create(new TrialStarted)
+            ->increment()
+            ->queue();
 
         $old_recurring = RecurringInvoice::query()->where('company_id', config('ninja.ninja_default_company_id'))
-                                            ->where('client_id', $client->id)
-                                            ->where('id', '!=', $recurring_invoice->id)
-                                            ->first();
+            ->where('client_id', $client->id)
+            ->where('id', '!=', $recurring_invoice->id)
+            ->first();
 
         if ($old_recurring) {
             $old_recurring->service()->stop()->save();
-            $old_recurring_repo = new RecurringInvoiceRepository();
+            $old_recurring_repo = new RecurringInvoiceRepository;
             $old_recurring_repo->archive($old_recurring);
         }
 
@@ -222,7 +223,7 @@ class NinjaPlanController extends Controller
     public function plan()
     {
         // return $this->trial();
-        //harvest the current plan
+        // harvest the current plan
         $data = [];
         $data['late_invoice'] = false;
 
@@ -230,50 +231,50 @@ class NinjaPlanController extends Controller
             $account = Account::query()->where('key', Auth::guard('contact')->user()->client->custom_value2)->first();
 
             if ($account) {
-                //offer the option to have a free trial
+                // offer the option to have a free trial
                 if (!$account->plan && !$account->is_trial) {
                     return $this->trial();
                 }
 
                 if (Carbon::parse($account->plan_expires)->lt(now())) {
-                    //expired get the most recent invoice for payment
+                    // expired get the most recent invoice for payment
 
                     $late_invoice = Invoice::on('db-ninja-01')
-                                           ->where('company_id', Auth::guard('contact')->user()->company->id)
-                                           ->where('client_id', Auth::guard('contact')->user()->client->id)
-                                           ->where('status_id', Invoice::STATUS_SENT)
-                                           ->whereNotNull('subscription_id')
-                                           ->orderBy('id', 'DESC')
-                                           ->first();
+                        ->where('company_id', Auth::guard('contact')->user()->company->id)
+                        ->where('client_id', Auth::guard('contact')->user()->client->id)
+                        ->where('status_id', Invoice::STATUS_SENT)
+                        ->whereNotNull('subscription_id')
+                        ->orderBy('id', 'DESC')
+                        ->first();
 
                     $data['late_invoice'] = false;
                 }
 
                 $recurring_invoice = RecurringInvoice::on('db-ninja-01')
-                                            ->where('client_id', auth()->guard('contact')->user()->client->id)
-                                            ->where('company_id', Auth::guard('contact')->user()->company->id)
-                                            ->whereNotNull('subscription_id')
-                                            ->where('status_id', RecurringInvoice::STATUS_ACTIVE)
-                                            ->orderBy('id', 'desc')
-                                            ->first();
+                    ->where('client_id', auth()->guard('contact')->user()->client->id)
+                    ->where('company_id', Auth::guard('contact')->user()->company->id)
+                    ->whereNotNull('subscription_id')
+                    ->where('status_id', RecurringInvoice::STATUS_ACTIVE)
+                    ->orderBy('id', 'desc')
+                    ->first();
 
                 $monthly_plans = Subscription::on('db-ninja-01')
-                                             ->where('company_id', Auth::guard('contact')->user()->company->id)
-                                             ->where('group_id', 6)
-                                             ->orderBy('promo_price', 'ASC')
-                                             ->get();
+                    ->where('company_id', Auth::guard('contact')->user()->company->id)
+                    ->where('group_id', 6)
+                    ->orderBy('promo_price', 'ASC')
+                    ->get();
 
                 $yearly_plans = Subscription::on('db-ninja-01')
-                                             ->where('company_id', Auth::guard('contact')->user()->company->id)
-                                             ->where('group_id', 31)
-                                             ->orderBy('promo_price', 'ASC')
-                                             ->get();
+                    ->where('company_id', Auth::guard('contact')->user()->company->id)
+                    ->where('group_id', 31)
+                    ->orderBy('promo_price', 'ASC')
+                    ->get();
 
                 $monthly_plans = $monthly_plans->merge($yearly_plans);
 
                 $current_subscription_id = $recurring_invoice ? $this->encodePrimaryKey($recurring_invoice->subscription_id) : false;
 
-                //remove existing subscription
+                // remove existing subscription
                 if ($current_subscription_id) {
                     $monthly_plans = $monthly_plans->filter(function ($plan) use ($current_subscription_id) {
                         return (string) $plan->hashed_id != (string) $current_subscription_id;

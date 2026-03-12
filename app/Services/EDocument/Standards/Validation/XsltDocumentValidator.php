@@ -6,11 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Validation;
+
+use Saxon\SaxonProcessor;
+use Saxon\XsltExecutable;
 
 class XsltDocumentValidator
 {
@@ -52,8 +54,6 @@ class XsltDocumentValidator
 
     /**
      * Get the appropriate XSD path based on document type
-     *
-     * @return string
      */
     private function getXsdPath(): string
     {
@@ -62,8 +62,6 @@ class XsltDocumentValidator
 
     /**
      * Check if the document is a Credit Note
-     *
-     * @return bool
      */
     public function isCreditNote(): bool
     {
@@ -72,14 +70,12 @@ class XsltDocumentValidator
 
     /**
      * Validate the XSLT document
-     *
-     * @return self
      */
     public function validate(): self
     {
         // nlog($this->xml_document);
         $this->validateXsd()
-             ->validateSchema();
+            ->validateSchema();
 
         return $this;
     }
@@ -88,16 +84,16 @@ class XsltDocumentValidator
     {
 
         try {
-            $processor = new \Saxon\SaxonProcessor();
+            $processor = new SaxonProcessor;
 
             $xslt = $processor->newXslt30Processor();
 
             foreach ($this->stylesheets as $stylesheet) {
                 $xdmNode = $processor->parseXmlFromString($this->xml_document);
 
-                /** @var \Saxon\XsltExecutable $xsltExecutable */
-                $xsltExecutable = $xslt->compileFromFile(app_path($stylesheet)); //@phpstan-ignore-line
-                $result = $xsltExecutable->transformToValue($xdmNode); //@phpstan-ignore-line
+                /** @var XsltExecutable $xsltExecutable */
+                $xsltExecutable = $xslt->compileFromFile(app_path($stylesheet)); // @phpstan-ignore-line
+                $result = $xsltExecutable->transformToValue($xdmNode); // @phpstan-ignore-line
 
                 if ($result->size() == 0) {
                     continue;
@@ -126,7 +122,7 @@ class XsltDocumentValidator
     {
         libxml_use_internal_errors(true);
 
-        $xml = new \DOMDocument();
+        $xml = new \DOMDocument;
         $xml->loadXML($this->xml_document);
 
         if (!$xml->schemaValidate(app_path($this->getXsdPath()))) {
@@ -176,10 +172,10 @@ class XsltDocumentValidator
 
     public function getHtml(): mixed
     {
-        //@todo need to harvest the document type and apply the correct stylesheet
+        // @todo need to harvest the document type and apply the correct stylesheet
         try {
             // Create Saxon processor
-            $processor = new \Saxon\SaxonProcessor();
+            $processor = new SaxonProcessor;
             $xslt = $processor->newXslt30Processor();
 
             $xml = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $this->xml_document);
@@ -188,21 +184,21 @@ class XsltDocumentValidator
             $xml_doc = $processor->parseXmlFromString($xml);
 
             // Compile and apply stylesheet
-            /** @var \Saxon\XsltExecutable $stylesheet */
-            $stylesheet = $xslt->compileFromFile(app_path($this->peppol_stylesheet)); //@phpstan-ignore-line
+            /** @var XsltExecutable $stylesheet */
+            $stylesheet = $xslt->compileFromFile(app_path($this->peppol_stylesheet)); // @phpstan-ignore-line
 
             // Transform to HTML
-            $result = $stylesheet->transformToString($xml_doc); //@phpstan-ignore-line
+            $result = $stylesheet->transformToString($xml_doc); // @phpstan-ignore-line
 
             return $result;
 
         } catch (\Throwable $th) {
-            nlog("failed to convert xml to html " . $th->getMessage());
+            nlog('failed to convert xml to html ' . $th->getMessage());
+
             return ['errors' => $th->getMessage()];
             // Handle any errors
             // throw new \Exception("XSLT transformation failed: " . $e->getMessage());
         }
 
     }
-
 }

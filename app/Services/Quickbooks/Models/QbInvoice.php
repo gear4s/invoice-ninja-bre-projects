@@ -6,22 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Models;
 
-use Carbon\Carbon;
-use App\Models\Invoice;
 use App\DataMapper\InvoiceSync;
+use App\Enum\SyncDirection;
 use App\Factory\InvoiceFactory;
 use App\Interfaces\SyncInterface;
+use App\Models\Invoice;
+use App\Models\Paymentable;
+use App\Models\TaxRate;
 use App\Repositories\InvoiceRepository;
 use App\Services\Quickbooks\QuickbooksService;
 use App\Services\Quickbooks\Transformers\InvoiceTransformer;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
 use App\Utils\BcMath;
+use Carbon\Carbon;
+use QuickBooksOnline\API\Data\IPPSalesReceipt;
 
 class QbInvoice implements SyncInterface
 {
@@ -32,16 +35,13 @@ class QbInvoice implements SyncInterface
     public function __construct(public QuickbooksService $service)
     {
         $this->invoice_transformer = new InvoiceTransformer($this->service->company);
-        $this->invoice_repository = new InvoiceRepository();
+        $this->invoice_repository = new InvoiceRepository;
     }
 
     /**
      * find
      *
      * Finds an invoice in QuickBooks by their ID.
-     *
-     * @param  string $id
-     * @return mixed
      */
     public function find(string $id): mixed
     {
@@ -52,9 +52,6 @@ class QbInvoice implements SyncInterface
      * syncToNinja
      *
      * Syncs invoices from QuickBooks to Ninja.
-     *
-     * @param  array $records
-     * @return void
      */
     public function syncToNinja(array $records): void
     {
@@ -102,11 +99,10 @@ class QbInvoice implements SyncInterface
                 $invoice->fill($ninja_invoice_data);
                 $invoice->saveQuietly();
 
-
                 // During QB import, use saveQuietly() to prevent circular sync back to QuickBooks
                 $invoice = $invoice->calc()->getInvoice()->service()->markSent()->applyNumber()->createInvitations()->save();
 
-                if ($record instanceof \QuickBooksOnline\API\Data\IPPSalesReceipt) {
+                if ($record instanceof IPPSalesReceipt) {
                     // During QB import, use saveQuietly() to prevent circular sync back to QuickBooks
                     $invoice->service()->markPaid()->save();
                 }
@@ -114,7 +110,6 @@ class QbInvoice implements SyncInterface
             }
 
             $ninja_invoice_data = false;
-
 
         }
 
@@ -124,9 +119,6 @@ class QbInvoice implements SyncInterface
      * syncToForeign
      *
      * Syncs invoices from Ninja to QuickBooks.
-     *
-     * @param  array $records
-     * @return void
      */
     public function syncToForeign(array $records): void
     {
@@ -162,7 +154,7 @@ class QbInvoice implements SyncInterface
                 } else {
                     $result = $this->service->sdk->Add($qb_invoice);
 
-                    $sync = new InvoiceSync();
+                    $sync = new InvoiceSync;
                     $sync->qb_id = data_get($result, 'Id') ?? data_get($result, 'Id.value');
                     $invoice->sync = $sync;
                     $invoice->saveQuietly();
@@ -198,9 +190,8 @@ class QbInvoice implements SyncInterface
      * 5. Aggregate taxes if more than 3 exist
      * 6. Recalculate and verify totals match QuickBooks
      *
-     * @param mixed $qb_response The QuickBooks invoice response object
-     * @param Invoice $invoice The Invoice Ninja invoice to update
-     * @return void
+     * @param  mixed  $qb_response  The QuickBooks invoice response object
+     * @param  Invoice  $invoice  The Invoice Ninja invoice to update
      */
     private function processQuickbooksTaxResponse(mixed $qb_response, Invoice $invoice): void
     {
@@ -218,6 +209,7 @@ class QbInvoice implements SyncInterface
 
             if (!$txn_tax_detail) {
                 nlog("QuickBooks: No TxnTaxDetail found in response for invoice {$invoice->id}");
+
                 return;
             }
 
@@ -236,6 +228,7 @@ class QbInvoice implements SyncInterface
             if (empty($tax_lines) || $total_tax <= 0) {
                 // No taxes applied - clear all tax fields
                 $this->clearAllTaxes($invoice);
+
                 return;
             }
 
@@ -283,10 +276,9 @@ class QbInvoice implements SyncInterface
      * In US tax scenarios, line items can have multiple taxes (state, city, county, district).
      * We need to assign all applicable taxes to each taxable line item.
      *
-     * @param array $qb_line_items QuickBooks line items
-     * @param Invoice $invoice Invoice Ninja invoice
-     * @param array $tax_lines Tax lines from TxnTaxDetail
-     * @return void
+     * @param  array  $qb_line_items  QuickBooks line items
+     * @param  Invoice  $invoice  Invoice Ninja invoice
+     * @param  array  $tax_lines  Tax lines from TxnTaxDetail
      */
     private function processLineItemTaxes(array $qb_line_items, Invoice $invoice, array $tax_lines): void
     {
@@ -327,6 +319,7 @@ class QbInvoice implements SyncInterface
                 $line_item->tax_rate3 = 0;
                 $line_items_modified = true;
                 $line_item_index++;
+
                 continue;
             }
 
@@ -367,11 +360,10 @@ class QbInvoice implements SyncInterface
      *
      * When using QuickBooks AST, all tax details are aggregated into a single tax name and rate.
      *
-     * @param object $line_item Invoice Ninja line item
-     * @param array $tax_details Array of tax detail objects
-     * @param array $tax_rate_map_by_id Tax rate map keyed by ID
-     * @param Invoice|null $invoice Invoice for getting client state
-     * @return void
+     * @param  object  $line_item  Invoice Ninja line item
+     * @param  array  $tax_details  Array of tax detail objects
+     * @param  array  $tax_rate_map_by_id  Tax rate map keyed by ID
+     * @param  Invoice|null  $invoice  Invoice for getting client state
      */
     private function assignTaxesToLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id, ?Invoice $invoice = null): void
     {
@@ -392,17 +384,16 @@ class QbInvoice implements SyncInterface
     /**
      * Aggregate multiple taxes into a single tax rate for a line item.
      *
-     * @param object $line_item Invoice Ninja line item
-     * @param array $tax_details Array of tax detail objects
-     * @param array $tax_rate_map_by_id Tax rate map keyed by ID (unused, kept for compatibility)
-     * @param Invoice|null $invoice Invoice for getting client state
-     * @return void
+     * @param  object  $line_item  Invoice Ninja line item
+     * @param  array  $tax_details  Array of tax detail objects
+     * @param  array  $tax_rate_map_by_id  Tax rate map keyed by ID (unused, kept for compatibility)
+     * @param  Invoice|null  $invoice  Invoice for getting client state
      */
     private function aggregateTaxesForLineItem(object $line_item, array $tax_details, array $tax_rate_map_by_id, ?Invoice $invoice = null): void
     {
         $aggregated_rate = $this->calculateAggregatedTaxRate($tax_details, true);
         $tax_name = $this->formatTaxName($aggregated_rate, $invoice);
-        
+
         $this->createTaxRateIfNeeded($tax_name, $aggregated_rate);
         $this->assignTaxToEntity($line_item, $tax_name, $aggregated_rate);
     }
@@ -410,8 +401,8 @@ class QbInvoice implements SyncInterface
     /**
      * Calculate aggregated tax rate from tax items.
      *
-     * @param array $tax_items Array of tax items (can be tax lines or tax details)
-     * @param bool $handle_nested Whether to handle nested TaxLineDetail structure
+     * @param  array  $tax_items  Array of tax items (can be tax lines or tax details)
+     * @param  bool  $handle_nested  Whether to handle nested TaxLineDetail structure
      * @return float Aggregated tax rate percentage
      */
     private function calculateAggregatedTaxRate(array $tax_items, bool $handle_nested = false): float
@@ -421,7 +412,7 @@ class QbInvoice implements SyncInterface
 
         foreach ($tax_items as $tax_item) {
             // Handle both TaxLineDetail structure and direct tax detail
-            $tax_line_detail = $handle_nested 
+            $tax_line_detail = $handle_nested
                 ? (data_get($tax_item, 'TaxLineDetail') ?? $tax_item)
                 : data_get($tax_item, 'TaxLineDetail');
 
@@ -454,8 +445,8 @@ class QbInvoice implements SyncInterface
     /**
      * Format tax name in "STATE RATE%" format.
      *
-     * @param float $rate Tax rate percentage
-     * @param Invoice|null $invoice Invoice for getting client state
+     * @param  float  $rate  Tax rate percentage
+     * @param  Invoice|null  $invoice  Invoice for getting client state
      * @return string Formatted tax name
      */
     private function formatTaxName(float $rate, ?Invoice $invoice = null): string
@@ -465,7 +456,7 @@ class QbInvoice implements SyncInterface
             $state = trim($invoice->client->state ?? '');
         }
 
-        return !empty($state) 
+        return !empty($state)
             ? "{$state}"
             : "{$rate}%";
     }
@@ -473,10 +464,9 @@ class QbInvoice implements SyncInterface
     /**
      * Assign aggregated tax to an entity (invoice or line item).
      *
-     * @param object|Invoice $entity Invoice or line item object
-     * @param string $tax_name Tax name
-     * @param float $tax_rate Tax rate percentage
-     * @return void
+     * @param  object|Invoice  $entity  Invoice or line item object
+     * @param  string  $tax_name  Tax name
+     * @param  float  $tax_rate  Tax rate percentage
      */
     private function assignTaxToEntity($entity, string $tax_name, float $tax_rate): void
     {
@@ -491,9 +481,8 @@ class QbInvoice implements SyncInterface
     /**
      * Create or update TaxRate in Invoice Ninja if needed.
      *
-     * @param string $tax_name Tax name
-     * @param float $tax_rate Tax rate
-     * @return void
+     * @param  string  $tax_name  Tax name
+     * @param  float  $tax_rate  Tax rate
      */
     private function createTaxRateIfNeeded(string $tax_name, float $tax_rate): void
     {
@@ -501,7 +490,7 @@ class QbInvoice implements SyncInterface
             return;
         }
 
-        $ninja_tax_rate = \App\Models\TaxRate::firstOrNew(
+        $ninja_tax_rate = TaxRate::firstOrNew(
             [
                 'company_id' => $this->service->company->id,
                 'name' => $tax_name,
@@ -515,7 +504,7 @@ class QbInvoice implements SyncInterface
         $ninja_tax_rate->company_id = $this->service->company->id;
         $ninja_tax_rate->name = $tax_name;
         $ninja_tax_rate->rate = $tax_rate;
-        
+
         if (!$ninja_tax_rate->exists) {
             $ninja_tax_rate->user_id = $this->service->company->owner()->id;
             $ninja_tax_rate->save();
@@ -525,8 +514,7 @@ class QbInvoice implements SyncInterface
     /**
      * Clear all tax fields on invoice and line items.
      *
-     * @param Invoice $invoice Invoice Ninja invoice
-     * @return void
+     * @param  Invoice  $invoice  Invoice Ninja invoice
      */
     private function clearAllTaxes(Invoice $invoice): void
     {
@@ -556,10 +544,6 @@ class QbInvoice implements SyncInterface
      * qbInvoiceUpdate
      *
      * Updates an invoice in Ninja if the balance is different.
-     *
-     * @param  array $ninja_invoice_data
-     * @param  Invoice $invoice
-     * @return void
      */
     private function qbInvoiceUpdate(array $ninja_invoice_data, Invoice $invoice): void
     {
@@ -581,28 +565,25 @@ class QbInvoice implements SyncInterface
      * findInvoice
      *
      * Finds an invoice in Ninja by their QuickBooks ID.
-     * @param  string $id
-     * @param  ?string $client_id
-     * @return ?Invoice
      */
     private function findInvoice(string $id, ?string $client_id = null): ?Invoice
     {
         $search = Invoice::query()
-                            ->withTrashed()
-                            ->where('company_id', $this->service->company->id)
-                            ->where('sync->qb_id', $id);
+            ->withTrashed()
+            ->where('company_id', $this->service->company->id)
+            ->where('sync->qb_id', $id);
 
         if ($search->count() == 0) {
             $invoice = InvoiceFactory::create($this->service->company->id, $this->service->company->owner()->id);
             $invoice->client_id = (int) $client_id;
 
-            $sync = new InvoiceSync();
+            $sync = new InvoiceSync;
             $sync->qb_id = $id;
             $invoice->sync = $sync;
 
             return $invoice;
         } elseif ($search->count() == 1) {
-            return $this->service->syncable('invoice', \App\Enum\SyncDirection::PULL) ? $search->first() : null;
+            return $this->service->syncable('invoice', SyncDirection::PULL) ? $search->first() : null;
         }
 
         return null;
@@ -614,18 +595,18 @@ class QbInvoice implements SyncInterface
 
         $qb_record = $this->find($id);
 
-
-        if ($this->service->syncable('invoice', \App\Enum\SyncDirection::PULL)) {
+        if ($this->service->syncable('invoice', SyncDirection::PULL)) {
 
             QuickbooksService::$importing[$this->service->company->id] = true;
             try {
                 $invoice = $this->findInvoice($id);
 
-                nlog("Comparing QB last updated: " . $last_updated);
-                nlog("Comparing Ninja last updated: " . $invoice->updated_at);
+                nlog('Comparing QB last updated: ' . $last_updated);
+                nlog('Comparing Ninja last updated: ' . $invoice->updated_at);
 
                 if (data_get($qb_record, 'TxnStatus') === 'Voided') {
                     $this->delete($id);
+
                     return;
                 }
 
@@ -646,9 +627,6 @@ class QbInvoice implements SyncInterface
 
     /**
      * syncNinjaInvoice
-     *
-     * @param  $record
-     * @return void
      */
     public function syncNinjaInvoice($record): void
     {
@@ -696,19 +674,19 @@ class QbInvoice implements SyncInterface
                 $ninja_payment = $payment_transformer->buildPayment($payment);
                 $ninja_payment->service()->applyNumber()->save();
 
-                $paymentable = new \App\Models\Paymentable();
+                $paymentable = new Paymentable;
                 $paymentable->payment_id = $ninja_payment->id;
                 $paymentable->paymentable_id = $invoice->id;
                 $paymentable->paymentable_type = 'invoices';
                 $paymentable->amount = $transformed['applied'] + $ninja_payment->credits->sum('amount');
-                $paymentable->created_at = $ninja_payment->date; //@phpstan-ignore-line
+                $paymentable->created_at = $ninja_payment->date; // @phpstan-ignore-line
                 $paymentable->save();
 
                 $invoice->service()->applyPayment($ninja_payment, $paymentable->amount);
 
             }
 
-            if ($record instanceof \QuickBooksOnline\API\Data\IPPSalesReceipt) {
+            if ($record instanceof IPPSalesReceipt) {
                 $invoice->service()->markPaid()->save();
             }
 
@@ -719,14 +697,13 @@ class QbInvoice implements SyncInterface
     /**
      * Deletes the invoice from Ninja and sets the sync to null
      *
-     * @param string $id
-     * @return void
+     * @param  string  $id
      */
     public function delete($id): void
     {
         $qb_record = $this->find($id);
 
-        if ($this->service->syncable('invoice', \App\Enum\SyncDirection::PULL) && $invoice = $this->findInvoice($id)) {
+        if ($this->service->syncable('invoice', SyncDirection::PULL) && $invoice = $this->findInvoice($id)) {
             QuickbooksService::$importing[$this->service->company->id] = true;
             try {
                 $this->invoice_repository->delete($invoice);
@@ -748,9 +725,8 @@ class QbInvoice implements SyncInterface
      *
      * If mismatches are found, it adjusts Invoice Ninja amounts to match QuickBooks.
      *
-     * @param mixed $qb_response QuickBooks invoice response
-     * @param Invoice $invoice Invoice Ninja invoice
-     * @return void
+     * @param  mixed  $qb_response  QuickBooks invoice response
+     * @param  Invoice  $invoice  Invoice Ninja invoice
      */
     private function validateAndSyncAmounts(mixed $qb_response, Invoice $invoice): void
     {

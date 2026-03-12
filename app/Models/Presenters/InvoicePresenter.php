@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models\Presenters;
 
+use App\Models\Invoice;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
 
@@ -25,7 +25,7 @@ use App\Utils\Traits\MakesDates;
  * Shortcuts to other presenters are here to facilitate
  * a clean UI / UX
  *
- * @property \App\Models\Invoice $entity
+ * @property Invoice $entity
  */
 class InvoicePresenter extends EntityPresenter
 {
@@ -47,7 +47,7 @@ class InvoicePresenter extends EntityPresenter
 
     public function rBits()
     {
-        $properties = new \stdClass();
+        $properties = new \stdClass;
         $properties->terms_text = $this->terms;
         $properties->note = $this->public_notes;
         $properties->itemized_receipt = [];
@@ -56,7 +56,7 @@ class InvoicePresenter extends EntityPresenter
             $properties->itemized_receipt[] = $this->itemRbits($item);
         }
 
-        $data = new \stdClass();
+        $data = new \stdClass;
         $data->receive_time = time();
         $data->type = 'transaction_details';
         $data->source = 'user';
@@ -67,7 +67,7 @@ class InvoicePresenter extends EntityPresenter
 
     public function itemRbits($item)
     {
-        $data = new \stdClass();
+        $data = new \stdClass;
         $data->description = $item->notes;
         $data->item_price = floatval($item->cost);
         $data->quantity = floatval($item->quantity);

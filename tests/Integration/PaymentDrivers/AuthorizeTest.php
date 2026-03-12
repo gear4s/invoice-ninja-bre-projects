@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration\PaymentDrivers;
 
+use net\authorize\api\constants\ANetEnvironment;
 use net\authorize\api\contract\v1 as AnetAPI;
 use net\authorize\api\contract\v1\CreateCustomerPaymentProfileRequest;
 use net\authorize\api\contract\v1\CreateTransactionRequest;
@@ -34,9 +34,6 @@ use net\authorize\api\controller\GetMerchantDetailsController;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class AuthorizeTest extends TestCase
 {
     use MockAccountData;
@@ -49,56 +46,56 @@ class AuthorizeTest extends TestCase
     {
         parent::setUp();
 
-        if (! config('ninja.testvars.authorize')) {
+        if (!config('ninja.testvars.authorize')) {
             $this->markTestSkipped('authorize.net not configured');
         }
     }
 
-    public function testUnpackingVars()
+    public function test_unpacking_vars()
     {
         $vars = json_decode(config('ninja.testvars.authorize'));
 
         $this->assertTrue(property_exists($vars, 'apiLoginId'));
     }
 
-    public function testCreatePublicClientKey()
+    public function test_create_public_client_key()
     {
         error_reporting(E_ALL & ~E_DEPRECATED);
 
         $vars = json_decode(config('ninja.testvars.authorize'));
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType;
         $merchantAuthentication->setName($vars->apiLoginId);
         $merchantAuthentication->setTransactionKey($vars->transactionKey);
 
-        $request = new AnetAPI\GetMerchantDetailsRequest();
+        $request = new AnetAPI\GetMerchantDetailsRequest;
         $request->setMerchantAuthentication($merchantAuthentication);
 
         $controller = new GetMerchantDetailsController($request);
 
-        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        $response = $controller->executeWithApiResponse(ANetEnvironment::SANDBOX);
 
         $this->assertNotNull($response->getPublicClientKey());
     }
 
-    public function testProfileIdList()
+    public function test_profile_id_list()
     {
         error_reporting(E_ALL & ~E_DEPRECATED);
 
         $vars = json_decode(config('ninja.testvars.authorize'));
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType;
         $merchantAuthentication->setName($vars->apiLoginId);
         $merchantAuthentication->setTransactionKey($vars->transactionKey);
 
         // Set the transaction's refId
-        $refId = 'ref'.time();
+        $refId = 'ref' . time();
 
         // Get all existing customer profile ID's
-        $request = new GetCustomerProfileIdsRequest();
+        $request = new GetCustomerProfileIdsRequest;
         $request->setMerchantAuthentication($merchantAuthentication);
         $controller = new GetCustomerProfileIdsController($request);
-        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        $response = $controller->executeWithApiResponse(ANetEnvironment::SANDBOX);
         if (($response != null) && ($response->getMessages()->getResultCode() == 'Ok')) {
             // nlog("GetCustomerProfileId's SUCCESS: "."\n");
             // nlog(print_r($response->getIds(), 1));
@@ -111,18 +108,18 @@ class AuthorizeTest extends TestCase
         $this->assertNotNull($response);
     }
 
-    public function testCreateProfile()
+    public function test_create_profile()
     {
         error_reporting(E_ALL & ~E_DEPRECATED);
 
         $vars = json_decode(config('ninja.testvars.authorize'));
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType;
         $merchantAuthentication->setName($vars->apiLoginId);
         $merchantAuthentication->setTransactionKey($vars->transactionKey);
 
         // Create the Bill To info for new payment type
-        $billTo = new CustomerAddressType();
+        $billTo = new CustomerAddressType;
         $billTo->setFirstName('Ellen');
         $billTo->setLastName('Johnson');
         $billTo->setCompany('Souveniropolis');
@@ -135,11 +132,11 @@ class AuthorizeTest extends TestCase
         $billTo->setfaxNumber('999-999-9999');
 
         // Create a customer shipping address
-        $customerShippingAddress = new CustomerAddressType();
+        $customerShippingAddress = new CustomerAddressType;
         $customerShippingAddress->setFirstName('James');
         $customerShippingAddress->setLastName('White');
         $customerShippingAddress->setCompany('Addresses R Us');
-        $customerShippingAddress->setAddress(rand().' North Spring Street');
+        $customerShippingAddress->setAddress(rand() . ' North Spring Street');
         $customerShippingAddress->setCity('Toms River');
         $customerShippingAddress->setState('NJ');
         $customerShippingAddress->setZip('08753');
@@ -149,26 +146,26 @@ class AuthorizeTest extends TestCase
 
         // Create an array of any shipping addresses
         $shippingProfiles[] = $customerShippingAddress;
-        $refId = 'ref'.time();
+        $refId = 'ref' . time();
         $email = 'test12@gmail.com';
 
         // Create a new CustomerProfileType and add the payment profile object
-        $customerProfile = new CustomerProfileType();
+        $customerProfile = new CustomerProfileType;
         $customerProfile->setDescription('Customer 2 Test PHP');
-        $customerProfile->setMerchantCustomerId('M_'.time());
+        $customerProfile->setMerchantCustomerId('M_' . time());
         $customerProfile->setEmail($email);
-        //$customerProfile->setpaymentProfiles($paymentProfiles);
+        // $customerProfile->setpaymentProfiles($paymentProfiles);
         $customerProfile->setShipToList($shippingProfiles);
 
         // Assemble the complete transaction request
-        $request = new AnetAPI\CreateCustomerProfileRequest();
+        $request = new AnetAPI\CreateCustomerProfileRequest;
         $request->setMerchantAuthentication($merchantAuthentication);
         $request->setRefId($refId);
         $request->setProfile($customerProfile);
 
         // Create the controller and get the response
         $controller = new CreateCustomerProfileController($request);
-        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        $response = $controller->executeWithApiResponse(ANetEnvironment::SANDBOX);
 
         if (($response != null) && ($response->getMessages()->getResultCode() == 'Ok')) {
             // nlog('Succesfully created customer profile : '.$response->getCustomerProfileId()."\n");
@@ -185,21 +182,21 @@ class AuthorizeTest extends TestCase
         $this->assertNotNull($response);
     }
 
-    public function testGetCustomerProfileId()
+    public function test_get_customer_profile_id()
     {
         error_reporting(E_ALL & ~E_DEPRECATED);
 
         $vars = json_decode(config('ninja.testvars.authorize'));
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType;
         $merchantAuthentication->setName($vars->apiLoginId);
         $merchantAuthentication->setTransactionKey($vars->transactionKey);
 
-        $request = new GetCustomerProfileRequest();
+        $request = new GetCustomerProfileRequest;
         $request->setMerchantAuthentication($merchantAuthentication);
         $request->setCustomerProfileId($this->customer_profile_id);
         $controller = new GetCustomerProfileController($request);
-        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        $response = $controller->executeWithApiResponse(ANetEnvironment::SANDBOX);
 
         if (($response != null) && ($response->getMessages()->getResultCode() == 'Ok')) {
             // nlog('got profile');
@@ -211,7 +208,7 @@ class AuthorizeTest extends TestCase
         $this->assertNotNull($response);
     }
 
-    public function testCreateCustomerPaymentProfile()
+    public function test_create_customer_payment_profile()
     {
         nlog('test create customer payment profile');
 
@@ -219,23 +216,23 @@ class AuthorizeTest extends TestCase
 
         $vars = json_decode(config('ninja.testvars.authorize'));
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType;
         $merchantAuthentication->setName($vars->apiLoginId);
         $merchantAuthentication->setTransactionKey($vars->transactionKey);
 
         // Set the transaction's refId
-        $refId = 'ref'.time();
+        $refId = 'ref' . time();
 
         // Set credit card information for payment profile
-        $creditCard = new CreditCardType();
+        $creditCard = new CreditCardType;
         $creditCard->setCardNumber('4111111111111111');
         $creditCard->setExpirationDate('2024-01');
         $creditCard->setCardCode('100');
-        $paymentCreditCard = new PaymentType();
+        $paymentCreditCard = new PaymentType;
         $paymentCreditCard->setCreditCard($creditCard);
 
         // Create the Bill To info for new payment type
-        $billto = new CustomerAddressType();
+        $billto = new CustomerAddressType;
         $billto->setFirstName('Elas');
         $billto->setLastName('Joson');
         $billto->setCompany('Souveniropolis');
@@ -248,7 +245,7 @@ class AuthorizeTest extends TestCase
         $billto->setfaxNumber('999-999-9999');
 
         // Create a new Customer Payment Profile object
-        $paymentprofile = new CustomerPaymentProfileType();
+        $paymentprofile = new CustomerPaymentProfileType;
         $paymentprofile->setCustomerType('individual');
         $paymentprofile->setBillTo($billto);
         $paymentprofile->setPayment($paymentCreditCard);
@@ -257,7 +254,7 @@ class AuthorizeTest extends TestCase
         $paymentprofiles[] = $paymentprofile;
 
         // Assemble the complete transaction request
-        $paymentprofilerequest = new CreateCustomerPaymentProfileRequest();
+        $paymentprofilerequest = new CreateCustomerPaymentProfileRequest;
         $paymentprofilerequest->setMerchantAuthentication($merchantAuthentication);
 
         // Add an existing profile id to the request
@@ -267,7 +264,7 @@ class AuthorizeTest extends TestCase
 
         // Create the controller and get the response
         $controller = new CreateCustomerPaymentProfileController($paymentprofilerequest);
-        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        $response = $controller->executeWithApiResponse(ANetEnvironment::SANDBOX);
 
         if (($response != null) && ($response->getMessages()->getResultCode() == 'Ok')) {
             //   nlog('Create Customer Payment Profile SUCCESS: '.$response->getCustomerPaymentProfileId()."\n");
@@ -280,42 +277,42 @@ class AuthorizeTest extends TestCase
         $this->assertNotNull($response);
     }
 
-    public function testChargeCustomerProfile()
+    public function test_charge_customer_profile()
     {
         error_reporting(E_ALL & ~E_DEPRECATED);
 
         $vars = json_decode(config('ninja.testvars.authorize'));
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType;
         $merchantAuthentication->setName($vars->apiLoginId);
         $merchantAuthentication->setTransactionKey($vars->transactionKey);
 
         // Set the transaction's refId
-        $refId = 'ref'.time();
+        $refId = 'ref' . time();
 
-        $profileToCharge = new CustomerProfilePaymentType();
+        $profileToCharge = new CustomerProfilePaymentType;
         $profileToCharge->setCustomerProfileId($this->customer_profile_id);
-        $paymentProfile = new PaymentProfileType();
+        $paymentProfile = new PaymentProfileType;
         $paymentProfile->setPaymentProfileId($this->customer_payment_profile);
         $profileToCharge->setPaymentProfile($paymentProfile);
 
-        $transactionRequestType = new TransactionRequestType();
+        $transactionRequestType = new TransactionRequestType;
         $transactionRequestType->setTransactionType('authCaptureTransaction');
         $transactionRequestType->setAmount(350);
         $transactionRequestType->setProfile($profileToCharge);
 
-        $request = new CreateTransactionRequest();
+        $request = new CreateTransactionRequest;
         $request->setMerchantAuthentication($merchantAuthentication);
         $request->setRefId($refId);
         $request->setTransactionRequest($transactionRequestType);
         $controller = new CreateTransactionController($request);
-        $response = $controller->executeWithApiResponse(\net\authorize\api\constants\ANetEnvironment::SANDBOX);
+        $response = $controller->executeWithApiResponse(ANetEnvironment::SANDBOX);
 
         // nlog($response);
         // nlog($response->getTransactionResponse()->getMessages() !== null);
         // nlog($response->getTransactionResponse()->getMessages());
         // nlog($response->getTransactionResponse()->getMessages()[0]);
-        //nlog($response->getTransactionResponse()->getMessages()[0]->getCode());
+        // nlog($response->getTransactionResponse()->getMessages()[0]->getCode());
 
         $code = '';
         $description = '';

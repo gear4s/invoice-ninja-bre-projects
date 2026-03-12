@@ -6,23 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use App\DataMapper\PurchaseOrderSync;
+use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
+use App\Helpers\Invoice\InvoiceSum;
+use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Services\PurchaseOrder\PurchaseOrderService;
 use App\Utils\Ninja;
 use App\Utils\Number;
-use Illuminate\Support\Carbon;
-use App\DataMapper\PurchaseOrderSync;
-use App\Helpers\Invoice\InvoiceSum;
-use Illuminate\Support\Facades\App;
 use Elastic\ScoutDriverPlus\Searchable;
-use App\Helpers\Invoice\InvoiceSumInclusive;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Services\PurchaseOrder\PurchaseOrderService;
-use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
 
 /**
  * App\Models\PurchaseOrder
@@ -97,23 +103,24 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
  * @property int|null $invoice_id
  * @property object|null $tax_data
  * @property-read int|null $activities_count
- * @property \App\Models\User|null $assigned_user
- * @property \App\Models\Client|null $client
- * @property \App\Models\Company $company
+ * @property User|null $assigned_user
+ * @property Client|null $client
+ * @property Company $company
  * @property-read int|null $documents_count
- * @property \App\Models\Expense|null $expense
+ * @property Expense|null $expense
  * @property string $hashed_id
- * @property \App\Models\Invoice|null $invoice
- * @property \App\Models\Project|null $project
- * @property \App\Models\User $user
- * @property \App\Models\Vendor $vendor
- * @property \App\Models\PurchaseOrderInvitation $invitation
- * @property \App\Models\Currency|null $currency
- * @property \App\Models\Location|null $location
+ * @property Invoice|null $invoice
+ * @property Project|null $project
+ * @property User $user
+ * @property Vendor $vendor
+ * @property PurchaseOrderInvitation $invitation
+ * @property Currency|null $currency
+ * @property Location|null $location
  * @property object|null $tax_data
  * @property object|null $e_invoice
  * @property int|null $location_id
- * @property \App\DataMapper\PurchaseOrderSync|null $sync
+ * @property PurchaseOrderSync|null $sync
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder exclude($columns)
  * @method static \Database\Factories\PurchaseOrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder filter(\App\Filters\QueryFilters $filters)
@@ -122,25 +129,26 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder query()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PurchaseOrderInvitation> $invitations
+ *
+ * @property-read Collection<int, Activity> $activities
+ * @property-read Collection<int, Document> $documents
+ * @property-read Collection<int, Backup> $history
+ * @property-read Collection<int, PurchaseOrderInvitation> $invitations
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder withoutTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
+ *
  * @mixin \Eloquent
  */
 class PurchaseOrder extends BaseModel
 {
     use Filterable;
-    use SoftDeletes;
     use Searchable;
+    use SoftDeletes;
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -222,11 +230,14 @@ class PurchaseOrder extends BaseModel
     ];
 
     public const STATUS_DRAFT = 1;
-    public const STATUS_SENT = 2;
-    public const STATUS_ACCEPTED = 3;
-    public const STATUS_RECEIVED = 4;
-    public const STATUS_CANCELLED = 5;
 
+    public const STATUS_SENT = 2;
+
+    public const STATUS_ACCEPTED = 3;
+
+    public const STATUS_RECEIVED = 4;
+
+    public const STATUS_CANCELLED = 5;
 
     public function toSearchableArray()
     {
@@ -234,8 +245,8 @@ class PurchaseOrder extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.purchase_order') . " " . $this->number . " | " . $this->vendor->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
+            'id' => $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.purchase_order') . ' ' . $this->number . ' | ' . $this->vendor->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'is_deleted' => $this->is_deleted,
@@ -254,9 +265,8 @@ class PurchaseOrder extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
-
 
     public static function stringStatus(int $status)
     {
@@ -296,55 +306,52 @@ class PurchaseOrder extends BaseModel
         return self::class;
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class)->withTrashed();
     }
 
-    public function history(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function history(): HasManyThrough
     {
         return $this->hasManyThrough(Backup::class, Activity::class);
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class)->where('company_id', $this->company_id)->where('vendor_id', $this->vendor_id)->orderBy('id', 'DESC')->take(50);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function expense(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function expense(): BelongsTo
     {
         return $this->belongsTo(Expense::class)->withTrashed();
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class)->withTrashed();
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function currency(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
     }
@@ -352,45 +359,44 @@ class PurchaseOrder extends BaseModel
     public function markInvitationsSent(): void
     {
         $this->invitations->each(function ($invitation) {
-            if (! isset($invitation->sent_date)) {
+            if (!isset($invitation->sent_date)) {
                 $invitation->sent_date = Carbon::now();
                 $invitation->saveQuietly();
             }
         });
     }
 
-    public function invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invitations(): HasMany
     {
         return $this->hasMany(PurchaseOrderInvitation::class);
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class)->withTrashed();
     }
 
-    public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
-    /** @return PurchaseOrderService  */
     public function service(): PurchaseOrderService
     {
         return new PurchaseOrderService($this);
     }
 
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function invoices(): BelongsToMany
     {
         return $this->belongsToMany(Invoice::class)->using(Paymentable::class);
     }
 
-    public function payments(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    public function payments(): MorphToMany
     {
         return $this->morphToMany(Payment::class, 'paymentable');
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
@@ -454,7 +460,6 @@ class PurchaseOrder extends BaseModel
 
         return $tax_type;
     }
-
 
     public function entityEmailEvent($invitation, $reminder_template, $template = '')
     {

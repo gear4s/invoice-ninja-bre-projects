@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,11 +27,10 @@ class ValidCompanyQuantity implements ValidationRule
 
         $test = Ninja::isSelfHost()
             ? auth()->user()->company()->account->companies->count() < 10
-            : (auth()->user()->account->isPaid() || auth()->user()->account->isTrial()) && auth()->user()->company()->account->companies->count() < 10 ;
+            : (auth()->user()->account->isPaid() || auth()->user()->account->isTrial()) && auth()->user()->company()->account->companies->count() < 10;
 
         if (!$test) {
             $fail($message);
         }
     }
-
 }

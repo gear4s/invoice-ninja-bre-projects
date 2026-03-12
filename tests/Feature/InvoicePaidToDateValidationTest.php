@@ -6,26 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Invoice;
-use Tests\MockAccountData;
-use App\Utils\Traits\MakesHash;
 use App\Factory\InvoiceItemFactory;
-use App\Helpers\Invoice\InvoiceSum;
+use App\Models\Invoice;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class InvoicePaidToDateValidationTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -71,7 +69,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Update succeeds when paid_to_date matches the DB value (no payment applied).
      */
-    public function testUpdateSucceedsWhenPaidToDateUnchanged()
+    public function test_update_succeeds_when_paid_to_date_unchanged()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -93,7 +91,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * Update fails (422) when a payment was applied between load and save,
      * causing paid_to_date to drift from the client's snapshot.
      */
-    public function testUpdateFailsWhenPaymentAppliedBetweenEdits()
+    public function test_update_fails_when_payment_applied_between_edits()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -124,7 +122,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * Update succeeds when the client's paid_to_date snapshot matches
      * after a payment has been applied (i.e. client refreshed first).
      */
-    public function testUpdateSucceedsAfterRefreshingPostPayment()
+    public function test_update_succeeds_after_refreshing_post_payment()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -150,7 +148,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Validation catches a full payment (invoice fully paid) during edit.
      */
-    public function testUpdateFailsWhenInvoiceFullyPaidDuringEdit()
+    public function test_update_fails_when_invoice_fully_paid_during_edit()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -178,7 +176,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * Validation catches partial payment applied, then another partial payment,
      * between client load and save. Client snapshot is from before both.
      */
-    public function testUpdateFailsWithMultiplePaymentsBetweenEdits()
+    public function test_update_fails_with_multiple_payments_between_edits()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -208,7 +206,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * When paid_to_date is omitted from the request entirely,
      * the validation rule should not fire (field is not present).
      */
-    public function testUpdateSucceedsWhenPaidToDateOmitted()
+    public function test_update_succeeds_when_paid_to_date_omitted()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -228,7 +226,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Fractional cent values: BcMath comparison catches small differences.
      */
-    public function testUpdateFailsOnFractionalCentDifference()
+    public function test_update_fails_on_fractional_cent_difference()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -253,7 +251,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Exact fractional match passes.
      */
-    public function testUpdateSucceedsWithExactFractionalMatch()
+    public function test_update_succeeds_with_exact_fractional_match()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -275,7 +273,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * Client sends paid_to_date as zero on an invoice that has never had
      * a payment — should pass since DB is also zero.
      */
-    public function testUpdateSucceedsWithZeroPaidToDateOnUnpaidInvoice()
+    public function test_update_succeeds_with_zero_paid_to_date_on_unpaid_invoice()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -297,7 +295,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * Client sends paid_to_date as string "0" — should still match
      * a numeric zero in DB (BcMath handles type coercion).
      */
-    public function testUpdateHandlesStringZeroPaidToDate()
+    public function test_update_handles_string_zero_paid_to_date()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -315,7 +313,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Client sends paid_to_date as a string number that matches DB.
      */
-    public function testUpdateHandlesStringNumericPaidToDate()
+    public function test_update_handles_string_numeric_paid_to_date()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -336,7 +334,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Large invoice amount: payment applied between edits is still caught.
      */
-    public function testUpdateFailsOnLargeInvoiceWithPaymentDrift()
+    public function test_update_fails_on_large_invoice_with_payment_drift()
     {
         $invoice = $this->createSentInvoice(999999.99);
 
@@ -360,7 +358,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Negative paid_to_date from client should fail (DB has 0).
      */
-    public function testUpdateFailsWithNegativePaidToDate()
+    public function test_update_fails_with_negative_paid_to_date()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -379,7 +377,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Client fabricates a paid_to_date higher than what's in the DB.
      */
-    public function testUpdateFailsWhenClientInflatesPaidToDate()
+    public function test_update_fails_when_client_inflates_paid_to_date()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -398,7 +396,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Sequential edits both succeed when no payment activity occurs.
      */
-    public function testMultipleEditsSucceedWithoutPaymentActivity()
+    public function test_multiple_edits_succeed_without_payment_activity()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -429,7 +427,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * Null paid_to_date is treated as zero by BcMath — passes on unpaid invoice.
      */
-    public function testUpdateSucceedsWithNullPaidToDateOnUnpaidInvoice()
+    public function test_update_succeeds_with_null_paid_to_date_on_unpaid_invoice()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -449,7 +447,7 @@ class InvoicePaidToDateValidationTest extends TestCase
      * same behavior as omitting the field entirely. The closure never fires.
      * This means null does NOT act as a concurrency check.
      */
-    public function testUpdatePassesWithNullPaidToDateOnPaidInvoice()
+    public function test_update_passes_with_null_paid_to_date_on_paid_invoice()
     {
         $invoice = $this->createSentInvoice(100);
 
@@ -473,7 +471,7 @@ class InvoicePaidToDateValidationTest extends TestCase
     /**
      * First edit succeeds, payment applied, second edit (with stale snapshot) fails.
      */
-    public function testSecondEditFailsAfterInterleavedPayment()
+    public function test_second_edit_fails_after_interleaved_payment()
     {
         $invoice = $this->createSentInvoice(100);
 

@@ -6,25 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Report;
 
+use App\Export\CSV\BaseExport;
+use App\Libraries\MultiDB;
+use App\Models\Company;
+use App\Models\Project;
 use App\Models\User;
+use App\Services\Template\TemplateService;
 use App\Utils\Ninja;
 use App\Utils\Number;
-use App\Models\Client;
-use League\Csv\Writer;
-use App\Models\Company;
-use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use App\Export\CSV\BaseExport;
-use App\Models\Project;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Facades\App;
-use App\Services\Template\TemplateService;
 
 class ProjectReport extends BaseExport
 {
@@ -40,7 +36,7 @@ class ProjectReport extends BaseExport
             'end_date',
             'projects',
         ]
-    */
+     */
     public function __construct(public Company $company, public array $input) {}
 
     public function run()
@@ -61,8 +57,8 @@ class ProjectReport extends BaseExport
 
         $user_name = $user ? $user->present()->name() : '';
 
-        $query = \App\Models\Project::with(['invoices','expenses','tasks'])
-                                ->where('company_id', $this->company->id);
+        $query = Project::with(['invoices', 'expenses', 'tasks'])
+            ->where('company_id', $this->company->id);
 
         $query = $this->filterByUserPermissions($query);
 
@@ -93,7 +89,7 @@ class ProjectReport extends BaseExport
             // 'charts' => $this->getCharts($projects),
         ];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         /** @var ?Project $_project */
         $_project = $query->first();
@@ -102,13 +98,12 @@ class ProjectReport extends BaseExport
 
         $ts_instance = $ts->setCompany($this->company)
                     // ->setData($data)
-                    ->processData($data)
-                    ->setRawTemplate(file_get_contents(resource_path($this->template)))
-                    ->addGlobal(['currency_code' => $currency_code])
-                    ->setGlobals()
-                    ->parseNinjaBlocks()
-                    ->save();
-
+            ->processData($data)
+            ->setRawTemplate(file_get_contents(resource_path($this->template)))
+            ->addGlobal(['currency_code' => $currency_code])
+            ->setGlobals()
+            ->parseNinjaBlocks()
+            ->save();
 
         return $ts_instance->getPdf();
     }

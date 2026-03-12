@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,13 +23,9 @@ class CompanyFactory
 {
     use MakesHash;
 
-    /**
-     * @param int $account_id
-     * @return Company
-     */
     public function create(int $account_id): Company
     {
-        $company = new Company();
+        $company = new Company;
         $company->account_id = $account_id;
         $company->company_key = $this->createHash();
         $company->settings = CompanySettings::defaults();
@@ -44,11 +39,11 @@ class CompanyFactory
             $company->subdomain = '';
         }
 
-        $company->enabled_modules = config('ninja.enabled_modules'); //32767;//8191; //4095
+        $company->enabled_modules = config('ninja.enabled_modules'); // 32767;//8191; //4095
         $company->default_password_timeout = 1800000;
         $company->markdown_email_enabled = true;
         $company->markdown_enabled = false;
-        $company->tax_data = new TaxModel();
+        $company->tax_data = new TaxModel;
         $company->first_month_of_year = '1';
         $company->smtp_encryption = 'tls';
         $company->smtp_host = '';

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,26 +16,23 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class PostmarkWebhookTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        if (! config('services.postmark.token')) {
+        if (!config('services.postmark.token')) {
             $this->markTestSkipped('Postmark Secret Set');
         }
 
         $this->makeTestData();
     }
 
-    public function testDeliveryReport()
+    public function test_delivery_report()
     {
         $invitation = $this->invoice->invitations->first();
         $invitation->message_id = '00000000-0000-0000-0000-000000000000';
@@ -64,7 +60,7 @@ class PostmarkWebhookTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testDeliveryJob()
+    public function test_delivery_job()
     {
         $invitation = $this->invoice->invitations->first();
         $invitation->message_id = '00000000-0000-0000-0000-000000000000';
@@ -84,7 +80,7 @@ class PostmarkWebhookTest extends TestCase
         $this->assertEquals('delivered', $invitation->fresh()->email_status);
     }
 
-    public function testSpamReport()
+    public function test_spam_report()
     {
         $invitation = $this->invoice->invitations->first();
         $invitation->message_id = '00000000-0000-0000-0000-000000000001';
@@ -112,7 +108,7 @@ class PostmarkWebhookTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function testSpamJob()
+    public function test_spam_job()
     {
         $invitation = $this->invoice->invitations->first();
         $invitation->message_id = '00000000-0000-0000-0000-000000000001';

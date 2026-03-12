@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,9 +31,6 @@ class RecurringExpenseTransformer extends EntityTransformer
         'documents',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'documents',
         'client',
@@ -71,8 +67,6 @@ class RecurringExpenseTransformer extends EntityTransformer
     }
 
     /**
-     * @param RecurringExpense $recurring_expense
-     *
      * @return array
      */
     public function transform(RecurringExpense $recurring_expense)
@@ -87,7 +81,7 @@ class RecurringExpenseTransformer extends EntityTransformer
             'client_id' => $this->encodePrimaryKey($recurring_expense->client_id),
             'bank_id' => (string) $recurring_expense->bank_id ?: '',
             'invoice_currency_id' => (string) $recurring_expense->invoice_currency_id ?: '',
-            'recurring_expense_currency_id' => '', //todo remove redundant in 5.0.25
+            'recurring_expense_currency_id' => '', // todo remove redundant in 5.0.25
             'currency_id' => (string) $recurring_expense->currency_id ?: '',
             'category_id' => $this->encodePrimaryKey($recurring_expense->category_id),
             'payment_type_id' => (string) $recurring_expense->payment_type_id ?: '',

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\MigrationController
  */
 class MigrationTest extends TestCase
@@ -40,7 +38,7 @@ class MigrationTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testCompanyExists()
+    public function test_company_exists()
     {
         $co = Company::find($this->company->id);
 
@@ -48,7 +46,7 @@ class MigrationTest extends TestCase
         $this->assertNotNull($co);
     }
 
-    public function testThatCompanyDeletesCompletely()
+    public function test_that_company_deletes_completely()
     {
         $company_id = $this->company->id;
 
@@ -61,7 +59,7 @@ class MigrationTest extends TestCase
         $this->assertNull($co);
     }
 
-    public function testCompanyChildDeletes()
+    public function test_company_child_deletes()
     {
         $this->makeTestData();
 

@@ -6,29 +6,28 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Report;
 
-use App\Models\User;
-use App\Models\Company;
-use App\Libraries\MultiDB;
-use App\Mail\DownloadReport;
-use Illuminate\Bus\Queueable;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
+use App\Libraries\MultiDB;
+use App\Mail\DownloadReport;
+use App\Models\Company;
+use App\Models\User;
 use App\Services\Report\ARDetailReport;
 use App\Services\Report\ARSummaryReport;
 use App\Services\Report\ClientBalanceReport;
 use App\Services\Report\ClientSalesReport;
 use App\Services\Report\TaxSummaryReport;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use PhpZip\ZipFile;
 
 class SendToAdmin implements ShouldQueue
 {
@@ -59,7 +58,7 @@ class SendToAdmin implements ShouldQueue
         // If the file is greater than 5MB, we need to zip it to ensure it does not break attachment size limits
         if ($size_mb > 5) {
 
-            $zipFile = new \PhpZip\ZipFile();
+            $zipFile = new ZipFile;
             $file_name = basename($file_name) . '.zip';
 
             try {
@@ -78,7 +77,7 @@ class SendToAdmin implements ShouldQueue
 
         if (in_array(get_class($export), [ARDetailReport::class, ARSummaryReport::class, ClientBalanceReport::class, ClientSalesReport::class, TaxSummaryReport::class])) {
             $pdf = base64_encode($export->getPdf());
-            $files[] = ['file' => $pdf, 'file_name' => str_replace(".csv", ".pdf", $this->file_name), 'mime' => 'application/pdf'];
+            $files[] = ['file' => $pdf, 'file_name' => str_replace('.csv', '.pdf', $this->file_name), 'mime' => 'application/pdf'];
         }
 
         $user = $this->company->owner();
@@ -87,7 +86,7 @@ class SendToAdmin implements ShouldQueue
             $user = User::find($this->request['user_id']) ?? $this->company->owner();
         }
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new DownloadReport($this->company, $files);
         $nmo->company = $this->company;
         $nmo->settings = $this->company->settings;
@@ -96,7 +95,7 @@ class SendToAdmin implements ShouldQueue
         try {
             (new NinjaMailerJob($nmo))->handle();
         } catch (\Throwable $th) {
-            nlog("EXCEPTION:: SendToAdmin:: could not email report for" . $th->getMessage());
+            nlog('EXCEPTION:: SendToAdmin:: could not email report for' . $th->getMessage());
         }
 
     }
@@ -104,7 +103,7 @@ class SendToAdmin implements ShouldQueue
     public function failed(?\Throwable $exception = null)
     {
         if ($exception) {
-            nlog("EXCEPTION:: SendToAdmin:: could not email report for" . $exception->getMessage());
+            nlog('EXCEPTION:: SendToAdmin:: could not email report for' . $exception->getMessage());
         }
     }
 }

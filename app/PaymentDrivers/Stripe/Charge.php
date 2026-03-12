@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,6 +20,7 @@ use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\StripePaymentDriver;
 use App\Utils\Traits\MakesHash;
+use Laracasts\Presenter\Exceptions\PresenterException;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Exception\AuthenticationException;
 use Stripe\Exception\CardException;
@@ -41,10 +41,10 @@ class Charge
 
     /**
      * Create a charge against a payment method.
-     * @param ClientGatewayToken $cgt
-     * @param PaymentHash $payment_hash
+     *
      * @return mixed success/failure
-     * @throws \Laracasts\Presenter\Exceptions\PresenterException
+     *
+     * @throws PresenterException
      */
     public function tokenBilling(ClientGatewayToken $cgt, PaymentHash $payment_hash)
     {
@@ -83,7 +83,7 @@ class Charge
                 $data['payment_method_types'] = ['bacs_debit'];
             }
             if ($cgt->gateway_type_id == GatewayType::CREDIT_CARD) {
-                $data['payment_method_types'] = ["card","link"];
+                $data['payment_method_types'] = ['card', 'link'];
             }
 
             /* Should improve token billing with client not present */
@@ -104,7 +104,7 @@ class Charge
             ];
 
             switch ($e) {
-                /** @var \Stripe\Exception\CardException $e */
+                /** @var CardException $e */
                 case $e instanceof CardException:
                     $data['message'] = $e->getError()->message ?? $e->getMessage();
                     break;
@@ -131,7 +131,7 @@ class Charge
             SystemLogger::dispatch($data, SystemLog::CATEGORY_GATEWAY_RESPONSE, SystemLog::EVENT_GATEWAY_FAILURE, SystemLog::TYPE_STRIPE, $this->stripe->client, $this->stripe->client->company);
         }
 
-        if (! $response) {
+        if (!$response) {
             return false;
         }
 
@@ -153,7 +153,6 @@ class Charge
 
             $status = Payment::STATUS_COMPLETED;
         }
-
 
         if (!in_array($response?->status, ['succeeded', 'processing'])) {
             $this->stripe->processInternallyFailedPayment($this->stripe, new \Exception('Auto billing failed.', 400));

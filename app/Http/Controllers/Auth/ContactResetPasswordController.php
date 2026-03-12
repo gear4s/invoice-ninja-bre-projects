@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -64,7 +63,6 @@ class ContactResetPasswordController extends Controller
      *
      * If no token is present, display the link request form.
      *
-     * @param Request $request
      * @param  string|null  $token
      * @return Factory|View
      */
@@ -73,7 +71,7 @@ class ContactResetPasswordController extends Controller
         if ($request->session()->has('company_key')) {
             MultiDB::findAndSetDbByCompanyKey($request->session()->get('company_key'));
 
-            /** @var \App\Models\Company $company **/
+            /** @var Company $company * */
             $company = Company::where('company_key', $request->session()->get('company_key'))->first();
             $db = $company->db;
             $account = $company->account;
@@ -82,12 +80,12 @@ class ContactResetPasswordController extends Controller
 
             if ($account_key) {
                 MultiDB::findAndSetDbByAccountKey($account_key);
-                /** @var \App\Models\Account $account **/
+                /** @var Account $account * */
                 $account = Account::where('key', $account_key)->first();
                 $db = $account->companies->first()->db;
                 $company = $account->companies->first();
             } else {
-                /** @var \App\Models\Account $account **/
+                /** @var Account $account * */
                 $account = Account::first();
                 $db = $account->companies->first()->db;
                 $company = $account->companies->first();
@@ -109,8 +107,8 @@ class ContactResetPasswordController extends Controller
 
         $user = ClientContact::where($request->only(['email', 'token']))->first();
 
-        if (! $user) {
-            return $this->sendResetFailedResponse($request, PASSWORD::INVALID_USER);
+        if (!$user) {
+            return $this->sendResetFailedResponse($request, Password::INVALID_USER);
         }
 
         $hashed_password = Hash::make($request->input('password'));

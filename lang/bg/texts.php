@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Организация',
     'name' => 'Име',
     'website' => 'Уебсайт',
@@ -1177,7 +1177,6 @@ $lang = array(
     'enterprise_plan_features' => 'Enterprise Plan добавя поддръжка за множество потребители и прикачени файлове, :link до вижте пълния списък с функции.',
     'return_to_app' => 'Обратно към приложението',
 
-
     // Payment updates
     'refund_payment' => 'Възстановяване на плащане',
     'refund_max' => 'Max:',
@@ -1706,7 +1705,6 @@ $lang = array(
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Български',
     'lang_Russian (Russia)' => 'Руски(Русия)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Счетоводство и правни услуги',
@@ -2364,7 +2362,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Тройунция злато',
     'currency_nicaraguan_córdoba' => 'Никарагуанска Кордоба',
     'currency_malagasy_ariary' => 'Мадагаскарски ариари',
-    "currency_tongan_pa_anga" => "тонганска паанга",
+    'currency_tongan_pa_anga' => 'тонганска паанга',
 
     'review_app_help' => 'Надяваме се, че използвате приложението с удоволствие.<br/>Ще се радваме, ако решите да :link!',
     'writing_a_review' => 'напишете оценка',
@@ -4364,7 +4362,7 @@ $lang = array(
     'activity_122' => ':user архивиран Периодична Разход :recurring_expense',
     'activity_123' => ':user изтрит Периодична Разход :recurring_expense',
     'activity_124' => ':user възстановена Периодична Разход :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'до Прегледай необходимия :entity до задайте парола.',
     'unsubscribe' => 'Отписване',
     'unsubscribed' => 'Отменен абонамент',
@@ -4870,7 +4868,7 @@ $lang = array(
     'payment_type_Klarna' => 'Кларна',
     'payment_type_Interac E Transfer' => 'Interac E трансфер',
     'xinvoice_payable' => 'Плаща се в рамките на :payeddue дни нето до :paydate',
-    'xinvoice_no_buyers_reference' => "Не е дадена референция на купувач",
+    'xinvoice_no_buyers_reference' => 'Не е дадена референция на купувач',
     'xinvoice_online_payment' => 'Фактура трябва до бъде платена онлайн чрез предоставената връзка',
     'pre_payment' => 'Пре Плащане',
     'number_of_payments' => 'Брой Плащания',
@@ -4975,8 +4973,8 @@ $lang = array(
     'e_invoice' => 'E- Фактура',
     'light_dark_mode' => 'Светъл/тъмен режим',
     'activities' => 'дейности',
-    'recent_transactions' => "Скорошни транзакции",
-    'country_Palestine' => "Палестина",
+    'recent_transactions' => 'Скорошни транзакции',
+    'country_Palestine' => 'Палестина',
     'country_Taiwan' => 'Тайван',
     'duties' => 'Задължения',
     'order_number' => 'Номер на поръчката',
@@ -5193,7 +5191,7 @@ $lang = array(
     'rff' => 'Форма за задължителни полета',
     'add_step' => 'Добавете стъпка',
     'steps' => 'стъпки',
-    'steps_order_help' =>  'Редът на стъпките е важен. Първата стъпка не трябва да зависи от никоя друга стъпка. Втората стъпка трябва да зависи от първата стъпка и т.н.',
+    'steps_order_help' => 'Редът на стъпките е важен. Първата стъпка не трябва да зависи от никоя друга стъпка. Втората стъпка трябва да зависи от първата стъпка и т.н.',
     'other_steps' => 'Други стъпки',
     'use_available_payments' => 'Използвайте Налични Плащания',
     'test_email_sent' => 'Успешно изпратен имейл',
@@ -5402,7 +5400,7 @@ $lang = array(
     'credit_updated' => 'Кредит обновена',
     'payment_updated' => 'Плащане обновена',
     'search_placeholder' => 'Намерете Фактури , Клиенти и др',
-    'invalid_vat_number' => "ДДС номерът не е валиден за избраната държава. Формат трябва да бъде код на държава, последван само от номер, т.е. DE123456789",
+    'invalid_vat_number' => 'ДДС номерът не е валиден за избраната държава. Формат трябва да бъде код на държава, последван само от номер, т.е. DE123456789',
     'acts_as_sender' => 'Изпрати E- Фактури',
     'acts_as_receiver' => 'Получаване на E- Фактури',
     'peppol_token_generated' => 'PEPPOL токен Успешно генериран.',
@@ -5539,7 +5537,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Настройване на имейли за автоматично напомняне',
     'pro_plan_feature_11' => 'Автоматично прикачена Фактура PDF до имейли',
     'pro_plan_feature_12' => 'Показване на Клиенти E-Signature на Фактури',
-    'pro_plan_feature_13' => "Активирайте квадратчето за отметка „ Условия за одобрение“.",
+    'pro_plan_feature_13' => 'Активирайте квадратчето за отметка „ Условия за одобрение“.',
     'pro_plan_feature_14' => 'Отчети: Фактури , Разходи, P&amp;L, др',
     'pro_plan_feature_15' => 'Масов имейл Фактури , цитати , Кредити',
     'pro_plan_feature_16' => 'Свържете 10 компании с 1 вход',
@@ -5914,6 +5912,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Банка превод',
     'activity_164' => 'Синхронизирането на QuickBooks не бе успешно. :notes',
-);
+];
 
 return $lang;

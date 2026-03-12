@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,6 +24,7 @@ use App\Http\Requests\RecurringExpense\UpdateRecurringExpenseRequest;
 use App\Http\Requests\RecurringExpense\UploadRecurringExpenseRequest;
 use App\Models\Account;
 use App\Models\RecurringExpense;
+use App\Models\User;
 use App\Repositories\RecurringExpenseRepository;
 use App\Transformers\RecurringExpenseTransformer;
 use App\Utils\Ninja;
@@ -32,6 +32,7 @@ use App\Utils\Traits\BulkOptions;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\SavesDocuments;
 use App\Utils\Traits\Uploadable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 /**
@@ -39,10 +40,10 @@ use Illuminate\Http\Response;
  */
 class RecurringExpenseController extends BaseController
 {
-    use MakesHash;
-    use Uploadable;
     use BulkOptions;
+    use MakesHash;
     use SavesDocuments;
+    use Uploadable;
 
     protected $entity_type = RecurringExpense::class;
 
@@ -55,7 +56,6 @@ class RecurringExpenseController extends BaseController
 
     /**
      * RecurringExpenseController constructor.
-     * @param RecurringExpenseRepository $recurring_expense_repo
      */
     public function __construct(RecurringExpenseRepository $recurring_expense_repo)
     {
@@ -73,31 +73,39 @@ class RecurringExpenseController extends BaseController
      *      description="Lists recurring_expenses, search and filters allow fine grained lists to be generated.
 
      * Query parameters can be added to performed more fine grained filtering of the recurring_expenses, these are handled by the RecurringExpenseFilters class which defines the methods available",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of recurring_expenses",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param RecurringExpenseFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function index(RecurringExpenseFilters $filters)
     {
@@ -109,10 +117,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowRecurringExpenseRequest $request
-     * @param RecurringExpense $recurring_expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/recurring_expenses/{id}",
@@ -120,6 +125,7 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expenses"},
      *      summary="Shows a client",
      *      description="Displays a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -129,28 +135,36 @@ class RecurringExpenseController extends BaseController
      *          description="The RecurringExpense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the recurring_expense object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -163,10 +177,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditRecurringExpenseRequest $request
-     * @param RecurringExpense $recurring_expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/recurring_expenses/{id}/edit",
@@ -174,6 +185,7 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expenses"},
      *      summary="Shows a client for editting",
      *      description="Displays a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -183,28 +195,36 @@ class RecurringExpenseController extends BaseController
      *          description="The RecurringExpense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -217,11 +237,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateRecurringExpenseRequest $request
-     * @param RecurringExpense $recurring_expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/recurring_expenses/{id}",
@@ -229,6 +245,7 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expenses"},
      *      summary="Updates a client",
      *      description="Handles the updating of a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -238,28 +255,36 @@ class RecurringExpenseController extends BaseController
      *          description="The RecurringExpense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -283,10 +308,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateRecurringExpenseRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/recurring_expenses/create",
@@ -294,33 +316,41 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expenses"},
      *      summary="Gets a new blank client object",
      *      description="Returns a blank object with default values",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A blank client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function create(CreateRecurringExpenseRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $recurring_expense = RecurringExpenseFactory::create($user->company()->id, $user->id);
@@ -331,10 +361,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreRecurringExpenseRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/recurring_expenses",
@@ -342,33 +369,41 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expenses"},
      *      summary="Adds a client",
      *      description="Adds an client to a company",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function store(StoreRecurringExpenseRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $recurring_expense = $this->recurring_expense_repo->save($request->all(), RecurringExpenseFactory::create($user->company()->id, $user->id));
@@ -382,18 +417,17 @@ class RecurringExpenseController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyRecurringExpenseRequest $request
-     * @param RecurringExpense $recurring_expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @throws \Exception
+     *
      * @OA\Delete(
      *      path="/api/v1/recurring_expenses/{id}",
      *      operationId="deleteRecurringExpense",
      *      tags={"recurring_expenses"},
      *      summary="Deletes a client",
      *      description="Handles the deletion of a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -403,27 +437,34 @@ class RecurringExpenseController extends BaseController
      *          description="The RecurringExpense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -438,8 +479,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/recurring_expenses/bulk",
@@ -447,16 +487,21 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expenses"},
      *      summary="Performs bulk actions on an array of recurring_expenses",
      *      description="",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\RequestBody(
      *         description="User credentials",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="integer",
      *                     description="Array of hashed IDs to be bulk 'actioned",
@@ -465,29 +510,36 @@ class RecurringExpenseController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The RecurringExpense User response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function bulk()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $action = request()->input('action');
@@ -510,38 +562,38 @@ class RecurringExpenseController extends BaseController
             case 'archive':
                 $this->recurring_expense_repo->archive($recurring_expense);
 
-                if (! $bulk) {
+                if (!$bulk) {
                     return $this->itemResponse($recurring_expense);
                 }
                 break;
             case 'restore':
                 $this->recurring_expense_repo->restore($recurring_expense);
 
-                if (! $bulk) {
+                if (!$bulk) {
                     return $this->itemResponse($recurring_expense);
                 }
                 break;
             case 'delete':
                 $this->recurring_expense_repo->delete($recurring_expense);
 
-                if (! $bulk) {
+                if (!$bulk) {
                     return $this->itemResponse($recurring_expense);
                 }
                 break;
             case 'email':
-                //dispatch email to queue
+                // dispatch email to queue
                 break;
             case 'start':
                 $recurring_expense = $recurring_expense->service()->start()->save();
 
-                if (! $bulk) {
+                if (!$bulk) {
                     $this->itemResponse($recurring_expense);
                 }
                 break;
             case 'stop':
                 $recurring_expense = $recurring_expense->service()->stop()->save();
 
-                if (! $bulk) {
+                if (!$bulk) {
                     $this->itemResponse($recurring_expense);
                 }
 
@@ -555,11 +607,7 @@ class RecurringExpenseController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UploadRecurringExpenseRequest $request
-     * @param RecurringExpense $recurring_expense
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/recurring_expenses/{id}/upload",
@@ -567,6 +615,7 @@ class RecurringExpenseController extends BaseController
      *      tags={"recurring_expense"},
      *      summary="Uploads a document to a recurring_expense",
      *      description="Handles the uploading of a document to a recurring_expense",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -576,35 +625,43 @@ class RecurringExpenseController extends BaseController
      *          description="The RecurringExpense Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the RecurringExpense object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/RecurringExpense"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function upload(UploadRecurringExpenseRequest $request, RecurringExpense $recurring_expense)
     {
-        if (! $this->checkFeature(Account::FEATURE_DOCUMENTS)) {
+        if (!$this->checkFeature(Account::FEATURE_DOCUMENTS)) {
             return $this->featureFailure();
         }
 

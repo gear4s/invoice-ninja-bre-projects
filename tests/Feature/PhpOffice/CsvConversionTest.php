@@ -6,15 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://opensource.org/licenses/AAL
  */
 
 namespace Tests\Feature\PhpOffice;
 
-use Tests\TestCase;
+use PhpOffice\PhpSpreadsheet\Reader\Csv;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Tests\TestCase;
 
 class CsvConversionTest extends TestCase
 {
@@ -23,11 +23,11 @@ class CsvConversionTest extends TestCase
         parent::setUp();
     }
 
-    public function testExample()
+    public function test_example()
     {
 
-        $spreadsheet = new Spreadsheet();
-        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+        $spreadsheet = new Spreadsheet;
+        $reader = new Csv;
 
         /* Set CSV parsing options */
 
@@ -37,7 +37,7 @@ class CsvConversionTest extends TestCase
 
         /* Load a CSV file and save as a XLS */
 
-        $spreadsheet = $reader->load(base_path().'/tests/Feature/Import/expenses.csv');
+        $spreadsheet = $reader->load(base_path() . '/tests/Feature/Import/expenses.csv');
         $writer = new Xlsx($spreadsheet);
         $writer->save(storage_path('/test.xlsx'));
 
@@ -45,7 +45,6 @@ class CsvConversionTest extends TestCase
 
         $this->assertTrue(file_exists(storage_path('/test.xlsx')));
         unlink(storage_path('/test.xlsx'));
-
 
     }
 }

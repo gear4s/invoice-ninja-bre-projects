@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,11 @@ namespace App\Observers;
 
 use App\Jobs\Client\CheckVat;
 use App\Jobs\Client\UpdateTaxData;
+use App\Jobs\Quickbooks\PushToQuickbooks;
 use App\Jobs\Util\WebhookHandler;
 use App\Models\Client;
 use App\Models\Webhook;
+use App\Services\Quickbooks\QuickbooksService;
 
 class ClientObserver
 {
@@ -55,7 +56,6 @@ class ClientObserver
     /**
      * Handle the client "created" event.
      *
-     * @param Client $client
      * @return void
      */
     public function created(Client $client)
@@ -71,8 +71,8 @@ class ClientObserver
         }
 
         $subscriptions = Webhook::where('company_id', $client->company_id)
-                                    ->where('event_id', Webhook::EVENT_CREATE_CLIENT)
-                                    ->exists();
+            ->where('event_id', Webhook::EVENT_CREATE_CLIENT)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_CLIENT, $client, $client->company)->delay(0);
@@ -82,8 +82,8 @@ class ClientObserver
         // 1. QuickBooks is connected and client sync is enabled
         // 2. We're NOT currently importing from QuickBooks (prevent circular sync)
         if ($client->company->shouldPushToQuickbooks('client')
-            && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$client->company_id])) {
-            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+            && empty(QuickbooksService::$importing[$client->company_id])) {
+            PushToQuickbooks::dispatch(
                 'client',
                 $client->id,
                 $client->company->db,
@@ -94,7 +94,6 @@ class ClientObserver
     /**
      * Handle the client "updated" event.
      *
-     * @param Client $client
      * @return void
      */
     public function updated(Client $client)
@@ -121,8 +120,8 @@ class ClientObserver
         }
 
         $subscriptions = Webhook::where('company_id', $client->company_id)
-                                    ->where('event_id', $event)
-                                    ->exists();
+            ->where('event_id', $event)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $client, $client->company, 'client')->delay(0);
@@ -133,9 +132,9 @@ class ClientObserver
         // 2. We're NOT currently importing from QuickBooks (prevent circular sync)
         // 3. Only financial fields changed (not balance fields which are auto-calculated)
         if ($client->company->shouldPushToQuickbooks('client')
-            && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$client->company_id])
-            && !$client->isDirty(['paid_to_date','balance','credit_balance','payment_balance'])) {
-            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+            && empty(QuickbooksService::$importing[$client->company_id])
+            && !$client->isDirty(['paid_to_date', 'balance', 'credit_balance', 'payment_balance'])) {
+            PushToQuickbooks::dispatch(
                 'client',
                 $client->id,
                 $client->company->db,
@@ -146,7 +145,6 @@ class ClientObserver
     /**
      * Handle the client "archived" event.
      *
-     * @param Client $client
      * @return void
      */
     public function deleted(Client $client)
@@ -156,12 +154,11 @@ class ClientObserver
         }
 
         $subscriptions = Webhook::where('company_id', $client->company_id)
-                                    ->where('event_id', Webhook::EVENT_ARCHIVE_CLIENT)
-                                    ->exists();
+            ->where('event_id', Webhook::EVENT_ARCHIVE_CLIENT)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_ARCHIVE_CLIENT, $client, $client->company)->delay(0);
         }
     }
-
 }

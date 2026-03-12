@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Http\Controllers\BaseController;
 use App\Models\Invoice;
 use App\Transformers\Contact\InvoiceTransformer;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class InvoiceController extends BaseController
@@ -35,9 +35,8 @@ class InvoiceController extends BaseController
     /**
      * List Invoices.
      *
-     * @param InvoiceFilters $filters  The filters
-     *
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @param  InvoiceFilters  $filters  The filters
+     * @return Response| JsonResponse
      */
     public function index(InvoiceFilters $filters)
     {

@@ -6,12 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -31,13 +32,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property bool $is_deleted
- * @property-read \App\Models\Client|null $client
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\CompanyGateway|null $gateway
- * @property-read \App\Models\GatewayType|null $gateway_type
+ * @property-read Client|null $client
+ * @property-read Company $company
+ * @property-read CompanyGateway|null $gateway
+ * @property-read GatewayType|null $gateway_type
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
+ *
  * @mixin \Eloquent
  */
 class ClientGatewayToken extends BaseModel
@@ -70,17 +73,17 @@ class ClientGatewayToken extends BaseModel
         return self::class;
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function gateway(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function gateway(): HasOne
     {
         return $this->hasOne(CompanyGateway::class, 'id', 'company_gateway_id');
     }
 
-    public function gateway_type(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function gateway_type(): HasOne
     {
         return $this->hasOne(GatewayType::class, 'id', 'gateway_type_id');
     }
@@ -88,14 +91,14 @@ class ClientGatewayToken extends BaseModel
     /**
      * Company
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }

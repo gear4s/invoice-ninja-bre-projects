@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\Company;
+use App\Utils\Ninja;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,19 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if(\App\Utils\Ninja::isSelfHost()) {
-        
-        
-        
-                \App\Models\Company::query()
+        if (Ninja::isSelfHost()) {
+
+            Company::query()
                 ->cursor()
                 ->each(function ($c) {
-
 
                     $settings = $c->settings;
                     $pdf_variables = $settings->pdf_variables;
 
-                    $ss =  [
+                    $ss = [
                         '$payment.number',
                         '$payment.date',
                         '$payment.amount',
@@ -32,8 +29,7 @@ return new class extends Migration
 
                     $pdf_variables->statement_unapplied_columns = $ss;
 
-
-                    $ss =  [
+                    $ss = [
                         '$invoice.number',
                         '$payment.date',
                         '$method',
@@ -42,7 +38,7 @@ return new class extends Migration
 
                     $pdf_variables->statement_payment_columns = $ss;
 
-                    $ss =  [
+                    $ss = [
                         '$credit.number',
                         '$credit.date',
                         '$total',
@@ -51,17 +47,14 @@ return new class extends Migration
 
                     $pdf_variables->statement_credit_columns = $ss;
 
-
-                    $ss =  [
+                    $ss = [
                         '$statement_date',
-                        '$balance'
+                        '$balance',
                     ];
 
                     $pdf_variables->statement_details = $ss;
 
-
-
-                    $ss =  [
+                    $ss = [
                         '$invoice.number',
                         '$invoice.date',
                         '$due_date',
@@ -75,12 +68,8 @@ return new class extends Migration
                     $c->settings = $settings;
                     $c->save();
 
-
-
                 });
 
-        
-        
         }
 
     }

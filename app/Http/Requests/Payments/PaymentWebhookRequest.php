@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -39,27 +38,27 @@ class PaymentWebhookRequest extends Request
     /**
      * Resolve company gateway.
      *
-     * @return null|\App\Models\CompanyGateway
+     * @return null|CompanyGateway
      */
     public function getCompanyGateway()
     {
         MultiDB::findAndSetDbByCompanyKey($this->company_key);
 
-        /** @var \App\Models\CompanyGateway */
+        /** @var CompanyGateway */
         return CompanyGateway::withTrashed()->where('id', $this->decodePrimaryKey($this->company_gateway_id))->where('is_deleted', 0)->first();
     }
 
     /**
      * Resolve payment hash.
      *
-     * @return null|bool|\App\Models\PaymentHash
+     * @return null|bool|PaymentHash
      */
     public function getPaymentHash()
     {
         if ($this->query('hash')) {
             MultiDB::findAndSetDbByCompanyKey($this->company_key);
 
-            /** @var \App\Models\PaymentHash */
+            /** @var PaymentHash */
             return PaymentHash::where('hash', $this->query('hash'))->firstOrFail();
         }
 
@@ -68,14 +67,12 @@ class PaymentWebhookRequest extends Request
 
     /**
      * Resolve company from company_key parameter.
-     *
-     * @return null|\App\Models\Company
      */
     public function getCompany(): ?Company
     {
         MultiDB::findAndSetDbByCompanyKey($this->company_key);
 
-        /** @var \App\Models\Company */
+        /** @var Company */
         return Company::where('company_key', $this->company_key)->firstOrFail();
     }
 }

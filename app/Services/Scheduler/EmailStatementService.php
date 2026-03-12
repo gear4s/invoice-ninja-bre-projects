@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,18 +20,18 @@ use Carbon\Carbon;
 
 class EmailStatementService
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     public function __construct(public Scheduler $scheduler) {}
 
     public function run()
     {
         $query = Client::query()
-                ->where('company_id', $this->scheduler->company_id)
-                ->where('is_deleted', 0);
+            ->where('company_id', $this->scheduler->company_id)
+            ->where('is_deleted', 0);
 
-        //Email only the selected clients
+        // Email only the selected clients
         if (count($this->scheduler->parameters['clients']) >= 1) {
             $query->whereIn('id', $this->transformKeys($this->scheduler->parameters['clients']));
         } else {
@@ -42,13 +41,13 @@ class EmailStatementService
         $query->cursor()
             ->each(function ($_client) {
 
-                //work out the date range
+                // work out the date range
                 $statement_properties = $this->calculateStatementProperties($_client);
 
                 $_client->service()->statement($statement_properties, true);
             });
 
-        //calculate next run dates;
+        // calculate next run dates;
         $this->scheduler->calculateNextRun();
 
     }
@@ -99,5 +98,4 @@ class EmailStatementService
             default => [now()->startOfDay()->firstOfMonth()->format('Y-m-d'), now()->startOfDay()->lastOfMonth()->format('Y-m-d')],
         };
     }
-
 }

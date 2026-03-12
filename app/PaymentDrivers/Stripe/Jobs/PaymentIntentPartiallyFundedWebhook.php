@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,6 +22,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Stripe\PaymentIntent;
 
 class PaymentIntentPartiallyFundedWebhook implements ShouldQueue
 {
@@ -54,18 +54,19 @@ class PaymentIntentPartiallyFundedWebhook implements ShouldQueue
             }
 
             if (!$payment_intent) {
-                nlog("payment intent not found");
+                nlog('payment intent not found');
                 nlog($transaction);
+
                 return;
             }
 
             $payment = Payment::query()
-            ->where('company_id', $company->id)
-            ->where('transaction_reference', $payment_intent)
-            ->first();
+                ->where('company_id', $company->id)
+                ->where('transaction_reference', $payment_intent)
+                ->first();
 
             if (!$payment) {
-                nlog("paymentintent found but no payment");
+                nlog('paymentintent found but no payment');
             }
 
             $company_gateway = CompanyGateway::query()->find($this->company_gateway_id);
@@ -74,25 +75,27 @@ class PaymentIntentPartiallyFundedWebhook implements ShouldQueue
             $hash = $transaction['metadata']['payment_hash'] ?? false;
 
             if (!$hash) {
-                nlog("no hash found");
+                nlog('no hash found');
+
                 return;
             }
 
             $payment_hash = PaymentHash::where('hash', $hash)->first();
 
             if (!$payment_hash) {
-                nlog("no payment hash found");
+                nlog('no payment hash found');
+
                 return;
             }
 
             $stripe_driver->client = $payment_hash->fee_invoice->client;
 
-            $pi = \Stripe\PaymentIntent::retrieve($payment_intent, $stripe_driver->stripe_connect_auth);
+            $pi = PaymentIntent::retrieve($payment_intent, $stripe_driver->stripe_connect_auth);
 
             $amount = $stripe_driver->convertFromStripeAmount($pi->amount, $stripe_driver->client->currency()->precision, $stripe_driver->client->currency());
-            $amount_received =  $stripe_driver->convertFromStripeAmount($pi->amount_received, $stripe_driver->client->currency()->precision, $stripe_driver->client->currency());
+            $amount_received = $stripe_driver->convertFromStripeAmount($pi->amount_received, $stripe_driver->client->currency()->precision, $stripe_driver->client->currency());
 
-            //at this point we just send notification emails to the client and advise of over/under payments.
+            // at this point we just send notification emails to the client and advise of over/under payments.
         }
     }
 }

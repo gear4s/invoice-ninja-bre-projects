@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,7 @@ use App\Models\Client;
 use App\Models\Credit;
 use App\Models\CreditInvitation;
 use App\Models\Document;
+use App\Models\Location;
 use App\Utils\Traits\MakesHash;
 use League\Fractal\Resource\Item;
 
@@ -44,7 +44,7 @@ class CreditTransformer extends EntityTransformer
             return null;
         }
 
-        return $this->includeItem($credit->location, $transformer, \App\Models\Location::class);
+        return $this->includeItem($credit->location, $transformer, Location::class);
     }
 
     public function includeActivities(Credit $credit)
@@ -145,8 +145,8 @@ class CreditTransformer extends EntityTransformer
             'paid_to_date' => (float) $credit->paid_to_date,
             'subscription_id' => $this->encodePrimaryKey($credit->subscription_id),
             'invoice_id' => $credit->invoice_id ? $this->encodePrimaryKey($credit->invoice_id) : '',
-            'tax_info' => $credit->tax_data ?: new \stdClass(),
-            'e_invoice' => $credit->e_invoice ?: new \stdClass(),
+            'tax_info' => $credit->tax_data ?: new \stdClass,
+            'e_invoice' => $credit->e_invoice ?: new \stdClass,
             'location_id' => $this->encodePrimaryKey($credit->location_id),
             'backup' => $credit->backup,
             'sync' => $credit->sync,

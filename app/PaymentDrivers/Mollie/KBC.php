@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,10 +22,12 @@ use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\Common\MethodInterface;
 use App\PaymentDrivers\MolliePaymentDriver;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\RedirectResponseor;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Mollie\Api\Exceptions\ApiException;
 
-class KBC implements MethodInterface, LivewireMethodInterface
+class KBC implements LivewireMethodInterface, MethodInterface
 {
     protected MolliePaymentDriver $mollie;
 
@@ -39,9 +40,6 @@ class KBC implements MethodInterface, LivewireMethodInterface
 
     /**
      * Show the authorization page for KBC.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function authorizeView(array $data): View
     {
@@ -50,9 +48,6 @@ class KBC implements MethodInterface, LivewireMethodInterface
 
     /**
      * Handle the authorization for KBC.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function authorizeResponse(Request $request): RedirectResponse
     {
@@ -62,8 +57,7 @@ class KBC implements MethodInterface, LivewireMethodInterface
     /**
      * Show the payment page for KBC.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponseor|RedirectResponse
+     * @return RedirectResponseor|RedirectResponse
      */
     public function paymentView(array $data)
     {
@@ -98,7 +92,7 @@ class KBC implements MethodInterface, LivewireMethodInterface
             return redirect(
                 $payment->getCheckoutUrl()
             );
-        } catch (\Mollie\Api\Exceptions\ApiException|\Exception $exception) {
+        } catch (ApiException|\Exception $exception) {
             return $this->processUnsuccessfulPayment($exception);
         }
     }
@@ -106,9 +100,9 @@ class KBC implements MethodInterface, LivewireMethodInterface
     /**
      * Handle unsuccessful payment.
      *
-     * @param Exception $exception
+     * @param  Exception  $exception
+     *
      * @throws PaymentFailed
-     * @return void
      */
     public function processUnsuccessfulPayment(\Exception $exception): void
     {
@@ -129,12 +123,11 @@ class KBC implements MethodInterface, LivewireMethodInterface
     /**
      * Handle the payments for the KBC.
      *
-     * @param PaymentResponseRequest $request
      * @return mixed
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
-        if (! \property_exists($this->mollie->payment_hash->data, 'payment_id')) {
+        if (!\property_exists($this->mollie->payment_hash->data, 'payment_id')) {
             return $this->processUnsuccessfulPayment(
                 new PaymentFailed('Whoops, something went wrong. Missing required [payment_id] parameter. Please contact administrator. Reference hash: ' . $this->mollie->payment_hash->hash)
             );
@@ -158,7 +151,7 @@ class KBC implements MethodInterface, LivewireMethodInterface
             return $this->processUnsuccessfulPayment(
                 new PaymentFailed(ctrans('texts.status_voided'))
             );
-        } catch (\Mollie\Api\Exceptions\ApiException|\Exception $exception) {
+        } catch (ApiException|\Exception $exception) {
             return $this->processUnsuccessfulPayment($exception);
         }
     }
@@ -166,8 +159,7 @@ class KBC implements MethodInterface, LivewireMethodInterface
     /**
      * Handle the successful payment for KBC.
      *
-     * @param ResourcesPayment $payment
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  ResourcesPayment  $payment
      */
     public function processSuccessfulPayment(\Mollie\Api\Resources\Payment $payment): RedirectResponse
     {
@@ -196,7 +188,7 @@ class KBC implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -206,7 +198,7 @@ class KBC implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

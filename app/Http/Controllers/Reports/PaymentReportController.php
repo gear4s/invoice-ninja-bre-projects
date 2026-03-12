@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,8 +17,10 @@ use App\Http\Requests\Report\GenericReportRequest;
 use App\Jobs\Report\PreviewReport;
 use App\Jobs\Report\SendToAdmin;
 use App\Models\Client;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class PaymentReportController extends BaseController
 {
@@ -39,33 +40,42 @@ class PaymentReportController extends BaseController
      *      tags={"reports"},
      *      summary="Payment reports",
      *      description="Export payment reports",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\RequestBody(
      *          required=true,
+     *
      *          @OA\JsonContent(ref="#/components/schemas/GenericReportSchema")
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="success",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function __invoke(GenericReportRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if ($request->has('send_email') && $request->get('send_email') && $request->missing('output')) {
@@ -74,12 +84,11 @@ class PaymentReportController extends BaseController
             return response()->json(['message' => 'working...'], 200);
         }
 
-        $hash = \Illuminate\Support\Str::uuid();
+        $hash = Str::uuid();
 
         PreviewReport::dispatch($user->company(), $request->all(), PaymentExport::class, $hash);
 
         return response()->json(['message' => $hash], 200);
 
     }
-
 }

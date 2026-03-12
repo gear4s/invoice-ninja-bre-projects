@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,6 +20,7 @@ use App\Transformers\VendorTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
 use League\Csv\Writer;
 
 class VendorExport extends BaseExport
@@ -39,9 +39,9 @@ class VendorExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->vendor_transformer = new VendorTransformer();
-        $this->contact_transformer = new VendorContactTransformer();
-        $this->decorator = new Decorator();
+        $this->vendor_transformer = new VendorTransformer;
+        $this->contact_transformer = new VendorContactTransformer;
+        $this->decorator = new Decorator;
     }
 
     public function init(): Builder
@@ -53,17 +53,17 @@ class VendorExport extends BaseExport
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        //load the CSV document from a string
+        // load the CSV document from a string
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = array_values($this->vendor_report_keys);
         }
 
         $query = Vendor::query()->with('contacts')
-                        ->withTrashed()
-                        ->where('company_id', $this->company->id);
+            ->withTrashed()
+            ->where('company_id', $this->company->id);
 
         if (!$this->input['include_deleted'] ?? false) {
             $query->where('is_deleted', 0);
@@ -91,12 +91,13 @@ class VendorExport extends BaseExport
         })->toArray();
 
         $report = $query->cursor()
-                ->map(function ($resource) {
+            ->map(function ($resource) {
 
-                    /** @var \App\Models\Vendor $resource */
-                    $row = $this->buildRow($resource);
-                    return $this->processMetaData($row, $resource);
-                })->toArray();
+                /** @var Vendor $resource */
+                $row = $this->buildRow($resource);
+
+                return $this->processMetaData($row, $resource);
+            })->toArray();
 
         return array_merge(['columns' => $header], $report);
     }
@@ -106,15 +107,15 @@ class VendorExport extends BaseExport
 
         $query = $this->init();
 
-        //insert the header
+        // insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
-              ->each(function ($vendor) {
+            ->each(function ($vendor) {
 
-                  /** @var \App\Models\Vendor $vendor */
-                  $this->csv->insertOne($this->buildRow($vendor));
-              });
+                /** @var Vendor $vendor */
+                $this->csv->insertOne($this->buildRow($vendor));
+            });
 
         return $this->csv->toString();
     }
@@ -170,7 +171,6 @@ class VendorExport extends BaseExport
         if (in_array('vendor.assigned_user_id', $this->input['report_keys'])) {
             $entity['vendor.assigned_user_id'] = $vendor->assigned_user ? $vendor->assigned_user->present()->name() : '';
         }
-
 
         // $entity['status'] = $this->calculateStatus($vendor);
 

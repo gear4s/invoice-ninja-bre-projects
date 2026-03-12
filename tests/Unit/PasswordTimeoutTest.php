@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\Auth\PasswordTimeoutController
  */
 class PasswordTimeoutTest extends TestCase
 {
     use DatabaseTransactions;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,26 +31,26 @@ class PasswordTimeoutTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testFalseResponse()
+    public function test_false_response()
     {
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/password_timeout')
-        ->assertStatus(412);
+            ->assertStatus(412);
 
     }
 
-    public function testTrueResponse()
+    public function test_true_response()
     {
-        Cache::put($this->user->hashed_id.'_'.$this->user->account_id.'_logged_in', true, 3600);
+        Cache::put($this->user->hashed_id . '_' . $this->user->account_id . '_logged_in', true, 3600);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->post('/api/v1/password_timeout')
-        ->assertStatus(200);
+            ->assertStatus(200);
 
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,13 +25,13 @@ class UpdatePrice extends AbstractService
 
         foreach ($line_items as $key => $line_item) {
 
-            /** @var \App\Models\Product $product **/
+            /** @var Product $product * */
             $product = Product::query()->where('company_id', $this->recurring_invoice->company_id)
-            ->where('product_key', $line_item->product_key)
-            ->where('is_deleted', 0)
-            ->first();
+                ->where('product_key', $line_item->product_key)
+                ->where('is_deleted', 0)
+                ->first();
 
-            if ($product) { //@phpstan-ignore-line
+            if ($product) { // @phpstan-ignore-line
                 $line_items[$key]->cost = floatval($product->price);
             }
         }

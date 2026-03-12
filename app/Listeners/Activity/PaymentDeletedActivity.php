@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,8 +23,6 @@ class PaymentDeletedActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -48,7 +45,7 @@ class PaymentDeletedActivity implements ShouldQueue
 
         $invoices = $payment->invoices;
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $fields->payment_id = $payment->id;
         $fields->client_id = $payment->client_id;
@@ -56,7 +53,7 @@ class PaymentDeletedActivity implements ShouldQueue
         $fields->company_id = $payment->company_id;
         $fields->activity_type_id = Activity::DELETE_PAYMENT;
 
-        foreach ($invoices as $invoice) { //todo we may need to add additional logic if in the future we apply payments to other entity Types, not just invoices
+        foreach ($invoices as $invoice) { // todo we may need to add additional logic if in the future we apply payments to other entity Types, not just invoices
             $fields->invoice_id = $invoice->id;
 
             $this->activity_repo->save($fields, $invoice, $event->event_vars);

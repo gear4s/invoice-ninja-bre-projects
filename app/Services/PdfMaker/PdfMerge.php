@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\PdfMaker;
 
+use Modules\Admin\Services\PdfParse;
 use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\PdfParser\PdfParserException;
 use setasign\Fpdi\PdfParser\StreamReader;
 
 class PdfMerge
@@ -20,14 +21,13 @@ class PdfMerge
     /**
      * __construct
      *
-     * @param  array $files
      * @return void
      */
     public function __construct(private array $files) {}
 
     public function run()
     {
-        $pdf = new FPDI();
+        $pdf = new Fpdi;
 
         foreach ($this->files as $file) {
 
@@ -36,12 +36,12 @@ class PdfMerge
             try {
                 // Try to open with FPDI first
                 $pageCount = $pdf->setSourceFile(StreamReader::createByString($file));
-            } catch (\setasign\Fpdi\PdfParser\PdfParserException $e) {
+            } catch (PdfParserException $e) {
                 // If FPDI fails, try downgrading the PDF
 
-                if (class_exists(\Modules\Admin\Services\PdfParse::class)) {
+                if (class_exists(PdfParse::class)) {
 
-                    $downgradedPdf = \Modules\Admin\Services\PdfParse::downgrade($file);
+                    $downgradedPdf = PdfParse::downgrade($file);
 
                     $pageCount = $pdf->setSourceFile(StreamReader::createByString($downgradedPdf));
                 }
@@ -62,5 +62,4 @@ class PdfMerge
 
         return $pdf->Output('S');
     }
-
 }

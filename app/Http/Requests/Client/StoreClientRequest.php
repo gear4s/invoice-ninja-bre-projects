@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,8 +16,14 @@ use App\Http\Requests\Request;
 use App\Http\ValidationRules\Ninja\CanStoreClientsRule;
 use App\Http\ValidationRules\ValidClientGroupSettingsRule;
 use App\Models\Client;
+use App\Models\Country;
+use App\Models\Currency;
 use App\Models\GroupSetting;
+use App\Models\Language;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends Request
@@ -27,12 +32,10 @@ class StoreClientRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var  \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Client::class);
@@ -40,7 +43,7 @@ class StoreClientRequest extends Request
 
     public function rules()
     {
-        /** @var  \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules['name'] = 'bail|sometimes|nullable|string';
@@ -49,9 +52,9 @@ class StoreClientRequest extends Request
         $rules['documents'] = 'bail|sometimes|array';
         $rules['documents.*'] = $this->fileValidation();
 
-        /* Ensure we have a client name, and that all emails are unique*/
-        //$rules['name'] = 'required|min:1';
-        $rules['settings'] = new ValidClientGroupSettingsRule();
+        /* Ensure we have a client name, and that all emails are unique */
+        // $rules['name'] = 'required|min:1';
+        $rules['settings'] = new ValidClientGroupSettingsRule;
         $rules['contacts'] = 'bail|array';
         $rules['contacts.*.email'] = 'bail|nullable|distinct|sometimes|email';
         $rules['contacts.*.password'] = [
@@ -63,7 +66,7 @@ class StoreClientRequest extends Request
             'regex:/[a-z]/', // must contain at least one lowercase letter
             'regex:/[A-Z]/', // must contain at least one uppercase letter
             'regex:/[0-9]/', // must contain at least one digit
-            //'regex:/[@$!%*#?&.]/', // must contain a special character
+            // 'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
         if ($user->company()->account->isFreeHostedClient()) {
@@ -163,14 +166,14 @@ class StoreClientRequest extends Request
     public function prepareForValidation()
     {
         $input = $this->all();
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -202,10 +205,10 @@ class StoreClientRequest extends Request
             }
         }
 
-        /* Convert hashed IDs to IDs*/
+        /* Convert hashed IDs to IDs */
         $input = $this->decodePrimaryKeys($input);
 
-        //is no settings->currency_id is set then lets dive in and find either a group or company currency all the below may be redundant!!
+        // is no settings->currency_id is set then lets dive in and find either a group or company currency all the below may be redundant!!
         if (
             !array_key_exists('currency_id', $input['settings']) &&
             isset($input['group_settings_id'])
@@ -274,7 +277,7 @@ class StoreClientRequest extends Request
             $input['name'] = strip_tags($input['name']);
         }
 
-        //If you want to validate, the prop must be set.
+        // If you want to validate, the prop must be set.
         $input['id'] = null;
 
         $this->replace($input);
@@ -292,7 +295,7 @@ class StoreClientRequest extends Request
 
     private function getLanguageId(string $language_code)
     {
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+        /** @var Collection<Language> */
         $languages = app('languages');
 
         $language = $languages->firstWhere('locale', $language_code);
@@ -302,7 +305,7 @@ class StoreClientRequest extends Request
 
     private function getCountryCode(string $country_code)
     {
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $country_code = strtoupper($country_code);
@@ -317,7 +320,7 @@ class StoreClientRequest extends Request
 
     private function getCurrencyCode($code)
     {
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         $code = strtoupper($code);

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,11 +28,11 @@ class ProfileController extends BaseController
 
     public function show(Request $request)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->first();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         return $this->itemResponse($company);

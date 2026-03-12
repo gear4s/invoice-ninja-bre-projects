@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Services\EDocument\Gateway\Storecove\Models;
 class AdditionalItemProperties
 {
     public ?string $name;
+
     public ?string $value;
 
     public function __construct(?string $name, ?string $value)
@@ -36,12 +36,14 @@ class AdditionalItemProperties
     public function setName(?string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
     public function setValue(?string $value): self
     {
         $this->value = $value;
+
         return $this;
     }
 }

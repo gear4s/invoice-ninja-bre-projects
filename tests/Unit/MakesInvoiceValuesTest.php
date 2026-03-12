@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,12 +14,11 @@ namespace Tests\Unit;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Traits\MakesInvoiceValues
  */
 class MakesInvoiceValuesTest extends TestCase
 {
-    public function testStrReplaceArray()
+    public function test_str_replace_array()
     {
         $columns = ['custom_invoice_label3'];
 
@@ -40,24 +38,24 @@ class MakesInvoiceValuesTest extends TestCase
         $this->assertFalse(in_array('custom_invoice_value1', $columns));
     }
 
-    public function testFilteringItemTaxes()
+    public function test_filtering_item_taxes()
     {
         $taxes = collect();
 
         $tax_name = 'GST';
         $tax_rate = '10.00';
 
-        $key = str_replace(' ', '', $tax_name.$tax_rate);
+        $key = str_replace(' ', '', $tax_name . $tax_rate);
 
-        $group_tax = collect(['key' => $key, 'total' => 20, 'tax_name' => $tax_name.' '.$tax_rate.'%']);
+        $group_tax = collect(['key' => $key, 'total' => 20, 'tax_name' => $tax_name . ' ' . $tax_rate . '%']);
         $taxes->push($group_tax);
-        $group_tax = collect(['key' => $key, 'total' => 30, 'tax_name' => $tax_name.' '.$tax_rate.'%']);
+        $group_tax = collect(['key' => $key, 'total' => 30, 'tax_name' => $tax_name . ' ' . $tax_rate . '%']);
         $taxes->push($group_tax);
-        $group_tax = collect(['key' => $key, 'total' => 30, 'tax_name' => $tax_name.' '.$tax_rate.'%']);
+        $group_tax = collect(['key' => $key, 'total' => 30, 'tax_name' => $tax_name . ' ' . $tax_rate . '%']);
         $taxes->push($group_tax);
-        $group_tax = collect(['key' => $key, 'total' => 20, 'tax_name' => $tax_name.' '.$tax_rate.'%']);
+        $group_tax = collect(['key' => $key, 'total' => 20, 'tax_name' => $tax_name . ' ' . $tax_rate . '%']);
         $taxes->push($group_tax);
-        $group_tax = collect(['key' => 'VAT', 'total' => 20, 'tax_name' => 'VAT'.' '.'17.5%']);
+        $group_tax = collect(['key' => 'VAT', 'total' => 20, 'tax_name' => 'VAT' . ' ' . '17.5%']);
         $taxes->push($group_tax);
 
         $this->assertEquals(5, $taxes->count());
@@ -80,7 +78,7 @@ class MakesInvoiceValuesTest extends TestCase
             $tax_array[] = ['name' => $tax_name, 'total' => $total_line_tax];
         }
 
-        //$this->assertEquals("GST10.00", print_r($tax_array));
+        // $this->assertEquals("GST10.00", print_r($tax_array));
         $this->assertEquals(100, $tax_array[0]['total']);
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -36,7 +35,7 @@ class ClientContactRequestCancellationObject
         $content = ctrans('texts.recurring_cancellation_request_body', ['contact' => $this->client_contact->present()->name(), 'client' => $this->client_contact->client->present()->name(), 'invoice' => $this->recurring_invoice->number]);
 
         if ($this->gateway_refund_attempted) {
-            $content .= "\n\n" . ctrans('texts.status') . " : " . ctrans('texts.payment_status_6');
+            $content .= "\n\n" . ctrans('texts.status') . ' : ' . ctrans('texts.payment_status_6');
         }
 
         $data = [
@@ -50,7 +49,7 @@ class ClientContactRequestCancellationObject
             'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
 
-        $mail_obj = new \stdClass();
+        $mail_obj = new \stdClass;
         $mail_obj->subject = ctrans('texts.recurring_cancellation_request', ['contact' => $this->client_contact->present()->name()]);
         $mail_obj->data = $data;
         $mail_obj->markdown = 'email.admin.generic';

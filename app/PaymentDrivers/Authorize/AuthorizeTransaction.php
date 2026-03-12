@@ -6,23 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Authorize;
 
 use App\Models\Invoice;
-use App\Utils\Traits\MakesHash;
-use App\PaymentDrivers\Authorize\FDSReview;
-use net\authorize\api\contract\v1\OrderType;
 use App\PaymentDrivers\AuthorizePaymentDriver;
+use App\Utils\Traits\MakesHash;
+use net\authorize\api\contract\v1\CreateTransactionRequest;
+use net\authorize\api\contract\v1\CustomerAddressType;
+use net\authorize\api\contract\v1\ExtendedAmountType;
+use net\authorize\api\contract\v1\OpaqueDataType;
+use net\authorize\api\contract\v1\OrderType;
 use net\authorize\api\contract\v1\PaymentType;
 use net\authorize\api\contract\v1\SettingType;
-use net\authorize\api\contract\v1\OpaqueDataType;
-use net\authorize\api\contract\v1\ExtendedAmountType;
+use net\authorize\api\contract\v1\SolutionType;
 use net\authorize\api\contract\v1\TransactionRequestType;
-use net\authorize\api\contract\v1\CreateTransactionRequest;
 use net\authorize\api\controller\CreateTransactionController;
 
 /**
@@ -44,10 +44,10 @@ class AuthorizeTransaction
         // Set the transaction's refId
         $refId = 'ref' . time();
 
-        $op = new OpaqueDataType();
+        $op = new OpaqueDataType;
         $op->setDataDescriptor($data['dataDescriptor']);
         $op->setDataValue($data['dataValue']);
-        $paymentOne = new PaymentType();
+        $paymentOne = new PaymentType;
         $paymentOne->setOpaqueData($op);
         $amount = $data['amount_with_fee'];
 
@@ -76,24 +76,24 @@ class AuthorizeTransaction
 
         $description = "Invoices: {$invoice_numbers} for {$amount} for client {$this->authorize->client->present()->name()}";
 
-        $order = new OrderType();
+        $order = new OrderType;
         $order->setInvoiceNumber(substr($invoice_numbers, 0, 19));
         $order->setDescription(substr($description, 0, 255));
-        $order->setSupplierOrderReference(substr($po_numbers, 0, 19));// 04-03-2023
+        $order->setSupplierOrderReference(substr($po_numbers, 0, 19)); // 04-03-2023
 
-        $tax = new ExtendedAmountType();
+        $tax = new ExtendedAmountType;
         $tax->setName('tax');
         $tax->setAmount($taxAmount);
 
         // Add values for transaction settings
-        $duplicateWindowSetting = new SettingType();
-        $duplicateWindowSetting->setSettingName("duplicateWindow");
-        $duplicateWindowSetting->setSettingValue("60");
+        $duplicateWindowSetting = new SettingType;
+        $duplicateWindowSetting->setSettingName('duplicateWindow');
+        $duplicateWindowSetting->setSettingValue('60');
 
         $contact = $this->authorize->client->primary_contact()->first() ?: $this->authorize->client->contacts()->first();
 
         if ($contact) {
-            $billto = new \net\authorize\api\contract\v1\CustomerAddressType();
+            $billto = new CustomerAddressType;
             $billto->setFirstName(substr($contact->present()->first_name(), 0, 50));
             $billto->setLastName(substr($contact->present()->last_name(), 0, 50));
             $billto->setCompany(substr($this->authorize->client->present()->name(), 0, 50));
@@ -109,9 +109,9 @@ class AuthorizeTransaction
             $billto->setPhoneNumber(substr($this->authorize->client->phone, 0, 20));
         }
 
-        //Assign to the transactionRequest field
+        // Assign to the transactionRequest field
 
-        $transactionRequestType = new TransactionRequestType();
+        $transactionRequestType = new TransactionRequestType;
         $transactionRequestType->setTransactionType('authCaptureTransaction');
         $transactionRequestType->setAmount($amount);
         $transactionRequestType->setTax($tax);
@@ -119,7 +119,7 @@ class AuthorizeTransaction
         $transactionRequestType->setOrder($order);
         $transactionRequestType->addToTransactionSettings($duplicateWindowSetting);
 
-        $solution = new \net\authorize\api\contract\v1\SolutionType();
+        $solution = new SolutionType;
         $solution->setId($this->authorize->company_gateway->getConfigField('testMode') ? 'AAA100303' : 'AAA172036');
         $transactionRequestType->setSolution($solution);
 
@@ -130,7 +130,7 @@ class AuthorizeTransaction
             $transactionRequestType->setBillTo($billto);
         }
 
-        $request = new CreateTransactionRequest();
+        $request = new CreateTransactionRequest;
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);
         $request->setRefId($refId);
         $request->setTransactionRequest($transactionRequestType);
@@ -149,8 +149,8 @@ class AuthorizeTransaction
                 nlog(' Description : ' . $tresponse->getMessages()[0]->getDescription());
                 nlog(print_r($tresponse->getMessages()[0], 1));
 
-                if ($tresponse->getResponseCode() == "4" || $tresponse->getMessages()[0]->getCode() == "253") {
-                    //notify user that this transaction is being held under FDS review:
+                if ($tresponse->getResponseCode() == '4' || $tresponse->getMessages()[0]->getCode() == '253') {
+                    // notify user that this transaction is being held under FDS review:
                     FDSReview::dispatch((string) $tresponse->getTransId(), $this->authorize->payment_hash, $this->authorize->company_gateway->company->db);
                 }
 
@@ -176,12 +176,11 @@ class AuthorizeTransaction
         }
 
         return [
-            'response'           => $tresponse,
-            'amount'             => $amount,
-            'profile_id'         => $profile_id,
-            'transaction_id'     => $tresponse->getTransId(),
+            'response' => $tresponse,
+            'amount' => $amount,
+            'profile_id' => $profile_id,
+            'transaction_id' => $tresponse->getTransId(),
             // 'payment_profile_id' => $payment_profile_id,
         ];
     }
-
 }

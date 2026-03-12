@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Utils\Ninja;
-use App\Utils\BcMath;
+use App\DataMapper\InvoiceItem;
+use App\Models\CompanyGateway;
 use App\Models\Invoice;
 use App\Models\Product;
-use App\Models\CompanyGateway;
-use App\DataMapper\InvoiceItem;
 use App\Services\AbstractService;
+use App\Utils\BcMath;
+use App\Utils\Ninja;
 use Illuminate\Support\Facades\App;
 
 class AddGatewayFee extends AbstractService
@@ -29,7 +28,7 @@ class AddGatewayFee extends AbstractService
     {
         $gateway_fee = round($this->company_gateway->calcGatewayFee($this->amount, $this->gateway_type_id, $this->invoice->uses_inclusive_taxes), $this->invoice->client->currency()->precision);
 
-        if (! $gateway_fee || $gateway_fee == 0 || ($gateway_fee > 0 && $gateway_fee < 0.01)) {
+        if (!$gateway_fee || $gateway_fee == 0 || ($gateway_fee > 0 && $gateway_fee < 0.01)) {
             return $this->invoice;
         }
 
@@ -46,7 +45,7 @@ class AddGatewayFee extends AbstractService
         $t->replace(Ninja::transformTranslations($this->invoice->company->settings));
         App::setLocale($this->invoice->client->locale());
 
-        $invoice_item = new InvoiceItem();
+        $invoice_item = new InvoiceItem;
         $invoice_item->type_id = '3';
         $invoice_item->product_key = ctrans('texts.surcharge');
         $invoice_item->notes = ctrans('texts.online_payment_surcharge');
@@ -78,8 +77,8 @@ class AddGatewayFee extends AbstractService
             $adjustment = $new_balance - $balance;
 
             $this->invoice
-            ->ledger()
-            ->updateInvoiceBalance($adjustment, 'Adjustment for adding gateway fee');
+                ->ledger()
+                ->updateInvoiceBalance($adjustment, 'Adjustment for adding gateway fee');
 
             $this->invoice->client->service()->updateBalance($adjustment);
 
@@ -96,7 +95,7 @@ class AddGatewayFee extends AbstractService
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->invoice->company->settings));
 
-        $invoice_item = new InvoiceItem();
+        $invoice_item = new InvoiceItem;
         $invoice_item->type_id = '3';
         $invoice_item->product_key = ctrans('texts.discount');
         $invoice_item->notes = ctrans('texts.online_payment_discount');
@@ -122,8 +121,8 @@ class AddGatewayFee extends AbstractService
             $adjustment = $new_balance - $balance;
 
             $this->invoice
-            ->ledger()
-            ->updateInvoiceBalance($adjustment * -1, 'Adjustment for adding gateway DISCOUNT');
+                ->ledger()
+                ->updateInvoiceBalance($adjustment * -1, 'Adjustment for adding gateway DISCOUNT');
 
             $this->invoice->client->service()->updateBalance($adjustment * -1);
 

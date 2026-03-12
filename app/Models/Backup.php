@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,8 +25,9 @@ use Illuminate\Support\Facades\Storage;
  * @property string $amount
  * @property string|null $filename
  * @property string|null $disk
- * @property-read \App\Models\Activity $activity
+ * @property-read Activity $activity
  * @property-read mixed $hashed_id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|Backup newModelQuery()
@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Storage;
  * @method static \Illuminate\Database\Eloquent\Builder|Backup whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Backup whereJsonBackup($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Backup whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Backup extends BaseModel
@@ -59,8 +60,6 @@ class Backup extends BaseModel
     /**
      * storeRemotely
      *
-     * @param  string $html
-     * @param  Client | Vendor $client_or_vendor
      *
      * @return void
      */
@@ -71,7 +70,7 @@ class Backup extends BaseModel
         }
 
         $path = $client_or_vendor->backup_path() . '/';
-        $filename = now()->format('Y_m_d') . '_' . md5(time()) . '.html'; //@phpstan-ignore-line
+        $filename = now()->format('Y_m_d') . '_' . md5(time()) . '.html'; // @phpstan-ignore-line
         $file_path = $path . $filename;
 
         $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
@@ -94,6 +93,7 @@ class Backup extends BaseModel
         $this->save();
 
     }
+
     /**
      * getFile
      *

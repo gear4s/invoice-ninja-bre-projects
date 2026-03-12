@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,6 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Stripe\Customer;
 
 class UpdateCustomer implements ShouldQueue
 {
@@ -54,7 +54,7 @@ class UpdateCustomer implements ShouldQueue
 
         $company = Company::where('company_key', $this->company_key)->first();
 
-        /** @var \App\Models\CompanyGateway $company_gateway **/
+        /** @var CompanyGateway $company_gateway * */
         $company_gateway = CompanyGateway::find($this->company_gateway_id);
         $client = Client::withTrashed()->find($this->client_id);
 
@@ -65,7 +65,7 @@ class UpdateCustomer implements ShouldQueue
         $stripe = $company_gateway->driver($client)->init();
 
         $customer = $stripe->findOrCreateCustomer();
-        //Else create a new record
+        // Else create a new record
         $data['name'] = $client->present()->name();
         $data['phone'] = substr($client->present()->phone(), 0, 20);
 
@@ -84,6 +84,6 @@ class UpdateCustomer implements ShouldQueue
         $data['shipping']['address']['state'] = $client->shipping_state;
         $data['shipping']['address']['country'] = $client->shipping_country ? $client->shipping_country->iso_3166_2 : '';
 
-        \Stripe\Customer::update($customer->id, $data, $stripe->stripe_connect_auth);
+        Customer::update($customer->id, $data, $stripe->stripe_connect_auth);
     }
 }

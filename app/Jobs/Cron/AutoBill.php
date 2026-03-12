@@ -6,21 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Cron;
 
+use App\Jobs\Entity\EmailEntity;
+use App\Libraries\MultiDB;
 use App\Models\Invoice;
 use App\Models\Webhook;
-use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
-use App\Jobs\Entity\EmailEntity;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class AutoBill implements ShouldQueue
 {
@@ -40,8 +39,6 @@ class AutoBill implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {
@@ -51,7 +48,6 @@ class AutoBill implements ShouldQueue
             MultiDB::setDb($this->db);
         }
         $invoice = false;
-
 
         try {
 
@@ -70,7 +66,7 @@ class AutoBill implements ShouldQueue
 
                 $invoice->invitations->each(function ($invitation) use ($invoice) {
 
-                    //2025-04-06 additional conditional check to prevent duplicate emails from being sent.
+                    // 2025-04-06 additional conditional check to prevent duplicate emails from being sent.
                     if ($invitation->contact && !$invitation->contact->trashed() && strlen($invitation->contact->email) >= 1 && $invoice->client->getSetting('auto_email_invoice') && !$invitation->contact->is_locked && $invoice->client->getSetting('client_online_payment_notification')) {
                         try {
                             EmailEntity::dispatch($invitation->withoutRelations(), $invoice->company->db)->delay(rand(1, 2));
@@ -85,7 +81,7 @@ class AutoBill implements ShouldQueue
                     }
                 });
 
-                $invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
+                $invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, 'client');
 
             }
 

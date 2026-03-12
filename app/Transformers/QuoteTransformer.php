@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,6 +15,7 @@ use App\Models\Activity;
 use App\Models\Backup;
 use App\Models\Client;
 use App\Models\Document;
+use App\Models\Location;
 use App\Models\Quote;
 use App\Models\QuoteInvitation;
 use App\Utils\Traits\MakesHash;
@@ -36,7 +36,6 @@ class QuoteTransformer extends EntityTransformer
         'location',
     ];
 
-
     public function includeLocation(Quote $quote)
     {
         $transformer = new LocationTransformer($this->serializer);
@@ -45,7 +44,7 @@ class QuoteTransformer extends EntityTransformer
             return null;
         }
 
-        return $this->includeItem($quote->location, $transformer, \App\Models\Location::class);
+        return $this->includeItem($quote->location, $transformer, Location::class);
     }
 
     public function includeActivities(Quote $quote)
@@ -162,8 +161,8 @@ class QuoteTransformer extends EntityTransformer
             'paid_to_date' => (float) $quote->paid_to_date,
             'project_id' => $this->encodePrimaryKey($quote->project_id),
             'subscription_id' => $this->encodePrimaryKey($quote->subscription_id),
-            'tax_info' => $quote->tax_data ?: new \stdClass(),
-            'e_invoice' => $quote->e_invoice ?: new \stdClass(),
+            'tax_info' => $quote->tax_data ?: new \stdClass,
+            'e_invoice' => $quote->e_invoice ?: new \stdClass,
             'location_id' => $this->encodePrimaryKey($quote->location_id),
             'sync' => $quote->sync,
         ];

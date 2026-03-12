@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,8 +17,11 @@ namespace App\DataMapper\TaxReport;
 class PaymentHistory
 {
     public string $number;
+
     public string $date;
+
     public float $amount;
+
     public float $refunded;
 
     public function __construct(array $attributes = [])

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,13 +26,11 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class RelationExistsTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     private $models = [
         Invoice::class,
         Client::class,
@@ -55,10 +52,10 @@ class RelationExistsTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testAssignedUserRelationExists()
+    public function test_assigned_user_relation_exists()
     {
         foreach ($this->models as $model) {
-            $class = new $model();
+            $class = new $model;
 
             $this->assertTrue(method_exists($class, 'assigned_user'));
         }

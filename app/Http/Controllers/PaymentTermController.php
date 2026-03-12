@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,9 +20,11 @@ use App\Http\Requests\PaymentTerm\ShowPaymentTermRequest;
 use App\Http\Requests\PaymentTerm\StorePaymentTermRequest;
 use App\Http\Requests\PaymentTerm\UpdatePaymentTermRequest;
 use App\Models\PaymentTerm;
+use App\Models\User;
 use App\Repositories\PaymentTermRepository;
 use App\Transformers\PaymentTermTransformer;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class PaymentTermController extends BaseController
@@ -42,7 +43,7 @@ class PaymentTermController extends BaseController
     /**
      * PaymentTermController constructor.
      *
-     * @param PaymentTermRepository $payment_term_repo  The payment term repo
+     * @param  PaymentTermRepository  $payment_term_repo  The payment term repo
      */
     public function __construct(PaymentTermRepository $payment_term_repo)
     {
@@ -58,27 +59,35 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Gets a list of payment terms",
      *      description="Lists payment terms",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of payment terms",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
 
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -93,11 +102,8 @@ class PaymentTermController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreatePaymentTermRequest $request The request
-     *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @param  CreatePaymentTermRequest  $request  The request
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/payment_terms/create",
@@ -105,33 +111,41 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Gets a new blank PaymentTerm object",
      *      description="Returns a blank object with default values",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A blank PaymentTerm object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Payment"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function create(CreatePaymentTermRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
         $payment_term = PaymentTermFactory::create($user->company()->id, $user->id);
 
@@ -141,11 +155,8 @@ class PaymentTermController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StorePaymentTermRequest $request The request
-     *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @param  StorePaymentTermRequest  $request  The request
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/payment_terms",
@@ -153,38 +164,48 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Adds a Payment",
      *      description="Adds a Payment Term to the system",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\RequestBody(
      *         description="The payment_terms request",
      *         required=true,
+     *
      *         @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved Payment object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function store(StorePaymentTermRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $payment_term = PaymentTermFactory::create($user->company()->id, $user->id);
@@ -201,6 +222,7 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Shows a Payment Term",
      *      description="Displays an Payment Term by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -210,34 +232,41 @@ class PaymentTermController extends BaseController
      *          description="The Payment Term Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the Payment Term object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param ShowPaymentTermRequest $request
-     * @param PaymentTerm $payment_term
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function show(ShowPaymentTermRequest $request, PaymentTerm $payment_term)
     {
@@ -251,6 +280,7 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Shows an Payment Term for editting",
      *      description="Displays an Payment Term by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -260,34 +290,41 @@ class PaymentTermController extends BaseController
      *          description="The Payment Term Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the Payment object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param EditPaymentTermRequest $request
-     * @param PaymentTerm $payment_term
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function edit(EditPaymentTermRequest $request, PaymentTerm $payment_term)
     {
@@ -297,11 +334,9 @@ class PaymentTermController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdatePaymentTermRequest $request  The request
-     * @param PaymentTerm $payment_term   The payment term
-     *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @param  UpdatePaymentTermRequest  $request  The request
+     * @param  PaymentTerm  $payment_term  The payment term
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/payment_terms/{id}",
@@ -309,6 +344,7 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Updates a Payment Term",
      *      description="Handles the updating of an Payment Termby id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -318,28 +354,36 @@ class PaymentTermController extends BaseController
      *          description="The Payment Term Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the Payment Term object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -355,19 +399,18 @@ class PaymentTermController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyPaymentTermRequest $request
-     * @param PaymentTerm $payment_term
      *
-     * @return     Response
-     *
+     * @return Response
      *
      * @throws \Exception
+     *
      * @OA\Delete(
      *      path="/api/v1/payment_terms/{id}",
      *      operationId="deletePaymentTerm",
      *      tags={"payment_termss"},
      *      summary="Deletes a Payment Term",
      *      description="Handles the deletion of an PaymentTerm by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -377,27 +420,34 @@ class PaymentTermController extends BaseController
      *          description="The Payment Term Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -412,8 +462,7 @@ class PaymentTermController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
-     *
+     * @return Response|JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/payment_terms/bulk",
@@ -421,16 +470,21 @@ class PaymentTermController extends BaseController
      *      tags={"payment_terms"},
      *      summary="Performs bulk actions on an array of payment terms",
      *      description="",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\RequestBody(
      *         description="Payment Ter,s",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="integer",
      *                     description="Array of hashed IDs to be bulk 'actioned",
@@ -439,30 +493,37 @@ class PaymentTermController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The Payment Terms response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/PaymentTerm"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
 
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function bulk()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $action = request()->input('action');

@@ -2,13 +2,14 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
+use App\DataMapper\InvoiceSync;
 use App\Models\Account;
+use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\DataMapper\InvoiceSync;
+use App\Models\User;
+use Faker\Factory;
+use Tests\TestCase;
 
 class InvoiceSyncCastTest extends TestCase
 {
@@ -18,8 +19,9 @@ class InvoiceSyncCastTest extends TestCase
     {
         parent::setUp();
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
     }
+
     public function test_it_can_cast_from_array()
     {
 
@@ -45,7 +47,7 @@ class InvoiceSyncCastTest extends TestCase
         $this->assertEquals('123', $invoice->sync->qb_id);
         $this->assertFalse($invoice->sync->dn_completed);
         $this->assertCount(1, $invoice->sync->invitations);
-        
+
         $invitation = $invoice->sync->getInvitation('test_invitation');
         $this->assertNotNull($invitation);
         $this->assertEquals('DN123', $invitation['dn_id']);
@@ -95,7 +97,7 @@ class InvoiceSyncCastTest extends TestCase
         // Method 3: JSON queries for invitation data
         $found = Invoice::whereJsonContains('sync->invitations', ['invitation_key' => 'invitation_1'])->first();
         $this->assertNotNull($found);
-        
+
         // Verify invitation data can be retrieved
         $invitation1 = $found->sync->getInvitation('invitation_1');
         $this->assertNotNull($invitation1);

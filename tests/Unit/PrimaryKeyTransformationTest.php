@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\Utils\Traits\MakesHash;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Traits\MakesHash
  */
 class PrimaryKeyTransformationTest extends TestCase
@@ -28,7 +26,7 @@ class PrimaryKeyTransformationTest extends TestCase
         parent::setUp();
     }
 
-    public function testTransformationArray()
+    public function test_transformation_array()
     {
         $keys = [
             $this->encodePrimaryKey(310), $this->encodePrimaryKey(311),
@@ -41,7 +39,7 @@ class PrimaryKeyTransformationTest extends TestCase
         $this->assertEquals(311, $transformed_keys[1]);
     }
 
-    public function testTransformation()
+    public function test_transformation()
     {
         $keys = $this->encodePrimaryKey(310);
 

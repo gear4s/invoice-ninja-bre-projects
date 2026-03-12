@@ -6,43 +6,44 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Export\CSV;
 
-use Str;
-use App\Models\Task;
-use App\Models\User;
-use App\Models\Quote;
+use App\Jobs\Credit\ZipCredits;
+use App\Jobs\Document\ZipDocuments;
+use App\Jobs\Invoice\ZipInvoices;
+use App\Jobs\PurchaseOrder\ZipPurchaseOrders;
+use App\Jobs\Quote\ZipQuotes;
 use App\Models\Client;
+use App\Models\ClientContact;
+use App\Models\Company;
 use App\Models\Credit;
 use App\Models\Design;
-use App\Models\Vendor;
-use App\Utils\Helpers;
-use App\Models\Company;
+use App\Models\Document;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\Document;
-use League\Fractal\Manager;
-use App\Jobs\Quote\ZipQuotes;
-use App\Models\ClientContact;
 use App\Models\PurchaseOrder;
-use Illuminate\Support\Carbon;
-use App\Jobs\Credit\ZipCredits;
-use App\Utils\Traits\MakesHash;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use App\Jobs\Invoice\ZipInvoices;
-use App\Jobs\Document\ZipDocuments;
-use App\Transformers\TaskTransformer;
-use App\Transformers\PaymentTransformer;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Task;
+use App\Models\User;
+use App\Models\Vendor;
 use App\Services\Template\TemplateService;
-use App\Jobs\PurchaseOrder\ZipPurchaseOrders;
+use App\Transformers\PaymentTransformer;
+use App\Transformers\TaskTransformer;
+use App\Utils\Helpers;
+use App\Utils\Number;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
+use League\Fractal\Manager;
 use League\Fractal\Serializer\ArraySerializer;
+use Str;
 
 class BaseExport
 {
@@ -95,46 +96,46 @@ class BaseExport
     ];
 
     protected array $client_report_keys = [
-        "name" => "client.name",
-        "number" => "client.number",
-        "user" => "client.user",
-        "assigned_user" => "client.assigned_user",
-        "balance" => "client.balance",
-        "paid_to_date" => "client.paid_to_date",
-        "currency" => "client.currency_id",
-        "website" => "client.website",
-        "private_notes" => "client.private_notes",
-        "industry" => "client.industry_id",
-        "size" => "client.size_id",
-        "work_phone" => "client.phone",
-        "address1" => "client.address1",
-        "address2" => "client.address2",
-        "city" => "client.city",
-        "state" => "client.state",
-        "postal_code" => "client.postal_code",
-        "country" => "client.country_id",
-        "shipping_address1" => "client.shipping_address1",
-        "shipping_address2" => "client.shipping_address2",
-        "shipping_city" => "client.shipping_city",
-        "shipping_state" => "client.shipping_state",
-        "shipping_postal_code" => "client.shipping_postal_code",
-        "shipping_country" => "client.shipping_country_id",
-        "payment_terms" => "client.payment_terms",
-        "vat_number" => "client.vat_number",
-        "id_number" => "client.id_number",
-        "public_notes" => "client.public_notes",
-        "phone" => "contact.phone",
-        "first_name" => "contact.first_name",
-        "last_name" => "contact.last_name",
-        "email" => "contact.email",
+        'name' => 'client.name',
+        'number' => 'client.number',
+        'user' => 'client.user',
+        'assigned_user' => 'client.assigned_user',
+        'balance' => 'client.balance',
+        'paid_to_date' => 'client.paid_to_date',
+        'currency' => 'client.currency_id',
+        'website' => 'client.website',
+        'private_notes' => 'client.private_notes',
+        'industry' => 'client.industry_id',
+        'size' => 'client.size_id',
+        'work_phone' => 'client.phone',
+        'address1' => 'client.address1',
+        'address2' => 'client.address2',
+        'city' => 'client.city',
+        'state' => 'client.state',
+        'postal_code' => 'client.postal_code',
+        'country' => 'client.country_id',
+        'shipping_address1' => 'client.shipping_address1',
+        'shipping_address2' => 'client.shipping_address2',
+        'shipping_city' => 'client.shipping_city',
+        'shipping_state' => 'client.shipping_state',
+        'shipping_postal_code' => 'client.shipping_postal_code',
+        'shipping_country' => 'client.shipping_country_id',
+        'payment_terms' => 'client.payment_terms',
+        'vat_number' => 'client.vat_number',
+        'id_number' => 'client.id_number',
+        'public_notes' => 'client.public_notes',
+        'phone' => 'contact.phone',
+        'first_name' => 'contact.first_name',
+        'last_name' => 'contact.last_name',
+        'email' => 'contact.email',
         'custom_value1' => 'client.custom_value1',
         'custom_value2' => 'client.custom_value2',
         'custom_value3' => 'client.custom_value3',
         'custom_value4' => 'client.custom_value4',
-        "contact_custom_value1" => "contact.custom_value1",
-        "contact_custom_value2" => "contact.custom_value2",
-        "contact_custom_value3" => "contact.custom_value3",
-        "contact_custom_value4" => "contact.custom_value4",
+        'contact_custom_value1' => 'contact.custom_value1',
+        'contact_custom_value2' => 'contact.custom_value2',
+        'contact_custom_value3' => 'contact.custom_value3',
+        'contact_custom_value4' => 'contact.custom_value4',
         'payment_balance' => 'client.payment_balance',
         'credit_balance' => 'client.credit_balance',
         'classification' => 'client.classification',
@@ -142,37 +143,37 @@ class BaseExport
 
     protected array $invoice_report_keys = [
         'name' => 'client.name',
-        "currency" => "client.currency_id",
-        "invoice_number" => "invoice.number",
-        "subtotal" => "invoice.subtotal",
-        "amount" => "invoice.amount",
-        "balance" => "invoice.balance",
-        "paid_to_date" => "invoice.paid_to_date",
-        "po_number" => "invoice.po_number",
-        "date" => "invoice.date",
-        "due_date" => "invoice.due_date",
-        "terms" => "invoice.terms",
-        "footer" => "invoice.footer",
-        "status" => "invoice.status",
-        "public_notes" => "invoice.public_notes",
-        "private_notes" => "invoice.private_notes",
-        "uses_inclusive_taxes" => "invoice.uses_inclusive_taxes",
-        "is_amount_discount" => "invoice.is_amount_discount",
-        "discount" => "invoice.discount",
-        "partial" => "invoice.partial",
-        "partial_due_date" => "invoice.partial_due_date",
-        "surcharge1" => "invoice.custom_surcharge1",
-        "surcharge2" => "invoice.custom_surcharge2",
-        "surcharge3" => "invoice.custom_surcharge3",
-        "surcharge4" => "invoice.custom_surcharge4",
-        "exchange_rate" => "invoice.exchange_rate",
-        "tax_amount" => "invoice.total_taxes",
-        "assigned_user" => "invoice.assigned_user_id",
-        "user" => "invoice.user_id",
-        "custom_value1" => "invoice.custom_value1",
-        "custom_value2" => "invoice.custom_value2",
-        "custom_value3" => "invoice.custom_value3",
-        "custom_value4" => "invoice.custom_value4",
+        'currency' => 'client.currency_id',
+        'invoice_number' => 'invoice.number',
+        'subtotal' => 'invoice.subtotal',
+        'amount' => 'invoice.amount',
+        'balance' => 'invoice.balance',
+        'paid_to_date' => 'invoice.paid_to_date',
+        'po_number' => 'invoice.po_number',
+        'date' => 'invoice.date',
+        'due_date' => 'invoice.due_date',
+        'terms' => 'invoice.terms',
+        'footer' => 'invoice.footer',
+        'status' => 'invoice.status',
+        'public_notes' => 'invoice.public_notes',
+        'private_notes' => 'invoice.private_notes',
+        'uses_inclusive_taxes' => 'invoice.uses_inclusive_taxes',
+        'is_amount_discount' => 'invoice.is_amount_discount',
+        'discount' => 'invoice.discount',
+        'partial' => 'invoice.partial',
+        'partial_due_date' => 'invoice.partial_due_date',
+        'surcharge1' => 'invoice.custom_surcharge1',
+        'surcharge2' => 'invoice.custom_surcharge2',
+        'surcharge3' => 'invoice.custom_surcharge3',
+        'surcharge4' => 'invoice.custom_surcharge4',
+        'exchange_rate' => 'invoice.exchange_rate',
+        'tax_amount' => 'invoice.total_taxes',
+        'assigned_user' => 'invoice.assigned_user_id',
+        'user' => 'invoice.user_id',
+        'custom_value1' => 'invoice.custom_value1',
+        'custom_value2' => 'invoice.custom_value2',
+        'custom_value3' => 'invoice.custom_value3',
+        'custom_value4' => 'invoice.custom_value4',
         'tax_name1' => 'invoice.tax_name1',
         'tax_name2' => 'invoice.tax_name2',
         'tax_name3' => 'invoice.tax_name3',
@@ -186,39 +187,39 @@ class BaseExport
 
     protected array $recurring_invoice_report_keys = [
         'name' => 'client.name',
-        "currency" => "client.currency_id",
-        "invoice_number" => "recurring_invoice.number",
-        "amount" => "recurring_invoice.amount",
-        "balance" => "recurring_invoice.balance",
-        "paid_to_date" => "recurring_invoice.paid_to_date",
-        "po_number" => "recurring_invoice.po_number",
-        "date" => "recurring_invoice.date",
-        "due_date" => "recurring_invoice.due_date",
-        "terms" => "recurring_invoice.terms",
-        "footer" => "recurring_invoice.footer",
-        "status" => "recurring_invoice.status",
-        "public_notes" => "recurring_invoice.public_notes",
-        "private_notes" => "recurring_invoice.private_notes",
-        "uses_inclusive_taxes" => "recurring_invoice.uses_inclusive_taxes",
-        "is_amount_discount" => "recurring_invoice.is_amount_discount",
-        "discount" => "recurring_invoice.discount",
-        "partial" => "recurring_invoice.partial",
-        "partial_due_date" => "recurring_invoice.partial_due_date",
-        "surcharge1" => "recurring_invoice.custom_surcharge1",
-        "surcharge2" => "recurring_invoice.custom_surcharge2",
-        "surcharge3" => "recurring_invoice.custom_surcharge3",
-        "surcharge4" => "recurring_invoice.custom_surcharge4",
-        "exchange_rate" => "recurring_invoice.exchange_rate",
-        "tax_amount" => "recurring_invoice.total_taxes",
-        "assigned_user" => "recurring_invoice.assigned_user_id",
-        "user" => "recurring_invoice.user_id",
-        "frequency_id" => "recurring_invoice.frequency_id",
-        "remaining_cycles" => "recurring_invoice.remaining_cycles",
-        "next_send_date" => "recurring_invoice.next_send_date",
-        "custom_value1" => "recurring_invoice.custom_value1",
-        "custom_value2" => "recurring_invoice.custom_value2",
-        "custom_value3" => "recurring_invoice.custom_value3",
-        "custom_value4" => "recurring_invoice.custom_value4",
+        'currency' => 'client.currency_id',
+        'invoice_number' => 'recurring_invoice.number',
+        'amount' => 'recurring_invoice.amount',
+        'balance' => 'recurring_invoice.balance',
+        'paid_to_date' => 'recurring_invoice.paid_to_date',
+        'po_number' => 'recurring_invoice.po_number',
+        'date' => 'recurring_invoice.date',
+        'due_date' => 'recurring_invoice.due_date',
+        'terms' => 'recurring_invoice.terms',
+        'footer' => 'recurring_invoice.footer',
+        'status' => 'recurring_invoice.status',
+        'public_notes' => 'recurring_invoice.public_notes',
+        'private_notes' => 'recurring_invoice.private_notes',
+        'uses_inclusive_taxes' => 'recurring_invoice.uses_inclusive_taxes',
+        'is_amount_discount' => 'recurring_invoice.is_amount_discount',
+        'discount' => 'recurring_invoice.discount',
+        'partial' => 'recurring_invoice.partial',
+        'partial_due_date' => 'recurring_invoice.partial_due_date',
+        'surcharge1' => 'recurring_invoice.custom_surcharge1',
+        'surcharge2' => 'recurring_invoice.custom_surcharge2',
+        'surcharge3' => 'recurring_invoice.custom_surcharge3',
+        'surcharge4' => 'recurring_invoice.custom_surcharge4',
+        'exchange_rate' => 'recurring_invoice.exchange_rate',
+        'tax_amount' => 'recurring_invoice.total_taxes',
+        'assigned_user' => 'recurring_invoice.assigned_user_id',
+        'user' => 'recurring_invoice.user_id',
+        'frequency_id' => 'recurring_invoice.frequency_id',
+        'remaining_cycles' => 'recurring_invoice.remaining_cycles',
+        'next_send_date' => 'recurring_invoice.next_send_date',
+        'custom_value1' => 'recurring_invoice.custom_value1',
+        'custom_value2' => 'recurring_invoice.custom_value2',
+        'custom_value3' => 'recurring_invoice.custom_value3',
+        'custom_value4' => 'recurring_invoice.custom_value4',
         'tax_name1' => 'recurring_invoice.tax_name1',
         'tax_name2' => 'recurring_invoice.tax_name2',
         'tax_name3' => 'recurring_invoice.tax_name3',
@@ -263,7 +264,7 @@ class BaseExport
         'subtotal' => 'purchase_order.subtotal',
     ];
 
-    protected array $product_report_keys  = [
+    protected array $product_report_keys = [
         // 'project' => 'project_id',
         // 'vendor' => 'vendor_id',
         'custom_value1' => 'custom_value1',
@@ -288,23 +289,23 @@ class BaseExport
     ];
 
     protected array $item_report_keys = [
-        "quantity" => "item.quantity",
-        "cost" => "item.cost",
-        "product_key" => "item.product_key",
-        "notes" => "item.notes",
-        "tax_name1" => "item.tax_name1",
-        "tax_rate1" => "item.tax_rate1",
-        "tax_name2" => "item.tax_name2",
-        "tax_rate2" => "item.tax_rate2",
-        "tax_name3" => "item.tax_name3",
-        "tax_rate3" => "item.tax_rate3",
-        "custom_value1" => "item.custom_value1",
-        "custom_value2" => "item.custom_value2",
-        "custom_value3" => "item.custom_value3",
-        "custom_value4" => "item.custom_value4",
-        "discount" => "item.discount",
-        "type" => "item.type_id",
-        "tax_category" => "item.tax_id",
+        'quantity' => 'item.quantity',
+        'cost' => 'item.cost',
+        'product_key' => 'item.product_key',
+        'notes' => 'item.notes',
+        'tax_name1' => 'item.tax_name1',
+        'tax_rate1' => 'item.tax_rate1',
+        'tax_name2' => 'item.tax_name2',
+        'tax_rate2' => 'item.tax_rate2',
+        'tax_name3' => 'item.tax_name3',
+        'tax_rate3' => 'item.tax_rate3',
+        'custom_value1' => 'item.custom_value1',
+        'custom_value2' => 'item.custom_value2',
+        'custom_value3' => 'item.custom_value3',
+        'custom_value4' => 'item.custom_value4',
+        'discount' => 'item.discount',
+        'type' => 'item.type_id',
+        'tax_category' => 'item.tax_id',
         'is_amount_discount' => 'item.is_amount_discount',
         'line_total' => 'item.line_total',
         'gross_line_total' => 'item.gross_line_total',
@@ -314,36 +315,36 @@ class BaseExport
 
     protected array $quote_report_keys = [
         'name' => 'client.name',
-        "currency" => "client.currency_id",
+        'currency' => 'client.currency_id',
         'custom_value1' => 'quote.custom_value1',
         'custom_value2' => 'quote.custom_value2',
         'custom_value3' => 'quote.custom_value3',
         'custom_value4' => 'quote.custom_value4',
-        "number" => "quote.number",
-        "amount" => "quote.amount",
-        "balance" => "quote.balance",
-        "paid_to_date" => "quote.paid_to_date",
-        "po_number" => "quote.po_number",
-        "date" => "quote.date",
-        "valid_until" => "quote.due_date",
-        "terms" => "quote.terms",
-        "footer" => "quote.footer",
-        "status" => "quote.status",
-        "public_notes" => "quote.public_notes",
-        "private_notes" => "quote.private_notes",
-        "uses_inclusive_taxes" => "quote.uses_inclusive_taxes",
-        "is_amount_discount" => "quote.is_amount_discount",
-        "discount" => "quote.discount",
-        "partial" => "quote.partial",
-        "partial_due_date" => "quote.partial_due_date",
-        "surcharge1" => "quote.custom_surcharge1",
-        "surcharge2" => "quote.custom_surcharge2",
-        "surcharge3" => "quote.custom_surcharge3",
-        "surcharge4" => "quote.custom_surcharge4",
-        "exchange_rate" => "quote.exchange_rate",
-        "tax_amount" => "quote.total_taxes",
-        "assigned_user" => "quote.assigned_user_id",
-        "user" => "quote.user_id",
+        'number' => 'quote.number',
+        'amount' => 'quote.amount',
+        'balance' => 'quote.balance',
+        'paid_to_date' => 'quote.paid_to_date',
+        'po_number' => 'quote.po_number',
+        'date' => 'quote.date',
+        'valid_until' => 'quote.due_date',
+        'terms' => 'quote.terms',
+        'footer' => 'quote.footer',
+        'status' => 'quote.status',
+        'public_notes' => 'quote.public_notes',
+        'private_notes' => 'quote.private_notes',
+        'uses_inclusive_taxes' => 'quote.uses_inclusive_taxes',
+        'is_amount_discount' => 'quote.is_amount_discount',
+        'discount' => 'quote.discount',
+        'partial' => 'quote.partial',
+        'partial_due_date' => 'quote.partial_due_date',
+        'surcharge1' => 'quote.custom_surcharge1',
+        'surcharge2' => 'quote.custom_surcharge2',
+        'surcharge3' => 'quote.custom_surcharge3',
+        'surcharge4' => 'quote.custom_surcharge4',
+        'exchange_rate' => 'quote.exchange_rate',
+        'tax_amount' => 'quote.total_taxes',
+        'assigned_user' => 'quote.assigned_user_id',
+        'user' => 'quote.user_id',
         'tax_name1' => 'quote.tax_name1',
         'tax_name2' => 'quote.tax_name2',
         'tax_name3' => 'quote.tax_name3',
@@ -355,58 +356,58 @@ class BaseExport
 
     protected array $credit_report_keys = [
         'name' => 'client.name',
-        "currency" => "client.currency_id",
-        "credit_number" => "credit.number",
-        "amount" => "credit.amount",
-        "balance" => "credit.balance",
-        "paid_to_date" => "credit.paid_to_date",
-        "po_number" => "credit.po_number",
-        "date" => "credit.date",
-        "due_date" => "credit.due_date",
-        "terms" => "credit.terms",
-        "discount" => "credit.discount",
-        "footer" => "credit.footer",
-        "status" => "credit.status",
-        "public_notes" => "credit.public_notes",
-        "private_notes" => "credit.private_notes",
-        "uses_inclusive_taxes" => "credit.uses_inclusive_taxes",
-        "is_amount_discount" => "credit.is_amount_discount",
-        "partial" => "credit.partial",
-        "partial_due_date" => "credit.partial_due_date",
-        "surcharge1" => "credit.custom_surcharge1",
-        "surcharge2" => "credit.custom_surcharge2",
-        "surcharge3" => "credit.custom_surcharge3",
-        "surcharge4" => "credit.custom_surcharge4",
-        "custom_value1" => "credit.custom_value1",
-        "custom_value2" => "credit.custom_value2",
-        "custom_value3" => "credit.custom_value3",
-        "custom_value4" => "credit.custom_value4",
-        "exchange_rate" => "credit.exchange_rate",
-        "tax_amount" => "credit.total_taxes",
-        "assigned_user" => "credit.assigned_user_id",
-        "user" => "credit.user_id",
+        'currency' => 'client.currency_id',
+        'credit_number' => 'credit.number',
+        'amount' => 'credit.amount',
+        'balance' => 'credit.balance',
+        'paid_to_date' => 'credit.paid_to_date',
+        'po_number' => 'credit.po_number',
+        'date' => 'credit.date',
+        'due_date' => 'credit.due_date',
+        'terms' => 'credit.terms',
+        'discount' => 'credit.discount',
+        'footer' => 'credit.footer',
+        'status' => 'credit.status',
+        'public_notes' => 'credit.public_notes',
+        'private_notes' => 'credit.private_notes',
+        'uses_inclusive_taxes' => 'credit.uses_inclusive_taxes',
+        'is_amount_discount' => 'credit.is_amount_discount',
+        'partial' => 'credit.partial',
+        'partial_due_date' => 'credit.partial_due_date',
+        'surcharge1' => 'credit.custom_surcharge1',
+        'surcharge2' => 'credit.custom_surcharge2',
+        'surcharge3' => 'credit.custom_surcharge3',
+        'surcharge4' => 'credit.custom_surcharge4',
+        'custom_value1' => 'credit.custom_value1',
+        'custom_value2' => 'credit.custom_value2',
+        'custom_value3' => 'credit.custom_value3',
+        'custom_value4' => 'credit.custom_value4',
+        'exchange_rate' => 'credit.exchange_rate',
+        'tax_amount' => 'credit.total_taxes',
+        'assigned_user' => 'credit.assigned_user_id',
+        'user' => 'credit.user_id',
         'subtotal' => 'credit.subtotal',
     ];
 
     protected array $payment_report_keys = [
         'name' => 'client.name',
-        "date" => "payment.date",
-        "amount" => "payment.amount",
-        "refunded" => "payment.refunded",
-        "applied" => "payment.applied",
-        "transaction_reference" => "payment.transaction_reference",
-        "currency" => "payment.currency",
-        "exchange_rate" => "payment.exchange_rate",
-        "number" => "payment.number",
-        "method" => "payment.method",
-        "status" => "payment.status",
-        "private_notes" => "payment.private_notes",
-        "custom_value1" => "payment.custom_value1",
-        "custom_value2" => "payment.custom_value2",
-        "custom_value3" => "payment.custom_value3",
-        "custom_value4" => "payment.custom_value4",
-        "user" => "payment.user_id",
-        "assigned_user" => "payment.assigned_user_id",
+        'date' => 'payment.date',
+        'amount' => 'payment.amount',
+        'refunded' => 'payment.refunded',
+        'applied' => 'payment.applied',
+        'transaction_reference' => 'payment.transaction_reference',
+        'currency' => 'payment.currency',
+        'exchange_rate' => 'payment.exchange_rate',
+        'number' => 'payment.number',
+        'method' => 'payment.method',
+        'status' => 'payment.status',
+        'private_notes' => 'payment.private_notes',
+        'custom_value1' => 'payment.custom_value1',
+        'custom_value2' => 'payment.custom_value2',
+        'custom_value3' => 'payment.custom_value3',
+        'custom_value4' => 'payment.custom_value4',
+        'user' => 'payment.user_id',
+        'assigned_user' => 'payment.assigned_user_id',
     ];
 
     protected array $expense_report_keys = [
@@ -471,11 +472,11 @@ class BaseExport
     ];
 
     protected array $forced_client_fields = [
-        "client.name",
+        'client.name',
     ];
 
     protected array $forced_vendor_fields = [
-        "vendor.name",
+        'vendor.name',
     ];
 
     protected function filterByClients($query)
@@ -493,19 +494,22 @@ class BaseExport
             }
 
             $this->client_description = $client->present()->name;
+
             return $query->where('client_id', $this->input['client_id']);
 
         } elseif (isset($this->input['clients']) && count($this->input['clients']) > 0) {
 
             $this->client_description = 'Multiple Clients';
+
             return $query->whereIn('client_id', $this->input['clients']);
         }
+
         return $query;
     }
 
     protected function resolveKey($key, $entity, $transformer): string
     {
-        $parts = explode(".", $key);
+        $parts = explode('.', $key);
 
         if (!is_array($parts) || count($parts) < 2) {
             return '';
@@ -535,7 +539,7 @@ class BaseExport
     {
 
         if (!$entity->client) {
-            return "";
+            return '';
         }
 
         $primary_contact = $entity->client->primary_contact()->first() ?? $entity->client->contacts()->first();
@@ -547,7 +551,7 @@ class BaseExport
     private function resolveVendorContactKey($column, $entity, $transformer)
     {
         if (!$entity->vendor) {
-            return "";
+            return '';
         }
 
         $primary_contact = $entity->vendor->primary_contact()->first() ?? $entity->vendor->contacts()->first();
@@ -555,7 +559,6 @@ class BaseExport
         return $primary_contact ? $primary_contact?->{$column} ?? '' : '';
 
     }
-
 
     private function resolveExpenseKey($column, $entity, $transformer)
     {
@@ -578,8 +581,8 @@ class BaseExport
 
         $transformed_entity = $transformer->includeExpense($entity);
 
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
+        $manager = new Manager;
+        $manager->setSerializer(new ArraySerializer);
         $transformed_entity = $manager->createData($transformed_entity)->toArray();
 
         if (array_key_exists($column, $transformed_entity)) {
@@ -610,8 +613,6 @@ class BaseExport
 
     }
 
-
-
     private function resolveVendorKey($column, $entity, $transformer)
     {
 
@@ -621,8 +622,8 @@ class BaseExport
 
         $transformed_entity = $transformer->includeVendor($entity);
 
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
+        $manager = new Manager;
+        $manager->setSerializer(new ArraySerializer);
         $transformed_entity = $manager->createData($transformed_entity)->toArray();
 
         if ($column == 'name') {
@@ -655,7 +656,6 @@ class BaseExport
 
     }
 
-
     private function resolveClientKey($column, $entity, $transformer)
     {
 
@@ -665,8 +665,8 @@ class BaseExport
 
         $transformed_client = $transformer->includeClient($entity);
 
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
+        $manager = new Manager;
+        $manager->setSerializer(new ArraySerializer);
         $transformed_client = $manager->createData($transformed_client)->toArray();
 
         if (in_array($column, ['client.name', 'name'])) {
@@ -704,7 +704,6 @@ class BaseExport
         if (in_array($column, ['payment_terms', 'client.payment_terms'])) {
             return $entity->client->getSetting('payment_terms');
         }
-
 
         if (array_key_exists($column, $transformed_client)) {
             return $transformed_client[$column];
@@ -751,8 +750,8 @@ class BaseExport
         if ($transformer instanceof PaymentTransformer && ($entity->invoices ?? false)) {
             $transformed_invoices = $transformer->includeInvoices($entity);
 
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
+            $manager = new Manager;
+            $manager->setSerializer(new ArraySerializer);
             $transformed_invoices = $manager->createData($transformed_invoices)->toArray();
 
             if (!isset($transformed_invoices['App\\Models\\Invoice'])) {
@@ -769,7 +768,7 @@ class BaseExport
                 return implode(', ', array_column($transformed_invoices, $column));
             }
 
-            return "";
+            return '';
 
         }
 
@@ -780,15 +779,15 @@ class BaseExport
                 return '';
             }
 
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
+            $manager = new Manager;
+            $manager->setSerializer(new ArraySerializer);
             $transformed_invoice = $manager->createData($transformed_invoice)->toArray();
 
         }
 
         if ($transformed_invoice && array_key_exists($column, $transformed_invoice)) {
             return $transformed_invoice[$column];
-        } elseif ($transformed_invoice && array_key_exists(str_replace("invoice.", "", $column), $transformed_invoice)) {
+        } elseif ($transformed_invoice && array_key_exists(str_replace('invoice.', '', $column), $transformed_invoice)) {
             return $transformed_invoice[$column];
         }
 
@@ -804,7 +803,7 @@ class BaseExport
 
             if (array_key_exists($column, $transformed_payment)) {
                 return $transformed_payment[$column];
-            } elseif (array_key_exists(str_replace("payment.", "", $column), $transformed_payment)) {
+            } elseif (array_key_exists(str_replace('payment.', '', $column), $transformed_payment)) {
                 return $transformed_payment[$column];
             }
 
@@ -843,7 +842,7 @@ class BaseExport
             return $payment?->currency?->code ?? '';
         }
 
-        $payment_transformer = new PaymentTransformer();
+        $payment_transformer = new PaymentTransformer;
         $transformed_payment = $payment_transformer->transform($payment);
 
         if ($column == 'status') {
@@ -860,10 +859,6 @@ class BaseExport
 
     /**
      * Apply Product Filters
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     *
-     * @return Builder
      */
     public function applyProductFilters(Builder $query): Builder
     {
@@ -890,10 +885,7 @@ class BaseExport
     /**
      * Add Client Filter
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  mixed $clients
-     *
-     * @return Builder
+     * @param  mixed  $clients
      */
     protected function addClientFilter(Builder $query, $clients): Builder
     {
@@ -912,17 +904,12 @@ class BaseExport
 
     /**
      * Add Vendor Filter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $vendors
-     *
-     * @return Builder
      */
-    protected function addVendorFilter(Builder$query, string $vendors): Builder
+    protected function addVendorFilter(Builder $query, string $vendors): Builder
     {
 
         if (is_string($vendors)) {
-            $vendors =  explode(',', $vendors);
+            $vendors = explode(',', $vendors);
         }
 
         $transformed_vendors = $this->transformKeys($vendors);
@@ -936,17 +923,12 @@ class BaseExport
 
     /**
      * AddProjectFilter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $projects
-     *
-     * @return Builder
      */
     protected function addProjectFilter(Builder $query, string $projects): Builder
     {
 
         if (is_string($projects)) {
-            $projects =  explode(',', $projects);
+            $projects = explode(',', $projects);
         }
 
         $transformed_projects = $this->transformKeys($projects);
@@ -960,21 +942,15 @@ class BaseExport
 
     /**
      * Add Category Filter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $expense_categories
-     *
-     * @return Builder
      */
     protected function addCategoryFilter(Builder $query, string $expense_categories): Builder
     {
 
         if (is_string($expense_categories)) {
-            $expense_categories =  explode(',', $expense_categories);
+            $expense_categories = explode(',', $expense_categories);
         }
 
         $transformed_expense_categories = $this->transformKeys($expense_categories);
-
 
         if (count($transformed_expense_categories) > 0) {
             $query->whereIn('category_id', $transformed_expense_categories);
@@ -985,11 +961,6 @@ class BaseExport
 
     /**
      * Add Payment Status Filters
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $status
-     *
-     * @return Builder
      */
     protected function addPaymentStatusFilters(Builder $query, string $status): Builder
     {
@@ -1043,11 +1014,6 @@ class BaseExport
 
     /**
      * Add RecurringInvoice Status Filter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $status
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function addRecurringInvoiceStatusFilter(Builder $query, string $status): Builder
     {
@@ -1084,13 +1050,9 @@ class BaseExport
         return $query;
 
     }
+
     /**
      * Add QuoteStatus Filter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $status
-     *
-     * @return Builder
      */
     protected function addQuoteStatusFilter(Builder $query, string $status): Builder
     {
@@ -1105,8 +1067,8 @@ class BaseExport
             if (in_array('sent', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                    ->whereNull('due_date')
-                    ->orWhere('due_date', '>=', now()->toDateString());
+                        ->whereNull('due_date')
+                        ->orWhere('due_date', '>=', now()->toDateString());
                 });
             }
 
@@ -1127,16 +1089,16 @@ class BaseExport
             if (in_array('expired', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                    ->whereNotNull('due_date')
-                    ->where('due_date', '<=', now()->toDateString());
+                        ->whereNotNull('due_date')
+                        ->where('due_date', '<=', now()->toDateString());
                 });
             }
 
             if (in_array('upcoming', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                    ->where('due_date', '>=', now()->toDateString())
-                    ->orderBy('due_date', 'DESC');
+                        ->where('due_date', '>=', now()->toDateString())
+                        ->orderBy('due_date', 'DESC');
                 });
             }
 
@@ -1152,11 +1114,6 @@ class BaseExport
 
     /**
      * Add PurchaseOrder Status Filter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $status
-     *
-     * @return Builder
      */
     protected function addPurchaseOrderStatusFilter(Builder $query, string $status): Builder
     {
@@ -1178,8 +1135,8 @@ class BaseExport
             if (in_array('sent', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', PurchaseOrder::STATUS_SENT)
-                    ->whereNull('due_date')
-                    ->orWhere('due_date', '>=', now()->toDateString());
+                        ->whereNull('due_date')
+                        ->orWhere('due_date', '>=', now()->toDateString());
                 });
             }
 
@@ -1202,10 +1159,6 @@ class BaseExport
 
     /**
      * Add Invoice Status Filter
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $status
-     * @return Builder
      */
     protected function addInvoiceStatusFilter(Builder $query, string $status): Builder
     {
@@ -1248,8 +1201,8 @@ class BaseExport
 
             if (in_array('overdue', $status_parameters)) {
                 $nested->orWhereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                                ->where('due_date', '<', Carbon::now())
-                                ->orWhere('partial_due_date', '<', Carbon::now());
+                    ->where('due_date', '<', Carbon::now())
+                    ->orWhere('partial_due_date', '<', Carbon::now());
             }
 
             if (in_array('viewed', $status_parameters)) {
@@ -1260,7 +1213,6 @@ class BaseExport
 
             }
 
-
         });
 
         return $query;
@@ -1268,10 +1220,6 @@ class BaseExport
 
     /**
      * Add Date Range
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param ?string $table_name
-     * @return Builder
      */
     protected function addDateRange(Builder $query, ?string $table_name = null): Builder
     {
@@ -1295,37 +1243,45 @@ class BaseExport
             case 'all':
                 $this->start_date = 'All available data';
                 $this->end_date = 'All available data';
+
                 return $query;
             case 'last7':
             case 'last_7_days':
             case 'last7_days':
                 $this->start_date = now()->subDays(7)->format('Y-m-d');
                 $this->end_date = now()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [now()->subDays(7), now()])->orderBy($this->date_key, 'ASC');
             case 'last30':
             case 'last_30_days':
                 $this->start_date = now()->subDays(30)->format('Y-m-d');
                 $this->end_date = now()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [now()->subDays(30), now()])->orderBy($this->date_key, 'ASC');
             case 'this_month':
                 $this->start_date = now()->startOfMonth()->format('Y-m-d');
                 $this->end_date = now()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [now()->startOfMonth(), now()])->orderBy($this->date_key, 'ASC');
             case 'last_month':
                 $this->start_date = now()->startOfMonth()->subMonth()->format('Y-m-d');
                 $this->end_date = now()->startOfMonth()->subMonth()->endOfMonth()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [now()->startOfMonth()->subMonth(), now()->startOfMonth()->subMonth()->endOfMonth()])->orderBy($this->date_key, 'ASC');
             case 'this_quarter':
                 $this->start_date = (new \Carbon\Carbon('0 months'))->startOfQuarter()->format('Y-m-d');
                 $this->end_date = (new \Carbon\Carbon('0 months'))->endOfQuarter()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [(new \Carbon\Carbon('0 months'))->startOfQuarter(), (new \Carbon\Carbon('0 months'))->endOfQuarter()])->orderBy($this->date_key, 'ASC');
             case 'last_quarter':
                 $this->start_date = (new \Carbon\Carbon('-3 months'))->startOfQuarter()->format('Y-m-d');
                 $this->end_date = (new \Carbon\Carbon('-3 months'))->endOfQuarter()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [(new \Carbon\Carbon('-3 months'))->startOfQuarter(), (new \Carbon\Carbon('-3 months'))->endOfQuarter()])->orderBy($this->date_key, 'ASC');
             case 'last365_days':
                 $this->start_date = now()->startOfDay()->subDays(365)->format('Y-m-d');
                 $this->end_date = now()->startOfDay()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [now()->subDays(365), now()])->orderBy($this->date_key, 'ASC');
             case 'this_year':
 
@@ -1338,6 +1294,7 @@ class BaseExport
 
                 $this->start_date = $fin_year_start->format('Y-m-d');
                 $this->end_date = $fin_year_start->copy()->addYear()->subDay()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [$this->start_date, $this->end_date])->orderBy($this->date_key, 'ASC');
             case 'last_year':
 
@@ -1351,14 +1308,17 @@ class BaseExport
 
                 $this->start_date = $fin_year_start->format('Y-m-d');
                 $this->end_date = $fin_year_start->copy()->addYear()->subDay()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [$this->start_date, $this->end_date])->orderBy($this->date_key, 'ASC');
             case 'custom':
                 $this->start_date = $custom_start_date->format('Y-m-d');
                 $this->end_date = $custom_end_date->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [$custom_start_date, $custom_end_date])->orderBy($this->date_key, 'ASC');
             default:
                 $this->start_date = now()->startOfYear()->format('Y-m-d');
                 $this->end_date = now()->format('Y-m-d');
+
                 return $query->whereBetween($this->date_key, [now()->startOfYear(), now()])->orderBy($this->date_key, 'ASC');
         }
     }
@@ -1367,9 +1327,6 @@ class BaseExport
      * Returns the merged array of
      * the entity with the matching
      * item report keys
-     *
-     * @param  string $entity_report_keys
-     * @return array
      */
     public function mergeItemsKeys(string $entity_report_keys): array
     {
@@ -1378,7 +1335,7 @@ class BaseExport
 
     public function buildHeader(): array
     {
-        $helper = new Helpers();
+        $helper = new Helpers;
 
         $header = [];
         // nlog("header");
@@ -1391,42 +1348,42 @@ class BaseExport
             $prefix = '';
 
             if (!$key) {
-                $prefix = stripos($value, 'client.') !== false ? ctrans('texts.client') . " " : ctrans('texts.contact') . " ";
+                $prefix = stripos($value, 'client.') !== false ? ctrans('texts.client') . ' ' : ctrans('texts.contact') . ' ';
                 $key = array_search($value, $this->client_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.invoice') . " ";
+                $prefix = ctrans('texts.invoice') . ' ';
                 $key = array_search($value, $this->invoice_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.recurring_invoice') . " ";
+                $prefix = ctrans('texts.recurring_invoice') . ' ';
                 $key = array_search($value, $this->recurring_invoice_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.payment') . " ";
+                $prefix = ctrans('texts.payment') . ' ';
                 $key = array_search($value, $this->payment_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.quote') . " ";
+                $prefix = ctrans('texts.quote') . ' ';
                 $key = array_search($value, $this->quote_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.credit') . " ";
+                $prefix = ctrans('texts.credit') . ' ';
                 $key = array_search($value, $this->credit_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.item') . " ";
+                $prefix = ctrans('texts.item') . ' ';
                 $key = array_search($value, $this->item_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.expense') . " ";
+                $prefix = ctrans('texts.expense') . ' ';
                 $key = array_search($value, $this->expense_report_keys);
 
                 if (!$key && $value == 'expense.category') {
@@ -1435,17 +1392,17 @@ class BaseExport
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.task') . " ";
+                $prefix = ctrans('texts.task') . ' ';
                 $key = array_search($value, $this->task_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.vendor') . " ";
+                $prefix = ctrans('texts.vendor') . ' ';
                 $key = array_search($value, $this->vendor_report_keys);
             }
 
             if (!$key) {
-                $prefix = ctrans('texts.purchase_order') . " ";
+                $prefix = ctrans('texts.purchase_order') . ' ';
                 $key = array_search($value, $this->purchase_order_report_keys);
             }
 
@@ -1475,7 +1432,6 @@ class BaseExport
             $key = str_replace('product.', '', $key);
             $key = str_replace('task.', '', $key);
 
-
             // if (stripos($value, 'client.') !== false && stripos($value, 'custom_value') === false) {
             //     $value = Str::after($value, 'client.');
             //     $header[] = $value;
@@ -1486,30 +1442,30 @@ class BaseExport
                 $header[] = $value;
             } elseif (stripos($value, 'custom_value') !== false) {
 
-                $parts = explode(".", $value);
+                $parts = explode('.', $value);
 
-                if (count($parts) == 2 && in_array($parts[0], ['contact', 'client','credit','quote','invoice','purchase_order','recurring_invoice'])) {
+                if (count($parts) == 2 && in_array($parts[0], ['contact', 'client', 'credit', 'quote', 'invoice', 'purchase_order', 'recurring_invoice'])) {
                     $entity = $parts[0] . substr($parts[1], -1);
-                    $prefix = ctrans("texts." . $parts[0]);
-                    $fallback = "custom_value" . substr($parts[1], -1);
+                    $prefix = ctrans('texts.' . $parts[0]);
+                    $fallback = 'custom_value' . substr($parts[1], -1);
                     $custom_field_label = (string) $helper->makeCustomField($this->company->custom_fields, $entity);
 
                     if (strlen($custom_field_label) >= 1) {
                         $header[] = $custom_field_label;
                     } else {
-                        $header[] = $prefix . " " . ctrans("texts.{$fallback}");
+                        $header[] = $prefix . ' ' . ctrans("texts.{$fallback}");
                     }
 
                 } elseif (count($parts) == 2 && (stripos($parts[0], 'vendor_contact') !== false || stripos($parts[0], 'contact') !== false)) {
                     $parts[0] = str_replace('vendor_contact', 'contact', $parts[0]);
 
-                    $entity = "contact" . substr($parts[1], -1);
+                    $entity = 'contact' . substr($parts[1], -1);
                     $custom_field_string = strlen($helper->makeCustomField($this->company->custom_fields, $entity)) > 1 ? $helper->makeCustomField($this->company->custom_fields, $entity) : ctrans("texts.{$parts[1]}");
-                    $header[] = ctrans("texts.{$parts[0]}") . " " . $custom_field_string;
+                    $header[] = ctrans("texts.{$parts[0]}") . ' ' . $custom_field_string;
 
-                } elseif (count($parts) == 2 && in_array(substr($original_key, 0, -1), ['credit','quote','invoice','purchase_order','recurring_invoice','task'])) {
-                    $custom_field_string = strlen($helper->makeCustomField($this->company->custom_fields, "product" . substr($original_key, -1))) > 1 ? $helper->makeCustomField($this->company->custom_fields, "product" . substr($original_key, -1)) : ctrans("texts.{$parts[1]}");
-                    $header[] = ctrans("texts.{$parts[0]}") . " " . $custom_field_string;
+                } elseif (count($parts) == 2 && in_array(substr($original_key, 0, -1), ['credit', 'quote', 'invoice', 'purchase_order', 'recurring_invoice', 'task'])) {
+                    $custom_field_string = strlen($helper->makeCustomField($this->company->custom_fields, 'product' . substr($original_key, -1))) > 1 ? $helper->makeCustomField($this->company->custom_fields, 'product' . substr($original_key, -1)) : ctrans("texts.{$parts[1]}");
+                    $header[] = ctrans("texts.{$parts[0]}") . ' ' . $custom_field_string;
                 } else {
                     $header[] = "{$prefix}" . ctrans("texts.{$key}");
                 }
@@ -1551,7 +1507,7 @@ class BaseExport
 
         foreach (array_values($this->input['report_keys']) as $key => $value) {
 
-            $report_keys = explode(".", $value);
+            $report_keys = explode('.', $value);
 
             $column_key = $value;
 
@@ -1598,7 +1554,7 @@ class BaseExport
 
         foreach (array_values($this->input['report_keys']) as $key => $value) {
 
-            $report_keys = explode(".", $value);
+            $report_keys = explode('.', $value);
 
             $column_key = $value;
 
@@ -1635,7 +1591,7 @@ class BaseExport
 
             switch (get_class($query->getModel())) {
                 case Invoice::class:
-                    nlog("zipping invoices");
+                    nlog('zipping invoices');
                     ZipInvoices::dispatch($query->pluck('id'), $this->company, $user);
                     break;
                 case Quote::class:
@@ -1648,7 +1604,7 @@ class BaseExport
                     ZipPurchaseOrders::dispatch($query->pluck('id'), $this->company, $user);
                     break;
                 default:
-                    # code...
+                    // code...
                     break;
             }
         }
@@ -1661,10 +1617,10 @@ class BaseExport
             $documents = $query->pluck('id')->toArray();
         } else {
             $documents = $query->cursor()
-                               ->map(function ($entity) {
-                                   return $entity->documents()->pluck('id')->toArray();
-                               })->flatten()
-                               ->toArray();
+                ->map(function ($entity) {
+                    return $entity->documents()->pluck('id')->toArray();
+                })->flatten()
+                ->toArray();
         }
 
         if (count($documents) > 0) {
@@ -1688,13 +1644,12 @@ class BaseExport
      * on the table prior to adding it to
      * the query builder
      *
-     * @param  string $table
-     * @param  string $column
-     * @return bool
+     * @param  string  $table
+     * @param  string  $column
      */
     public function columnExists($table, $column): bool
     {
-        return \Illuminate\Support\Facades\Schema::hasColumn($table, $column);
+        return Schema::hasColumn($table, $column);
     }
 
     public function convertFloats(iterable $entity): iterable
@@ -1705,12 +1660,12 @@ class BaseExport
 
             if (is_float($value)) {
 
-                //Careful not to convert discount % to currency
+                // Careful not to convert discount % to currency
                 if ($key == 'discount' && isset($entity->is_amount_discount) && !$entity->is_amount_discount) {
                     continue;
                 }
 
-                $entity[$key] = \App\Utils\Number::formatValue($value, $currency);
+                $entity[$key] = Number::formatValue($value, $currency);
             }
         }
 
@@ -1785,19 +1740,20 @@ class BaseExport
             default => null,
         };
     }
+
     private function resolveEntityFilters(User $user, Builder $query): Builder
     {
 
         $model = get_class($query->getModel());
         $model_string = $this->getModelString($query);
-        $column_listing = \Illuminate\Support\Facades\Schema::getColumnListing($query->getModel()->getTable());
+        $column_listing = Schema::getColumnListing($query->getModel()->getTable());
 
         /** If the User can view or edit the entity, then return the query unfiltered */
         if ($user->hasIntersectPermissions(["view_{$model_string}", "edit_{$model_string}"])) {
             return $query;
         }
 
-        //Handle Child Models Like ClientContact or VendorContact
+        // Handle Child Models Like ClientContact or VendorContact
         if (in_array($model, ['App\Models\ClientContact', 'App\Models\VendorContact'])) {
 
             $query->whereHas($model_string, function ($_q) use ($user) {

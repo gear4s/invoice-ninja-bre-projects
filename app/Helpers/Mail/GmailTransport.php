@@ -6,17 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Helpers\Mail;
 
+use App\Utils\Encode;
 use Google\Client;
 use Google\Service\Gmail;
 use Google\Service\Gmail\Message;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\MessageConverter;
 
 /**
@@ -31,15 +32,15 @@ class GmailTransport extends AbstractTransport
 
     protected function doSend(SentMessage $message): void
     {
-        nlog("In Do Send");
+        nlog('In Do Send');
 
-        /** @var \Symfony\Component\Mime\Email $message */
-        $message = MessageConverter::toEmail($message->getOriginalMessage()); //@phpstan-ignore-line
+        /** @var Email $message */
+        $message = MessageConverter::toEmail($message->getOriginalMessage()); // @phpstan-ignore-line
 
-        //ensure utf-8 encoding of subject
+        // ensure utf-8 encoding of subject
         $subject = $message->getSubject();
 
-        $subject = \App\Utils\Encode::convert($subject);
+        $subject = Encode::convert($subject);
 
         $message->subject($subject);
 
@@ -47,14 +48,14 @@ class GmailTransport extends AbstractTransport
         $token = $message->getHeaders()->get('gmailtoken')->getValue(); // @phpstan-ignore-line
         $message->getHeaders()->remove('gmailtoken');
 
-        $client = new Client();
+        $client = new Client;
         $client->setClientId(config('ninja.auth.google.client_id'));
         $client->setClientSecret(config('ninja.auth.google.client_secret'));
         $client->setAccessToken($token);
 
         $service = new Gmail($client);
 
-        $body = new Message();
+        $body = new Message;
 
         $bccs = $message->getHeaders()->get('Bcc');
 
@@ -68,7 +69,7 @@ class GmailTransport extends AbstractTransport
                 $bcc_list .= $address->getAddress() . ',';
             }
 
-            $bcc_list = rtrim($bcc_list, ",") . "\r\n";
+            $bcc_list = rtrim($bcc_list, ',') . "\r\n";
         }
 
         $body->setRaw($this->base64_encode($bcc_list . $message->toString()));

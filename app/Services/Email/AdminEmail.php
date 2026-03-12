@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -36,15 +35,18 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Modules\Admin\Jobs\Account\EmailFilter;
+use Symfony\Component\Mime\Exception\LogicException;
+use Symfony\Component\Mime\Exception\RfcComplianceException;
 use Turbo124\Beacon\Facades\LightLogs;
 
 class AdminEmail implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use MakesHash;
 
     public $tries = 4;
 
@@ -95,8 +97,6 @@ class AdminEmail implements ShouldQueue
 
     /**
      * Sets the override flag
-     *
-     * @return self
      */
     public function setOverride(): self
     {
@@ -107,8 +107,6 @@ class AdminEmail implements ShouldQueue
 
     /**
      * Populates the mailable
-     *
-     * @return self
      */
     public function buildMailable(): self
     {
@@ -126,7 +124,7 @@ class AdminEmail implements ShouldQueue
     {
         $this->setMailDriver();
 
-        /* Init the mailer*/
+        /* Init the mailer */
         $mailer = Mail::mailer($this->mailer);
 
         /* Additional configuration if using a client third party mailer */
@@ -144,33 +142,35 @@ class AdminEmail implements ShouldQueue
 
         /* Attempt the send! */
         try {
-            nlog("Using mailer => " . $this->mailer . " " . now()->toDateTimeString());
+            nlog('Using mailer => ' . $this->mailer . ' ' . now()->toDateTimeString());
 
             $mailer->send($this->mailable);
 
-            Cache::increment("email_quota" . $this->company->account->key);
+            Cache::increment('email_quota' . $this->company->account->key);
 
             LightLogs::create(new EmailSuccess($this->company->company_key, $this->mailable->subject))
                 ->send();
 
-        } catch (\Symfony\Component\Mime\Exception\RfcComplianceException $e) {
+        } catch (RfcComplianceException $e) {
             nlog("Mailer failed with a Logic Exception {$e->getMessage()}");
             $this->fail();
             $this->cleanUpMailers();
             $this->logMailError($e->getMessage(), $this->company->clients()->first());
+
             return;
-        } catch (\Symfony\Component\Mime\Exception\LogicException $e) {
+        } catch (LogicException $e) {
             nlog("Mailer failed with a Logic Exception {$e->getMessage()}");
             $this->fail();
             $this->cleanUpMailers();
             $this->logMailError($e->getMessage(), $this->company->clients()->first());
+
             return;
         } catch (\Exception|\RuntimeException|\Google\Service\Exception $e) {
             nlog("Mailer failed with {$e->getMessage()}");
             $message = $e->getMessage();
 
             if (stripos($e->getMessage(), 'code 406') || stripos($e->getMessage(), 'code 300') || stripos($e->getMessage(), 'code 413')) {
-                $message = "Either Attachment too large, or recipient has been suppressed.";
+                $message = 'Either Attachment too large, or recipient has been suppressed.';
 
                 $this->fail();
                 $this->logMailError($e->getMessage(), $this->company->clients()->first());
@@ -184,7 +184,7 @@ class AdminEmail implements ShouldQueue
              * this merges a text string with a json object
              * need to harvest the ->Message property using the following
              */
-            if ($e instanceof ClientException) { //postmark specific failure
+            if ($e instanceof ClientException) { // postmark specific failure
                 $response = $e->getResponse();
                 $message_body = json_decode($response->getBody()->getContents());
 
@@ -195,16 +195,17 @@ class AdminEmail implements ShouldQueue
 
                 $this->fail();
                 $this->cleanUpMailers();
+
                 return;
             }
 
-            //only report once, not on all tries
+            // only report once, not on all tries
             if ($this->attempts() == $this->tries) {
                 /* If the is an entity attached to the message send a failure mailer */
                 $this->entityEmailFailed($message);
 
                 /* Don't send postmark failures to Sentry */
-                if (Ninja::isHosted() && (!$e instanceof ClientException)) { //@phpstan-ignore-line
+                if (Ninja::isHosted() && (!$e instanceof ClientException)) { // @phpstan-ignore-line
                     app('sentry')->captureException($e);
                 }
             }
@@ -223,8 +224,6 @@ class AdminEmail implements ShouldQueue
      * On the hosted platform we scan all outbound email for
      * spam. This sequence processes the filters we use on all
      * emails.
-     *
-     * @return bool
      */
     public function preFlightChecksFail(): bool
     {
@@ -264,9 +263,9 @@ class AdminEmail implements ShouldQueue
 
         /* If the account is verified, we allow emails to flow */
         if ($this->company->account && $this->company->account->is_verified_account) {
-            //11-01-2022
+            // 11-01-2022
 
-            /* Continue to analyse verified accounts in case they later start sending poor quality emails*/
+            /* Continue to analyse verified accounts in case they later start sending poor quality emails */
             // if(class_exists(\Modules\Admin\Jobs\Account\EmailQuality::class))
             //     (new \Modules\Admin\Jobs\Account\EmailQuality($this->nmo, $this->company))->run();
 
@@ -275,16 +274,16 @@ class AdminEmail implements ShouldQueue
 
         /* On the hosted platform if the user has not verified their account we fail here - but still check what they are trying to send! */
         if ($this->company->account && !$this->company->account->account_sms_verified) {
-            if (class_exists(\Modules\Admin\Jobs\Account\EmailFilter::class)) {
-                return (new \Modules\Admin\Jobs\Account\EmailFilter($this->email_object, $this->company))->run();
+            if (class_exists(EmailFilter::class)) {
+                return (new EmailFilter($this->email_object, $this->company))->run();
             }
 
             return true;
         }
 
         /* On the hosted platform we actively scan all outbound emails to ensure outbound email quality remains high */
-        if (class_exists(\Modules\Admin\Jobs\Account\EmailFilter::class)) {
-            return (new \Modules\Admin\Jobs\Account\EmailFilter($this->email_object, $this->company))->run();
+        if (class_exists(EmailFilter::class)) {
+            return (new EmailFilter($this->email_object, $this->company))->run();
         }
 
         return false;
@@ -292,8 +291,6 @@ class AdminEmail implements ShouldQueue
 
     /**
      * hasInValidEmails
-     *
-     * @return bool
      */
     private function hasInValidEmails(): bool
     {
@@ -302,15 +299,14 @@ class AdminEmail implements ShouldQueue
                 return true;
             }
 
-            if (!str_contains($address_object->address, "@")) {
+            if (!str_contains($address_object->address, '@')) {
                 return true;
             }
 
-            if ($address_object->address == " ") {
+            if ($address_object->address == ' ') {
                 return true;
             }
         }
-
 
         return false;
     }
@@ -328,27 +324,33 @@ class AdminEmail implements ShouldQueue
             case 'gmail':
                 $this->mailer = 'gmail';
                 $this->setGmailMailer();
+
                 return $this;
             case 'office365':
             case 'microsoft':
                 $this->mailer = 'office365';
                 $this->setOfficeMailer();
+
                 return $this;
             case 'client_postmark':
                 $this->mailer = 'postmark';
                 $this->setPostmarkMailer();
+
                 return $this;
             case 'client_mailgun':
                 $this->mailer = 'mailgun';
                 $this->setMailgunMailer();
+
                 return $this;
             case 'client_brevo':
                 $this->mailer = 'brevo';
                 $this->setBrevoMailer();
+
                 return $this;
 
             default:
                 $this->mailer = config('mail.default');
+
                 return $this;
         }
 
@@ -383,11 +385,8 @@ class AdminEmail implements ShouldQueue
         }
     }
 
-
     /**
      * Ensure we discard any data that is not required
-     *
-     * @return void
      */
     private function cleanUpMailers(): void
     {
@@ -401,16 +400,15 @@ class AdminEmail implements ShouldQueue
 
         $this->client_brevo_secret = null;
 
-        //always dump the drivers to prevent reuse
+        // always dump the drivers to prevent reuse
         app('mail.manager')->forgetMailers();
     }
-
 
     /**
      * Check to ensure no cross account
      * emails can be sent.
      *
-     * @param User $user
+     * @param  User  $user
      */
     private function checkValidSendingUser($user)
     {
@@ -433,7 +431,7 @@ class AdminEmail implements ShouldQueue
     {
         $sending_user = $this->email_object->settings->gmail_sending_user_id;
 
-        if ($sending_user == "0") {
+        if ($sending_user == '0') {
             $user = $this->company->owner();
         } else {
             $user = User::find($this->decodePrimaryKey($sending_user));
@@ -441,6 +439,7 @@ class AdminEmail implements ShouldQueue
 
         return $user;
     }
+
     /**
      * Configures Mailgun using client supplied secret
      * as the Mailer
@@ -454,17 +453,19 @@ class AdminEmail implements ShouldQueue
 
         } else {
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
         $user = $this->resolveSendingUser();
 
-        $sending_email = (isset($this->email_object->settings->custom_sending_email) && stripos($this->email_object->settings->custom_sending_email, "@")) ? $this->email_object->settings->custom_sending_email : $user->email;
+        $sending_email = (isset($this->email_object->settings->custom_sending_email) && stripos($this->email_object->settings->custom_sending_email, '@')) ? $this->email_object->settings->custom_sending_email : $user->email;
         $sending_user = (isset($this->email_object->settings->email_from_name) && strlen($this->email_object->settings->email_from_name) > 2) ? $this->email_object->settings->email_from_name : $user->name();
 
         $this->mailable
             ->from($sending_email, $sending_user);
     }
+
     /**
      * Configures Brevo using client supplied secret
      * as the Mailer
@@ -476,12 +477,13 @@ class AdminEmail implements ShouldQueue
 
         } else {
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
         $user = $this->resolveSendingUser();
 
-        $sending_email = (isset($this->email_object->settings->custom_sending_email) && stripos($this->email_object->settings->custom_sending_email, "@")) ? $this->email_object->settings->custom_sending_email : $user->email;
+        $sending_email = (isset($this->email_object->settings->custom_sending_email) && stripos($this->email_object->settings->custom_sending_email, '@')) ? $this->email_object->settings->custom_sending_email : $user->email;
         $sending_user = (isset($this->email_object->settings->email_from_name) && strlen($this->email_object->settings->email_from_name) > 2) ? $this->email_object->settings->email_from_name : $user->name();
 
         $this->mailable
@@ -498,12 +500,13 @@ class AdminEmail implements ShouldQueue
             $this->client_postmark_secret = $this->email_object->settings->postmark_secret;
         } else {
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
         $user = $this->resolveSendingUser();
 
-        $sending_email = (isset($this->email_object->settings->custom_sending_email) && stripos($this->email_object->settings->custom_sending_email, "@")) ? $this->email_object->settings->custom_sending_email : $user->email;
+        $sending_email = (isset($this->email_object->settings->custom_sending_email) && stripos($this->email_object->settings->custom_sending_email, '@')) ? $this->email_object->settings->custom_sending_email : $user->email;
         $sending_user = (isset($this->email_object->settings->email_from_name) && strlen($this->email_object->settings->email_from_name) > 2) ? $this->email_object->settings->email_from_name : $user->name();
 
         $this->mailable
@@ -529,6 +532,7 @@ class AdminEmail implements ShouldQueue
             $user->save();
         } else {
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
@@ -551,7 +555,7 @@ class AdminEmail implements ShouldQueue
 
         nlog("Sending via {$user->name()}");
 
-        $google = (new Google())->init();
+        $google = (new Google)->init();
 
         try {
             if ($google->getClient()->isAccessTokenExpired()) {
@@ -563,16 +567,17 @@ class AdminEmail implements ShouldQueue
         } catch (\Exception $e) {
             $this->logMailError('Gmail Token Invalid', $this->company->clients()->first());
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
         /**
          * If the user doesn't have a valid token, notify them
          */
-
         if (!$user->oauth_user_token) {
             $this->company->account->gmailCredentialNotification();
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
@@ -587,6 +592,7 @@ class AdminEmail implements ShouldQueue
         if (!$token) {
             $this->company->account->gmailCredentialNotification();
             $this->email_object->settings->email_sending_method = 'default';
+
             return $this->setMailDriver();
         }
 
@@ -600,9 +606,8 @@ class AdminEmail implements ShouldQueue
     /**
      * Logs any errors to the SystemLog
      *
-     * @param  string $errors
-     * @param  null | \App\Models\Client $recipient_object
-     * @return void
+     * @param  string  $errors
+     * @param  null | Client  $recipient_object
      */
     private function logMailError($errors, $recipient_object): void
     {
@@ -629,16 +634,13 @@ class AdminEmail implements ShouldQueue
 
     /**
      * Attempts to refresh the Microsoft refreshToken
-     *
-     * @param \App\Models\User $user
-     * @return mixed
      */
     private function refreshOfficeToken(User $user): mixed
     {
         $expiry = $user->oauth_user_token_expiry ?: now()->subDay();
 
         if ($expiry->lt(now())) {
-            $guzzle = new \GuzzleHttp\Client();
+            $guzzle = new \GuzzleHttp\Client;
             $url = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 
             $token = json_decode($guzzle->post($url, [
@@ -669,8 +671,7 @@ class AdminEmail implements ShouldQueue
     /**
      * Entity notification when an email fails to send
      *
-     * @param  string $message
-     * @return void
+     * @param  string  $message
      */
     private function entityEmailFailed($message): void
     {
@@ -684,7 +685,7 @@ class AdminEmail implements ShouldQueue
                 event(new PaymentWasEmailedAndFailed($this->email_object->entity, $this->company, $message, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
                 break;
             default:
-                # code...
+                // code...
                 break;
         }
 
@@ -692,7 +693,6 @@ class AdminEmail implements ShouldQueue
             $this->logMailError($message, $this->email_object->client);
         }
     }
-
 
     public function failed($exception = null)
     {

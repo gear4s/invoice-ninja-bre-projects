@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,12 +16,12 @@ use App\Jobs\Mail\NinjaMailerObject;
 use App\Libraries\MultiDB;
 use App\Utils\Ninja;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Modules\Admin\Mail\Welcome;
 
 class CreateAccountActivity implements ShouldQueue
 {
     /**
      * Create the event listener.
-     *
      */
     public function __construct() {}
 
@@ -37,8 +36,8 @@ class CreateAccountActivity implements ShouldQueue
         MultiDB::setDb($event->company->db);
 
         if (Ninja::isHosted()) {
-            $nmo = new NinjaMailerObject();
-            $nmo->mailable = new \Modules\Admin\Mail\Welcome($event->user);
+            $nmo = new NinjaMailerObject;
+            $nmo->mailable = new Welcome($event->user);
             $nmo->company = $event->company;
             $nmo->settings = $event->company->settings;
             $nmo->to_user = $event->user;

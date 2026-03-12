@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,20 +18,25 @@ use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\CompanyGateway;
 use App\Models\GatewayType;
+use Illuminate\Support\Facades\Cache;
+use Stripe\Account;
 use Stripe\Exception\ApiErrorException;
+use Stripe\OAuth;
+use Stripe\Stripe;
 
 class StripeConnectController extends BaseController
 {
     /**
      * Initialize Stripe Connect flow.
      *
-     * @param string $token One-time token
+     * @param  string  $token  One-time token
+     *
      * @throws ApiErrorException
      */
     public function initialize(InitializeStripeConnectRequest $request, string $token)
     {
 
-        if (! is_array($request->getTokenContent())) {
+        if (!is_array($request->getTokenContent())) {
             abort(400, 'Invalid token');
         }
 
@@ -47,7 +51,7 @@ class StripeConnectController extends BaseController
 
     public function completed(InitializeStripeConnectRequest $request)
     {
-        \Stripe\Stripe::setApiKey(config('ninja.ninja_stripe_key'));
+        Stripe::setApiKey(config('ninja.ninja_stripe_key'));
 
         if ($request->has('error') && $request->error == 'access_denied') {
             return view('auth.connect.access_denied');
@@ -57,20 +61,20 @@ class StripeConnectController extends BaseController
 
         try {
             /** @class \stdClass $response
-             *  @property string $scope
-             *  @property string $stripe_user_id
-             *  @property string $stripe_publishable_key
-             *  @property string $refresh_token
-             *  @property string $livemode
-             *  @property string $access_token
-             *  @property string $token_type
-             *  @property string $stripe_user
-             *  @property string $stripe_account
-             *  @property string $error
-            */
+             * @property string $scope
+             * @property string $stripe_user_id
+             * @property string $stripe_publishable_key
+             * @property string $refresh_token
+             * @property string $livemode
+             * @property string $access_token
+             * @property string $token_type
+             * @property string $stripe_user
+             * @property string $stripe_account
+             * @property string $error
+             */
 
-            /** @var  \stdClass $response */
-            $response = \Stripe\OAuth::token([
+            /** @var \stdClass $response */
+            $response = OAuth::token([
                 'grant_type' => 'authorization_code',
                 'code' => $request->input('code'),
             ]);
@@ -78,7 +82,6 @@ class StripeConnectController extends BaseController
             nlog($response);
 
         } catch (\Exception $e) {
-
 
         }
 
@@ -99,10 +102,10 @@ class StripeConnectController extends BaseController
             ->where('company_id', $company->id)
             ->first();
 
-        if (! $company_gateway) {
+        if (!$company_gateway) {
             $company_gateway = CompanyGatewayFactory::create($company->id, $company->owner()->id);
-            $fees_and_limits = new \stdClass();
-            $fees_and_limits->{GatewayType::CREDIT_CARD} = new FeesAndLimits();
+            $fees_and_limits = new \stdClass;
+            $fees_and_limits->{GatewayType::CREDIT_CARD} = new FeesAndLimits;
             $company_gateway->gateway_key = 'd14dd26a47cecc30fdd65700bfb67b34';
             $company_gateway->fees_and_limits = $fees_and_limits;
             $company_gateway->setConfig([]);
@@ -126,15 +129,15 @@ class StripeConnectController extends BaseController
 
         try {
             $stripe = $company_gateway->driver()->init();
-            $a = \Stripe\Account::retrieve($response->stripe_user_id, $stripe->stripe_connect_auth);
+            $a = Account::retrieve($response->stripe_user_id, $stripe->stripe_connect_auth);
 
             if ($a->business_name ?? false) {
                 $company_gateway->label = substr("Stripe - {$a->business_name}", 0, 250);
                 $company_gateway->save();
             }
         } catch (\Exception $e) {
-            nlog("Exception:: StripeConnectController::" . $e->getMessage());
-            nlog("could not harvest stripe company name");
+            nlog('Exception:: StripeConnectController::' . $e->getMessage());
+            nlog('could not harvest stripe company name');
         }
 
         if (isset($request->getTokenContent()['is_react']) && $request->getTokenContent()['is_react']) {
@@ -143,11 +146,10 @@ class StripeConnectController extends BaseController
             $redirect_uri = config('ninja.app_url');
         }
 
-        \Illuminate\Support\Facades\Cache::pull($request->token);
+        Cache::pull($request->token);
 
-        //response here
+        // response here
         return view('auth.connect.completed', ['url' => $redirect_uri]);
 
     }
-
 }

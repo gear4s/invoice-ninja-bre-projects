@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,8 +24,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use League\Csv\Writer;
-
-use function Sentry\continueTrace;
 
 class ProfitLoss
 {
@@ -85,7 +82,7 @@ class ProfitLoss
 
     public function __construct(protected Company $company, protected array $payload)
     {
-        $this->currency_api = new CurrencyApi();
+        $this->currency_api = new CurrencyApi;
 
         $this->company = $company;
 
@@ -110,7 +107,7 @@ class ProfitLoss
     {
         MultiDB::setDb($this->company->db);
 
-        if ($this->is_income_billed) { //get invoiced amounts
+        if ($this->is_income_billed) { // get invoiced amounts
             $this->filterIncome();
         } else {
 
@@ -266,72 +263,72 @@ class ProfitLoss
         $this->invoice_payment_map = [];
 
         Payment::query()->where('company_id', $this->company->id)
-                        ->whereIn('status_id', [1, 4, 5])
-                        ->where('is_deleted', 0)
-                        ->whereBetween('date', [$this->start_date, $this->end_date])
-                        ->whereHas('client', function ($query) {
-                            $query->where('is_deleted', 0);
-                        })
-                        ->with(['company', 'client'])
-                        ->cursor()
-                        ->each(function ($payment) {
+            ->whereIn('status_id', [1, 4, 5])
+            ->where('is_deleted', 0)
+            ->whereBetween('date', [$this->start_date, $this->end_date])
+            ->whereHas('client', function ($query) {
+                $query->where('is_deleted', 0);
+            })
+            ->with(['company', 'client'])
+            ->cursor()
+            ->each(function ($payment) {
 
-                            $map = new \stdClass();
-                            $amount_payment_paid = 0;
-                            $amount_credit_paid = 0;
-                            $amount_payment_paid_converted = 0;
-                            $amount_credit_paid_converted = 0;
-                            $tax_amount = 0;
-                            $tax_amount_converted = 0;
-                            $tax_amount_credit = 0;
-                            $tax_amount_credit_converted = $tax_amount_credit_converted = 0;
+                $map = new \stdClass;
+                $amount_payment_paid = 0;
+                $amount_credit_paid = 0;
+                $amount_payment_paid_converted = 0;
+                $amount_credit_paid_converted = 0;
+                $tax_amount = 0;
+                $tax_amount_converted = 0;
+                $tax_amount_credit = 0;
+                $tax_amount_credit_converted = $tax_amount_credit_converted = 0;
 
-                            $invoice = false;
+                $invoice = false;
 
-                            foreach ($payment->paymentables as $pivot) {
-                                if ($pivot->paymentable_type == 'invoices') {
-                                    $invoice = Invoice::query()->withTrashed()->find($pivot->paymentable_id);
+                foreach ($payment->paymentables as $pivot) {
+                    if ($pivot->paymentable_type == 'invoices') {
+                        $invoice = Invoice::query()->withTrashed()->find($pivot->paymentable_id);
 
-                                    if (!$invoice) {
-                                        continue;
-                                    }
+                        if (!$invoice) {
+                            continue;
+                        }
 
-                                    $pivot_diff = $pivot->amount - $pivot->refunded;
-                                    $amount_payment_paid += $pivot_diff;
-                                    $amount_payment_paid_converted += $pivot_diff * ($payment->exchange_rate ?: 1);
+                        $pivot_diff = $pivot->amount - $pivot->refunded;
+                        $amount_payment_paid += $pivot_diff;
+                        $amount_payment_paid_converted += $pivot_diff * ($payment->exchange_rate ?: 1);
 
-                                    if ($invoice->amount > 0) {
-                                        $tax_amount += ($pivot_diff / $invoice->amount) * $invoice->total_taxes;
-                                        $tax_amount_converted += (($pivot_diff / $invoice->amount) * $invoice->total_taxes) / $invoice->exchange_rate;
-                                    }
+                        if ($invoice->amount > 0) {
+                            $tax_amount += ($pivot_diff / $invoice->amount) * $invoice->total_taxes;
+                            $tax_amount_converted += (($pivot_diff / $invoice->amount) * $invoice->total_taxes) / $invoice->exchange_rate;
+                        }
 
-                                }
+                    }
 
-                                if (!$invoice) {
-                                    continue;
-                                }
+                    if (!$invoice) {
+                        continue;
+                    }
 
-                                if ($pivot->paymentable_type == 'credits') {
-                                    $amount_credit_paid += $pivot->amount - $pivot->refunded;
-                                    $amount_credit_paid_converted += $pivot_diff * ($payment->exchange_rate ?: 1);
+                    if ($pivot->paymentable_type == 'credits') {
+                        $amount_credit_paid += $pivot->amount - $pivot->refunded;
+                        $amount_credit_paid_converted += $pivot_diff * ($payment->exchange_rate ?: 1);
 
-                                    $tax_amount_credit += ($pivot_diff / $invoice->amount) * $invoice->total_taxes;
-                                    $tax_amount_credit_converted += (($pivot_diff / $invoice->amount) * $invoice->total_taxes) / $invoice->exchange_rate;
-                                }
-                            }
+                        $tax_amount_credit += ($pivot_diff / $invoice->amount) * $invoice->total_taxes;
+                        $tax_amount_credit_converted += (($pivot_diff / $invoice->amount) * $invoice->total_taxes) / $invoice->exchange_rate;
+                    }
+                }
 
-                            $map->amount_payment_paid = $amount_payment_paid;
-                            $map->amount_payment_paid_converted = $amount_payment_paid_converted;
-                            $map->tax_amount = $tax_amount;
-                            $map->tax_amount_converted = $tax_amount_converted;
-                            $map->amount_credit_paid = $amount_credit_paid;
-                            $map->amount_credit_paid_converted = $amount_credit_paid_converted;
-                            $map->tax_amount_credit = $tax_amount_credit;
-                            $map->tax_amount_credit_converted = $tax_amount_credit_converted;
-                            $map->currency_id = $payment->currency_id;
+                $map->amount_payment_paid = $amount_payment_paid;
+                $map->amount_payment_paid_converted = $amount_payment_paid_converted;
+                $map->tax_amount = $tax_amount;
+                $map->tax_amount_converted = $tax_amount_converted;
+                $map->amount_credit_paid = $amount_credit_paid;
+                $map->amount_credit_paid_converted = $amount_credit_paid_converted;
+                $map->tax_amount_credit = $tax_amount_credit;
+                $map->tax_amount_credit_converted = $tax_amount_credit_converted;
+                $map->currency_id = $payment->currency_id;
 
-                            $this->invoice_payment_map[] = $map;
-                        });
+                $this->invoice_payment_map[] = $map;
+            });
 
         return $this;
     }
@@ -366,38 +363,37 @@ class ProfitLoss
         $csv->insertOne([ctrans('texts.company_name'), $this->company->present()->name()]);
         $csv->insertOne([ctrans('texts.date_range'), Carbon::parse($this->start_date)->format($this->company->date_format()), Carbon::parse($this->end_date)->format($this->company->date_format())]);
 
-        //gross sales ex tax
+        // gross sales ex tax
 
         $csv->insertOne(['--------------------']);
 
-        $csv->insertOne([ctrans('texts.total_revenue') . "[" . ctrans('texts.tax') . " " . ctrans('texts.exclusive') . "]", Number::formatMoney($this->income, $this->company)]);
+        $csv->insertOne([ctrans('texts.total_revenue') . '[' . ctrans('texts.tax') . ' ' . ctrans('texts.exclusive') . ']', Number::formatMoney($this->income, $this->company)]);
 
-        //total taxes
+        // total taxes
 
         $csv->insertOne([ctrans('texts.total_taxes'), Number::formatMoney($this->income_taxes, $this->company)]);
 
-        //expense
+        // expense
 
         $csv->insertOne(['--------------------']);
         foreach ($this->expense_break_down as $expense_breakdown) {
             $csv->insertOne([$expense_breakdown['category_name'], Number::formatMoney($expense_breakdown['total'], $this->company)]);
         }
-        //total expense taxes
+        // total expense taxes
 
         $csv->insertOne(['--------------------']);
-        $csv->insertOne([ctrans('texts.total_expenses') . "[" . ctrans('texts.tax') . " " . ctrans('texts.exclusive') . "]", Number::formatMoney(array_sum(array_column($this->expense_break_down, 'total')), $this->company)]);
+        $csv->insertOne([ctrans('texts.total_expenses') . '[' . ctrans('texts.tax') . ' ' . ctrans('texts.exclusive') . ']', Number::formatMoney(array_sum(array_column($this->expense_break_down, 'total')), $this->company)]);
 
         $csv->insertOne([ctrans('texts.total_taxes'), Number::formatMoney(array_sum(array_column($this->expense_break_down, 'tax')), $this->company)]);
 
         $csv->insertOne(['--------------------']);
         $csv->insertOne([ctrans('texts.total_profit'), Number::formatMoney($this->income - array_sum(array_column($this->expense_break_down, 'total')), $this->company)]);
 
-        //net profit
+        // net profit
 
         $csv->insertOne(['--------------------']);
         $csv->insertOne(['']);
         $csv->insertOne(['']);
-
 
         $csv->insertOne(['--------------------']);
         $csv->insertOne([ctrans('texts.revenue')]);
@@ -417,7 +413,7 @@ class ProfitLoss
             $csv->insertOne([$expense->currency, ($expense->total - $expense->foreign_tax_amount), $expense->foreign_tax_amount]);
         }
 
-        return  $csv->toString();
+        return $csv->toString();
     }
 
     /**
@@ -449,28 +445,28 @@ class ProfitLoss
     private function expenseData()
     {
         $expenses = Expense::query()->where('company_id', $this->company->id)
-                           ->where(function ($query) {
-                               $query->whereNull('client_id')->orWhereHas('client', function ($q) {
-                                   $q->where('is_deleted', 0);
-                               });
-                           })
-                           ->where('is_deleted', 0)
-                           ->withTrashed()
-                           ->whereBetween('date', [$this->start_date, $this->end_date])
-                           ->cursor();
+            ->where(function ($query) {
+                $query->whereNull('client_id')->orWhereHas('client', function ($q) {
+                    $q->where('is_deleted', 0);
+                });
+            })
+            ->where('is_deleted', 0)
+            ->withTrashed()
+            ->whereBetween('date', [$this->start_date, $this->end_date])
+            ->cursor();
 
         $this->expenses = [];
 
         $company_currency_code = $this->company->currency()->code;
 
         foreach ($expenses as $expense) {
-            $map = new \stdClass();
+            $map = new \stdClass;
 
             $expense_tax_total = $this->getTax($expense);
             $map->total = $expense->amount;
-            $map->converted_total = $converted_total = $this->getConvertedTotal($expense->amount, $expense->exchange_rate); //converted to company currency
-            $map->tax = $tax = $this->getConvertedTotal($expense_tax_total, $expense->exchange_rate); //tax component
-            $map->net_converted_total = $expense->uses_inclusive_taxes ? ($converted_total - $tax) : $converted_total; //excludes all taxes
+            $map->converted_total = $converted_total = $this->getConvertedTotal($expense->amount, $expense->exchange_rate); // converted to company currency
+            $map->tax = $tax = $this->getConvertedTotal($expense_tax_total, $expense->exchange_rate); // tax component
+            $map->net_converted_total = $expense->uses_inclusive_taxes ? ($converted_total - $tax) : $converted_total; // excludes all taxes
             $map->category_id = $expense->category_id;
             $map->category_name = $expense->category ? $expense->category->name : 'No Category Defined';
             $map->currency_id = $expense->currency_id ?: $expense->company->settings->currency_id;
@@ -487,15 +483,15 @@ class ProfitLoss
         $data = [];
 
         foreach ($this->expenses as $expense) {
-            if (! array_key_exists($expense->category_id, $data)) {
+            if (!array_key_exists($expense->category_id, $data)) {
                 $data[$expense->category_id] = [];
             }
 
-            if (! array_key_exists('total', $data[$expense->category_id])) {
+            if (!array_key_exists('total', $data[$expense->category_id])) {
                 $data[$expense->category_id]['total'] = 0;
             }
 
-            if (! array_key_exists('tax', $data[$expense->category_id])) {
+            if (!array_key_exists('tax', $data[$expense->category_id])) {
                 $data[$expense->category_id]['tax'] = 0;
             }
 
@@ -512,7 +508,7 @@ class ProfitLoss
     private function getTax($expense)
     {
         $amount = $expense->amount;
-        //is amount tax
+        // is amount tax
 
         if ($expense->calculate_tax_by_amount) {
             return $expense->tax_amount1 + $expense->tax_amount2 + $expense->tax_amount3;

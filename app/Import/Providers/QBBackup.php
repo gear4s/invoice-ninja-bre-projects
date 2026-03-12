@@ -4,11 +4,10 @@ namespace App\Import\Providers;
 
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Import\Providers\BaseImport;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Paymentable;
 use App\Services\Quickbooks\QuickbooksService;
-use App\Services\Quickbooks\Transformers\ClientTransformer;
 use App\Services\Quickbooks\Transformers\PaymentTransformer;
+use Illuminate\Support\Facades\Cache;
 
 class QBBackup extends BaseImport implements ImportInterface
 {
@@ -26,7 +25,7 @@ class QBBackup extends BaseImport implements ImportInterface
         $temp_file = tempnam(sys_get_temp_dir(), 'zip_');
         file_put_contents($temp_file, $zip_content);
 
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($temp_file) === true) {
 
             $qb_json = $zip->getFromName('backup.json');
@@ -91,21 +90,20 @@ class QBBackup extends BaseImport implements ImportInterface
             $ninja_payment = $payment_transformer->buildPayment($payment);
             $ninja_payment->service()->applyNumber()->save();
 
-
             $invoice = Invoice::query()
-                    ->withTrashed()
-                    ->where('company_id', $this->company->id)
-                    ->where('sync->qb_id', $payment['invoice_id'])
-                    ->first();
+                ->withTrashed()
+                ->where('company_id', $this->company->id)
+                ->where('sync->qb_id', $payment['invoice_id'])
+                ->first();
 
             if ($invoice) {
 
-                $paymentable = new \App\Models\Paymentable();
+                $paymentable = new Paymentable;
                 $paymentable->payment_id = $ninja_payment->id;
                 $paymentable->paymentable_id = $invoice->id;
                 $paymentable->paymentable_type = 'invoices';
                 $paymentable->amount = $transformed['applied'] + $ninja_payment->credits->sum('amount');
-                $paymentable->created_at = $ninja_payment->date; //@phpstan-ignore-line
+                $paymentable->created_at = $ninja_payment->date; // @phpstan-ignore-line
                 $paymentable->save();
 
                 $invoice->service()->applyPayment($ninja_payment, $paymentable->amount);

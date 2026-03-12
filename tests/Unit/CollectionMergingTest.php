@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,9 +15,6 @@ use App\Factory\ClientContactFactory;
 use App\Factory\InvoiceItemFactory;
 use Tests\TestCase;
 
-/**
- *
- */
 class CollectionMergingTest extends TestCase
 {
     protected function setUp(): void
@@ -26,7 +22,7 @@ class CollectionMergingTest extends TestCase
         parent::setUp();
     }
 
-    public function testUniqueValues()
+    public function test_unique_values()
     {
         $methods[] = [1 => 1];
         $methods[] = [1 => 2];
@@ -61,7 +57,7 @@ class CollectionMergingTest extends TestCase
         $this->assertEquals(11, $intersect->count());
     }
 
-    public function testExistenceInCollection()
+    public function test_existence_in_collection()
     {
         $items = InvoiceItemFactory::generate(5);
 
@@ -76,7 +72,7 @@ class CollectionMergingTest extends TestCase
         $this->assertTrue(collect($items)->contains('type_id', 3));
     }
 
-    public function testClientContactSendEmailExists()
+    public function test_client_contact_send_email_exists()
     {
         $new_collection = collect();
 
@@ -93,7 +89,7 @@ class CollectionMergingTest extends TestCase
         $this->assertTrue($new_collection->contains('send_email', true));
     }
 
-    public function testClientContactSendEmailDoesNotExists()
+    public function test_client_contact_send_email_does_not_exists()
     {
         $new_collection = collect();
 

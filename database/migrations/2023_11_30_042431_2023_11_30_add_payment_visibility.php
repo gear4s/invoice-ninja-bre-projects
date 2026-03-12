@@ -1,9 +1,8 @@
 <?php
 
 use App\Models\Gateway;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Artisan;
 
 return new class extends Migration
 {
@@ -15,7 +14,7 @@ return new class extends Migration
 
         Gateway::whereIn('id', [60, 15])->update(['visible' => 1]);
 
-        \Illuminate\Support\Facades\Artisan::call('ninja:design-update');
+        Artisan::call('ninja:design-update');
 
     }
 

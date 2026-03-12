@@ -6,17 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\RecurringInvoices;
 
-use App\Models\Invoice;
-use Livewire\Component;
 use App\Libraries\MultiDB;
+use App\Models\Invoice;
 use App\Models\RecurringInvoice;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class UpdateAutoBilling extends Component
 {
@@ -40,16 +39,16 @@ class UpdateAutoBilling extends Component
         $invoice = $this->invoice();
 
         if ($invoice->auto_bill == 'optin' || $invoice->auto_bill == 'optout') {
-            $invoice->auto_bill_enabled = ! $invoice->auto_bill_enabled;
+            $invoice->auto_bill_enabled = !$invoice->auto_bill_enabled;
             $invoice->saveQuietly();
 
             Invoice::withTrashed()
-                        ->where('company_id', $invoice->company_id)
-                        ->where('recurring_id', $invoice->id)
-                        ->whereIn('status_id', [2,3])
-                        ->where('is_deleted', 0)
-                        ->where('balance', '>', 0)
-                        ->update(['auto_bill_enabled' => $invoice->auto_bill_enabled]);
+                ->where('company_id', $invoice->company_id)
+                ->where('recurring_id', $invoice->id)
+                ->whereIn('status_id', [2, 3])
+                ->where('is_deleted', 0)
+                ->where('balance', '>', 0)
+                ->update(['auto_bill_enabled' => $invoice->auto_bill_enabled]);
         }
     }
 

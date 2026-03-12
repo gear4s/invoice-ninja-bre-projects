@@ -6,17 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\EInvoice;
 
-use App\Utils\Ninja;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Invoice;
 use App\Http\Requests\Request;
+use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\User;
 use App\Services\EDocument\Adapters\CII\PaymentMeans;
 use Illuminate\Validation\Rule;
 
@@ -24,13 +22,11 @@ class UpdateEInvoiceConfiguration extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin();
@@ -127,7 +123,7 @@ class UpdateEInvoiceConfiguration extends Request
 
     public function getLevel()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return match ($this->entity) {

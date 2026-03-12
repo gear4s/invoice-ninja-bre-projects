@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Services\Subscription\SubscriptionCalculator;
 use App\Services\Subscription\SubscriptionService;
 use App\Services\Subscription\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -60,10 +60,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $optional_product_ids
  * @property string|null $optional_recurring_product_ids
  * @property string|null $steps
- * @property-read \App\Models\Company $company
+ * @property-read Company $company
  * @property-read mixed $hashed_id
- * @property-read \App\Models\GroupSetting|null $group_settings
- * @property-read \App\Models\User $user
+ * @property-read GroupSetting|null $group_settings
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\SubscriptionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|Subscription filter(\App\Filters\QueryFilters $filters)
@@ -75,13 +76,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|Subscription withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Subscription withoutTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Subscription with($value)
+ *
  * @mixin \Eloquent
  */
 class Subscription extends BaseModel
 {
+    use Filterable;
     use HasFactory;
     use SoftDeletes;
-    use Filterable;
 
     protected $hidden = [
         'id',
@@ -158,12 +160,12 @@ class Subscription extends BaseModel
         return new SubscriptionCalculator($this);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
@@ -207,9 +209,6 @@ class Subscription extends BaseModel
 
     /**
      * Calculates the maximum product quantity available
-     *
-     * @param  mixed $product
-     * @return int
      */
     public function maxQuantity(mixed $product): int
     {

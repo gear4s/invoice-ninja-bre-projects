@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Filters;
 use App\Models\RecurringInvoice;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * RecurringInvoiceFilters.
@@ -24,8 +24,6 @@ class RecurringInvoiceFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -34,30 +32,30 @@ class RecurringInvoiceFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('date', 'like', '%' . $filter . '%')
-                  ->orWhere('amount', 'like', '%' . $filter . '%')
-                  ->orWhere('number', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value1', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value2', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value3', 'like', '%' . $filter . '%')
-                  ->orWhere('custom_value4', 'like', '%' . $filter . '%')
-                  ->orWhereHas('client', function ($q) use ($filter) {
-                      $q->where('name', 'like', '%' . $filter . '%');
-                  })
-                  ->orWhereHas('client.contacts', function ($q) use ($filter) {
-                      $q->where('first_name', 'like', '%' . $filter . '%')
+                ->orWhere('amount', 'like', '%' . $filter . '%')
+                ->orWhere('number', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value1', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value2', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value3', 'like', '%' . $filter . '%')
+                ->orWhere('custom_value4', 'like', '%' . $filter . '%')
+                ->orWhereHas('client', function ($q) use ($filter) {
+                    $q->where('name', 'like', '%' . $filter . '%');
+                })
+                ->orWhereHas('client.contacts', function ($q) use ($filter) {
+                    $q->where('first_name', 'like', '%' . $filter . '%')
                         ->orWhere('last_name', 'like', '%' . $filter . '%')
                         ->orWhere('email', 'like', '%' . $filter . '%');
-                  })
-                    ->orWhereRaw("
+                })
+                ->orWhereRaw("
                             JSON_UNQUOTE(JSON_EXTRACT(
                                 JSON_ARRAY(
                                     JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].notes')), 
                                     JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].product_key'))
                                 ), '$[*]')
                             ) LIKE ?", ['%' . $filter . '%']);
-            //->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].notes')) LIKE ?", ['%'.$filter.'%']);
+            // ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].notes')) LIKE ?", ['%'.$filter.'%']);
         });
     }
 
@@ -70,8 +68,7 @@ class RecurringInvoiceFilters extends QueryFilters
      * - paused
      * - completed
      *
-     * @param string $value The invoice status as seen by the client
-     * @return Builder
+     * @param  string  $value  The invoice status as seen by the client
      */
     public function client_status(string $value = ''): Builder
     {
@@ -122,8 +119,7 @@ class RecurringInvoiceFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
@@ -134,14 +130,13 @@ class RecurringInvoiceFilters extends QueryFilters
             $sort_col[0] = 'next_send_date';
         }
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing('recurring_invoices'))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], Schema::getColumnListing('recurring_invoices'))) {
             return $this->builder;
         }
 
         $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
 
         if ($sort_col[0] == 'client_id') {
-
 
             return $this->builder
                 ->orderByRaw(
@@ -164,8 +159,6 @@ class RecurringInvoiceFilters extends QueryFilters
                     END " . $dir
                 );
 
-
-
             // return $this->builder->orderByRaw('client_id IS NULL')
             //                  ->orderBy(\App\Models\Client::select('name')
             //                  ->whereColumn('clients.id', 'recurring_invoices.client_id')
@@ -186,8 +179,6 @@ class RecurringInvoiceFilters extends QueryFilters
 
     /**
      * Filters the query by the users company ID.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {
@@ -197,8 +188,7 @@ class RecurringInvoiceFilters extends QueryFilters
     /**
      * Filter based on line_items product_key
      *
-     * @param string $value Product keys
-     * @return Builder
+     * @param  string  $value  Product keys
      */
     public function product_key(string $value = ''): Builder
     {
@@ -222,9 +212,6 @@ class RecurringInvoiceFilters extends QueryFilters
 
     /**
      * next send date between.
-     *
-     * @param string $range
-     * @return Builder
      */
     public function next_send_between(string $range = ''): Builder
     {
@@ -265,9 +252,6 @@ class RecurringInvoiceFilters extends QueryFilters
 
     /**
      * Filter by frequency id.
-     *
-     * @param string $value
-     * @return Builder
      */
     public function frequency_id(string $value = ''): Builder
     {

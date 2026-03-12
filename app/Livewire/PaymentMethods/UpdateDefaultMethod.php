@@ -6,16 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\PaymentMethods;
 
-use Livewire\Component;
 use App\Libraries\MultiDB;
-use Livewire\Attributes\Computed;
 use App\Models\ClientGatewayToken;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class UpdateDefaultMethod extends Component
 {
@@ -38,7 +37,6 @@ class UpdateDefaultMethod extends Component
     {
 
         MultiDB::setDb($this->db);
-
 
         if ($this->token()->is_default) {
             return;

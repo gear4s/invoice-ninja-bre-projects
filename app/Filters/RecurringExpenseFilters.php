@@ -6,12 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\Client;
+use App\Models\ExpenseCategory;
+use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -23,8 +25,6 @@ class RecurringExpenseFilters extends QueryFilters
     /**
      * Filter based on search text.
      *
-     * @param string $filter
-     * @return Builder
      * @deprecated
      */
     public function filter(string $filter = ''): Builder
@@ -33,7 +33,7 @@ class RecurringExpenseFilters extends QueryFilters
             return $this->builder;
         }
 
-        return  $this->builder->where(function ($query) use ($filter) {
+        return $this->builder->where(function ($query) use ($filter) {
             $query->where('number', 'like', '%' . $filter . '%')
                 ->orWhere('amount', 'like', '%' . $filter . '%')
                 ->orWhere('public_notes', 'like', '%' . $filter . '%')
@@ -60,7 +60,6 @@ class RecurringExpenseFilters extends QueryFilters
         return $this->builder->where('number', $number);
     }
 
-
     /**
      * Filter based on client status.
      *
@@ -71,8 +70,6 @@ class RecurringExpenseFilters extends QueryFilters
      * - invoiced
      * - paid
      * - unpaid
-     *
-     * @return Builder
      */
     public function client_status(string $value = ''): Builder
     {
@@ -90,16 +87,16 @@ class RecurringExpenseFilters extends QueryFilters
             if (in_array('logged', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->where('amount', '>', 0)
-                          ->whereNull('invoice_id')
-                          ->whereNull('payment_date')
-                          ->where('should_be_invoiced', false);
+                        ->whereNull('invoice_id')
+                        ->whereNull('payment_date')
+                        ->where('should_be_invoiced', false);
                 });
             }
 
             if (in_array('pending', $status_parameters)) {
                 $query->orWhere(function ($query) {
                     $query->where('should_be_invoiced', true)
-                          ->whereNull('invoice_id');
+                        ->whereNull('invoice_id');
                 });
             }
 
@@ -127,12 +124,10 @@ class RecurringExpenseFilters extends QueryFilters
         return $this->builder;
     }
 
-
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
@@ -146,23 +141,23 @@ class RecurringExpenseFilters extends QueryFilters
 
         if ($sort_col[0] == 'client_id' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(client_id), client_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\Client::select('name')
+                ->orderByRaw('ISNULL(client_id), client_id ' . $sort_col[1])
+                ->orderBy(Client::select('name')
                     ->whereColumn('clients.id', 'recurring_expenses.client_id'), $sort_col[1]);
         }
 
         if ($sort_col[0] == 'vendor_id' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(vendor_id), vendor_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\Vendor::select('name')
+                ->orderByRaw('ISNULL(vendor_id), vendor_id ' . $sort_col[1])
+                ->orderBy(Vendor::select('name')
                     ->whereColumn('vendors.id', 'recurring_expenses.vendor_id'), $sort_col[1]);
 
         }
 
         if ($sort_col[0] == 'category_id' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
-                    ->orderByRaw('ISNULL(category_id), category_id ' . $sort_col[1])
-                    ->orderBy(\App\Models\ExpenseCategory::select('name')
+                ->orderByRaw('ISNULL(category_id), category_id ' . $sort_col[1])
+                ->orderBy(ExpenseCategory::select('name')
                     ->whereColumn('expense_categories.id', 'recurring_expenses.category_id'), $sort_col[1]);
         }
 
@@ -181,12 +176,10 @@ class RecurringExpenseFilters extends QueryFilters
      * date_range
      *
      * only filters on date
-     * @param  string $date_range
-     * @return Builder
      */
     public function date_range(string $date_range = ''): Builder
     {
-        $parts = explode(",", $date_range);
+        $parts = explode(',', $date_range);
 
         if (!isset($parts[1])) {
             return $this->builder;
@@ -197,7 +190,6 @@ class RecurringExpenseFilters extends QueryFilters
             $start_date = Carbon::parse($parts[0]);
             $end_date = Carbon::parse($parts[1]);
 
-
             return $this->builder->whereBetween('date', [$start_date, $end_date]);
         } catch (\Exception $e) {
             return $this->builder;
@@ -207,8 +199,6 @@ class RecurringExpenseFilters extends QueryFilters
 
     /**
      * Filters the query by the users company ID.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function entityFilter(): Builder
     {

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,16 +19,16 @@ class NinjaTranslator extends Translator
     /**
      * Set translation.
      *
-     * @param string $key
-     * @param mixed $value
-     * @param null $locale
+     * @param  string  $key
+     * @param  mixed  $value
+     * @param  null  $locale
      * @return void
      */
     public function set($key, $value, $locale = null)
     {
         [$namespace, $group, $item] = $this->parseKey($key);
 
-        if (null === $locale) {
+        if ($locale === null) {
             $locale = $this->locale;
         }
 
@@ -41,7 +40,7 @@ class NinjaTranslator extends Translator
 
     public function replace($items, $locale = null)
     {
-        if (null === $locale) {
+        if ($locale === null) {
             $locale = $this->locale;
         }
 

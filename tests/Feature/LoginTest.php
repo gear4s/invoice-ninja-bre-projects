@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,11 +18,10 @@ use App\Models\CompanyToken;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\Auth\LoginController
  */
 class LoginTest extends TestCase
@@ -136,7 +134,7 @@ class LoginTest extends TestCase
     //    // $this->assertGuest();
     // }
 
-    public function testApiLogin()
+    public function test_api_login()
     {
         Account::all()->each(function ($account) {
             $account->delete();
@@ -156,12 +154,12 @@ class LoginTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
-        $company_token->name = $user->first_name.' '.$user->last_name;
-        $company_token->token = \Illuminate\Support\Str::random(64);
+        $company_token->name = $user->first_name . ' ' . $user->last_name;
+        $company_token->token = Str::random(64);
         $company_token->is_system = true;
         $company_token->save();
 
@@ -187,11 +185,9 @@ class LoginTest extends TestCase
             'password' => '123456',
         ];
 
-
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
         ])->postJson('/api/v1/login', $data);
-
 
         $arr = $response->json();
 

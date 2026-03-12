@@ -2,22 +2,19 @@
 
 namespace App\Services\Report;
 
-use Carbon\Carbon;
-use App\Utils\Ninja;
-use App\Utils\Number;
-use League\Csv\Writer;
+use App\Export\CSV\BaseExport;
+use App\Libraries\MultiDB;
+use App\Models\Activity;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\Activity;
-use App\Utils\Translator;
-use App\Libraries\MultiDB;
-use Illuminate\Support\Str;
-use App\Export\CSV\BaseExport;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
-use League\Csv\CharsetConverter;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
-use Illuminate\Database\Query\Builder;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class RefundReport extends BaseExport
 {
@@ -37,14 +34,14 @@ class RefundReport extends BaseExport
     ];
 
     /**
-     * @param array $input
-     * [
-     *     'date_range',
-     *     'start_date',
-     *     'end_date',
-     *     'clients',
-     *     'client_id',
-     * ]
+     * @param  array  $input
+     *                        [
+     *                        'date_range',
+     *                        'start_date',
+     *                        'end_date',
+     *                        'clients',
+     *                        'client_id',
+     *                        ]
      */
     public function __construct(public Company $company, public array $input) {}
 
@@ -57,7 +54,7 @@ class RefundReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
@@ -128,7 +125,7 @@ class RefundReport extends BaseExport
             // Create a row for each refunded invoice
             foreach ($invoices as $invoice) {
                 $this->csv->insertOne([
-                    $this->translateDate(\Carbon\Carbon::parse($activity->created_at)->format('Y-m-d'), $this->company->date_format(), $this->company->locale()),
+                    $this->translateDate(Carbon::parse($activity->created_at)->format('Y-m-d'), $this->company->date_format(), $this->company->locale()),
                     Number::formatMoney($refundAmount, $this->company),
                     $payment ? $payment->number : '',
                     $invoice['number'],

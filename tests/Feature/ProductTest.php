@@ -6,32 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
 use App\DataMapper\InvoiceItem;
-use Tests\TestCase;
 use App\Models\Invoice;
 use App\Models\Product;
-use Tests\MockAccountData;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 /**
- *
  *  App\Http\Controllers\ProductController
  */
 class ProductTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -48,19 +47,19 @@ class ProductTest extends TestCase
 
     }
 
-    public function testRequiredFields()
+    public function test_required_fields()
     {
 
         $product = [
             'cost' => 10,
-            'vendor_id' => $this->vendor->hashed_id
+            'vendor_id' => $this->vendor->hashed_id,
         ];
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/products', $product)
-        ->assertStatus(200);
+            ->assertStatus(200);
 
         $arr = $response->json();
 
@@ -69,11 +68,11 @@ class ProductTest extends TestCase
         $this->assertNull($p->vendor_id);
     }
 
-    public function testProductCostMigration()
+    public function test_product_cost_migration()
     {
         $items = [];
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->product_cost = 0;
         $item->product_key = 'test';
         $item->quantity = 1;
@@ -94,13 +93,12 @@ class ProductTest extends TestCase
             ]);
 
         $i = Invoice::factory()
-                ->create([
-                    'client_id' => $this->client->id,
-                    'company_id' => $this->company->id,
-                    'user_id' => $this->user->id,
-                    'line_items' => $items,
-                ]);
-
+            ->create([
+                'client_id' => $this->client->id,
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'line_items' => $items,
+            ]);
 
         $line_items = $i->line_items;
 
@@ -126,25 +124,21 @@ class ProductTest extends TestCase
                 $invoice->line_items = $line_items;
                 $invoice->saveQuietly();
 
-
             });
-
 
         $i = $i->fresh();
         $line_items = $i->line_items;
 
         $this->assertEquals(10, $line_items[0]->product_cost);
 
-
     }
 
-    public function testSetTaxId()
+    public function test_set_tax_id()
     {
         $p = Product::factory()->create([
             'user_id' => $this->user->id,
-            'company_id' => $this->company->id
+            'company_id' => $this->company->id,
         ]);
-
 
         $this->assertEquals(1, $p->tax_id);
 
@@ -161,7 +155,7 @@ class ProductTest extends TestCase
                 'X-API-SECRET' => config('ninja.api_secret'),
                 'X-API-TOKEN' => $this->token,
             ])->post('/api/v1/products/bulk', $update)
-            ->assertStatus(200);
+                ->assertStatus(200);
         } catch (\Exception $e) {
 
         }
@@ -172,16 +166,16 @@ class ProductTest extends TestCase
 
     }
 
-    public function testProductGetProductKeyFilter()
+    public function test_product_get_product_key_filter()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->get('/api/v1/products?product_key=xx')
-        ->assertStatus(200);
+            ->assertStatus(200);
     }
 
-    public function testProductList()
+    public function test_product_list()
     {
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
@@ -223,13 +217,13 @@ class ProductTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->put('/api/v1/products/'.$this->encodePrimaryKey($product->id), $product_update)
+        ])->put('/api/v1/products/' . $this->encodePrimaryKey($product->id), $product_update)
             ->assertStatus(200);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->delete('/api/v1/products/'.$this->encodePrimaryKey($product->id))
-        ->assertStatus(200);
+        ])->delete('/api/v1/products/' . $this->encodePrimaryKey($product->id))
+            ->assertStatus(200);
     }
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,8 @@ use App\Models\Document;
 use App\Models\Product;
 use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class ProductTransformer extends EntityTransformer
 {
@@ -26,18 +27,13 @@ class ProductTransformer extends EntityTransformer
         'documents',
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'company',
         'user',
     ];
 
     /**
-     * @param Product $product
-     *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return Response|JsonResponse
      */
     public function includeUser(Product $product)
     {
@@ -47,9 +43,7 @@ class ProductTransformer extends EntityTransformer
     }
 
     /**
-     * @param Product $product
-     *
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return Response|JsonResponse
      */
     public function includeCompany(Product $product)
     {
@@ -75,7 +69,7 @@ class ProductTransformer extends EntityTransformer
             'notes' => $product->notes ?: '',
             'cost' => (float) $product->cost ?: 0,
             'price' => (float) $product->price ?: 0,
-            'quantity' => is_numeric($product->quantity) ? (float) $product->quantity : (float) 1.0, //@phpstan-ignore-line
+            'quantity' => is_numeric($product->quantity) ? (float) $product->quantity : (float) 1.0, // @phpstan-ignore-line
             'tax_name1' => $product->tax_name1 ?: '',
             'tax_rate1' => (float) $product->tax_rate1 ?: 0,
             'tax_name2' => $product->tax_name2 ?: '',

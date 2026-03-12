@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\CompanyGateway;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 
 class CloneCompanyGatewayRequest extends Request
 {
@@ -23,7 +23,7 @@ class CloneCompanyGatewayRequest extends Request
      */
     public function authorize()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->isAdmin();

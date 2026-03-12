@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,7 +42,6 @@ class ClientController extends BaseController
 
     /**
      * ClientController constructor.
-     * @param ClientRepository $client_repo
      */
     public function __construct(ClientRepository $client_repo)
     {
@@ -54,28 +52,28 @@ class ClientController extends BaseController
 
     public function show(Request $request, string $contact_key)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->first();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         $contact = ClientContact::with('client')
-                            ->where('company_id', $company->id)
-                            ->where('contact_key', $contact_key)
-                            ->firstOrFail();
+            ->where('company_id', $company->id)
+            ->where('contact_key', $contact_key)
+            ->firstOrFail();
 
         return $this->itemResponse($contact->client);
     }
 
     public function store(StoreShopClientRequest $request)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->first();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         app('queue')->createPayloadUsing(function () use ($company) {

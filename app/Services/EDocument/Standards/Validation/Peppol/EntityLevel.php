@@ -6,26 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Validation\Peppol;
 
-use XSLTProcessor;
-use App\Models\Quote;
+use App\DataMapper\Tax\BaseRule;
+use App\Exceptions\PeppolValidationException;
 use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Vendor;
 use App\Models\Company;
+use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use Illuminate\Support\Facades\App;
+use App\Models\Vendor;
 use App\Services\EDocument\Standards\Peppol;
-use App\Exceptions\PeppolValidationException;
 use App\Services\EDocument\Standards\Validation\EntityLevelInterface;
 use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
+use Illuminate\Support\Facades\App;
 
 class EntityLevel implements EntityLevelInterface
 {
@@ -177,6 +176,7 @@ class EntityLevel implements EntityLevelInterface
         if (count($this->errors['client']) > 0) {
 
             $this->errors['passes'] = false;
+
             return $this->errors;
 
         }
@@ -249,29 +249,25 @@ class EntityLevel implements EntityLevelInterface
 
         }
 
-        //If not an individual, you MUST have a VAT number if you are in the EU
+        // If not an individual, you MUST have a VAT number if you are in the EU
         if (!in_array($client->classification, ['government', 'individual']) && in_array($client->country->iso_3166_2, $this->eu_country_codes)) {
             if (!$this->validString($client->vat_number)) {
-                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
-            } elseif (isset($this->vat_number_regex[$client->country->iso_3166_2]) && !preg_match($this->vat_number_regex[$client->country->iso_3166_2], str_replace([" ",".","-"], "", $client->vat_number))) {
-                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.invalid_vat_number")];
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans('texts.vat_number')];
+            } elseif (isset($this->vat_number_regex[$client->country->iso_3166_2]) && !preg_match($this->vat_number_regex[$client->country->iso_3166_2], str_replace([' ', '.', '-'], '', $client->vat_number))) {
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans('texts.invalid_vat_number')];
             }
         }
 
-
-
-        //Primary contact email is present.
+        // Primary contact email is present.
         if ($client->present()->email() == 'No Email Set') {
-            $errors[] = ['field' => 'email', 'label' => ctrans("texts.email")];
+            $errors[] = ['field' => 'email', 'label' => ctrans('texts.email')];
         }
 
         $delivery_network_supported = $client->checkDeliveryNetwork();
 
         if (is_string($delivery_network_supported)) {
-            $errors[] = ['field' => ctrans("texts.country"), 'label' => $delivery_network_supported];
+            $errors[] = ['field' => ctrans('texts.country'), 'label' => $delivery_network_supported];
         }
-
-
 
         return $errors;
 
@@ -318,18 +314,17 @@ class EntityLevel implements EntityLevelInterface
 
         }
 
-        //test legal entity id present
+        // test legal entity id present
         if (intval($company->legal_entity_id) == 0) {
-            $errors[] = ['field' => "You have not registered a legal entity id as yet."];
+            $errors[] = ['field' => 'You have not registered a legal entity id as yet.'];
         }
 
-        //If not an individual, you MUST have a VAT number
+        // If not an individual, you MUST have a VAT number
         if ($company->getSetting('classification') != 'individual' && !$this->validString($company->getSetting('vat_number'))) {
-            $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+            $errors[] = ['field' => 'vat_number', 'label' => ctrans('texts.vat_number')];
         } elseif ($company->getSetting('classification') == 'individual' && !$this->validString($company->getSetting('id_number'))) {
-            $errors[] = ['field' => 'id_number', 'label' => ctrans("texts.id_number")];
+            $errors[] = ['field' => 'id_number', 'label' => ctrans('texts.id_number')];
         }
-
 
         // foreach($this->company_fields as $field)
         // {
@@ -357,7 +352,6 @@ class EntityLevel implements EntityLevelInterface
 
     // }
 
-
     /************************************ helpers ************************************/
     private function validString(?string $string): bool
     {
@@ -369,7 +363,7 @@ class EntityLevel implements EntityLevelInterface
 
         $company_country_code = $client->company->country()->iso_3166_2;
         $client_country_code = $client->country->iso_3166_2;
-        $br = new \App\DataMapper\Tax\BaseRule();
+        $br = new BaseRule;
         $eu_countries = $br->eu_country_codes;
 
         if ($client_country_code == $company_country_code) {
@@ -400,11 +394,8 @@ class EntityLevel implements EntityLevelInterface
 
             }
 
-
         }
 
         return $this;
     }
-
-
 }

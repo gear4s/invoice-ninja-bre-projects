@@ -6,15 +6,15 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Transformers;
 
-use App\Models\Client;
 use App\DataMapper\ClientSettings;
+use App\Models\Client;
 use App\Services\Quickbooks\QuickbooksService;
+use Illuminate\Support\Str;
 
 /**
  * Class ClientTransformer.
@@ -24,7 +24,6 @@ class ClientTransformer extends BaseTransformer
     /**
      * qbToNinja
      *
-     * @param  mixed $qb_data
      * @return array
      */
     public function qbToNinja(mixed $qb_data, QuickbooksService $qb_service)
@@ -32,15 +31,10 @@ class ClientTransformer extends BaseTransformer
         return $this->transform($qb_data);
     }
 
-
     /**
      * ninjaToQb
      *
      * Transforms a Invoice Ninja Client to a QuickBooks Client
-     *
-     * @param  \App\Models\Client $client
-     * @param  \App\Services\Quickbooks\QuickbooksService $qb_service
-     * @return array
      */
     public function ninjaToQb(Client $client, QuickbooksService $qb_service): array
     {
@@ -52,7 +46,7 @@ class ClientTransformer extends BaseTransformer
         // Email: 100 chars, Phone: 21 chars, Website: 100 chars, Notes: 4000 chars, BusinessNumber: 20 chars
         $display_name = mb_substr($client->present()->name(), 0, 100);
         $company_name = mb_substr($client->present()->name(), 0, 100);
-        
+
         return [
             'DisplayName' => $display_name,
             'PrimaryEmailAddr' => [
@@ -82,20 +76,16 @@ class ClientTransformer extends BaseTransformer
             'Notes' => mb_substr($client->public_notes ?? '', 0, 4000),
             'BusinessNumber' => mb_substr($client->id_number ?? '', 0, 20),
             'Active' => $client->deleted_at ? false : true,
-            'V4IDPseudonym' => $client->client_hash ?? \Illuminate\Support\Str::random(32),
+            'V4IDPseudonym' => $client->client_hash ?? Str::random(32),
             'WebAddr' => mb_substr($client->website ?? '', 0, 100),
         ];
 
     }
 
-
     /**
      * transform
      *
      * Transforms a QuickBooks Client to a Invoice Ninja Client
-     *
-     * @param  mixed $data
-     * @return array
      */
     public function transform(mixed $data): array
     {
@@ -104,7 +94,7 @@ class ClientTransformer extends BaseTransformer
             'first_name' => data_get($data, 'GivenName', ''),
             'last_name' => data_get($data, 'FamilyName', ''),
             'phone' => data_get($data, 'PrimaryPhone.FreeFormNumber', ''),
-            'email' =>  data_get($data, 'PrimaryEmailAddr.Address', null),
+            'email' => data_get($data, 'PrimaryEmailAddr.Address', null),
         ];
 
         // Get billing address fields
@@ -119,7 +109,7 @@ class ClientTransformer extends BaseTransformer
         // Get shipping address fields
         // If ShipAddr is NULL, QuickBooks indicates "same as billing" - copy billing address to shipping
         $ship_addr = data_get($data, 'ShipAddr');
-        
+
         if ($ship_addr === null) {
             // ShipAddr is NULL, so shipping address is same as billing address
             $ship_address1 = $bill_address1;
@@ -153,7 +143,7 @@ class ClientTransformer extends BaseTransformer
             'shipping_country_id' => $this->resolveCountry($ship_country),
             'shipping_state' => $ship_state,
             'shipping_postal_code' => $ship_postal_code,
-            'client_hash' => data_get($data, 'V4IDPseudonym', \Illuminate\Support\Str::random(32)),
+            'client_hash' => data_get($data, 'V4IDPseudonym', Str::random(32)),
             'vat_number' => data_get($data, 'PrimaryTaxIdentifier', ''),
             'id_number' => data_get($data, 'BusinessNumber', ''),
             'terms' => data_get($data, 'SalesTermRef', false),
@@ -170,5 +160,4 @@ class ClientTransformer extends BaseTransformer
 
         return [$client, $contact, $new_client_merge];
     }
-
 }

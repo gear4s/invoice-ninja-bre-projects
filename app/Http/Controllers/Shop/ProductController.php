@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,6 +16,7 @@ use App\Models\Company;
 use App\Models\Product;
 use App\Transformers\ProductTransformer;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use stdClass;
@@ -32,16 +32,15 @@ class ProductController extends BaseController
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
-     * @return Response| \Illuminate\Http\JsonResponse
+     * @return Response| JsonResponse
      */
     public function index(Request $request)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->firstOrFail();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         $products = Product::where('company_id', $company->id);
@@ -51,16 +50,16 @@ class ProductController extends BaseController
 
     public function show(Request $request, string $product_key)
     {
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = Company::where('company_key', $request->header('X-API-COMPANY-KEY'))->firstOrFail();
 
-        if (! $company->enable_shop_api) {
-            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass()], 403);
+        if (!$company->enable_shop_api) {
+            return response()->json(['message' => 'Shop is disabled', 'errors' => new stdClass], 403);
         }
 
         $product = Product::where('company_id', $company->id)
-                            ->where('product_key', $product_key)
-                            ->first();
+            ->where('product_key', $product_key)
+            ->first();
 
         return $this->itemResponse($product);
     }

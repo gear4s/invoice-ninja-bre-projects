@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,6 +20,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Stripe\WebhookEndpoint;
 
 class StripeWebhook implements ShouldQueue
 {
@@ -63,26 +63,26 @@ class StripeWebhook implements ShouldQueue
 
         $company = Company::where('company_key', $this->company_key)->first();
 
-        /** @var \App\Models\CompanyGateway $company_gateway **/
+        /** @var CompanyGateway $company_gateway * */
         $company_gateway = CompanyGateway::find($this->company_gateway_id);
 
         $stripe = $company_gateway->driver()->init();
 
-        $endpoints = \Stripe\WebhookEndpoint::all([], $stripe->stripe_connect_auth);
+        $endpoints = WebhookEndpoint::all([], $stripe->stripe_connect_auth);
 
         $webhook_url = $company_gateway->webhookUrl();
 
         foreach ($endpoints['data'] as $endpoint) {
             if ($endpoint->url === $webhook_url) {
-                \Stripe\WebhookEndpoint::update($endpoint->id, ['enabled_events' => $this->events], $stripe->stripe_connect_auth);
+                WebhookEndpoint::update($endpoint->id, ['enabled_events' => $this->events], $stripe->stripe_connect_auth);
 
                 $this->url_found = true;
             }
         }
 
         /* Add new webhook */
-        if (! $this->url_found) {
-            \Stripe\WebhookEndpoint::create([
+        if (!$this->url_found) {
+            WebhookEndpoint::create([
                 'url' => $webhook_url,
                 'enabled_events' => $this->events,
             ], $stripe->stripe_connect_auth);
@@ -91,7 +91,7 @@ class StripeWebhook implements ShouldQueue
 
     public function failed($exception = null)
     {
-        nlog("StripeWebhook failed: " . $exception->getMessage());
+        nlog('StripeWebhook failed: ' . $exception->getMessage());
 
         config(['queue.failed.driver' => null]);
 

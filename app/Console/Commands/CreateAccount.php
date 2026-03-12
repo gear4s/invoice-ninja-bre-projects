@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,14 +23,13 @@ use App\Models\User;
 use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class CreateAccount extends Command
 {
-    use MakesHash;
     use GeneratesCounter;
+    use MakesHash;
 
     /**
      * @var string
@@ -64,7 +62,7 @@ class CreateAccount extends Command
     {
         $settings = CompanySettings::defaults();
 
-        $settings->name = "Untitled Company";
+        $settings->name = 'Untitled Company';
         $settings->currency_id = '1';
         $settings->language_id = '1';
 
@@ -92,12 +90,12 @@ class CreateAccount extends Command
             'password' => Hash::make($password),
             'confirmation_code' => $this->createDbHash(config('database.default')),
             'email_verified_at' => now(),
-            'first_name'        => 'New',
-            'last_name'         => 'User',
-            'phone'             => '',
+            'first_name' => 'New',
+            'last_name' => 'User',
+            'phone' => '',
         ]);
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -118,8 +116,7 @@ class CreateAccount extends Command
 
         (new CreateCompanyPaymentTerms($company, $user))->handle();
         (new CreateCompanyTaskStatuses($company, $user))->handle();
-        (new VersionCheck())->handle();
+        (new VersionCheck)->handle();
 
     }
-
 }

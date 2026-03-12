@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,37 +13,37 @@ namespace App\PaymentDrivers\CBAPowerBoard\Models;
 
 class Charge
 {
-    /** @var ?string */
     public ?string $external_id;
-    /** @var ?string */
+
     public ?string $_id;
-    /** @var ?string */
+
     public ?string $created_at;
-    /** @var ?string */
+
     public ?string $updated_at;
-    /** @var ?string */
+
     public ?string $remittance_date;
-    /** @var ?string */
+
     public ?string $company_id;
-    /** @var float */
+
     public float $amount;
-    /** @var ?string */
+
     public ?string $currency;
-    /** @var ?int */
+
     public ?int $__v;
+
     /** @var Transaction[] */
     public array $transactions;
-    /** @var ?bool */
+
     public ?bool $one_off;
-    /** @var ?bool */
+
     public ?bool $archived;
-    /** @var Customer */
+
     public Customer $customer;
-    /** @var ?bool */
+
     public ?bool $capture;
-    /** @var ?string */
+
     public ?string $status;
-    /** @var ?array */
+
     public ?array $items;
 
     public function __construct(

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,9 +15,11 @@ use App\Factory\ClientFactory;
 use App\Factory\ExpenseCategoryFactory;
 use App\Factory\ProjectFactory;
 use App\Factory\VendorFactory;
+use App\Import\ImportException;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\Country;
+use App\Models\Currency;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Invoice;
@@ -32,7 +33,7 @@ use App\Models\Vendor;
 use App\Repositories\ClientRepository;
 use App\Utils\Number;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 
 /**
  * Class BaseTransformer.
@@ -50,7 +51,7 @@ class BaseTransformer
 
     public function parseDate($date)
     {
-        if (stripos($date, "/") !== false && $this->company->settings->country_id != 840) {
+        if (stripos($date, '/') !== false && $this->company->settings->country_id != 840) {
             $date = str_replace('/', '-', $date);
         }
 
@@ -77,7 +78,7 @@ class BaseTransformer
             return null;
         }
 
-        if (stripos($date, "/") !== false && $this->company->settings->country_id != 840) {
+        if (stripos($date, '/') !== false && $this->company->settings->country_id != 840) {
             $date = str_replace('/', '-', $date);
         }
 
@@ -94,7 +95,6 @@ class BaseTransformer
 
             return $parsed_date;
         }
-
 
     }
 
@@ -126,7 +126,7 @@ class BaseTransformer
             return $this->company->settings->currency_id;
         }
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         $currency = $currencies->first(function ($item) use ($code) {
@@ -160,7 +160,7 @@ class BaseTransformer
             case RecurringInvoice::FREQUENCY_MONTHLY:
             case 'monthly':
             case 'month':
-                        return RecurringInvoice::FREQUENCY_MONTHLY;
+                return RecurringInvoice::FREQUENCY_MONTHLY;
             case RecurringInvoice::FREQUENCY_TWO_MONTHS:
             case 'bimonthly':
                 return RecurringInvoice::FREQUENCY_TWO_MONTHS;
@@ -247,8 +247,8 @@ class BaseTransformer
             $contacts = ClientContact::query()->whereHas('client', function ($query) {
                 $query->where('is_deleted', false);
             })
-            ->where('company_id', $this->company->id)
-            ->where('email', $client_email);
+                ->where('company_id', $this->company->id)
+                ->where('email', $client_email);
 
             if ($contacts->count() >= 1) {
                 return $contacts->first()->client_id;
@@ -264,13 +264,13 @@ class BaseTransformer
                 'error' => "Error, you are attempting to import more clients than your plan allows ({$hosted_client_count})",
             ];
 
-            throw new \App\Import\ImportException("Error, you are attempting to import more clients than your plan allows ({$hosted_client_count})");
+            throw new ImportException("Error, you are attempting to import more clients than your plan allows ({$hosted_client_count})");
         }
 
         // 2026-03-05: If we don't have a client name or email, we can't create a client.
-        if(empty(trim($client_name ?? '')) && empty(trim($client_email ?? ''))) {
+        if (empty(trim($client_name ?? '')) && empty(trim($client_email ?? ''))) {
             nlog("A Client Name or Email is required, none provided! {$client_name}, {$client_email}");
-            throw new \App\Import\ImportException("A Client Name or Email is required, none provided!");
+            throw new ImportException('A Client Name or Email is required, none provided!');
         }
 
         $client_repository = app()->make(ClientRepository::class);
@@ -297,10 +297,8 @@ class BaseTransformer
         return $client->id;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////////////
     /**
-     * @param $name
-     *
      * @return bool
      */
     public function hasClient($name)
@@ -324,10 +322,7 @@ class BaseTransformer
             ->exists();
     }
 
-
     /**
-     * @param $name
-     *
      * @return bool
      */
     public function hasVendor($name)
@@ -341,8 +336,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return bool
      */
     public function hasProject($name)
@@ -356,8 +349,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $key
-     *
      * @return bool
      */
     public function hasProduct($key)
@@ -371,9 +362,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $data
-     * @param $field
-     *
      * @return float
      */
     public function getFloat($data, $field)
@@ -398,29 +386,25 @@ class BaseTransformer
         $amount = $data[$field] ?? '';
 
         // Remove any non-numeric characters except for the decimal and thousand separators
-        $amount = preg_replace('/[^\d' . preg_quote(",") . preg_quote(".") . '-]/', '', $amount);
+        $amount = preg_replace('/[^\d' . preg_quote(',') . preg_quote('.') . '-]/', '', $amount);
 
         // Handle negative numbers
         $isNegative = strpos($amount, '-') !== false;
         $amount = str_replace('-', '', $amount);
 
         // Remove thousand separators
-        $amount = str_replace(".", "", $amount);
+        $amount = str_replace('.', '', $amount);
 
-        $amount = str_replace(",", '.', $amount);
+        $amount = str_replace(',', '.', $amount);
 
         // Convert to float and apply negative sign if necessary
         $result = (float) $amount;
 
         return $isNegative ? -$result : $result;
 
-
     }
 
     /**
-     * @param $data
-     * @param $field
-     *
      * @return float
      */
     public function getFloatOrOne($data, $field)
@@ -434,8 +418,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int|null
      */
     public function getClientId($name)
@@ -451,8 +433,7 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
+     * @param  $name
      * @return string
      */
     public function getProduct($key)
@@ -467,11 +448,6 @@ class BaseTransformer
         return $product;
     }
 
-    /**
-     * @param $email
-     *
-     * @return ?ClientContact
-     */
     public function getContact($email): ?ClientContact
     {
         $contact = ClientContact::query()
@@ -481,7 +457,7 @@ class BaseTransformer
             ])
             ->first();
 
-        if (! $contact) {
+        if (!$contact) {
             return null;
         }
 
@@ -489,8 +465,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int|null
      */
     public function getCountryId($name)
@@ -508,8 +482,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int|null
      */
     public function getCountryIdBy2($name)
@@ -520,8 +492,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return float
      */
     public function getTaxRate($name)
@@ -539,8 +509,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return string
      */
     public function getTaxName($name)
@@ -558,10 +526,8 @@ class BaseTransformer
     }
 
     /**
-     *
-     * @param mixed  $data
-     * @param mixed  $field
-     *
+     * @param  mixed  $data
+     * @param  mixed  $field
      * @return ?string
      */
     public function getDate($data, $field)
@@ -579,8 +545,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $number
-     *
      * @return ?string
      */
     public function getInvoiceNumber($number)
@@ -589,8 +553,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $invoice_number
-     *
      * @return int|null
      */
     public function getInvoiceId($invoice_number)
@@ -606,8 +568,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $invoice_number
-     *
      * @return bool
      */
     public function hasInvoice($invoice_number)
@@ -620,10 +580,7 @@ class BaseTransformer
             ->exists();
     }
 
-
     /**
-     * @param $invoice_number
-     *
      * @return bool
      */
     public function hasRecurringInvoice($invoice_number)
@@ -650,8 +607,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $quote_number
-     *
      * @return bool
      */
     public function hasQuote($quote_number)
@@ -665,8 +620,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $invoice_number
-     *
      * @return int|null
      */
     public function getInvoiceClientId($invoice_number)
@@ -682,8 +635,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int|null
      */
     public function getVendorId($name)
@@ -718,13 +669,11 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int
      */
     public function getExpenseCategoryId($name)
     {
-        /** @var ?\App\Models\ExpenseCategory $ec */
+        /** @var ?ExpenseCategory $ec */
         $ec = ExpenseCategory::query()->where('company_id', $this->company->id)
             ->where('is_deleted', false)
             ->whereRaw("LOWER(REPLACE(`name`, ' ' ,''))  = ?", [
@@ -763,8 +712,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int|null
      */
     public function getProjectId($name, $clientId = null)
@@ -798,8 +745,6 @@ class BaseTransformer
     }
 
     /**
-     * @param $name
-     *
      * @return int|null
      */
     public function getPaymentTypeId($name)

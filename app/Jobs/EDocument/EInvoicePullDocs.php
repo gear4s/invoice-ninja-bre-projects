@@ -6,36 +6,36 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\EDocument;
 
-use App\Utils\Ninja;
 use App\Models\Account;
 use App\Models\Company;
-use App\Utils\TempFile;
+use App\Services\EDocument\Gateway\Storecove\Storecove;
 use App\Services\Email\Email;
-use Illuminate\Bus\Queueable;
 use App\Services\Email\EmailObject;
-use Illuminate\Support\Facades\App;
+use App\Utils\Ninja;
+use App\Utils\TempFile;
+use App\Utils\Traits\Notifications\UserNotifies;
 use App\Utils\Traits\SavesDocuments;
-use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\EDocument\Gateway\Storecove\Storecove;
-use App\Utils\Traits\Notifications\UserNotifies;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Http;
 
 class EInvoicePullDocs implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
-    use SerializesModels;
     use SavesDocuments;
+    use SerializesModels;
     use UserNotifies;
 
     public $deleteWhenMissingModels = true;
@@ -48,31 +48,31 @@ class EInvoicePullDocs implements ShouldQueue
 
     public function handle()
     {
-        nlog("Pulling Peppol Docs " . now()->format('Y-m-d h:i:s'));
+        nlog('Pulling Peppol Docs ' . now()->format('Y-m-d h:i:s'));
 
         if (Ninja::isHosted()) {
             return;
         }
 
         Account::query()
-                ->with('companies')
-                ->where('e_invoice_quota', '>', 0)
-                ->whereHas('companies', function ($q) {
-                    $q->whereNotNull('legal_entity_id');
+            ->with('companies')
+            ->where('e_invoice_quota', '>', 0)
+            ->whereHas('companies', function ($q) {
+                $q->whereNotNull('legal_entity_id');
+            })
+            ->cursor()
+            ->each(function ($account) {
+
+                $account->companies->filter(function ($company) {
+
+                    return $company->settings->e_invoice_type == 'PEPPOL' && ($company->tax_data->acts_as_receiver ?? false);
+
                 })
-                ->cursor()
-                ->each(function ($account) {
-
-                    $account->companies->filter(function ($company) {
-
-                        return $company->settings->e_invoice_type == 'PEPPOL' && ($company->tax_data->acts_as_receiver ?? false);
-
-                    })
                     ->each(function ($company) {
 
                         $this->einvoice_received_count = 0;
 
-                        $response = \Illuminate\Support\Facades\Http::baseUrl(config('ninja.hosted_ninja_url'))
+                        $response = Http::baseUrl(config('ninja.hosted_ninja_url'))
                             ->withHeaders([
                                 'Content-Type' => 'application/json',
                                 'Accept' => 'application/json',
@@ -94,8 +94,6 @@ class EInvoicePullDocs implements ShouldQueue
                             nlog($response->body());
                         }
 
-
-
                         if ($this->einvoice_received_count > 0) {
 
                             foreach ($company->company_users as $company_user) {
@@ -110,7 +108,7 @@ class EInvoicePullDocs implements ShouldQueue
 
                                 App::setLocale($company->getLocale());
 
-                                $mo = new EmailObject();
+                                $mo = new EmailObject;
                                 $mo->subject = ctrans('texts.einvoice_received_subject');
                                 $mo->body = ctrans('texts.einvoice_received_body', ['count' => $this->einvoice_received_count]);
                                 $mo->text_body = ctrans('texts.einvoice_received_body', ['count' => $this->einvoice_received_count]);
@@ -124,24 +122,25 @@ class EInvoicePullDocs implements ShouldQueue
 
                     });
 
-                });
+            });
     }
 
     private function handleSuccess(array $received_documents, Company $company, string $hash): void
     {
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
 
         $mail_payload = [];
 
         $this->einvoice_received_count = count($received_documents);
 
         foreach ($received_documents as $document) {
-        
+
             nlog($document);
 
-            if(!isset($document['document']['invoice'])) {
-                nlog("No invoice found in document!!");
+            if (!isset($document['document']['invoice'])) {
+                nlog('No invoice found in document!!');
+
                 continue;
             }
 
@@ -176,7 +175,7 @@ class EInvoicePullDocs implements ShouldQueue
 
         }
 
-        $response = \Illuminate\Support\Facades\Http::baseUrl(config('ninja.hosted_ninja_url'))
+        $response = Http::baseUrl(config('ninja.hosted_ninja_url'))
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
@@ -187,13 +186,11 @@ class EInvoicePullDocs implements ShouldQueue
                 'account_key' => $company->account->key,
                 'company_key' => $company->company_key,
                 'legal_entity_id' => $company->legal_entity_id,
-                'hash'  => $hash,
+                'hash' => $hash,
             ]);
 
         if ($response->successful()) {
         }
-
-
 
     }
 

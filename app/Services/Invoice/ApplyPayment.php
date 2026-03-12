@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,19 +28,19 @@ class ApplyPayment extends AbstractService
 
         if ($this->invoice->hasPartial()) {
             if ($this->invoice->partial == $this->payment_amount) {
-                //is partial and amount is exactly the partial amount
+                // is partial and amount is exactly the partial amount
 
                 $amount_paid = $this->payment_amount * -1;
 
                 $this->invoice->service()->clearPartial()->setDueDate()->setStatus(Invoice::STATUS_PARTIAL)->updateBalance($amount_paid)->updatePaidToDate($amount_paid * -1)->save();
             } elseif ($this->invoice->partial > 0 && $this->invoice->partial > $this->payment_amount) {
-                //partial amount exists, but the amount is less than the partial amount
+                // partial amount exists, but the amount is less than the partial amount
 
                 $amount_paid = $this->payment_amount * -1;
 
                 $this->invoice->service()->updatePartial($amount_paid)->updateBalance($amount_paid)->updatePaidToDate($amount_paid * -1)->save();
             } elseif ($this->invoice->partial > 0 && $this->invoice->partial < $this->payment_amount) {
-                //partial exists and the amount paid is GREATER than the partial amount
+                // partial exists and the amount paid is GREATER than the partial amount
 
                 $amount_paid = $this->payment_amount * -1;
 
@@ -56,13 +55,13 @@ class ApplyPayment extends AbstractService
 
                 $this->invoice->service()->clearPartial()->setStatus(Invoice::STATUS_PAID)->updateBalance($amount_paid)->updatePaidToDate($amount_paid * -1)->save();
             } elseif ($this->payment_amount < $this->invoice->balance) {
-                //partial invoice payment made
+                // partial invoice payment made
 
                 $amount_paid = $this->payment_amount * -1;
 
                 $this->invoice->service()->clearPartial()->setStatus(Invoice::STATUS_PARTIAL)->updateBalance($amount_paid)->updatePaidToDate($amount_paid * -1)->save();
             } elseif ($this->payment_amount > $this->invoice->balance) {
-                //partial invoice payment made
+                // partial invoice payment made
 
                 $amount_paid = $this->invoice->balance * -1;
 
@@ -71,21 +70,21 @@ class ApplyPayment extends AbstractService
         }
 
         $this->payment
-             ->ledger()
-             ->updatePaymentBalance($amount_paid, "ApplyPaymentInvoice");
+            ->ledger()
+            ->updatePaymentBalance($amount_paid, 'ApplyPaymentInvoice');
 
         $this->invoice
-             ->client
-             ->service()
-             ->updateBalance($amount_paid)
-             ->save();
+            ->client
+            ->service()
+            ->updateBalance($amount_paid)
+            ->save();
 
         $this->invoice
-             ->service()
-             ->applyNumber()
-             ->workFlow()
-             ->unlockDocuments()
-             ->save();
+            ->service()
+            ->applyNumber()
+            ->workFlow()
+            ->unlockDocuments()
+            ->save();
 
         return $this->invoice;
     }

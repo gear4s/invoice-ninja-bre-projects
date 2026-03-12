@@ -6,45 +6,45 @@ return [
 
     'greeting' => 'Üdvözöljük az Elektronikus Számlázásban, :name!',
 
-    'intro' => "Ez a szolgáltatás lehetővé teszi a következőket:",
-    'intro_items' => "
+    'intro' => 'Ez a szolgáltatás lehetővé teszi a következőket:',
+    'intro_items' => '
         • Számlák elektronikus küldése és fogadása<br>
         • A szabályozásoknak való megfelelés biztosítása<br>
         • A fizetési folyamatok felgyorsítása<br>
         • A manuális adatbevitel és hibák csökkentése<br>
-    ",
+    ',
 
     'requirements_title' => 'Fontos követelmények',
     'requirements_intro' => 'Az elektronikus számlázás sikeres működtetése érdekében kérjük, ellenőrizze ezeket a kritikus üzleti adatokat:',
-    'requirements_items' => "
+    'requirements_items' => '
             • Jogi cégneve - Pontosan meg kell egyeznie a hivatalos regisztrációval<br>
             • Adószám / ÁFA szám - Érvényes és validált kell legyen<br>
             • Üzleti azonosítók (ABN/EORI/GLN) - Pontosnak és aktívnak kell lenniük<br>
             • Cégcím - Meg kell egyeznie a hivatalos nyilvántartásokkal<br>
             • Elérhetőségek - Frissnek és figyelemmel kísértnek kell lenniük<br>
-        ",
+        ',
 
     'validation_title' => 'Miért fontos a pontos információ',
-    'validation_items' => "
+    'validation_items' => '
             • A hibás adatok számla elutasítást okozhatnak<br>
             • Az adóhatóságok pontosan egyező regisztrációs számokat követelnek<br>
             • A fizetési rendszerek a helyes üzleti azonosítókra támaszkodnak<br>
             • A jogi megfelelőség a pontos üzleti információktól függ<br>
-        ",
+        ',
 
     'next_steps' => 'Következő lépések',
-    'next_steps_items' => "
+    'next_steps_items' => '
             1. Tekintse át cége adatait a fiókbeállításokban<br>
             2. Frissítse az elavult adatokat<br>
             3. Ellenőrizze az adószámokat<br>
             4. Küldjön egy teszt elektronikus számlát<br>
-        ",
+        ',
     'support_title' => 'Segítségre van szüksége?',
-    'support_message' => "Támogató csapatunk készen áll segíteni bármilyen kérdésével az elektronikus számlázás követelményeivel vagy beállításával kapcsolatban.<br>
+    'support_message' => 'Támogató csapatunk készen áll segíteni bármilyen kérdésével az elektronikus számlázás követelményeivel vagy beállításával kapcsolatban.<br>
                     Vegye fel a kapcsolatot a támogatással: :email<br>
                     Köszönjük, hogy a mi elektronikus számlázó szolgáltatásunkat választotta.<br>
-    ",
-    "text" => "
+    ',
+    'text' => '
     Elektronikus számla aktiválása
 
 Üdvözöljük az Elektronikus Számlázásban.
@@ -87,5 +87,5 @@ Támogató csapatunk készen áll segíteni bármilyen kérdésével az elektron
 Vegye fel a kapcsolatot a támogatással: contact@invoiceninja.com
 
 Köszönjük, hogy a mi elektronikus számlázó szolgáltatásunkat választotta.
-    "
+    ',
 ];

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -49,14 +48,14 @@ class CreateInvitations
                 ->withTrashed()
                 ->first();
 
-            if (! $invitation && $contact->send_email) {
+            if (!$invitation && $contact->send_email) {
                 $ii = QuoteInvitationFactory::create($this->quote->company_id, $this->quote->user_id);
                 $ii->key = $this->createDbHash($this->quote->company->db);
                 $ii->quote_id = $this->quote->id;
                 $ii->client_contact_id = $contact->id;
                 $ii->can_sign = $contact->can_sign;
                 $ii->saveQuietly();
-            } elseif ($invitation && ! $contact->send_email) {
+            } elseif ($invitation && !$contact->send_email) {
                 $invitation->delete();
             }
         });
@@ -68,10 +67,10 @@ class CreateInvitations
                 $contact = $contacts->first();
 
                 $invitation = QuoteInvitation::query()->where('company_id', $this->quote->company_id)
-                                        ->where('client_contact_id', $contact->id)
-                                        ->where('quote_id', $this->quote->id)
-                                        ->withTrashed()
-                                        ->first();
+                    ->where('client_contact_id', $contact->id)
+                    ->where('quote_id', $this->quote->id)
+                    ->withTrashed()
+                    ->first();
 
                 if ($invitation) {
                     $invitation->restore();
@@ -88,9 +87,9 @@ class CreateInvitations
             $ii->saveQuietly();
         }
 
-        if($this->quote->invitations()->where('can_sign', true)->count() == 0){
-            
-            $ii = $this->quote->invitations()->whereHas('contact', function ($q){
+        if ($this->quote->invitations()->where('can_sign', true)->count() == 0) {
+
+            $ii = $this->quote->invitations()->whereHas('contact', function ($q) {
                 $q->where('is_primary', true);
             })->first() ?? $this->quote->invitations()->first();
 

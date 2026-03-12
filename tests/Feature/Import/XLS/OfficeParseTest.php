@@ -6,22 +6,29 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Import\XLS;
 
 use App\Import\Providers\Csv;
-use App\Import\Transformer\BaseTransformer;
-use App\Models\Client;
 use App\Models\Invoice;
-use App\Models\Vendor;
 use App\Utils\Traits\MakesHash;
-use App\Utils\TruthSource;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Document\Properties;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\NamedRange;
+use PhpOffice\PhpSpreadsheet\Reader\Exception;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Conditional;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
@@ -35,7 +42,7 @@ class OfficeParseTest extends TestCase
         parent::setUp();
 
         $this->markTestSkipped('Skipping test');
-        
+
         $this->withoutMiddleware(ThrottleRequests::class);
 
         config(['database.default' => config('ninja.db.default')]);
@@ -55,8 +62,8 @@ class OfficeParseTest extends TestCase
         $this->assertFileExists($inputFileName, 'Excel file should exist');
 
         // Test 2: Create reader and verify it's valid
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($inputFileType);
-        $this->assertInstanceOf(\PhpOffice\PhpSpreadsheet\Reader\Xlsx::class, $reader, 'Reader should be Xlsx type');
+        $reader = IOFactory::createReader($inputFileType);
+        $this->assertInstanceOf(Xlsx::class, $reader, 'Reader should be Xlsx type');
 
         // Test 3: Configure reader
         $reader->setIgnoreRowsWithNoCells(true);
@@ -64,14 +71,14 @@ class OfficeParseTest extends TestCase
 
         // Test 4: Load spreadsheet
         $spreadsheet = $reader->load($inputFileName);
-        $this->assertInstanceOf(\PhpOffice\PhpSpreadsheet\Spreadsheet::class, $spreadsheet, 'Should load as Spreadsheet object');
+        $this->assertInstanceOf(Spreadsheet::class, $spreadsheet, 'Should load as Spreadsheet object');
 
         // Test 5: Verify spreadsheet has content
         $this->assertGreaterThan(0, $spreadsheet->getSheetCount(), 'Spreadsheet should have at least one sheet');
 
         // Test 6: Get first worksheet
         $worksheet = $spreadsheet->getActiveSheet();
-        $this->assertInstanceOf(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::class, $worksheet, 'Should have active worksheet');
+        $this->assertInstanceOf(Worksheet::class, $worksheet, 'Should have active worksheet');
 
         // Test 7: Verify worksheet has data
         $highestRow = $worksheet->getHighestRow();
@@ -82,10 +89,10 @@ class OfficeParseTest extends TestCase
 
         // Test 8: Read and validate header row
         $headers = [];
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $cellValue = $worksheet->getCell($colLetter . '1')->getValue();
             if (!empty($cellValue)) {
                 $headers[] = $cellValue;
@@ -101,13 +108,15 @@ class OfficeParseTest extends TestCase
         for ($row = 2; $row <= $highestRow; $row++) {
             $rowData = [];
             for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                 $cellValue = $worksheet->getCell($colLetter . $row)->getValue();
                 $rowData[] = $cellValue;
             }
 
             // Only add rows that have at least one non-empty cell
-            if (array_filter($rowData, function ($value) { return !empty($value); })) {
+            if (array_filter($rowData, function ($value) {
+                return !empty($value);
+            })) {
                 $dataRows[] = $rowData;
             }
         }
@@ -128,11 +137,11 @@ class OfficeParseTest extends TestCase
 
         // Test 11: Verify spreadsheet properties
         $properties = $spreadsheet->getProperties();
-        $this->assertInstanceOf(\PhpOffice\PhpSpreadsheet\Document\Properties::class, $properties, 'Should have document properties');
+        $this->assertInstanceOf(Properties::class, $properties, 'Should have document properties');
 
         // Test 12: Test cell access methods
         $firstCell = $worksheet->getCell('A1');
-        $this->assertInstanceOf(\PhpOffice\PhpSpreadsheet\Cell\Cell::class, $firstCell, 'Should be able to access individual cells');
+        $this->assertInstanceOf(Cell::class, $firstCell, 'Should be able to access individual cells');
 
         // Test 13: Test range access
         $range = $worksheet->rangeToArray('A1:' . $highestColumn . '1');
@@ -149,9 +158,9 @@ class OfficeParseTest extends TestCase
         // Test with non-existent file
         $nonExistentFile = base_path('tests/Feature/Import/non_existent.xlsx');
 
-        $this->expectException(\PhpOffice\PhpSpreadsheet\Reader\Exception::class);
+        $this->expectException(Exception::class);
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->load($nonExistentFile);
     }
 
@@ -160,9 +169,9 @@ class OfficeParseTest extends TestCase
         // Test with wrong file type
         $csvFile = base_path('tests/Feature/Import/clients.csv');
 
-        $this->expectException(\PhpOffice\PhpSpreadsheet\Reader\Exception::class);
+        $this->expectException(Exception::class);
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->load($csvFile);
     }
 
@@ -170,7 +179,7 @@ class OfficeParseTest extends TestCase
     {
         $inputFileName = base_path('tests/Feature/Import/clients.xlsx');
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->setIgnoreRowsWithNoCells(true);
         $spreadsheet = $reader->load($inputFileName);
 
@@ -178,7 +187,7 @@ class OfficeParseTest extends TestCase
 
         // Test that we can handle empty cells gracefully
         $emptyCell = $worksheet->getCell('Z999');
-        $this->assertInstanceOf(\PhpOffice\PhpSpreadsheet\Cell\Cell::class, $emptyCell);
+        $this->assertInstanceOf(Cell::class, $emptyCell);
         $this->assertNull($emptyCell->getValue());
 
         $spreadsheet->disconnectWorksheets();
@@ -189,7 +198,7 @@ class OfficeParseTest extends TestCase
     {
         $inputFileName = base_path('tests/Feature/Import/clients.xlsx');
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->setReadDataOnly(false); // Important: Keep formatting info
         $spreadsheet = $reader->load($inputFileName);
 
@@ -198,11 +207,11 @@ class OfficeParseTest extends TestCase
         // Test cell format detection and data extraction
         $highestRow = $worksheet->getHighestRow();
         $highestColumn = $worksheet->getHighestColumn();
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         for ($row = 1; $row <= min(5, $highestRow); $row++) {
             for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                 $cell = $worksheet->getCell($colLetter . $row);
 
                 // Get the raw value (unformatted)
@@ -226,12 +235,12 @@ class OfficeParseTest extends TestCase
                 // Log cell information for analysis
                 if (!empty($rawValue)) {
                     nlog("Cell {$colLetter}{$row}:");
-                    nlog("  Raw Value: " . var_export($rawValue, true));
-                    nlog("  Formatted Value: " . var_export($formattedValue, true));
-                    nlog("  Calculated Value: " . var_export($calculatedValue, true));
-                    nlog("  Data Type: " . $dataType);
-                    nlog("  Number Format: " . $numberFormat);
-                    nlog("  Format Type: " . $formatType);
+                    nlog('  Raw Value: ' . var_export($rawValue, true));
+                    nlog('  Formatted Value: ' . var_export($formattedValue, true));
+                    nlog('  Calculated Value: ' . var_export($calculatedValue, true));
+                    nlog('  Data Type: ' . $dataType);
+                    nlog('  Number Format: ' . $numberFormat);
+                    nlog('  Format Type: ' . $formatType);
 
                     // Test specific format detection
                     $this->assertIsString($dataType, 'Data type should be a string');
@@ -239,13 +248,13 @@ class OfficeParseTest extends TestCase
 
                     // Test data type constants
                     $validDataTypes = [
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING,
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC,
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_BOOL,
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NULL,
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_INLINE,
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_ERROR,
-                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_FORMULA,
+                        DataType::TYPE_STRING,
+                        DataType::TYPE_NUMERIC,
+                        DataType::TYPE_BOOL,
+                        DataType::TYPE_NULL,
+                        DataType::TYPE_INLINE,
+                        DataType::TYPE_ERROR,
+                        DataType::TYPE_FORMULA,
                     ];
 
                     $this->assertContains($dataType, $validDataTypes, 'Data type should be valid');
@@ -264,7 +273,7 @@ class OfficeParseTest extends TestCase
     {
         // Test date detection
         $dateCell = $worksheet->getCell('A1'); // Assuming first cell might be a date
-        if ($dateCell->getDataType() === \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC) {
+        if ($dateCell->getDataType() === DataType::TYPE_NUMERIC) {
             $numberFormat = $dateCell->getStyle()->getNumberFormat()->getFormatCode();
 
             // Check if it's a date format
@@ -274,15 +283,15 @@ class OfficeParseTest extends TestCase
                 $rawValue = $dateCell->getValue();
                 $formattedDate = $dateCell->getFormattedValue();
 
-                nlog("Date Cell Found:");
-                nlog("  Raw Value (Excel timestamp): " . $rawValue);
-                nlog("  Formatted Date: " . $formattedDate);
-                nlog("  Number Format: " . $numberFormat);
+                nlog('Date Cell Found:');
+                nlog('  Raw Value (Excel timestamp): ' . $rawValue);
+                nlog('  Formatted Date: ' . $formattedDate);
+                nlog('  Number Format: ' . $numberFormat);
 
                 // Convert Excel timestamp to PHP DateTime
                 if (is_numeric($rawValue)) {
-                    $phpDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($rawValue);
-                    nlog("  PHP DateTime: " . $phpDate->format('Y-m-d H:i:s'));
+                    $phpDate = Date::excelToDateTimeObject($rawValue);
+                    nlog('  PHP DateTime: ' . $phpDate->format('Y-m-d H:i:s'));
 
                     $this->assertInstanceOf(\DateTime::class, $phpDate, 'Should convert Excel date to PHP DateTime');
                 }
@@ -291,7 +300,7 @@ class OfficeParseTest extends TestCase
 
         // Test currency detection
         $currencyCell = $worksheet->getCell('B1'); // Assuming second cell might be currency
-        if ($currencyCell->getDataType() === \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC) {
+        if ($currencyCell->getDataType() === DataType::TYPE_NUMERIC) {
             $numberFormat = $currencyCell->getStyle()->getNumberFormat()->getFormatCode();
 
             // Check if it's a currency format
@@ -304,10 +313,10 @@ class OfficeParseTest extends TestCase
                 $rawValue = $currencyCell->getValue();
                 $formattedCurrency = $currencyCell->getFormattedValue();
 
-                nlog("Currency Cell Found:");
-                nlog("  Raw Value: " . $rawValue);
-                nlog("  Formatted Currency: " . $formattedCurrency);
-                nlog("  Number Format: " . $numberFormat);
+                nlog('Currency Cell Found:');
+                nlog('  Raw Value: ' . $rawValue);
+                nlog('  Formatted Currency: ' . $formattedCurrency);
+                nlog('  Number Format: ' . $numberFormat);
 
                 $this->assertIsNumeric($rawValue, 'Currency raw value should be numeric');
             }
@@ -315,7 +324,7 @@ class OfficeParseTest extends TestCase
 
         // Test percentage detection
         $percentageCell = $worksheet->getCell('C1'); // Assuming third cell might be percentage
-        if ($percentageCell->getDataType() === \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC) {
+        if ($percentageCell->getDataType() === DataType::TYPE_NUMERIC) {
             $numberFormat = $percentageCell->getStyle()->getNumberFormat()->getFormatCode();
 
             // Check if it's a percentage format
@@ -325,10 +334,10 @@ class OfficeParseTest extends TestCase
                 $rawValue = $percentageCell->getValue();
                 $formattedPercentage = $percentageCell->getFormattedValue();
 
-                nlog("Percentage Cell Found:");
-                nlog("  Raw Value (decimal): " . $rawValue);
-                nlog("  Formatted Percentage: " . $formattedPercentage);
-                nlog("  Number Format: " . $numberFormat);
+                nlog('Percentage Cell Found:');
+                nlog('  Raw Value (decimal): ' . $rawValue);
+                nlog('  Formatted Percentage: ' . $formattedPercentage);
+                nlog('  Number Format: ' . $numberFormat);
 
                 $this->assertIsNumeric($rawValue, 'Percentage raw value should be numeric');
             }
@@ -342,7 +351,7 @@ class OfficeParseTest extends TestCase
     {
         $inputFileName = base_path('tests/Feature/Import/clients.xlsx');
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->setReadDataOnly(false);
         $spreadsheet = $reader->load($inputFileName);
 
@@ -351,7 +360,7 @@ class OfficeParseTest extends TestCase
         // Example: Extract and process data with format awareness
         $processedData = $this->extractFormattedData($worksheet);
 
-        nlog("Processed Data:");
+        nlog('Processed Data:');
         nlog($processedData);
 
         $this->assertIsArray($processedData, 'Should return processed data array');
@@ -368,12 +377,12 @@ class OfficeParseTest extends TestCase
         $data = [];
         $highestRow = $worksheet->getHighestRow();
         $highestColumn = $worksheet->getHighestColumn();
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         // Get headers first
         $headers = [];
         for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $cellValue = $worksheet->getCell($colLetter . '1')->getValue();
             if (!empty($cellValue)) {
                 $headers[] = $cellValue;
@@ -386,7 +395,7 @@ class OfficeParseTest extends TestCase
             $hasData = false;
 
             for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                 $cell = $worksheet->getCell($colLetter . $row);
 
                 $processedValue = $this->processCellValue($cell);
@@ -422,23 +431,23 @@ class OfficeParseTest extends TestCase
         $builtInFormat = $cell->getStyle()->getNumberFormat()->getBuiltInFormatCode();
 
         // Log format information for debugging
-        nlog("Processing cell with:");
-        nlog("  Data Type: " . $dataType);
-        nlog("  Number Format: " . $numberFormat);
-        nlog("  Built-in Format: " . $builtInFormat);
-        nlog("  Raw Value: " . var_export($rawValue, true));
+        nlog('Processing cell with:');
+        nlog('  Data Type: ' . $dataType);
+        nlog('  Number Format: ' . $numberFormat);
+        nlog('  Built-in Format: ' . $builtInFormat);
+        nlog('  Raw Value: ' . var_export($rawValue, true));
 
         switch ($dataType) {
-            case \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC:
+            case DataType::TYPE_NUMERIC:
                 return $this->processNumericValue($cell, $rawValue, $numberFormat);
 
-            case \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING:
+            case DataType::TYPE_STRING:
                 return $this->processStringValue($cell, $rawValue, $numberFormat);
 
-            case \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_BOOL:
+            case DataType::TYPE_BOOL:
                 return (bool) $rawValue;
 
-            case \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_FORMULA:
+            case DataType::TYPE_FORMULA:
                 return $this->processFormulaValue($cell, $rawValue, $numberFormat);
 
             default:
@@ -453,13 +462,14 @@ class OfficeParseTest extends TestCase
     {
         // Check if it's a date
         if ($this->isDateTimeFormat($numberFormat)) {
-            $phpDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($rawValue);
+            $phpDate = Date::excelToDateTimeObject($rawValue);
+
             return [
                 'type' => 'date',
                 'raw' => $rawValue,
                 'formatted' => $cell->getFormattedValue(),
                 'php_date' => $phpDate->format('Y-m-d H:i:s'),
-                'timestamp' => $phpDate->getTimestamp()
+                'timestamp' => $phpDate->getTimestamp(),
             ];
         }
 
@@ -472,7 +482,7 @@ class OfficeParseTest extends TestCase
                 'type' => 'currency',
                 'raw' => (float) $rawValue,
                 'formatted' => $cell->getFormattedValue(),
-                'decimal' => (float) $rawValue
+                'decimal' => (float) $rawValue,
             ];
         }
 
@@ -483,7 +493,7 @@ class OfficeParseTest extends TestCase
                 'raw' => (float) $rawValue,
                 'formatted' => $cell->getFormattedValue(),
                 'decimal' => (float) $rawValue,
-                'percentage' => (float) $rawValue * 100
+                'percentage' => (float) $rawValue * 100,
             ];
         }
 
@@ -492,7 +502,7 @@ class OfficeParseTest extends TestCase
             'type' => 'number',
             'raw' => (float) $rawValue,
             'formatted' => $cell->getFormattedValue(),
-            'decimal' => (float) $rawValue
+            'decimal' => (float) $rawValue,
         ];
     }
 
@@ -513,7 +523,7 @@ class OfficeParseTest extends TestCase
                     'formatted' => $cell->getFormattedValue(),
                     'extracted_decimal' => $extractedValue,
                     'original_string' => (string) $rawValue,
-                    'excel_hint' => $numberFormat
+                    'excel_hint' => $numberFormat,
                 ];
             }
         }
@@ -522,7 +532,7 @@ class OfficeParseTest extends TestCase
             'type' => 'string',
             'raw' => (string) $rawValue,
             'formatted' => $cell->getFormattedValue(),
-            'trimmed' => trim((string) $rawValue)
+            'trimmed' => trim((string) $rawValue),
         ];
     }
 
@@ -538,7 +548,7 @@ class OfficeParseTest extends TestCase
             'raw' => $rawValue,
             'calculated' => $calculatedValue,
             'formatted' => $cell->getFormattedValue(),
-            'processed' => $this->processNumericValue($cell, $calculatedValue, $numberFormat)
+            'processed' => $this->processNumericValue($cell, $calculatedValue, $numberFormat),
         ];
     }
 
@@ -553,7 +563,7 @@ class OfficeParseTest extends TestCase
             'dd/mm', 'mm/dd', 'dd-mm', 'mm-dd', 'dd/mm/yy', 'dd/mm/yyyy',
             'mm/dd/yy', 'mm/dd/yyyy', 'yyyy-mm-dd', 'dd-mm-yyyy',
             'h:mm', 'hh:mm', 'h:mm:ss', 'hh:mm:ss', 'm/d/yy h:mm',
-            'dd/mm/yyyy hh:mm', 'yyyy-mm-dd hh:mm:ss'
+            'dd/mm/yyyy hh:mm', 'yyyy-mm-dd hh:mm:ss',
         ];
 
         $formatCode = strtolower($formatCode);
@@ -653,7 +663,7 @@ class OfficeParseTest extends TestCase
         // Test with actual Excel file
         $inputFileName = base_path('tests/Feature/Import/clients.xlsx');
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->setReadDataOnly(false);
         $spreadsheet = $reader->load($inputFileName);
 
@@ -665,14 +675,14 @@ class OfficeParseTest extends TestCase
         $formattedValue = $cell->getFormattedValue();
         $dataType = $cell->getDataType();
 
-        nlog("Cell D3 Analysis:");
-        nlog("  Raw Value: " . var_export($rawValue, true));
-        nlog("  Formatted Value: " . var_export($formattedValue, true));
-        nlog("  Data Type: " . $dataType);
+        nlog('Cell D3 Analysis:');
+        nlog('  Raw Value: ' . var_export($rawValue, true));
+        nlog('  Formatted Value: ' . var_export($formattedValue, true));
+        nlog('  Data Type: ' . $dataType);
 
-        if ($dataType === \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING) {
+        if ($dataType === DataType::TYPE_STRING) {
             $extractedCurrency = $this->extractCurrencyFromString($rawValue);
-            nlog("  Extracted Currency: " . var_export($extractedCurrency, true));
+            nlog('  Extracted Currency: ' . var_export($extractedCurrency, true));
 
             if ($extractedCurrency !== null) {
                 $this->assertIsFloat($extractedCurrency, 'Should extract numeric value from currency string');
@@ -691,7 +701,7 @@ class OfficeParseTest extends TestCase
     {
         $inputFileName = base_path('tests/Feature/Import/clients.xlsx');
 
-        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader = IOFactory::createReader('Xlsx');
         $reader->setReadDataOnly(false);
         $spreadsheet = $reader->load($inputFileName);
 
@@ -699,14 +709,14 @@ class OfficeParseTest extends TestCase
 
         // Find the Currency column
         $highestColumn = $worksheet->getHighestColumn();
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         $currencyColumnIndex = null;
         $currencyColumnLetter = null;
 
         // Find the Currency column header
         for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $cellValue = $worksheet->getCell($colLetter . '1')->getValue();
 
             if (strtolower(trim($cellValue)) === 'currency') {
@@ -718,9 +728,9 @@ class OfficeParseTest extends TestCase
 
         $this->assertNotNull($currencyColumnIndex, 'Currency column should be found');
 
-        nlog("Currency Column Found:");
-        nlog("  Column Letter: " . $currencyColumnLetter);
-        nlog("  Column Index: " . $currencyColumnIndex);
+        nlog('Currency Column Found:');
+        nlog('  Column Letter: ' . $currencyColumnLetter);
+        nlog('  Column Index: ' . $currencyColumnIndex);
 
         // Analyze the Currency column data
         $highestRow = $worksheet->getHighestRow();
@@ -742,17 +752,17 @@ class OfficeParseTest extends TestCase
                     'data_type' => $dataType,
                     'number_format' => $numberFormat,
                     'built_in_format' => $builtInFormat,
-                    'data_type_name' => $this->getDataTypeName($dataType)
+                    'data_type_name' => $this->getDataTypeName($dataType),
                 ];
 
                 $currencyData[] = $cellInfo;
 
                 nlog("Row {$row}:");
-                nlog("  Raw Value: " . var_export($rawValue, true));
-                nlog("  Formatted Value: " . var_export($formattedValue, true));
-                nlog("  Data Type: " . $dataType . " (" . $this->getDataTypeName($dataType) . ")");
-                nlog("  Number Format: " . $numberFormat);
-                nlog("  Built-in Format: " . $builtInFormat);
+                nlog('  Raw Value: ' . var_export($rawValue, true));
+                nlog('  Formatted Value: ' . var_export($formattedValue, true));
+                nlog('  Data Type: ' . $dataType . ' (' . $this->getDataTypeName($dataType) . ')');
+                nlog('  Number Format: ' . $numberFormat);
+                nlog('  Built-in Format: ' . $builtInFormat);
             }
         }
 
@@ -760,19 +770,19 @@ class OfficeParseTest extends TestCase
         $dataTypes = array_unique(array_column($currencyData, 'data_type'));
         $numberFormats = array_unique(array_column($currencyData, 'number_format'));
 
-        nlog("Currency Column Analysis:");
-        nlog("  Total non-empty cells: " . count($currencyData));
-        nlog("  Data types found: " . implode(', ', $dataTypes));
-        nlog("  Number formats found: " . implode(', ', $numberFormats));
+        nlog('Currency Column Analysis:');
+        nlog('  Total non-empty cells: ' . count($currencyData));
+        nlog('  Data types found: ' . implode(', ', $dataTypes));
+        nlog('  Number formats found: ' . implode(', ', $numberFormats));
 
         // Test specific expectations
         $this->assertNotEmpty($currencyData, 'Currency column should have data');
 
         // Check if all values are of the same type
         if (count($dataTypes) === 1) {
-            nlog("  All values are of type: " . $dataTypes[0]);
+            nlog('  All values are of type: ' . $dataTypes[0]);
         } else {
-            nlog("  Mixed data types detected: " . implode(', ', $dataTypes));
+            nlog('  Mixed data types detected: ' . implode(', ', $dataTypes));
         }
 
         $spreadsheet->disconnectWorksheets();
@@ -785,13 +795,13 @@ class OfficeParseTest extends TestCase
     private function getDataTypeName($dataType)
     {
         $typeMap = [
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING => 'String',
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC => 'Numeric',
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_BOOL => 'Boolean',
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NULL => 'Null',
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_INLINE => 'Inline',
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_ERROR => 'Error',
-            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_FORMULA => 'Formula',
+            DataType::TYPE_STRING => 'String',
+            DataType::TYPE_NUMERIC => 'Numeric',
+            DataType::TYPE_BOOL => 'Boolean',
+            DataType::TYPE_NULL => 'Null',
+            DataType::TYPE_INLINE => 'Inline',
+            DataType::TYPE_ERROR => 'Error',
+            DataType::TYPE_FORMULA => 'Formula',
         ];
 
         return $typeMap[$dataType] ?? 'Unknown';
@@ -803,7 +813,7 @@ class OfficeParseTest extends TestCase
     public function test_create_excel_with_localization()
     {
         // Create a new spreadsheet
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $worksheet = $spreadsheet->getActiveSheet();
 
         // Set up different localization scenarios
@@ -819,7 +829,7 @@ class OfficeParseTest extends TestCase
                     ['John Doe', 1234.56, '2023-12-25', 0.15],
                     ['Jane Smith', -567.89, '2023-12-26', 0.25],
                     ['Bob Wilson', 9999.99, '2023-12-27', 0.75],
-                ]
+                ],
             ],
             'European_Euro' => [
                 'locale' => 'de_DE',
@@ -832,7 +842,7 @@ class OfficeParseTest extends TestCase
                     ['Hans Müller', 1234.56, '2023-12-25', 0.15],
                     ['Anna Schmidt', -567.89, '2023-12-26', 0.25],
                     ['Klaus Weber', 9999.99, '2023-12-27', 0.75],
-                ]
+                ],
             ],
             'UK_Pound' => [
                 'locale' => 'en_GB',
@@ -845,16 +855,16 @@ class OfficeParseTest extends TestCase
                     ['John Smith', 1234.56, '2023-12-25', 0.15],
                     ['Mary Jones', -567.89, '2023-12-26', 0.25],
                     ['David Brown', 9999.99, '2023-12-27', 0.75],
-                ]
-            ]
+                ],
+            ],
         ];
 
         $currentRow = 1;
 
         foreach ($testCases as $testName => $config) {
             nlog("Creating {$testName} section:");
-            nlog("  Locale: " . $config['locale']);
-            nlog("  Currency: " . $config['currency_code'] . " (" . $config['currency_symbol'] . ")");
+            nlog('  Locale: ' . $config['locale']);
+            nlog('  Currency: ' . $config['currency_code'] . ' (' . $config['currency_symbol'] . ')');
 
             // Add section header
             $worksheet->setCellValue("A{$currentRow}", $testName);
@@ -881,7 +891,7 @@ class OfficeParseTest extends TestCase
 
                 // Convert date string to Excel date
                 if ($rowIndex > 0) { // Skip header row
-                    $dateValue = \PhpOffice\PhpSpreadsheet\Shared\Date::stringToExcel($rowData[2]);
+                    $dateValue = Date::stringToExcel($rowData[2]);
                     $worksheet->setCellValue("C{$row}", $dateValue);
                 }
 
@@ -889,9 +899,9 @@ class OfficeParseTest extends TestCase
                 $worksheet->getStyle("D{$row}")->getNumberFormat()->setFormatCode('0.00%');
 
                 nlog("  Row {$row}:");
-                nlog("    Raw Amount: " . $rowData[1]);
-                nlog("    Currency Format: " . $currencyFormat);
-                nlog("    Date Format: " . $dateFormat);
+                nlog('    Raw Amount: ' . $rowData[1]);
+                nlog('    Currency Format: ' . $currencyFormat);
+                nlog('    Date Format: ' . $dateFormat);
             }
 
             $currentRow += count($config['values']) + 2; // Add spacing between sections
@@ -901,11 +911,11 @@ class OfficeParseTest extends TestCase
         $this->test_read_formatted_values($worksheet);
 
         // Save the file
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $outputFile = storage_path('app/test_localized.xlsx');
         $writer->save($outputFile);
 
-        nlog("Excel file created: " . $outputFile);
+        nlog('Excel file created: ' . $outputFile);
 
         $this->assertFileExists($outputFile, 'Localized Excel file should be created');
 
@@ -919,7 +929,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_read_formatted_values($worksheet)
     {
-        nlog("Reading back formatted values:");
+        nlog('Reading back formatted values:');
 
         // Read a few cells to verify formatting
         $testCells = [
@@ -941,9 +951,9 @@ class OfficeParseTest extends TestCase
             $numberFormat = $cell->getStyle()->getNumberFormat()->getFormatCode();
 
             nlog("  {$description} ({$cellAddress}):");
-            nlog("    Raw Value: " . var_export($rawValue, true));
-            nlog("    Formatted Value: " . var_export($formattedValue, true));
-            nlog("    Number Format: " . $numberFormat);
+            nlog('    Raw Value: ' . var_export($rawValue, true));
+            nlog('    Formatted Value: ' . var_export($formattedValue, true));
+            nlog('    Number Format: ' . $numberFormat);
         }
     }
 
@@ -956,24 +966,24 @@ class OfficeParseTest extends TestCase
             'USD' => [
                 'en_US' => '$#,##0.00',
                 'en_CA' => '$#,##0.00',
-                'default' => '$#,##0.00'
+                'default' => '$#,##0.00',
             ],
             'EUR' => [
                 'de_DE' => '#,##0.00 €',
                 'fr_FR' => '#,##0.00 €',
                 'it_IT' => '#,##0.00 €',
                 'es_ES' => '#,##0.00 €',
-                'default' => '#,##0.00 €'
+                'default' => '#,##0.00 €',
             ],
             'GBP' => [
                 'en_GB' => '£#,##0.00',
-                'default' => '£#,##0.00'
+                'default' => '£#,##0.00',
             ],
             'JPY' => [
                 'ja_JP' => '¥#,##0',
-                'default' => '¥#,##0'
+                'default' => '¥#,##0',
             ],
-            'default' => '#,##0.00'
+            'default' => '#,##0.00',
         ];
 
         return $formats[$currencyCode][$locale] ??
@@ -994,7 +1004,7 @@ class OfficeParseTest extends TestCase
             'it_IT' => 'dd/mm/yyyy',
             'es_ES' => 'dd/mm/yyyy',
             'ja_JP' => 'yyyy/m/d',
-            'default' => 'yyyy-mm-dd'
+            'default' => 'yyyy-mm-dd',
         ];
 
         return $formats[$locale] ?? $formats['default'];
@@ -1005,7 +1015,7 @@ class OfficeParseTest extends TestCase
      */
     public function test_worksheet_data_injection_methods()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $worksheet = $spreadsheet->getActiveSheet();
 
         // Test 1: Single cell injection
@@ -1033,7 +1043,7 @@ class OfficeParseTest extends TestCase
         $this->test_from_array_with_mixed_types($worksheet);
 
         // Save the test file
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $outputFile = storage_path('app/test_data_injection.xlsx');
         $writer->save($outputFile);
 
@@ -1048,7 +1058,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_single_cell_injection($worksheet)
     {
-        nlog("=== Test 1: Single Cell Injection ===");
+        nlog('=== Test 1: Single Cell Injection ===');
 
         // Method 1: Direct cell assignment
         $worksheet->setCellValue('A1', 'Single Cell Test');
@@ -1063,7 +1073,7 @@ class OfficeParseTest extends TestCase
         $cell = $worksheet->getCell('A3');
         $cell->setValue('Cell Object Test');
 
-        nlog("Single cell injection completed");
+        nlog('Single cell injection completed');
     }
 
     /**
@@ -1071,7 +1081,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_row_by_row_injection($worksheet)
     {
-        nlog("=== Test 2: Row-by-Row Injection (CSV Style) ===");
+        nlog('=== Test 2: Row-by-Row Injection (CSV Style) ===');
 
         $data = [
             ['Name', 'Age', 'Salary', 'Start Date'],
@@ -1085,12 +1095,12 @@ class OfficeParseTest extends TestCase
             $currentRow = $startRow + $rowIndex;
 
             foreach ($rowData as $colIndex => $value) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
+                $colLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
                 $worksheet->setCellValue($colLetter . $currentRow, $value);
             }
         }
 
-        nlog("Row-by-row injection completed");
+        nlog('Row-by-row injection completed');
     }
 
     /**
@@ -1098,7 +1108,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_array_based_injection($worksheet)
     {
-        nlog("=== Test 3: Array-Based Injection ===");
+        nlog('=== Test 3: Array-Based Injection ===');
 
         $data = [
             ['Product', 'Price', 'Quantity', 'Total'],
@@ -1118,7 +1128,7 @@ class OfficeParseTest extends TestCase
         ];
         $worksheet->fromArray($dataWithNulls, 'N/A', 'A15');
 
-        nlog("Array-based injection completed");
+        nlog('Array-based injection completed');
     }
 
     /**
@@ -1126,7 +1136,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_range_based_injection($worksheet)
     {
-        nlog("=== Test 4: Range-Based Injection ===");
+        nlog('=== Test 4: Range-Based Injection ===');
 
         $data = [
             ['ID', 'Name', 'Department'],
@@ -1141,10 +1151,10 @@ class OfficeParseTest extends TestCase
 
         // Method 2: Using named ranges
         $worksheet->getParent()->addNamedRange(
-            new \PhpOffice\PhpSpreadsheet\NamedRange('EmployeeData', $worksheet, 'A20:D23')
+            new NamedRange('EmployeeData', $worksheet, 'A20:D23')
         );
 
-        nlog("Range-based injection completed");
+        nlog('Range-based injection completed');
     }
 
     /**
@@ -1152,7 +1162,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_bulk_data_injection($worksheet)
     {
-        nlog("=== Test 5: Bulk Data Injection ===");
+        nlog('=== Test 5: Bulk Data Injection ===');
 
         // Large dataset
         $bulkData = [];
@@ -1161,7 +1171,7 @@ class OfficeParseTest extends TestCase
                 'ID-' . $i,
                 'User-' . $i,
                 rand(1000, 9999),
-                date('Y-m-d', strtotime("+{$i} days"))
+                date('Y-m-d', strtotime("+{$i} days")),
             ];
         }
 
@@ -1171,7 +1181,7 @@ class OfficeParseTest extends TestCase
         // Bulk insert
         $worksheet->fromArray($bulkData, null, 'A25');
 
-        nlog("Bulk data injection completed: " . count($bulkData) . " rows");
+        nlog('Bulk data injection completed: ' . count($bulkData) . ' rows');
     }
 
     /**
@@ -1179,7 +1189,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_from_array_with_headers($worksheet)
     {
-        nlog("=== Test 6: From Array with Headers ===");
+        nlog('=== Test 6: From Array with Headers ===');
 
         $headers = ['Product', 'Category', 'Price', 'Stock'];
         $data = [
@@ -1196,7 +1206,7 @@ class OfficeParseTest extends TestCase
         $fullData = array_merge([$headers], $data);
         $worksheet->fromArray($fullData, null, 'A140');
 
-        nlog("Array with headers injection completed");
+        nlog('Array with headers injection completed');
     }
 
     /**
@@ -1204,7 +1214,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_from_array_with_formatting($worksheet)
     {
-        nlog("=== Test 7: From Array with Formatting ===");
+        nlog('=== Test 7: From Array with Formatting ===');
 
         $data = [
             ['Invoice', 'Amount', 'Date', 'Status'],
@@ -1230,29 +1240,29 @@ class OfficeParseTest extends TestCase
         $worksheet->getStyle('C151:C' . $highestRow)->getNumberFormat()->setFormatCode('m/d/yyyy');
 
         // Color code status
-        $statusColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $statusColumn = Coordinate::columnIndexFromString($highestColumn);
         for ($row = 151; $row <= $highestRow; $row++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($statusColumn);
+            $colLetter = Coordinate::stringFromColumnIndex($statusColumn);
             $statusCell = $worksheet->getCell($colLetter . $row);
             $status = $statusCell->getValue();
 
             switch ($status) {
                 case 'Paid':
-                    $statusCell->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+                    $statusCell->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
                     $statusCell->getStyle()->getFill()->getStartColor()->setRGB('90EE90');
                     break;
                 case 'Pending':
-                    $statusCell->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+                    $statusCell->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
                     $statusCell->getStyle()->getFill()->getStartColor()->setRGB('FFD700');
                     break;
                 case 'Overdue':
-                    $statusCell->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+                    $statusCell->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
                     $statusCell->getStyle()->getFill()->getStartColor()->setRGB('FFB6C1');
                     break;
             }
         }
 
-        nlog("Array with formatting injection completed");
+        nlog('Array with formatting injection completed');
     }
 
     /**
@@ -1260,7 +1270,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_from_array_with_mixed_types($worksheet)
     {
-        nlog("=== Test 8: From Array with Mixed Data Types ===");
+        nlog('=== Test 8: From Array with Mixed Data Types ===');
 
         $mixedData = [
             ['Type', 'String', 'Number', 'Date', 'Boolean', 'Formula'],
@@ -1284,7 +1294,7 @@ class OfficeParseTest extends TestCase
         // Format boolean column
         $worksheet->getStyle('E171:E' . $highestRow)->getNumberFormat()->setFormatCode('"Yes";"No"');
 
-        nlog("Mixed data types injection completed");
+        nlog('Mixed data types injection completed');
     }
 
     /**
@@ -1292,7 +1302,7 @@ class OfficeParseTest extends TestCase
      */
     public function test_csv_vs_array_performance()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $worksheet = $spreadsheet->getActiveSheet();
 
         $testData = [];
@@ -1302,7 +1312,7 @@ class OfficeParseTest extends TestCase
                 'Name-' . $i,
                 rand(1000, 9999),
                 date('Y-m-d', strtotime("+{$i} days")),
-                rand(100, 999) / 100
+                rand(100, 999) / 100,
             ];
         }
 
@@ -1312,7 +1322,7 @@ class OfficeParseTest extends TestCase
         foreach ($testData as $rowIndex => $rowData) {
             $currentRow = $startRow + $rowIndex;
             foreach ($rowData as $colIndex => $value) {
-                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
+                $colLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
                 $worksheet->setCellValue($colLetter . $currentRow, $value);
             }
         }
@@ -1323,10 +1333,10 @@ class OfficeParseTest extends TestCase
         $worksheet->fromArray($testData, null, 'A1001');
         $arrayTime = microtime(true) - $startTime;
 
-        nlog("Performance Comparison:");
-        nlog("  CSV-style (row by row): " . round($csvTime * 1000, 2) . "ms");
-        nlog("  Array-style (fromArray): " . round($arrayTime * 1000, 2) . "ms");
-        nlog("  Speed improvement: " . round(($csvTime / $arrayTime), 1) . "x faster");
+        nlog('Performance Comparison:');
+        nlog('  CSV-style (row by row): ' . round($csvTime * 1000, 2) . 'ms');
+        nlog('  Array-style (fromArray): ' . round($arrayTime * 1000, 2) . 'ms');
+        nlog('  Speed improvement: ' . round(($csvTime / $arrayTime), 1) . 'x faster');
 
         $this->assertLessThan($csvTime, $arrayTime, 'Array method should be faster than CSV method');
 
@@ -1339,7 +1349,7 @@ class OfficeParseTest extends TestCase
      */
     public function test_column_based_formatting()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $worksheet = $spreadsheet->getActiveSheet();
 
         // Sample data
@@ -1354,7 +1364,7 @@ class OfficeParseTest extends TestCase
         // Insert data
         $worksheet->fromArray($data, null, 'A1');
 
-        nlog("=== Column-Based Formatting Examples ===");
+        nlog('=== Column-Based Formatting Examples ===');
 
         // Method 1: Format entire columns using column letters
         $this->test_column_formatting_methods($worksheet);
@@ -1369,7 +1379,7 @@ class OfficeParseTest extends TestCase
         $this->test_conditional_column_formatting($worksheet);
 
         // Save the test file
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $outputFile = storage_path('app/test_column_formatting.xlsx');
         $writer->save($outputFile);
 
@@ -1384,20 +1394,20 @@ class OfficeParseTest extends TestCase
      */
     private function test_column_formatting_methods($worksheet)
     {
-        nlog("--- Method 1: Direct Column Formatting ---");
+        nlog('--- Method 1: Direct Column Formatting ---');
 
         // Format entire columns using column letters
         $worksheet->getStyle('A:A')->getFont()->setBold(true); // Invoice column
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode('$#,##0.00'); // Amount column
         $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode('m/d/yyyy'); // Date column
-        $worksheet->getStyle('D:D')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER); // Status column
+        $worksheet->getStyle('D:D')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Status column
         $worksheet->getStyle('E:E')->getNumberFormat()->setFormatCode('0.00%'); // Percentage column
 
-        nlog("  Column A (Invoice): Bold font");
-        nlog("  Column B (Amount): Currency format");
-        nlog("  Column C (Date): Date format");
-        nlog("  Column D (Status): Center aligned");
-        nlog("  Column E (Percentage): Percentage format");
+        nlog('  Column A (Invoice): Bold font');
+        nlog('  Column B (Amount): Currency format');
+        nlog('  Column C (Date): Date format');
+        nlog('  Column D (Status): Center aligned');
+        nlog('  Column E (Percentage): Percentage format');
     }
 
     /**
@@ -1405,15 +1415,15 @@ class OfficeParseTest extends TestCase
      */
     private function test_dynamic_column_formatting($worksheet)
     {
-        nlog("--- Method 2: Dynamic Column Formatting ---");
+        nlog('--- Method 2: Dynamic Column Formatting ---');
 
         $highestRow = $worksheet->getHighestRow();
         $highestColumn = $worksheet->getHighestColumn();
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         // Format each column based on its position
         for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $range = $colLetter . '1:' . $colLetter . $highestRow;
 
             switch ($colIndex) {
@@ -1430,7 +1440,7 @@ class OfficeParseTest extends TestCase
                     nlog("  Column {$colLetter}: Date format");
                     break;
                 case 4: // Status column
-                    $worksheet->getStyle($range)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    $worksheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                     nlog("  Column {$colLetter}: Center aligned");
                     break;
                 case 5: // Percentage column
@@ -1446,22 +1456,22 @@ class OfficeParseTest extends TestCase
      */
     private function test_header_based_column_formatting($worksheet)
     {
-        nlog("--- Method 3: Header-Based Column Formatting ---");
+        nlog('--- Method 3: Header-Based Column Formatting ---');
 
         // Get headers from first row
         $headers = [];
         $highestColumn = $worksheet->getHighestColumn();
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $headers[$colIndex] = $worksheet->getCell($colLetter . '1')->getValue();
         }
 
         // Format columns based on header names
         $highestRow = $worksheet->getHighestRow();
         foreach ($headers as $colIndex => $headerName) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $range = $colLetter . '2:' . $colLetter . $highestRow; // Skip header row
 
             switch (strtolower($headerName)) {
@@ -1478,7 +1488,7 @@ class OfficeParseTest extends TestCase
                     nlog("  Column '{$headerName}': Date format");
                     break;
                 case 'status':
-                    $worksheet->getStyle($range)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    $worksheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                     nlog("  Column '{$headerName}': Center aligned");
                     break;
                 case 'percentage':
@@ -1494,7 +1504,7 @@ class OfficeParseTest extends TestCase
      */
     private function test_conditional_column_formatting($worksheet)
     {
-        nlog("--- Method 4: Conditional Column Formatting ---");
+        nlog('--- Method 4: Conditional Column Formatting ---');
 
         $highestRow = $worksheet->getHighestRow();
 
@@ -1503,30 +1513,30 @@ class OfficeParseTest extends TestCase
         $conditionalStyles = $worksheet->getStyle($statusRange)->getConditionalStyles();
 
         // Add conditional formatting for Status column
-        $conditionalStyles[] = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $conditionalStyles[0]->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_CELLIS);
-        $conditionalStyles[0]->setOperatorType(\PhpOffice\PhpSpreadsheet\Style\Conditional::OPERATOR_EQUAL);
+        $conditionalStyles[] = new Conditional;
+        $conditionalStyles[0]->setConditionType(Conditional::CONDITION_CELLIS);
+        $conditionalStyles[0]->setOperatorType(Conditional::OPERATOR_EQUAL);
         $conditionalStyles[0]->addCondition('"Paid"');
-        $conditionalStyles[0]->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+        $conditionalStyles[0]->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
         $conditionalStyles[0]->getStyle()->getFill()->getStartColor()->setRGB('90EE90');
 
-        $conditionalStyles[] = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $conditionalStyles[1]->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_CELLIS);
-        $conditionalStyles[1]->setOperatorType(\PhpOffice\PhpSpreadsheet\Style\Conditional::OPERATOR_EQUAL);
+        $conditionalStyles[] = new Conditional;
+        $conditionalStyles[1]->setConditionType(Conditional::CONDITION_CELLIS);
+        $conditionalStyles[1]->setOperatorType(Conditional::OPERATOR_EQUAL);
         $conditionalStyles[1]->addCondition('"Pending"');
-        $conditionalStyles[1]->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+        $conditionalStyles[1]->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
         $conditionalStyles[1]->getStyle()->getFill()->getStartColor()->setRGB('FFD700');
 
-        $conditionalStyles[] = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $conditionalStyles[2]->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_CELLIS);
-        $conditionalStyles[2]->setOperatorType(\PhpOffice\PhpSpreadsheet\Style\Conditional::OPERATOR_EQUAL);
+        $conditionalStyles[] = new Conditional;
+        $conditionalStyles[2]->setConditionType(Conditional::CONDITION_CELLIS);
+        $conditionalStyles[2]->setOperatorType(Conditional::OPERATOR_EQUAL);
         $conditionalStyles[2]->addCondition('"Overdue"');
-        $conditionalStyles[2]->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+        $conditionalStyles[2]->getStyle()->getFill()->setFillType(Fill::FILL_SOLID);
         $conditionalStyles[2]->getStyle()->getFill()->getStartColor()->setRGB('FFB6C1');
 
         $worksheet->getStyle($statusRange)->setConditionalStyles($conditionalStyles);
 
-        nlog("  Status column: Conditional formatting applied");
+        nlog('  Status column: Conditional formatting applied');
     }
 
     /**
@@ -1534,7 +1544,7 @@ class OfficeParseTest extends TestCase
      */
     public function test_practical_column_formatting()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $worksheet = $spreadsheet->getActiveSheet();
 
         // Your data
@@ -1552,7 +1562,7 @@ class OfficeParseTest extends TestCase
         $this->applyColumnFormatting($worksheet);
 
         // Save
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $outputFile = storage_path('app/test_practical_column_formatting.xlsx');
         $writer->save($outputFile);
 
@@ -1569,7 +1579,7 @@ class OfficeParseTest extends TestCase
     {
         $highestRow = $worksheet->getHighestRow();
         $highestColumn = $worksheet->getHighestColumn();
-        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+        $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
         // Define column formats
         $columnFormats = [
@@ -1582,7 +1592,7 @@ class OfficeParseTest extends TestCase
 
         // Apply formatting to each column
         for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $range = $colLetter . '2:' . $colLetter . $highestRow; // Skip header
 
             if (isset($columnFormats[$colIndex])) {
@@ -1602,14 +1612,14 @@ class OfficeParseTest extends TestCase
                         if ($format['format'] === 'bold') {
                             $worksheet->getStyle($range)->getFont()->setBold(true);
                         } elseif ($format['format'] === 'center') {
-                            $worksheet->getStyle($range)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                            $worksheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                         }
                         break;
                 }
             }
         }
 
-        nlog("Applied column formatting to " . $highestColumnIndex . " columns");
+        nlog('Applied column formatting to ' . $highestColumnIndex . ' columns');
     }
 
     /**
@@ -1617,35 +1627,35 @@ class OfficeParseTest extends TestCase
      */
     public function test_worksheet_naming_methods()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
 
-        nlog("=== Worksheet Naming Methods ===");
+        nlog('=== Worksheet Naming Methods ===');
 
         // Method 1: Name the active sheet
         $worksheet = $spreadsheet->getActiveSheet();
         $worksheet->setTitle('Tax Report 2023');
-        nlog("Method 1: Active sheet renamed to: " . $worksheet->getTitle());
+        nlog('Method 1: Active sheet renamed to: ' . $worksheet->getTitle());
 
         // Method 2: Create new worksheet with name
         $newWorksheet = $spreadsheet->createSheet();
         $newWorksheet->setTitle('Invoice Summary');
-        nlog("Method 2: New sheet created with name: " . $newWorksheet->getTitle());
+        nlog('Method 2: New sheet created with name: ' . $newWorksheet->getTitle());
 
         // Method 3: Set active sheet by name
         $spreadsheet->setActiveSheetIndexByName('Invoice Summary');
         $activeSheet = $spreadsheet->getActiveSheet();
-        nlog("Method 3: Active sheet is now: " . $activeSheet->getTitle());
+        nlog('Method 3: Active sheet is now: ' . $activeSheet->getTitle());
 
         // Method 4: Get worksheet by name
         $taxWorksheet = $spreadsheet->getSheetByName('Tax Report 2023');
-        nlog("Method 4: Retrieved sheet by name: " . $taxWorksheet->getTitle());
+        nlog('Method 4: Retrieved sheet by name: ' . $taxWorksheet->getTitle());
 
         // Method 5: List all worksheet names
         $sheetNames = [];
         foreach ($spreadsheet->getAllSheets() as $sheet) {
             $sheetNames[] = $sheet->getTitle();
         }
-        nlog("Method 5: All sheet names: " . implode(', ', $sheetNames));
+        nlog('Method 5: All sheet names: ' . implode(', ', $sheetNames));
 
         // Method 6: Check if worksheet exists by name
         $exists = $spreadsheet->getSheetByName('Tax Report 2023') !== null;
@@ -1653,19 +1663,19 @@ class OfficeParseTest extends TestCase
 
         // Method 7: Remove worksheet by name
         $spreadsheet->removeSheetByIndex(1); // Remove the second sheet
-        nlog("Method 7: Removed second sheet");
+        nlog('Method 7: Removed second sheet');
 
         // Method 8: Rename worksheet
         $worksheet->setTitle('Updated Tax Report 2023');
-        nlog("Method 8: Renamed to: " . $worksheet->getTitle());
+        nlog('Method 8: Renamed to: ' . $worksheet->getTitle());
 
         // Method 9: Get worksheet index by name
         $index = $spreadsheet->getIndex($spreadsheet->getSheetByName('Updated Tax Report 2023'));
-        nlog("Method 9: Sheet index: " . $index);
+        nlog('Method 9: Sheet index: ' . $index);
 
         // Method 10: Validate worksheet name
         $validName = $this->validateWorksheetName('Tax Report 2023');
-        nlog("Method 10: Valid worksheet name: " . ($validName ? 'Yes' : 'No'));
+        nlog('Method 10: Valid worksheet name: ' . ($validName ? 'Yes' : 'No'));
 
         // Test specific expectations
         $this->assertEquals('Updated Tax Report 2023', $worksheet->getTitle(), 'Worksheet should be renamed');
@@ -1680,9 +1690,9 @@ class OfficeParseTest extends TestCase
      */
     public function test_practical_worksheet_naming()
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
 
-        nlog("=== Practical Worksheet Naming Scenarios ===");
+        nlog('=== Practical Worksheet Naming Scenarios ===');
 
         // Scenario 1: Tax Report with multiple sheets
         $taxWorksheet = $spreadsheet->getActiveSheet();
@@ -1720,21 +1730,21 @@ class OfficeParseTest extends TestCase
         // Scenario 4: Set Summary as active sheet
         $spreadsheet->setActiveSheetIndexByName('Summary');
         $activeSheet = $spreadsheet->getActiveSheet();
-        nlog("Active sheet is now: " . $activeSheet->getTitle());
+        nlog('Active sheet is now: ' . $activeSheet->getTitle());
 
         // Scenario 5: List all sheets
         $allSheets = [];
         foreach ($spreadsheet->getAllSheets() as $sheet) {
             $allSheets[] = $sheet->getTitle();
         }
-        nlog("All sheets: " . implode(', ', $allSheets));
+        nlog('All sheets: ' . implode(', ', $allSheets));
 
         // Test expectations
         $this->assertEquals(3, $spreadsheet->getSheetCount(), 'Should have 3 sheets');
         $this->assertEquals('Summary', $spreadsheet->getActiveSheet()->getTitle(), 'Summary should be active');
 
         // Save the test file
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $outputFile = storage_path('app/test_worksheet_naming.xlsx');
         $writer->save($outputFile);
 

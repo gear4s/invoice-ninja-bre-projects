@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Observers;
 
+use App\Jobs\Quickbooks\PushToQuickbooks;
 use App\Jobs\Util\WebhookHandler;
 use App\Models\Product;
 use App\Models\Webhook;
+use App\Services\Quickbooks\QuickbooksService;
 
 class ProductObserver
 {
@@ -23,7 +24,6 @@ class ProductObserver
     /**
      * Handle the product "created" event.
      *
-     * @param Product $product
      * @return void
      */
     public function created(Product $product)
@@ -42,9 +42,9 @@ class ProductObserver
         // 3. We're NOT currently importing from QuickBooks (prevent circular sync)
         if ($product->company->quickbooks
             && $product->company->shouldPushToQuickbooks('product')
-            && empty(\App\Services\Quickbooks\QuickbooksService::$importing[$product->company_id])) {
+            && empty(QuickbooksService::$importing[$product->company_id])) {
 
-            \App\Jobs\Quickbooks\PushToQuickbooks::dispatch(
+            PushToQuickbooks::dispatch(
                 'product',
                 $product->id,
                 $product->company->db
@@ -56,7 +56,6 @@ class ProductObserver
     /**
      * Handle the product "updated" event.
      *
-     * @param Product $product
      * @return void
      */
     public function updated(Product $product)
@@ -71,7 +70,6 @@ class ProductObserver
             $event = Webhook::EVENT_DELETE_PRODUCT;
         }
 
-
         $subscriptions = Webhook::where('company_id', $product->company_id)
             ->where('event_id', $event)
             ->exists();
@@ -85,7 +83,6 @@ class ProductObserver
     /**
      * Handle the product "deleted" event.
      *
-     * @param Product $product
      * @return void
      */
     public function deleted(Product $product)
@@ -106,7 +103,6 @@ class ProductObserver
     /**
      * Handle the product "restored" event.
      *
-     * @param Product $product
      * @return void
      */
     public function restored(Product $product)
@@ -117,7 +113,6 @@ class ProductObserver
     /**
      * Handle the product "force deleted" event.
      *
-     * @param Product $product
      * @return void
      */
     public function forceDeleted(Product $product)

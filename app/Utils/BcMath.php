@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,132 +26,120 @@ class BcMath
      * Default scale for currency calculations (2 decimal places)
      */
     private const DEFAULT_SCALE = 10;
-    
+
     /**
      * normalizeNumber
-     *
-     * @param  mixed $number
-     * @return string
      */
     private static function normalizeNumber(mixed $number): string
     {
         if ($number === null || $number === '') {
             return '0';
-        }
-        elseif (is_float($number)) {
+        } elseif (is_float($number)) {
             return rtrim(rtrim(number_format($number, 10, '.', ''), '0'), '.');
         }
-        
+
         return (string) $number;
     }
+
     /**
      * Add two numbers using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function add($left, $right, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcadd(self::normalizeNumber($left), self::normalizeNumber($right), $scale);
     }
 
     /**
      * Subtract two numbers using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function sub($left, $right, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcsub(self::normalizeNumber($left), self::normalizeNumber($right), $scale);
     }
 
     /**
      * Multiply two numbers using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function mul($left, $right, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcmul(self::normalizeNumber($left), self::normalizeNumber($right), $scale);
     }
 
     /**
      * Divide two numbers using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function div($left, $right, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcdiv(self::normalizeNumber($left), self::normalizeNumber($right), $scale);
     }
 
     /**
      * Calculate modulo using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function mod($left, $right, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcmod(self::normalizeNumber($left), self::normalizeNumber($right), $scale);
     }
 
     /**
      * Calculate power using bcmath
      *
-     * @param string|float|int $base
-     * @param string|float|int $exponent
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $base
+     * @param  string|float|int  $exponent
      */
     public static function pow($base, $exponent, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcpow(self::normalizeNumber($base), self::normalizeNumber($exponent), $scale);
     }
 
     /**
      * Calculate square root using bcmath
      *
-     * @param string|float|int $number
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $number
      */
     public static function sqrt($number, ?int $scale = null): string
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bcsqrt(self::normalizeNumber($number), $scale);
     }
 
     /**
      * Round a number to specified decimal places using bcmath
      *
-     * @param string|float|int $number
-     * @param int $precision
-     * @return string
+     * @param  string|float|int  $number
      */
     public static function round($number, int $precision = self::DEFAULT_SCALE): string
     {
         $number = self::normalizeNumber($number);
-        
+
         /** New rounding implementation to work around changes to rounding in PHP 8.4 */
         $multiplier = bcpow('10', (string) $precision, 0);
 
@@ -173,24 +160,22 @@ class BcMath
     /**
      * Compare two numbers using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      * @return int Returns -1, 0, or 1 if left is less than, equal to, or greater than right
      */
     public static function comp($left, $right, ?int $scale = null): int
     {
         $scale ??= self::DEFAULT_SCALE;
+
         return bccomp(self::normalizeNumber($left), self::normalizeNumber($right), $scale);
     }
 
     /**
      * Check if two numbers are equal using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function equal($left, $right, ?int $scale = null): bool
     {
@@ -200,10 +185,8 @@ class BcMath
     /**
      * Check if left number is greater than right number using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function greaterThan($left, $right, ?int $scale = null): bool
     {
@@ -213,10 +196,8 @@ class BcMath
     /**
      * Check if left number is greater than or equal to right number using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function greaterThanOrEqual($left, $right, ?int $scale = null): bool
     {
@@ -226,10 +207,8 @@ class BcMath
     /**
      * Check if left number is less than right number using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function lessThan($left, $right, ?int $scale = null): bool
     {
@@ -239,10 +218,8 @@ class BcMath
     /**
      * Check if left number is less than or equal to right number using bcmath
      *
-     * @param string|float|int $left
-     * @param string|float|int $right
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $left
+     * @param  string|float|int  $right
      */
     public static function lessThanOrEqual($left, $right, ?int $scale = null): bool
     {
@@ -252,9 +229,7 @@ class BcMath
     /**
      * Check if a number is zero using bcmath
      *
-     * @param string|float|int $number
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $number
      */
     public static function isZero($number, ?int $scale = null): bool
     {
@@ -264,9 +239,7 @@ class BcMath
     /**
      * Check if a number is positive using bcmath
      *
-     * @param string|float|int $number
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $number
      */
     public static function isPositive($number, ?int $scale = null): bool
     {
@@ -276,9 +249,7 @@ class BcMath
     /**
      * Check if a number is negative using bcmath
      *
-     * @param string|float|int $number
-     * @param int|null $scale
-     * @return bool
+     * @param  string|float|int  $number
      */
     public static function isNegative($number, ?int $scale = null): bool
     {
@@ -288,9 +259,7 @@ class BcMath
     /**
      * Get the absolute value using bcmath
      *
-     * @param string|float|int $number
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $number
      */
     public static function abs($number, ?int $scale = null): string
     {
@@ -307,10 +276,8 @@ class BcMath
     /**
      * Calculate percentage using bcmath
      *
-     * @param string|float|int $part
-     * @param string|float|int $total
-     * @param int|null $scale
-     * @return string
+     * @param  string|float|int  $part
+     * @param  string|float|int  $total
      */
     public static function percentage($part, $total, ?int $scale = null): string
     {
@@ -325,10 +292,6 @@ class BcMath
 
     /**
      * Calculate sum of an array of numbers using bcmath
-     *
-     * @param array $numbers
-     * @param int|null $scale
-     * @return string
      */
     public static function sum(array $numbers, ?int $scale = null): string
     {
@@ -344,10 +307,6 @@ class BcMath
 
     /**
      * Calculate average of an array of numbers using bcmath
-     *
-     * @param array $numbers
-     * @param int|null $scale
-     * @return string
      */
     public static function avg(array $numbers, ?int $scale = null): string
     {
@@ -359,19 +318,19 @@ class BcMath
         }
 
         $sum = self::sum($numbers, $scale);
+
         return self::div($sum, (string) $count, $scale);
     }
 
     /**
      * Format a number as currency string with proper precision
      *
-     * @param string|float|int $number
-     * @param int $precision
-     * @return string
+     * @param  string|float|int  $number
      */
     public static function formatCurrency($number, int $precision = self::DEFAULT_SCALE): string
     {
         $rounded = self::round($number, $precision);
+
         return number_format((float) $rounded, $precision, '.', '');
     }
 
@@ -379,8 +338,7 @@ class BcMath
      * Convert a number to float for compatibility with existing code
      * Use this sparingly and only when you need to pass values to functions that expect floats
      *
-     * @param string|float|int $number
-     * @return float
+     * @param  string|float|int  $number
      */
     public static function toFloat($number): float
     {
@@ -390,8 +348,7 @@ class BcMath
     /**
      * Convert a number to string for consistent handling
      *
-     * @param string|float|int $number
-     * @return string
+     * @param  string|float|int  $number
      */
     public static function toString($number): string
     {

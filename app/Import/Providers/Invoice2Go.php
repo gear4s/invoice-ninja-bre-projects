@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,7 +24,7 @@ class Invoice2Go extends BaseImport
     {
         if (
             in_array($entity, [
-                //'client',
+                // 'client',
                 'invoice',
                 // 'product',
                 // 'payment',
@@ -36,14 +35,14 @@ class Invoice2Go extends BaseImport
             $this->{$entity}();
         }
 
-        //collate any errors
+        // collate any errors
 
         // $this->finalizeImport();
     }
 
     public function invoice()
     {
-        //make sure we update and create products with wave
+        // make sure we update and create products with wave
         $initial_update_products_value = $this->company->update_products;
         $this->company->update_products = true;
 

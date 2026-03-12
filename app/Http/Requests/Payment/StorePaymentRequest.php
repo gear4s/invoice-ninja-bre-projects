@@ -6,24 +6,25 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Payment;
 
-use App\Models\Invoice;
-use App\Models\Payment;
+use App\Exceptions\DuplicatePaymentException;
 use App\Helpers\Cache\Atomic;
 use App\Http\Requests\Request;
-use App\Utils\BcMath;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
-use App\Exceptions\DuplicatePaymentException;
 use App\Http\ValidationRules\Credit\CreditsSumRule;
 use App\Http\ValidationRules\Credit\ValidCreditsRules;
-use App\Http\ValidationRules\ValidPayableInvoicesRule;
 use App\Http\ValidationRules\PaymentAmountsBalanceRule;
+use App\Http\ValidationRules\ValidPayableInvoicesRule;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\User;
+use App\Utils\BcMath;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 
 class StorePaymentRequest extends Request
 {
@@ -31,12 +32,10 @@ class StorePaymentRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Payment::class);
@@ -44,19 +43,19 @@ class StorePaymentRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [
-            'client_id' => ['bail','required',Rule::exists('clients', 'id')->where('company_id', $user->company()->id)->where('is_deleted', 0)],
-            'invoices' => ['bail', 'sometimes', 'nullable', 'array', new ValidPayableInvoicesRule()],
-            'invoices.*.amount' => ['bail','required'],
-            'invoices.*.invoice_id' => ['bail','required','distinct', Rule::exists('invoices', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)->where('is_deleted', 0)],
-            'credits.*.credit_id' => ['bail','required','distinct', new ValidCreditsRules($this->all()),Rule::exists('credits', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)->where('is_deleted', 0)],
-            'credits.*.amount' => ['bail','required', new CreditsSumRule($this->all())],
-            'amount' => ['bail', 'numeric', new PaymentAmountsBalanceRule(), 'max:99999999999999'],
+            'client_id' => ['bail', 'required', Rule::exists('clients', 'id')->where('company_id', $user->company()->id)->where('is_deleted', 0)],
+            'invoices' => ['bail', 'sometimes', 'nullable', 'array', new ValidPayableInvoicesRule],
+            'invoices.*.amount' => ['bail', 'required'],
+            'invoices.*.invoice_id' => ['bail', 'required', 'distinct', Rule::exists('invoices', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)->where('is_deleted', 0)],
+            'credits.*.credit_id' => ['bail', 'required', 'distinct', new ValidCreditsRules($this->all()), Rule::exists('credits', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)->where('is_deleted', 0)],
+            'credits.*.amount' => ['bail', 'required', new CreditsSumRule($this->all())],
+            'amount' => ['bail', 'numeric', new PaymentAmountsBalanceRule, 'max:99999999999999'],
             'number' => ['bail', 'nullable',  Rule::unique('payments')->where('company_id', $user->company()->id)],
-            'idempotency_key' => ['nullable', 'bail', 'string','max:64', Rule::unique('payments')->where('company_id', $user->company()->id)],
+            'idempotency_key' => ['nullable', 'bail', 'string', 'max:64', Rule::unique('payments')->where('company_id', $user->company()->id)],
             'date' => ['bail', 'nullable', 'sometimes', 'date:Y-m-d'],
         ];
 
@@ -67,7 +66,6 @@ class StorePaymentRequest extends Request
 
         return $rules;
     }
-
 
     public function withValidator($validator)
     {
@@ -82,11 +80,13 @@ class StorePaymentRequest extends Request
                 // Check amount exists (if not caught by basic rules)
                 if (!array_key_exists('amount', $invoice)) {
                     $validator->errors()->add("invoices.{$index}.amount", ctrans('texts.amount') . ' required');
+
                     continue;
                 }
 
                 if (!array_key_exists('invoice_id', $invoice)) {
                     $validator->errors()->add("invoices.{$index}.invoice_id", ctrans('texts.invoice_id') . ' required');
+
                     continue;
                 }
 
@@ -95,18 +95,20 @@ class StorePaymentRequest extends Request
 
                 if (!$inv) {
                     $validator->errors()->add("invoices.{$index}.invoice_id", ctrans('texts.invoice_not_found'));
+
                     continue;
                 }
 
                 // Check client match
                 if ($inv->client_id != $clientId) {
                     $validator->errors()->add("invoices.{$index}", ctrans('texts.invoices_dont_match_client'));
+
                     continue;
                 }
 
                 // Check amount validation
                 if ($inv->status_id == Invoice::STATUS_DRAFT && $invoice['amount'] <= $inv->amount) {
-                    //catch here nothing to do - we need this to prevent the last elseif triggering
+                    // catch here nothing to do - we need this to prevent the last elseif triggering
                 } elseif ($invoice['amount'] <= 0 && $inv->amount > 0) {
                     $validator->errors()->add("invoices.{$index}.amount", 'Amount cannot be less than or equal to zero');
                 } elseif ($inv->status_id == Invoice::STATUS_DRAFT && BcMath::greaterThan($invoice['amount'], $inv->amount)) {
@@ -129,7 +131,7 @@ class StorePaymentRequest extends Request
     public function prepareForValidation()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
@@ -142,18 +144,18 @@ class StorePaymentRequest extends Request
             $hash_key = $this->input('amount', 0);
         }
 
-        $hash = $this->ip() . "|" . $hash_key . "|" . $client_id . "|" . $user->company()->company_key;
+        $hash = $this->ip() . '|' . $hash_key . '|' . $client_id . '|' . $user->company()->company_key;
 
         // Atomic lock: returns false if key already exists (request in progress)
         if (!Atomic::set($hash, true, 1)) {
             throw new DuplicatePaymentException('Duplicate request.', 429);
         }
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -200,15 +202,15 @@ class StorePaymentRequest extends Request
             $input['credits'] = null;
         }
 
-        if (! isset($input['amount']) || $input['amount'] == 0) {
+        if (!isset($input['amount']) || $input['amount'] == 0) {
             $input['amount'] = $invoices_total - $credits_total;
         }
 
-        if (! isset($input['date'])) {
+        if (!isset($input['date'])) {
             $input['date'] = now()->addSeconds($user->company()->utc_offset())->format('Y-m-d');
         }
 
-        if (! isset($input['idempotency_key'])) {
+        if (!isset($input['idempotency_key'])) {
             $input['idempotency_key'] = substr(time() . "{$input['date']}{$input['amount']}{$credits_total}{$this->client_id}{$user->company()->company_key}", 0, 64);
         }
 
@@ -220,6 +222,4 @@ class StorePaymentRequest extends Request
 
         $this->replace($input);
     }
-
-
 }

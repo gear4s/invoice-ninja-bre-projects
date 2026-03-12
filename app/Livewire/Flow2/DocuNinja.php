@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Flow2;
 
-use Livewire\Component;
 use App\Libraries\MultiDB;
 use App\Utils\Traits\WithSecureContext;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
+use Livewire\Component;
 
 class DocuNinja extends Component
 {
@@ -22,16 +23,23 @@ class DocuNinja extends Component
 
     // Properties to store DocuNinja internal state
     public $docuNinjaCredentials = [];
+
     public $docuNinjaFormData = [];
+
     public $docuNinjaSignatureData = [];
+
     public $docuNinjaSigningStatus = 'unknown';
+
     public $docuNinjaInternalState = [];
 
     public $_key;
 
     private ?string $document_id = null;
+
     private ?string $document_invitation_id = null;
+
     private ?string $sig = null;
+
     private ?string $company_key = null;
 
     public function mount()
@@ -59,8 +67,8 @@ class DocuNinja extends Component
         </div>
         HTML;
     }
-    
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+
+    public function render(): Factory|View
     {
         return render('flow2.docu-ninja', [
             'token' => '',
@@ -84,20 +92,20 @@ class DocuNinja extends Component
         $this->docuNinjaSignatureData = $data['signatureData'] ?? [];
         $this->docuNinjaSigningStatus = $data['signingStatus'] ?? 'unknown';
         $this->docuNinjaInternalState = $data['fullState'] ?? [];
-        
+
         // Log the received data for debugging
         \Log::info('DocuNinja state change received', $data);
-        
+
         // You can now use these variables in your component
         $this->dispatch('docuNinjaStateUpdated', [
             'credentials' => $this->docuNinjaCredentials,
             'formData' => $this->docuNinjaFormData,
             'signatureData' => $this->docuNinjaSignatureData,
             'signingStatus' => $this->docuNinjaSigningStatus,
-            'internalState' => $this->docuNinjaInternalState
+            'internalState' => $this->docuNinjaInternalState,
         ]);
     }
-    
+
     /**
      * Get the current DocuNinja credentials
      */
@@ -105,7 +113,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaCredentials;
     }
-    
+
     /**
      * Get the current DocuNinja form data
      */
@@ -113,7 +121,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaFormData;
     }
-    
+
     /**
      * Get the current DocuNinja signature data
      */
@@ -121,7 +129,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaSignatureData;
     }
-    
+
     /**
      * Get the current DocuNinja signing status
      */
@@ -129,7 +137,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaSigningStatus;
     }
-    
+
     /**
      * Get the complete DocuNinja internal state
      */
@@ -137,7 +145,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaInternalState;
     }
-    
+
     /**
      * Check if DocuNinja has specific credentials
      */
@@ -145,7 +153,7 @@ class DocuNinja extends Component
     {
         return !empty($this->docuNinjaCredentials);
     }
-    
+
     /**
      * Check if DocuNinja has form data
      */
@@ -153,7 +161,7 @@ class DocuNinja extends Component
     {
         return !empty($this->docuNinjaFormData);
     }
-    
+
     /**
      * Check if DocuNinja has signature data
      */
@@ -161,7 +169,7 @@ class DocuNinja extends Component
     {
         return !empty($this->docuNinjaSignatureData);
     }
-    
+
     /**
      * Get a specific value from DocuNinja form data
      */
@@ -169,7 +177,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaFormData[$key] ?? $default;
     }
-    
+
     /**
      * Get a specific value from DocuNinja credentials
      */
@@ -177,7 +185,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaCredentials[$key] ?? $default;
     }
-    
+
     /**
      * Check if DocuNinja is in a specific signing status
      */
@@ -185,7 +193,7 @@ class DocuNinja extends Component
     {
         return $this->docuNinjaSigningStatus === $status;
     }
-    
+
     /**
      * Check if DocuNinja is ready for signing
      */
@@ -193,7 +201,7 @@ class DocuNinja extends Component
     {
         return $this->isDocuNinjaStatus('ready') || $this->isDocuNinjaStatus('initialized');
     }
-    
+
     /**
      * Check if DocuNinja is currently signing
      */
@@ -201,7 +209,7 @@ class DocuNinja extends Component
     {
         return $this->isDocuNinjaStatus('signing') || $this->isDocuNinjaStatus('in_progress');
     }
-    
+
     /**
      * Check if DocuNinja has completed signing
      */
@@ -209,7 +217,7 @@ class DocuNinja extends Component
     {
         return $this->isDocuNinjaStatus('completed') || $this->isDocuNinjaStatus('finished');
     }
-    
+
     /**
      * Refresh the DocuNinja state (useful for debugging)
      */
@@ -224,14 +232,14 @@ class DocuNinja extends Component
                 'formData' => $this->docuNinjaFormData,
                 'signatureData' => $this->docuNinjaSignatureData,
                 'signingStatus' => $this->docuNinjaSigningStatus,
-                'internalState' => $this->docuNinjaInternalState
-            ]
+                'internalState' => $this->docuNinjaInternalState,
+            ],
         ]);
-        
+
         // Log the refresh action
         \Log::info('DocuNinja state refresh requested');
     }
-    
+
     /**
      * Clear the DocuNinja state
      */
@@ -242,10 +250,10 @@ class DocuNinja extends Component
         $this->docuNinjaSignatureData = [];
         $this->docuNinjaSigningStatus = 'unknown';
         $this->docuNinjaInternalState = [];
-        
+
         // Dispatch event to notify that state was cleared
         $this->dispatch('docuNinjaStateCleared');
-        
+
         // Log the clear action
         \Log::info('DocuNinja state cleared');
     }
@@ -257,6 +265,3 @@ class DocuNinja extends Component
         $stopPropagation();
     }
 }
-
-
-

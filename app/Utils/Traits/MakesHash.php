@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,6 +22,7 @@ trait MakesHash
 {
     /**
      * Creates a simple alphanumeric Hash.
+     *
      * @return string - asd89f7as89df6asf78as6fds
      */
     public function createHash(): string
@@ -33,20 +33,20 @@ trait MakesHash
     /**
      * Creates a simple alphanumeric Hash which is prepended with a encoded database prefix.
      *
-     * @param $db - Full database name
+     * @param  $db  - Full database name
      * @return string 01-asfas8df76a78f6a78dfsdf
      */
     public function createDbHash($db): string
     {
         if (config('ninja.db.multi_db_enabled')) {
-            return  $this->getDbCode($db) . '-' . Str::random(config('ninja.key_length'));
+            return $this->getDbCode($db) . '-' . Str::random(config('ninja.key_length'));
         }
 
         return Str::random(config('ninja.key_length'));
     }
 
     /**
-     * @param $db - Full database name
+     * @param  $db  - Full database name
      * @return string - hashed and encoded int 01,02,03,04
      */
     public function getDbCode($db): string
@@ -74,7 +74,7 @@ trait MakesHash
             if (isset($decoded_array[0]) ?? false) {
                 return $decoded_array[0];
             } elseif ($return_string_failure) {
-                return "Invalid Primary Key";
+                return 'Invalid Primary Key';
             } else {
                 throw new \Exception('Invalid Primary Key');
             }

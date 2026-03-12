@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,6 +15,7 @@ use App\DataProviders\USStates;
 use App\Libraries\MultiDB;
 use App\Models\Client;
 use App\Models\Company;
+use App\Services\Tax\Providers\TaxProvider;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,23 +28,19 @@ class UpdateTaxData implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use MakesHash;
 
     public $tries = 1;
 
     /**
      * Create a new job instance.
-     *
-     * @param Client $client
-     * @param Company $company
      */
     public function __construct(public Client $client, protected Company $company) {}
 
     /**
      * Execute the job.
-     *
      */
     public function handle()
     {
@@ -54,10 +50,9 @@ class UpdateTaxData implements ShouldQueue
             return;
         }
 
-        $tax_provider = new \App\Services\Tax\Providers\TaxProvider($this->company, $this->client);
+        $tax_provider = new TaxProvider($this->company, $this->client);
 
         try {
-
 
             if (!$this->client->state && $this->client->postal_code) {
 
@@ -67,12 +62,12 @@ class UpdateTaxData implements ShouldQueue
             }
 
             $tax_provider->setBillingAddress($this->getBillingAddress())
-                         ->setShippingAddress($this->getShippingAddress())
-                         ->updateClientTaxData();
+                ->setShippingAddress($this->getShippingAddress())
+                ->updateClientTaxData();
 
         } catch (\Exception $e) {
-            nlog("Exception:: UpdateTaxData::" . $e->getMessage());
-            nlog("problem getting tax data => " . $e->getMessage());
+            nlog('Exception:: UpdateTaxData::' . $e->getMessage());
+            nlog('problem getting tax data => ' . $e->getMessage());
         }
 
     }
@@ -116,9 +111,8 @@ class UpdateTaxData implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("UpdateTaxData failed => " . $exception->getMessage());
+        nlog('UpdateTaxData failed => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
 
     }
-
 }

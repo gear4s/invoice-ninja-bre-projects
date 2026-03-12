@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -37,10 +36,6 @@ class PurchaseOrderWasAccepted
 
     /**
      * Create a new event instance.
-     *
-     * @param PurchaseOrder $purchase_order
-     * @param Company $company
-     * @param array $event_vars
      */
     public function __construct(PurchaseOrder $purchase_order, VendorContact $contact, Company $company, array $event_vars)
     {

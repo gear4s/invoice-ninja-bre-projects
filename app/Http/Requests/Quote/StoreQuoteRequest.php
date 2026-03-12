@@ -6,33 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Quote;
 
-use App\Models\Quote;
 use App\Http\Requests\Request;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Validation\Rule;
-use App\Utils\Traits\CleanLineItems;
-use App\Http\ValidationRules\Quote\UniqueQuoteNumberRule;
 use App\Http\ValidationRules\Project\ValidProjectForClient;
+use App\Models\Client;
+use App\Models\Quote;
+use App\Models\User;
+use App\Utils\Traits\CleanLineItems;
+use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 
 class StoreQuoteRequest extends Request
 {
-    use MakesHash;
     use CleanLineItems;
+    use MakesHash;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Quote::class);
@@ -40,7 +40,7 @@ class StoreQuoteRequest extends Request
 
     public function rules()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -52,7 +52,7 @@ class StoreQuoteRequest extends Request
         $rules['documents'] = 'bail|sometimes|array';
         $rules['documents.*'] = $this->fileValidation();
 
-        $rules['number'] = ['bail','nullable', Rule::unique('quotes')->where('company_id', $user->company()->id)];
+        $rules['number'] = ['bail', 'nullable', Rule::unique('quotes')->where('company_id', $user->company()->id)];
 
         $rules['invitations'] = 'sometimes|bail|array';
         $rules['invitations.*.client_contact_id'] = 'bail|required|distinct';
@@ -60,7 +60,7 @@ class StoreQuoteRequest extends Request
         $rules['project_id'] = ['bail', 'sometimes', new ValidProjectForClient($this->all())];
         $rules['is_amount_discount'] = ['boolean'];
         $rules['date'] = 'bail|sometimes|date:Y-m-d';
-        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', Rule::requiredIf(fn() => strlen($this->partial_due_date ?? '') > 1), 'date'];
+        $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', Rule::requiredIf(fn () => strlen($this->partial_due_date ?? '') > 1), 'date'];
         $rules['line_items'] = 'array';
 
         $rules['discount'] = 'sometimes|numeric|max:99999999999999';
@@ -81,14 +81,14 @@ class StoreQuoteRequest extends Request
         $rules['custom_surcharge3'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['custom_surcharge4'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
 
-        $rules['location_id'] = ['nullable', 'sometimes','bail',Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
+        $rules['location_id'] = ['nullable', 'sometimes', 'bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
 
         return $rules;
     }
 
     public function prepareForValidation()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $input = $this->all();
@@ -98,12 +98,11 @@ class StoreQuoteRequest extends Request
         $input['amount'] = 0;
         $input['balance'] = 0;
 
-
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -131,24 +130,23 @@ class StoreQuoteRequest extends Request
             $input['date'] = now()->addSeconds($user->company()->utc_offset())->format('Y-m-d');
         }
         if (isset($input['client_id']) && isset($input['partial_due_date']) && (!isset($input['due_date']) || strlen($input['due_date']) <= 1)) {
-            $client = \App\Models\Client::withTrashed()->find($input['client_id']);
+            $client = Client::withTrashed()->find($input['client_id']);
             $valid_days = ($client && strlen($client->getSetting('valid_until')) >= 1) ? $client->getSetting('valid_until') : 7;
-            $input['due_date'] = \Carbon\Carbon::parse($input['date'])->addDays((int) $valid_days)->format('Y-m-d');
+            $input['due_date'] = Carbon::parse($input['date'])->addDays((int) $valid_days)->format('Y-m-d');
         }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
-            $input['footer'] = str_replace("\n", "", $input['footer']);
+            $input['footer'] = str_replace("\n", '', $input['footer']);
         }
         if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
-            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+            $input['public_notes'] = str_replace("\n", '', $input['public_notes']);
         }
         if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
-            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
+            $input['private_notes'] = str_replace("\n", '', $input['private_notes']);
         }
         if (isset($input['terms']) && $this->hasHeader('X-REACT')) {
-            $input['terms'] = str_replace("\n", "", $input['terms']);
+            $input['terms'] = str_replace("\n", '', $input['terms']);
         }
-
 
         $this->replace($input);
     }

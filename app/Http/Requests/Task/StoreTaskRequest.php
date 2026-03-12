@@ -6,16 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Task;
 
 use App\Http\Requests\Request;
+use App\Models\ClientContact;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreTaskRequest extends Request
@@ -24,12 +26,10 @@ class StoreTaskRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Task::class);
@@ -38,7 +38,7 @@ class StoreTaskRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -65,6 +65,7 @@ class StoreTaskRequest extends Request
 
             if (!is_array($values)) {
                 $fail('The ' . $attribute . ' must be a valid array.');
+
                 return;
             }
 
@@ -128,11 +129,11 @@ class StoreTaskRequest extends Request
             $input['status_id'] = $this->decodePrimaryKey($input['status_id']);
         }
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('documents') instanceof UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
 
-        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->file('file') instanceof UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
@@ -147,7 +148,7 @@ class StoreTaskRequest extends Request
             foreach ($time_logs as &$time_log) {
 
                 if (is_string($time_log)) {
-                    continue; //catch if it isn't even a proper time log
+                    continue; // catch if it isn't even a proper time log
                 }
 
                 // Ensure $time_log is an array before accessing indices
@@ -167,7 +168,7 @@ class StoreTaskRequest extends Request
         }
 
         if (isset($input['description']) && is_string($input['description'])) {
-            $input['description'] = str_ireplace(['</sc', 'file:/', 'iframe', '<embed', '&lt;embed', '&lt;object', '<object', '127.0.0.1', 'localhost', '<?xml encoding="UTF-8">', '/etc/'], "", $input['description']);
+            $input['description'] = str_ireplace(['</sc', 'file:/', 'iframe', '<embed', '&lt;embed', '&lt;object', '<object', '127.0.0.1', 'localhost', '<?xml encoding="UTF-8">', '/etc/'], '', $input['description']);
         }
 
         /* Ensure the project is related */
@@ -180,7 +181,7 @@ class StoreTaskRequest extends Request
                 unset($input['project_id']);
             }
         } elseif (array_key_exists('email', $input) && isset($input['email']) && strlen($input['email']) > 3) { // if creating a task via the chrome extension, we can associate the task to the client email.
-            $contact = \App\Models\ClientContact::where('email', $input['email'])->company()->first();
+            $contact = ClientContact::where('email', $input['email'])->company()->first();
             if ($contact) {
                 $input['client_id'] = $contact->client_id;
             } else {

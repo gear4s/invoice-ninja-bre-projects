@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,7 +19,7 @@ class RecurringDueDatesTest extends TestCase
 {
     use HasRecurrence;
 
-    public function testFirstDate()
+    public function test_first_date()
     {
         $date = Carbon::parse('2020-02-15');
 
@@ -29,7 +28,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-03-01', $due_date->format('Y-m-d'));
     }
 
-    public function testFirstOfMonthOnFirst()
+    public function test_first_of_month_on_first()
     {
         $date = Carbon::parse('2020-02-01');
 
@@ -38,7 +37,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-03-01', $due_date->format('Y-m-d'));
     }
 
-    public function testFirstOfMonthOnLast()
+    public function test_first_of_month_on_last()
     {
         $date = Carbon::parse('2020-03-31');
 
@@ -47,7 +46,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-04-01', $due_date->format('Y-m-d'));
     }
 
-    public function testLastOfMonth()
+    public function test_last_of_month()
     {
         $date = Carbon::parse('2020-02-15');
 
@@ -56,7 +55,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-02-29', $due_date->format('Y-m-d'));
     }
 
-    public function testLastOfMonthOnFirst()
+    public function test_last_of_month_on_first()
     {
         $date = Carbon::parse('2020-02-1');
 
@@ -65,7 +64,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-02-29', $due_date->format('Y-m-d'));
     }
 
-    public function testLastOfMonthOnLast()
+    public function test_last_of_month_on_last()
     {
         $date = Carbon::parse('2020-02-29');
 
@@ -74,7 +73,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-03-31', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonth()
+    public function test_day_of_month()
     {
         $date = Carbon::parse('2020-02-01');
 
@@ -83,7 +82,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-02-15', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthInFuture()
+    public function test_day_of_month_in_future()
     {
         $date = Carbon::parse('2020-02-16');
 
@@ -92,7 +91,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-03-15', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthSameDay()
+    public function test_day_of_month_same_day()
     {
         $date = Carbon::parse('2020-02-01');
 
@@ -101,7 +100,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-03-01', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthWithOverflow()
+    public function test_day_of_month_with_overflow()
     {
         $date = Carbon::parse('2020-1-31');
 
@@ -110,7 +109,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-02-29', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthWithOverflow2()
+    public function test_day_of_month_with_overflow2()
     {
         $date = Carbon::parse('2020-02-29');
 
@@ -119,7 +118,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-03-31', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthWithOverflow3()
+    public function test_day_of_month_with_overflow3()
     {
         $date = Carbon::parse('2020-01-30');
 
@@ -128,7 +127,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2020-02-29', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthWithOverflow4()
+    public function test_day_of_month_with_overflow4()
     {
         $date = Carbon::parse('2019-02-28');
 
@@ -137,7 +136,7 @@ class RecurringDueDatesTest extends TestCase
         $this->assertEquals('2019-03-31', $due_date->format('Y-m-d'));
     }
 
-    public function testDayOfMonthWithOverflow5()
+    public function test_day_of_month_with_overflow5()
     {
         $date = Carbon::parse('2019-1-31');
 

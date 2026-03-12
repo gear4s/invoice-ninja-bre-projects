@@ -6,21 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
 use App\Jobs\SES\SESWebhook;
-use App\Jobs\PostMark\ProcessPostmarkWebhook;
 use App\Libraries\MultiDB;
-use App\Services\InboundMail\InboundMail;
-use App\Services\InboundMail\InboundMailEngine;
-use App\Utils\TempFile;
-use Illuminate\Support\Carbon;
+use App\Models\Company;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -45,8 +40,7 @@ class SNSController extends BaseController
     /**
      * Handle SNS webhook notifications
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function webhook(Request $request)
     {
@@ -60,6 +54,7 @@ class SNSController extends BaseController
 
             if (!$snsData) {
                 nlog('SNS Webhook: Invalid JSON payload');
+
                 return response()->json(['error' => 'Invalid JSON payload'], 400);
             }
 
@@ -70,12 +65,14 @@ class SNSController extends BaseController
                 $signatureValid = $this->verifySNSSignature($request, $payload);
                 if (!$signatureValid) {
                     nlog('SNS Webhook: Invalid signature - potential security threat');
+
                     return response()->json(['error' => 'Invalid signature'], 401);
                 }
             }
 
             if (!$snsMessageType) {
                 nlog('SNS Webhook: Missing x-amz-sns-message-type header');
+
                 return response()->json(['error' => 'Missing SNS message type'], 400);
             }
 
@@ -92,6 +89,7 @@ class SNSController extends BaseController
             // Handle unsubscribe confirmation
             if ($snsMessageType === 'UnsubscribeConfirmation') {
                 nlog('SNS Unsubscribe confirmation received', ['topic_arn' => $snsData['TopicArn'] ?? 'unknown']);
+
                 return response()->json(['status' => 'unsubscribe_confirmed']);
             }
 
@@ -109,10 +107,6 @@ class SNSController extends BaseController
 
     /**
      * Verify SNS message signature using full AWS SNS validation
-     *
-     * @param Request $request
-     * @param string $payload
-     * @return bool
      */
     private function verifySNSSignature(Request $request, string $payload): bool
     {
@@ -121,6 +115,7 @@ class SNSController extends BaseController
             $snsData = json_decode($payload, true);
             if (!$snsData) {
                 nlog('SNS: Invalid JSON payload for signature verification');
+
                 return false;
             }
 
@@ -129,6 +124,7 @@ class SNSController extends BaseController
             foreach ($requiredFields as $field) {
                 if (!isset($snsData[$field])) {
                     nlog('SNS: Missing required field for signature verification', ['field' => $field]);
+
                     return false;
                 }
             }
@@ -172,10 +168,6 @@ class SNSController extends BaseController
 
     /**
      * Fallback basic validation when full signature verification fails
-     *
-     * @param Request $request
-     * @param string $payload
-     * @return bool
      */
     private function fallbackBasicValidation(Request $request, string $payload): bool
     {
@@ -191,6 +183,7 @@ class SNSController extends BaseController
             foreach ($requiredHeaders as $header) {
                 if (!$request->header($header)) {
                     nlog('SNS: Missing required header for basic validation', ['header' => $header]);
+
                     return false;
                 }
             }
@@ -210,15 +203,13 @@ class SNSController extends BaseController
 
     /**
      * Fetch and cache the SNS signing certificate
-     *
-     * @param string $certUrl
-     * @return string|false
      */
     private function fetchSigningCertificate(string $certUrl): string|false
     {
         // Validate the certificate URL is from AWS
         if (!$this->isValidAWSCertificateUrl($certUrl)) {
             nlog('SNS: Invalid certificate URL', ['url' => $certUrl]);
+
             return false;
         }
 
@@ -227,6 +218,7 @@ class SNSController extends BaseController
         $cachedCert = Cache::get($cacheKey);
         if ($cachedCert) {
             nlog('SNS: Using cached certificate');
+
             return $cachedCert;
         }
 
@@ -242,9 +234,11 @@ class SNSController extends BaseController
                     // Cache for 24 hours (AWS certificates are long-lived)
                     Cache::put($cacheKey, $certificate, 86400);
                     nlog('SNS: Certificate fetched and cached successfully');
+
                     return $certificate;
                 } else {
                     nlog('SNS: Invalid certificate format received');
+
                     return false;
                 }
             } else {
@@ -252,21 +246,18 @@ class SNSController extends BaseController
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
+
                 return false;
             }
         } catch (\Exception $e) {
             nlog('SNS: Error fetching certificate', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
 
     /**
      * Verify the message signature using the certificate
-     *
-     * @param array $snsData
-     * @param string $certificate
-     * @param string $payload
-     * @return bool
      */
     private function verifyMessageSignature(array $snsData, string $certificate, string $payload): bool
     {
@@ -275,6 +266,7 @@ class SNSController extends BaseController
             $signature = $snsData['Signature'] ?? '';
             if (empty($signature)) {
                 nlog('SNS: Missing signature in message');
+
                 return false;
             }
 
@@ -285,6 +277,7 @@ class SNSController extends BaseController
             $decodedSignature = base64_decode($signature, true);
             if ($decodedSignature === false || $decodedSignature === '') {
                 nlog('SNS: Invalid signature encoding');
+
                 return false;
             }
 
@@ -292,6 +285,7 @@ class SNSController extends BaseController
             $publicKey = openssl_pkey_get_public($certificate);
             if ($publicKey === false) {
                 nlog('SNS: Failed to load public key from certificate');
+
                 return false;
             }
 
@@ -304,26 +298,27 @@ class SNSController extends BaseController
 
             if ($verificationResult === 1) {
                 nlog('SNS: Signature verification successful');
+
                 return true;
             } elseif ($verificationResult === 0) {
                 nlog('SNS: Signature verification failed');
+
                 return false;
             } else {
                 nlog('SNS: Error during signature verification');
+
                 return false;
             }
 
         } catch (\Exception $e) {
             nlog('SNS: Error during signature verification', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
 
     /**
      * Create the string to sign according to AWS SNS specification
-     *
-     * @param array $snsData
-     * @return string
      */
     private function createStringToSign(array $snsData): string
     {
@@ -348,9 +343,6 @@ class SNSController extends BaseController
 
     /**
      * Validate that the certificate URL is from AWS
-     *
-     * @param string $url
-     * @return bool
      */
     private function isValidAWSCertificateUrl(string $url): bool
     {
@@ -379,9 +371,6 @@ class SNSController extends BaseController
 
     /**
      * Validate certificate format
-     *
-     * @param string $certificate
-     * @return bool
      */
     private function isValidCertificate(string $certificate): bool
     {
@@ -394,8 +383,7 @@ class SNSController extends BaseController
     /**
      * Handle SNS subscription confirmation
      *
-     * @param array $snsData
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     private function handleSubscriptionConfirmation(array $snsData)
     {
@@ -407,6 +395,7 @@ class SNSController extends BaseController
                 'errors' => $verificationResult['errors'],
                 'payload' => $snsData,
             ]);
+
             return response()->json(['error' => 'Invalid subscription confirmation payload', 'details' => $verificationResult['errors']], 400);
         }
 
@@ -420,7 +409,7 @@ class SNSController extends BaseController
         // You can optionally make an HTTP request to confirm the subscription
         // This is required by AWS to complete the SNS subscription setup
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(10)->get($subscribeUrl);
+            $response = Http::timeout(10)->get($subscribeUrl);
             nlog('SNS Subscription confirmed', ['response' => $response]);
         } catch (\Exception $e) {
             nlog('SNS Subscription confirmation failed', ['error' => $e->getMessage()]);
@@ -429,11 +418,9 @@ class SNSController extends BaseController
         return response()->json(['status' => 'subscription_confirmed']);
     }
 
-
     /**
      * Verify SNS subscription confirmation payload structure and content
      *
-     * @param array $snsData
      * @return array ['valid' => bool, 'errors' => array]
      */
     private function verifySubscriptionConfirmationPayload(array $snsData): array
@@ -454,6 +441,7 @@ class SNSController extends BaseController
         foreach ($requiredFields as $field => $expectedType) {
             if (!isset($snsData[$field])) {
                 $errors[] = "Missing required field: {$field}";
+
                 continue;
             }
 
@@ -517,9 +505,6 @@ class SNSController extends BaseController
 
     /**
      * Validate MessageId format (should be a UUID-like string)
-     *
-     * @param string $messageId
-     * @return bool
      */
     private function isValidMessageId(string $messageId): bool
     {
@@ -529,9 +514,6 @@ class SNSController extends BaseController
 
     /**
      * Validate TopicArn format
-     *
-     * @param string $topicArn
-     * @return bool
      */
     private function isValidTopicArn(string $topicArn): bool
     {
@@ -541,9 +523,6 @@ class SNSController extends BaseController
 
     /**
      * Validate subscription token format
-     *
-     * @param string $token
-     * @return bool
      */
     private function isValidSubscriptionToken(string $token): bool
     {
@@ -559,8 +538,7 @@ class SNSController extends BaseController
     /**
      * Handle SES notification from SNS
      *
-     * @param array $snsData
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     private function handleSESNotification(array $snsData)
     {
@@ -568,6 +546,7 @@ class SNSController extends BaseController
 
         if (!$message) {
             nlog('SNS Notification: Missing Message content');
+
             return response()->json(['error' => 'Missing Message content'], 400);
         }
 
@@ -576,6 +555,7 @@ class SNSController extends BaseController
 
         if (!$sesData) {
             nlog('SNS Notification: Invalid SES message format');
+
             return response()->json(['error' => 'Invalid SES message format'], 400);
         }
 
@@ -586,12 +566,12 @@ class SNSController extends BaseController
             nlog('SNS Notification: No company key found in SES data', [
                 'ses_data' => $sesData,
             ]);
+
             return response()->json(['error' => 'No company key found'], 400);
         }
 
         // Resolve the company and get their specific SES topic ARN if configured
         $this->resolveCompany($companyKey);
-
 
         // Validate the SES payload structure
         $validationResult = $this->validateSESPayload($sesData);
@@ -602,6 +582,7 @@ class SNSController extends BaseController
                 'payload' => $sesData,
                 'company_key' => $companyKey,
             ]);
+
             return response()->json(['error' => 'Invalid SES payload', 'details' => $validationResult['errors']], 400);
         }
 
@@ -615,7 +596,6 @@ class SNSController extends BaseController
     /**
      * Validate SES payload structure and required fields
      *
-     * @param array $sesData
      * @return array ['valid' => bool, 'errors' => array]
      */
     private function validateSESPayload(array $sesData): array
@@ -751,14 +731,12 @@ class SNSController extends BaseController
 
     /**
      * Check if timestamp is in valid ISO 8601 format
-     *
-     * @param string $timestamp
-     * @return bool
      */
     private function isValidISOTimestamp(string $timestamp): bool
     {
         try {
             $date = new \DateTime($timestamp);
+
             return $date !== false;
         } catch (\Exception $e) {
             return false;
@@ -767,9 +745,6 @@ class SNSController extends BaseController
 
     /**
      * Check for suspicious content patterns in the payload
-     *
-     * @param array $sesData
-     * @return bool
      */
     private function containsSuspiciousContent(array $sesData): bool
     {
@@ -791,6 +766,7 @@ class SNSController extends BaseController
         foreach ($suspiciousPatterns as $pattern) {
             if (stripos($payloadString, $pattern) !== false) {
                 nlog('SNS: Suspicious content pattern detected', ['pattern' => $pattern]);
+
                 return true;
             }
         }
@@ -800,9 +776,6 @@ class SNSController extends BaseController
 
     /**
      * Extract company key from SES data
-     *
-     * @param array $sesData
-     * @return string|null
      */
     private function extractCompanyKeyFromSES(array $sesData): ?string
     {
@@ -813,6 +786,7 @@ class SNSController extends BaseController
             $companyKey = $sesData['mail']['tags']['company_key'];
             if ($this->isValidCompanyKey($companyKey)) {
                 nlog('SNS: Found company key in mail tags', ['value' => $companyKey]);
+
                 return $companyKey;
             }
         }
@@ -829,6 +803,7 @@ class SNSController extends BaseController
                     $companyKey = $header['value'];
                     if ($this->isValidCompanyKey($companyKey)) {
                         nlog('SNS: Found X-Tag header', ['value' => $companyKey]);
+
                         return $companyKey;
                     }
                 }
@@ -842,6 +817,7 @@ class SNSController extends BaseController
             $companyKey = $sesData['company_key'];
             if ($this->isValidCompanyKey($companyKey)) {
                 nlog('SNS: Found company key in main SES data', ['value' => $companyKey]);
+
                 return $companyKey;
             }
         }
@@ -851,6 +827,7 @@ class SNSController extends BaseController
             $companyKey = $sesData['bounce']['tags']['company_key'];
             if ($this->isValidCompanyKey($companyKey)) {
                 nlog('SNS: Found company key in bounce tags', ['value' => $companyKey]);
+
                 return $companyKey;
             }
         }
@@ -860,6 +837,7 @@ class SNSController extends BaseController
             $companyKey = $sesData['complaint']['tags']['company_key'];
             if ($this->isValidCompanyKey($companyKey)) {
                 nlog('SNS: Found company key in complaint tags', ['value' => $companyKey]);
+
                 return $companyKey;
             }
         }
@@ -869,6 +847,7 @@ class SNSController extends BaseController
             $companyKey = $sesData['delivery']['tags']['company_key'];
             if ($this->isValidCompanyKey($companyKey)) {
                 nlog('SNS: Found company key in delivery tags', ['value' => $companyKey]);
+
                 return $companyKey;
             }
         }
@@ -878,9 +857,6 @@ class SNSController extends BaseController
 
     /**
      * Validate company key format
-     *
-     * @param string $companyKey
-     * @return bool
      */
     private function isValidCompanyKey(string $companyKey): bool
     {
@@ -908,7 +884,7 @@ class SNSController extends BaseController
             MultiDB::findAndSetDbByCompanyKey($companyKey);
 
             // Use MultiDB to find the company
-            $company = \App\Models\Company::where('company_key', $companyKey)->first();
+            $company = Company::where('company_key', $companyKey)->first();
 
             if ($company && $company->settings->email_sending_method === 'client_ses' && strlen($company->settings->ses_topic_arn ?? '') > 2) {
                 $this->expectedTopicArn = $company->settings->ses_topic_arn;
@@ -918,6 +894,4 @@ class SNSController extends BaseController
 
         }
     }
-
-
 }

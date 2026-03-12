@@ -13,15 +13,15 @@ return new class extends Migration
     {
 
         Schema::table('quotes', function (Blueprint $table) {
-            $table->mediumText('tax_data')->nullable(); //json object
+            $table->mediumText('tax_data')->nullable(); // json object
         });
 
         Schema::table('credits', function (Blueprint $table) {
-            $table->mediumText('tax_data')->nullable(); //json object
+            $table->mediumText('tax_data')->nullable(); // json object
         });
 
         Schema::table('purchase_orders', function (Blueprint $table) {
-            $table->mediumText('tax_data')->nullable(); //json object
+            $table->mediumText('tax_data')->nullable(); // json object
         });
 
     }
@@ -29,8 +29,5 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        
-    }
+    public function down(): void {}
 };

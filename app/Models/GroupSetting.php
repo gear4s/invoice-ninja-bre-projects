@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Utils\Traits\MakesHash;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -30,13 +31,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property bool $is_deleted
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Client> $clients
+ * @property-read Collection<int, Client> $clients
  * @property-read int|null $clients_count
- * @property-read \App\Models\Company $company
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read Company $company
+ * @property-read Collection<int, Document> $documents
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User|null $user
+ * @property-read User|null $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @method static \Illuminate\Database\Eloquent\Builder|GroupSetting newModelQuery()
@@ -55,14 +57,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|GroupSetting whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|GroupSetting withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|GroupSetting withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Client> $clients
+ *
+ * @property-read Collection<int, Client> $clients
+ *
  * @mixin \Eloquent
  */
 class GroupSetting extends StaticModel
 {
+    use Filterable;
     use MakesHash;
     use SoftDeletes;
-    use Filterable;
 
     protected $casts = [
         'settings' => 'object',
@@ -102,10 +106,7 @@ class GroupSetting extends StaticModel
         return $this->hasMany(Client::class, 'id', 'group_settings_id');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
-     */
-    public function documents(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function documents(): MorphMany
     {
         return $this->morphMany(Document::class, 'documentable');
     }
@@ -113,8 +114,8 @@ class GroupSetting extends StaticModel
     /**
      * Retrieve the model for a bound value.
      *
-     * @param mixed $value
-     * @param null $field
+     * @param  mixed  $value
+     * @param  null  $field
      * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)

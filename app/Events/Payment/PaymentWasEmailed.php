@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,11 +29,6 @@ class PaymentWasEmailed
 
     /**
      * Create a new event instance.
-     *
-     * @param Payment $payment
-     * @param Company $company
-     * @param ClientContact $contact
-     * @param array $event_vars
      */
     public function __construct(public Payment $payment, public Company $company, public ClientContact $contact, public array $event_vars) {}
 }

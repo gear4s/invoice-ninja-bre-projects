@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,18 +17,25 @@ namespace App\DataMapper\TaxReport;
 class TaxDetail
 {
     public string $tax_name; // e.g., Sales Tax
-    public float $tax_rate = 0; //21%
+
+    public float $tax_rate = 0; // 21%
+
     public string $nexus; // Tax jurisdiction nexus (e.g. "CA", "NY", "FL")
+
     public string $country_nexus; // Country nexus (e.g. "US", "UK", "CA")
+
     public float $taxable_amount; // net amount exclusive of taxes
+
     public float $tax_amount; // total tax amount
+
     public string $tax_status; // "collected", "pending", "refundable", "partially_paid", "adjustment"
 
     // Adjustment-specific fields (used when tax_status is "adjustment")
     public ?string $postal_code; // "invoice_cancelled", "tax_rate_change", "exemption_applied", "correction"
-    public float $line_total;
-    public float $total_tax;
 
+    public float $line_total;
+
+    public float $total_tax;
 
     public function __construct(array $attributes = [])
     {

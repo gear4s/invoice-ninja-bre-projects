@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,6 @@ class SubscriptionObserver
     /**
      * Handle the subscription "created" event.
      *
-     * @param Subscription $subscription
      * @return void
      */
     public function created(Subscription $subscription)
@@ -30,7 +28,6 @@ class SubscriptionObserver
     /**
      * Handle the subscription "updated" event.
      *
-     * @param Subscription $subscription
      * @return void
      */
     public function updated(Subscription $subscription)
@@ -41,7 +38,6 @@ class SubscriptionObserver
     /**
      * Handle the subscription "deleted" event.
      *
-     * @param Subscription $subscription
      * @return void
      */
     public function deleted(Subscription $subscription)
@@ -52,7 +48,6 @@ class SubscriptionObserver
     /**
      * Handle the subscription "restored" event.
      *
-     * @param Subscription $subscription
      * @return void
      */
     public function restored(Subscription $subscription)
@@ -63,7 +58,6 @@ class SubscriptionObserver
     /**
      * Handle the subscription "force deleted" event.
      *
-     * @param Subscription $subscription
      * @return void
      */
     public function forceDeleted(Subscription $subscription)

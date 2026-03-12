@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,14 +23,12 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class PlanTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,7 +39,7 @@ class PlanTest extends TestCase
         Model::reguard();
     }
 
-    public function testTrialFeatures()
+    public function test_trial_features()
     {
         config(['ninja.production' => true]);
 
@@ -62,7 +59,7 @@ class PlanTest extends TestCase
         $this->assertTrue($this->account->hasFeature(Account::FEATURE_CUSTOM_URL));
     }
 
-    public function testTrialFilter()
+    public function test_trial_filter()
     {
         $plans = collect(['trial_pro', 'trial_enterprise', 'no_freebies']);
 
@@ -73,7 +70,7 @@ class PlanTest extends TestCase
         $this->assertEquals($filtered_plans->count(), 2);
     }
 
-    public function testSubscriptionDateIncrement()
+    public function test_subscription_date_increment()
     {
         $subscription = SubscriptionFactory::create($this->company->id, $this->user->id);
         $subscription->frequency_id = RecurringInvoice::FREQUENCY_MONTHLY;

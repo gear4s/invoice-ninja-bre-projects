@@ -6,19 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Storecove;
 
+use App\DataMapper\Analytics\LegalEntityCreated;
 use App\Models\Company;
-use Illuminate\Support\Facades\Http;
-use Turbo124\Beacon\Facades\LightLogs;
+use App\Models\Credit;
+use App\Models\Invoice;
+use App\Services\EDocument\Gateway\Transformers\StorecoveExpense;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use App\DataMapper\Analytics\LegalEntityCreated;
-use App\Services\EDocument\Gateway\Transformers\StorecoveExpense;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Turbo124\Beacon\Facades\LightLogs;
 
 enum HttpVerb: string
 {
@@ -31,23 +35,20 @@ enum HttpVerb: string
 
 class Storecove
 {
-    /** @var string $base_url */
     private string $base_url = 'https://api.storecove.com/api/v2/';
 
-    /** @var array $peppol_discovery */
     private array $peppol_discovery = [
-        "documentTypes" =>  ["invoice"],
-        "network" =>  "peppol",
-        "metaScheme" =>  "iso6523-actorid-upis",
+        'documentTypes' => ['invoice'],
+        'network' => 'peppol',
+        'metaScheme' => 'iso6523-actorid-upis',
         // "scheme" =>  "de:lwid",
         // "identifier" => "DE:VAT",
     ];
 
-    /** @var array $dbn_discovery */
     private array $dbn_discovery = [
-        "documentTypes" =>  ["invoice"],
-        "network" =>  "dbnalliance",
-        "metaScheme" =>  "iso6523-actorid-upis",
+        'documentTypes' => ['invoice'],
+        'network' => 'dbnalliance',
+        'metaScheme' => 'iso6523-actorid-upis',
         // "scheme" =>  "gln",
         // "identifier" => "1200109963131",
     ];
@@ -66,7 +67,7 @@ class Storecove
 
     public function __construct()
     {
-        $this->router = new StorecoveRouter();
+        $this->router = new StorecoveRouter;
         $this->mutator = new Mutator($this);
         $this->adapter = new StorecoveAdapter($this);
         $this->expense = new StorecoveExpense($this);
@@ -76,16 +77,15 @@ class Storecove
     /**
      * build
      *
-     * @param  \App\Models\Invoice|\App\Models\Credit $model
-     * @return self
+     * @param  Invoice|Credit  $model
      */
     public function build($model): self
     {
         // return
         $this->adapter
-             ->transform($model)
-             ->decorate()
-             ->validate();
+            ->transform($model)
+            ->decorate()
+            ->validate();
 
         return $this;
     }
@@ -97,11 +97,6 @@ class Storecove
 
     /**
      * Discovery
-     *
-     * @param  string $identifier
-     * @param  string $scheme
-     * @param  string $network
-     * @return bool
      */
     public function discovery(string $identifier, string $scheme, string $network = 'peppol'): bool
     {
@@ -124,7 +119,7 @@ class Storecove
             ],
         };
 
-        $uri =  "discovery/receives";
+        $uri = 'discovery/receives';
 
         $r = $this->httpClient($uri, (HttpVerb::POST)->value, $network_data, $this->getHeaders());
 
@@ -134,11 +129,6 @@ class Storecove
 
     /**
      * Discovery - attempts to find the identifier on the network
-     *
-     * @param  string $identifier
-     * @param  string $scheme
-     * @param  string $network
-     * @return bool
      */
     public function exists(string $identifier, string $scheme, string $network = 'peppol'): bool
     {
@@ -150,7 +140,7 @@ class Storecove
             default => $network_data = array_merge($this->peppol_discovery, ['scheme' => $scheme, 'identifier' => $identifier]),
         };
 
-        $uri =  "discovery/exists";
+        $uri = 'discovery/exists';
 
         $r = $this->httpClient($uri, (HttpVerb::POST)->value, $network_data, $this->getHeaders());
 
@@ -160,18 +150,19 @@ class Storecove
 
     /**
      * Unused as yet
+     *
      * @todo
-     * @param  array $payload
      */
-    public function sendJsonDocument(array $payload): string|\Illuminate\Http\Client\Response
+    public function sendJsonDocument(array $payload): string|Response
     {
 
-        $uri = "document_submissions";
+        $uri = 'document_submissions';
 
         $r = $this->httpClient($uri, (HttpVerb::POST)->value, $payload, $this->getHeaders());
 
         if ($r->successful()) {
             nlog("sent! GUID = {$r->json()['guid']}");
+
             return $r->json()['guid'];
         }
 
@@ -185,24 +176,21 @@ class Storecove
     /**
      * Send Raw UBL Document via StoreCove
      *
-     * @param  string $document
-     * @param  int $routing_id
-     * @param  array $override_payload
      *
-     * @return string|\Illuminate\Http\Client\Response
+     * @return string|Response
      */
     public function sendDocument(string $document, int $routing_id, array $override_payload = [])
     {
         $this->legal_entity_id = $routing_id;
 
         $payload = [
-            "legalEntityId" => $routing_id,
-            "idempotencyGuid" => \Illuminate\Support\Str::uuid(),
-            "routing" => [
-                "eIdentifiers" => [],
-                "emails" => ["peppol@mail.invoicing.co"],
+            'legalEntityId' => $routing_id,
+            'idempotencyGuid' => Str::uuid(),
+            'routing' => [
+                'eIdentifiers' => [],
+                'emails' => ['peppol@mail.invoicing.co'],
             ],
-            "document" => [
+            'document' => [
 
             ],
         ];
@@ -210,13 +198,13 @@ class Storecove
         $payload = array_merge($payload, $override_payload);
 
         $payload['document']['documentType'] = 'invoice';
-        $payload['document']["rawDocumentData"] = [
-            "document" => base64_encode($document),
-            "parse" => true,
-            "parseStrategy" => "ubl",
+        $payload['document']['rawDocumentData'] = [
+            'document' => base64_encode($document),
+            'parse' => true,
+            'parseStrategy' => 'ubl',
         ];
 
-        $uri = "document_submissions";
+        $uri = 'document_submissions';
 
         $r = $this->httpClient($uri, (HttpVerb::POST)->value, $payload, $this->getHeaders());
 
@@ -233,7 +221,6 @@ class Storecove
      *
      * "guid" => "661c079d-0c2b-4b45-8263-678ed81224af",
      *
-     * @param  string $guid
      * @return mixed
      */
     public function getSendingEvidence(string $guid)
@@ -252,7 +239,6 @@ class Storecove
     /**
      * checkNetworkStatus
      *
-     * @param  array $data
      * @return bool|array
      */
     public function checkNetworkStatus(array $data): mixed
@@ -279,11 +265,11 @@ class Storecove
 
     }
 
-    public function setupLegalEntity(array $data): array|\Illuminate\Http\Client\Response
+    public function setupLegalEntity(array $data): array|Response
     {
         $legal_entity_response = $this->createLegalEntity($data);
 
-        if (! is_array($legal_entity_response)) {
+        if (!is_array($legal_entity_response)) {
             return $legal_entity_response;
         }
 
@@ -293,18 +279,18 @@ class Storecove
 
         $add_identifier_response = $this->addIdentifier(
             legal_entity_id: $legal_entity_response['id'],
-            identifier: $data['classification'] === 'individual' ? str_replace('/', '', $data['id_number']) : str_replace(" ", "", $data['vat_number']),
+            identifier: $data['classification'] === 'individual' ? str_replace('/', '', $data['id_number']) : str_replace(' ', '', $data['vat_number']),
             scheme: $scheme,
         );
 
-        if (! is_array($add_identifier_response)) {
+        if (!is_array($add_identifier_response)) {
             return $add_identifier_response;
         }
 
         /** For Belgium, we register both the BE:VAT and BE:EN identifiers so that users can receive via HERMES */
-        if ($data['country'] == "BE") {
-            $scheme = "BE:EN";
-            $identifier = $data['classification'] === 'individual' ? str_replace('/', '', $data['id_number']) : str_replace([" ","BE"], "", $data['vat_number']);
+        if ($data['country'] == 'BE') {
+            $scheme = 'BE:EN';
+            $identifier = $data['classification'] === 'individual' ? str_replace('/', '', $data['id_number']) : str_replace([' ', 'BE'], '', $data['vat_number']);
             $add_identifier_response = $this->addIdentifier(
                 legal_entity_id: $legal_entity_response['id'],
                 identifier: $identifier,
@@ -313,8 +299,8 @@ class Storecove
         }
 
         /** For Denmark, we register both identifiers */
-        if ($data['country'] == "DK") {
-            $add_identifier_response = $this->addIdentifier($legal_entity_response['id'], str_replace(" ", "", $data['vat_number']), "DK:DIGST");
+        if ($data['country'] == 'DK') {
+            $add_identifier_response = $this->addIdentifier($legal_entity_response['id'], str_replace(' ', '', $data['vat_number']), 'DK:DIGST');
         }
 
         return [
@@ -326,8 +312,7 @@ class Storecove
         ];
     }
 
-
-    public function removePeppolIdentifier(int $legal_entity_id, string $identifier, string $scheme, string $superscheme = "iso6523-actorid-upis"): array|\Illuminate\Http\Client\Response
+    public function removePeppolIdentifier(int $legal_entity_id, string $identifier, string $scheme, string $superscheme = 'iso6523-actorid-upis'): array|Response
     {
 
         $uri = "/legal_entities/{$legal_entity_id}/peppol_identifiers/{$superscheme}/{$scheme}/{$identifier}";
@@ -375,7 +360,7 @@ class Storecove
 
         }
 
-        //@todo - $data should contain the send/receive configuration for the next array
+        // @todo - $data should contain the send/receive configuration for the next array
         $company_defaults = [
             'acts_as_receiver' => true,
             'acts_as_sender' => true,
@@ -389,6 +374,7 @@ class Storecove
         if ($r->successful()) {
             $data = $r->object();
             LightLogs::create(new LegalEntityCreated($data->id, $data->tenant_id))->batch();
+
             return $r->json();
         }
 
@@ -399,10 +385,9 @@ class Storecove
     /**
      * GetLegalEntity
      *
-     * @param  int $id
-     * @return array|\Illuminate\Http\Client\Response
+     * @param  int  $id
      */
-    public function getLegalEntity($id): array|\Illuminate\Http\Client\Response
+    public function getLegalEntity($id): array|Response
     {
 
         $uri = "legal_entities/{$id}";
@@ -420,8 +405,6 @@ class Storecove
     /**
      * UpdateLegalEntity
      *
-     * @param  int $id
-     * @param  array $data
      * @return mixed
      */
     public function updateLegalEntity(int $id, array $data)
@@ -443,20 +426,15 @@ class Storecove
      * AddIdentifier
      *
      * Add a Peppol identifier to the legal entity
-     *
-     * @param  int $legal_entity_id
-     * @param  string $identifier
-     * @param  string $scheme
-     * @return array|\Illuminate\Http\Client\Response
      */
-    public function addIdentifier(int $legal_entity_id, string $identifier, string $scheme): array|\Illuminate\Http\Client\Response
+    public function addIdentifier(int $legal_entity_id, string $identifier, string $scheme): array|Response
     {
         $uri = "legal_entities/{$legal_entity_id}/peppol_identifiers";
-        $identifier = preg_replace("/[^a-zA-Z0-9]/", "", $identifier);
+        $identifier = preg_replace('/[^a-zA-Z0-9]/', '', $identifier);
         $data = [
-            "identifier" => $identifier,
-            "scheme" => $scheme,
-            "superscheme" => "iso6523-actorid-upis",
+            'identifier' => $identifier,
+            'scheme' => $scheme,
+            'superscheme' => 'iso6523-actorid-upis',
         ];
 
         $r = $this->httpClient($uri, (HttpVerb::POST)->value, $data);
@@ -477,22 +455,16 @@ class Storecove
      *
      * Adds an additional TAX identifier to the legal entity, where they are selling cross border
      * and are required to be registered in the destination country.
-     *
-     * @param  int $legal_entity_id
-     * @param  string $identifier
-     * @param  string $scheme
-     * @return array|\Illuminate\Http\Client\Response
      */
-
-    public function addAdditionalTaxIdentifier(int $legal_entity_id, string $identifier, string $scheme): array|\Illuminate\Http\Client\Response
+    public function addAdditionalTaxIdentifier(int $legal_entity_id, string $identifier, string $scheme): array|Response
     {
 
         $uri = "legal_entities/{$legal_entity_id}/additional_tax_identifiers";
 
         $data = [
-            "identifier" => $identifier,
-            "scheme" => $scheme,
-            "superscheme" => "iso6523-actorid-upis",
+            'identifier' => $identifier,
+            'scheme' => $scheme,
+            'superscheme' => 'iso6523-actorid-upis',
         ];
 
         $r = $this->httpClient($uri, (HttpVerb::POST)->value, $data);
@@ -512,22 +484,17 @@ class Storecove
      *
      * Adds an additional TAX identifier to the legal entity, where they are selling cross border
      * and are required to be registered in the destination country.
-     *
-     * @param  int $legal_entity_id
-     * @param  string $tax_identifier
-     * @return array|false|\Illuminate\Http\Client\Response
      */
-
-    public function removeAdditionalTaxIdentifier(int $legal_entity_id, string $tax_identifier): array|false|\Illuminate\Http\Client\Response
+    public function removeAdditionalTaxIdentifier(int $legal_entity_id, string $tax_identifier): array|false|Response
     {
         $legal_entity = $this->getLegalEntity($legal_entity_id);
 
         if (isset($legal_entity['additional_tax_identifiers']) && is_array($legal_entity['additional_tax_identifiers'])) {
             $identifer = collect($legal_entity['additional_tax_identifiers'])
-                ->filter(fn($id) => $id['identifier'] == $tax_identifier)
+                ->filter(fn ($id) => $id['identifier'] == $tax_identifier)
                 ->first();
 
-            if (! $identifer) {
+            if (!$identifer) {
                 return false;
             }
 
@@ -549,11 +516,8 @@ class Storecove
      * Delete Legal Entity Identifier
      *
      * Remove the entity from the network
-     *
-     * @param  int $legal_entity_id
-     * @return array|\Illuminate\Http\Client\Response
      */
-    public function deleteIdentifier(int $legal_entity_id): array|\Illuminate\Http\Client\Response
+    public function deleteIdentifier(int $legal_entity_id): array|Response
     {
         $uri = "/legal_entities/{$legal_entity_id}";
 
@@ -569,11 +533,9 @@ class Storecove
     /**
      * getDocument
      *
-     * @param  string $guid
-     * @param  string $format json|original
-     * @return array|\Illuminate\Http\Client\Response
+     * @param  string  $format  json|original
      */
-    public function getDocument(string $guid, string $format = 'json'): array|\Illuminate\Http\Client\Response
+    public function getDocument(string $guid, string $format = 'json'): array|Response
     {
 
         $uri = "/received_documents/{$guid}/{$format}";
@@ -588,15 +550,12 @@ class Storecove
 
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * getHeaders
      *
      * Base request headers
-     *
-     * @param  array $headers
-     * @return array
      */
     private function getHeaders(array $headers = []): array
     {
@@ -610,11 +569,7 @@ class Storecove
     /**
      * Http Client
      *
-     * @param  string $uri
-     * @param  string $verb
-     * @param  array $data
-     * @param  array $headers
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     private function httpClient(string $uri, string $verb, array $data, ?array $headers = [])
     {
@@ -622,24 +577,24 @@ class Storecove
         try {
             $r = Http::withToken(config('ninja.storecove_api_key'))
                 ->withHeaders($this->getHeaders($headers))
-            ->{$verb}("{$this->base_url}{$uri}", $data)->throw();
+                ->{$verb}("{$this->base_url}{$uri}", $data)->throw();
         } catch (ClientException $e) {
             // 4xx errors
             nlog("LEI:: {$this->legal_entity_id}");
-            nlog("Client error: " . $e->getMessage());
-            nlog("Response body: " . $e->getResponse()->getBody()->getContents());
+            nlog('Client error: ' . $e->getMessage());
+            nlog('Response body: ' . $e->getResponse()->getBody()->getContents());
         } catch (ServerException $e) {
             // 5xx errors
 
             nlog("LEI:: {$this->legal_entity_id}");
-            nlog("Server error: " . $e->getMessage());
-            nlog("Response body: " . $e->getResponse()->getBody()->getContents());
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+            nlog('Server error: ' . $e->getMessage());
+            nlog('Response body: ' . $e->getResponse()->getBody()->getContents());
+        } catch (RequestException $e) {
 
             nlog("LEI:: {$this->legal_entity_id}");
             nlog("Request error: {$e->getCode()}: " . $e->getMessage());
             $responseBody = $e->response->body();
-            nlog("Response body: " . $responseBody);
+            nlog('Response body: ' . $responseBody);
 
             return $e->response;
 
@@ -647,5 +602,4 @@ class Storecove
 
         return $r; // @phpstan-ignore-line
     }
-
 }

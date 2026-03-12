@@ -6,44 +6,39 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Transformers;
 
-use App\Utils\Ninja;
-use App\Models\Vendor;
-use App\Models\Company;
-use App\Models\Activity;
-use App\Factory\VendorFactory;
 use App\Factory\ExpenseFactory;
-use App\Repositories\VendorRepository;
-use App\Repositories\ExpenseRepository;
+use App\Factory\VendorFactory;
+use App\Models\Activity;
+use App\Models\Company;
+use App\Models\Country;
+use App\Models\Currency;
+use App\Models\Vendor;
 use App\Repositories\ActivityRepository;
-use Symfony\Component\Serializer\Serializer;
+use App\Repositories\ExpenseRepository;
 use App\Repositories\VendorContactRepository;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use InvoiceNinja\EInvoice\Models\Peppol\PaymentMeans;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use App\Services\EDocument\Gateway\Storecove\Storecove;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use App\Repositories\VendorRepository;
 use App\Services\EDocument\Gateway\Storecove\Models\Invoice;
-use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
-use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
-use InvoiceNinja\EInvoice\Models\Peppol\Invoice as PeppolInvoice;
-use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
-use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
-use App\Services\EDocument\Gateway\Storecove\PeppolToStorecoveNormalizer;
-use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
-use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
+use App\Services\EDocument\Gateway\Storecove\Storecove;
+use App\Utils\Ninja;
+use App\Utils\TempFile;
 use App\Utils\Traits\SavesDocuments;
+use Illuminate\Support\Collection;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 class StorecoveExpense
 {
@@ -54,11 +49,11 @@ class StorecoveExpense
     public function getStorecoveInvoice($storecove_json)
     {
 
-        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader);
 
         // Create a proper PropertyInfoExtractor
-        $phpDocExtractor = new PhpDocExtractor();
-        $reflectionExtractor = new ReflectionExtractor();
+        $phpDocExtractor = new PhpDocExtractor;
+        $reflectionExtractor = new ReflectionExtractor;
 
         $propertyInfo = new PropertyInfoExtractor(
             // List of extractors for type info
@@ -74,8 +69,8 @@ class StorecoveExpense
         );
 
         $normalizers = [
-            new DateTimeNormalizer(),
-            new ArrayDenormalizer(),
+            new DateTimeNormalizer,
+            new ArrayDenormalizer,
             new ObjectNormalizer(
                 $classMetadataFactory,
                 null,
@@ -91,8 +86,7 @@ class StorecoveExpense
             AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE => true,  // Add this
         ];
 
-        $encoders = [new JsonEncoder()];
-
+        $encoders = [new JsonEncoder];
 
         $serializer = new Serializer($normalizers, $encoders);
 
@@ -118,33 +112,32 @@ class StorecoveExpense
         $expense_array = $this->transform($storecove_invoice);
 
         $vendor = Vendor::query()
-                ->where('company_id', $company->id)
-                ->where(function ($query) use ($expense_array) {
-                    // Check VAT number if present
-                    if (strlen($expense_array['vendor']['vat_number']) > 2) {
-                        $query->orWhere('vat_number', $expense_array['vendor']['vat_number']);
-                    }
+            ->where('company_id', $company->id)
+            ->where(function ($query) use ($expense_array) {
+                // Check VAT number if present
+                if (strlen($expense_array['vendor']['vat_number']) > 2) {
+                    $query->orWhere('vat_number', $expense_array['vendor']['vat_number']);
+                }
 
-                    // Check ID number if present
-                    if (strlen($expense_array['vendor']['id_number']) > 2) {
-                        $query->orWhere('id_number', $expense_array['vendor']['id_number']);
-                    }
+                // Check ID number if present
+                if (strlen($expense_array['vendor']['id_number']) > 2) {
+                    $query->orWhere('id_number', $expense_array['vendor']['id_number']);
+                }
 
-                    // If no valid identifiers, force no results
-                    if (strlen($expense_array['vendor']['vat_number']) <= 2 && strlen($expense_array['vendor']['id_number']) <= 2) {
-                        $query->where('id', 0); // Forces no match
-                    }
+                // If no valid identifiers, force no results
+                if (strlen($expense_array['vendor']['vat_number']) <= 2 && strlen($expense_array['vendor']['id_number']) <= 2) {
+                    $query->where('id', 0); // Forces no match
+                }
 
-                })->first();
+            })->first();
 
         if (!$vendor) {
-            $vendor_repo = new VendorRepository(new VendorContactRepository());
+            $vendor_repo = new VendorRepository(new VendorContactRepository);
             $vendor = VendorFactory::create($company->id, $company->owner()->id);
             $vendor = $vendor_repo->save($expense_array['vendor'], $vendor);
         }
 
-
-        $expense_repo = new ExpenseRepository();
+        $expense_repo = new ExpenseRepository;
 
         $expense = ExpenseFactory::create($vendor->company_id, $vendor->user_id);
         $expense->vendor_id = $vendor->id;
@@ -153,7 +146,7 @@ class StorecoveExpense
 
         $expense = $expense_repo->save($expense_array, $expense);
 
-        $fields = new \stdClass();
+        $fields = new \stdClass;
 
         $fields->expense_id = $expense->id;
         $fields->user_id = $expense->user_id;
@@ -162,12 +155,12 @@ class StorecoveExpense
         $fields->vendor_id = $expense->vendor_id;
         $fields->activity_type_id = Activity::E_EXPENSE_CREATED;
 
-        $activity_repo = new ActivityRepository();
+        $activity_repo = new ActivityRepository;
         $activity_repo->save($fields, $expense, Ninja::eventVars());
 
         foreach ($storecove_invoice->getAttachments() ?? [] as $attachment) {
 
-            $document = \App\Utils\TempFile::UploadedFileFromBase64($attachment->getDocument(), $attachment->getFilename(), $attachment->getMimeType());
+            $document = TempFile::UploadedFileFromBase64($attachment->getDocument(), $attachment->getFilename(), $attachment->getMimeType());
 
             $this->saveDocument($document, $expense, true);
 
@@ -203,7 +196,7 @@ class StorecoveExpense
                 } elseif ($ident == 'routing_id') {
                     $routing_id = $pi->getId();
                 } else {
-                    //Sometimes some very unusual identifiers are returned, we should always skip these.
+                    // Sometimes some very unusual identifiers are returned, we should always skip these.
                     // ie. IBAN, etc.
                     continue;
                 }
@@ -260,7 +253,7 @@ class StorecoveExpense
             $key++;
         }
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         $currency = $currencies->first(function ($c) use ($storecove_invoice) {
@@ -270,11 +263,11 @@ class StorecoveExpense
         $countries = app('countries');
 
         $country_id = $countries->first(function ($c) use ($party) {
-            /** @var \App\Models\Country $c */
+            /** @var Country $c */
             return $party->getAddress()->getCountry() == $c->iso_3166_2 || $party->getAddress()->getCountry() == $c->iso_3166_3;
         })->id ?? 1;
 
-        //vendor
+        // vendor
         $vendor = [
             'name' => $party->getCompanyName() ?? $party->getRegistrationName(),
             'phone' => $party->getContact()->getPhone() ?? '',
@@ -298,7 +291,7 @@ class StorecoveExpense
             ],
         ];
 
-        //expense
+        // expense
         $expense = [
             'amount' => $storecove_invoice->getAmountIncludingTax(),
             'currency_id' => $currency,
@@ -323,6 +316,4 @@ class StorecoveExpense
         return $expense;
 
     }
-
-
 }

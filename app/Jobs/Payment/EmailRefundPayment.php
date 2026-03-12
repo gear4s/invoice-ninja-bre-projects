@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -43,10 +42,7 @@ class EmailRefundPayment implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param Payment $payment
-     * @param $email_builder
-     * @param $contact
-     * @param $company
+     * @param  $email_builder
      */
     public function __construct(public Payment $payment, private Company $company, private ?ClientContact $contact)
     {
@@ -55,7 +51,6 @@ class EmailRefundPayment implements ShouldQueue
 
     /**
      * Execute the job.
-     *
      */
     public function handle()
     {
@@ -83,7 +78,7 @@ class EmailRefundPayment implements ShouldQueue
 
             $invitation = null;
 
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
 
             if ($this->payment->invoices && $this->payment->invoices->count() >= 1) {
 

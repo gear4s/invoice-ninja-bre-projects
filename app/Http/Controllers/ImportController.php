@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Import\ImportRequest;
 use App\Http\Requests\Import\PreImportRequest;
 use App\Jobs\Import\CSVIngest;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
@@ -27,9 +29,8 @@ class ImportController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param PreImportRequest $request
      *
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     * @return JsonResponse|Response
      *
      * @OA\Post(
      *      path="/api/v1/preimport",
@@ -37,36 +38,46 @@ class ImportController extends Controller
      *      tags={"imports"},
      *      summary="Pre Import checks - returns a reference to the job and the headers of the CSV",
      *      description="Pre Import checks - returns a reference to the job and the headers of the CSV",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\RequestBody(
      *         description="The CSV file",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
+     *
      *             @OA\Schema(
      *                 type="string",
      *                 format="binary"
      *             )
      *         )
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a reference to the file",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -78,7 +89,7 @@ class ImportController extends Controller
         $hash = Str::random(32);
 
         $data = [
-            'hash'     => $hash,
+            'hash' => $hash,
             'mappings' => [],
         ];
         /** @var UploadedFile $file */
@@ -96,7 +107,7 @@ class ImportController extends Controller
 
             $data['mappings'][$entityType] = [
                 'available' => $class_map::importable(),
-                'headers'   => array_slice($csv_array, 0, 2),
+                'headers' => array_slice($csv_array, 0, 2),
                 'hints' => $hints,
             ];
         }
@@ -190,24 +201,28 @@ class ImportController extends Controller
         // UTF-32 BE BOM
         if (substr($data, 0, 4) === "\x00\x00\xFE\xFF") {
             $withoutBOM = substr($data, 4);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-32BE');
         }
 
         // UTF-32 LE BOM
         if (substr($data, 0, 4) === "\xFF\xFE\x00\x00") {
             $withoutBOM = substr($data, 4);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-32LE');
         }
 
         // UTF-16 BE BOM
         if (substr($data, 0, 2) === "\xFE\xFF") {
             $withoutBOM = substr($data, 2);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-16BE');
         }
 
         // UTF-16 LE BOM
         if (substr($data, 0, 2) === "\xFF\xFE") {
             $withoutBOM = substr($data, 2);
+
             return mb_convert_encoding($withoutBOM, 'UTF-8', 'UTF-16LE');
         }
 
@@ -297,6 +312,7 @@ class ImportController extends Controller
                 return true;
             }
         }
+
         return false;
     }
 
@@ -328,7 +344,7 @@ class ImportController extends Controller
 
         $translated_keys = collect($available_keys)->map(function ($value, $key) {
 
-            $parts = explode(".", $value);
+            $parts = explode('.', $value);
             $index = $parts[0];
             $label = $parts[1] ?? $parts[0];
 
@@ -336,13 +352,13 @@ class ImportController extends Controller
 
         })->toArray();
 
-        //Exact string match
+        // Exact string match
         foreach ($headers as $key => $value) {
 
             foreach ($translated_keys as $tkey => $tvalue) {
 
-                $concat_needle = str_ireplace(" ", "", $tvalue['index'] . $tvalue['label']);
-                $concat_value = str_ireplace(" ", "", $value);
+                $concat_needle = str_ireplace(' ', '', $tvalue['index'] . $tvalue['label']);
+                $concat_value = str_ireplace(' ', '', $value);
 
                 if ($this->testMatch($concat_value, $concat_needle)) {
 
@@ -359,7 +375,7 @@ class ImportController extends Controller
 
         }
 
-        //Label Match
+        // Label Match
         foreach ($headers as $key => $value) {
 
             if (isset($hints[$key])) {
@@ -381,7 +397,7 @@ class ImportController extends Controller
 
         }
 
-        //Index matching pass using the index of the translation here
+        // Index matching pass using the index of the translation here
         foreach ($headers as $key => $value) {
             if (isset($hints[$key])) {
                 continue;
@@ -410,7 +426,7 @@ class ImportController extends Controller
 
     public function import(ImportRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $data = $request->all();
@@ -448,7 +464,7 @@ class ImportController extends Controller
 
         $csvdelimiter = self::detectDelimiter($csvfile);
         $csv->setDelimiter($csvdelimiter);
-        $stmt = new Statement();
+        $stmt = new Statement;
         $data = iterator_to_array($stmt->process($csv));
 
         if (count($data) > 0) {
@@ -472,8 +488,7 @@ class ImportController extends Controller
     /**
      * Returns the best delimiter
      *
-     * @param string $csvfile
-     * @return string
+     * @param  string  $csvfile
      */
     public function detectDelimiter($csvfile): string
     {

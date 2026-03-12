@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils\Traits;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
 
@@ -35,7 +35,7 @@ trait SubscriptionHooker
             $headers = array_merge($headers, $subscription->webhook_configuration['post_purchase_headers']);
         }
 
-        $client = new \GuzzleHttp\Client(
+        $client = new Client(
             [
                 'headers' => $headers,
             ]
@@ -61,7 +61,7 @@ trait SubscriptionHooker
             $error = json_decode($e->getResponse()->getBody()->getContents());
 
             if (is_null($error)) {
-                nlog("empty response");
+                nlog('empty response');
                 nlog($e->getMessage());
             }
 

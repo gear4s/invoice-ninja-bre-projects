@@ -6,40 +6,37 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Exceptions;
 
-use Throwable;
-use PDOException;
 use App\Utils\Ninja;
-use Sentry\State\Scope;
-use Illuminate\Support\Arr;
-use Illuminate\Http\Request;
-use InvalidArgumentException;
-use Sentry\Laravel\Integration;
-use Illuminate\Support\Facades\Schema;
 use Aws\Exception\CredentialsException;
-use Illuminate\Database\QueryException;
-use GuzzleHttp\Exception\ConnectException;
-use Illuminate\Auth\AuthenticationException;
-use League\Flysystem\UnableToCreateDirectory;
-use Illuminate\Session\TokenMismatchException;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Encryption\MissingAppKeyException;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Queue\MaxAttemptsExceededException;
 use Elastic\Transport\Exception\NoNodeAvailableException;
-use Illuminate\Http\Exceptions\ThrottleRequestsException;
-use Symfony\Component\Process\Exception\RuntimeException;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\RelationNotFoundException;
+use Illuminate\Database\QueryException;
+use Illuminate\Encryption\MissingAppKeyException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Http\Request;
+use Illuminate\Queue\MaxAttemptsExceededException;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
+use League\Flysystem\UnableToCreateDirectory;
+use PDOException;
+use Sentry\Laravel\Integration;
+use Sentry\State\Scope;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
-use Illuminate\Database\Eloquent\ModelNotFoundException as ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Process\Exception\RuntimeException;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -98,8 +95,8 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param Throwable $exception
      * @return void
+     *
      * @throws Throwable
      */
     public function report(Throwable $exception)
@@ -121,9 +118,9 @@ class Handler extends ExceptionHandler
                 }
 
                 $scope->setUser([
-                    'id'    => $key,
+                    'id' => $key,
                     'email' => 'hosted@invoiceninja.com',
-                    'name'  => $name,
+                    'name' => $name,
                 ]);
             });
 
@@ -135,15 +132,15 @@ class Handler extends ExceptionHandler
                 if (auth()->guard('contact') && auth()->guard('contact')->user() && auth()->guard('contact')->user()->company->account->report_errors) {// @phpstan-ignore-line
 
                     $scope->setUser([
-                        'id'    => auth()->guard('contact')->user()->company->account->key,
+                        'id' => auth()->guard('contact')->user()->company->account->key,
                         'email' => 'anonymous@example.com',
-                        'name'  => 'Anonymous User',
+                        'name' => 'Anonymous User',
                     ]);
                 } elseif (auth()->guard('user') && auth()->guard('user')->user() && auth()->user()->companyIsSet() && auth()->user()->company()->account->report_errors) {// @phpstan-ignore-line
                     $scope->setUser([
-                        'id'    => auth()->user()->account->key,
+                        'id' => auth()->user()->account->key,
                         'email' => 'anonymous@example.com',
-                        'name'  => 'Anonymous User',
+                        'name' => 'Anonymous User',
                     ]);
                 }
             });
@@ -189,11 +186,9 @@ class Handler extends ExceptionHandler
         return true;
     }
 
-
     /**
      * Determine if the exception is in the "do not report" list.
      *
-     * @param  \Throwable  $e
      * @return bool
      */
     protected function sentryShouldReport(Throwable $e)
@@ -204,14 +199,14 @@ class Handler extends ExceptionHandler
             $dontReport = array_merge($this->selfHostDontReport, $this->internalDontReport);
         }
 
-        return is_null(Arr::first($dontReport, fn($type) => $e instanceof $type));
+        return is_null(Arr::first($dontReport, fn ($type) => $e instanceof $type));
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param Request $request
-     * @param Throwable $exception
+     * @param  Request  $request
+     *
      * @throws Throwable
      */
     public function render($request, Throwable $exception)
@@ -232,11 +227,11 @@ class Handler extends ExceptionHandler
             return response()->json(['message' => $exception->getMessage()], 401);
         } elseif ($exception instanceof TokenMismatchException) {
             return redirect()
-                    ->back()
-                    ->withInput($request->except('password', 'password_confirmation', '_token'))
-                    ->with([
-                        'message' => ctrans('texts.token_expired'),
-                        'message-type' => 'danger', ]);
+                ->back()
+                ->withInput($request->except('password', 'password_confirmation', '_token'))
+                ->with([
+                    'message' => ctrans('texts.token_expired'),
+                    'message-type' => 'danger', ]);
         } elseif ($exception instanceof NotFoundHttpException && $request->expectsJson()) {
             return response()->json(['message' => 'Route does not exist'], 404);
         } elseif ($exception instanceof MethodNotAllowedHttpException && $request->expectsJson()) {

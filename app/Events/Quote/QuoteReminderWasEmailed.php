@@ -6,7 +6,6 @@
  * @link https://github.com/Quoteninja/Quoteninja source repository
  *
  * @copyright Copyright (c) 2024. Quote Ninja LLC (https://Quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 

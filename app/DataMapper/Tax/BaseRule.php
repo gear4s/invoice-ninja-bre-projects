@@ -6,19 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\DataMapper\Tax;
 
-use App\Models\Quote;
+use App\DataMapper\Tax\ZipTax\Response;
+use App\DataProviders\USStates;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
-use App\DataProviders\USStates;
-use App\DataMapper\Tax\ZipTax\Response;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
+use Carbon\Carbon;
 
 class BaseRule implements RuleInterface
 {
@@ -108,7 +108,7 @@ class BaseRule implements RuleInterface
 
         'AU' => 'AU', // Australia
 
-        'GB' => 'UK', //Great Britain
+        'GB' => 'UK', // Great Britain
     ];
 
     /** EU TAXES */
@@ -141,15 +141,18 @@ class BaseRule implements RuleInterface
         'ES',
         'GB',
     ];
-    /** Supported E Delivery Countries */
 
+    /** Supported E Delivery Countries */
     public string $tax_name1 = '';
+
     public float $tax_rate1 = 0;
 
     public string $tax_name2 = '';
+
     public float $tax_rate2 = 0;
 
     public string $tax_name3 = '';
+
     public float $tax_rate3 = 0;
 
     protected ?Client $client;
@@ -171,11 +174,9 @@ class BaseRule implements RuleInterface
     {
         return $this->should_calc_tax && $this->checkIfInvoiceLocked() && $this->invoice->client;
     }
+
     /**
      * Initializes the tax rule for the entity.
-     *
-     * @param  mixed $invoice
-     * @return self
      */
     public function setEntity(mixed $invoice): self
     {
@@ -185,7 +186,6 @@ class BaseRule implements RuleInterface
 
         $this->resolveRegions();
 
-
         if (!$this->isTaxableRegion()) {
             $this->tax_data = null;
             $this->tax_rate1 = 0;
@@ -194,6 +194,7 @@ class BaseRule implements RuleInterface
             $this->tax_name2 = '';
             $this->tax_rate3 = 0;
             $this->tax_name3 = '';
+
             return $this;
         }
 
@@ -201,7 +202,7 @@ class BaseRule implements RuleInterface
 
         $this->tax_data = new Response($this->invoice->tax_data);
 
-        if ($this->invoice instanceof \App\Models\RecurringInvoice) {
+        if ($this->invoice instanceof RecurringInvoice) {
             $this->tax_data = new Response($this->client->tax_data);
         }
 
@@ -210,8 +211,6 @@ class BaseRule implements RuleInterface
 
     /**
      * Configigures the Tax Data for the entity
-     *
-     * @return self
      */
     private function configTaxData(): self
     {
@@ -230,9 +229,7 @@ class BaseRule implements RuleInterface
         /**
          * Origin - Company Tax Data
          * Destination - Client Tax Data
-         *
          */
-
         $tax_data = false;
 
         if ($this->seller_region == 'US' && $this->client_region == 'US') {
@@ -243,6 +240,7 @@ class BaseRule implements RuleInterface
             /** We should never encounter this scenario */
             if (!$company->origin_tax_data) {
                 $this->should_calc_tax = false;
+
                 return $this;
             }
 
@@ -256,7 +254,6 @@ class BaseRule implements RuleInterface
                 $tax_data = $this->invoice->location->tax_data;
 
             } elseif ($this->client->tax_data) {
-
 
                 $tax_data = $this->client->tax_data;
 
@@ -274,7 +271,7 @@ class BaseRule implements RuleInterface
                 try {
                     $this->invoice->saveQuietly();
                 } catch (\Exception $e) {
-                    nlog("Exception:: BaseRule::" . $e->getMessage());
+                    nlog('Exception:: BaseRule::' . $e->getMessage());
                 }
 
             }
@@ -284,11 +281,8 @@ class BaseRule implements RuleInterface
 
     }
 
-
     /**
      * Resolve Regions & Subregions
-     *
-     * @return self
      */
     private function resolveRegions(): self
     {
@@ -354,7 +348,7 @@ class BaseRule implements RuleInterface
 
             return $this;
 
-        } elseif ($this->client_region == 'AU') { //these are defaults and are only stubbed out for now, for AU we can actually remove these
+        } elseif ($this->client_region == 'AU') { // these are defaults and are only stubbed out for now, for AU we can actually remove these
 
             $this->tax_rate1 = $this->client->company->tax_data->regions->AU->subregions->AU->tax_rate;
             $this->tax_name1 = $this->client->company->tax_data->regions->AU->subregions->AU->tax_name;
@@ -409,7 +403,7 @@ class BaseRule implements RuleInterface
 
             return $this;
 
-        } elseif ($this->isTaxableRegion()) { //other regions outside of US
+        } elseif ($this->isTaxableRegion()) { // other regions outside of US
 
             match (intval($item->tax_id)) {
                 Product::PRODUCT_TYPE_EXEMPT => $this->taxExempt($item),
@@ -509,7 +503,7 @@ class BaseRule implements RuleInterface
 
     public function regionWithNoTaxCoverage(string $iso_3166_2): bool
     {
-        return ! in_array($iso_3166_2, array_merge($this->eu_country_codes, array_keys($this->region_codes)));
+        return !in_array($iso_3166_2, array_merge($this->eu_country_codes, array_keys($this->region_codes)));
     }
 
     private function checkIfInvoiceLocked(): bool
@@ -537,15 +531,15 @@ class BaseRule implements RuleInterface
 
                 return true;
 
-                //if now is greater than the end of month the invoice was dated - do not modify
+                // if now is greater than the end of month the invoice was dated - do not modify
             case 'end_of_month':
-                if (\Carbon\Carbon::parse($this->invoice->date)->setTimezone($this->invoice->company->timezone()->name)->endOfMonth()->lte(now())) {
+                if (Carbon::parse($this->invoice->date)->setTimezone($this->invoice->company->timezone()->name)->endOfMonth()->lte(now())) {
                     return false;
                 }
+
                 return true;
             default:
                 return true;
         }
     }
-
 }

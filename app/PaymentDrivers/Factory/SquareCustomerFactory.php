@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -81,10 +80,9 @@ class SquareCustomerFactory
     {
         $cards = [];
 
-
         foreach ($customer->getCards() ?? [] as $card) {
 
-            $meta = new \stdClass();
+            $meta = new \stdClass;
             $meta->exp_month = $card->getExpMonth();
             $meta->exp_year = $card->getExpYear();
             $meta->last4 = $card->getLast4();
@@ -103,7 +101,7 @@ class SquareCustomerFactory
 
         return
             collect([
-                'name' => $customer->getCompanyName() ?? ($customer->getGivenName() ?? '' . " " . $customer->getFamilyName() ?? ''),
+                'name' => $customer->getCompanyName() ?? ($customer->getGivenName() ?? '' . ' ' . $customer->getFamilyName() ?? ''),
                 'contacts' => [
                     [
                         'first_name' => $customer->getGivenName(),
@@ -124,8 +122,7 @@ class SquareCustomerFactory
                 ],
                 'cards' => $cards,
             ])
-            ->toArray();
+                ->toArray();
 
     }
-
 }

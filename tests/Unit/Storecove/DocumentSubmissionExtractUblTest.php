@@ -6,32 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit\Storecove;
 
-use Tests\TestCase;
-use ReflectionClass;
-use ReflectionMethod;
 use Modules\Admin\Jobs\Storecove\DocumentSubmission;
+use ReflectionClass;
+use Tests\TestCase;
 
 class DocumentSubmissionExtractUblTest extends TestCase
 {
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        if(!class_exists(DocumentSubmission::class)) {
+        if (!class_exists(DocumentSubmission::class)) {
             $this->markTestSkipped('DocumentSubmission class does not exist');
         }
     }
+
     /**
      * Test extracting CreditNote from StandardBusinessDocument wrapper
      */
-    public function testExtractCreditNoteFromSbdWrapper(): void
+    public function test_extract_credit_note_from_sbd_wrapper(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><sh:StandardBusinessDocument xmlns:sh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"><sh:StandardBusinessDocumentHeader><sh:HeaderVersion>1.0</sh:HeaderVersion><sh:Sender><sh:Identifier Authority="iso6523-actorid-upis">0208:1234567890</sh:Identifier></sh:Sender><sh:Receiver><sh:Identifier Authority="iso6523-actorid-upis">0208:0987654321</sh:Identifier></sh:Receiver><sh:DocumentIdentification><sh:Standard>urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2</sh:Standard><sh:TypeVersion>2.1</sh:TypeVersion><sh:InstanceIdentifier>aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee</sh:InstanceIdentifier><sh:Type>CreditNote</sh:Type><sh:CreationDateAndTime>2026-01-22T15:53:41.44Z</sh:CreationDateAndTime></sh:DocumentIdentification><sh:BusinessScope><sh:Scope><sh:Type>DOCUMENTID</sh:Type><sh:InstanceIdentifier>urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2::CreditNote##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1</sh:InstanceIdentifier><sh:Identifier>busdox-docid-qns</sh:Identifier></sh:Scope><sh:Scope><sh:Type>PROCESSID</sh:Type><sh:InstanceIdentifier>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</sh:InstanceIdentifier><sh:Identifier>cenbii-procid-ubl</sh:Identifier></sh:Scope><sh:Scope><sh:Type>COUNTRY_C1</sh:Type><sh:InstanceIdentifier>BE</sh:InstanceIdentifier></sh:Scope></sh:BusinessScope></sh:StandardBusinessDocumentHeader><CreditNote xmlns:cec="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2">
    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
@@ -199,7 +197,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
         $this->assertStringNotContainsString('StandardBusinessDocumentHeader', $result);
 
         // Assert that the result is valid XML that can be parsed
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $this->assertTrue($dom->loadXML($result), 'Extracted XML should be valid');
 
         // Assert that the root element is CreditNote
@@ -210,7 +208,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
     /**
      * Test extracting Invoice from StandardBusinessDocument wrapper
      */
-    public function testExtractInvoiceFromSbdWrapper(): void
+    public function test_extract_invoice_from_sbd_wrapper(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><sh:StandardBusinessDocument xmlns:sh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"><sh:StandardBusinessDocumentHeader><sh:HeaderVersion>1.0</sh:HeaderVersion><sh:Sender><sh:Identifier Authority="iso6523-actorid-upis">0208:0769867026</sh:Identifier></sh:Sender><sh:Receiver><sh:Identifier Authority="iso6523-actorid-upis">0208:0821894064</sh:Identifier></sh:Receiver><sh:DocumentIdentification><sh:Standard>urn:oasis:names:specification:ubl:schema:xsd:Invoice-2</sh:Standard><sh:TypeVersion>2.1</sh:TypeVersion><sh:InstanceIdentifier>507dcfe6-7f6e-473a-bd20-f1c8dce2e2c8</sh:InstanceIdentifier><sh:Type>Invoice</sh:Type><sh:CreationDateAndTime>2026-01-22T15:53:41.44Z</sh:CreationDateAndTime></sh:DocumentIdentification></sh:StandardBusinessDocumentHeader><Invoice xmlns:cec="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
@@ -238,7 +236,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
         $this->assertStringNotContainsString('StandardBusinessDocument', $result);
 
         // Assert that the result is valid XML that can be parsed
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $this->assertTrue($dom->loadXML($result), 'Extracted XML should be valid');
 
         // Assert that the root element is Invoice
@@ -249,7 +247,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
     /**
      * Test that exception is thrown when neither Invoice nor CreditNote is found
      */
-    public function testThrowsExceptionWhenNoInvoiceOrCreditNoteFound(): void
+    public function test_throws_exception_when_no_invoice_or_credit_note_found(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><sh:StandardBusinessDocument xmlns:sh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"><sh:StandardBusinessDocumentHeader><sh:HeaderVersion>1.0</sh:HeaderVersion></sh:StandardBusinessDocumentHeader><OtherDocument xmlns="urn:example:other:document"><SomeElement>Test</SomeElement></OtherDocument></sh:StandardBusinessDocument>';
 
@@ -266,7 +264,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
     /**
      * Test that method handles XML without SBD wrapper (direct Invoice)
      */
-    public function testExtractDirectInvoiceWithoutWrapper(): void
+    public function test_extract_direct_invoice_without_wrapper(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><Invoice xmlns:cec="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
@@ -286,7 +284,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
         $this->assertStringContainsString('DIRECT/2026/0001', $result);
 
         // Assert that the result is valid XML that can be parsed
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $this->assertTrue($dom->loadXML($result), 'Extracted XML should be valid');
         $this->assertEquals('Invoice', $dom->documentElement->localName);
     }
@@ -294,7 +292,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
     /**
      * Test that method handles XML without SBD wrapper (direct CreditNote)
      */
-    public function testExtractDirectCreditNoteWithoutWrapper(): void
+    public function test_extract_direct_credit_note_without_wrapper(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><CreditNote xmlns:cec="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2">
    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
@@ -314,7 +312,7 @@ class DocumentSubmissionExtractUblTest extends TestCase
         $this->assertStringContainsString('CN/2026/0001', $result);
 
         // Assert that the result is valid XML that can be parsed
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $this->assertTrue($dom->loadXML($result), 'Extracted XML should be valid');
         $this->assertEquals('CreditNote', $dom->documentElement->localName);
     }

@@ -6,20 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\EInvoice;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Modules\Admin\Http\Controllers\EInvoiceTokenController;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class PeppolApiTest extends TestCase
 {
     use DatabaseTransactions;
@@ -40,16 +38,16 @@ class PeppolApiTest extends TestCase
         );
     }
 
-    public function testGeneratingToken()
+    public function test_generating_token()
     {
-        if (! class_exists(\Modules\Admin\Http\Controllers\EInvoiceTokenController::class)) {
+        if (!class_exists(EInvoiceTokenController::class)) {
             $this->markTestSkipped('Admin module not installed');
         }
 
         config(['ninja.environment' => 'selfhost']);
 
         /**
-         * @var \App\Models\User $user
+         * @var User $user
          */
         $user = $this->user;
 
@@ -62,17 +60,16 @@ class PeppolApiTest extends TestCase
                 'X-API-TOKEN' => $this->token,
             ])
             ->post('/api/v1/einvoice/token/update')
-            ->assertSuccessful()
-        ;
+            ->assertSuccessful();
 
         $user->refresh();
 
         $this->assertNotEquals($current, $user->account->e_invoicing_token);
     }
 
-    public function testHealthCheck()
+    public function test_health_check()
     {
-        if (! class_exists(\Modules\Admin\Http\Controllers\EInvoiceTokenController::class)) {
+        if (!class_exists(EInvoiceTokenController::class)) {
             $this->markTestSkipped('Admin module not installed');
         }
 
@@ -83,23 +80,20 @@ class PeppolApiTest extends TestCase
                 'X-API-TOKEN' => $this->token,
             ])
             ->get('/api/v1/einvoice/health_check')
-            ->assertStatus(status: 422)
-        ;
+            ->assertStatus(status: 422);
 
         $this
             ->withHeaders([
                 'X-API-TOKEN' => $this->token,
             ])
             ->post('/api/v1/einvoice/token/update')
-            ->assertSuccessful()
-        ;
+            ->assertSuccessful();
 
         $this
             ->withHeaders([
                 'X-API-TOKEN' => $this->token,
             ])
             ->get('/api/v1/einvoice/health_check')
-            ->assertSuccessful()
-        ;
+            ->assertSuccessful();
     }
 }

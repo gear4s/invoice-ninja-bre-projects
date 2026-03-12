@@ -18,7 +18,7 @@ return new class extends Migration
         Schema::table('invoices', function (Blueprint $table) {
             $table->text('sync')->nullable();
         });
-        
+
         Schema::table('products', function (Blueprint $table) {
             $table->text('sync')->nullable();
         });

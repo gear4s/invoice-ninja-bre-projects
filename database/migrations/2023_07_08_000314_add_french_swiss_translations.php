@@ -3,7 +3,8 @@
 use App\Models\Language;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -11,12 +12,12 @@ return new class extends Migration {
      */
     public function up()
     {
-        
+
         Language::unguard();
 
         $language = Language::find(40);
 
-        if (! $language) {
+        if (!$language) {
             Language::create(['id' => 40, 'name' => 'French - Swiss', 'locale' => 'fr_CH']);
         }
 

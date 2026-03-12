@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -49,8 +48,6 @@ class ReactBuilder extends Command
     {
         if ($this->option('type') == 'local') {
 
-
-
             $includes = '';
 
             $directoryIterator = false;
@@ -59,6 +56,7 @@ class ReactBuilder extends Command
                 $directoryIterator = new \RecursiveDirectoryIterator(public_path('react/v' . config('ninja.app_version') . '/'), \RecursiveDirectoryIterator::SKIP_DOTS);
             } catch (\Exception $e) {
                 $this->error('React files not found');
+
                 return;
             }
 
@@ -79,7 +77,6 @@ class ReactBuilder extends Command
             file_put_contents(resource_path('views/react/head.blade.php'), $includes);
 
         }
-
 
     }
 }

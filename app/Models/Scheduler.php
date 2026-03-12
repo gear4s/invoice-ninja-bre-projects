@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
 use App\Services\Scheduler\SchedulerService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -27,14 +27,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $company_id
  * @property bool $is_paused
  * @property int|null $frequency_id
- * @property \Carbon\Carbon|\Illuminate\Support\Carbon|null $next_run_client
- * @property \Carbon\Carbon|\Illuminate\Support\Carbon|null $next_run
+ * @property Carbon|\Illuminate\Support\Carbon|null $next_run_client
+ * @property Carbon|\Illuminate\Support\Carbon|null $next_run
  * @property int $user_id
  * @property string $name
  * @property string $template
  * @property int|null $remaining_cycles
- * @property-read \App\Models\Company $company
+ * @property-read Company $company
  * @property-read mixed $hashed_id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\SchedulerFactory factory($count = null, $state = [])
@@ -46,13 +47,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel scope()
  * @method static \Illuminate\Database\Eloquent\Builder|Scheduler withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|Scheduler withoutTrashed()
- * @property-read \App\Models\User $user
+ *
+ * @property-read User $user
+ *
  * @mixin \Eloquent
  */
 class Scheduler extends BaseModel
 {
-    use SoftDeletes;
     use Filterable;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -100,8 +103,6 @@ class Scheduler extends BaseModel
 
     /**
      * remainingCycles
-     *
-     * @return int
      */
     public function remainingCycles(): int
     {
@@ -116,14 +117,14 @@ class Scheduler extends BaseModel
 
     public function calculateNextRun()
     {
-        if (! $this->next_run) {
+        if (!$this->next_run) {
             return null;
         }
 
         $offset = $this->company->timezone_offset();
 
         switch ($this->frequency_id) {
-            case 0: //used only for email entities
+            case 0: // used only for email entities
                 $next_run = $this->next_run;
                 break;
             case RecurringInvoice::FREQUENCY_DAILY:
@@ -163,7 +164,7 @@ class Scheduler extends BaseModel
                 $next_run = now()->startOfDay()->addYears(3);
                 break;
             default:
-                $next_run =  null;
+                $next_run = null;
         }
 
         $this->next_run_client = $next_run ?: null;
@@ -173,7 +174,7 @@ class Scheduler extends BaseModel
 
     public function adjustOffset(): void
     {
-        if (! $this->next_run) {
+        if (!$this->next_run) {
             return;
         }
 

@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Entreprise',
     'name' => 'Nom',
     'website' => 'Site web',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Le plan Entreprise ajoute la prise en charge de plusieurs utilisateurs et de pièces jointes, :link pour voir la liste complète des fonctionnalités.',
     'return_to_app' => 'Retourner à l\'App',
 
-
     // Payment updates
     'refund_payment' => 'Remboursement du paiement',
     'refund_max' => 'Max :',
@@ -1705,7 +1704,6 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'lang_Serbian' => 'Serbe',
     'lang_Bulgarian' => 'Bulgare',
     'lang_Russian (Russia)' => 'Russe (Russie)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Comptabilité & Légal',
@@ -2363,7 +2361,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'currency_gold_troy_ounce' => 'Once troy d&#39;or',
     'currency_nicaraguan_córdoba' => 'Cordoue nicaraguayenne',
     'currency_malagasy_ariary' => 'Ariary malgache',
-    "currency_tongan_pa_anga" => "Pa'anga des Tonga",
+    'currency_tongan_pa_anga' => "Pa'anga des Tonga",
 
     'review_app_help' => 'Nous espérons que votre utilisation de cette application vous est agréable.<br/>Un commentaire de votre part serait grandement apprécié!',
     'writing_a_review' => 'écrire un commentaire',
@@ -4363,7 +4361,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'activity_122' => ':user archivée récurrente :recurring_expense',
     'activity_123' => ':user a supprimé la dépense récurrente :recurring_expense',
     'activity_124' => ':user a restauré la dépense récurrente :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Pour voir :entity vous devez spécifier un mot de passe.',
     'unsubscribe' => 'Se désabonner',
     'unsubscribed' => 'Désabonné',
@@ -4974,8 +4972,8 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'e_invoice' => 'Facture électronique',
     'light_dark_mode' => 'Thème clair/sombre',
     'activities' => 'Activités',
-    'recent_transactions' => "Transactions récentes",
-    'country_Palestine' => "Palestine",
+    'recent_transactions' => 'Transactions récentes',
+    'country_Palestine' => 'Palestine',
     'country_Taiwan' => 'Taïwan',
     'duties' => 'Devoirs',
     'order_number' => 'Numéro de commande',
@@ -5192,7 +5190,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'rff' => 'Formulaire de champs obligatoires',
     'add_step' => 'Ajouter une étape',
     'steps' => 'Pas',
-    'steps_order_help' =>  'L&#39;ordre des étapes est important. La première étape ne devrait dépendre d’aucune autre étape. La deuxième étape doit dépendre de la première étape, et ainsi de suite.',
+    'steps_order_help' => 'L&#39;ordre des étapes est important. La première étape ne devrait dépendre d’aucune autre étape. La deuxième étape doit dépendre de la première étape, et ainsi de suite.',
     'other_steps' => 'Autres étapes',
     'use_available_payments' => 'Utiliser les paiements disponibles',
     'test_email_sent' => 'E-mail envoyé avec succès',
@@ -5401,7 +5399,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'credit_updated' => 'Crédit mis à jour',
     'payment_updated' => 'Paiement mis à jour',
     'search_placeholder' => 'Trouvez des factures, des clients et plus encore',
-    'invalid_vat_number' => "Le numéro de TVA n&#39;est pas valide pour le pays sélectionné. Le format doit être le code du pays suivi d&#39;un numéro uniquement, par exemple DE123456789",
+    'invalid_vat_number' => 'Le numéro de TVA n&#39;est pas valide pour le pays sélectionné. Le format doit être le code du pays suivi d&#39;un numéro uniquement, par exemple DE123456789',
     'acts_as_sender' => 'Envoyer des factures électroniques',
     'acts_as_receiver' => 'Recevoir des factures électroniques',
     'peppol_token_generated' => 'Le jeton PEPPOL a été généré avec succès.',
@@ -5538,7 +5536,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'pro_plan_feature_10' => 'Configurer des e-mails de rappel automatique',
     'pro_plan_feature_11' => 'Facture PDF automatiquement jointe aux e-mails',
     'pro_plan_feature_12' => 'Afficher la signature électronique des clients sur les factures',
-    'pro_plan_feature_13' => "Cochez la case « Approuver les conditions »",
+    'pro_plan_feature_13' => 'Cochez la case « Approuver les conditions »',
     'pro_plan_feature_14' => 'Rapports : factures, dépenses, P&amp;L, etc.',
     'pro_plan_feature_15' => 'Factures, devis et crédits par e-mail en masse',
     'pro_plan_feature_16' => 'Interlink 10 entreprises avec 1 identifiant',
@@ -5913,6 +5911,6 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Virement bancaire Stripe',
     'activity_164' => 'La synchronisation QuickBooks a échoué. :notes',
-);
+];
 
 return $lang;

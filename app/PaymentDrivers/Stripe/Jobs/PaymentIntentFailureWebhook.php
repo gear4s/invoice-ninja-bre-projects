@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -32,7 +31,7 @@ class PaymentIntentFailureWebhook implements ShouldQueue
     use SerializesModels;
     use Utilities;
 
-    public $tries = 1; //number of retries
+    public $tries = 1; // number of retries
 
     public $deleteWhenMissingModels = true;
 
@@ -53,7 +52,7 @@ class PaymentIntentFailureWebhook implements ShouldQueue
 
     public function handle()
     {
-        nlog("payment intent failed");
+        nlog('payment intent failed');
 
         MultiDB::findAndSetDbByCompanyKey($this->company_key);
         nlog($this->stripe_request);

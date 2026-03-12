@@ -6,30 +6,31 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use App\Services\Quickbooks\QuickbooksService;
-use App\Services\Quickbooks\Jobs\QuickbooksImport;
-use App\Http\Requests\Quickbooks\SyncTaxRatesRequest;
-use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
 use App\Http\Requests\Quickbooks\DisconnectQuickbooksRequest;
+use App\Http\Requests\Quickbooks\SyncQuickbooksRequest;
+use App\Http\Requests\Quickbooks\SyncTaxRatesRequest;
+use App\Models\User;
+use App\Services\Quickbooks\Jobs\QuickbooksImport;
+use App\Services\Quickbooks\QuickbooksService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class QuickbooksController extends BaseController
-{    
+{
     /**
      * sync
      *
      * Syncs the Quickbooks entities to Invoice Ninja
      *
-     * @param  SyncQuickbooksRequest $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function sync(SyncQuickbooksRequest $request)
     {
@@ -39,18 +40,18 @@ class QuickbooksController extends BaseController
 
         $syncable = [];
 
-        if($request->client) {
+        if ($request->client) {
             $syncable[] = 'Customer';
         }
-        if($request->product) {
+        if ($request->product) {
             $syncable[] = 'Item';
         }
-        if($request->invoice) {
+        if ($request->invoice) {
             $syncable[] = 'Invoice';
         }
 
         QuickbooksImport::dispatch($company->id, $company->db, $syncable);
-        
+
         return response()->noContent();
     }
 
@@ -59,8 +60,7 @@ class QuickbooksController extends BaseController
      *
      * Syncs tax rates from Quickbooks to Invoice Ninja
      *
-     * @param  SyncTaxRatesRequest $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function syncTaxRates(SyncTaxRatesRequest $request)
     {
@@ -78,8 +78,7 @@ class QuickbooksController extends BaseController
      *
      * Disconnects the Quickbooks Account From the Invoice Ninja Company
      *
-     * @param  DisconnectQuickbooksRequest $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function disconnect(DisconnectQuickbooksRequest $request)
     {
@@ -87,17 +86,16 @@ class QuickbooksController extends BaseController
         $user = auth()->user();
         $company = $user->company();
 
-        try{
+        try {
             $qb = new QuickbooksService($company);
             $qb->disconnect();
-        }
-        catch(\Throwable $e){
+        } catch (\Throwable $e) {
             /** Regardless of what happens, we should always set the quickbooks object to null */
             $company->quickbooks = null;
             $company->save();
 
         }
-        
+
         return response()->noContent();
     }
 
@@ -106,12 +104,11 @@ class QuickbooksController extends BaseController
      *
      * Returns the URL for the user to reconnect their QuickBooks account.
      *
-     * @param  Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function reconnectUrl(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
         $company = $user->company();
 
@@ -121,7 +118,7 @@ class QuickbooksController extends BaseController
 
         // Generate a one-time token for the reconnect flow
         $token = Str::random(64);
-        
+
         Cache::put($token, [
             'context' => 'quickbooks.reconnect',
             'company_key' => $company->company_key,

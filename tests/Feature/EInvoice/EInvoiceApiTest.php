@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,9 +16,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class EInvoiceApiTest extends TestCase
 {
     use DatabaseTransactions;
@@ -40,11 +36,11 @@ class EInvoiceApiTest extends TestCase
         );
     }
 
-    public function testRetrySendRoute()
+    public function test_retry_send_route()
     {
         $data = [
             'entity' => 'invoice',
-            'entity_id' => $this->invoice->hashed_id
+            'entity_id' => $this->invoice->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -56,12 +52,12 @@ class EInvoiceApiTest extends TestCase
 
     }
 
-    public function testValidationOnRoutes()
+    public function test_validation_on_routes()
     {
 
         $data = [
             'entity' => 'invoiceBLAH',
-            'entity_id' => $this->invoice->hashed_id
+            'entity_id' => $this->invoice->hashed_id,
         ];
 
         $response = $this->withHeaders([
@@ -73,12 +69,12 @@ class EInvoiceApiTest extends TestCase
 
     }
 
-    public function testValidationOnRoutes2()
+    public function test_validation_on_routes2()
     {
 
         $data = [
             'entity' => 'invoice',
-            'entity_id' => 'ddf8hjdfh8'
+            'entity_id' => 'ddf8hjdfh8',
         ];
 
         $response = $this->withHeaders([

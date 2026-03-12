@@ -6,22 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
-use App\Models\Invoice;
-use Livewire\Component;
 use App\Libraries\MultiDB;
-use Illuminate\Support\Str;
 use App\Models\ClientContact;
 use App\Models\CompanyGateway;
+use App\Models\Invoice;
 use App\Utils\Traits\MakesHash;
-use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class RequiredClientInfo extends Component
 {
@@ -54,25 +53,45 @@ class RequiredClientInfo extends Component
     public $countries;
 
     public $client_name;
+
     public $contact_first_name;
+
     public $contact_last_name;
+
     public $contact_email;
+
     public $client_phone;
+
     public $client_address_line_1;
+
     public $client_city;
+
     public $client_state;
+
     public $client_country_id;
+
     public $client_postal_code;
+
     public $client_shipping_address_line_1;
+
     public $client_shipping_city;
+
     public $client_shipping_state;
+
     public $client_shipping_postal_code;
+
     public $client_shipping_country_id;
+
     public $client_custom_value1;
+
     public $client_custom_value2;
+
     public $client_custom_value3;
+
     public $client_custom_value4;
+
     private ?CompanyGateway $company_gateway;
+
     private int $unfilled_fields = 0;
 
     /**
@@ -203,7 +222,7 @@ class RequiredClientInfo extends Component
         $this->contact_email = $contact->email;
         $this->client_phone = $contact->client->phone;
         $this->client_address_line_1 = $contact->client->address1;
-        $this->client_city = $contact->client->city ;
+        $this->client_city = $contact->client->city;
         $this->client_state = $contact->client->state;
         $this->client_country_id = $contact->client->country_id;
         $this->client_postal_code = $contact->client->postal_code;
@@ -224,7 +243,7 @@ class RequiredClientInfo extends Component
 
             $hash = Cache::get(request()->input('hash'));
 
-            /** @var \App\Models\Invoice $invoice */
+            /** @var Invoice $invoice */
             $invoice = Invoice::withTrashed()->find($this->decodePrimaryKey($hash['invoice_id']));
 
             $this->invoice_terms = $invoice->terms;
@@ -251,6 +270,7 @@ class RequiredClientInfo extends Component
     {
 
         MultiDB::setDb($this->db);
+
         return ClientContact::withTrashed()->find($this->contact_id);
 
     }
@@ -260,6 +280,7 @@ class RequiredClientInfo extends Component
     {
 
         MultiDB::setDb($this->db);
+
         return ClientContact::withTrashed()->find($this->contact_id)->client;
 
     }
@@ -281,7 +302,7 @@ class RequiredClientInfo extends Component
         $rules = [];
 
         collect($this->fields)->map(function ($field) use (&$rules) {
-            if (! array_key_exists('filled', $field)) {
+            if (!array_key_exists('filled', $field)) {
                 $rules[$field['name']] = array_key_exists('validation_rules', $field)
                     ? $field['validation_rules']
                     : 'required';
@@ -302,7 +323,7 @@ class RequiredClientInfo extends Component
                 client_postal_code: $contact->client->postal_code
             );
 
-            //if stripe is enabled, we want to update the customer at this point.
+            // if stripe is enabled, we want to update the customer at this point.
 
             return true;
         }
@@ -316,14 +337,12 @@ class RequiredClientInfo extends Component
         $client = [];
         $contact = [];
 
-
         MultiDB::setDb($this->db);
         // $_contact = ClientContact::withTrashed()->with('client')->find($this->contact_id);
 
         $_contact = ClientContact::withTrashed()->with(['client' => function ($query) {
             $query->without('gateway_tokens', 'documents', 'contacts.company', 'contacts'); // Exclude 'grandchildren' relation of 'client'
         }])->find($this->contact_id);
-
 
         foreach ($data as $field => $value) {
             if (Str::startsWith($field, 'client_')) {
@@ -335,14 +354,13 @@ class RequiredClientInfo extends Component
             }
         }
 
-
         $_contact->first_name = $this->contact_first_name;
         $_contact->last_name = $this->contact_last_name;
         $_contact->client->name = $this->client_name;
         $_contact->email = $this->contact_email;
         $_contact->client->phone = $this->client_phone;
         $_contact->client->address1 = $this->client_address_line_1;
-        $_contact->client->city  = $this->client_city;
+        $_contact->client->city = $this->client_city;
         $_contact->client->state = $this->client_state;
         $_contact->client->country_id = $this->client_country_id;
         $_contact->client->postal_code = $this->client_postal_code;
@@ -357,7 +375,6 @@ class RequiredClientInfo extends Component
         $_contact->client->custom_value4 = $this->client_custom_value4;
         $_contact->push();
 
-
         $contact_update = $_contact
             ->fill($contact)
             ->push();
@@ -367,13 +384,13 @@ class RequiredClientInfo extends Component
             ->push();
 
         if ($_contact) {
-            /** @var \App\Models\CompanyGateway $cg */
+            /** @var CompanyGateway $cg */
             $cg = CompanyGateway::find($this->company_gateway_id);
 
             if ($cg && $cg->update_details) {
                 $payment_gateway = $cg->driver($_contact->client)->init();
 
-                if (method_exists($payment_gateway, "updateCustomer")) {
+                if (method_exists($payment_gateway, 'updateCustomer')) {
                     $payment_gateway->updateCustomer();
                 }
             }
@@ -426,7 +443,7 @@ class RequiredClientInfo extends Component
         $fields = [];
 
         collect($this->fields)->map(function ($field) use (&$fields) {
-            if (! array_key_exists('filled', $field)) {
+            if (!array_key_exists('filled', $field)) {
                 $fields[] = $field['name'];
             }
         });

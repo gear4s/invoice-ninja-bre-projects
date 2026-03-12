@@ -6,31 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Storecove;
 
 use App\DataMapper\Tax\BaseRule;
-use App\Services\EDocument\Standards\Peppol;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use App\Services\EDocument\Gateway\Storecove\Storecove;
-use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use App\Services\EDocument\Gateway\Storecove\Models\Credit;
 use App\Services\EDocument\Gateway\Storecove\Models\Invoice;
+use App\Services\EDocument\Gateway\Storecove\Models\PublicIdentifiers;
+use App\Services\EDocument\Standards\Peppol;
+use InvoiceNinja\EInvoice\EInvoice;
+use InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Encoder\XmlEncoder;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
+use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
+use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
-use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
-use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
-use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
-use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
-use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 class StorecoveAdapter
 {
@@ -72,9 +73,6 @@ class StorecoveAdapter
      * addError
      *
      * Adds an error to the errors array.
-     *
-     * @param  string $error
-     * @return self
      */
     private function addError(string $error): self
     {
@@ -95,17 +93,14 @@ class StorecoveAdapter
 
         $obj['Invoice'] = $storecove_object['document']['invoice'];
 
-        $storecove_object = $serializer->normalize($obj, null, [\Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true]);
+        $storecove_object = $serializer->normalize($obj, null, [AbstractObjectNormalizer::SKIP_NULL_VALUES => true]);
 
-        return $serializer->deserialize(json_encode($storecove_object), \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class, 'json', $context);
+        return $serializer->deserialize(json_encode($storecove_object), Invoice::class, 'json', $context);
 
     }
 
     /**
      * transform
-     *
-     * @param  \App\Models\Invoice |\App\Models\Credit $invoice
-     * @return self
      */
     public function transform(\App\Models\Invoice|\App\Models\Credit $invoice): self
     {
@@ -123,13 +118,13 @@ class StorecoveAdapter
                 AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
             ];
 
-            $e = new \InvoiceNinja\EInvoice\EInvoice();
+            $e = new EInvoice;
             $peppolInvoice = $e->decode('Peppol', $p, 'xml');
 
             // $parent = $invoice instanceof \App\Models\Credit ? \App\Services\EDocument\Gateway\Storecove\Models\Credit::class : \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class;
-            $parent = ($invoice instanceof \App\Models\Credit || $peppolInvoice instanceof \InvoiceNinja\EInvoice\Models\Peppol\CreditNote)
-    ? \App\Services\EDocument\Gateway\Storecove\Models\Credit::class 
-    : \App\Services\EDocument\Gateway\Storecove\Models\Invoice::class;
+            $parent = ($invoice instanceof \App\Models\Credit || $peppolInvoice instanceof CreditNote)
+    ? Credit::class
+    : Invoice::class;
 
             $peppolInvoice = $e->encode($peppolInvoice, 'json');
             $this->storecove_invoice = $serializer->deserialize($peppolInvoice, $parent, 'json', $context);
@@ -156,7 +151,7 @@ class StorecoveAdapter
             return $this;
         }
 
-        //set all taxmap countries - resolve the taxing country
+        // set all taxmap countries - resolve the taxing country
         $lines = $this->storecove_invoice->getInvoiceLines();
 
         foreach ($lines as &$line) {
@@ -176,7 +171,6 @@ class StorecoveAdapter
                     if ($allowance->reason == ctrans('texts.discount')) {
                         $allowance->amount_excluding_tax = $allowance->amount_excluding_tax * -1;
                     }
-
 
                     foreach ($allowance->getTaxesDutiesFees() ?? [] as &$tax) {
 
@@ -207,9 +201,9 @@ class StorecoveAdapter
         unset($tax);
 
         $this->storecove_invoice->setTaxSubtotals($tax_subtotals);
-        //configure identifiers
+        // configure identifiers
 
-        //update payment means codes to storecove equivalents
+        // update payment means codes to storecove equivalents
         $payment_means = $this->storecove_invoice->getPaymentMeansArray();
 
         foreach ($payment_means as &$pm) {
@@ -233,7 +227,6 @@ class StorecoveAdapter
             }
             unset($tax);
 
-
             if ($allowance->reason == ctrans('texts.discount')) {
                 $allowance->amount_excluding_tax = $allowance->amount_excluding_tax * -1;
             }
@@ -247,13 +240,13 @@ class StorecoveAdapter
 
         $this->storecove_invoice->setTaxSystem('tax_line_percentages');
 
-        //resolve and set the public identifier for the customer
+        // resolve and set the public identifier for the customer
         $accounting_customer_party = $this->storecove_invoice->getAccountingCustomerParty();
 
         if (strlen($this->ninja_invoice->client->vat_number ?? '') > 2) {
-            $id =  preg_replace("/[^a-zA-Z0-9]/", "", $this->ninja_invoice->client->vat_number ?? '');
+            $id = preg_replace('/[^a-zA-Z0-9]/', '', $this->ninja_invoice->client->vat_number ?? '');
             $scheme = $this->storecove->router->setInvoice($this->ninja_invoice)->resolveTaxScheme($this->ninja_invoice->client->country->iso_3166_2, $this->ninja_invoice->client->classification ?? 'individual');
-            $pi = new \App\Services\EDocument\Gateway\Storecove\Models\PublicIdentifiers($scheme, $id);
+            $pi = new PublicIdentifiers($scheme, $id);
             $accounting_customer_party->addPublicIdentifiers($pi);
             $this->storecove_invoice->setAccountingCustomerParty($accounting_customer_party);
         }
@@ -264,9 +257,9 @@ class StorecoveAdapter
     private function getSerializer()
     {
 
-        $phpDocExtractor = new PhpDocExtractor();
-        $reflectionExtractor = new ReflectionExtractor();
-        $typeExtractors = [$reflectionExtractor,$phpDocExtractor];
+        $phpDocExtractor = new PhpDocExtractor;
+        $reflectionExtractor = new ReflectionExtractor;
+        $typeExtractors = [$reflectionExtractor, $phpDocExtractor];
         $descriptionExtractors = [$phpDocExtractor];
         $propertyInitializableExtractors = [$reflectionExtractor];
         $propertyInfo = new PropertyInfoExtractor(
@@ -274,15 +267,15 @@ class StorecoveAdapter
             $descriptionExtractors,
             $typeExtractors,
         );
-        $xml_encoder = new XmlEncoder(['xml_format_output' => true, 'remove_empty_tags' => true,]);
-        $json_encoder = new JsonEncoder();
+        $xml_encoder = new XmlEncoder(['xml_format_output' => true, 'remove_empty_tags' => true]);
+        $json_encoder = new JsonEncoder;
 
-        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
-        $metadataAwareNameConverter = new MetadataAwareNameConverter($classMetadataFactory, new CamelCaseToSnakeCaseNameConverter());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader);
+        $metadataAwareNameConverter = new MetadataAwareNameConverter($classMetadataFactory, new CamelCaseToSnakeCaseNameConverter);
 
         $normalizer = new ObjectNormalizer($classMetadataFactory, $metadataAwareNameConverter, null, $propertyInfo);
 
-        $normalizers = [new DateTimeNormalizer(), $normalizer,  new ArrayDenormalizer()];
+        $normalizers = [new DateTimeNormalizer, $normalizer,  new ArrayDenormalizer];
         $encoders = [$xml_encoder, $json_encoder];
         $serializer = new Serializer($normalizers, $encoders);
 
@@ -300,7 +293,6 @@ class StorecoveAdapter
         if ($this->has_error) {
             return ['errors' => $this->getErrors(), 'document' => false];
         }
-
 
         $serializer = $this->getSerializer();
 
@@ -326,9 +318,6 @@ class StorecoveAdapter
 
     /**
      * RemoveEmptyValues
-     *
-     * @param  array $array
-     * @return array
      */
     private function removeEmptyValues(array $array): array
     {
@@ -342,26 +331,27 @@ class StorecoveAdapter
                 unset($array[$key]);
             }
         }
+
         // nlog($array);
         return $array;
     }
 
     private function buildNexus(): self
     {
-        nlog("building nexus");
-        //Calculate nexus
+        nlog('building nexus');
+        // Calculate nexus
         $company_country_code = $this->ninja_invoice->company->country()->iso_3166_2;
         $client_country_code = $this->ninja_invoice->client->country->iso_3166_2;
-        $br = new BaseRule();
+        $br = new BaseRule;
         $eu_countries = $br->eu_country_codes;
 
         if ($client_country_code == $company_country_code) {
-            //Domestic Sales
-            nlog("domestic sales");
+            // Domestic Sales
+            nlog('domestic sales');
             $this->nexus = $company_country_code;
         } elseif (in_array($company_country_code, $eu_countries) && !in_array($client_country_code, $eu_countries)) {
-            //NON-EU Sale
-            nlog("non eu");
+            // NON-EU Sale
+            nlog('non eu');
             $this->nexus = $company_country_code;
         } elseif (in_array($client_country_code, $eu_countries)) {
 
@@ -374,10 +364,9 @@ class StorecoveAdapter
                     || !($this->ninja_invoice->client->has_valid_vat_number ?? false)
                     || $this->ninja_invoice->client->classification == 'individual';
 
-
             // B2C, under threshold, no Company VAT Registerd - must charge origin country VAT
             if ($is_b2c && !$is_over_threshold && strlen($this->ninja_invoice->company->settings->vat_number ?? '') < 2) {
-                nlog("no company vat");
+                nlog('no company vat');
                 $this->nexus = $company_country_code;
             } elseif ($is_b2c) {
                 if ($is_over_threshold) {
@@ -385,20 +374,21 @@ class StorecoveAdapter
                     if (!isset($this->ninja_invoice->company->tax_data->regions->EU->subregions->{$client_country_code}->vat_number)) {
                         $this->nexus = $client_country_code;
                         $this->addError("Tax Nexus is client country ({$client_country_code}) - however VAT number not present for this region. Document not sent!");
+
                         return $this;
                     }
-                    nlog("B2C");
+                    nlog('B2C');
                     $this->nexus = $client_country_code;
                     $this->setupDestinationVAT($client_country_code);
                 } else {
-                    nlog("under threshold origin country");
+                    nlog('under threshold origin country');
                     // B2C under threshold - origin country VAT
                     $this->nexus = $company_country_code;
                 }
             } elseif ($is_over_threshold && !in_array($company_country_code, $eu_countries)) {
                 $this->nexus = $client_country_code;
             } else {
-                nlog("B2B with valid vat");
+                nlog('B2B with valid vat');
                 // B2B with valid VAT - origin country
                 $this->nexus = $company_country_code;
             }
@@ -429,7 +419,7 @@ class StorecoveAdapter
         $id = $this->ninja_invoice->company->tax_data->regions->EU->subregions->{$client_country_code}->vat_number;
         $scheme = $this->storecove->router->setInvoice($this->ninja_invoice)->resolveTaxScheme($client_country_code, $this->ninja_invoice->client->classification ?? 'individual');
 
-        $pi = new \App\Services\EDocument\Gateway\Storecove\Models\PublicIdentifiers($scheme, $id);
+        $pi = new PublicIdentifiers($scheme, $id);
         $asp = $this->storecove_invoice->getAccountingSupplierParty();
         $asp->addPublicIdentifiers($pi);
         $this->storecove_invoice->setAccountingSupplierParty($asp);
@@ -496,10 +486,9 @@ class StorecoveAdapter
             '78' => 'it_pagopa',
             '42' => 'nl_ga_beneficiary',
             '43' => 'nl_ga_gaccount',
-            '1'  => 'undefined',    // Instrument not defined
+            '1' => 'undefined',    // Instrument not defined
             default => 'undefined',
         };
 
     }
-
 }

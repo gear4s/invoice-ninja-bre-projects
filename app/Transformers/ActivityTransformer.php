@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,9 +34,6 @@ class ActivityTransformer extends EntityTransformer
 
     protected array $defaultIncludes = [];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'history',
         'user',
@@ -56,8 +52,6 @@ class ActivityTransformer extends EntityTransformer
     ];
 
     /**
-     * @param Activity $activity
-     *
      * @return array
      */
     public function transform(Activity $activity)
@@ -167,7 +161,6 @@ class ActivityTransformer extends EntityTransformer
 
         return $this->includeItem($activity->purchase_order, $transformer, PurchaseOrder::class);
     }
-
 
     public function includeQuote(Activity $activity)
     {

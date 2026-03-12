@@ -6,22 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Recurring;
 
-use App\Utils\Ninja;
-use App\Models\Subscription;
-use App\Models\RecurringQuote;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
+use App\Jobs\RecurringInvoice\SendRecurring;
 use App\Models\RecurringExpense;
 use App\Models\RecurringInvoice;
+use App\Models\RecurringQuote;
+use App\Models\Subscription;
 use App\Services\Invoice\LocationData;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\RecurringInvoice\SendRecurring;
 
 class RecurringService
 {
@@ -29,7 +28,7 @@ class RecurringService
 
     public function __construct(public RecurringInvoice|RecurringExpense|RecurringQuote $recurring_entity) {}
 
-    //set schedules - update next_send_dates
+    // set schedules - update next_send_dates
 
     /**
      * Stops a recurring invoice
@@ -76,6 +75,7 @@ class RecurringService
 
     /**
      * Applies the invoice number.
+     *
      * @return $this InvoiceService object
      */
     public function applyNumber()
@@ -94,7 +94,7 @@ class RecurringService
     {
         $this->recurring_entity->invitations->each(function ($invitation) {
 
-            //30-06-2023
+            // 30-06-2023
             try {
                 Storage::disk(config('filesystems.default'))->delete($this->recurring_entity->client->recurring_invoice_filepath($invitation) . $this->recurring_entity->numberFormatter() . '.pdf');
                 Storage::disk('public')->delete($this->recurring_entity->client->recurring_invoice_filepath($invitation) . $this->recurring_entity->numberFormatter() . '.pdf');
@@ -105,7 +105,6 @@ class RecurringService
             }
 
         });
-
 
         return $this;
     }

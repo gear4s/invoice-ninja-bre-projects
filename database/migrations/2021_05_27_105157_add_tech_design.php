@@ -3,8 +3,10 @@
 use App\Models\Design;
 use App\Utils\Ninja;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Artisan;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -13,7 +15,7 @@ return new class extends Migration {
     public function up()
     {
         if (Ninja::isHosted()) {
-            $design = new Design();
+            $design = new Design;
 
             $design->id = 10;
             $design->name = 'Tech';
@@ -23,7 +25,7 @@ return new class extends Migration {
 
             $design->save();
         } elseif (Design::count() !== 0) {
-            $design = new Design();
+            $design = new Design;
 
             $design->name = 'Tech';
             $design->is_custom = false;
@@ -33,7 +35,7 @@ return new class extends Migration {
             $design->save();
         }
 
-        \Illuminate\Support\Facades\Artisan::call('ninja:design-update');
+        Artisan::call('ninja:design-update');
     }
 
     /**

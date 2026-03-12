@@ -2,7 +2,10 @@
 
 namespace App\Jobs\Invoice;
 
+use App\Models\Credit;
+use App\Models\Invoice;
 use App\Models\PurchaseOrder;
+use App\Models\Quote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,13 +21,8 @@ class InjectSignature implements ShouldQueue
 
     /**
      * Create a new job instance.
-     *
-     * @param \App\Models\Invoice | \App\Models\Quote | \App\Models\Credit | \App\Models\PurchaseOrder $entity
-     * @param int $contact_id
-     * @param string $signature
-     * @param string $ip
      */
-    public function __construct(public \App\Models\Invoice|\App\Models\Quote|\App\Models\Credit|\App\Models\PurchaseOrder $entity, private int $contact_id, private string $signature, private ?string $ip) {}
+    public function __construct(public Invoice|Quote|Credit|PurchaseOrder $entity, private int $contact_id, private string $signature, private ?string $ip) {}
 
     /**
      * Execute the job.
@@ -51,7 +49,7 @@ class InjectSignature implements ShouldQueue
             }
         }
 
-        if (! $invitation) {
+        if (!$invitation) {
             return;
         }
 

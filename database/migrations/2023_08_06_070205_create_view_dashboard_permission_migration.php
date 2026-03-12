@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\CompanyUser;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -10,7 +12,7 @@ return new class extends Migration {
      */
     public function up()
     {
-        \App\Models\CompanyUser::query()->where('is_admin', 0)->cursor()->each(function ($cu) {
+        CompanyUser::query()->where('is_admin', 0)->cursor()->each(function ($cu) {
             $permissions = $cu->permissions;
 
             if (!$permissions || strlen($permissions) == 0) {
@@ -22,7 +24,7 @@ return new class extends Migration {
 
                 $permissions_array[] = 'view_dashboard';
 
-                $modified_permissions_string = implode(",", $permissions_array);
+                $modified_permissions_string = implode(',', $permissions_array);
 
                 $cu->permissions = $modified_permissions_string;
                 $cu->save();
@@ -36,7 +38,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

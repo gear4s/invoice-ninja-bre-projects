@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,14 @@ use App\Factory\RecurringExpenseToExpenseFactory;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\Country;
 use App\Models\User;
 use App\Utils\Traits\AppSetup;
+use Faker\Factory;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
-/**
- *
- */
 class RecurringExpenseCloneTest extends TestCase
 {
     use AppSetup;
@@ -33,18 +33,18 @@ class RecurringExpenseCloneTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
-        if (\App\Models\Country::count() == 0) {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        if (Country::count() == 0) {
+            Artisan::call('db:seed', ['--force' => true]);
         }
 
     }
 
-    public function testBadBase64String()
+    public function test_bad_base64_string()
     {
         $account = Account::factory()->create();
-        $user = User::factory()->create(['account_id' => $account->id, 'email' => \Illuminate\Support\Str::random(32)."@example.com"]);
+        $user = User::factory()->create(['account_id' => $account->id, 'email' => Str::random(32) . '@example.com']);
         $company = Company::factory()->create(['account_id' => $account->id]);
 
         $client = Client::factory()->create([

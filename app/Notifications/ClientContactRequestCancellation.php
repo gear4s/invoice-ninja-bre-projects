@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,7 +20,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-//@deprecated for mail
+// @deprecated for mail
 class ClientContactRequestCancellation extends Notification
 {
     //  use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -63,7 +62,6 @@ class ClientContactRequestCancellation extends Notification
      * Get the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     *
      */
     public function toMail($notifiable) {}
 
@@ -86,12 +84,12 @@ class ClientContactRequestCancellation extends Notification
         $client_name = $this->client_contact->client->present()->name();
         $recurring_invoice_number = $this->recurring_invoice->number;
 
-        return (new SlackMessage())
-                ->success()
-                ->to('#devv2')
-                ->from('System')
-                ->image('https://app.invoiceninja.com/favicon.png')
-                ->content("Contact {$name} from client {$client_name} requested to cancel Recurring Invoice #{$recurring_invoice_number}");
+        return (new SlackMessage)
+            ->success()
+            ->to('#devv2')
+            ->from('System')
+            ->image('https://app.invoiceninja.com/favicon.png')
+            ->content("Contact {$name} from client {$client_name} requested to cancel Recurring Invoice #{$recurring_invoice_number}");
     }
 
     /**

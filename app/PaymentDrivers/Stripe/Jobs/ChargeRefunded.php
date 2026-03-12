@@ -6,28 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Stripe\Jobs;
 
+use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Payment;
-use App\Libraries\MultiDB;
 use App\Models\PaymentHash;
-use App\Services\Email\Email;
-use Illuminate\Bus\Queueable;
-use App\Models\CompanyGateway;
-use App\Services\Email\EmailObject;
-use Illuminate\Support\Facades\App;
-use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\SerializesModels;
 use App\PaymentDrivers\Stripe\Utilities;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Services\Email\Email;
+use App\Services\Email\EmailObject;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
 
 class ChargeRefunded implements ShouldQueue
 {
@@ -37,7 +35,7 @@ class ChargeRefunded implements ShouldQueue
     use SerializesModels;
     use Utilities;
 
-    public $tries = 1; //number of retries
+    public $tries = 1; // number of retries
 
     public $deleteWhenMissingModels = true;
 
@@ -59,7 +57,8 @@ class ChargeRefunded implements ShouldQueue
         $payment_hash_key = $source['metadata']['payment_hash'] ?? null;
 
         if (is_null($payment_hash_key)) {
-            nlog("charge.refunded not found");
+            nlog('charge.refunded not found');
+
             return;
         }
 
@@ -70,14 +69,14 @@ class ChargeRefunded implements ShouldQueue
 
         $stripe_driver->payment_hash = $payment_hash;
 
-        /** @var \App\Models\Payment $payment **/
+        /** @var Payment $payment * */
         $payment = Payment::query()
-                         ->withTrashed()
-                         ->where('company_id', $company->id)
-                         ->where('transaction_reference', $charge_id)
-                         ->first();
+            ->withTrashed()
+            ->where('company_id', $company->id)
+            ->where('transaction_reference', $charge_id)
+            ->first();
 
-        //don't touch if already refunded
+        // don't touch if already refunded
         if (!$payment || $payment->status_id == Payment::STATUS_REFUNDED || $payment->is_deleted) {
             return;
         }
@@ -90,6 +89,7 @@ class ChargeRefunded implements ShouldQueue
             $payment->service()->deletePayment();
             $payment->status_id = Payment::STATUS_FAILED;
             $payment->save();
+
             return;
         }
 
@@ -97,7 +97,7 @@ class ChargeRefunded implements ShouldQueue
         $payment = $payment->fresh();
 
         if ($payment->status_id == Payment::STATUS_PARTIALLY_REFUNDED) {
-            //determine the delta in the refunded amount - how much has already been refunded and only apply the delta.
+            // determine the delta in the refunded amount - how much has already been refunded and only apply the delta.
 
             if (floatval($payment->refunded) >= floatval($amount_refunded)) {
                 return;
@@ -108,25 +108,25 @@ class ChargeRefunded implements ShouldQueue
         }
 
         $invoice_collection = $payment->paymentables
-                    ->where('paymentable_type', 'invoices')
-                    ->map(function ($pivot) {
-                        return [
-                            'invoice_id' => $pivot->paymentable_id,
-                            'amount' => $pivot->amount - $pivot->refunded,
-                        ];
-                    });
+            ->where('paymentable_type', 'invoices')
+            ->map(function ($pivot) {
+                return [
+                    'invoice_id' => $pivot->paymentable_id,
+                    'amount' => $pivot->amount - $pivot->refunded,
+                ];
+            });
 
         if ($invoice_collection->count() == 1 && $invoice_collection->first()['amount'] >= $amount_refunded) {
-            //If there is only one invoice- and we are refunding _less_ than the amount of the invoice, we can just refund the payment
+            // If there is only one invoice- and we are refunding _less_ than the amount of the invoice, we can just refund the payment
 
             $invoice_collection = $payment->paymentables
-                    ->where('paymentable_type', 'invoices')
-                    ->map(function ($pivot) use ($amount_refunded) {
-                        return [
-                            'invoice_id' => $pivot->paymentable_id,
-                            'amount' => $amount_refunded,
-                        ];
-                    });
+                ->where('paymentable_type', 'invoices')
+                ->map(function ($pivot) use ($amount_refunded) {
+                    return [
+                        'invoice_id' => $pivot->paymentable_id,
+                        'amount' => $amount_refunded,
+                    ];
+                });
 
         } elseif ($invoice_collection->sum('amount') != $amount_refunded) {
 
@@ -134,8 +134,8 @@ class ChargeRefunded implements ShouldQueue
 
             App::setLocale($payment_hash->payment->company->getLocale());
 
-            $mo = new EmailObject();
-            $mo->subject = "Refund processed in Stripe for multiple invoices, action required.";
+            $mo = new EmailObject;
+            $mo->subject = 'Refund processed in Stripe for multiple invoices, action required.';
             $mo->body = $refund_text;
             $mo->text_body = $refund_text;
             $mo->company_key = $payment_hash->payment->company->company_key;
@@ -143,6 +143,7 @@ class ChargeRefunded implements ShouldQueue
             $mo->to = [new Address($payment_hash->payment->company->owner()->email, $payment_hash->payment->company->owner()->present()->name())];
 
             Email::dispatch($mo, $payment_hash->payment->company);
+
             return;
 
         }

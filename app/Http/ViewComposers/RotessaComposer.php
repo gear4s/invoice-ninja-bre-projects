@@ -6,20 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-use Illuminate\Support\Facades\View;
 use App\DataProviders\CAProvinces;
 use App\DataProviders\USStates;
+use Illuminate\Support\Facades\View;
 
-View::composer(['*.rotessa.components.address','*.rotessa.components.banks.US.bank','*.rotessa.components.dropdowns.country.US'], function ($view) {
+View::composer(['*.rotessa.components.address', '*.rotessa.components.banks.US.bank', '*.rotessa.components.dropdowns.country.US'], function ($view) {
     $states = USStates::get();
     $view->with('states', $states);
 });
 
-View::composer(['*.rotessa.components.address','*.rotessa.components.banks.CA.bank','*.rotessa.components.dropdowns.country.CA'], function ($view) {
+View::composer(['*.rotessa.components.address', '*.rotessa.components.banks.CA.bank', '*.rotessa.components.dropdowns.country.CA'], function ($view) {
     $provinces = CAProvinces::get();
     $view->with('provinces', $provinces);
 });

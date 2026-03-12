@@ -7,7 +7,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -20,7 +21,7 @@ return new class extends Migration {
 
         $language = Language::find(38);
 
-        if (! $language) {
+        if (!$language) {
             Language::create(['id' => 38, 'name' => 'Khmer', 'locale' => 'km_KH']);
         }
 
@@ -31,7 +32,7 @@ return new class extends Migration {
         }
 
         Company::query()->cursor()->each(function ($company) {
-            $company->tax_data = new TaxModel();
+            $company->tax_data = new TaxModel;
             $company->save();
         });
     }

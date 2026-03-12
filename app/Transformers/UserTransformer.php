@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,16 +22,10 @@ class UserTransformer extends EntityTransformer
 {
     use MakesHash;
 
-    /**
-     * @var array
-     */
     protected array $defaultIncludes = [
-        //'company_user'
+        // 'company_user'
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
         'companies',
         'company_users',
@@ -41,7 +34,7 @@ class UserTransformer extends EntityTransformer
 
     public function transform(User $user)
     {
-        $ref = new \stdClass();
+        $ref = new \stdClass;
         $ref->free = 0;
         $ref->pro = 0;
         $ref->enterprise = 0;
@@ -104,13 +97,9 @@ class UserTransformer extends EntityTransformer
         return $this->includeCollection($user->company_users, $transformer, CompanyUser::class);
     }
 
-    /**
-     *
-     * @param User $user
-     */
     public function includeCompanyUser(User $user)
     {
-        if (! $user->company_id && request()->header('X-API-TOKEN')) {
+        if (!$user->company_id && request()->header('X-API-TOKEN')) {
             $company_token = CompanyToken::query()->where('token', request()->header('X-API-TOKEN'))->first();
             $user->company_id = $company_token->company_id;
         }

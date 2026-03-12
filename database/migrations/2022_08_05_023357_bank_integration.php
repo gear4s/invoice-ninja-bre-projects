@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -17,17 +18,17 @@ return new class extends Migration {
             $table->unsignedInteger('account_id');
             $table->unsignedInteger('company_id');
             $table->unsignedInteger('user_id');
-        
-            $table->text('provider_name'); //providerName ie Chase
-            $table->bigInteger('provider_id'); //id of the bank
-            $table->bigInteger('bank_account_id'); //id
-            $table->text('bank_account_name')->nullable(); //accountName
-            $table->text('bank_account_number')->nullable(); //accountNumber
-            $table->text('bank_account_status')->nullable(); //accountStatus
-            $table->text('bank_account_type')->nullable(); //CONTAINER
-            $table->decimal('balance', 20, 6)->default(0); //currentBalance.amount
-            $table->text('currency')->nullable(); //currentBalance.currency
-            $table->text('nickname')->default(''); //accountName
+
+            $table->text('provider_name'); // providerName ie Chase
+            $table->bigInteger('provider_id'); // id of the bank
+            $table->bigInteger('bank_account_id'); // id
+            $table->text('bank_account_name')->nullable(); // accountName
+            $table->text('bank_account_number')->nullable(); // accountNumber
+            $table->text('bank_account_status')->nullable(); // accountStatus
+            $table->text('bank_account_type')->nullable(); // CONTAINER
+            $table->decimal('balance', 20, 6)->default(0); // currentBalance.amount
+            $table->text('currency')->nullable(); // currentBalance.currency
+            $table->text('nickname')->default(''); // accountName
             $table->date('from_date')->nullable();
 
             $table->boolean('is_deleted')->default(0);
@@ -64,7 +65,7 @@ return new class extends Migration {
             $table->text('invoice_ids')->default('');
             $table->unsignedInteger('expense_id')->nullable();
             $table->unsignedInteger('vendor_id')->nullable();
-            $table->unsignedInteger('status_id')->default(1); //unmatched / matched / converted
+            $table->unsignedInteger('status_id')->default(1); // unmatched / matched / converted
             $table->boolean('is_deleted')->default(0);
 
             $table->timestamps(6);
@@ -83,7 +84,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('transaction_id')->nullable();
         });
 
-        Schema::table('expenses', function (Illuminate\Database\Schema\Blueprint $table) {
+        Schema::table('expenses', function (Blueprint $table) {
             $table->unsignedBigInteger('transaction_id')->nullable()->change();
         });
     }
@@ -93,7 +94,5 @@ return new class extends Migration {
      *
      * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 };

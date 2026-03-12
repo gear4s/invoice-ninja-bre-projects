@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,7 +20,7 @@ use Illuminate\Support\Facades\App;
 class ClientUnsubscribedObject
 {
     public function __construct(
-        public ClientContact|VendorContact$contact,
+        public ClientContact|VendorContact $contact,
         public Company $company,
         private bool $use_react_link = false
     ) {}
@@ -29,9 +28,9 @@ class ClientUnsubscribedObject
     public function build()
     {
         App::forgetInstance('translator');
-        /* Init a new copy of the translator*/
+        /* Init a new copy of the translator */
         $t = app('translator');
-        /* Set the locale*/
+        /* Set the locale */
         App::setLocale($this->company->getLocale());
         /* Set customized translations _NOW_ */
         $t->replace(Ninja::transformTranslations($this->company->settings));
@@ -48,7 +47,7 @@ class ClientUnsubscribedObject
             'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
 
-        $mail_obj = new \stdClass();
+        $mail_obj = new \stdClass;
         $mail_obj->subject = ctrans('texts.client_unsubscribed');
         $mail_obj->data = $data;
         $mail_obj->markdown = 'email.admin.generic';

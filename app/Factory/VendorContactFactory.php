@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,7 @@ class VendorContactFactory
 {
     public static function create(int $company_id, int $user_id): VendorContact
     {
-        $vendor_contact = new VendorContact();
+        $vendor_contact = new VendorContact;
         $vendor_contact->first_name = '';
         $vendor_contact->user_id = $user_id;
         $vendor_contact->company_id = $company_id;

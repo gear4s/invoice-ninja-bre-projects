@@ -14,7 +14,6 @@ class AddHebrewLanguage extends Migration
     {
         Language::unguard();
 
-
         if (!Language::find(33)) {
             $serbian = ['id' => 33, 'name' => 'Serbian', 'locale' => 'sr'];
             Language::create($serbian);

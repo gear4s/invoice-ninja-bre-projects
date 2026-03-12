@@ -6,39 +6,37 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards;
 
-use Sabre\Xml\Service;
 use App\Models\Invoice;
 use App\Services\AbstractService;
-use CleverIt\UBL\Invoice\FatturaPA\common\Sede;
 use CleverIt\UBL\Invoice\FatturaPA\common\Anagrafica;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiGenerali;
-use CleverIt\UBL\Invoice\FatturaPA\common\IdFiscaleIVA;
+use CleverIt\UBL\Invoice\FatturaPA\common\CedentePrestatore;
+use CleverIt\UBL\Invoice\FatturaPA\common\CessionarioCommittente;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiAnagrafici;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiAnagraficiVettore;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiBeniServizi;
 use CleverIt\UBL\Invoice\FatturaPA\common\DatiContratto;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiGenerali;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiGeneraliDocumento;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiOrdineAcquisto;
 use CleverIt\UBL\Invoice\FatturaPA\common\DatiPagamento;
 use CleverIt\UBL\Invoice\FatturaPA\common\DatiRicezione;
 use CleverIt\UBL\Invoice\FatturaPA\common\DatiRiepilogo;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiTrasporto;
-use CleverIt\UBL\Invoice\FatturaPA\common\RegimeFiscale;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiAnagrafici;
-use CleverIt\UBL\Invoice\FatturaPA\common\DettaglioLinee;
-use CleverIt\UBL\Invoice\FatturaPA\common\IdTrasmittente;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiBeniServizi;
 use CleverIt\UBL\Invoice\FatturaPA\common\DatiTrasmissione;
-use CleverIt\UBL\Invoice\FatturaPA\common\CedentePrestatore;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiOrdineAcquisto;
+use CleverIt\UBL\Invoice\FatturaPA\common\DatiTrasporto;
+use CleverIt\UBL\Invoice\FatturaPA\common\DettaglioLinee;
 use CleverIt\UBL\Invoice\FatturaPA\common\DettaglioPagamento;
 use CleverIt\UBL\Invoice\FatturaPA\common\FatturaElettronica;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiAnagraficiVettore;
-use CleverIt\UBL\Invoice\FatturaPA\common\DatiGeneraliDocumento;
-use CleverIt\UBL\Invoice\FatturaPA\common\CessionarioCommittente;
 use CleverIt\UBL\Invoice\FatturaPA\common\FatturaElettronicaBody;
 use CleverIt\UBL\Invoice\FatturaPA\common\FatturaElettronicaHeader;
+use CleverIt\UBL\Invoice\FatturaPA\common\IdFiscaleIVA;
+use CleverIt\UBL\Invoice\FatturaPA\common\IdTrasmittente;
+use CleverIt\UBL\Invoice\FatturaPA\common\Sede;
+use Sabre\Xml\Service;
 
 /**
  * @deprecated not needed anylonger as we have invoiceninja/einvoice
@@ -47,16 +45,16 @@ class FatturaPA extends AbstractService
 {
     // private $xml;
 
-    //urn:cen.eu:en16931:2017#compliant#urn:fatturapa.gov.it:CIUS-IT:2.0.0
-    //<cbc:EndpointID schemeID=" 0201 ">UFF001</cbc:EndpointID>
+    // urn:cen.eu:en16931:2017#compliant#urn:fatturapa.gov.it:CIUS-IT:2.0.0
+    // <cbc:EndpointID schemeID=" 0201 ">UFF001</cbc:EndpointID>
 
     /**
-    * 	   File Types
-    *
-    * 	   EI01 => FILE VUOTO
-    *      EI02 => SERVIZIO NON DISPONIBILE
-    *      EI03 => UTENTE NON ABILITATO
-    */
+     * 	   File Types
+     *
+     * 	   EI01 => FILE VUOTO
+     *      EI02 => SERVIZIO NON DISPONIBILE
+     *      EI03 => UTENTE NON ABILITATO
+     */
 
     /** Formato Trasmissione
      *     FPA12: This is the format used for FatturaPA version 1.2.
@@ -73,29 +71,29 @@ class FatturaPA extends AbstractService
      */
 
     /**
-    * MP01 contanti //cash
-    * MP02 assegno //check
-    * MP03 assegno circolare //cashier's check
-    * MP04 contanti presso Tesoreria //cash at treasury
-    * MP05 bonifico //bank transfer
-    * MP06 vaglia cambiario //bill of exchange
-    * MP07 bollettino bancario //bank bulletin
-    * MP08 carta di pagamento //payment card
-    * MP09 RID //RID
-    * MP10 RID utenze //RID utilities
-    * MP11 RID veloce //fast RID
-    * MP12 Riba //Riba
-    * MP13 MAV //MAV
-    * MP14 quietanza erario stato //state treasury receipt
-    * MP15 giroconto su conti di contabilità speciale //transfer to special accounting accounts
-    * MP16 domiciliazione bancaria //bank domiciliation
-    * MP17 domiciliazione postale //postal domiciliation
-    * MP18 bollettino di c/c postale //postal giro account
-    * MP19 SEPA Direct Debit //SEPA Direct Debit
-    * MP20 SEPA Direct Debit CORE //SEPA Direct Debit CORE
-    * MP21 SEPA Direct Debit B2B //SEPA Direct Debit B2B
-    * MP22 Trattenuta su somme già riscosse //Withholding on sums already collected
-    * MP23 PagoPA //PagoPA
+     * MP01 contanti //cash
+     * MP02 assegno //check
+     * MP03 assegno circolare //cashier's check
+     * MP04 contanti presso Tesoreria //cash at treasury
+     * MP05 bonifico //bank transfer
+     * MP06 vaglia cambiario //bill of exchange
+     * MP07 bollettino bancario //bank bulletin
+     * MP08 carta di pagamento //payment card
+     * MP09 RID //RID
+     * MP10 RID utenze //RID utilities
+     * MP11 RID veloce //fast RID
+     * MP12 Riba //Riba
+     * MP13 MAV //MAV
+     * MP14 quietanza erario stato //state treasury receipt
+     * MP15 giroconto su conti di contabilità speciale //transfer to special accounting accounts
+     * MP16 domiciliazione bancaria //bank domiciliation
+     * MP17 domiciliazione postale //postal domiciliation
+     * MP18 bollettino di c/c postale //postal giro account
+     * MP19 SEPA Direct Debit //SEPA Direct Debit
+     * MP20 SEPA Direct Debit CORE //SEPA Direct Debit CORE
+     * MP21 SEPA Direct Debit B2B //SEPA Direct Debit B2B
+     * MP22 Trattenuta su somme già riscosse //Withholding on sums already collected
+     * MP23 PagoPA //PagoPA
      */
 
     /**
@@ -103,37 +101,33 @@ class FatturaPA extends AbstractService
      * TP02 pagamento completo //full payment
      * TP03 anticipo //advance
      */
-
-    /**
-     * @param Invoice $invoice
-     */
     public function __construct(public Invoice $invoice) {}
 
     public function run()
     {
 
-        $fatturaHeader = new FatturaElettronicaHeader();
+        $fatturaHeader = new FatturaElettronicaHeader;
 
-        $datiTrasmissione = new DatiTrasmissione();
-        $datiTrasmissione->setFormatoTrasmissione("FPR12");
+        $datiTrasmissione = new DatiTrasmissione;
+        $datiTrasmissione->setFormatoTrasmissione('FPR12');
         $datiTrasmissione->setCodiceDestinatario($this->invoice->client->routing_id);
         $datiTrasmissione->setProgressivoInvio($this->invoice->number);
 
-        $idPaese = new IdTrasmittente();
+        $idPaese = new IdTrasmittente;
         $idPaese->setIdPaese($this->invoice->company->country()->iso_3166_2);
         $idPaese->setIdCodice($this->invoice->company->settings->vat_number);
 
         $datiTrasmissione->setIdTrasmittente($idPaese);
         $fatturaHeader->setDatiTrasmissione($datiTrasmissione);
 
-        $cedentePrestatore = new CedentePrestatore();
-        $datiAnagrafici = new DatiAnagrafici();
+        $cedentePrestatore = new CedentePrestatore;
+        $datiAnagrafici = new DatiAnagrafici;
         $idFiscaleIVA = new IdFiscaleIVA(IdPaese: $this->invoice->company->country()->iso_3166_2, IdCodice: $this->invoice->company->settings->vat_number);
         $datiAnagrafici->setIdFiscaleIVA($idFiscaleIVA);
 
         $anagrafica = new Anagrafica(Denominazione: $this->invoice->company->present()->name());
         $datiAnagrafici->setAnagrafica($anagrafica);
-        $datiAnagrafici->setRegimeFiscale("RF01");  //swap this out with the custom settings.
+        $datiAnagrafici->setRegimeFiscale('RF01');  // swap this out with the custom settings.
         $cedentePrestatore->setDatiAnagrafici($datiAnagrafici);
 
         $sede = new Sede(
@@ -147,8 +141,8 @@ class FatturaPA extends AbstractService
         $cedentePrestatore->setSede($sede);
         $fatturaHeader->setCedentePrestatore($cedentePrestatore);
 
-        //client details
-        $datiAnagrafici = new DatiAnagrafici();
+        // client details
+        $datiAnagrafici = new DatiAnagrafici;
 
         $anagrafica = new Anagrafica(Denominazione: $this->invoice->client->present()->name());
         $datiAnagrafici->setAnagrafica($anagrafica);
@@ -168,15 +162,15 @@ class FatturaPA extends AbstractService
 
         $fatturaHeader->setCessionarioCommittente($cessionarioCommittente);
 
-        ////////////////// Fattura Body //////////////////
-        $fatturaBody = new FatturaElettronicaBody();
+        // //////////////// Fattura Body //////////////////
+        $fatturaBody = new FatturaElettronicaBody;
 
-        $datiGeneraliDocument = new DatiGeneraliDocumento();
-        $datiGeneraliDocument->setTipoDocumento("TD01")
-                             ->setDivisa($this->invoice->client->currency()->code)
-                             ->setData($this->invoice->date)
-                             ->setNumero($this->invoice->number)
-                             ->setCausale($this->invoice->public_notes ?? ''); //unsure...
+        $datiGeneraliDocument = new DatiGeneraliDocumento;
+        $datiGeneraliDocument->setTipoDocumento('TD01')
+            ->setDivisa($this->invoice->client->currency()->code)
+            ->setData($this->invoice->date)
+            ->setNumero($this->invoice->number)
+            ->setCausale($this->invoice->public_notes ?? ''); // unsure...
 
         /**PO information
         $datiOrdineAcquisto = new DatiOrdineAcquisto();
@@ -222,16 +216,15 @@ $datiTrasporto->setDatiAnagraficiVettore($datiAnagraficiVettore)
                      ->setDataOraConsegna("2017-01-10T16:46:12.000+02:00");
 */
 
-        $datiGenerali = new DatiGenerali();
+        $datiGenerali = new DatiGenerali;
         $datiGenerali->setDatiGeneraliDocumento($datiGeneraliDocument);
         //  ->setDatiOrdineAcquisto($datiOrdineAcquisto)
         //  ->setDatiContratto($datiContratto)
         //  ->setDatiRicezione($datiRicezione);
 
-
-        $datiBeniServizi  = new DatiBeniServizi();
+        $datiBeniServizi = new DatiBeniServizi;
         $tax_rate_level = 0;
-        //line items
+        // line items
         foreach ($this->invoice->line_items as $key => $item) {
 
             $numero = $key + 1;
@@ -252,7 +245,7 @@ $datiTrasporto->setDatiAnagraficiVettore($datiAnagraficiVettore)
 
         }
 
-        //totals
+        // totals
         if ($this->invoice->tax_rate1 > $tax_rate_level) {
             $tax_rate_level = sprintf('%0.2f', $this->invoice->tax_rate1);
         }
@@ -265,32 +258,31 @@ $datiTrasporto->setDatiAnagraficiVettore($datiAnagraficiVettore)
             AliquotaIVA: "{$tax_rate_level}",
             ImponibileImporto: "{$subtotal}",
             Imposta: "{$taxes}",
-            EsigibilitaIVA: "I",
+            EsigibilitaIVA: 'I',
         );
 
         $datiBeniServizi->setDatiRiepilogo($datiRiepilogo);
 
         $dettalioPagament = new DettaglioPagamento(
-            ModalitaPagamento: "MP01", //String
+            ModalitaPagamento: 'MP01', // String
             DataScadenzaPagamento: (string) $this->invoice->due_date ?? $this->invoice->date,
             ImportoPagamento: (string) sprintf('%0.2f', $this->invoice->balance),
         );
 
-        $datiPagamento = new DatiPagamento();
-        $datiPagamento->setCondizioniPagamento("TP02")
-                    ->setDettaglioPagamento($dettalioPagament);
+        $datiPagamento = new DatiPagamento;
+        $datiPagamento->setCondizioniPagamento('TP02')
+            ->setDettaglioPagamento($dettalioPagament);
 
         $fatturaBody->setDatiGenerali($datiGenerali)
-                    ->setDatiBeniServizi($datiBeniServizi)
-                    ->setDatiPagamento($datiPagamento);
+            ->setDatiBeniServizi($datiBeniServizi)
+            ->setDatiPagamento($datiPagamento);
 
-        ////////////////////////////////////
-        $xmlService = new Service();
+        // //////////////////////////////////
+        $xmlService = new Service;
 
         $xml = $xmlService->write('p:FatturaElettronica', new FatturaElettronica($fatturaHeader, $fatturaBody));
 
         return $xml;
 
     }
-
 }

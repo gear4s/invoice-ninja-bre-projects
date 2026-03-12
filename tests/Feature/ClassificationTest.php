@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -17,13 +16,10 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class ClassificationTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockUnitData;
 
     protected function setUp(): void
@@ -33,11 +29,11 @@ class ClassificationTest extends TestCase
 
     }
 
-    public function testClientClassification()
+    public function test_client_classification()
     {
         $data = [
             'name' => 'Personal Company',
-            'classification' => 'individual'
+            'classification' => 'individual',
         ];
 
         $response = $this->withHeaders([
@@ -52,11 +48,11 @@ class ClassificationTest extends TestCase
         $this->assertEquals('individual', $arr['data']['classification']);
     }
 
-    public function testValidationClassification()
+    public function test_validation_classification()
     {
         $data = [
             'name' => 'Personal Company',
-            'classification' => 'this_is_not_validated'
+            'classification' => 'this_is_not_validated',
         ];
 
         $response = $this->withHeaders([
@@ -68,7 +64,7 @@ class ClassificationTest extends TestCase
 
     }
 
-    public function testValidation2Classification()
+    public function test_validation2_classification()
     {
         $this->client->classification = 'business';
 
@@ -76,7 +72,7 @@ class ClassificationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$this->client->hashed_id, $this->client->toArray());
+        ])->putJson('/api/v1/clients/' . $this->client->hashed_id, $this->client->toArray());
 
         $response->assertStatus(200);
 
@@ -85,24 +81,24 @@ class ClassificationTest extends TestCase
         $this->assertEquals('business', $arr['data']['classification']);
     }
 
-    public function testValidation3Classification()
+    public function test_validation3_classification()
     {
         $this->client->classification = 'this_is_not_validated';
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/clients/'.$this->client->hashed_id, $this->client->toArray());
+        ])->putJson('/api/v1/clients/' . $this->client->hashed_id, $this->client->toArray());
 
         $response->assertStatus(422);
 
     }
 
-    public function testVendorClassification()
+    public function test_vendor_classification()
     {
         $data = [
             'name' => 'Personal Company',
-            'classification' => 'individual'
+            'classification' => 'individual',
         ];
 
         $response = $this->withHeaders([
@@ -117,11 +113,11 @@ class ClassificationTest extends TestCase
         $this->assertEquals('individual', $arr['data']['classification']);
     }
 
-    public function testVendorValidationClassification()
+    public function test_vendor_validation_classification()
     {
         $data = [
             'name' => 'Personal Company',
-            'classification' => 'this_is_not_validated'
+            'classification' => 'this_is_not_validated',
         ];
 
         $response = $this->withHeaders([
@@ -133,14 +129,14 @@ class ClassificationTest extends TestCase
 
     }
 
-    public function testVendorValidation2Classification()
+    public function test_vendor_validation2_classification()
     {
         $this->vendor->classification = 'company';
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/vendors/'.$this->vendor->hashed_id, $this->vendor->toArray());
+        ])->putJson('/api/v1/vendors/' . $this->vendor->hashed_id, $this->vendor->toArray());
 
         $response->assertStatus(200);
 
@@ -149,20 +145,20 @@ class ClassificationTest extends TestCase
         $this->assertEquals('company', $arr['data']['classification']);
     }
 
-    public function testVendorValidation3Classification()
+    public function test_vendor_validation3_classification()
     {
         $this->vendor->classification = 'this_is_not_validated';
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/vendors/'.$this->vendor->hashed_id, $this->vendor->toArray());
+        ])->putJson('/api/v1/vendors/' . $this->vendor->hashed_id, $this->vendor->toArray());
 
         $response->assertStatus(422);
 
     }
 
-    public function testCompanyClassification()
+    public function test_company_classification()
     {
         $settings = $this->company->settings;
         $settings->classification = 'company';
@@ -172,7 +168,7 @@ class ClassificationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/companies/'.$this->company->hashed_id, $this->company->toArray());
+        ])->putJson('/api/v1/companies/' . $this->company->hashed_id, $this->company->toArray());
 
         $response->assertStatus(200);
 
@@ -181,7 +177,7 @@ class ClassificationTest extends TestCase
         $this->assertEquals('company', $arr['data']['settings']['classification']);
     }
 
-    public function testCompanyValidationClassification()
+    public function test_company_validation_classification()
     {
         $settings = $this->company->settings;
         $settings->classification = 545454;
@@ -191,13 +187,13 @@ class ClassificationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/companies/'.$this->company->hashed_id, $this->company->toArray());
+        ])->putJson('/api/v1/companies/' . $this->company->hashed_id, $this->company->toArray());
 
         $response->assertStatus(422);
 
     }
 
-    public function testCompanyValidation2Classification()
+    public function test_company_validation2_classification()
     {
         $settings = $this->company->settings;
         $settings->classification = null;
@@ -207,7 +203,7 @@ class ClassificationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/companies/'.$this->company->hashed_id, $this->company->toArray());
+        ])->putJson('/api/v1/companies/' . $this->company->hashed_id, $this->company->toArray());
 
         $response->assertStatus(200);
 

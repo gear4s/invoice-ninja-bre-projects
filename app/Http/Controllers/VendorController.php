@@ -6,44 +6,45 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Utils\Ninja;
-use App\Models\Vendor;
-use App\Models\Account;
-use Illuminate\Http\Response;
-use App\Factory\VendorFactory;
-use App\Filters\VendorFilters;
-use App\Utils\Traits\MakesHash;
-use App\Utils\Traits\Uploadable;
-use App\Utils\Traits\BulkOptions;
-use App\Utils\Traits\SavesDocuments;
-use App\Repositories\VendorRepository;
 use App\Events\Vendor\VendorWasCreated;
 use App\Events\Vendor\VendorWasUpdated;
-use App\Transformers\VendorTransformer;
-use App\Http\Requests\Vendor\EditVendorRequest;
-use App\Http\Requests\Vendor\ShowVendorRequest;
-use App\Http\Requests\Vendor\PurgeVendorRequest;
-use App\Http\Requests\Vendor\StoreVendorRequest;
+use App\Factory\VendorFactory;
+use App\Filters\VendorFilters;
 use App\Http\Requests\Vendor\CreateVendorRequest;
+use App\Http\Requests\Vendor\DestroyVendorRequest;
+use App\Http\Requests\Vendor\EditVendorRequest;
+use App\Http\Requests\Vendor\PurgeVendorRequest;
+use App\Http\Requests\Vendor\ShowVendorRequest;
+use App\Http\Requests\Vendor\StoreVendorRequest;
 use App\Http\Requests\Vendor\UpdateVendorRequest;
 use App\Http\Requests\Vendor\UploadVendorRequest;
-use App\Http\Requests\Vendor\DestroyVendorRequest;
+use App\Models\Account;
+use App\Models\User;
+use App\Models\Vendor;
+use App\Repositories\VendorRepository;
+use App\Transformers\VendorTransformer;
+use App\Utils\Ninja;
+use App\Utils\Traits\BulkOptions;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\SavesDocuments;
+use App\Utils\Traits\Uploadable;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 /**
  * Class VendorController.
  */
 class VendorController extends BaseController
 {
-    use MakesHash;
-    use Uploadable;
     use BulkOptions;
+    use MakesHash;
     use SavesDocuments;
+    use Uploadable;
 
     protected $entity_type = Vendor::class;
 
@@ -56,7 +57,6 @@ class VendorController extends BaseController
 
     /**
      * VendorController constructor.
-     * @param VendorRepository $vendor_repo
      */
     public function __construct(VendorRepository $vendor_repo)
     {
@@ -78,27 +78,34 @@ class VendorController extends BaseController
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of vendors",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param VendorFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function index(VendorFilters $filters)
     {
@@ -110,10 +117,7 @@ class VendorController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowVendorRequest $request
-     * @param Vendor $vendor
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/vendors/{id}",
@@ -121,6 +125,7 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Shows a client",
      *      description="Displays a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -130,28 +135,36 @@ class VendorController extends BaseController
      *          description="The Vendor Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the vendor object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -164,10 +177,7 @@ class VendorController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditVendorRequest $request
-     * @param Vendor $vendor
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/vendors/{id}/edit",
@@ -175,6 +185,7 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Shows a client for editting",
      *      description="Displays a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -184,28 +195,36 @@ class VendorController extends BaseController
      *          description="The Vendor Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -218,11 +237,7 @@ class VendorController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateVendorRequest $request
-     * @param Vendor $vendor
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/vendors/{id}",
@@ -230,6 +245,7 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Updates a client",
      *      description="Handles the updating of a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -239,28 +255,36 @@ class VendorController extends BaseController
      *          description="The Vendor Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -285,10 +309,7 @@ class VendorController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateVendorRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/vendors/create",
@@ -296,26 +317,34 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Gets a new blank client object",
      *      description="Returns a blank object with default values",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A blank client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -323,7 +352,7 @@ class VendorController extends BaseController
     public function create(CreateVendorRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $vendor = VendorFactory::create($user->company()->id, auth()->user()->id);
@@ -334,10 +363,7 @@ class VendorController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreVendorRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/vendors",
@@ -345,26 +371,34 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Adds a client",
      *      description="Adds an client to a company",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved client object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -372,7 +406,7 @@ class VendorController extends BaseController
     public function store(StoreVendorRequest $request)
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $vendor = $this->vendor_repo->save($request->all(), VendorFactory::create($user->company()->id, auth()->user()->id));
@@ -391,18 +425,17 @@ class VendorController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyVendorRequest $request
-     * @param Vendor $vendor
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @throws \Exception
+     *
      * @OA\Delete(
      *      path="/api/v1/vendors/{id}",
      *      operationId="deleteVendor",
      *      tags={"vendors"},
      *      summary="Deletes a client",
      *      description="Handles the deletion of a client by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -412,34 +445,41 @@ class VendorController extends BaseController
      *          description="The Vendor Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function destroy(DestroyVendorRequest $request, Vendor $vendor)
     {
-        //may not need these destroy routes as we are using actions to 'archive/delete'
+        // may not need these destroy routes as we are using actions to 'archive/delete'
         $vendor->delete();
 
         return $this->itemResponse($vendor->fresh());
@@ -448,8 +488,7 @@ class VendorController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/vendors/bulk",
@@ -457,16 +496,21 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Performs bulk actions on an array of vendors",
      *      description="",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\RequestBody(
      *         description="User credentials",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="integer",
      *                     description="Array of hashed IDs to be bulk 'actioned",
@@ -475,22 +519,29 @@ class VendorController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The Vendor User response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -502,7 +553,7 @@ class VendorController extends BaseController
         $ids = request()->input('ids');
         $vendors = Vendor::withTrashed()->find($this->transformKeys($ids));
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $vendors->each(function ($vendor, $key) use ($action, $user) {
@@ -521,17 +572,13 @@ class VendorController extends BaseController
      */
     public function statement()
     {
-        //todo
+        // todo
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param UploadVendorRequest $request
-     * @param Vendor $vendor
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/vendors/{id}/upload",
@@ -539,6 +586,7 @@ class VendorController extends BaseController
      *      tags={"vendors"},
      *      summary="Uploads a document to a vendor",
      *      description="Handles the uploading of a document to a vendor",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -548,35 +596,43 @@ class VendorController extends BaseController
      *          description="The Vendor Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the Vendor object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Vendor"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function upload(UploadVendorRequest $request, Vendor $vendor)
     {
-        if (! $this->checkFeature(Account::FEATURE_DOCUMENTS)) {
+        if (!$this->checkFeature(Account::FEATURE_DOCUMENTS)) {
             return $this->featureFailure();
         }
 
@@ -587,33 +643,27 @@ class VendorController extends BaseController
         return $this->itemResponse($vendor->fresh());
     }
 
-
     /**
-        * Update the specified resource in storage.
-        *
-        * @param PurgeVendorRequest $request
-        * @param Vendor $vendor
-        * @param string $mergeable_vendor
-        * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-        *
-        */
-
+     * Update the specified resource in storage.
+     *
+     * @return JsonResponse|Response
+     */
     public function merge(PurgeVendorRequest $request, Vendor $vendor, string $mergeable_vendor)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $m_vendor = Vendor::withTrashed()
-                            ->where('id', $this->decodePrimaryKey($mergeable_vendor))
-                            ->where('company_id', $user->company()->id)
-                            ->first();
+            ->where('id', $this->decodePrimaryKey($mergeable_vendor))
+            ->where('company_id', $user->company()->id)
+            ->first();
 
         if (!$m_vendor) {
-            return response()->json(['message' => "Vendor not found"], 400);
+            return response()->json(['message' => 'Vendor not found'], 400);
         }
 
         if ($m_vendor->id == $vendor->id) {
-            return response()->json(['message' => "Attempting to merge the same vendor is not possible."], 400);
+            return response()->json(['message' => 'Attempting to merge the same vendor is not possible.'], 400);
         }
 
         $merged_vendor = $vendor->service()->merge($m_vendor)->save();

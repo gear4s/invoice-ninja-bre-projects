@@ -6,16 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\Invoice;
 
+use App\DataMapper\TransactionEventMetadata;
 use App\Models\Invoice;
 use App\Models\TransactionEvent;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use App\DataMapper\TransactionEventMetadata;
 
 /**
  * Handles entries for vanilla payments on an invoice.
@@ -29,7 +29,6 @@ class InvoiceTransactionEventEntryCash
 
     /**
      * Handle the event.
-     *
      */
     public function run($invoice, $start_date, $end_date)
     {
@@ -50,10 +49,9 @@ class InvoiceTransactionEventEntryCash
                 ];
             })->filter(function ($payment) use ($start_date, $end_date) {
                 // Filter payments where the pivot created_at is within the date boundaries
-                return \Carbon\Carbon::parse($payment['date'])->isBetween($start_date, $end_date);
+                return Carbon::parse($payment['date'])->isBetween($start_date, $end_date);
             });
         });
-
 
         TransactionEvent::create([
             'invoice_id' => $invoice->id,
@@ -80,6 +78,7 @@ class InvoiceTransactionEventEntryCash
     {
         if ($invoice->amount == 0) {
             $this->paid_ratio = 0;
+
             return $this;
         }
 
@@ -123,5 +122,4 @@ class InvoiceTransactionEventEntryCash
         ]);
 
     }
-
 }

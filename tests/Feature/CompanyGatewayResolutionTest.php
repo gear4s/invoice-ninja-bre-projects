@@ -6,13 +6,11 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature;
 
-use App\Models\Client;
 use App\Models\CompanyGateway;
 use App\Models\Credit;
 use App\Models\GatewayType;
@@ -23,13 +21,10 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class CompanyGatewayResolutionTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     public $cg;
@@ -44,7 +39,7 @@ class CompanyGatewayResolutionTest extends TestCase
             ThrottleRequests::class
         );
 
-        if (! config('ninja.testvars.stripe')) {
+        if (!config('ninja.testvars.stripe')) {
             $this->markTestSkipped('Skip test no company gateways installed');
         }
         Model::reguard();
@@ -86,10 +81,10 @@ class CompanyGatewayResolutionTest extends TestCase
         $data[2]['fee_cap'] = 0;
         $data[2]['is_enabled'] = true;
 
-        //disable ach here
+        // disable ach here
         $json_config = json_decode(config('ninja.testvars.stripe'));
 
-        $this->cg = new CompanyGateway();
+        $this->cg = new CompanyGateway;
         $this->cg->company_id = $this->company->id;
         $this->cg->user_id = $this->user->id;
         $this->cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -105,7 +100,7 @@ class CompanyGatewayResolutionTest extends TestCase
     /**
      *  \App\Models\CompanyGateway::calcGatewayFee()
      */
-    public function testGatewayResolution()
+    public function test_gateway_resolution()
     {
         $fee = $this->cg->calcGatewayFee(10, GatewayType::CREDIT_CARD, false);
         $this->assertEquals(0.2, $fee);
@@ -114,13 +109,13 @@ class CompanyGatewayResolutionTest extends TestCase
     /**
      *  \App|Models\Client::validGatewayForAmount()
      */
-    public function testValidationForGatewayAmount()
+    public function test_validation_for_gateway_amount()
     {
         $this->assertTrue($this->client->validGatewayForAmount($this->cg->fees_and_limits->{1}, 10));
         $this->assertTrue($this->client->validGatewayForAmount($this->cg->fees_and_limits->{2}, 10));
     }
 
-    public function testAvailablePaymentMethodsCount()
+    public function test_available_payment_methods_count()
     {
         $amount = 10;
 
@@ -135,11 +130,10 @@ class CompanyGatewayResolutionTest extends TestCase
         $this->assertNotNull($this->cg->fees_and_limits->{1}->min_limit);
         $payment_methods = $this->client->service()->getPaymentMethods($amount);
 
-
         $this->assertEquals(2, count($payment_methods));
     }
 
-    public function testRemoveMethods()
+    public function test_remove_methods()
     {
         $amount = 10;
 
@@ -180,10 +174,10 @@ class CompanyGatewayResolutionTest extends TestCase
         $data[2]['fee_cap'] = 0;
         $data[2]['is_enabled'] = false;
 
-        //disable ach here
+        // disable ach here
         $json_config = json_decode(config('ninja.testvars.stripe'));
 
-        $this->cg = new CompanyGateway();
+        $this->cg = new CompanyGateway;
         $this->cg->company_id = $this->company->id;
         $this->cg->user_id = $this->user->id;
         $this->cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -201,7 +195,7 @@ class CompanyGatewayResolutionTest extends TestCase
         $this->assertEquals(1, count($this->client->service()->getPaymentMethods($amount)));
     }
 
-    public function testEnableFeeAdjustment()
+    public function test_enable_fee_adjustment()
     {
         $data = [];
         $data[1]['min_limit'] = -1;
@@ -232,10 +226,10 @@ class CompanyGatewayResolutionTest extends TestCase
         $data[2]['fee_cap'] = 0;
         $data[2]['is_enabled'] = true;
 
-        //disable ach here
+        // disable ach here
         $json_config = json_decode(config('ninja.testvars.stripe'));
 
-        $this->cg = new CompanyGateway();
+        $this->cg = new CompanyGateway;
         $this->cg->company_id = $this->company->id;
         $this->cg->user_id = $this->user->id;
         $this->cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';

@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards;
 
+use App\DataMapper\InvoiceItem;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Product;
@@ -30,24 +30,21 @@ class OrderXDocument extends AbstractService
     /**
      * __construct
      *
-     * @param  \App\Models\Invoice | \App\Models\Quote | \App\Models\PurchaseOrder | \App\Models\Credit $document
-     * @param  bool $returnObject
-     * @param  array $tax_map
      * @return void
      */
-    public function __construct(public \App\Models\Invoice|\App\Models\Quote|\App\Models\PurchaseOrder|\App\Models\Credit  $document, private readonly bool $returnObject = false, private array $tax_map = []) {}
+    public function __construct(public Invoice|Quote|PurchaseOrder|Credit $document, private readonly bool $returnObject = false, private array $tax_map = []) {}
 
     public function run(): self
     {
 
         $company = $this->document->company;
         $settings_entity = ($this->document instanceof PurchaseOrder) ? $this->document->vendor : $this->document->client;
-        $profile = $settings_entity->getSetting('e_quote_type') ? $settings_entity->getSetting('e_quote_type') : "OrderX_Extended";
+        $profile = $settings_entity->getSetting('e_quote_type') ? $settings_entity->getSetting('e_quote_type') : 'OrderX_Extended';
 
         $profile = match ($profile) {
-            "OrderX_Basic" => OrderProfiles::PROFILE_BASIC,
-            "OrderX_Comfort" => OrderProfiles::PROFILE_COMFORT,
-            "OrderX_Extended" => OrderProfiles::PROFILE_EXTENDED,
+            'OrderX_Basic' => OrderProfiles::PROFILE_BASIC,
+            'OrderX_Comfort' => OrderProfiles::PROFILE_COMFORT,
+            'OrderX_Extended' => OrderProfiles::PROFILE_EXTENDED,
             default => OrderProfiles::PROFILE_EXTENDED,
         };
 
@@ -55,12 +52,12 @@ class OrderXDocument extends AbstractService
 
         $this->orderxdocument
             ->setDocumentSeller($company->getSetting('name'))
-            ->setDocumentSellerAddress($company->getSetting("address1"), $company->getSetting("address2"), "", $company->getSetting("postal_code"), $company->getSetting("city"), $company->country()->iso_3166_2, $company->getSetting("state"))
-            ->setDocumentSellerContact($this->document->user->present()->getFullName(), "", $this->document->user->present()->phone(), "", $this->document->user->email)
+            ->setDocumentSellerAddress($company->getSetting('address1'), $company->getSetting('address2'), '', $company->getSetting('postal_code'), $company->getSetting('city'), $company->country()->iso_3166_2, $company->getSetting('state'))
+            ->setDocumentSellerContact($this->document->user->present()->getFullName(), '', $this->document->user->present()->phone(), '', $this->document->user->email)
             ->setDocumentBuyer($settings_entity->present()->name(), $settings_entity->number)
-            ->setDocumentBuyerAddress($settings_entity->address1, "", "", $settings_entity->postal_code, $settings_entity->city, $settings_entity->country->iso_3166_2 ?? $company->country()->iso_3166_2, $settings_entity->state)
-            ->setDocumentBuyerContact($settings_entity->present()->primary_contact_name(), "", $settings_entity->present()->phone(), "", $settings_entity->present()->email())
-            ->addDocumentPaymentTerm(ctrans("texts.xinvoice_payable", ['payeddue' => date_create($this->document->date ?? now()->format('Y-m-d'))->diff(date_create($this->document->due_date ?? now()->format('Y-m-d')))->format("%d"), 'paydate' => $this->document->due_date]));
+            ->setDocumentBuyerAddress($settings_entity->address1, '', '', $settings_entity->postal_code, $settings_entity->city, $settings_entity->country->iso_3166_2 ?? $company->country()->iso_3166_2, $settings_entity->state)
+            ->setDocumentBuyerContact($settings_entity->present()->primary_contact_name(), '', $settings_entity->present()->phone(), '', $settings_entity->present()->email())
+            ->addDocumentPaymentTerm(ctrans('texts.xinvoice_payable', ['payeddue' => date_create($this->document->date ?? now()->format('Y-m-d'))->diff(date_create($this->document->due_date ?? now()->format('Y-m-d')))->format('%d'), 'paydate' => $this->document->due_date]));
 
         if (!empty($this->document->public_notes)) {
             $this->orderxdocument->addDocumentNote($this->document->public_notes ?? '');
@@ -71,15 +68,15 @@ class OrderXDocument extends AbstractService
             case Quote::class:
                 // Probably wrong file code https://github.com/horstoeko/zugferd/blob/master/src/codelists/ZugferdInvoiceType.php
                 if (empty($this->document->number)) {
-                    $this->orderxdocument->setDocumentInformation("DRAFT", OrderDocumentTypes::ORDER, date_create($this->document->date ?? now()->format('Y-m-d')), $settings_entity->getCurrencyCode());
+                    $this->orderxdocument->setDocumentInformation('DRAFT', OrderDocumentTypes::ORDER, date_create($this->document->date ?? now()->format('Y-m-d')), $settings_entity->getCurrencyCode());
                     $this->orderxdocument->setIsTestDocument(true);
                 } else {
                     $this->orderxdocument->setDocumentInformation($this->document->number, OrderDocumentTypes::ORDER, date_create($this->document->date ?? now()->format('Y-m-d')), $settings_entity->getCurrencyCode());
-                };
+                }
                 break;
             case PurchaseOrder::class:
                 if (empty($this->document->number)) {
-                    $this->orderxdocument->setDocumentInformation("DRAFT", OrderDocumentTypes::ORDER_RESPONSE, date_create($this->document->date ?? now()->format('Y-m-d')), $settings_entity->getCurrencyCode());
+                    $this->orderxdocument->setDocumentInformation('DRAFT', OrderDocumentTypes::ORDER_RESPONSE, date_create($this->document->date ?? now()->format('Y-m-d')), $settings_entity->getCurrencyCode());
                     $this->orderxdocument->setIsTestDocument(true);
                 } else {
                     $this->orderxdocument->setDocumentInformation($this->document->number, OrderDocumentTypes::ORDER_RESPONSE, date_create($this->document->date ?? now()->format('Y-m-d')), $settings_entity->getCurrencyCode());
@@ -91,27 +88,27 @@ class OrderXDocument extends AbstractService
         }
 
         if (empty($settings_entity->routing_id)) {
-            $this->orderxdocument->setDocumentBuyerReference(ctrans("texts.xinvoice_no_buyers_reference"));
+            $this->orderxdocument->setDocumentBuyerReference(ctrans('texts.xinvoice_no_buyers_reference'));
         } else {
             $this->orderxdocument->setDocumentBuyerReference($settings_entity->routing_id);
         }
         if (isset($settings_entity->shipping_address1) && $settings_entity->shipping_country) {
-            $this->orderxdocument->setDocumentShipToAddress($settings_entity->shipping_address1, $settings_entity->shipping_address2, "", $settings_entity->shipping_postal_code, $settings_entity->shipping_city, $settings_entity->shipping_country->iso_3166_2, $settings_entity->shipping_state);
+            $this->orderxdocument->setDocumentShipToAddress($settings_entity->shipping_address1, $settings_entity->shipping_address2, '', $settings_entity->shipping_postal_code, $settings_entity->shipping_city, $settings_entity->shipping_country->iso_3166_2, $settings_entity->shipping_state);
         }
 
-        $this->orderxdocument->addDocumentPaymentMean('68', ctrans("texts.xinvoice_online_payment"));
+        $this->orderxdocument->addDocumentPaymentMean('68', ctrans('texts.xinvoice_online_payment'));
 
-        if (str_contains($company->getSetting('vat_number'), "/")) {
-            $this->orderxdocument->addDocumentSellerTaxRegistration("FC", $company->getSetting('vat_number'));
+        if (str_contains($company->getSetting('vat_number'), '/')) {
+            $this->orderxdocument->addDocumentSellerTaxRegistration('FC', $company->getSetting('vat_number'));
         } else {
-            $this->orderxdocument->addDocumentSellerTaxRegistration("VA", $company->getSetting('vat_number'));
+            $this->orderxdocument->addDocumentSellerTaxRegistration('VA', $company->getSetting('vat_number'));
         }
 
         $invoicing_data = $this->document->calc();
 
-        //Create line items and calculate taxes
+        // Create line items and calculate taxes
         foreach ($this->document->line_items as $index => $item) {
-            /** @var \App\DataMapper\InvoiceItem $item **/
+            /** @var InvoiceItem $item * */
             $this->orderxdocument->addNewPosition($index)
                 ->setDocumentPositionGrossPrice($item->gross_line_total)
                 ->setDocumentPositionNetPrice($item->cost);
@@ -125,7 +122,7 @@ class OrderXDocument extends AbstractService
                 if (!empty($item->notes)) {
                     $this->orderxdocument->setDocumentPositionProductDetails($item->notes);
                 } else {
-                    $this->orderxdocument->setDocumentPositionProductDetails("no product name defined");
+                    $this->orderxdocument->setDocumentPositionProductDetails('no product name defined');
                 }
             }
             // TODO: add item classification (kg, m^3, ...)
@@ -193,7 +190,7 @@ class OrderXDocument extends AbstractService
         );
 
         foreach ($this->tax_map as $item) {
-            $this->orderxdocument->addDocumentTax($item["tax_type"], "VAT", $item["net_amount"], $item["tax_rate"] * $item["net_amount"], $item["tax_rate"] * 100);
+            $this->orderxdocument->addDocumentTax($item['tax_type'], 'VAT', $item['net_amount'], $item['tax_rate'] * $item['net_amount'], $item['tax_rate'] * 100);
         }
 
         // The validity can be checked using https://portal3.gefeg.com/invoice/validation or https://e-rechnung.bayern.de/app/#/upload
@@ -204,8 +201,6 @@ class OrderXDocument extends AbstractService
     /**
      * Returns the XML document
      * in string format
-     *
-     * @return string
      */
     public function getXml(): string
     {
@@ -224,7 +219,7 @@ class OrderXDocument extends AbstractService
                 $tax_type = OrderDutyTaxFeeCategories::STANDARD_RATE;
                 break;
             case Product::PRODUCT_TYPE_EXEMPT:
-                $tax_type =  OrderDutyTaxFeeCategories::EXEMPT_FROM_TAX;
+                $tax_type = OrderDutyTaxFeeCategories::EXEMPT_FROM_TAX;
                 break;
             case Product::PRODUCT_TYPE_ZERO_RATED:
                 $tax_type = OrderDutyTaxFeeCategories::ZERO_RATED_GOODS;
@@ -233,35 +228,36 @@ class OrderXDocument extends AbstractService
                 $tax_type = OrderDutyTaxFeeCategories::VAT_REVERSE_CHARGE;
                 break;
         }
-        $eu_states = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "EL", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO", "CH"];
+        $eu_states = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'EL', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'CH'];
         if (empty($tax_type)) {
             if ((in_array($this->document->company->country()->iso_3166_2, $eu_states) && in_array($this->document->client->country->iso_3166_2, $eu_states)) && $this->document->company->country()->iso_3166_2 != $this->document->client->country->iso_3166_2) {
                 $tax_type = OrderDutyTaxFeeCategories::VAT_EXEMPT_FOR_EEA_INTRACOMMUNITY_SUPPLY_OF_GOODS_AND_SERVICES;
             } elseif (!in_array($this->document->client->country->iso_3166_2, $eu_states)) {
                 $tax_type = OrderDutyTaxFeeCategories::SERVICE_OUTSIDE_SCOPE_OF_TAX;
-            } elseif ($this->document->client->country->iso_3166_2 == "ES-CN") {
+            } elseif ($this->document->client->country->iso_3166_2 == 'ES-CN') {
                 $tax_type = OrderDutyTaxFeeCategories::CANARY_ISLANDS_GENERAL_INDIRECT_TAX;
-            } elseif (in_array($this->document->client->country->iso_3166_2, ["ES-CE", "ES-ML"])) {
+            } elseif (in_array($this->document->client->country->iso_3166_2, ['ES-CE', 'ES-ML'])) {
                 $tax_type = OrderDutyTaxFeeCategories::TAX_FOR_PRODUCTION_SERVICES_AND_IMPORTATION_IN_CEUTA_AND_MELILLA;
             } else {
                 // nlog("Unkown tax case for xinvoice");
                 $tax_type = OrderDutyTaxFeeCategories::STANDARD_RATE;
             }
         }
+
         return $tax_type;
     }
+
     private function addtoTaxMap(string $tax_type, float $net_amount, float $tax_rate): void
     {
-        $hash = hash("md5", $tax_type . "-" . $tax_rate);
+        $hash = hash('md5', $tax_type . '-' . $tax_rate);
         if (array_key_exists($hash, $this->tax_map)) {
-            $this->tax_map[$hash]["net_amount"] += $net_amount;
+            $this->tax_map[$hash]['net_amount'] += $net_amount;
         } else {
             $this->tax_map[$hash] = [
-                "tax_type" => $tax_type,
-                "net_amount" => $net_amount,
-                "tax_rate" => $tax_rate / 100,
+                'tax_type' => $tax_type,
+                'net_amount' => $net_amount,
+                'tax_rate' => $tax_rate / 100,
             ];
         }
     }
-
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,12 +14,9 @@ namespace Tests\Unit;
 use App\Models\Client;
 use Tests\TestCase;
 
-/**
- *
- */
 class EvaluateStringTest extends TestCase
 {
-    public function testNumericCleanup()
+    public function test_numeric_cleanup()
     {
         $string = '13/favicon.ico';
 
@@ -29,9 +25,8 @@ class EvaluateStringTest extends TestCase
         $this->assertEquals(13, $number);
     }
 
-    public function testClassNameResolution()
+    public function test_class_name_resolution()
     {
         $this->assertEquals(class_basename(Client::class), 'Client');
     }
-
 }

@@ -12,7 +12,7 @@ return new class extends Migration
      * @return void
      */
     public function up()
-    {     
+    {
         Schema::table('companies', function (Blueprint $table) {
             $table->text('quickbooks')->nullable();
         });
@@ -23,8 +23,5 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
-    {
-        
-    }
+    public function down() {}
 };

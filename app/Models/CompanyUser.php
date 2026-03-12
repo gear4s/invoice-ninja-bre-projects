@@ -6,13 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use Awobaz\Compoships\Compoships;
 use Awobaz\Compoships\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -36,16 +40,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $permissions_updated_at
  * @property string $ninja_portal_url
  * @property object|null $react_settings
- * @property-read \App\Models\Account $account
- * @property-read \App\Models\Company $company
- * @property-read \App\Models\CompanyUser $cu
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $token
+ * @property-read Account $account
+ * @property-read Company $company
+ * @property-read CompanyUser $cu
+ * @property-read Collection<int, CompanyToken> $token
  * @property-read int|null $token_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
+ * @property-read Collection<int, CompanyToken> $tokens
  * @property-read int|null $tokens_count
- * @property-read \App\Models\User $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ * @property-read User $user
+ * @property-read Collection<int, User> $users
  * @property-read int|null $users_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyUser authCompany()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyUser newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyUser newQuery()
@@ -70,27 +75,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyUser whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyUser withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|CompanyUser withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $token
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $token
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyUser> $cu
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $token
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
+ *
+ * @property-read Collection<int, CompanyToken> $token
+ * @property-read Collection<int, CompanyToken> $tokens
+ * @property-read Collection<int, User> $users
+ * @property-read Collection<int, CompanyToken> $token
+ * @property-read Collection<int, CompanyToken> $tokens
+ * @property-read Collection<int, User> $users
+ * @property-read Collection<int, CompanyUser> $cu
+ * @property-read Collection<int, CompanyToken> $token
+ * @property-read Collection<int, CompanyToken> $tokens
+ *
  * @mixin \Eloquent
  */
 class CompanyUser extends Pivot
 {
+    use Compoships;
     use SoftDeletes;
-    use \Awobaz\Compoships\Compoships;
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
     /**
      * The attributes that should be cast to native types.
-     *
      */
     protected $casts = [
         'permissions_updated_at' => 'timestamp',
@@ -125,29 +131,23 @@ class CompanyUser extends Pivot
         return self::class;
     }
 
-    public function account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function user_pivot(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function user_pivot(): HasOne
     {
         return $this->hasOne(User::class)->withPivot('permissions', 'settings', 'react_settings', 'is_admin', 'is_owner', 'is_locked', 'slack_webhook_url', 'migrating');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    public function company_pivot(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function company_pivot(): HasOne
     {
         return $this->hasOne(Company::class)->withPivot('permissions', 'settings', 'react_settings', 'is_admin', 'is_owner', 'is_locked', 'slack_webhook_url', 'migrating');
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function user()
     {
@@ -155,7 +155,7 @@ class CompanyUser extends Pivot
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function company()
     {
@@ -186,9 +186,9 @@ class CompanyUser extends Pivot
         return $this->hasMany(CompanyToken::class, 'user_id', 'user_id');
     }
 
-    public function scopeAuthCompany($query): \Illuminate\Database\Eloquent\Builder
+    public function scopeAuthCompany($query): Builder
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $query->where('company_id', $user->companyId());
@@ -198,12 +198,9 @@ class CompanyUser extends Pivot
 
     /**
      * Determines if the notifications should be React or Flutter links
-     *
-     * @return bool
      */
     public function portalType(): bool
     {
         return isset($this->react_settings->react_notification_link) && $this->react_settings->react_notification_link;
     }
-
 }

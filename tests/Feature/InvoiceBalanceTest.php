@@ -2,20 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
+use App\Factory\InvoiceItemFactory;
 use App\Models\Client;
 use App\Models\Invoice;
-use Tests\MockAccountData;
 use App\Utils\Traits\MakesHash;
-use App\Factory\InvoiceItemFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Session;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class InvoiceBalanceTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void

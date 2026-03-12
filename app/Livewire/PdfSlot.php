@@ -6,27 +6,27 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire;
 
-use App\Utils\Number;
-use Livewire\Component;
-use App\Utils\HtmlEngine;
+use App\Jobs\EDocument\CreateEDocument;
+use App\Jobs\Entity\CreateRawPdf;
 use App\Libraries\MultiDB;
-use Illuminate\Support\Str;
-use App\Models\QuoteInvitation;
-use App\Utils\VendorHtmlEngine;
 use App\Models\CreditInvitation;
 use App\Models\InvoiceInvitation;
-use Livewire\Attributes\Computed;
-use Illuminate\Support\Facades\Cache;
-use App\Jobs\EDocument\CreateEDocument;
 use App\Models\PurchaseOrderInvitation;
+use App\Models\QuoteInvitation;
 use App\Models\RecurringInvoiceInvitation;
 use App\Services\Pdf\Markdown;
+use App\Utils\HtmlEngine;
+use App\Utils\Number;
+use App\Utils\VendorHtmlEngine;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class PdfSlot extends Component
 {
@@ -111,7 +111,7 @@ class PdfSlot extends Component
 
         $file_name = $this->entity()->numberFormatter() . '.pdf';
 
-        $file = (new \App\Jobs\Entity\CreateRawPdf($this->invitation()))->handle();
+        $file = (new CreateRawPdf($this->invitation()))->handle();
 
         $headers = ['Content-Type' => 'application/pdf'];
 
@@ -198,7 +198,7 @@ class PdfSlot extends Component
     private function getCompanyAddress()
     {
 
-        $company_address = "";
+        $company_address = '';
 
         foreach ($this->settings->pdf_variables?->company_address as $variable) {
             $company_address .= "<p>{$variable}</p>";
@@ -210,7 +210,7 @@ class PdfSlot extends Component
 
     private function getCompanyDetails()
     {
-        $company_details = "";
+        $company_details = '';
 
         foreach ($this->settings->pdf_variables->company_details as $variable) {
             $company_details .= "<p>{$variable}</p>";
@@ -222,7 +222,7 @@ class PdfSlot extends Component
 
     private function getEntityDetails()
     {
-        $entity_details = "";
+        $entity_details = '';
 
         if ($this->entity_type == 'invoice' || $this->entity_type == 'recurring_invoice') {
             foreach ($this->settings->pdf_variables->invoice_details as $variable) {
@@ -265,7 +265,7 @@ class PdfSlot extends Component
 
     private function getUserDetails()
     {
-        $user_details = "";
+        $user_details = '';
 
         if ($this->entity_type == 'purchase_order') {
             foreach (array_slice($this->settings->pdf_variables->vendor_details, 1) as $variable) {
@@ -287,7 +287,7 @@ class PdfSlot extends Component
             return $item->type_id == 1 || $item->type_id == 6 || $item->type_id == 5;
         })->map(function ($item) {
 
-            //$notes = strlen($item->notes) > 4 ? $item->notes : $item->product_key;
+            // $notes = strlen($item->notes) > 4 ? $item->notes : $item->product_key;
             $notes = $this->preference_product_notes_for_html_view ? $item->notes : $item->product_key;
 
             return [
@@ -324,6 +324,7 @@ class PdfSlot extends Component
             return 'invoice';
         } elseif ($this->invitation() instanceof QuoteInvitation) {
             $this->is_quote = true;
+
             return 'quote';
         } elseif ($this->invitation() instanceof CreditInvitation) {
             return 'credit';
@@ -331,9 +332,9 @@ class PdfSlot extends Component
             return 'recurring_invoice';
         } elseif ($this->invitation() instanceof PurchaseOrderInvitation) {
             $this->route_entity = 'vendor';
+
             return 'purchase_order';
         }
-
 
         return '';
     }

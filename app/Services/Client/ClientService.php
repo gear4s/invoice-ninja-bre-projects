@@ -6,32 +6,30 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Client;
 
-use App\Utils\Ninja;
-use App\Utils\Number;
+use App\Events\Statement\StatementWasEmailed;
 use App\Models\Client;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\Email\Email;
-use App\Utils\Traits\MakesDates;
-use Illuminate\Support\Facades\DB;
 use App\Services\Email\EmailObject;
-use App\Services\Client\MapSettings;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use App\Utils\Traits\GeneratesCounter;
-use Illuminate\Mail\Mailables\Address;
+use App\Utils\Traits\MakesDates;
 use Illuminate\Database\QueryException;
-use App\Events\Statement\StatementWasEmailed;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Support\Facades\DB;
 
 class ClientService
 {
-    use MakesDates;
     use GeneratesCounter;
+    use MakesDates;
 
     private string $client_start_date;
 
@@ -48,10 +46,10 @@ class ClientService
         try {
 
             $balance = Invoice::withTrashed()
-                        ->where('client_id', $this->client->id)
-                        ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                        ->where('is_deleted', false)
-                        ->sum('balance');
+                ->where('client_id', $this->client->id)
+                ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('is_deleted', false)
+                ->sum('balance');
 
             DB::connection(config('database.default'))->transaction(function () use ($balance) {
                 $this->client = Client::withTrashed()->where('id', $this->client->id)->lockForUpdate()->first();
@@ -59,9 +57,8 @@ class ClientService
                 $this->client->saveQuietly();
             }, 2);
 
-
         } catch (\Throwable $throwable) {
-            nlog("DB ERROR " . $throwable->getMessage());
+            nlog('DB ERROR ' . $throwable->getMessage());
         }
 
         // if ($invoice && floatval($this->client->balance)  != floatval($pre_client_balance)) {
@@ -75,7 +72,6 @@ class ClientService
     /**
      * Seeing too many race conditions under heavy load here.
      *
-     * @param  float $amount
      * @return ClientService
      */
     public function updateBalance(float $amount)
@@ -121,11 +117,11 @@ class ClientService
         DB::connection(config('database.default'))->transaction(function () {
 
             $amount = Payment::query()
-                    ->withTrashed()
-                    ->where('client_id', $this->client->id)
-                    ->where('is_deleted', 0)
-                    ->whereIn('status_id', [Payment::STATUS_COMPLETED, Payment::STATUS_PENDING, Payment::STATUS_PARTIALLY_REFUNDED, Payment::STATUS_REFUNDED])
-                    ->selectRaw('SUM(payments.amount - payments.applied) as amount')->first()->amount ?? 0;
+                ->withTrashed()
+                ->where('client_id', $this->client->id)
+                ->where('is_deleted', 0)
+                ->whereIn('status_id', [Payment::STATUS_COMPLETED, Payment::STATUS_PENDING, Payment::STATUS_PARTIALLY_REFUNDED, Payment::STATUS_REFUNDED])
+                ->selectRaw('SUM(payments.amount - payments.applied) as amount')->first()->amount ?? 0;
 
             $this->client = Client::withTrashed()->where('id', $this->client->id)->lockForUpdate()->first();
             $this->client->payment_balance = $amount;
@@ -135,7 +131,6 @@ class ClientService
         return $this;
     }
 
-
     public function adjustCreditBalance(mixed $amount)
     {
 
@@ -143,7 +138,6 @@ class ClientService
 
         return $this;
     }
-
 
     public function applyNumber(): self
     {
@@ -174,12 +168,12 @@ class ClientService
     public function getCreditBalance(): float
     {
         $credits = Credit::withTrashed()->where('client_id', $this->client->id)
-                      ->where('is_deleted', false)
-                      ->where(function ($query) {
-                          $query->where('due_date', '>=', now()->format('Y-m-d'))
-                                  ->orWhereNull('due_date');
-                      })
-                      ->orderBy('created_at', 'ASC');
+            ->where('is_deleted', false)
+            ->where(function ($query) {
+                $query->where('due_date', '>=', now()->format('Y-m-d'))
+                    ->orWhereNull('due_date');
+            })
+            ->orderBy('created_at', 'ASC');
 
         return Number::roundValue($credits->sum('balance'), $this->client->currency()->precision);
     }
@@ -187,13 +181,13 @@ class ClientService
     public function getCredits()
     {
         return Credit::query()->where('client_id', $this->client->id)
-                  ->where('is_deleted', false)
-                  ->where('balance', '>', 0)
-                  ->where(function ($query) {
-                      $query->where('due_date', '>=', now()->format('Y-m-d'))
-                              ->orWhereNull('due_date');
-                  })
-                  ->orderBy('created_at', 'ASC')->get();
+            ->where('is_deleted', false)
+            ->where('balance', '>', 0)
+            ->where(function ($query) {
+                $query->where('due_date', '>=', now()->format('Y-m-d'))
+                    ->orWhereNull('due_date');
+            })
+            ->orderBy('created_at', 'ASC')->get();
     }
 
     public function getPaymentMethods(float $amount)
@@ -211,8 +205,7 @@ class ClientService
     /**
      * Generate the client statement.
      *
-     * @param array $options
-     * @param bool $send_email determines if we should send this statement direct to the client
+     * @param  bool  $send_email  determines if we should send this statement direct to the client
      */
     public function statement(array $options = [], bool $send_email = false)
     {
@@ -227,6 +220,7 @@ class ClientService
             }
 
             $this->emailStatement($pdf, $statement->options);
+
             return;
         }
 
@@ -236,8 +230,8 @@ class ClientService
     /**
      * Emails the statement to the client
      *
-     * @param  mixed $pdf     The pdf blob
-     * @param  array  $options The statement options array
+     * @param  mixed  $pdf  The pdf blob
+     * @param  array  $options  The statement options array
      */
     private function emailStatement($pdf, array $options): void
     {
@@ -254,21 +248,21 @@ class ClientService
     /**
      * Builds and returns an EmailObject for Client Statements
      *
-     * @param  mixed $pdf       The PDF to send
-     * @return EmailObject      The EmailObject to send
+     * @param  mixed  $pdf  The PDF to send
+     * @return EmailObject The EmailObject to send
      */
     public function buildStatementMailableData($pdf): EmailObject
     {
         $email = $this->client->present()->email();
 
-        $email_object = new EmailObject();
+        $email_object = new EmailObject;
         $email_object->to = [new Address($email, $this->client->present()->name())];
 
         $cc_contacts = $this->client
-                            ->contacts()
-                            ->where('send_email', true)
-                            ->where('email', '!=', $email)
-                            ->get();
+            ->contacts()
+            ->where('send_email', true)
+            ->where('email', '!=', $email)
+            ->get();
 
         foreach ($cc_contacts as $contact) {
 
@@ -278,9 +272,9 @@ class ClientService
 
         $invoice = $this->client->invoices()->whereHas('invitations')->first();
 
-        $invoice = \App\Models\Invoice::where('client_id', $this->client->id)->whereHas('invitations')->first();
+        $invoice = Invoice::where('client_id', $this->client->id)->whereHas('invitations')->first();
 
-        $email_object->attachments = [['file' => base64_encode($pdf), 'name' => ctrans('texts.statement') . ".pdf"]];
+        $email_object->attachments = [['file' => base64_encode($pdf), 'name' => ctrans('texts.statement') . '.pdf']];
         $email_object->client_id = $this->client->id;
         $email_object->entity_class = Invoice::class;
         $email_object->entity_id = $invoice?->id ?? null;
@@ -295,7 +289,6 @@ class ClientService
 
         return $email_object;
     }
-
 
     public function showSettingsMap(): array
     {

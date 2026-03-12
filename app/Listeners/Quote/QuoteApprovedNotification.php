@@ -6,7 +6,6 @@
  * @link https://github.com/quoteninja/quoteninja source repository
  *
  * @copyright Copyright (c) 2022. Quote Ninja LLC (https://quoteninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -42,13 +41,12 @@ class QuoteApprovedNotification implements ShouldQueue
 
         $quote = $event->quote;
 
-
         /* We loop through each user and determine whether they need to be notified */
         foreach ($event->company->company_users as $company_user) {
             /* The User */
             $user = $company_user->user;
 
-            if (! $user) {
+            if (!$user) {
                 continue;
             }
 
@@ -59,7 +57,7 @@ class QuoteApprovedNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject();
+                $nmo = new NinjaMailerObject;
                 $nmo->mailable = new NinjaMailer((new QuoteApprovedObject($quote, $event->company, $company_user->portalType()))->build());
                 $nmo->company = $quote->company;
                 $nmo->settings = $quote->company->settings;

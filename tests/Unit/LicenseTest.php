@@ -6,24 +6,17 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Unit;
 
 use App\DataMapper\EInvoice\TaxEntity;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Design;
 use App\Models\License;
-use App\Models\Payment;
-use Illuminate\Support\Str;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
-/**
- *
- */
 class LicenseTest extends TestCase
 {
     use DatabaseTransactions;
@@ -41,13 +34,13 @@ class LicenseTest extends TestCase
             $te = new TaxEntity([
                 'legal_entity_id' => $te['legal_entity_id'] ?? 1,
                 'company_key' => $te['company_key'] ?? '',
-                'received_documents' => $te['received_documents'] ?? []
+                'received_documents' => $te['received_documents'] ?? [],
             ]);
 
             $entities[] = $te;
         }
 
-        $l = new License();
+        $l = new License;
         $l->license_key = Str::random(32);
         $l->email = 'test@gmail.com';
         $l->transaction_reference = Str::random(10);
@@ -59,24 +52,24 @@ class LicenseTest extends TestCase
 
     }
 
-    public function testTaxEntiyFind()
+    public function test_tax_entiy_find()
     {
         $tes = [
             [
                 'legal_entity_id' => 22,
-                'company_key' => \Illuminate\Support\Str::random(32),
-                'received_documents' => []
+                'company_key' => Str::random(32),
+                'received_documents' => [],
             ],
             [
                 'legal_entity_id' => 33,
-                'company_key' => \Illuminate\Support\Str::random(32),
-                'received_documents' => []
+                'company_key' => Str::random(32),
+                'received_documents' => [],
             ],
             [
                 'legal_entity_id' => 50,
                 'company_key' => 'abcd',
-                'received_documents' => []
-            ]
+                'received_documents' => [],
+            ],
         ];
 
         $l = $this->stubLicense($tes);
@@ -95,7 +88,7 @@ class LicenseTest extends TestCase
 
     }
 
-    public function testTaxEntityAddRemove()
+    public function test_tax_entity_add_remove()
     {
         $l = $this->stubLicense();
 
@@ -104,7 +97,7 @@ class LicenseTest extends TestCase
         $te = new TaxEntity([
             'legal_entity_id' => 123,
             'company_key' => 'qqqq',
-            'received_documents' => []
+            'received_documents' => [],
         ]);
 
         $l->addEntity($te);
@@ -117,11 +110,9 @@ class LicenseTest extends TestCase
 
         $this->assertCount(0, $l->entities);
 
-
     }
 
-
-    public function testTaxEntityAddUpdate()
+    public function test_tax_entity_add_update()
     {
         $l = $this->stubLicense();
 
@@ -130,7 +121,7 @@ class LicenseTest extends TestCase
         $te = new TaxEntity([
             'legal_entity_id' => 123,
             'company_key' => 'qqqq',
-            'received_documents' => []
+            'received_documents' => [],
         ]);
 
         $l->addEntity($te);
@@ -156,11 +147,9 @@ class LicenseTest extends TestCase
 
     }
 
-
-
-    public function testLicenseValidity()
+    public function test_license_validity()
     {
-        $l = new License();
+        $l = new License;
 
         $l->license_key = Str::random(32);
         $l->email = 'test@gmail.com';
@@ -173,10 +162,9 @@ class LicenseTest extends TestCase
         $this->assertTrue($l->isValid());
     }
 
-
-    public function testLicenseValidityExpired()
+    public function test_license_validity_expired()
     {
-        $l = new License();
+        $l = new License;
 
         $l->license_key = Str::random(32);
         $l->email = 'test@gmail.com';
@@ -192,8 +180,7 @@ class LicenseTest extends TestCase
         $this->assertFalse($l->isValid());
     }
 
-
-    public function testPopDocs()
+    public function test_pop_docs()
     {
 
         $docs = [
@@ -224,19 +211,19 @@ class LicenseTest extends TestCase
         $tes = [
             [
                 'legal_entity_id' => 22,
-                'company_key' => \Illuminate\Support\Str::random(32),
-                'received_documents' => []
+                'company_key' => Str::random(32),
+                'received_documents' => [],
             ],
             [
                 'legal_entity_id' => 11,
-                'company_key' => \Illuminate\Support\Str::random(32),
-                'received_documents' => []
+                'company_key' => Str::random(32),
+                'received_documents' => [],
             ],
             [
                 'legal_entity_id' => 50,
                 'company_key' => 'abcd',
-                'received_documents' => $docs
-            ]
+                'received_documents' => $docs,
+            ],
         ];
 
         $l = $this->stubLicense($tes);
@@ -262,6 +249,4 @@ class LicenseTest extends TestCase
         $this->assertEquals('6c5d4e3f-2b1a-9d8c-7e6f-5d4c3b2a1e9d', $tax_entity->received_documents[0]);
 
     }
-
-
 }

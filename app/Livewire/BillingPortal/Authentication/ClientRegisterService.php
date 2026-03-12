@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -73,7 +72,7 @@ class ClientRegisterService
 
         if (isset($data['currency_id'])) {
             $settings = $client->settings;
-            $settings->currency_id = $data['currency_id'] ?? $this->company->settings->currency_id; //@phpstan-ignore-line
+            $settings->currency_id = $data['currency_id'] ?? $this->company->settings->currency_id; // @phpstan-ignore-line
             $client->settings = $settings;
         }
 

@@ -5,35 +5,54 @@ namespace App\Services\EDocument\Gateway\Storecove\Models;
 class Order
 {
     public ?string $document_number;
+
     public ?string $issue_date;
+
     public ?SellerSupplierParty $seller_supplier_party;
+
     /** @var OrderLines[]|null */
     public ?array $order_lines;
+
     public ?string $amount_including_tax;
+
     public ?string $tax_system;
+
     /** @var References[]|null */
     public ?array $references;
+
     public ?string $issue_time;
+
     public ?string $time_zone;
+
     public ?string $order_type;
+
     public ?string $note;
+
     public ?string $document_currency_code;
+
     public ?string $accounting_cost;
+
     public ?string $validity_period;
+
     public ?BuyerCustomerParty $buyer_customer_party;
+
     public ?Delivery $delivery;
+
     public ?DeliveryTerms $delivery_terms;
+
     public ?PaymentTerms $payment_terms;
+
     /** @var AllowanceCharges[]|null */
     public ?array $allowance_charges;
+
     /** @var Attachments[]|null */
     public ?array $attachments;
 
     /**
-     * @param OrderLines[] $order_lines
-     * @param References[] $references
-     * @param AllowanceCharges[] $allowance_charges
-     * @param Attachments[] $attachments
+     * @param  OrderLines[]  $order_lines
+     * @param  References[]  $references
+     * @param  AllowanceCharges[]  $allowance_charges
+     * @param  Attachments[]  $attachments
      */
     public function __construct(
         ?string $document_number,
@@ -194,132 +213,152 @@ class Order
     public function setDocumentNumber(?string $document_number): self
     {
         $this->document_number = $document_number;
+
         return $this;
     }
 
     public function setIssueDate(?string $issue_date): self
     {
         $this->issue_date = $issue_date;
+
         return $this;
     }
 
     public function setSellerSupplierParty(?SellerSupplierParty $seller_supplier_party): self
     {
         $this->seller_supplier_party = $seller_supplier_party;
+
         return $this;
     }
 
     /**
-     * @param OrderLines[] $order_lines
+     * @param  OrderLines[]  $order_lines
      */
     public function setOrderLines(?array $order_lines): self
     {
         $this->order_lines = $order_lines;
+
         return $this;
     }
 
     public function setAmountIncludingTax(?string $amount_including_tax): self
     {
         $this->amount_including_tax = $amount_including_tax;
+
         return $this;
     }
 
     public function setTaxSystem(?string $tax_system): self
     {
         $this->tax_system = $tax_system;
+
         return $this;
     }
 
     /**
-     * @param References[] $references
+     * @param  References[]  $references
      */
     public function setReferences(?array $references): self
     {
         $this->references = $references;
+
         return $this;
     }
 
     public function setIssueTime(?string $issue_time): self
     {
         $this->issue_time = $issue_time;
+
         return $this;
     }
 
     public function setTimeZone(?string $time_zone): self
     {
         $this->time_zone = $time_zone;
+
         return $this;
     }
 
     public function setOrderType(?string $order_type): self
     {
         $this->order_type = $order_type;
+
         return $this;
     }
 
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
         return $this;
     }
 
     public function setDocumentCurrencyCode(?string $document_currency_code): self
     {
         $this->document_currency_code = $document_currency_code;
+
         return $this;
     }
 
     public function setAccountingCost(?string $accounting_cost): self
     {
         $this->accounting_cost = $accounting_cost;
+
         return $this;
     }
 
     public function setValidityPeriod(?string $validity_period): self
     {
         $this->validity_period = $validity_period;
+
         return $this;
     }
 
     public function setBuyerCustomerParty(?BuyerCustomerParty $buyer_customer_party): self
     {
         $this->buyer_customer_party = $buyer_customer_party;
+
         return $this;
     }
 
     public function setDelivery(?Delivery $delivery): self
     {
         $this->delivery = $delivery;
+
         return $this;
     }
 
     public function setDeliveryTerms(?DeliveryTerms $delivery_terms): self
     {
         $this->delivery_terms = $delivery_terms;
+
         return $this;
     }
 
     public function setPaymentTerms(?PaymentTerms $payment_terms): self
     {
         $this->payment_terms = $payment_terms;
+
         return $this;
     }
 
     /**
-     * @param AllowanceCharges[] $allowance_charges
+     * @param  AllowanceCharges[]  $allowance_charges
      */
     public function setAllowanceCharges(?array $allowance_charges): self
     {
         $this->allowance_charges = $allowance_charges;
+
         return $this;
     }
 
     /**
-     * @param Attachments[] $attachments
+     * @param  Attachments[]  $attachments
      */
     public function setAttachments(?array $attachments): self
     {
         $this->attachments = $attachments;
+
         return $this;
     }
 }

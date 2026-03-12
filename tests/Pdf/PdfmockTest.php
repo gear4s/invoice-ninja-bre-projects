@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,12 +20,12 @@ use App\Models\Design;
 use App\Models\Invoice;
 use App\Services\Pdf\PdfBuilder;
 use App\Services\Pdf\PdfConfiguration;
+use App\Services\Pdf\PdfDesigner;
 use App\Services\Pdf\PdfMock;
 use App\Services\Pdf\PdfService;
 use Tests\TestCase;
 
 /**
- *
  *   App\Services\Pdf\PdfService
  */
 class PdfmockTest extends TestCase
@@ -37,7 +36,7 @@ class PdfmockTest extends TestCase
 
     }
 
-    public function testPdfInstance()
+    public function test_pdf_instance()
     {
         $data = [
             'settings' => CompanySettings::defaults(),
@@ -49,7 +48,7 @@ class PdfmockTest extends TestCase
         $account = Account::factory()->make();
         $company->setRelation('account', $account);
 
-        $entity = (new \App\Services\Pdf\PdfMock($data, $company))->build()->initEntity();
+        $entity = (new PdfMock($data, $company))->build()->initEntity();
 
         $this->assertInstanceOf(Invoice::class, $entity);
         $this->assertNotNull($entity->client);
@@ -62,10 +61,9 @@ class PdfmockTest extends TestCase
 
         $this->assertNotNull($pdf_config);
 
-
     }
 
-    public function testHtmlGeneration()
+    public function test_html_generation()
     {
         $data = [
             'settings' => CompanySettings::defaults(),
@@ -100,7 +98,7 @@ class PdfmockTest extends TestCase
 
         $pdf_service->config = $pdf_config;
 
-        $pdf_designer = (new \App\Services\Pdf\PdfDesigner($pdf_service))->build();
+        $pdf_designer = (new PdfDesigner($pdf_service))->build();
         $pdf_service->designer = $pdf_designer;
 
         $pdf_service->html_variables = $pdf_mock->getStubVariables();
@@ -113,5 +111,4 @@ class PdfmockTest extends TestCase
 
         $this->assertNotNull($html);
     }
-
 }

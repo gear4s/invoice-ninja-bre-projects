@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\ValidationRules;
 
 use App\Libraries\MultiDB;
+use App\Models\User;
 use Illuminate\Contracts\Validation\Rule;
 
 /**
@@ -21,13 +21,13 @@ use Illuminate\Contracts\Validation\Rule;
 class ValidUserForCompany implements Rule
 {
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-        /** @var \App\Models\User auth()->user() */
+        /** @var User auth()->user() */
         $user = auth()->user();
 
         return MultiDB::checkUserAndCompanyCoExist($value, $user->company()->company_key);

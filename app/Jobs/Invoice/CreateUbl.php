@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -60,7 +59,7 @@ class CreateUbl implements ShouldQueue
         $invoice = $this->invoice;
         $company = $invoice->company;
         $client = $invoice->client;
-        $ubl_invoice = new UBLInvoice();
+        $ubl_invoice = new UBLInvoice;
 
         // invoice
         $ubl_invoice->setId($invoice->number);
@@ -84,7 +83,7 @@ class CreateUbl implements ShouldQueue
 
         $ubl_invoice->setInvoiceLines($invoice_lines);
 
-        $taxtotal = new TaxTotal();
+        $taxtotal = new TaxTotal;
         $taxAmount1 = $taxAmount2 = $taxAmount3 = 0;
 
         if (strlen($invoice->tax_name1 ?? '') > 1) {
@@ -102,8 +101,8 @@ class CreateUbl implements ShouldQueue
         $taxtotal->setTaxAmount($taxAmount1 + $taxAmount2 + $taxAmount3);
         $ubl_invoice->setTaxTotal($taxtotal);
 
-        $ubl_invoice->setLegalMonetaryTotal((new LegalMonetaryTotal())
-            //->setLineExtensionAmount()
+        $ubl_invoice->setLegalMonetaryTotal((new LegalMonetaryTotal)
+            // ->setLineExtensionAmount()
             ->setTaxInclusiveAmount($invoice->balance)
             ->setTaxExclusiveAmount($taxable)
             ->setPayableAmount($invoice->balance));
@@ -117,16 +116,16 @@ class CreateUbl implements ShouldQueue
 
     private function createParty($company, $user)
     {
-        $party = new Party();
+        $party = new Party;
         $party->setName($company->present()->name);
-        $address = (new Address())
+        $address = (new Address)
             ->setCityName($company->city)
             ->setStreetName($company->address1)
             ->setBuildingNumber($company->address2)
             ->setPostalZone($company->postal_code);
 
         if ($company->country_id) {
-            $country = new Country();
+            $country = new Country;
             $country->setIdentificationCode(($company instanceof Company) ? $company->country()->iso_3166_2 : $company->country->iso_3166_2);
             $address->setCountry($country);
         }
@@ -134,7 +133,7 @@ class CreateUbl implements ShouldQueue
         $party->setPostalAddress($address);
         $party->setPhysicalLocation($address);
 
-        $contact = new Contact();
+        $contact = new Contact;
         $contact->setElectronicMail($user->email);
         $party->setContact($contact);
 
@@ -143,16 +142,16 @@ class CreateUbl implements ShouldQueue
 
     private function createInvoiceLine($index, $item, $taxable)
     {
-        $invoiceLine = (new InvoiceLine())
+        $invoiceLine = (new InvoiceLine)
             ->setId($index + 1)
             ->setInvoicedQuantity($item->quantity)
             ->setLineExtensionAmount($this->costWithDiscount($item))
-            ->setItem((new Item())
+            ->setItem((new Item)
                 ->setName($item->product_key)
                 ->setDescription($item->notes));
-        //->setSellersItemIdentification("1ABCD"));
+        // ->setSellersItemIdentification("1ABCD"));
 
-        $taxtotal = new TaxTotal();
+        $taxtotal = new TaxTotal;
         $itemTaxAmount1 = $itemTaxAmount2 = $itemTaxAmount3 = 0;
 
         if (strlen($item->tax_name1 ?? '') > 1) {
@@ -177,23 +176,21 @@ class CreateUbl implements ShouldQueue
     {
         $invoice = $this->invoice;
         $taxAmount = $this->taxAmount($taxable, $taxRate);
-        $taxScheme = ((new TaxScheme()))->setId($taxName);
+        $taxScheme = ((new TaxScheme))->setId($taxName);
 
-        $taxtotal->addTaxSubTotal((new TaxSubTotal())
-                ->setTaxAmount($taxAmount)
-                ->setTaxableAmount($taxable)
-                ->setTaxCategory((new TaxCategory())
-                    ->setId($taxName)
-                    ->setName($taxName)
-                    ->setTaxScheme($taxScheme)
-                    ->setPercent($taxRate)));
+        $taxtotal->addTaxSubTotal((new TaxSubTotal)
+            ->setTaxAmount($taxAmount)
+            ->setTaxableAmount($taxable)
+            ->setTaxCategory((new TaxCategory)
+                ->setId($taxName)
+                ->setName($taxName)
+                ->setTaxScheme($taxScheme)
+                ->setPercent($taxRate)));
 
         return $taxAmount;
     }
 
     /**
-     * @param $item
-     * @param $invoice_total
      * @return float
      */
     private function getItemTaxable($item, $invoice_total)

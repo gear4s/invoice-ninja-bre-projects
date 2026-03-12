@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,10 +19,10 @@ use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
+use Stripe\PaymentIntent;
 
 class PRZELEWY24 implements LivewireMethodInterface
 {
-    /** @var StripePaymentDriver */
     public StripePaymentDriver $stripe;
 
     public function __construct(StripePaymentDriver $stripe)
@@ -57,7 +56,7 @@ class PRZELEWY24 implements LivewireMethodInterface
         $this->stripe->payment_hash->data = array_merge((array) $this->stripe->payment_hash->data, $request->all());
         $this->stripe->payment_hash->save();
 
-        if (in_array($request->redirect_status, ['succeeded','pending'])) {
+        if (in_array($request->redirect_status, ['succeeded', 'pending'])) {
             return $this->processSuccessfulPayment($request->payment_intent);
         }
 
@@ -70,7 +69,7 @@ class PRZELEWY24 implements LivewireMethodInterface
 
         $this->stripe->init();
 
-        //catch duplicate submissions.
+        // catch duplicate submissions.
         if ($pay_exists = Payment::query()->where('transaction_reference', $payment_intent)->first()) {
             return redirect()->route('client.payments.show', ['payment' => $pay_exists->hashed_id]);
         }
@@ -93,7 +92,6 @@ class PRZELEWY24 implements LivewireMethodInterface
             $this->stripe->client,
             $this->stripe->client->company,
         );
-
 
         return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
     }
@@ -132,7 +130,7 @@ class PRZELEWY24 implements LivewireMethodInterface
         $data['customer'] = $this->stripe->findOrCreateCustomer()->id;
         $data['country'] = $this->stripe->client->country->iso_3166_2;
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = PaymentIntent::create([
             'amount' => $data['stripe_amount'],
             'currency' => 'eur',
             'payment_method_types' => ['p24'],
@@ -142,7 +140,7 @@ class PRZELEWY24 implements LivewireMethodInterface
                 'payment_hash' => $this->stripe->payment_hash->hash,
                 'gateway_type_id' => GatewayType::PRZELEWY24,
             ],
-        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid("st", true)]));
+        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid('st', true)]));
 
         $data['pi_client_secret'] = $intent->client_secret;
 

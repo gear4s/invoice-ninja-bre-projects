@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,14 +22,13 @@ class VendorObserver
     /**
      * Handle the vendor "created" event.
      *
-     * @param Vendor $vendor
      * @return void
      */
     public function created(Vendor $vendor)
     {
         $subscriptions = Webhook::where('company_id', $vendor->company_id)
-                                    ->where('event_id', Webhook::EVENT_CREATE_VENDOR)
-                                    ->exists();
+            ->where('event_id', Webhook::EVENT_CREATE_VENDOR)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_CREATE_VENDOR, $vendor, $vendor->company)->delay(0);
@@ -40,7 +38,6 @@ class VendorObserver
     /**
      * Handle the vendor "updated" event.
      *
-     * @param Vendor $vendor
      * @return void
      */
     public function updated(Vendor $vendor)
@@ -55,10 +52,9 @@ class VendorObserver
             $event = Webhook::EVENT_DELETE_VENDOR;
         }
 
-
         $subscriptions = Webhook::where('company_id', $vendor->company_id)
-                                    ->where('event_id', $event)
-                                    ->exists();
+            ->where('event_id', $event)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch($event, $vendor, $vendor->company)->delay(0);
@@ -68,7 +64,6 @@ class VendorObserver
     /**
      * Handle the vendor "deleted" event.
      *
-     * @param Vendor $vendor
      * @return void
      */
     public function deleted(Vendor $vendor)
@@ -78,8 +73,8 @@ class VendorObserver
         }
 
         $subscriptions = Webhook::where('company_id', $vendor->company_id)
-                                    ->where('event_id', Webhook::EVENT_ARCHIVE_VENDOR)
-                                    ->exists();
+            ->where('event_id', Webhook::EVENT_ARCHIVE_VENDOR)
+            ->exists();
 
         if ($subscriptions) {
             WebhookHandler::dispatch(Webhook::EVENT_ARCHIVE_VENDOR, $vendor, $vendor->company)->delay(0);
@@ -89,7 +84,6 @@ class VendorObserver
     /**
      * Handle the vendor "restored" event.
      *
-     * @param Vendor $vendor
      * @return void
      */
     public function restored(Vendor $vendor)
@@ -100,7 +94,6 @@ class VendorObserver
     /**
      * Handle the vendor "force deleted" event.
      *
-     * @param Vendor $vendor
      * @return void
      */
     public function forceDeleted(Vendor $vendor)

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,18 +21,18 @@ use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Utils\Traits\MakesHash;
+use Faker\Factory;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- *
  *  App\Models\InvoiceInvitation
  */
 class InvitationTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     // use RefreshDatabase;
 
     protected function setUp(): void
@@ -42,7 +41,7 @@ class InvitationTest extends TestCase
 
     }
 
-    public function testInvoiceCreationAfterInvoiceMarkedSent()
+    public function test_invoice_creation_after_invoice_marked_sent()
     {
         $account = Account::factory()->create();
         $company = Company::factory()->create([
@@ -52,13 +51,13 @@ class InvitationTest extends TestCase
         $account->default_company_id = $company->id;
         $account->save();
 
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $fake_email = $faker->email();
 
         $user = User::where('email', $fake_email)->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'email' => $fake_email,
                 'account_id' => $account->id,

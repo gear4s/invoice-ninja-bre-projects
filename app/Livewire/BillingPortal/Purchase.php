@@ -6,26 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal;
 
-use App\Utils\Ninja;
-use Livewire\Component;
 use App\Libraries\MultiDB;
-use Illuminate\Support\Str;
-use Livewire\Attributes\On;
-use App\Models\Subscription;
-use App\Utils\Traits\MakesHash;
-use Livewire\Attributes\Computed;
-use Illuminate\Support\Facades\App;
-use App\Livewire\BillingPortal\Cart\Cart;
-use App\Livewire\BillingPortal\Payments\Methods;
 use App\Livewire\BillingPortal\Authentication\Login;
 use App\Livewire\BillingPortal\Authentication\Register;
 use App\Livewire\BillingPortal\Authentication\RegisterOrLogin;
+use App\Livewire\BillingPortal\Cart\Cart;
+use App\Livewire\BillingPortal\Payments\Methods;
+use App\Models\Subscription;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class Purchase extends Component
 {
@@ -120,7 +117,7 @@ class Purchase extends Component
     #[Computed()]
     public function subscription()
     {
-        return Subscription::find($this->decodePrimaryKey($this->subscription_id))?->withoutRelations()?->makeHidden(['webhook_configuration','steps']);
+        return Subscription::find($this->decodePrimaryKey($this->subscription_id))?->withoutRelations()?->makeHidden(['webhook_configuration', 'steps']);
     }
 
     public static function defaultSteps()
@@ -133,15 +130,13 @@ class Purchase extends Component
 
     public function mount()
     {
-        $classes = collect(self::$dependencies)->mapWithKeys(fn($dependency, $class) => [$dependency['id'] => $class])->toArray();
+        $classes = collect(self::$dependencies)->mapWithKeys(fn ($dependency, $class) => [$dependency['id'] => $class])->toArray();
 
         MultiDB::setDb($this->db);
 
         $sub = Subscription::find($this->decodePrimaryKey($this->subscription_id));
 
-
         if (!$sub) {
-
 
             session()->flash('title', __('texts.subscription_unavailable'));
             session()->flash('notification', '');
@@ -152,7 +147,7 @@ class Purchase extends Component
 
         if ($sub->steps) {
             $steps = collect(explode(',', $sub->steps))
-                ->map(fn($step) => $classes[$step])
+                ->map(fn ($step) => $classes[$step])
                 ->toArray();
             $this->steps = [
                 Setup::class,

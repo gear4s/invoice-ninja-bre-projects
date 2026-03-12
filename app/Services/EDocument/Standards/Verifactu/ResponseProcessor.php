@@ -4,18 +4,18 @@ namespace App\Services\EDocument\Standards\Verifactu;
 
 use DOMDocument;
 use DOMElement;
-use DOMNodeList;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 class ResponseProcessor
 {
     private DOMDocument $dom;
+
     private ?DOMElement $root = null;
 
     public function __construct()
     {
-        $this->dom = new DOMDocument();
+        $this->dom = new DOMDocument;
     }
 
     /**
@@ -80,6 +80,7 @@ class ResponseProcessor
     private function isSuccessful(): bool
     {
         $estadoEnvio = $this->getElementText('//tikR:EstadoEnvio');
+
         return $estadoEnvio === 'Correcto';
     }
 
@@ -274,6 +275,7 @@ class ResponseProcessor
 
         if ($nodeList && $nodeList->length > 0) {
             $node = $nodeList->item(0);
+
             return $node instanceof DOMElement ? $node : null;
         }
 
@@ -294,6 +296,7 @@ class ResponseProcessor
     public function getFirstError(): ?string
     {
         $errors = $this->getErrors();
+
         return $errors[0]['message'] ?? null;
     }
 

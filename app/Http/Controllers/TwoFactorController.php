@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,20 +25,20 @@ class TwoFactorController extends BaseController
 
     public function setupTwoFactor()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         if (strlen($user->google_2fa_secret ?? '') > 2) {
             return response()->json(['message' => '2FA already enabled'], 400);
         } elseif (Ninja::isSelfHost()) {
 
-        } elseif (! $user->phone) {
+        } elseif (!$user->phone) {
             return response()->json(['message' => ctrans('texts.set_phone_for_two_factor')], 400);
-        } elseif (! $user->isVerified()) {
+        } elseif (!$user->isVerified()) {
             return response()->json(['message' => 'Please confirm your account first'], 400);
         }
 
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
         $secret = $google2fa->generateSecretKey();
 
         $qr_code = $google2fa->getQRCodeUrl(
@@ -58,9 +57,9 @@ class TwoFactorController extends BaseController
 
     public function enableTwoFactor(EnableTwoFactorRequest $request)
     {
-        $google2fa = new Google2FA();
+        $google2fa = new Google2FA;
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $secret = $request->input('secret');
@@ -71,11 +70,11 @@ class TwoFactorController extends BaseController
             $user->save();
 
             return response()->json(['message' => ctrans('texts.enabled_two_factor')], 200);
-        } elseif (! $secret || ! $google2fa->verifyKey($secret, $oneTimePassword)) {
+        } elseif (!$secret || !$google2fa->verifyKey($secret, $oneTimePassword)) {
             return response()->json(['message' => ctrans('texts.invalid_one_time_password')], 400);
-        } elseif (! $user->phone) {
+        } elseif (!$user->phone) {
             return response()->json(['message' => ctrans('texts.set_phone_for_two_factor')], 400);
-        } elseif (! $user->isVerified()) {
+        } elseif (!$user->isVerified()) {
             return response()->json(['message' => 'Please confirm your account first'], 400);
         }
 
@@ -90,7 +89,7 @@ class TwoFactorController extends BaseController
     public function disableTwoFactor()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $user->google_2fa_secret = null;

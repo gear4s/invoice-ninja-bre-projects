@@ -6,23 +6,23 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Qvalia;
 
-use App\Services\EDocument\Gateway\MutatorUtil;
 use App\Services\EDocument\Gateway\MutatorInterface;
+use App\Services\EDocument\Gateway\MutatorUtil;
+use InvoiceNinja\EInvoice\Models\Peppol\CreditNote;
+use InvoiceNinja\EInvoice\Models\Peppol\Invoice;
 
 class Mutator implements MutatorInterface
 {
-    /** @var \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote */
-    private \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice;
+    private \InvoiceNinja\EInvoice\Models\Peppol\Invoice|CreditNote $p_invoice;
 
-    private ?\InvoiceNinja\EInvoice\Models\Peppol\Invoice $_client_settings;
+    private ?Invoice $_client_settings;
 
-    private ?\InvoiceNinja\EInvoice\Models\Peppol\Invoice $_company_settings;
+    private ?Invoice $_company_settings;
 
     private $invoice;
 
@@ -36,20 +36,22 @@ class Mutator implements MutatorInterface
     public function setInvoice($invoice): self
     {
         $this->invoice = $invoice;
+
         return $this;
     }
 
     /**
-     * @param \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice
+     * @param  Invoice|CreditNote  $p_invoice
      */
     public function setPeppol($p_invoice): self
     {
         $this->p_invoice = $p_invoice;
+
         return $this;
     }
 
     /**
-     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote
+     * @return Invoice|CreditNote
      */
     public function getPeppol(): mixed
     {
@@ -69,12 +71,14 @@ class Mutator implements MutatorInterface
     public function setClientSettings($client_settings): self
     {
         $this->_client_settings = $client_settings;
+
         return $this;
     }
 
     public function setCompanySettings($company_settings): self
     {
         $this->_company_settings = $company_settings;
+
         return $this;
     }
 
@@ -94,8 +98,6 @@ class Mutator implements MutatorInterface
      * Runs sender level specific requirements for the e-invoice,
      *
      * ie, mutations that are required by the senders country.
-     *
-     * @return self
      */
     public function senderSpecificLevelMutators(): self
     {
@@ -113,7 +115,6 @@ class Mutator implements MutatorInterface
      * Runs receiver level specific requirements for the e-invoice
      *
      * ie mutations that are required by the receiving country
-     * @return self
      */
     public function receiverSpecificLevelMutators(): self
     {
@@ -130,65 +131,79 @@ class Mutator implements MutatorInterface
     {
         return $this;
     }
+
     public function CH(): self
     {
         return $this;
     }
+
     public function AT(): self
     {
         return $this;
     }
+
     public function AU(): self
     {
         return $this;
     }
+
     public function ES(): self
     {
         return $this;
     }
+
     public function FI(): self
     {
         return $this;
     }
+
     public function FR(): self
     {
         return $this;
     }
+
     public function IT(): self
     {
         return $this;
     }
+
     public function client_IT(): self
     {
         return $this;
     }
+
     public function MY(): self
     {
         return $this;
     }
+
     public function NL(): self
     {
         return $this;
     }
+
     public function NZ(): self
     {
         return $this;
     }
+
     public function PL(): self
     {
         return $this;
     }
+
     public function RO(): self
     {
         return $this;
     }
+
     public function SG(): self
     {
         return $this;
     }
+
     public function SE(): self
     {
         return $this;
     }
-
 }

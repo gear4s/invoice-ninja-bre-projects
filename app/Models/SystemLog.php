@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Models;
 
 use App\Utils\Traits\MakesHash;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|SystemLog company()
  * @method static \Illuminate\Database\Eloquent\Builder|SystemLog filter(\App\Filters\QueryFilters $filters)
  * @method static \Illuminate\Database\Eloquent\Builder|SystemLog newModelQuery()
@@ -49,13 +50,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|SystemLog whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SystemLog withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|SystemLog withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class SystemLog extends Model
 {
     use Filterable;
-    use SoftDeletes;
     use MakesHash;
+    use SoftDeletes;
 
     protected $casts = [
         'updated_at' => 'timestamp',
@@ -83,7 +85,7 @@ class SystemLog extends Model
 
     public const CATEGORY_PEPPOL = 8;
 
-    /* Event IDs*/
+    /* Event IDs */
     public const EVENT_PAYMENT_RECONCILIATION_FAILURE = 10;
 
     public const EVENT_PAYMENT_RECONCILIATION_SUCCESS = 11;
@@ -96,7 +98,7 @@ class SystemLog extends Model
 
     public const EVENT_MAIL_SEND = 30;
 
-    public const EVENT_MAIL_RETRY_QUEUE = 31; //we use this to queue emails that are spooled and not sent due to the email queue quota being exceeded.
+    public const EVENT_MAIL_RETRY_QUEUE = 31; // we use this to queue emails that are spooled and not sent due to the email queue quota being exceeded.
 
     public const EVENT_MAIL_BOUNCED = 32;
 
@@ -128,7 +130,7 @@ class SystemLog extends Model
 
     public const EVENT_PEPPOL_SUCCESS = 73;
 
-    /*Type IDs*/
+    /* Type IDs */
     public const TYPE_PAYPAL = 300;
 
     public const TYPE_STRIPE = 301;
@@ -216,7 +218,7 @@ class SystemLog extends Model
     public function resolveRouteBinding($value, $field = null)
     {
         if (is_numeric($value)) {
-            throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Record with value {$value} not found");
+            throw new ModelNotFoundException("Record with value {$value} not found");
         }
 
         return $this
@@ -230,7 +232,7 @@ class SystemLog extends Model
      */
     public function scopeCompany($query)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $query->where('company_id', $user->companyId());
@@ -240,7 +242,7 @@ class SystemLog extends Model
 
     public function company()
     {
-        return $this->hasMany(\App\Models\Company::class);
+        return $this->hasMany(Company::class);
     }
 
     public function getCategoryName()
@@ -338,9 +340,9 @@ class SystemLog extends Model
             case self::TYPE_WEPAY:
                 return 'WePay';
             case self::TYPE_PAYFAST:
-                return "Payfast";
+                return 'Payfast';
             case self::TYPE_FORTE:
-                return "Forte";
+                return 'Forte';
             default:
                 return 'undefined';
         }

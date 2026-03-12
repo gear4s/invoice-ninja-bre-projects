@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,13 +17,13 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Listeners\Payment\PaymentNotification
  */
 class GoogleAnalyticsTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,7 +31,7 @@ class GoogleAnalyticsTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testGoogleAnalyticsLogic()
+    public function test_google_analytics_logic()
     {
 
         $analytics_id = 'analytics_id';
@@ -62,9 +61,9 @@ class GoogleAnalyticsTest extends TestCase
 
         $base = "v=1&tid={$analytics_id}&cid={$client->id}&cu={$currency_code}&ti={$entity_number}";
 
-        $url = $base."&t=transaction&ta=ninja&tr={$amount}";
+        $url = $base . "&t=transaction&ta=ninja&tr={$amount}";
 
-        $url = $base."&t=item&in={$item}&ip={$amount}&iq=1";
+        $url = $base . "&t=item&in={$item}&ip={$amount}&iq=1";
 
         $this->assertNotNull($url);
     }

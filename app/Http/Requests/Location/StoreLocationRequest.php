@@ -6,26 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\Location;
 
-use App\Models\Expense;
 use App\Http\Requests\Request;
+use App\Models\Expense;
 use App\Models\Location;
+use App\Models\User;
 
 class StoreLocationRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', Location::class) || $user->can('create', Expense::class);
@@ -34,7 +32,7 @@ class StoreLocationRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
@@ -58,7 +56,6 @@ class StoreLocationRequest extends Request
         if (array_key_exists('color', $input) && is_null($input['color'])) {
             $input['color'] = '';
         }
-
 
         $this->replace($input);
     }

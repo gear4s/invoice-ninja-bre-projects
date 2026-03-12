@@ -2,7 +2,6 @@
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class PaymentMeansArray
@@ -94,48 +93,56 @@ class PaymentMeansArray
     public function setCode(?string $code): self
     {
         $this->code = $code;
+
         return $this;
     }
 
     public function setAccount(?string $account): self
     {
         $this->account = $account;
+
         return $this;
     }
 
     public function setBrancheCode(?string $branche_code): self
     {
         $this->branche_code = $branche_code;
+
         return $this;
     }
 
     public function setHolder(?string $holder): self
     {
         $this->holder = $holder;
+
         return $this;
     }
 
     public function setNetwork(?string $network): self
     {
         $this->network = $network;
+
         return $this;
     }
 
     public function setMandate(?string $mandate): self
     {
         $this->mandate = $mandate;
+
         return $this;
     }
 
     public function setPaymentId(?string $payment_id): self
     {
         $this->payment_id = $payment_id;
+
         return $this;
     }
 
     public function setAmount(?string $amount): self
     {
         $this->amount = $amount;
+
         return $this;
     }
 }

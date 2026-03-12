@@ -6,21 +6,19 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Observers;
 
-use App\Models\Location;
 use App\Jobs\Client\UpdateLocationTaxData;
+use App\Models\Location;
 
 class LocationObserver
 {
     /**
      * Handle the location "created" event.
      *
-     * @param Location $location
      * @return void
      */
     public function created(Location $location)
@@ -34,7 +32,6 @@ class LocationObserver
     /**
      * Handle the location "updated" event.
      *
-     * @param Location $location
      * @return void
      */
     public function updated(Location $location)
@@ -49,7 +46,6 @@ class LocationObserver
     /**
      * Handle the location "deleted" event.
      *
-     * @param Location $location
      * @return void
      */
     public function deleted(Location $location) {}
@@ -57,7 +53,6 @@ class LocationObserver
     /**
      * Handle the location "restored" event.
      *
-     * @param Location $location
      * @return void
      */
     public function restored(Location $location) {}
@@ -65,7 +60,6 @@ class LocationObserver
     /**
      * Handle the location "force deleted" event.
      *
-     * @param Location $location
      * @return void
      */
     public function forceDeleted(Location $location)

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -198,23 +197,23 @@ class CreateAccountRequest extends Request
     public function rules()
     {
         if (Ninja::isHosted()) {
-            $email_rules = ['bail', 'required', 'max:255', 'email:rfc,dns', new NewUniqueUserRule(), new BlackListRule(), new EmailBlackListRule()];
+            $email_rules = ['bail', 'required', 'max:255', 'email:rfc,dns', new NewUniqueUserRule, new BlackListRule, new EmailBlackListRule];
         } else {
-            $email_rules = ['bail', 'required', 'max:255', 'email:rfc,dns', new NewUniqueUserRule()];
+            $email_rules = ['bail', 'required', 'max:255', 'email:rfc,dns', new NewUniqueUserRule];
         }
 
         return [
-            'first_name'        => 'string|max:100',
-            'last_name'         =>  'string:max:100',
-            'password'          => 'required|string|min:6|max:100',
-            'email'             =>  $email_rules,
-            'privacy_policy'    => 'required|boolean',
-            'terms_of_service'  => 'required|boolean',
-            'utm_source'        => 'sometimes|nullable|string',
-            'utm_medium'        => 'sometimes|nullable|string',
-            'utm_campaign'      => 'sometimes|nullable|string',
-            'utm_term'          => 'sometimes|nullable|string',
-            'utm_content'       => 'sometimes|nullable|string',
+            'first_name' => 'string|max:100',
+            'last_name' => 'string:max:100',
+            'password' => 'required|string|min:6|max:100',
+            'email' => $email_rules,
+            'privacy_policy' => 'required|boolean',
+            'terms_of_service' => 'required|boolean',
+            'utm_source' => 'sometimes|nullable|string',
+            'utm_medium' => 'sometimes|nullable|string',
+            'utm_campaign' => 'sometimes|nullable|string',
+            'utm_term' => 'sometimes|nullable|string',
+            'utm_content' => 'sometimes|nullable|string',
             // 'cf-turnstile'      => 'required_if:token_name,web_client|string',
         ];
     }
@@ -224,11 +223,10 @@ class CreateAccountRequest extends Request
 
         $validator->after(function ($validator) {
 
-
             try {
-                $domain = explode("@", $this->input('email'))[1] ?? "";
+                $domain = explode('@', $this->input('email'))[1] ?? '';
                 $dns = dns_get_record($domain, DNS_MX);
-                $server = $dns[0]["target"] ?? null;
+                $server = $dns[0]['target'] ?? null;
 
                 if ($server && in_array($server, $this->fake_domains)) {
                     $validator->errors()->add('email', 'Account Already Exists.');
@@ -236,7 +234,7 @@ class CreateAccountRequest extends Request
             } catch (\Throwable $e) {
 
                 nlog($e->getMessage());
-                nlog("I could not check the email address => " . $this->input('email'));
+                nlog('I could not check the email address => ' . $this->input('email'));
             }
 
         });

@@ -6,46 +6,44 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Scheduler;
 
-use App\Models\Client;
-use App\Models\Scheduler;
-use App\Mail\DownloadReport;
-use App\Export\CSV\TaskExport;
-use App\Export\CSV\QuoteExport;
-use App\Utils\Traits\MakesHash;
+use App\Export\CSV\ActivityExport;
 use App\Export\CSV\ClientExport;
-use App\Export\CSV\CreditExport;
-use App\Utils\Traits\MakesDates;
 use App\Export\CSV\ContactExport;
+use App\Export\CSV\CreditExport;
+use App\Export\CSV\DocumentExport;
 use App\Export\CSV\ExpenseExport;
 use App\Export\CSV\InvoiceExport;
+use App\Export\CSV\InvoiceItemExport;
 use App\Export\CSV\PaymentExport;
 use App\Export\CSV\ProductExport;
-use App\Jobs\Mail\NinjaMailerJob;
-use App\Export\CSV\ActivityExport;
-use App\Export\CSV\DocumentExport;
-use App\Export\CSV\QuoteItemExport;
-use App\Services\Report\ProfitLoss;
-use App\Jobs\Mail\NinjaMailerObject;
-use App\Export\CSV\InvoiceItemExport;
 use App\Export\CSV\ProductSalesExport;
+use App\Export\CSV\QuoteExport;
+use App\Export\CSV\QuoteItemExport;
+use App\Export\CSV\RecurringInvoiceExport;
+use App\Export\CSV\TaskExport;
+use App\Jobs\Mail\NinjaMailerJob;
+use App\Jobs\Mail\NinjaMailerObject;
+use App\Mail\DownloadReport;
+use App\Models\Scheduler;
 use App\Services\Report\ARDetailReport;
 use App\Services\Report\ARSummaryReport;
-use App\Services\Report\UserSalesReport;
-use App\Services\Report\TaxSummaryReport;
-use App\Export\CSV\RecurringInvoiceExport;
-use App\Services\Report\ClientSalesReport;
 use App\Services\Report\ClientBalanceReport;
+use App\Services\Report\ClientSalesReport;
+use App\Services\Report\ProfitLoss;
+use App\Services\Report\TaxSummaryReport;
+use App\Services\Report\UserSalesReport;
+use App\Utils\Traits\MakesDates;
+use App\Utils\Traits\MakesHash;
 
 class EmailReport
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     private string $file_name = 'file.csv';
 
@@ -110,13 +108,14 @@ class EmailReport
 
         if (!$export) {
             $this->cancelSchedule();
+
             return;
         }
 
         if (isset($data['template_id']) && !empty($data['template_id'])) {
             $builder = $export->init();
             $pdf = $export->exportTemplate($builder, $data['template_id']);
-            $files[] = ['file' => base64_encode($pdf), 'file_name' => "report.pdf", 'mime' => 'application/pdf'];
+            $files[] = ['file' => base64_encode($pdf), 'file_name' => 'report.pdf', 'mime' => 'application/pdf'];
         } else {
             $csv = base64_encode($export->run());
             $files = [];
@@ -125,15 +124,14 @@ class EmailReport
 
         if (in_array(get_class($export), [ARDetailReport::class, ARSummaryReport::class])) {
             $pdf = base64_encode($export->getPdf());
-            $files[] = ['file' => $pdf, 'file_name' => str_replace(".csv", ".pdf", $this->file_name), 'mime' => 'application/pdf'];
+            $files[] = ['file' => $pdf, 'file_name' => str_replace('.csv', '.pdf', $this->file_name), 'mime' => 'application/pdf'];
         }
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new DownloadReport($this->scheduler->company->withoutRelations(), $files);
         $nmo->company = $this->scheduler->company->withoutRelations();
         $nmo->settings = $this->scheduler->company->settings;
         $nmo->to_user = $this->scheduler->user->withoutRelations();
-
 
         try {
             (new NinjaMailerJob($nmo))->handle();
@@ -141,8 +139,7 @@ class EmailReport
             nlog("EXCEPTION:: EmailReport:: could not email report for schdule {$this->scheduler->id} " . $th->getMessage());
         }
 
-
-        //calculate next run dates;
+        // calculate next run dates;
         $this->scheduler->calculateNextRun();
 
     }
@@ -151,7 +148,4 @@ class EmailReport
     {
         $this->scheduler->forceDelete();
     }
-
-
-
 }

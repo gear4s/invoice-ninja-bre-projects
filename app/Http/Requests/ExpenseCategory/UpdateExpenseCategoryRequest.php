@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Requests\ExpenseCategory;
 
 use App\Http\Requests\Request;
+use App\Models\User;
 use App\Utils\Traits\ChecksEntityStatus;
 use Illuminate\Validation\Rule;
 
@@ -22,13 +22,11 @@ class UpdateExpenseCategoryRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('edit', $this->expense_category);
@@ -37,7 +35,7 @@ class UpdateExpenseCategoryRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];

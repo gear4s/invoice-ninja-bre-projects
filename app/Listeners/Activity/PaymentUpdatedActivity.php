@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,6 @@ namespace App\Listeners\Activity;
 
 use App\Libraries\MultiDB;
 use App\Models\Activity;
-use App\Models\Invoice;
 use App\Repositories\ActivityRepository;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use stdClass;
@@ -25,8 +23,6 @@ class PaymentUpdatedActivity implements ShouldQueue
 
     /**
      * Create the event listener.
-     *
-     * @param ActivityRepository $activity_repo
      */
     public function __construct(ActivityRepository $activity_repo)
     {
@@ -47,7 +43,7 @@ class PaymentUpdatedActivity implements ShouldQueue
 
         $invoices = $payment->invoices;
 
-        $fields = new stdClass();
+        $fields = new stdClass;
 
         $user_id = $event->event_vars['user_id'] ?? $event->payment->user_id;
 

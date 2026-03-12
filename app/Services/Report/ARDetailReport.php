@@ -6,25 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Report;
 
-use Carbon\Carbon;
-use App\Utils\Ninja;
-use App\Utils\Number;
-use App\Models\Client;
-use League\Csv\Writer;
+use App\Export\CSV\BaseExport;
+use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Libraries\MultiDB;
-use App\Export\CSV\BaseExport;
 use App\Models\User;
-use App\Utils\Traits\MakesDates;
-use Illuminate\Support\Facades\App;
 use App\Services\Template\TemplateService;
+use App\Utils\Ninja;
+use App\Utils\Number;
+use App\Utils\Traits\MakesDates;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
+use League\Csv\CharsetConverter;
+use League\Csv\Writer;
 
 class ARDetailReport extends BaseExport
 {
@@ -61,7 +60,7 @@ class ARDetailReport extends BaseExport
             'clients',
             'client_id',
         ]
-    */
+     */
     public function __construct(public Company $company, public array $input) {}
 
     public function run()
@@ -73,14 +72,14 @@ class ARDetailReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::fromString();
-        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+        CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([ctrans('texts.aged_receivable_detailed_report')]);
-        $this->csv->insertOne([ctrans('texts.created_on'),' ',$this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale())]);
+        $this->csv->insertOne([ctrans('texts.created_on'), ' ', $this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale())]);
 
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = $this->report_keys;
@@ -89,15 +88,15 @@ class ARDetailReport extends BaseExport
         $this->csv->insertOne($this->buildHeader());
 
         $query = Invoice::query()
-                ->whereIn('invoices.status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                ->withTrashed()
-                ->whereHas('client', function ($query) {
-                    $query->where('is_deleted', 0);
-                })
-                ->where('invoices.company_id', $this->company->id)
-                ->where('invoices.is_deleted', 0)
-                ->where('invoices.balance', '>', 0)
-                ->orderBy('invoices.due_date', 'ASC');
+            ->whereIn('invoices.status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+            ->withTrashed()
+            ->whereHas('client', function ($query) {
+                $query->where('is_deleted', 0);
+            })
+            ->where('invoices.company_id', $this->company->id)
+            ->where('invoices.is_deleted', 0)
+            ->where('invoices.balance', '>', 0)
+            ->orderBy('invoices.due_date', 'ASC');
 
         $query = $this->addDateRange($query, 'invoices');
 
@@ -106,7 +105,7 @@ class ARDetailReport extends BaseExport
 
         $query->cursor()
             ->each(function ($invoice) {
-                /** @var \App\Models\Invoice $invoice */
+                /** @var Invoice $invoice */
                 $this->csv->insertOne($this->buildRow($invoice));
             });
 
@@ -127,13 +126,13 @@ class ARDetailReport extends BaseExport
             'created_by' => $user_name,
         ];
 
-        $ts = new TemplateService();
+        $ts = new TemplateService;
 
         $ts_instance = $ts->setCompany($this->company)
-                    ->setData($data)
-                    ->setRawTemplate(file_get_contents(resource_path($this->template)))
-                    ->parseNinjaBlocks()
-                    ->save();
+            ->setData($data)
+            ->setRawTemplate(file_get_contents(resource_path($this->template)))
+            ->parseNinjaBlocks()
+            ->save();
 
         return $ts_instance->getPdf();
     }
@@ -171,5 +170,4 @@ class ARDetailReport extends BaseExport
 
         return $header;
     }
-
 }

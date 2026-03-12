@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,34 +21,33 @@ class DatesTest extends TestCase
         parent::setUp();
     }
 
-    public function testDateNotGreaterThanMonthsEnd()
+    public function test_date_not_greater_than_months_end()
     {
         $this->travelTo(now()->createFromDate(2024, 6, 20));
         $date = '2024-05-20';
 
-        $this->assertTrue(\Carbon\Carbon::parse($date)->endOfMonth()->lte(now()));
+        $this->assertTrue(Carbon::parse($date)->endOfMonth()->lte(now()));
 
         $this->travelBack();
 
     }
 
-    public function testDatLessThanMonthsEnd()
+    public function test_dat_less_than_months_end()
     {
         $this->travelTo(now()->createFromDate(2024, 5, 30));
         $date = '2024-05-20';
 
-        $this->assertFalse(\Carbon\Carbon::parse($date)->endOfMonth()->lte(now()));
+        $this->assertFalse(Carbon::parse($date)->endOfMonth()->lte(now()));
 
         $this->travelBack();
 
     }
 
-
-    public function testLastFinancialYear3()
+    public function test_last_financial_year3()
     {
         $this->travelTo(now()->createFromDate(2020, 6, 30));
 
-        //override for financial years
+        // override for financial years
         $first_month_of_year = 7;
         $fin_year_start = now()->createFromDate(now()->year, $first_month_of_year, 1);
 
@@ -66,11 +64,11 @@ class DatesTest extends TestCase
 
     }
 
-    public function testLastFinancialYear2()
+    public function test_last_financial_year2()
     {
         $this->travelTo(now()->createFromDate(2020, 7, 1));
 
-        //override for financial years
+        // override for financial years
         $first_month_of_year = 7;
         $fin_year_start = now()->createFromDate(now()->year, $first_month_of_year, 1);
 
@@ -87,11 +85,11 @@ class DatesTest extends TestCase
 
     }
 
-    public function testLastFinancialYear()
+    public function test_last_financial_year()
     {
         $this->travelTo(now()->createFromDate(2020, 12, 1));
 
-        //override for financial years
+        // override for financial years
         $first_month_of_year = 7;
         $fin_year_start = now()->createFromDate(now()->year, $first_month_of_year, 1);
 
@@ -108,7 +106,7 @@ class DatesTest extends TestCase
 
     }
 
-    public function testFinancialYearDates4()
+    public function test_financial_year_dates4()
     {
         $this->travelTo(now()->createFromDate(2020, 12, 1));
 
@@ -129,7 +127,7 @@ class DatesTest extends TestCase
 
     }
 
-    public function testFinancialYearDates3()
+    public function test_financial_year_dates3()
     {
         $this->travelTo(now()->createFromDate(2021, 12, 1));
 
@@ -150,7 +148,7 @@ class DatesTest extends TestCase
 
     }
 
-    public function testFinancialYearDates2()
+    public function test_financial_year_dates2()
     {
         $this->travelTo(now()->createFromDate(2021, 8, 1));
 
@@ -171,8 +169,7 @@ class DatesTest extends TestCase
 
     }
 
-
-    public function testFinancialYearDates()
+    public function test_financial_year_dates()
     {
         $this->travelTo(now()->createFromDate(2021, 1, 1));
 
@@ -193,7 +190,7 @@ class DatesTest extends TestCase
 
     }
 
-    public function testDaysDiff()
+    public function test_days_diff()
     {
         $string_date = '2021-06-01';
 
@@ -205,7 +202,7 @@ class DatesTest extends TestCase
         $this->assertEquals(19, $diff_in_days);
     }
 
-    public function testDiffInDaysRange()
+    public function test_diff_in_days_range()
     {
         $now = Carbon::parse('2020-01-01');
 
@@ -214,7 +211,7 @@ class DatesTest extends TestCase
         $this->assertEquals(7, intval(abs($x)));
     }
 
-    public function testFourteenDaysFromNow()
+    public function test_fourteen_days_from_now()
     {
         $date_in_past = '2020-01-01';
 
@@ -223,7 +220,7 @@ class DatesTest extends TestCase
         $this->assertTrue($date_in_future->gt(Carbon::parse($date_in_past)->addDays(14)));
     }
 
-    public function testThirteenteenDaysFromNow()
+    public function test_thirteenteen_days_from_now()
     {
         $date_in_past = '2020-01-01';
 
@@ -232,7 +229,7 @@ class DatesTest extends TestCase
         $this->assertFalse($date_in_future->gt(Carbon::parse($date_in_past)->addDays(14)));
     }
 
-    /*Test time travelling behaves as expected */
+    /* Test time travelling behaves as expected */
     // public function testTimezoneShifts()
     // {
     //     $this->travel(Carbon::parse('2022-12-20'));

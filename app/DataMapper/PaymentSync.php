@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -41,6 +40,7 @@ class PaymentSync implements Castable
         $this->qb_void_error = $attributes['qb_void_error'] ?? '';
         $this->last_synced_at = $attributes['last_synced_at'] ?? '';
     }
+
     /**
      * Get the name of the caster class to use when casting from / to this cast target.
      *

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -79,7 +78,7 @@ class QuickbooksSync
         $this->income_account_map = $attributes['income_account_map'] ?? [];
         $this->qb_income_account_id = $attributes['qb_income_account_id'] ?? null;
         $this->tax_rate_map = $attributes['tax_rate_map'] ?? [];
-        $this->automatic_taxes = $attributes['automatic_taxes'] ?? false; //requires us to syncronously push the invoice to QB, and return fully formed Invoice with taxes included.
+        $this->automatic_taxes = $attributes['automatic_taxes'] ?? false; // requires us to syncronously push the invoice to QB, and return fully formed Invoice with taxes included.
         $this->default_taxable_code = $attributes['default_taxable_code'] ?? null;
         $this->default_exempt_code = $attributes['default_exempt_code'] ?? null;
         $this->country = $attributes['country'] ?? null;

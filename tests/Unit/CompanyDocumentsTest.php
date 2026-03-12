@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,8 +22,9 @@ use Tests\TestCase;
 
 class CompanyDocumentsTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,14 +36,13 @@ class CompanyDocumentsTest extends TestCase
         );
     }
 
-    public function testCompanyDocumentExists()
+    public function test_company_document_exists()
     {
         $company_key = $this->company->company_key;
 
         $original_count = Document::whereCompanyId($this->company->id)->count();
 
         $image = UploadedFile::fake()->image('avatar.jpg');
-
 
         $document = (new UploadFile(
             $image,
@@ -64,5 +63,4 @@ class CompanyDocumentsTest extends TestCase
         $this->assertEquals(0, Document::whereCompanyId($this->company->id)->count());
 
     }
-
 }

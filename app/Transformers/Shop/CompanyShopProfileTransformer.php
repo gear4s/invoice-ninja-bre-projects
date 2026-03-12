@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -24,26 +23,18 @@ class CompanyShopProfileTransformer extends EntityTransformer
 {
     use MakesHash;
 
-    /**
-     * @var array
-     */
     protected array $defaultIncludes = [
     ];
 
-    /**
-     * @var array
-     */
     protected array $availableIncludes = [
     ];
 
     /**
-     * @param Company $company
-     *
      * @return array
      */
     public function transform(Company $company)
     {
-        $std = new stdClass();
+        $std = new stdClass;
 
         return [
             'company_key' => (string) $company->company_key ?: '',
@@ -53,7 +44,7 @@ class CompanyShopProfileTransformer extends EntityTransformer
 
     private function trimCompany($company)
     {
-        $std = new stdClass();
+        $std = new stdClass;
 
         $trimmed_company_settings = [
             'custom_fields' => $company->custom_fields ?: $std,
@@ -78,7 +69,7 @@ class CompanyShopProfileTransformer extends EntityTransformer
             'client_registration_fields' => $company->client_registration_fields,
         ];
 
-        $new_settings = new stdClass();
+        $new_settings = new stdClass;
 
         foreach ($trimmed_company_settings as $key => $value) {
             $new_settings->{$key} = $value;

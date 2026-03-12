@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,6 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $is_deleted
  * @property-read mixed $hashed_id
  * @property-read mixed $tax_rate_id
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\TaxRateFactory factory($count = null, $state = [])
@@ -50,13 +50,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder|TaxRate withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|TaxRate withoutTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|TaxRate firstOrNew()
+ *
  * @mixin \Eloquent
  */
 class TaxRate extends BaseModel
 {
+    use Filterable;
     use MakesHash;
     use SoftDeletes;
-    use Filterable;
 
     protected $fillable = [
         'name',

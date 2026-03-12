@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -42,9 +41,7 @@ class UsaTaxCalculator implements RegionalTaxCalculator
      * Proportionally allocates the given amount across state/county/city/district
      * based on the invoice's tax_data breakdown
      *
-     * @param Invoice $invoice
-     * @param float $amount The tax amount to allocate
-     * @return array
+     * @param  float  $amount  The tax amount to allocate
      */
     public function calculateColumns(Invoice $invoice, float $amount): array
     {

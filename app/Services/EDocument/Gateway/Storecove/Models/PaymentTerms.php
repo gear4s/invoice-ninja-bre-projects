@@ -22,6 +22,7 @@ class PaymentTerms
     public function setNote(?string $note): self
     {
         $this->note = $note;
+
         return $this;
     }
 }

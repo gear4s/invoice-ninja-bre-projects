@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,13 +18,10 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class InvoiceLinkTasksTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockAccountData;
 
     protected function setUp(): void
@@ -38,7 +34,7 @@ class InvoiceLinkTasksTest extends TestCase
         $this->makeTestData();
     }
 
-    public function testMapCreation()
+    public function test_map_creation()
     {
         $temp_invoice_id = $this->invoice->id;
 

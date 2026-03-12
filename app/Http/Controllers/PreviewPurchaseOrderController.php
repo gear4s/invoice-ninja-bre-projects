@@ -6,33 +6,38 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
-use App\Utils\Ninja;
-use App\Models\PurchaseOrder;
-use App\Services\Pdf\PdfMock;
-use App\Utils\Traits\MakesHash;
-use App\Services\Pdf\PdfService;
-use Illuminate\Support\Facades\App;
-use App\Utils\Traits\MakesInvoiceHtml;
-use Turbo124\Beacon\Facades\LightLogs;
-use App\Models\PurchaseOrderInvitation;
-use App\Utils\Traits\Pdf\PageNumbering;
-use Illuminate\Support\Facades\Response;
 use App\DataMapper\Analytics\LivePreview;
-use App\Http\Requests\Preview\ShowPreviewRequest;
 use App\Http\Requests\Preview\PreviewPurchaseOrderRequest;
+use App\Http\Requests\Preview\ShowPreviewRequest;
+use App\Models\Company;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderInvitation;
+use App\Models\User;
+use App\Services\Pdf\PdfMock;
+use App\Services\Pdf\PdfService;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\MakesInvoiceHtml;
+use App\Utils\Traits\Pdf\PageNumbering;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Turbo124\Beacon\Facades\LightLogs;
 
 class PreviewPurchaseOrderController extends BaseController
 {
     use MakesHash;
     use MakesInvoiceHtml;
     use PageNumbering;
-
 
     public function __construct()
     {
@@ -42,7 +47,7 @@ class PreviewPurchaseOrderController extends BaseController
     /**
      * Returns a template filled with entity variables.
      *
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse | \Illuminate\Http\JsonResponse | \Illuminate\Http\Response | \Symfony\Component\HttpFoundation\BinaryFileResponse | \Illuminate\Http\RedirectResponse | \Illuminate\Routing\Redirector | string
+     * @return StreamedResponse | JsonResponse | \Illuminate\Http\Response | BinaryFileResponse | RedirectResponse | Redirector | string
      *
      * @OA\Post(
      *      path="/api/v1/preview/purchase_order",
@@ -50,23 +55,30 @@ class PreviewPurchaseOrderController extends BaseController
      *      tags={"preview"},
      *      summary="Returns a pdf preview for purchase order",
      *      description="Returns a pdf preview for purchase order.",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The pdf response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
 
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -79,13 +91,13 @@ class PreviewPurchaseOrderController extends BaseController
 
             $design_object = json_decode(json_encode($request->input('design')), true);
 
-            if (! is_array($design_object)) {
+            if (!is_array($design_object)) {
                 return response()->json(['message' => ctrans('texts.invalid_design_object')], 400);
             }
 
             $entity_obj = PurchaseOrder::query()->whereId($this->decodePrimaryKey($request->input('entity_id')))->company()->first();
 
-            if (! $entity_obj) {
+            if (!$entity_obj) {
                 return $this->blankEntity();
             }
 
@@ -99,15 +111,15 @@ class PreviewPurchaseOrderController extends BaseController
             $ps = new PdfService($invitation, 'product', [
                 'client' => $entity_obj->client ?? false,
                 'vendor' => $entity_obj->vendor ?? false,
-                $request->input('entity') . "s" => [$entity_obj],
+                $request->input('entity') . 's' => [$entity_obj],
             ]);
 
             $ps->boot()
-            ->designer
-            ->buildFromPartials($request->design['design']);
+                ->designer
+                ->buildFromPartials($request->design['design']);
 
             $ps->builder
-            ->build();
+                ->build();
 
             if ($request->query('html') == 'true') {
                 return $ps->getHtml();
@@ -123,7 +135,6 @@ class PreviewPurchaseOrderController extends BaseController
                 'Cache-Control:' => 'no-cache',
             ]);
 
-
         }
 
         return $this->blankEntity();
@@ -134,7 +145,7 @@ class PreviewPurchaseOrderController extends BaseController
 
         $start = microtime(true);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $invitation = $request->resolveInvitation();
@@ -144,9 +155,9 @@ class PreviewPurchaseOrderController extends BaseController
         $entity_obj->fill($request->all());
 
         if (!$entity_obj->id) {
-            $entity_obj->design_id = intval($this->decodePrimaryKey($settings->{"purchase_order_design_id"}));
-            $entity_obj->footer = empty($entity_obj->footer) ? $settings->{"purchase_order_footer"} : $entity_obj->footer;
-            $entity_obj->terms = empty($entity_obj->terms) ? $settings->{"purchase_order_terms"} : $entity_obj->terms;
+            $entity_obj->design_id = intval($this->decodePrimaryKey($settings->{'purchase_order_design_id'}));
+            $entity_obj->footer = empty($entity_obj->footer) ? $settings->{'purchase_order_footer'} : $entity_obj->footer;
+            $entity_obj->terms = empty($entity_obj->terms) ? $settings->{'purchase_order_terms'} : $entity_obj->terms;
             $entity_obj->public_notes = empty($entity_obj->public_notes) ? $request->getVendor()->public_notes : $entity_obj->public_notes;
             $invitation->setRelation($request->entity, $entity_obj);
 
@@ -155,15 +166,15 @@ class PreviewPurchaseOrderController extends BaseController
         $ps = new PdfService($invitation, 'purchase_order', [
             'client' => $entity_obj->client ?? false,
             'vendor' => $vendor ?? false,
-            "purchase_orders" => [$entity_obj],
+            'purchase_orders' => [$entity_obj],
         ]);
 
         $pdf = $ps->boot()->getPdf();
 
         if (Ninja::isHosted()) {
-            LightLogs::create(new LivePreview())
-                        ->increment()
-                        ->batch();
+            LightLogs::create(new LivePreview)
+                ->increment()
+                ->batch();
         }
 
         /** Return PDF */
@@ -176,19 +187,18 @@ class PreviewPurchaseOrderController extends BaseController
             'Server-Timing' => (string) (microtime(true) - $start),
         ]);
 
-
     }
 
     private function blankEntity()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         App::forgetInstance('translator');
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($user->company()->settings));
 
-        /** @var \App\Models\PurchaseOrderInvitation $invitation */
+        /** @var PurchaseOrderInvitation $invitation */
         $invitation = PurchaseOrderInvitation::where('company_id', $user->company()->id)->orderBy('id', 'desc')->first();
 
         /* If we don't have a valid invitation in the system - create a mock using transactions */
@@ -198,23 +208,22 @@ class PreviewPurchaseOrderController extends BaseController
 
         $design_object = json_decode(json_encode(request()->input('design')), true);
 
-        if (! is_array($design_object)) {
+        if (!is_array($design_object)) {
             return response()->json(['message' => 'Invalid custom design object'], 400);
         }
 
         $ps = new PdfService($invitation, 'product', [
             'client' => $invitation->client ?? false,
             'vendor' => $invitation->vendor ?? false,
-            "purchase_orders" => [$invitation->purchase_order],
+            'purchase_orders' => [$invitation->purchase_order],
         ]);
 
         $ps->boot()
-        ->designer
-        ->buildFromPartials($design_object['design']);
+            ->designer
+            ->buildFromPartials($design_object['design']);
 
         $ps->builder
-        ->build();
-
+            ->build();
 
         if (request()->query('html') == 'true') {
             return $ps->getHtml();
@@ -235,12 +244,12 @@ class PreviewPurchaseOrderController extends BaseController
     private function mockEntity()
     {
 
-        nlog("mockEntity");
+        nlog('mockEntity');
 
         $start = microtime(true);
         $user = auth()->user();
 
-        /** @var \App\Models\Company $company */
+        /** @var Company $company */
         $company = $user->company();
 
         $request = request()->input('design');

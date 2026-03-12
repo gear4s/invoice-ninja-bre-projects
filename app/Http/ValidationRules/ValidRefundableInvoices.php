@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,8 +24,8 @@ class ValidRefundableInvoices implements Rule
     use MakesHash;
 
     /**
-     * @param string $attribute
-     * @param mixed $value
+     * @param  string  $attribute
+     * @param  mixed  $value
      * @return bool
      */
     private $error_msg;
@@ -40,22 +39,22 @@ class ValidRefundableInvoices implements Rule
 
     public function passes($attribute, $value)
     {
-        if (! array_key_exists('id', $this->input)) {
+        if (!array_key_exists('id', $this->input)) {
             $this->error_msg = ctrans('texts.payment_id_required');
 
             return false;
         }
 
-        /**@var \App\Models\Payment $payment **/
+        /** @var \App\Models\Payment $payment * */
         $payment = Payment::whereId($this->input['id'])->first();
 
-        if (! $payment) {
+        if (!$payment) {
             $this->error_msg = ctrans('texts.unable_to_retrieve_payment');
 
             return false;
         }
 
-        /*If no invoices has been sent, then we apply the payment to the client account*/
+        /* If no invoices has been sent, then we apply the payment to the client account */
         $invoices = [];
 
         if (is_array($value)) {
@@ -65,7 +64,7 @@ class ValidRefundableInvoices implements Rule
         }
 
         foreach ($invoices as $invoice) {
-            if (! $invoice->isRefundable()) {
+            if (!$invoice->isRefundable()) {
                 $this->error_msg = ctrans('texts.invoice_cannot_be_refunded', ['invoice' => $invoice->hashed_id]);
 
                 return false;

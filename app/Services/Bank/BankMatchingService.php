@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -35,23 +34,23 @@ class BankMatchingService implements ShouldQueue
         MultiDB::setDb($this->db);
 
         BankTransaction::query()->where('company_id', $this->company_id)
-           ->where('status_id', BankTransaction::STATUS_UNMATCHED)
-           ->cursor()
-           ->each(function ($bt) {
-               (new BankService($bt))->processRules();
-           });
+            ->where('status_id', BankTransaction::STATUS_UNMATCHED)
+            ->cursor()
+            ->each(function ($bt) {
+                (new BankService($bt))->processRules();
+            });
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->db . "_" . $this->company_id))->dontRelease()];
+        return [(new WithoutOverlapping($this->db . '_' . $this->company_id))->dontRelease()];
     }
 
     public function failed($exception = null)
     {
 
         if ($exception) {
-            nlog("BANKMATCHINGSERVICE:: " . $exception->getMessage());
+            nlog('BANKMATCHINGSERVICE:: ' . $exception->getMessage());
         }
 
         config(['queue.failed.driver' => null]);

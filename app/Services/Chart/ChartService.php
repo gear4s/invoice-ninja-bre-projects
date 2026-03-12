@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,18 +13,15 @@ namespace App\Services\Chart;
 
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\Currency;
 use App\Models\Expense;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Quote;
-use App\Models\Task;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 
 class ChartService
 {
-    use ChartQueries;
     use ChartCalculations;
+    use ChartQueries;
 
     public function __construct(public Company $company, private User $user, private bool $is_admin, private bool $include_drafts = false) {}
 
@@ -48,7 +44,7 @@ class ChartService
         /* Push the company currency on also */
         $currencies->push((int) $this->company->settings->currency_id);
 
-        /* Add our expense currencies*/
+        /* Add our expense currencies */
         $expense_currencies = Expense::withTrashed()
             ->where('company_id', $this->company->id)
             ->where('is_deleted', 0)
@@ -61,8 +57,7 @@ class ChartService
         /* Merge and filter by unique */
         $currencies = $currencies->merge($expense_currencies)->unique();
 
-
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $cache_currencies = app('currencies');
 
         $filtered_currencies = $cache_currencies->whereIn('id', $currencies)->all();
@@ -125,10 +120,10 @@ class ChartService
             $outstanding_set = array_search($key, array_column($outstanding, 'currency_id'));
             $expenses_set = array_search($key, array_column($expenses, 'currency_id'));
 
-            $data[$key]['invoices'] = $invoices_set !== false ? $invoices[array_search($key, array_column($invoices, 'currency_id'))] : new \stdClass();
-            $data[$key]['revenue'] = $revenue_set !== false ? $revenue[array_search($key, array_column($revenue, 'currency_id'))] : new \stdClass();
-            $data[$key]['outstanding'] = $outstanding_set !== false ? $outstanding[array_search($key, array_column($outstanding, 'currency_id'))] : new \stdClass();
-            $data[$key]['expenses'] = $expenses_set !== false ? $expenses[array_search($key, array_column($expenses, 'currency_id'))] : new \stdClass();
+            $data[$key]['invoices'] = $invoices_set !== false ? $invoices[array_search($key, array_column($invoices, 'currency_id'))] : new \stdClass;
+            $data[$key]['revenue'] = $revenue_set !== false ? $revenue[array_search($key, array_column($revenue, 'currency_id'))] : new \stdClass;
+            $data[$key]['outstanding'] = $outstanding_set !== false ? $outstanding[array_search($key, array_column($outstanding, 'currency_id'))] : new \stdClass;
+            $data[$key]['expenses'] = $expenses_set !== false ? $expenses[array_search($key, array_column($expenses, 'currency_id'))] : new \stdClass;
 
         }
 
@@ -137,11 +132,10 @@ class ChartService
         $aggregate_expenses = $this->getAggregateExpenseQuery($start_date, $end_date);
         $aggregate_invoices = $this->getAggregateInvoicesQuery($start_date, $end_date);
 
-        $data[999]['invoices'] = $aggregate_invoices !== false ? reset($aggregate_invoices) : new \stdClass();
-        $data[999]['expenses'] = $aggregate_expenses !== false ? reset($aggregate_expenses) : new \stdClass();
-        $data[999]['outstanding'] = $aggregate_outstanding !== false ? reset($aggregate_outstanding) : new \stdClass();
-        $data[999]['revenue'] = $aggregate_revenue !== false ? reset($aggregate_revenue) : new \stdClass();
-
+        $data[999]['invoices'] = $aggregate_invoices !== false ? reset($aggregate_invoices) : new \stdClass;
+        $data[999]['expenses'] = $aggregate_expenses !== false ? reset($aggregate_expenses) : new \stdClass;
+        $data[999]['outstanding'] = $aggregate_outstanding !== false ? reset($aggregate_outstanding) : new \stdClass;
+        $data[999]['revenue'] = $aggregate_revenue !== false ? reset($aggregate_revenue) : new \stdClass;
 
         return $data;
     }
@@ -185,7 +179,7 @@ class ChartService
     private function addCurrencyCodes($data_set): array
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+        /** @var Collection<Currency> */
         $currencies = app('currencies');
 
         foreach ($data_set as $key => $value) {
@@ -211,12 +205,12 @@ class ChartService
         return '';
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * calculatedField
      *
-     * @param  array $data -
+     * @param  array  $data  -
      *
      * field - list of fields for calculation
      * period - current/previous
@@ -251,5 +245,4 @@ class ChartService
 
         return $results;
     }
-
 }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,7 @@ trait CleanLineItems
 {
     public function cleanItems($items): array
     {
-        if (! isset($items) || ! is_array($items)) {
+        if (!isset($items) || !is_array($items)) {
             return [];
         }
 
@@ -38,9 +37,9 @@ trait CleanLineItems
     public function cleanFeeItems($items): array
     {
 
-        //ensure we never allow gateway fees to be cloned across to new entities
+        // ensure we never allow gateway fees to be cloned across to new entities
         foreach ($items as $key => $value) {
-            if (in_array($value['type_id'], ['3','4'])) {
+            if (in_array($value['type_id'], ['3', '4'])) {
                 unset($items[$key]);
             }
         }
@@ -51,7 +50,6 @@ trait CleanLineItems
 
     /**
      * Sets default values for the line_items.
-     * @param $item
      */
     private function cleanLineItem($item)
     {
@@ -74,10 +72,10 @@ trait CleanLineItems
             $item['tax_id'] = ($item['type_id'] === '2') ? '2' : '1';
         }
 
-        $xss_patterns = ["</sc", "onerror", "prompt(", "alert("];
+        $xss_patterns = ['</sc', 'onerror', 'prompt(', 'alert('];
         foreach (['notes', 'product_key', 'custom_value1', 'custom_value2', 'custom_value3', 'custom_value4'] as $field) {
             if (!empty($item[$field]) && is_string($item[$field])) {
-                $item[$field] = str_replace($xss_patterns, "<-", $item[$field]);
+                $item[$field] = str_replace($xss_patterns, '<-', $item[$field]);
             }
         }
 

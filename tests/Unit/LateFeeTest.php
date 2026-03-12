@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,19 +19,20 @@ use App\Jobs\Util\ReminderJob;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\CompanyGateway;
 use App\Models\Invoice;
 use App\Models\User;
+use App\Repositories\InvoiceRepository;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- *
- */
 class LateFeeTest extends TestCase
 {
     use DatabaseTransactions;
     use MockAccountData;
+
     public $account;
 
     public $company;
@@ -65,7 +65,7 @@ class LateFeeTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32)."@example.com",
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $this->company = Company::factory()->create([
@@ -76,7 +76,7 @@ class LateFeeTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-        $settings = new \stdClass();
+        $settings = new \stdClass;
         $settings->currency_id = '1';
 
         $client = Client::factory()->create([
@@ -89,9 +89,9 @@ class LateFeeTest extends TestCase
         return $client;
     }
 
-    public function testAddLateFeeAppropriately()
+    public function test_add_late_fee_appropriately()
     {
-        $invoice_item = new InvoiceItem();
+        $invoice_item = new InvoiceItem;
         $invoice_item->type_id = '5';
         $invoice_item->product_key = trans('texts.fee');
         $invoice_item->notes = ctrans('texts.late_fee_added', ['date' => 'xyz']);
@@ -112,21 +112,21 @@ class LateFeeTest extends TestCase
 
     }
 
-    public function testModelBehaviourInsideMap()
+    public function test_model_behaviour_inside_map()
     {
         $i = Invoice::factory()->count(5)
-        ->create([
-            'client_id' => $this->client->id,
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'tax_name1' => '',
-            'tax_rate1' => 0,
-            'tax_name2' => '',
-            'tax_rate2' => 0,
-            'tax_name3' => '',
-            'tax_rate3' => 0,
-            'discount' => 0,
-        ]);
+            ->create([
+                'client_id' => $this->client->id,
+                'company_id' => $this->company->id,
+                'user_id' => $this->user->id,
+                'tax_name1' => '',
+                'tax_rate1' => 0,
+                'tax_name2' => '',
+                'tax_rate2' => 0,
+                'tax_name3' => '',
+                'tax_rate3' => 0,
+                'discount' => 0,
+            ]);
 
         $i->each(function ($invoice) {
             $this->assertGreaterThan(1, count($invoice->line_items));
@@ -136,6 +136,7 @@ class LateFeeTest extends TestCase
 
         $invoices = $i->map(function ($invoice) {
             $invoice->service()->removeUnpaidGatewayFees();
+
             return $invoice;
         });
 
@@ -149,7 +150,7 @@ class LateFeeTest extends TestCase
 
             $line_items = $invoice->line_items;
 
-            $item = new InvoiceItem();
+            $item = new InvoiceItem;
             $item->type_id = '3';
             $item->product_key = trans('texts.fee');
             $item->quantity = 1;
@@ -157,7 +158,7 @@ class LateFeeTest extends TestCase
 
             $line_items[] = $item;
 
-            $item = new InvoiceItem();
+            $item = new InvoiceItem;
             $item->type_id = '5';
             $item->product_key = trans('texts.fee');
             $item->quantity = 1;
@@ -186,7 +187,7 @@ class LateFeeTest extends TestCase
 
     }
 
-    public function testCollectionPassesIsArray()
+    public function test_collection_passes_is_array()
     {
         $line_items = collect($this->invoice->line_items);
         $this->assertTrue(is_array($this->invoice->line_items));
@@ -194,7 +195,7 @@ class LateFeeTest extends TestCase
         $this->assertFalse(is_array($line_items));
     }
 
-    public function testLineItemResiliency()
+    public function test_line_item_resiliency()
     {
         $line_count = count($this->invoice->line_items);
         $this->assertGreaterThan(0, $line_count);
@@ -206,7 +207,7 @@ class LateFeeTest extends TestCase
         $this->assertCount($line_count, $this->invoice->line_items);
     }
 
-    public function testCollectionAsLineItemArray()
+    public function test_collection_as_line_item_array()
     {
 
         $i = Invoice::factory()->create([
@@ -231,7 +232,7 @@ class LateFeeTest extends TestCase
 
         $line_items[] = $item;
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->type_id = '5';
         $item->product_key = trans('texts.fee');
         $item->quantity = 1;
@@ -263,7 +264,7 @@ class LateFeeTest extends TestCase
 
     }
 
-    public function testLateFeeRemovals()
+    public function test_late_fee_removals()
     {
 
         // if(!config('ninja.testvars.stripe')){
@@ -287,7 +288,7 @@ class LateFeeTest extends TestCase
         $data[1]['fee_cap'] = 0;
         $data[1]['is_enabled'] = true;
 
-        $cg = new \App\Models\CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -306,7 +307,6 @@ class LateFeeTest extends TestCase
         $cgt->gateway_type_id = 1;
         $cgt->company_gateway_id = $cg->id;
         $cgt->save();
-
 
         $i = Invoice::factory()->create([
             'client_id' => $this->client->id,
@@ -330,7 +330,7 @@ class LateFeeTest extends TestCase
 
         $line_items[] = $item;
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->type_id = '5';
         $item->product_key = trans('texts.fee');
         $item->quantity = 1;
@@ -349,7 +349,7 @@ class LateFeeTest extends TestCase
 
         $i = $i->calc()->getInvoice();
 
-        $repo = new \App\Repositories\InvoiceRepository();
+        $repo = new InvoiceRepository;
         $repo->save([], $i);
         $this->assertEquals(3, count($i->line_items));
         $this->assertEquals(21, $i->amount);
@@ -367,9 +367,9 @@ class LateFeeTest extends TestCase
         $this->assertEquals(20, $i->amount);
 
         $i->line_items = collect($i->line_items)
-                                    ->reject(function ($item) {
-                                        return $item->type_id == '3';
-                                    })->toArray();
+            ->reject(function ($item) {
+                return $item->type_id == '3';
+            })->toArray();
 
         $this->assertEquals(2, count($i->line_items));
 
@@ -387,7 +387,7 @@ class LateFeeTest extends TestCase
 
         $line_items = $i->line_items;
 
-        $item = new InvoiceItem();
+        $item = new InvoiceItem;
         $item->type_id = '5';
         $item->product_key = trans('texts.fee');
         $item->quantity = 1;
@@ -409,7 +409,7 @@ class LateFeeTest extends TestCase
 
     }
 
-    public function testLateFeeAdded()
+    public function test_late_fee_added()
     {
 
         $this->travelTo(now()->startOfDay()->subDays(10));
@@ -464,7 +464,7 @@ class LateFeeTest extends TestCase
         $this->assertEquals(10, $i->balance);
 
         $reflectionMethod = new \ReflectionMethod(ReminderJob::class, 'sendReminderForInvoice');
-        $reflectionMethod->invokeArgs(new ReminderJob(), [$i]);
+        $reflectionMethod->invokeArgs(new ReminderJob, [$i]);
 
         $i = $i->refresh();
 
@@ -475,8 +475,7 @@ class LateFeeTest extends TestCase
 
     }
 
-
-    public function testLateFeeAddedWithCustomSendTime()
+    public function test_late_fee_added_with_custom_send_time()
     {
 
         $this->travelTo(now()->startOfDay()->subDays(10));
@@ -535,10 +534,10 @@ class LateFeeTest extends TestCase
 
         do {
 
-            (new ReminderJob())->handle();
+            (new ReminderJob)->handle();
             $invoice = $i->fresh();
 
-            $x = (bool)$invoice->reminder1_sent;
+            $x = (bool) $invoice->reminder1_sent;
             $this->travelTo(now()->addHour());
 
         } while ($x === false);
@@ -552,9 +551,7 @@ class LateFeeTest extends TestCase
 
     }
 
-
-
-    public function testLateFeeAddedToNewInvoiceWithLockedInvoiceConfig()
+    public function test_late_fee_added_to_new_invoice_with_locked_invoice_config()
     {
 
         $settings = CompanySettings::defaults();
@@ -600,7 +597,7 @@ class LateFeeTest extends TestCase
         $this->assertEquals(10, $client->fresh()->balance);
 
         $reflectionMethod = new \ReflectionMethod(ReminderJob::class, 'sendReminderForInvoice');
-        $reflectionMethod->invokeArgs(new ReminderJob(), [$i]);
+        $reflectionMethod->invokeArgs(new ReminderJob, [$i]);
 
         $i->fresh();
 
@@ -608,8 +605,7 @@ class LateFeeTest extends TestCase
         $this->assertEquals(20, $client->fresh()->balance);
     }
 
-
-    public function testLateFeeBalances()
+    public function test_late_fee_balances()
     {
         $this->assertEquals(10, $this->client->balance);
         $this->assertEquals(10, $this->invoice->balance);
@@ -636,7 +632,7 @@ class LateFeeTest extends TestCase
             $fee += round($invoice->balance * $percent / 100, 2);
         }
 
-        $invoice_item = new InvoiceItem();
+        $invoice_item = new InvoiceItem;
         $invoice_item->type_id = '5';
         $invoice_item->product_key = trans('texts.fee');
         $invoice_item->notes = ctrans('texts.late_fee_added', ['date' => now()]);

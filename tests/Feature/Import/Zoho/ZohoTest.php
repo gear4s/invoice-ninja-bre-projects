@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -26,7 +25,6 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- *
  *  App\Import\Providers\Zoho
  */
 class ZohoTest extends TestCase
@@ -50,10 +48,10 @@ class ZohoTest extends TestCase
         $this->withoutExceptionHandling();
     }
 
-    public function testClientZohoImport()
+    public function test_client_zoho_import()
     {
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/zoho_contacts.csv'
+            base_path() . '/tests/Feature/Import/zoho_contacts.csv'
         );
         $hash = Str::random(32);
 
@@ -118,7 +116,7 @@ class ZohoTest extends TestCase
             'import_type' => 'zoho',
         ];
 
-        Cache::put($hash.'-client', base64_encode($csv), 360);
+        Cache::put($hash . '-client', base64_encode($csv), 360);
 
         $csv_importer = new Zoho($data, $this->company);
 
@@ -140,11 +138,11 @@ class ZohoTest extends TestCase
         $this->assertEquals('888-867-5309', $client->phone);
     }
 
-    public function testInvoiceZohoImport()
+    public function test_invoice_zoho_import()
     {
-        //first import all the clients
+        // first import all the clients
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/zoho_contacts.csv'
+            base_path() . '/tests/Feature/Import/zoho_contacts.csv'
         );
         $hash = Str::random(32);
 
@@ -209,16 +207,16 @@ class ZohoTest extends TestCase
             'import_type' => 'zoho',
         ];
 
-        Cache::put($hash.'-client', base64_encode($csv), 360);
+        Cache::put($hash . '-client', base64_encode($csv), 360);
 
         $csv_importer = new Zoho($data, $this->company);
 
         $count = $csv_importer->import('client');
 
-        //now import the invoices
+        // now import the invoices
 
         $csv = file_get_contents(
-            base_path().'/tests/Feature/Import/zoho_invoices.csv'
+            base_path() . '/tests/Feature/Import/zoho_invoices.csv'
         );
         $hash = Str::random(32);
 
@@ -315,7 +313,7 @@ class ZohoTest extends TestCase
             'import_type' => 'zoho',
         ];
 
-        Cache::put($hash.'-invoice', base64_encode($csv), 360);
+        Cache::put($hash . '-invoice', base64_encode($csv), 360);
 
         $csv_importer = new Zoho($data, $this->company);
 

@@ -6,14 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
 use App\Models\Invoice;
-use App\Models\Quote;
 use App\Models\RecurringInvoice;
 use App\Services\AbstractService;
 use Carbon\Carbon;
@@ -25,15 +23,15 @@ class UpdateReminder extends AbstractService
     /* We only support setting reminders based on the due date, not the partial due date */
     public function run()
     {
-        if (! $this->settings) {
+        if (!$this->settings) {
             $this->settings = $this->invoice->client->getMergedSettings();
         }
 
-        if (! $this->invoice->isPayable() || $this->invoice->status_id == Invoice::STATUS_DRAFT) {
+        if (!$this->invoice->isPayable() || $this->invoice->status_id == Invoice::STATUS_DRAFT) {
             $this->invoice->next_send_date = null;
             $this->invoice->saveQuietly();
 
-            return $this->invoice; //exit early
+            return $this->invoice; // exit early
         }
 
         if ($this->invoice->next_send_date) {
@@ -151,9 +149,9 @@ class UpdateReminder extends AbstractService
         if ($this->invoice->last_sent_date
             && $this->settings->enable_reminder_endless
             && (int) $this->settings->endless_reminder_frequency_id > 0
-            && ($this->invoice->reminder1_sent || $this->settings->schedule_reminder1 == "" || !$this->settings->enable_reminder1)
-            && ($this->invoice->reminder2_sent || $this->settings->schedule_reminder2 == "" || !$this->settings->enable_reminder2)
-            && ($this->invoice->reminder3_sent || $this->settings->schedule_reminder3 == "" || !$this->settings->enable_reminder3)) {
+            && ($this->invoice->reminder1_sent || $this->settings->schedule_reminder1 == '' || !$this->settings->enable_reminder1)
+            && ($this->invoice->reminder2_sent || $this->settings->schedule_reminder2 == '' || !$this->settings->enable_reminder2)
+            && ($this->invoice->reminder3_sent || $this->settings->schedule_reminder3 == '' || !$this->settings->enable_reminder3)) {
             $reminder_date = $this->addTimeInterval($this->invoice->last_sent_date, (int) $this->settings->endless_reminder_frequency_id)->addSeconds($offset);
 
             if ($reminder_date && $reminder_date->gt(now())) {
@@ -172,7 +170,7 @@ class UpdateReminder extends AbstractService
 
     private function addTimeInterval($date, $endless_reminder_frequency_id): ?Carbon
     {
-        if (! $date) {
+        if (!$date) {
             return null;
         }
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Http\Requests\BankTransaction;
 
 use App\Http\Requests\Request;
 use App\Models\BankTransaction;
+use App\Models\User;
 use App\Utils\Traits\MakesHash;
 
 class StoreBankTransactionRequest extends Request
@@ -22,12 +22,10 @@ class StoreBankTransactionRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         return $user->can('create', BankTransaction::class);
@@ -36,14 +34,14 @@ class StoreBankTransactionRequest extends Request
     public function rules()
     {
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $rules = [];
 
         $rules['bank_integration_id'] = 'bail|required|exists:bank_integrations,id,company_id,' . $user->company()->id . ',is_deleted,0';
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'nullable', 'max:99999999999999'];
-        $rules['base_type'] = ['required','in:debit,credit,DEBIT,CREDIT', 'bail'];
+        $rules['base_type'] = ['required', 'in:debit,credit,DEBIT,CREDIT', 'bail'];
 
         return $rules;
     }
@@ -52,12 +50,11 @@ class StoreBankTransactionRequest extends Request
     {
         $input = $this->all();
 
-        if (array_key_exists('bank_integration_id', $input) && $input['bank_integration_id'] == "") {
+        if (array_key_exists('bank_integration_id', $input) && $input['bank_integration_id'] == '') {
             unset($input['bank_integration_id']);
         } elseif (array_key_exists('bank_integration_id', $input) && strlen($input['bank_integration_id']) > 1 && !is_numeric($input['bank_integration_id'])) {
             $input['bank_integration_id'] = $this->decodePrimaryKey($input['bank_integration_id']);
         }
-
 
         $this->replace($input);
     }

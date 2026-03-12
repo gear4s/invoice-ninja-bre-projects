@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,6 +21,7 @@ class VatNumberCheck
     {
         if (strlen($this->vat_number ?? '') == 0) {
             $this->response = ['valid' => false, 'error' => 'No VAT number provided'];
+
             return $this;
         } else {
             return $this->checkvat_number();
@@ -30,7 +30,7 @@ class VatNumberCheck
 
     private function checkvat_number(): self
     {
-        $wsdl = "https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl";
+        $wsdl = 'https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl';
 
         try {
             $client = new \SoapClient($wsdl);

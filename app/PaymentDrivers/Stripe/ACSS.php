@@ -6,37 +6,36 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Stripe;
 
+use App\Exceptions\PaymentFailed;
 use App\Http\Controllers\ClientPortal\InvoiceController;
 use App\Http\Requests\ClientPortal\Invoices\ProcessInvoicesInBulkRequest;
-use App\Models\Payment;
-use App\Models\SystemLog;
-use Stripe\PaymentIntent;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Http\Requests\Request;
+use App\Jobs\Mail\PaymentFailureMailer;
+use App\Jobs\Util\SystemLogger;
+use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
+use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use Illuminate\Support\Str;
-use App\Http\Requests\Request;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use App\Exceptions\PaymentFailed;
-use App\Models\ClientGatewayToken;
-use Illuminate\Support\Facades\Cache;
-use App\Jobs\Mail\PaymentFailureMailer;
-use App\PaymentDrivers\StripePaymentDriver;
+use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\PaymentDrivers\StripePaymentDriver;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Stripe\PaymentIntent;
+use Stripe\SetupIntent;
 
 class ACSS implements LivewireMethodInterface
 {
     use MakesHash;
 
-    /** @var StripePaymentDriver */
     public StripePaymentDriver $stripe;
 
     public function __construct(StripePaymentDriver $stripe)
@@ -48,7 +47,7 @@ class ACSS implements LivewireMethodInterface
     /**
      * Generate mandate for future ACSS billing
      *
-     * @param  mixed $data
+     * @param  mixed  $data
      * @return void
      */
     public function authorizeView($data)
@@ -59,7 +58,7 @@ class ACSS implements LivewireMethodInterface
         $data['country'] = $this->stripe->client->country->iso_3166_2;
         $data['post_auth_response'] = false;
 
-        $intent = \Stripe\SetupIntent::create([
+        $intent = SetupIntent::create([
             'usage' => 'off_session',
             'payment_method_types' => ['acss_debit'],
             'customer' => $data['customer'],
@@ -84,7 +83,6 @@ class ACSS implements LivewireMethodInterface
     /**
      * Authorizes the mandate for future billing
      *
-     * @param  Request $request
      * @return void
      */
     public function authorizeResponse(Request $request)
@@ -93,10 +91,10 @@ class ACSS implements LivewireMethodInterface
 
         if (isset($setup_intent->type)) {
 
-            $error = "There was a problem setting up this payment method for future use";
+            $error = 'There was a problem setting up this payment method for future use';
 
-            if (in_array($setup_intent->type, ["validation_error", "invalid_request_error"])) {
-                $error = "Please provide complete payment details.";
+            if (in_array($setup_intent->type, ['validation_error', 'invalid_request_error'])) {
+                $error = 'Please provide complete payment details.';
             }
 
             SystemLogger::dispatch(
@@ -111,7 +109,7 @@ class ACSS implements LivewireMethodInterface
             throw new PaymentFailed($error, 400);
         }
 
-        $stripe_setup_intent = $this->stripe->getSetupIntentId($setup_intent->id); //needed to harvest the Mandate
+        $stripe_setup_intent = $this->stripe->getSetupIntentId($setup_intent->id); // needed to harvest the Mandate
 
         $client_gateway_token = $this->storePaymentMethod($setup_intent->payment_method, $stripe_setup_intent->mandate, $setup_intent->status == 'succeeded' ? 'authorized' : 'unauthorized');
 
@@ -120,7 +118,7 @@ class ACSS implements LivewireMethodInterface
             $data = Cache::pull($request->post_auth_response);
 
             if (!$data) {
-                throw new PaymentFailed("There was a problem storing this payment method", 500);
+                throw new PaymentFailed('There was a problem storing this payment method', 500);
             }
 
             $hash = PaymentHash::with('fee_invoice')->where('hash', $data['payment_hash'])->first();
@@ -141,14 +139,11 @@ class ACSS implements LivewireMethodInterface
 
     /**
      * Generates a token Payment Intent
-     *
-     * @param  ClientGatewayToken $token
-     * @return PaymentIntent
      */
     private function tokenIntent(ClientGatewayToken $token): PaymentIntent
     {
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = PaymentIntent::create([
             'amount' => $this->stripe->convertToStripeAmount($this->stripe->payment_hash->amount_with_fee(), $this->stripe->client->currency()->precision, $this->stripe->client->currency()),
             'currency' => $this->stripe->client->currency()->code,
             'payment_method_types' => ['acss_debit'],
@@ -181,7 +176,7 @@ class ACSS implements LivewireMethodInterface
             $data['customer'] = $this->stripe->findOrCreateCustomer()->id;
             $data['country'] = $this->stripe->client->country->iso_3166_2;
 
-            $intent = \Stripe\SetupIntent::create([
+            $intent = SetupIntent::create([
                 'usage' => 'off_session',
                 'payment_method_types' => ['acss_debit'],
                 'customer' => $data['customer'],
@@ -222,9 +217,6 @@ class ACSS implements LivewireMethodInterface
      * Payment view for ACSS
      *
      * Determines if any payment tokens are available and if not, generates a mandate
-     *
-     * @param  array $data
-
      */
     public function paymentView(array $data)
     {
@@ -232,11 +224,11 @@ class ACSS implements LivewireMethodInterface
 
         if (isset($data['one_page_checkout']) && $data['one_page_checkout']) {
             $data = [
-                'invoices' => collect($data['invoices'])->map(fn($invoice) => $invoice['invoice_id'])->toArray(),
+                'invoices' => collect($data['invoices'])->map(fn ($invoice) => $invoice['invoice_id'])->toArray(),
                 'action' => 'payment',
             ];
 
-            $request = new ProcessInvoicesInBulkRequest();
+            $request = new ProcessInvoicesInBulkRequest;
             $request->replace($data);
 
             session()->flash('message', ctrans('texts.payment_method_added'));
@@ -253,8 +245,6 @@ class ACSS implements LivewireMethodInterface
 
     /**
      * ?redundant
-     *
-     * @return string
      */
     private function buildReturnUrl(): string
     {
@@ -267,8 +257,6 @@ class ACSS implements LivewireMethodInterface
 
     /**
      * PaymentResponseRequest
-     *
-     * @param  PaymentResponseRequest $request
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
@@ -277,7 +265,7 @@ class ACSS implements LivewireMethodInterface
 
         $cgt = ClientGatewayToken::find($this->decodePrimaryKey($request->token));
 
-        /** @var \Stripe\PaymentIntent $intent */
+        /** @var PaymentIntent $intent */
         $intent = $this->tokenIntent($cgt);
 
         $this->stripe->payment_hash->data = array_merge((array) $this->stripe->payment_hash->data, $request->all());
@@ -293,9 +281,6 @@ class ACSS implements LivewireMethodInterface
 
     /**
      * Performs token billing using a ACSS payment method
-     *
-     * @param  ClientGatewayToken $cgt
-     * @param  PaymentHash $payment_hash
      */
     public function tokenBilling(ClientGatewayToken $cgt, PaymentHash $payment_hash)
     {
@@ -306,23 +291,20 @@ class ACSS implements LivewireMethodInterface
         $this->stripe->payment_hash->data = array_merge((array) $this->stripe->payment_hash->data, ['stripe_amount' => $stripe_amount]);
         $this->stripe->payment_hash->save();
 
-        /** @var \Stripe\PaymentIntent $intent */
+        /** @var PaymentIntent $intent */
         $intent = $this->tokenIntent($cgt);
 
         if ($intent->status && $intent->status == 'processing') {
             $this->processSuccessfulPayment($intent->id);
         } else {
-            $e = new \Exception("There was a problem processing this payment method", 500);
+            $e = new \Exception('There was a problem processing this payment method', 500);
             $this->stripe->processInternallyFailedPayment($this->stripe, $e);
         }
-
 
     }
 
     /**
      * Creates a payment for the transaction
-     *
-     * @param  string $payment_intent
      */
     public function processSuccessfulPayment(string $payment_intent)
     {
@@ -378,18 +360,13 @@ class ACSS implements LivewireMethodInterface
 
     /**
      * Stores the payment token
-     *
-     * @param  string $payment_method
-     * @param  string $mandate
-     * @param  string $status
-     * @return ClientGatewayToken
      */
     private function storePaymentMethod(string $payment_method, string $mandate, string $status = 'authorized'): ?ClientGatewayToken
     {
         try {
             $method = $this->stripe->getStripePaymentMethod($payment_method);
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = (string) $method->acss_debit->bank_name;
             $payment_meta->last4 = (string) $method->acss_debit->last4;
             $payment_meta->state = $status;

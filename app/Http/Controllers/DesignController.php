@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,9 +21,11 @@ use App\Http\Requests\Design\ShowDesignRequest;
 use App\Http\Requests\Design\StoreDesignRequest;
 use App\Http\Requests\Design\UpdateDesignRequest;
 use App\Models\Design;
+use App\Models\User;
 use App\Repositories\DesignRepository;
 use App\Transformers\DesignTransformer;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
@@ -43,7 +44,6 @@ class DesignController extends BaseController
 
     /**
      * DesignController constructor.
-     * @param DesignRepository $design_repo
      */
     public function __construct(DesignRepository $design_repo)
     {
@@ -59,31 +59,39 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Gets a list of designs",
      *      description="Lists designs",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A list of designs",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
-     * @param DesignFilters $filters
-     * @return Response| \Illuminate\Http\JsonResponse|mixed
+     *
+     * @return Response| JsonResponse|mixed
      */
     public function index(DesignFilters $filters)
     {
@@ -95,10 +103,7 @@ class DesignController extends BaseController
     /**
      * Display the specified resource.
      *
-     * @param ShowDesignRequest $request
-     * @param Design $design
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/designs/{id}",
@@ -106,6 +111,7 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Shows a design",
      *      description="Displays a design by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -115,28 +121,36 @@ class DesignController extends BaseController
      *          description="The Design Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the expense object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -149,10 +163,7 @@ class DesignController extends BaseController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param EditDesignRequest $request
-     * @param Design $design
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/designs/{id}/edit",
@@ -160,6 +171,7 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Shows a design for editting",
      *      description="Displays a design by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -169,28 +181,36 @@ class DesignController extends BaseController
      *          description="The Design Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the design object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -203,11 +223,7 @@ class DesignController extends BaseController
     /**
      * Update the specified resource in storage.
      *
-     * @param UpdateDesignRequest $request
-     * @param Design $design
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/designs/{id}",
@@ -215,6 +231,7 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Updates a design",
      *      description="Handles the updating of a design by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -224,28 +241,36 @@ class DesignController extends BaseController
      *          description="The Design Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the design object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -265,10 +290,7 @@ class DesignController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreateDesignRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/designs/create",
@@ -276,33 +298,41 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Gets a new blank design object",
      *      description="Returns a blank object with default values",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="A blank design object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function create(CreateDesignRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $design = DesignFactory::create($user->company()->id, $user->id);
@@ -313,10 +343,7 @@ class DesignController extends BaseController
     /**
      * Store a newly created resource in storage.
      *
-     * @param StoreDesignRequest $request
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/designs",
@@ -324,33 +351,41 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Adds a design",
      *      description="Adds an design to a company",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns the saved design object",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function store(StoreDesignRequest $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $design = DesignFactory::create($user->company()->id, $user->id);
@@ -414,18 +449,17 @@ class DesignController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param DestroyDesignRequest $request
-     * @param Design $design
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @throws \Exception
+     *
      * @OA\Delete(
      *      path="/api/v1/designs/{id}",
      *      operationId="deleteDesign",
      *      tags={"designs"},
      *      summary="Deletes a design",
      *      description="Handles the deletion of a design by id",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/include"),
@@ -435,34 +469,41 @@ class DesignController extends BaseController
      *          description="The Design Hashed ID",
      *          example="D2J234DFA",
      *          required=true,
+     *
      *          @OA\Schema(
      *              type="string",
      *              format="string",
      *          ),
      *      ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="Returns a HTTP status",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
      */
     public function destroy(DestroyDesignRequest $request, Design $design)
     {
-        //may not need these destroy routes as we are using actions to 'archive/delete'
+        // may not need these destroy routes as we are using actions to 'archive/delete'
         $design->is_deleted = true;
         $design->name = $design->name . '_deleted_' . Str::random(5);
         $design->delete();
@@ -474,8 +515,7 @@ class DesignController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response| \Illuminate\Http\JsonResponse
-     *
+     * @return Response| JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/designs/bulk",
@@ -483,16 +523,21 @@ class DesignController extends BaseController
      *      tags={"designs"},
      *      summary="Performs bulk actions on an array of designs",
      *      description="",
+     *
      *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
      *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
      *      @OA\Parameter(ref="#/components/parameters/index"),
+     *
      *      @OA\RequestBody(
      *         description="User credentials",
      *         required=true,
+     *
      *         @OA\MediaType(
      *             mediaType="application/json",
+     *
      *             @OA\Schema(
      *                 type="array",
+     *
      *                 @OA\Items(
      *                     type="integer",
      *                     description="Array of hashed IDs to be bulk 'actioned",
@@ -501,22 +546,29 @@ class DesignController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *      @OA\Response(
      *          response=200,
      *          description="The Design User response",
+     *
      *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
      *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
      *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *
      *          @OA\JsonContent(ref="#/components/schemas/Design"),
      *       ),
+     *
      *       @OA\Response(
      *          response=422,
      *          description="Validation error",
+     *
      *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
      *       ),
+     *
      *       @OA\Response(
      *           response="default",
      *           description="Unexpected Error",
+     *
      *           @OA\JsonContent(ref="#/components/schemas/Error"),
      *       ),
      *     )
@@ -527,17 +579,16 @@ class DesignController extends BaseController
 
         $ids = request()->input('ids');
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
-
 
         if ($action == 'clone') {
             $design = Design::withTrashed()
-                            ->whereIn('id', $this->transformKeys($ids))
-                            ->where(function ($q) {
-                                $q->where('company_id', auth()->user()->company()->id)
-                                  ->orWhereNull('company_id');
-                            })->first();
+                ->whereIn('id', $this->transformKeys($ids))
+                ->where(function ($q) {
+                    $q->where('company_id', auth()->user()->company()->id)
+                        ->orWhereNull('company_id');
+                })->first();
 
             if ($design) {
                 $this->design_repo->clone($design, $user);
@@ -565,18 +616,17 @@ class DesignController extends BaseController
         $group_settings_id = $request->input('group_settings_id', false);
         $client_id = $request->input('client_id', false);
 
-
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $company = $user->getCompany();
 
         $design = Design::where('company_id', $company->id)
-                        ->orWhereNull('company_id')
-                        ->where('id', $design_id)
-                        ->exists();
+            ->orWhereNull('company_id')
+            ->where('id', $design_id)
+            ->exists();
 
-        if (! $design) {
+        if (!$design) {
             return response()->json(['message' => 'Design does not exist.'], 400);
         }
 
@@ -584,31 +634,30 @@ class DesignController extends BaseController
             case 'invoice':
 
                 $company->invoices()
-                        ->withTrashed()
-                        ->when($settings_level == 'company', function ($query) {
-                            $query->where(function ($query) {
-                                $query->whereDoesntHave('client.group_settings')
-                                    ->orWhereHas('client.group_settings', function ($q) {
+                    ->withTrashed()
+                    ->when($settings_level == 'company', function ($query) {
+                        $query->where(function ($query) {
+                            $query->whereDoesntHave('client.group_settings')
+                                ->orWhereHas('client.group_settings', function ($q) {
 
-                                        $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
+                                    $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
                                         ->orWhereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') = ''");
 
-                                    });
-                            });
-                        })
-                        ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
+                                });
+                        });
+                    })
+                    ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
 
-                            $query->whereHas('client', function ($q) use ($group_settings_id) {
-                                $q->where('group_settings_id', $group_settings_id);
-                            });
+                        $query->whereHas('client', function ($q) use ($group_settings_id) {
+                            $q->where('group_settings_id', $group_settings_id);
+                        });
 
-                        })
-                        ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
+                    })
+                    ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
 
-                            $query->where('client_id', $client_id);
+                        $query->where('client_id', $client_id);
 
-                        })->update(['design_id' => $design_id]);
-
+                    })->update(['design_id' => $design_id]);
 
                 // Recurring Invoice Designs are set using the global company level.
                 if ($settings_level == 'company') {
@@ -619,61 +668,61 @@ class DesignController extends BaseController
             case 'quote':
 
                 $company->quotes()
-                        ->withTrashed()
-                        ->when($settings_level == 'company', function ($query) {
-                            $query->where(function ($query) {
-                                $query->whereDoesntHave('client.group_settings')
-                                    ->orWhereHas('client.group_settings', function ($q) {
+                    ->withTrashed()
+                    ->when($settings_level == 'company', function ($query) {
+                        $query->where(function ($query) {
+                            $query->whereDoesntHave('client.group_settings')
+                                ->orWhereHas('client.group_settings', function ($q) {
 
-                                        $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
+                                    $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
                                         ->orWhereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') = ''");
 
-                                    });
-                            });
-                        })
-                        ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
+                                });
+                        });
+                    })
+                    ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
 
-                            $query->whereHas('client', function ($q) use ($group_settings_id) {
-                                $q->where('group_settings_id', $group_settings_id);
-                            });
+                        $query->whereHas('client', function ($q) use ($group_settings_id) {
+                            $q->where('group_settings_id', $group_settings_id);
+                        });
 
-                        })
-                        ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
+                    })
+                    ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
 
-                            $query->where('client_id', $client_id);
+                        $query->where('client_id', $client_id);
 
-                        })
-                        ->update(['design_id' => $design_id]);
+                    })
+                    ->update(['design_id' => $design_id]);
 
                 break;
             case 'credit':
 
                 $company->credits()
-                        ->withTrashed()
-                        ->when($settings_level == 'company', function ($query) {
-                            $query->where(function ($query) {
-                                $query->whereDoesntHave('client.group_settings')
-                                    ->orWhereHas('client.group_settings', function ($q) {
+                    ->withTrashed()
+                    ->when($settings_level == 'company', function ($query) {
+                        $query->where(function ($query) {
+                            $query->whereDoesntHave('client.group_settings')
+                                ->orWhereHas('client.group_settings', function ($q) {
 
-                                        $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
+                                    $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
                                         ->orWhereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') = ''");
 
-                                    });
-                            });
-                        })
-                        ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
+                                });
+                        });
+                    })
+                    ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
 
-                            $query->whereHas('client', function ($q) use ($group_settings_id) {
-                                $q->where('group_settings_id', $group_settings_id);
-                            });
+                        $query->whereHas('client', function ($q) use ($group_settings_id) {
+                            $q->where('group_settings_id', $group_settings_id);
+                        });
 
-                        })
-                        ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
+                    })
+                    ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
 
-                            $query->where('client_id', $client_id);
+                        $query->where('client_id', $client_id);
 
-                        })
-                        ->update(['design_id' => $design_id]);
+                    })
+                    ->update(['design_id' => $design_id]);
 
                 break;
 

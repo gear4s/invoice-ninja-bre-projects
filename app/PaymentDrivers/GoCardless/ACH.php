@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,12 +26,13 @@ use App\Utils\Traits\MakesHash;
 use Exception;
 use GoCardlessPro\Resources\Payment as ResourcesPayment;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\RedirectResponseor;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-//@deprecated
-class ACH implements MethodInterface, LivewireMethodInterface
+// @deprecated
+class ACH implements LivewireMethodInterface, MethodInterface
 {
     use MakesHash;
 
@@ -48,12 +48,11 @@ class ACH implements MethodInterface, LivewireMethodInterface
     /**
      * Authorization page for ACH.
      *
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponseor|RedirectResponse
+     * @return RedirectResponseor|RedirectResponse
      */
     public function authorizeView(array $data)
     {
-        $session_token = \Illuminate\Support\Str::uuid()->toString();
+        $session_token = Str::uuid()->toString();
 
         try {
             $redirect = $this->go_cardless->gateway->redirectFlows()->create([
@@ -78,7 +77,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             return redirect(
                 $redirect->redirect_url
             );
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return $this->processUnsuccessfulAuthorization($exception);
         }
     }
@@ -86,9 +85,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
     /**
      * Handle unsuccessful authorization.
      *
-     * @param Exception $exception
      * @throws PaymentFailed
-     * @return void
      */
     public function processUnsuccessfulAuthorization(Exception $exception): void
     {
@@ -107,8 +104,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
     /**
      * Handle ACH post-redirect authorization.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse|void
+     * @return RedirectResponse|void
      */
     public function authorizeResponse(Request $request)
     {
@@ -120,7 +116,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
                 ]],
             );
 
-            $payment_meta = new \stdClass();
+            $payment_meta = new \stdClass;
             $payment_meta->brand = ctrans('texts.ach');
             $payment_meta->type = GatewayType::BANK_TRANSFER;
             $payment_meta->state = 'authorized';
@@ -134,16 +130,13 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $payment_method = $this->go_cardless->storeGatewayToken($data, ['gateway_customer_reference' => $redirect_flow->links->customer]);
 
             return redirect()->route('client.payment_methods.show', $payment_method->hashed_id);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return $this->processUnsuccessfulAuthorization($exception);
         }
     }
 
     /**
      * Show the payment page for ACH.
-     *
-     * @param array $data
-     * @return \Illuminate\View\View
      */
     public function paymentView(array $data): View
     {
@@ -155,16 +148,15 @@ class ACH implements MethodInterface, LivewireMethodInterface
     /**
      * Process payments for ACH.
      *
-     * @param PaymentResponseRequest $request
-     * @return \Illuminate\Http\RedirectResponse|void
+     * @return RedirectResponse|void
      */
     public function paymentResponse(PaymentResponseRequest $request)
     {
         $this->go_cardless->ensureMandateIsReady($request->source);
 
         $invoice = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->go_cardless->payment_hash->invoices(), 'invoice_id')))
-                          ->withTrashed()
-                          ->first();
+            ->withTrashed()
+            ->first();
 
         if ($invoice) {
             $description = "Invoice {$invoice->number} for {$request->amount} for client {$this->go_cardless->client->present()->name()}";
@@ -172,7 +164,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $description = "Amount {$request->amount} from client {$this->go_cardless->client->present()->name()}";
         }
 
-        $amount = $this->go_cardless->convertToGoCardlessAmount($this->go_cardless->payment_hash?->amount_with_fee(), $this->go_cardless->client->currency()->precision); //@phpstan-ignore-line
+        $amount = $this->go_cardless->convertToGoCardlessAmount($this->go_cardless->payment_hash?->amount_with_fee(), $this->go_cardless->client->currency()->precision); // @phpstan-ignore-line
 
         try {
             $payment = $this->go_cardless->gateway->payments()->create([
@@ -195,7 +187,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
             }
 
             return $this->processUnsuccessfulPayment($payment);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             throw new PaymentFailed($exception->getMessage(), $exception->getCode());
         }
     }
@@ -203,9 +195,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
     /**
      * Handle pending payments for ACH.
      *
-     * @param ResourcesPayment $payment
-     * @param array $data
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function processPendingPayment(ResourcesPayment $payment, array $data = [])
     {
@@ -233,7 +223,6 @@ class ACH implements MethodInterface, LivewireMethodInterface
     /**
      * Process unsuccessful payments for ACH.
      *
-     * @param ResourcesPayment $payment
      * @return never
      */
     public function processUnsuccessfulPayment(ResourcesPayment $payment)
@@ -256,8 +245,9 @@ class ACH implements MethodInterface, LivewireMethodInterface
 
         throw new PaymentFailed('Failed to process the payment.', 500);
     }
+
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -265,7 +255,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

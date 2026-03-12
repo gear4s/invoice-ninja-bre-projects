@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -27,9 +26,9 @@ class UploadFile implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MakesHash;
     use Queueable;
     use SerializesModels;
-    use MakesHash;
 
     public const IMAGE = 1;
 
@@ -68,17 +67,15 @@ class UploadFile implements ShouldQueue
         $this->disk = $disk ?? config('filesystems.default');
         $this->is_public = $is_public;
 
-        //MultiDB::setDB($this->company->db);
+        // MultiDB::setDB($this->company->db);
     }
 
     /**
      * Execute the job.
-     *
-     * @return Document|null
      */
     public function handle(): ?Document
     {
-        if (is_array($this->file)) { //return early if the payload is just JSON
+        if (is_array($this->file)) { // return early if the payload is just JSON
             return null;
         }
 
@@ -101,11 +98,11 @@ class UploadFile implements ShouldQueue
             $height = $image_size[1];
         }
 
-        $document = new Document();
+        $document = new Document;
         $document->user_id = $this->user->id;
         $document->company_id = $this->company->id;
         $document->url = $instance;
-        $document->name = str_replace("/", "-", $this->file->getClientOriginalName());
+        $document->name = str_replace('/', '-', $this->file->getClientOriginalName());
         $document->type = $this->file->extension();
         $document->disk = $this->disk;
         $document->hash = $this->file->hashName();
@@ -126,7 +123,7 @@ class UploadFile implements ShouldQueue
     {
         $extension = $this->file->getClientOriginalExtension();
 
-        if (empty(Document::$types[$extension]) && ! empty(Document::$extraExtensions[$extension])) {
+        if (empty(Document::$types[$extension]) && !empty(Document::$extraExtensions[$extension])) {
             $documentType = Document::$extraExtensions[$extension];
         } else {
             $documentType = $extension;
@@ -152,7 +149,7 @@ class UploadFile implements ShouldQueue
             }
 
             if (in_array($documentType, ['bmp', 'tiff', 'psd'])) {
-                if (! class_exists('Imagick')) {
+                if (!class_exists('Imagick')) {
                     // Cant't read this
                     $makePreview = false;
                 } else {

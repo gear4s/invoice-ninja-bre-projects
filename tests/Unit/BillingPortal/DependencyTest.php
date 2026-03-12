@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\Livewire\BillingPortal\Authentication\RegisterOrLogin;
 use App\Livewire\BillingPortal\Cart\Cart;
 use App\Livewire\BillingPortal\Payments\Methods;
 use App\Livewire\BillingPortal\Purchase;
-use App\Livewire\BillingPortal\RFF;
 use App\Livewire\BillingPortal\Setup;
 use App\Livewire\BillingPortal\Submit;
 use App\Services\Subscription\StepService;
@@ -32,7 +30,7 @@ class DependencyTest extends TestCase
 
     }
 
-    public function testDependencyOrder()
+    public function test_dependency_order()
     {
         $results = StepService::check([
             RegisterOrLogin::class,
@@ -56,7 +54,7 @@ class DependencyTest extends TestCase
         $this->assertCount(0, $results);
     }
 
-    public function testSorting()
+    public function test_sorting()
     {
         $results = $this->sort([
             Methods::class,

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,7 +21,6 @@ class HeaderComposer
     /**
      * Bind data to the view.
      *
-     * @param  View  $view
      * @return void
      */
     public function compose(View $view)
@@ -35,15 +33,16 @@ class HeaderComposer
      */
     private function headerData()
     {
-        if (! auth()->user()) {
+        if (!auth()->user()) {
             return [];
         }
 
         $companies = auth()->user()->companies;
 
-        //companies
+        // companies
         $data['current_company'] = $companies->first();
         $data['companies'] = $companies;
+
         /*
                 $data['current_company'] = $companies->first(function ($company){
                     return $company->id == auth()->user()->company()->id;

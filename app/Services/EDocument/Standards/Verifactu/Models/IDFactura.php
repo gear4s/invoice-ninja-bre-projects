@@ -8,7 +8,9 @@ use DOMElement;
 class IDFactura extends BaseXmlModel
 {
     protected string $idEmisorFactura;
+
     protected string $numSerieFactura;
+
     protected string $fechaExpedicionFactura;
 
     public function __construct()
@@ -27,6 +29,7 @@ class IDFactura extends BaseXmlModel
     public function setIdEmisorFactura(string $idEmisorFactura): self
     {
         $this->idEmisorFactura = $idEmisorFactura;
+
         return $this;
     }
 
@@ -38,6 +41,7 @@ class IDFactura extends BaseXmlModel
     public function setNumSerieFactura(?string $numSerieFactura = ''): self
     {
         $this->numSerieFactura = $numSerieFactura ?? '&';
+
         return $this;
     }
 
@@ -49,6 +53,7 @@ class IDFactura extends BaseXmlModel
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
     {
         $this->fechaExpedicionFactura = $fechaExpedicionFactura;
+
         return $this;
     }
 
@@ -65,7 +70,7 @@ class IDFactura extends BaseXmlModel
 
     public static function fromDOMElement(DOMElement $element): self
     {
-        $idFactura = new self();
+        $idFactura = new self;
 
         // Parse IDEmisorFactura
         $idEmisorFactura = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDEmisorFactura')->item(0);

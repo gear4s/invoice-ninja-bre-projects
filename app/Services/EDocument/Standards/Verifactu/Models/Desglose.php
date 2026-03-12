@@ -5,11 +5,17 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class Desglose extends BaseXmlModel
 {
     protected ?array $desgloseFactura = null;
+
     protected ?array $desgloseTipoOperacion = null;
+
     protected ?array $desgloseIVA = null;
+
     protected ?array $desgloseIGIC = null;
+
     protected ?array $desgloseIRPF = null;
+
     protected ?array $desgloseIS = null;
+
     protected ?DetalleDesglose $detalleDesglose = null;
 
     public function toXml(\DOMDocument $doc): \DOMElement
@@ -23,12 +29,14 @@ class Desglose extends BaseXmlModel
                     $root->appendChild($detalleDesglose->toXml($doc));
                 }
             }
+
             return $root;
         }
 
         // If we have a single DetalleDesglose object, use it
         if ($this->detalleDesglose !== null) {
             $root->appendChild($this->detalleDesglose->toXml($doc));
+
             return $root;
         }
 
@@ -83,7 +91,6 @@ class Desglose extends BaseXmlModel
                 number_format((float) $baseImponible, 2, '.', '')
             ));
 
-
             if (isset($this->desgloseFactura['Cuota']) && $this->desgloseFactura['CalificacionOperacion'] == 'S1') {
                 $detalleDesglose->appendChild($this->createElement(
                     $doc,
@@ -133,12 +140,13 @@ class Desglose extends BaseXmlModel
         // }
 
         $root->appendChild($detalleDesglose);
+
         return $root;
     }
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $desglose = new self();
+        $desglose = new self;
 
         // Parse DesgloseFactura
         $desgloseFacturaElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'DesgloseFactura')->item(0);
@@ -223,6 +231,7 @@ class Desglose extends BaseXmlModel
     public function setDesgloseFactura(?array $desgloseFactura): self
     {
         $this->desgloseFactura = $desgloseFactura;
+
         return $this;
     }
 
@@ -234,6 +243,7 @@ class Desglose extends BaseXmlModel
     public function setDesgloseTipoOperacion(?array $desgloseTipoOperacion): self
     {
         $this->desgloseTipoOperacion = $desgloseTipoOperacion;
+
         return $this;
     }
 
@@ -245,12 +255,14 @@ class Desglose extends BaseXmlModel
     public function setDesgloseIVA(?array $desgloseIVA): self
     {
         $this->desgloseIVA = $desgloseIVA;
+
         return $this;
     }
 
     public function addDesgloseIVA(DetalleDesglose $desgloseIVA): self
     {
         $this->desgloseIVA[] = $desgloseIVA;
+
         return $this;
     }
 
@@ -262,6 +274,7 @@ class Desglose extends BaseXmlModel
     public function setDesgloseIGIC(?array $desgloseIGIC): self
     {
         $this->desgloseIGIC = $desgloseIGIC;
+
         return $this;
     }
 
@@ -273,6 +286,7 @@ class Desglose extends BaseXmlModel
     public function setDesgloseIRPF(?array $desgloseIRPF): self
     {
         $this->desgloseIRPF = $desgloseIRPF;
+
         return $this;
     }
 
@@ -284,12 +298,14 @@ class Desglose extends BaseXmlModel
     public function setDesgloseIS(?array $desgloseIS): self
     {
         $this->desgloseIS = $desgloseIS;
+
         return $this;
     }
 
     public function setDetalleDesglose(?DetalleDesglose $detalleDesglose): self
     {
         $this->detalleDesglose = $detalleDesglose;
+
         return $this;
     }
 

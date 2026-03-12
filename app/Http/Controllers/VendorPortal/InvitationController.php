@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -28,20 +27,20 @@ use Illuminate\Support\Str;
  */
 class InvitationController extends Controller
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     public function purchaseOrder(string $invitation_key)
     {
         Auth::logout();
 
         $invitation = PurchaseOrderInvitation::withTrashed()
-                                    ->where('key', $invitation_key)
-                                    ->whereHas('purchase_order', function ($query) {
-                                        $query->where('is_deleted', 0);
-                                    })
-                                    ->with('contact.vendor')
-                                    ->first();
+            ->where('key', $invitation_key)
+            ->whereHas('purchase_order', function ($query) {
+                $query->where('is_deleted', 0);
+            })
+            ->with('contact.vendor')
+            ->first();
 
         if (!$invitation) {
             return abort(404, 'The resource is no longer available.');
@@ -55,7 +54,7 @@ class InvitationController extends Controller
         $entity = 'purchase_order';
 
         if (empty($vendor_contact->email)) {
-            $vendor_contact->email = Str::random(15) . "@example.com";
+            $vendor_contact->email = Str::random(15) . '@example.com';
         } $vendor_contact->save();
 
         if (request()->has('vendor_hash') && request()->input('vendor_hash') == $invitation->contact->vendor->vendor_hash) {
@@ -70,7 +69,7 @@ class InvitationController extends Controller
 
         session()->put('is_silent', request()->has('silent'));
 
-        if (auth()->guard('vendor')->user() && ! session()->get('is_silent') && ! $invitation->viewed_date) {
+        if (auth()->guard('vendor')->user() && !session()->get('is_silent') && !$invitation->viewed_date) {
             $invitation->markViewed();
             event(new InvitationWasViewed($invitation->purchase_order, $invitation, $invitation->company, Ninja::eventVars()));
             event(new PurchaseOrderWasViewed($invitation, $invitation->company, Ninja::eventVars()));
@@ -84,12 +83,12 @@ class InvitationController extends Controller
     public function download(string $invitation_key)
     {
         $invitation = PurchaseOrderInvitation::withTrashed()
-                            ->where('key', $invitation_key)
-                            ->with('contact.vendor')
-                            ->firstOrFail();
+            ->where('key', $invitation_key)
+            ->with('contact.vendor')
+            ->firstOrFail();
 
         if (!$invitation) {
-            return response()->json(["message" => "no record found"], 400);
+            return response()->json(['message' => 'no record found'], 400);
         }
 
         App::setLocale($invitation->contact->preferredLocale());

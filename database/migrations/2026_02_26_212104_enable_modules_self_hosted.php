@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         if (Ninja::isSelfHost()) {
-            
+
             Company::query()->update(['enable_modules' => 0]);
         }
     }

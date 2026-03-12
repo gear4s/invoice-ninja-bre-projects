@@ -2,7 +2,6 @@
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class References
@@ -13,17 +12,26 @@ class References
 
     #[SerializedPath('[cac:InvoiceDocumentReference][cbc:ID][#]')]
     public ?string $document_id;
+
     public ?string $document_uuid;
+
     public ?string $document_id_scheme_id;
+
     public ?string $document_id_scheme_agency_id;
+
     public ?string $document_id_scheme_version_id;
+
     public ?string $document_id_list_id;
+
     public ?string $document_id_list_agency_id;
+
     public ?string $document_id_list_version_id;
+
     public ?string $line_id;
 
     #[SerializedPath('[cac:InvoiceDocumentReference][cbc:IssueDate]')]
     public ?string $issue_date;
+
     public ?string $document_description;
 
     public function __construct(
@@ -58,7 +66,7 @@ class References
 
     public function getDocumentType(): ?string
     {
-        return $this->document_type ?? "billing";
+        return $this->document_type ?? 'billing';
     }
 
     public function getDocumentTypeCode(): ?string
@@ -124,78 +132,91 @@ class References
     public function setDocumentType(?string $document_type): self
     {
         $this->document_type = $document_type;
+
         return $this;
     }
 
     public function setDocumentTypeCode(?string $document_type_code): self
     {
         $this->document_type_code = $document_type_code;
+
         return $this;
     }
 
     public function setDocumentId(?string $document_id): self
     {
         $this->document_id = $document_id;
+
         return $this;
     }
 
     public function setDocumentUuid(?string $document_uuid): self
     {
         $this->document_uuid = $document_uuid;
+
         return $this;
     }
 
     public function setDocumentIdSchemeId(?string $document_id_scheme_id): self
     {
         $this->document_id_scheme_id = $document_id_scheme_id;
+
         return $this;
     }
 
     public function setDocumentIdSchemeAgencyId(?string $document_id_scheme_agency_id): self
     {
         $this->document_id_scheme_agency_id = $document_id_scheme_agency_id;
+
         return $this;
     }
 
     public function setDocumentIdSchemeVersionId(?string $document_id_scheme_version_id): self
     {
         $this->document_id_scheme_version_id = $document_id_scheme_version_id;
+
         return $this;
     }
 
     public function setDocumentIdListId(?string $document_id_list_id): self
     {
         $this->document_id_list_id = $document_id_list_id;
+
         return $this;
     }
 
     public function setDocumentIdListAgencyId(?string $document_id_list_agency_id): self
     {
         $this->document_id_list_agency_id = $document_id_list_agency_id;
+
         return $this;
     }
 
     public function setDocumentIdListVersionId(?string $document_id_list_version_id): self
     {
         $this->document_id_list_version_id = $document_id_list_version_id;
+
         return $this;
     }
 
     public function setLineId(?string $line_id): self
     {
         $this->line_id = $line_id;
+
         return $this;
     }
 
     public function setIssueDate(?string $issue_date): self
     {
         $this->issue_date = $issue_date;
+
         return $this;
     }
 
     public function setDocumentDescription(?string $document_description): self
     {
         $this->document_description = $document_description;
+
         return $this;
     }
 }

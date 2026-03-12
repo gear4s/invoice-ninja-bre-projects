@@ -6,20 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
+use App\Models\ClientContact;
 use App\Models\Design;
 use App\Models\Invoice;
-use App\Utils\HtmlEngine;
-use App\Models\ClientContact;
+use App\Services\Pdf\PdfService;
+use App\Services\Template\TemplateService;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Pdf\PdfMaker;
-use Illuminate\Support\Facades\Storage;
-use App\Services\Template\TemplateService;
 
 class GenerateDeliveryNote
 {
@@ -47,9 +45,9 @@ class GenerateDeliveryNote
             $ts = new TemplateService($design);
 
             $pdf = $ts->setCompany($this->invoice->company)
-            ->build([
-                'invoices' => collect([$this->invoice]),
-            ])->getPdf();
+                ->build([
+                    'invoices' => collect([$this->invoice]),
+                ])->getPdf();
 
             return $pdf;
 
@@ -63,7 +61,7 @@ class GenerateDeliveryNote
 
         $design = Design::withTrashed()->find($design_id);
 
-        $ps = new \App\Services\Pdf\PdfService($invitation, 'delivery_note');
+        $ps = new PdfService($invitation, 'delivery_note');
 
         return $ps->boot()->getPdf();
 

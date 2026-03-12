@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -82,8 +81,6 @@ use App\Helpers\Bank\AccountTransformerInterface;
 
     )
  */
-
-
 class AccountTransformer implements AccountTransformerInterface
 {
     public function transform($nordigen_account)
@@ -96,25 +93,25 @@ class AccountTransformer implements AccountTransformerInterface
         $used_balance = $nordigen_account->balances[0];
         // prefer entry with closingBooked
         foreach ($nordigen_account->balances as $entry) {
-            if ($entry["balanceType"] === 'closingBooked') { // available: closingBooked, interimAvailable
+            if ($entry['balanceType'] === 'closingBooked') { // available: closingBooked, interimAvailable
                 $used_balance = $entry;
                 break;
             }
         }
 
         return [
-            'id' => $nordigen_account->metadata["id"],
-            'account_type' => "bank",
-            'account_name' => $nordigen_account->data["iban"] ?? '',
-            'account_status' => $nordigen_account->metadata["status"],
-            'account_number' => isset($nordigen_account->data["iban"]) ? '**** ' . substr($nordigen_account->data["iban"], -7) : '',
-            'provider_account_id' => $nordigen_account->metadata["id"],
-            'provider_id' => $nordigen_account->institution["id"],
-            'provider_name' => $nordigen_account->institution["name"],
-            'provider_history' => $nordigen_account->institution["transaction_total_days"],
-            'nickname' => $nordigen_account->data["ownerName"] ?? '',
-            'current_balance' => (float) $used_balance ? $used_balance["balanceAmount"]["amount"] : 0,
-            'account_currency' => $used_balance ? $used_balance["balanceAmount"]["currency"] : '',
+            'id' => $nordigen_account->metadata['id'],
+            'account_type' => 'bank',
+            'account_name' => $nordigen_account->data['iban'] ?? '',
+            'account_status' => $nordigen_account->metadata['status'],
+            'account_number' => isset($nordigen_account->data['iban']) ? '**** ' . substr($nordigen_account->data['iban'], -7) : '',
+            'provider_account_id' => $nordigen_account->metadata['id'],
+            'provider_id' => $nordigen_account->institution['id'],
+            'provider_name' => $nordigen_account->institution['name'],
+            'provider_history' => $nordigen_account->institution['transaction_total_days'],
+            'nickname' => $nordigen_account->data['ownerName'] ?? '',
+            'current_balance' => (float) $used_balance ? $used_balance['balanceAmount']['amount'] : 0,
+            'account_currency' => $used_balance ? $used_balance['balanceAmount']['currency'] : '',
         ];
 
     }

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -29,8 +28,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Square\Http\ApiResponse;
+use Square\Models\Card;
+use Square\Models\CreateCardRequest;
+use Square\Models\CreatePaymentRequest;
+use Square\Models\Money;
 
-class CreditCard implements MethodInterface, LivewireMethodInterface
+class CreditCard implements LivewireMethodInterface, MethodInterface
 {
     use MakesHash;
 
@@ -42,8 +45,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     /**
      * Authorization page for credit card.
      *
-     * @param array $data
-     * @return \Illuminate\View\View
+     * @param  array  $data
      */
     public function authorizeView($data): View
     {
@@ -55,8 +57,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     /**
      * Handle authorization for credit card.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  Request  $request
      */
     public function authorizeResponse($request): RedirectResponse
     {
@@ -72,7 +73,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
 
     private function buildClientObject()
     {
-        $client = new \stdClass();
+        $client = new \stdClass;
 
         $country = $this->square_driver->client->country ? $this->square_driver->client->country->iso_3166_2 : $this->square_driver->client->company->country()->iso_3166_2;
 
@@ -109,11 +110,11 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
             $description = "Payment with no invoice for amount {$amount} for client {$this->square_driver->client->present()->name()}";
         }
 
-        $amount_money = new \Square\Models\Money();
+        $amount_money = new Money;
         $amount_money->setAmount($amount);
         $amount_money->setCurrency($this->square_driver->client->currency()->code);
 
-        $body = new \Square\Models\CreatePaymentRequest($token, $request->idempotencyKey);
+        $body = new CreatePaymentRequest($token, $request->idempotencyKey);
         $body->setAmountMoney($amount_money);
         $body->setAutocomplete(true);
         $body->setLocationId($this->square_driver->company_gateway->getConfigField('locationId'));
@@ -140,7 +141,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
         }
 
         if (is_array($response)) {
-            nlog("square");
+            nlog('square');
             nlog($response);
         }
 
@@ -194,23 +195,23 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     private function createCard($source_id)
     {
 
-        $square_card = new \Square\Models\Card();
+        $square_card = new Card;
         $square_card->setCustomerId($this->square_driver->findOrCreateClient());
 
-        $body = new \Square\Models\CreateCardRequest(uniqid("st", true), $source_id, $square_card);
+        $body = new CreateCardRequest(uniqid('st', true), $source_id, $square_card);
 
         $api_response = $this->square_driver
-                             ->init()
-                             ->square
-                             ->getCardsApi()
-                             ->createCard($body);
+            ->init()
+            ->square
+            ->getCardsApi()
+            ->createCard($body);
 
         $body = json_decode($api_response->getBody());
 
         if ($api_response->isSuccess()) {
 
             try {
-                $payment_meta = new \stdClass();
+                $payment_meta = new \stdClass;
                 $payment_meta->exp_month = (string) $body->card->exp_month;
                 $payment_meta->exp_year = (string) $body->card->exp_year;
                 $payment_meta->brand = (string) $body->card->card_brand;
@@ -237,7 +238,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -245,7 +246,7 @@ class CreditCard implements MethodInterface, LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {

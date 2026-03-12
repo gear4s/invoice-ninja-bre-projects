@@ -6,56 +6,38 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Integration\Einvoice\Storecove;
 
-use Tests\TestCase;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Country;
 use App\Models\Expense;
-use App\Models\Invoice;
-use App\Utils\TempFile;
-use Tests\MockAccountData;
-use Illuminate\Support\Str;
-use App\Models\ClientContact;
-use App\DataMapper\InvoiceItem;
-use App\DataMapper\Tax\TaxModel;
-use App\DataMapper\ClientSettings;
-use App\DataMapper\CompanySettings;
-use App\Utils\Traits\SavesDocuments;
-use App\Services\EDocument\Standards\Peppol;
-use Symfony\Component\Serializer\Serializer;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use InvoiceNinja\EInvoice\Models\Peppol\PaymentMeans;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use App\Services\EDocument\Gateway\Storecove\Storecove;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
-use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
-use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
-use InvoiceNinja\EInvoice\Models\Peppol\Invoice as PeppolInvoice;
-use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
-use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
-use App\Services\EDocument\Gateway\Storecove\PeppolToStorecoveNormalizer;
-use Symfony\Component\Serializer\NameConverter\MetadataAwareNameConverter;
 use App\Services\EDocument\Gateway\Storecove\Models\Invoice as StorecoveInvoice;
+use App\Services\EDocument\Gateway\Storecove\Storecove;
 use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
-use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
+use App\Utils\TempFile;
+use App\Utils\Traits\SavesDocuments;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Saxon\SaxonProcessor;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
+use Tests\MockAccountData;
+use Tests\TestCase;
 
 class StorecoveIngestTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
     use SavesDocuments;
 
     private int $routing_id = 0;
@@ -71,12 +53,11 @@ class StorecoveIngestTest extends TestCase
         $this->makeTestData();
 
         if (config('ninja.testvars.travis') !== false || !config('ninja.storecove_api_key')) {
-            $this->markTestSkipped("do not run in CI");
+            $this->markTestSkipped('do not run in CI');
         }
 
-
         try {
-            $processor = new \Saxon\SaxonProcessor();
+            $processor = new SaxonProcessor;
         } catch (\Throwable $e) {
             $this->markTestSkipped('saxon not installed');
         }
@@ -90,13 +71,13 @@ class StorecoveIngestTest extends TestCase
     public function getStorecoveInvoice($x)
     {
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
 
-        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader);
 
         // Create a proper PropertyInfoExtractor
-        $phpDocExtractor = new PhpDocExtractor();
-        $reflectionExtractor = new ReflectionExtractor();
+        $phpDocExtractor = new PhpDocExtractor;
+        $reflectionExtractor = new ReflectionExtractor;
 
         $propertyInfo = new PropertyInfoExtractor(
             // List of extractors for type info
@@ -112,14 +93,14 @@ class StorecoveIngestTest extends TestCase
         );
 
         $normalizers = [
-            new DateTimeNormalizer(),
-            new ArrayDenormalizer(),
+            new DateTimeNormalizer,
+            new ArrayDenormalizer,
             new ObjectNormalizer(
                 $classMetadataFactory,
                 null,
                 null,
                 $propertyInfo
-            )
+            ),
         ];
 
         $context = [
@@ -129,8 +110,7 @@ class StorecoveIngestTest extends TestCase
             AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE => true,  // Add this
         ];
 
-        $encoders = [new JsonEncoder()];
-
+        $encoders = [new JsonEncoder];
 
         $serializer = new Serializer($normalizers, $encoders);
 
@@ -150,7 +130,7 @@ class StorecoveIngestTest extends TestCase
         return $storecove_invoice;
     }
 
-    public function testRenderHtmlDocument()
+    public function test_render_html_document()
     {
 
         $doc = json_decode($this->document, true);
@@ -168,7 +148,7 @@ class StorecoveIngestTest extends TestCase
         $this->assertIsString($html);
     }
 
-    public function testSaveDocument()
+    public function test_save_document()
     {
         $doc = json_decode($this->document, true);
 
@@ -188,7 +168,7 @@ class StorecoveIngestTest extends TestCase
 
     }
 
-    public function testExpenseCreation()
+    public function test_expense_creation()
     {
 
         $x = json_decode($this->test_invoice, true);
@@ -199,16 +179,16 @@ class StorecoveIngestTest extends TestCase
 
         $this->assertInstanceOf(StorecoveInvoice::class, $storecove_invoice);
 
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $expense = $storecove->expense->createExpense($storecove_invoice, $this->company);
 
         // $this->assertInstanceOf(Expense::class, $expense);
 
     }
 
-    public function testIngestStorecoveDocument()
+    public function test_ingest_storecove_document()
     {
-        $storecove = new Storecove();
+        $storecove = new Storecove;
         $x = json_decode($this->test_invoice, true);
 
         $doc = $x['document']['invoice'];
@@ -224,7 +204,7 @@ class StorecoveIngestTest extends TestCase
 
         foreach ($storecove_invoice->getTaxSubtotals() as $tdf) {
 
-            $tax_totals[] = (array)$tdf;
+            $tax_totals[] = (array) $tdf;
         }
 
         $totals = collect($tax_totals);
@@ -259,7 +239,7 @@ class StorecoveIngestTest extends TestCase
                     'category' => $group->first()['category'],
                     'percentage' => $group->first()['percentage'],
                     'country' => $group->first()['country'],
-                    'total_tax_amount' => $group->sum('tax_amount')
+                    'total_tax_amount' => $group->sum('tax_amount'),
                 ];
             })->toArray();
 
@@ -300,7 +280,7 @@ class StorecoveIngestTest extends TestCase
             return $storecove_invoice->getDocumentCurrencyCode() == strtoupper($c->iso_3166_3 ?? '');
         })->id ?? 1;
 
-        //vendor
+        // vendor
         $vendor = [
             'name' => $party->getCompanyName() ?? $party->getRegistrationName(),
             'phone' => $party->getContact()->getPhone() ?? '',
@@ -318,11 +298,11 @@ class StorecoveIngestTest extends TestCase
                     'last_name' => $party->getContact()->getFirstName() ?? '',
                     'email' => $party->getContact()->getEmail() ?? '',
                     'phone' => $party->getContact()->getPhone() ?? '',
-                ]
+                ],
             ],
         ];
 
-        //expense
+        // expense
         $expense = [
             'amount' => $storecove_invoice->getAmountIncludingTax(),
             'currency_id' => $currency,
@@ -344,7 +324,5 @@ class StorecoveIngestTest extends TestCase
             'calculate_tax_by_amount' => true,
         ];
 
-
     }
-
 }

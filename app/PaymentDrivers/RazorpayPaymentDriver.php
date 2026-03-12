@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,6 +18,7 @@ use App\Models\PaymentHash;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Razorpay\Hosted;
 use App\Utils\Traits\MakesHash;
+use Razorpay\Api\Api;
 
 class RazorpayPaymentDriver extends BaseDriver
 {
@@ -30,7 +30,7 @@ class RazorpayPaymentDriver extends BaseDriver
 
     public $can_authorise_credit_card = false;
 
-    public \Razorpay\Api\Api $gateway;
+    public Api $gateway;
 
     public $payment_method;
 
@@ -42,7 +42,7 @@ class RazorpayPaymentDriver extends BaseDriver
 
     public function init(): self
     {
-        $this->gateway = new \Razorpay\Api\Api(
+        $this->gateway = new Api(
             $this->company_gateway->getConfigField('apiKey'),
             $this->company_gateway->getConfigField('apiSecret'),
         );
@@ -93,8 +93,7 @@ class RazorpayPaymentDriver extends BaseDriver
     /**
      * Convert the amount to the format that Razorpay supports.
      *
-     * @param mixed|float $amount
-     * @return int
+     * @param  mixed|float  $amount
      */
     public function convertToRazorpayAmount($amount): int
     {

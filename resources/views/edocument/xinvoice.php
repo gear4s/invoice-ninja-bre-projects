@@ -192,13 +192,13 @@ $document->getDocumentBuyerAddress($buyeraddressline1, $buyeraddressline2, $buye
     <?php if ($buyeraddressline1) { ?><?php echo $buyeraddressline1; ?><br><?php } ?>
     <?php if ($buyeraddressline2) { ?><?php echo $buyeraddressline2; ?><br><?php } ?>
     <?php if ($buyeraddressline3) { ?><?php echo $buyeraddressline3; ?><br><?php } ?>
-    <?php echo $buyercounty . " " . $buyerpostcode . " " . $buyercity; ?><br>
+    <?php echo $buyercounty . ' ' . $buyerpostcode . ' ' . $buyercity; ?><br>
 </p>
 <h1 style="margin: 0; padding: 0; margin-top: 50px">
     Invoice <?php echo $documentno; ?>
 </h1>
 <p style="margin: 0; padding: 0">
-    Invoice Date <?php echo $documentdate->format("d.m.Y"); ?>
+    Invoice Date <?php echo $documentdate->format('d.m.Y'); ?>
 </p>
 <p style="margin-top: 50px" class="bold">
     Sehr geehrter Kunde,
@@ -258,7 +258,7 @@ $document->getDocumentBuyerAddress($buyeraddressline1, $buyeraddressline2, $buye
                     <?php $document->getDocumentPositionGrossPriceAllowanceCharge($actualAmount, $isCharge, $calculationPercent, $basisAmount, $reason, $taxTypeCode, $taxCategoryCode, $rateApplicablePercent, $sequence, $basisQuantity, $basisQuantityUnitCode, $reasonCode); ?>
                     <tr>
                         <td class="posno">&nbsp;</td>
-                        <td class="posdesc bold italic"><?php echo ($isCharge ? "Charge" : "Allowance") ?></td>
+                        <td class="posdesc bold italic"><?php echo $isCharge ? 'Charge' : 'Allowance' ?></td>
                         <td class="posqty">&nbsp;</td>
                         <td class="posunitprice italic"><?php echo number_format($actualAmount, 2); ?> (<?php echo number_format($grossAmount, 2); ?>) <?php echo $invoiceCurrency; ?></td>
                     </tr>
@@ -285,7 +285,7 @@ $document->getDocumentBuyerAddress($buyeraddressline1, $buyeraddressline2, $buye
             <?php $document->getDocumentAllowanceCharge($actualAmount, $isCharge, $taxCategoryCode, $taxTypeCode, $rateApplicablePercent, $sequence, $calculationPercent, $basisAmount, $basisQuantity, $basisQuantityUnitCode, $reasonCode, $reason); ?>
             <tr>
                 <td class="<?php echo $isFirstDocumentAllowanceCharge ? 'space' : ''; ?>" colspan="3">&nbsp;</td>
-                <td class="<?php echo $isFirstDocumentAllowanceCharge ? 'space' : ''; ?> totalname"><?php echo $reason ? $reason : ($isCharge ? "Charge" : "Allowance"); ?></td>
+                <td class="<?php echo $isFirstDocumentAllowanceCharge ? 'space' : ''; ?> totalname"><?php echo $reason ? $reason : ($isCharge ? 'Charge' : 'Allowance'); ?></td>
                 <td class="<?php echo $isFirstDocumentAllowanceCharge ? 'space' : ''; ?> totalvalue"><?php echo number_format($basisAmount, 2); ?> <?php echo $invoiceCurrency; ?></td>
                 <td class="<?php echo $isFirstDocumentAllowanceCharge ? 'space' : ''; ?> totalvalue bold"><?php echo number_format($actualAmount, 2); ?> <?php echo $invoiceCurrency; ?></td>
             </tr>
@@ -310,14 +310,14 @@ $document->getDocumentBuyerAddress($buyeraddressline1, $buyeraddressline2, $buye
         <td class="space totalname" colspan="2">Nettobetrag</td>
         <td class="space totalvalue"><?php echo number_format($lineTotalAmount, 2); ?> <?php echo $invoiceCurrency; ?></td>
     </tr>
-    <?php if($chargeTotalAmount != 0) { ?>
+    <?php if ($chargeTotalAmount != 0) { ?>
         <tr>
             <td class="" colspan="3">&nbsp;</td>
             <td class="totalname" colspan="2">Summe Aufschläge</td>
             <td class="totalvalue"><?php echo number_format($chargeTotalAmount, 2); ?> <?php echo $invoiceCurrency; ?></td>
         </tr>
     <?php } ?>
-    <?php if($allowanceTotalAmount != 0) { ?>
+    <?php if ($allowanceTotalAmount != 0) { ?>
         <tr>
             <td class="" colspan="3">&nbsp;</td>
             <td class="totalname" colspan="2">Summe Rabatte</td>
@@ -349,7 +349,7 @@ $document->getDocumentBuyerAddress($buyeraddressline1, $buyeraddressline2, $buye
         VAT Summation
     -->
 
-    <?php if($document->firstDocumentTax()) { ?>
+    <?php if ($document->firstDocumentTax()) { ?>
         <tr>
             <td colspan="6">&nbsp;</td>
         </tr>
@@ -364,7 +364,7 @@ $document->getDocumentBuyerAddress($buyeraddressline1, $buyeraddressline2, $buye
             <tr>
                 <td class="<?php echo $isfirsttax ? 'space' : '' ?>" colspan="3">&nbsp;</td>
                 <td class="totalname<?php echo $isfirsttax ? ' space' : '' ?>"><?php echo number_format($rateApplicablePercent, 2); ?>%</td>
-                <td class="totalvalue<?php echo $isfirsttax ? ' space' : '' ?>"><?php echo number_format($basisAmount,2) ?> <?php echo $invoiceCurrency; ?></td>
+                <td class="totalvalue<?php echo $isfirsttax ? ' space' : '' ?>"><?php echo number_format($basisAmount, 2) ?> <?php echo $invoiceCurrency; ?></td>
                 <td class="totalvalue bold<?php echo $isfirsttax ? ' space' : '' ?>"><?php echo number_format($calculatedAmount, 2); ?> <?php echo $invoiceCurrency; ?></td>
             </tr>
             <?php $sumbasisamount = $sumbasisamount + $basisAmount ?>

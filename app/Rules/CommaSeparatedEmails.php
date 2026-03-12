@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 /**
  * Custom validation rule for comma-separated email addresses
@@ -46,7 +47,7 @@ class CommaSeparatedEmails implements ValidationRule
     /**
      * Run the validation rule.
      *
-     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  Closure(string): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -64,12 +65,14 @@ class CommaSeparatedEmails implements ValidationRule
         // If no valid emails after splitting, fail validation
         if (empty($emails)) {
             $fail('The :attribute must contain at least one valid email address.');
+
             return;
         }
 
         // Check if we exceed the maximum number of emails
         if (count($emails) > $this->maxEmails) {
             $fail("The :attribute cannot contain more than {$this->maxEmails} email addresses.");
+
             return;
         }
 
@@ -77,6 +80,7 @@ class CommaSeparatedEmails implements ValidationRule
         foreach ($emails as $email) {
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $fail("The email address '{$email}' in :attribute is not valid.");
+
                 return;
             }
         }
@@ -101,6 +105,7 @@ class CommaSeparatedEmails implements ValidationRule
         }
 
         $emails = array_map('trim', explode(',', $emailString));
+
         return array_filter($emails);
     }
 

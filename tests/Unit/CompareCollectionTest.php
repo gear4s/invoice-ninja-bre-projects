@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,7 +15,6 @@ use App\Utils\Traits\MakesHash;
 use Tests\TestCase;
 
 /**
- *
  *   App\Utils\Number
  */
 class CompareCollectionTest extends TestCase
@@ -24,9 +22,13 @@ class CompareCollectionTest extends TestCase
     use MakesHash;
 
     public $map;
+
     public $view_permission;
+
     public $edit_permission;
+
     public $is_admin;
+
     public $is_not_admin;
 
     protected function setUp(): void
@@ -52,13 +54,13 @@ class CompareCollectionTest extends TestCase
         $this->is_not_admin = false;
     }
 
-    public function testCollectionCreation()
+    public function test_collection_creation()
     {
         $collection = collect();
 
         $invoice_ids = '';
 
-        $invoices = explode(",", $invoice_ids);
+        $invoices = explode(',', $invoice_ids);
 
         if (count($invoices) >= 1) {
             foreach ($invoices as $invoice) {
@@ -71,27 +73,27 @@ class CompareCollectionTest extends TestCase
         $this->assertEquals(0, $collection->count());
     }
 
-    public function testCompareResultOfComparison()
+    public function test_compare_result_of_comparison()
     {
         $this->assertEquals(7, $this->map->count());
     }
 
-    public function testViewPermission()
+    public function test_view_permission()
     {
         $this->assertEquals(1, $this->checkPermissions($this->view_permission, $this->is_not_admin)->count());
     }
 
-    public function testViewAndEditPermission()
+    public function test_view_and_edit_permission()
     {
         $this->assertEquals(2, $this->checkPermissions($this->edit_permission, $this->is_not_admin)->count());
     }
 
-    public function testAdminPermissions()
+    public function test_admin_permissions()
     {
         $this->assertEquals(7, $this->checkPermissions($this->view_permission, $this->is_admin)->count());
     }
 
-    public function testActionViewClientFilter()
+    public function test_action_view_client_filter()
     {
         $actions = [
             'view_client_client_id',
@@ -100,7 +102,7 @@ class CompareCollectionTest extends TestCase
         $this->assertEquals(1, $this->map->whereIn('action', $actions)->count());
     }
 
-    public function testNoActionClientFilter()
+    public function test_no_action_client_filter()
     {
         $actions = [
             '',
@@ -109,7 +111,7 @@ class CompareCollectionTest extends TestCase
         $this->assertEquals(0, $this->map->whereIn('action', $actions)->count());
     }
 
-    public function testActionsAndPermissionsFilter()
+    public function test_actions_and_permissions_filter()
     {
         $actions = [
             'view_client_client_id',
@@ -121,7 +123,7 @@ class CompareCollectionTest extends TestCase
         $this->assertEquals(1, $this->checkPermissions($this->view_permission, $this->is_not_admin)->count());
     }
 
-    public function testActionAndPermissionsFilterFailure()
+    public function test_action_and_permissions_filter_failure()
     {
         $actions = [
             'edit_client_client_id',
@@ -133,7 +135,7 @@ class CompareCollectionTest extends TestCase
         $this->assertEquals(0, $data->whereIn('permission', $this->view_permission)->count());
     }
 
-    public function testEditActionAndPermissionsFilter()
+    public function test_edit_action_and_permissions_filter()
     {
         $actions = [
             'edit_client_client_id',

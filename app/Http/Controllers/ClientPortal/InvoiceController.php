@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,6 +17,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClientPortal\Invoices\ProcessInvoicesInBulkRequest;
 use App\Http\Requests\ClientPortal\Invoices\ShowInvoiceRequest;
 use App\Http\Requests\ClientPortal\Invoices\ShowInvoicesRequest;
+use App\Jobs\Entity\CreateRawPdf;
+use App\Models\Account;
 use App\Models\CreditInvitation;
 use App\Models\Invoice;
 use App\Models\InvoiceInvitation;
@@ -33,11 +34,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use PhpZip\Exception\ZipException;
+use PhpZip\ZipFile;
 
 class InvoiceController extends Controller
 {
-    use MakesHash;
     use MakesDates;
+    use MakesHash;
 
     /**
      * Display list of invoices.
@@ -52,8 +55,6 @@ class InvoiceController extends Controller
     /**
      * Show specific invoice.
      *
-     * @param ShowInvoiceRequest $request
-     * @param Invoice $invoice
      *
      * @return Factory|View
      */
@@ -64,7 +65,7 @@ class InvoiceController extends Controller
         $invitation = $invoice->invitations()->where('client_contact_id', auth()->guard('contact')->user()->id)->first();
 
         // @phpstan-ignore-next-line
-        if ($invitation && auth()->guard('contact') && ! session()->get('is_silent') && ! $invitation->viewed_date) {
+        if ($invitation && auth()->guard('contact') && !session()->get('is_silent') && !$invitation->viewed_date) {
             $invitation->markViewed();
 
             event(new InvitationWasViewed($invoice, $invitation, $invoice->company, Ninja::eventVars()));
@@ -82,7 +83,7 @@ class InvoiceController extends Controller
             'invoices' => [$invoice->hashed_id],
             'db' => $invoice->company->db,
             'docuninja_active' => false,
-            'requires_signature' => $invoice->client->getSetting('require_invoice_signature') && $invoice->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
+            'requires_signature' => $invoice->client->getSetting('require_invoice_signature') && $invoice->company->account->hasFeature(Account::FEATURE_INVOICE_SETTINGS),
         ];
 
         if ($request->query('mode') === 'fullscreen') {
@@ -91,7 +92,7 @@ class InvoiceController extends Controller
 
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
 
-        if($default_flow){
+        if ($default_flow) {
             $docuninja_active = $invoice->company->docuninjaActive();
             $signature_required = $invoice->client->getSetting('require_invoice_signature');
             $signature_accepted = $invoice->sync?->dn_completed;
@@ -99,13 +100,14 @@ class InvoiceController extends Controller
             $data['docuninja_active'] = (bool) $set_docuninja;
 
             // If DocuNinja is active, we don't need to show the signature field.
-            if($docuninja_active){
+            if ($docuninja_active) {
                 $data['requires_signature'] = false;
             }
         }
 
         if (!$invoice->isPayable()) {
             unset($data['invitation']);
+
             return $this->render('invoices.show', $data);
         }
 
@@ -132,31 +134,31 @@ class InvoiceController extends Controller
         $invitation = false;
 
         if (!isset($data['entity_type'])) {
-            nlog(array_merge(["showBlob"], $data ?? []));
+            nlog(array_merge(['showBlob'], $data ?? []));
         }
 
-        match($data['entity_type'] ?? 'invoice') {
-            'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']), //@todo - sometimes this is false!!
+        match ($data['entity_type'] ?? 'invoice') {
+            'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']), // @todo - sometimes this is false!!
             'quote' => $invitation = QuoteInvitation::withTrashed()->find($data['invitation_id']),
             'credit' => $invitation = CreditInvitation::withTrashed()->find($data['invitation_id']),
             'recurring_invoice' => $invitation = RecurringInvoiceInvitation::withTrashed()->find($data['invitation_id']),
             default => $invitation = false,
         };
 
-        if (! $invitation) {
+        if (!$invitation) {
             return redirect('/');
         }
 
-        $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
+        $file = (new CreateRawPdf($invitation))->handle();
 
         $headers = ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline'];
+
         return response()->make($file, 200, $headers);
 
     }
 
     /**
      * Pay one or more invoices.
-     *
      */
     public function catch_bulk()
     {
@@ -181,10 +183,10 @@ class InvoiceController extends Controller
     public function downloadInvoices($ids)
     {
         $data['invoices'] = Invoice::query()
-                            ->whereIn('id', $ids)
-                            ->whereClientId(auth()->guard('contact')->user()->client->id)
-                            ->withTrashed()
-                            ->get();
+            ->whereIn('id', $ids)
+            ->whereClientId(auth()->guard('contact')->user()->client->id)
+            ->withTrashed()
+            ->get();
 
         if (count($data['invoices']) == 0) {
             return back()->with(['message' => ctrans('texts.no_items_selected')]);
@@ -201,39 +203,38 @@ class InvoiceController extends Controller
     }
 
     /**
-     * @param array $ids
      * @return Factory|View|RedirectResponse
      */
     private function makePayment(array $ids)
     {
         $invoices = Invoice::query()
-                            ->whereIn('id', $ids)
-                            ->whereClientId(auth()->guard('contact')->user()->client->id)
-                            ->withTrashed()
-                            ->get();
+            ->whereIn('id', $ids)
+            ->whereClientId(auth()->guard('contact')->user()->client->id)
+            ->withTrashed()
+            ->get();
 
-        //filter invoices which are payable
+        // filter invoices which are payable
         $invoices = $invoices->filter(function ($invoice) {
             return $invoice->isPayable();
         });
 
-        //return early if no invoices.
+        // return early if no invoices.
         if ($invoices->count() == 0) {
             return back()
                 ->with('message', ctrans('texts.no_payable_invoices_selected'));
         }
 
-        //ensure all stale fees are removed.
+        // ensure all stale fees are removed.
         $invoices->each(function ($invoice) {
             $invoice->service()
-                    ->markSent()
-                    ->removeUnpaidGatewayFees()
-                    ->save();
+                ->markSent()
+                ->removeUnpaidGatewayFees()
+                ->save();
         });
 
         $invoices = $invoices->fresh();
 
-        //iterate and sum the payable amounts either partial or balance
+        // iterate and sum the payable amounts either partial or balance
         $total = 0;
         foreach ($invoices as $invoice) {
             if ($invoice->partial > 0) {
@@ -243,7 +244,7 @@ class InvoiceController extends Controller
             }
         }
 
-        //format data
+        // format data
         $invoices->map(function ($invoice) {
             $invoice->balance = $invoice->balance > 0 ? Number::formatValue($invoice->balance, $invoice->client->currency()) : 0;
             $invoice->partial = $invoice->partial > 0 ? Number::formatValue($invoice->partial, $invoice->client->currency()) : 0;
@@ -251,12 +252,12 @@ class InvoiceController extends Controller
             return $invoice;
         });
 
-        //format totals
+        // format totals
         $formatted_total = Number::formatMoney($total, auth()->guard('contact')->user()->client);
 
         $payment_methods = auth()->guard('contact')->user()->client->service()->getPaymentMethods($total);
 
-        //if there is only one payment method -> lets return straight to the payment page
+        // if there is only one payment method -> lets return straight to the payment page
 
         $settings = auth()->guard('contact')->user()->client->getMergedSettings();
         $variables = false;
@@ -271,59 +272,56 @@ class InvoiceController extends Controller
             'formatted_total' => $formatted_total,
             'payment_methods' => $payment_methods,
             'hashed_ids' => $invoices->pluck('hashed_id'),
-            'total' =>  $total,
+            'total' => $total,
             'variables' => $variables,
             'invitation' => $invitation,
             '_key' => $invitation ? $invitation->key : false,
             'db' => $invitation->company->db,
             'docuninja_active' => false,
-            'requires_signature' => $invoices->first()->client->getSetting('require_invoice_signature') && $invoices->first()->company->account->hasFeature(\App\Models\Account::FEATURE_INVOICE_SETTINGS),
+            'requires_signature' => $invoices->first()->client->getSetting('require_invoice_signature') && $invoices->first()->company->account->hasFeature(Account::FEATURE_INVOICE_SETTINGS),
 
         ];
 
         $default_flow = auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default';
 
-        if($default_flow){
+        if ($default_flow) {
             $docuninja_active = $invoices->first()->company->docuninjaActive();
             $signature_required = $invoices->first()->client->getSetting('require_invoice_signature');
-            $signature_accepted = $invoices->reject(function ($invoice){
+            $signature_accepted = $invoices->reject(function ($invoice) {
                 return !$invoice->sync?->dn_completed;
             })->count() == 0;
 
             $set_docuninja = $docuninja_active && !$signature_accepted && $signature_required;
-            
+
             $data['docuninja_active'] = (bool) $set_docuninja;
 
             // If DocuNinja is active, we don't need to show the signature field.
-            if($docuninja_active){
+            if ($docuninja_active) {
                 $data['requires_signature'] = false;
             }
         }
 
         return $default_flow ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
-    
+
     }
 
     /**
      * Helper function to download invoice PDFs.
-     *
-     * @param array $ids
-     *
      */
     private function downloadInvoicePDF(array $ids)
     {
         $invoices = Invoice::query()
-                            ->whereIn('id', $ids)
-                            ->withTrashed()
-                            ->whereClientId(auth()->guard('contact')->user()->client->id)
-                            ->get();
+            ->whereIn('id', $ids)
+            ->withTrashed()
+            ->whereClientId(auth()->guard('contact')->user()->client->id)
+            ->get();
 
-        //generate pdf's of invoices locally
-        if (! $invoices || $invoices->count() == 0) {
+        // generate pdf's of invoices locally
+        if (!$invoices || $invoices->count() == 0) {
             return back()->with(['message' => ctrans('texts.no_items_selected')]);
         }
 
-        //if only 1 pdf, output to buffer for download
+        // if only 1 pdf, output to buffer for download
         if ($invoices->count() == 1) {
             $invoice = $invoices->first();
 
@@ -338,14 +336,14 @@ class InvoiceController extends Controller
     private function buildZip($invoices)
     {
         // create new archive
-        $zipFile = new \PhpZip\ZipFile();
+        $zipFile = new ZipFile;
         try {
 
             foreach ($invoices as $invoice) {
 
                 if ($invoice->client->getSetting('enable_e_invoice')) {
                     $xml = $invoice->service()->getEInvoice();
-                    $zipFile->addFromString($invoice->getFileName("xml"), $xml);
+                    $zipFile->addFromString($invoice->getFileName('xml'), $xml);
                 }
 
                 $file = $invoice->service()->getRawInvoicePdf();
@@ -353,15 +351,14 @@ class InvoiceController extends Controller
                 $zipFile->addFromString($zip_file_name, $file);
             }
 
-
             $filename = date('Y-m-d') . '_' . str_replace(' ', '_', trans('texts.invoices')) . '.zip';
             $filepath = sys_get_temp_dir() . '/' . $filename;
 
             $zipFile->saveAsFile($filepath) // save the archive to a file
-                   ->close(); // close archive
+                ->close(); // close archive
 
             return response()->download($filepath, $filename)->deleteFileAfterSend(true);
-        } catch (\PhpZip\Exception\ZipException $e) {
+        } catch (ZipException $e) {
             // handle exception
         } finally {
             $zipFile->close();

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -22,6 +21,7 @@ class ApplePayDomainMerchantUrlTest extends TestCase
 {
     use DatabaseTransactions;
     use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,18 +33,18 @@ class ApplePayDomainMerchantUrlTest extends TestCase
         );
     }
 
-    public function testMerchantFieldGet()
+    public function test_merchant_field_get()
     {
         // if (! config('ninja.testvars.stripe')) {
         $this->markTestSkipped('Skip test no company gateways installed');
         // }
 
-        $config = new \stdClass();
+        $config = new \stdClass;
         $config->publishableKey = 'pk_test';
         $config->apiKey = 'sk_test';
         $config->appleDomainVerification = 'merchant_id';
 
-        $cg = new CompanyGateway();
+        $cg = new CompanyGateway;
         $cg->company_id = $this->company->id;
         $cg->user_id = $this->user->id;
         $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -63,7 +63,7 @@ class ApplePayDomainMerchantUrlTest extends TestCase
         $this->assertEquals('merchant_id', $arr);
     }
 
-    public function testDomainParsing()
+    public function test_domain_parsing()
     {
         $domain = 'http://ninja.test:8000';
 

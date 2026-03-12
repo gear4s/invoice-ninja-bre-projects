@@ -6,21 +6,20 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils;
 
-use LimitIterator;
-use SplFileObject;
 use App\Libraries\MultiDB;
 use App\Mail\TestMailServer;
 use Exception;
+use Illuminate\Mail\MailServiceProvider;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Queue;
+use LimitIterator;
+use SplFileObject;
 
 /**
  * Class SystemHealth.
@@ -43,8 +42,8 @@ class SystemHealth
     /**
      * Check loaded extensions / PHP version / DB Connections.
      *
-     * @param bool $check_database
-     * @return     array  Result set of checks
+     * @param  bool  $check_database
+     * @return array Result set of checks
      */
     public static function check($check_database = true, $check_file_system = true): array
     {
@@ -58,7 +57,7 @@ class SystemHealth
             $system_health = false;
         }
 
-        if (! self::simpleDbCheck() && $check_database) {
+        if (!self::simpleDbCheck() && $check_database) {
             info('db fails');
             $system_health = false;
         }
@@ -103,16 +102,15 @@ class SystemHealth
         if (strlen(config('ninja.currency_converter_api_key')) == 0) {
             try {
                 $cs = DB::table('clients')
-                      ->select('settings->currency_id as id')
-                                ->get();
-            } catch (\Exception $e) {
-                return true; //fresh installs, there may be no DB connection, nor migrations could have run yet.
+                    ->select('settings->currency_id as id')
+                    ->get();
+            } catch (Exception $e) {
+                return true; // fresh installs, there may be no DB connection, nor migrations could have run yet.
             }
 
             $currency_count = $cs->unique('id')->filter(function ($value) {
                 return !is_null($value->id);
             })->count();
-
 
             if ($currency_count > 1) {
                 return true;
@@ -136,7 +134,7 @@ class SystemHealth
                 $failed_job = DB::table('failed_jobs')->latest('failed_at')->first();
                 $last_error = $failed_job->exception;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
 
         return [
@@ -155,9 +153,9 @@ class SystemHealth
                 continue;
             }
 
-            //nlog($file->getPathname());
+            // nlog($file->getPathname());
 
-            if ($file->isFile() && ! $file->isWritable()) {
+            if ($file->isFile() && !$file->isWritable()) {
                 return "{$file->getFileName()} is not writable";
             }
         }
@@ -246,7 +244,7 @@ class SystemHealth
     private static function checkPhpCli()
     {
         if (!function_exists('exec')) {
-            return "Unable to check CLI version";
+            return 'Unable to check CLI version';
         }
 
         try {
@@ -277,7 +275,7 @@ class SystemHealth
     {
         $result = ['success' => false];
 
-        if ($request && ! config('ninja.preconfigured_install')) {
+        if ($request && !config('ninja.preconfigured_install')) {
             config(['database.connections.mysql.host' => $request->input('db_host')]);
             config(['database.connections.mysql.port' => $request->input('db_port')]);
             config(['database.connections.mysql.database' => $request->input('db_database')]);
@@ -288,7 +286,7 @@ class SystemHealth
             DB::purge('mysql');
         }
 
-        if (! config('ninja.db.multi_db_enabled')) {
+        if (!config('ninja.db.multi_db_enabled')) {
             try {
                 $pdo = DB::connection()->getPdo();
                 $x = DB::connection()->getDatabaseName();
@@ -334,7 +332,7 @@ class SystemHealth
             config(['mail.encryption' => $request->input('encryption')]);
             config(['mail.username' => $request->input('mail_username')]);
             config(['mail.password' => $request->input('mail_password')]);
-            (new \Illuminate\Mail\MailServiceProvider(app()))->register();
+            (new MailServiceProvider(app()))->register();
         }
 
         try {

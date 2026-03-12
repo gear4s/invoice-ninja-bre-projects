@@ -39,7 +39,7 @@ return new class extends Migration
             $table->boolean('can_sign')->default(false);
         });
 
-        Illuminate\Support\Facades\Schema::table('credits', function (Illuminate\Database\Schema\Blueprint $table) {
+        Schema::table('credits', function (Blueprint $table) {
             $table->text('sync')->nullable();
         });
     }
@@ -47,7 +47,5 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };

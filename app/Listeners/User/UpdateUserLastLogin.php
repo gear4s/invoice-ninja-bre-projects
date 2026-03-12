@@ -6,25 +6,24 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\User;
 
-use App\Utils\Ninja;
-use App\Models\SystemLog;
-use App\Libraries\MultiDB;
-use App\Jobs\Util\SystemLogger;
-use App\Mail\User\UserLoggedIn;
 use App\Jobs\Mail\NinjaMailerJob;
-use Illuminate\Support\Facades\App;
 use App\Jobs\Mail\NinjaMailerObject;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Queue\SerializesModels;
+use App\Jobs\Util\SystemLogger;
+use App\Libraries\MultiDB;
+use App\Mail\User\UserLoggedIn;
+use App\Models\SystemLog;
+use App\Utils\Ninja;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 class UpdateUserLastLogin implements ShouldQueue
 {
@@ -64,7 +63,7 @@ class UpdateUserLastLogin implements ShouldQueue
         $key = "user_logged_in_{$user->id}{$event->company->db}";
 
         if ($user->ip != $ip && is_null(Cache::get($key)) && $user->user_logged_in_notification && strlen($user->oauth_provider_id ?? '') == 0) {
-            $nmo = new NinjaMailerObject();
+            $nmo = new NinjaMailerObject;
             $nmo->mailable = new UserLoggedIn($user, $user->account->companies->first(), $ip);
             $nmo->company = $user->account->companies->first();
             $nmo->settings = $user->account->companies->first()->settings;
@@ -73,7 +72,7 @@ class UpdateUserLastLogin implements ShouldQueue
             try {
                 NinjaMailerJob::dispatch($nmo, true);
             } catch (\Exception $e) {
-                //this will catch for users that don't have their mail server configured correctly.
+                // this will catch for users that don't have their mail server configured correctly.
             }
 
             $user->ip = $ip;

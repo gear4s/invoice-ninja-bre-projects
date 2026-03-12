@@ -6,38 +6,36 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentHash;
-use Illuminate\Http\Request;
-use App\Utils\Traits\MakesHash;
+use App\Http\Requests\Payments\PaymentNotificationWebhookRequest;
 use App\Models\ClientGatewayToken;
-use App\PaymentDrivers\PayFast\Token;
-use Illuminate\Support\Facades\Cache;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentHash;
+use App\Models\SystemLog;
 use App\PaymentDrivers\PayFast\CreditCard;
 use App\PaymentDrivers\PayFast\PaymentCompletedWebhook;
-use App\Http\Requests\Payments\PaymentNotificationWebhookRequest;
+use App\PaymentDrivers\PayFast\Token;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Cache;
 
 class PayFastPaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = false; //does this gateway support refunds?
+    public $refundable = false; // does this gateway support refunds?
 
-    public $token_billing = true; //does this gateway support token billing?
+    public $token_billing = true; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = true; //does this gateway support authorizations?
+    public $can_authorise_credit_card = true; // does this gateway support authorizations?
 
-    public $payfast; //initialized gateway
+    public $payfast; // initialized gateway
 
-    public $payment_method; //initialized payment method
+    public $payment_method; // initialized payment method
 
     public static $methods = [
         GatewayType::CREDIT_CARD => CreditCard::class,
@@ -45,8 +43,8 @@ class PayFastPaymentDriver extends BaseDriver
 
     public const SYSTEM_LOG_TYPE = SystemLog::TYPE_PAYFAST;
 
-    //developer resources
-    //https://sandbox.payfast.co.za/
+    // developer resources
+    // https://sandbox.payfast.co.za/
 
     public function gatewayTypes(): array
     {
@@ -94,12 +92,12 @@ class PayFastPaymentDriver extends BaseDriver
 
     public function processPaymentView(array $data)
     {
-        return $this->payment_method->paymentView($data);  //this is your custom implementation from here
+        return $this->payment_method->paymentView($data);  // this is your custom implementation from here
     }
 
     public function processPaymentResponse($request)
     {
-        return $this->payment_method->paymentResponse($request); //this is your custom implementation from here
+        return $this->payment_method->paymentResponse($request); // this is your custom implementation from here
     }
 
     public function refund(Payment $payment, $amount, $return_client_response = false)
@@ -130,7 +128,7 @@ class PayFastPaymentDriver extends BaseDriver
         ];
 
         foreach ($keys as $key) {
-            if (! empty($data[$key])) {
+            if (!empty($data[$key])) {
                 $fields[$key] = $data[$key];
             }
         }
@@ -175,7 +173,7 @@ class PayFastPaymentDriver extends BaseDriver
              * Passphrase for md5 signature generation
              */
             'passphrase', ] as $key) {
-            if (! empty($data[$key])) {
+            if (!empty($data[$key])) {
                 $fields[$key] = $data[$key];
             }
         }
@@ -185,7 +183,7 @@ class PayFastPaymentDriver extends BaseDriver
         return md5(http_build_query($fields));
     }
 
-    public function processWebhookRequest(PaymentNotificationWebhookRequest $request, Payment $payment = null)
+    public function processWebhookRequest(PaymentNotificationWebhookRequest $request, ?Payment $payment = null)
     {
         $data = $request->all();
         // nlog("payfast");
@@ -193,6 +191,7 @@ class PayFastPaymentDriver extends BaseDriver
 
         if (array_key_exists('pf_payment_id', $data) && strlen($data['pf_payment_id']) > 1) {
             PaymentCompletedWebhook::dispatch($data, $request->company_key, $this->company_gateway->id)->delay(10);
+
             return;
         }
 
@@ -202,18 +201,17 @@ class PayFastPaymentDriver extends BaseDriver
             switch ($hash) {
                 case 'cc_auth':
                     $this->setPaymentMethod(GatewayType::CREDIT_CARD)
-                         ->authorizeResponse($request);
+                        ->authorizeResponse($request);
 
                     return response()->json([], 200);
-
 
                 default:
 
                     $payment_hash = PaymentHash::where('hash', $data['m_payment_id'])->first();
 
                     $this->setPaymentMethod(GatewayType::CREDIT_CARD)
-                            ->setPaymentHash($payment_hash)
-                            ->processPaymentResponse($request);
+                        ->setPaymentHash($payment_hash)
+                        ->processPaymentResponse($request);
 
                     return response()->json([], 200);
 

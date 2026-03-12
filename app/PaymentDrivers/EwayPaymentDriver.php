@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -21,33 +20,35 @@ use App\Models\SystemLog;
 use App\PaymentDrivers\Eway\CreditCard;
 use App\PaymentDrivers\Eway\Token;
 use App\Utils\Traits\MakesHash;
+use Eway\Rapid;
+use Eway\Rapid\Client;
 
 class EwayPaymentDriver extends BaseDriver
 {
     use MakesHash;
 
-    public $refundable = true; //does this gateway support refunds?
+    public $refundable = true; // does this gateway support refunds?
 
-    public $token_billing = true; //does this gateway support token billing?
+    public $token_billing = true; // does this gateway support token billing?
 
-    public $can_authorise_credit_card = true; //does this gateway support authorizations?
+    public $can_authorise_credit_card = true; // does this gateway support authorizations?
 
-    public $eway; //initialized gateway
+    public $eway; // initialized gateway
 
-    public $payment_method; //initialized payment method
+    public $payment_method; // initialized payment method
 
     public static $methods = [
-        GatewayType::CREDIT_CARD => CreditCard::class, //maps GatewayType => Implementation class
+        GatewayType::CREDIT_CARD => CreditCard::class, // maps GatewayType => Implementation class
     ];
 
-    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_EWAY; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_EWAY; // define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
 
     public function init()
     {
         $apiKey = $this->company_gateway->getConfigField('apiKey');
         $apiPassword = $this->company_gateway->getConfigField('password');
-        $apiEndpoint = $this->company_gateway->getConfigField('testMode') ? \Eway\Rapid\Client::MODE_SANDBOX : \Eway\Rapid\Client::MODE_PRODUCTION;
-        $this->eway = \Eway\Rapid::createClient($apiKey, $apiPassword, $apiEndpoint);
+        $apiEndpoint = $this->company_gateway->getConfigField('testMode') ? Client::MODE_SANDBOX : Client::MODE_PRODUCTION;
+        $this->eway = Rapid::createClient($apiKey, $apiPassword, $apiEndpoint);
 
         return $this;
     }
@@ -83,12 +84,12 @@ class EwayPaymentDriver extends BaseDriver
 
     public function processPaymentView(array $data)
     {
-        return $this->payment_method->paymentView($data);  //this is your custom implementation from here
+        return $this->payment_method->paymentView($data);  // this is your custom implementation from here
     }
 
     public function processPaymentResponse($request)
     {
-        return $this->payment_method->paymentResponse($request); //this is your custom implementation from here
+        return $this->payment_method->paymentResponse($request); // this is your custom implementation from here
     }
 
     /* We need PCI compliance prior to enabling this */
@@ -113,7 +114,7 @@ class EwayPaymentDriver extends BaseDriver
             if ($response->getErrors()) {
                 foreach ($response->getErrors() as $error) {
                     $refund_status = false;
-                    $refund_message = \Eway\Rapid::getMessage($error);
+                    $refund_message = Rapid::getMessage($error);
                 }
             } else {
                 $refund_status = false;
@@ -135,7 +136,7 @@ class EwayPaymentDriver extends BaseDriver
         return (new Token($this))->tokenBilling($cgt, $payment_hash);
     }
 
-    public function processWebhookRequest(PaymentWebhookRequest $request, Payment $payment = null) {}
+    public function processWebhookRequest(PaymentWebhookRequest $request, ?Payment $payment = null) {}
 
     public function convertAmount($amount)
     {
@@ -202,11 +203,9 @@ class EwayPaymentDriver extends BaseDriver
             $fields[] = ['name' => 'client_custom_value3', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client3'), 'type' => 'text', 'validation' => 'required'];
         }
 
-
         if ($this->company_gateway->require_custom_value4) {
             $fields[] = ['name' => 'client_custom_value4', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client4'), 'type' => 'text', 'validation' => 'required'];
         }
-
 
         return $fields;
     }
@@ -217,6 +216,7 @@ class EwayPaymentDriver extends BaseDriver
         $response = $this->init()->eway->queryTransaction('xx');
 
         $message = (bool) count($response->getErrors()) == 0 ? 'ok' : 'error';
+
         return $message;
 
     }
@@ -225,6 +225,7 @@ class EwayPaymentDriver extends BaseDriver
      * importCustomers
      *
      * No support
+     *
      * @return void
      */
     public function importCustomers()

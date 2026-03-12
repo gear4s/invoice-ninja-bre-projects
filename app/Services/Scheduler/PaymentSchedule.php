@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,9 +24,10 @@ class PaymentSchedule
 
     public function run()
     {
-        //Handle if the invoice_id has been deleted
-        if(!isset($this->scheduler->parameters['invoice_id'])) {
+        // Handle if the invoice_id has been deleted
+        if (!isset($this->scheduler->parameters['invoice_id'])) {
             $this->scheduler->forceDelete();
+
             return;
         }
 
@@ -36,6 +36,7 @@ class PaymentSchedule
         // Needs to be draft, partial or sent AND not deleted
         if (!$invoice || !in_array($invoice->status_id, [Invoice::STATUS_DRAFT, Invoice::STATUS_PARTIAL, Invoice::STATUS_SENT]) || $invoice->is_deleted) {
             $this->scheduler->forceDelete();
+
             return;
         }
 
@@ -48,7 +49,7 @@ class PaymentSchedule
 
         foreach ($schedule as $key => $item) {
             if (now()->subSeconds($offset)->startOfDay()->eq(Carbon::parse($item['date'])->startOfDay())) {
-            // if (now()->startOfDay()->eq(Carbon::parse($item['date'])->subSeconds($offset)->startOfDay())) {
+                // if (now()->startOfDay()->eq(Carbon::parse($item['date'])->subSeconds($offset)->startOfDay())) {
                 $next_schedule = $item;
                 $schedule_index = $key;
             }
@@ -56,6 +57,7 @@ class PaymentSchedule
 
         if (!$next_schedule) {
             $this->scheduler->forceDelete();
+
             return;
         }
 

@@ -6,24 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Standards\Validation\Verifactu;
 
-use App\Models\Quote;
+use App\DataMapper\Tax\BaseRule;
 use App\Models\Client;
-use App\Models\Credit;
-use App\Models\Vendor;
 use App\Models\Company;
+use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
+use App\Models\Quote;
 use App\Models\RecurringInvoice;
-use Illuminate\Support\Facades\App;
+use App\Models\Vendor;
 use App\Services\EDocument\Standards\Validation\EntityLevelInterface;
+use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
+use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
+use Illuminate\Support\Facades\App;
 
-//@todo - need to implement a rule set for verifactu for validation
+// @todo - need to implement a rule set for verifactu for validation
 class EntityLevel implements EntityLevelInterface
 {
     private array $errors = [];
@@ -47,7 +49,6 @@ class EntityLevel implements EntityLevelInterface
     ];
 
     public function __construct() {}
-
 
     private function init(string $locale): self
     {
@@ -97,15 +98,15 @@ class EntityLevel implements EntityLevelInterface
         $this->errors['client'] = $this->testClientState($invoice->client);
         $this->errors['company'] = $this->testCompanyState($invoice->client); // uses client level settings which is what we want
 
-
         if (count($this->errors['client']) > 0) {
 
             $this->errors['passes'] = false;
+
             return $this->errors;
 
         }
 
-        $_invoice = (new \App\Services\EDocument\Standards\Verifactu\RegistroAlta($invoice))->run();
+        $_invoice = (new RegistroAlta($invoice))->run();
 
         if ($invoice->amount < 0) {
             $_invoice = $_invoice->setRectification();
@@ -113,7 +114,7 @@ class EntityLevel implements EntityLevelInterface
 
         $xml = $_invoice->getInvoice()->toXmlString();
 
-        $xslt = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($xml);
+        $xslt = new VerifactuDocumentValidator($xml);
         $xslt->validate();
         $errors = $xslt->getVerifactuErrors();
         // nlog($errors);
@@ -132,11 +133,9 @@ class EntityLevel implements EntityLevelInterface
 
         // $this->errors['invoice'][] = 'test error';
 
-        $this->errors['passes'] = count($this->errors['invoice']) === 0 && count($this->errors['company']) === 0; //no need to check client as we are using client level settings
+        $this->errors['passes'] = count($this->errors['invoice']) === 0 && count($this->errors['company']) === 0; // no need to check client as we are using client level settings
 
         return $this->errors;
-
-
 
         // $p = new Peppol($invoice);
 
@@ -178,7 +177,6 @@ class EntityLevel implements EntityLevelInterface
 
         // $this->checkNexus($invoice->client);
 
-
     }
 
     private function testClientState(Client $client): array
@@ -188,10 +186,10 @@ class EntityLevel implements EntityLevelInterface
 
         foreach ($this->client_fields as $field) {
 
-            if ($field == 'country_id' && $client->country_id >= 1 && in_array($client->country->iso_3166_2, (new \App\DataMapper\Tax\BaseRule())->eu_country_codes)) {
+            if ($field == 'country_id' && $client->country_id >= 1 && in_array($client->country->iso_3166_2, (new BaseRule)->eu_country_codes)) {
                 continue;
             } elseif ($field == 'country_id') {
-                $errors[] = ['field' => 'country_id', 'label' => ctrans("texts.country_id") . " (Must be in the EU)"];
+                $errors[] = ['field' => 'country_id', 'label' => ctrans('texts.country_id') . ' (Must be in the EU)'];
             } else {
                 $errors[] = ['field' => $field, 'label' => ctrans("texts.{$field}")];
             }
@@ -201,22 +199,19 @@ class EntityLevel implements EntityLevelInterface
         /** Spanish Client Validation requirements */
         if ($client->country_id == 724) {
 
-            if (in_array($client->classification, ['','individual']) && strlen($client->id_number ?? '') == 0 && strlen($client->vat_number ?? '') == 0) {
-                $errors[] = ['field' => 'id_number', 'label' => ctrans("texts.id_number")];
+            if (in_array($client->classification, ['', 'individual']) && strlen($client->id_number ?? '') == 0 && strlen($client->vat_number ?? '') == 0) {
+                $errors[] = ['field' => 'id_number', 'label' => ctrans('texts.id_number')];
             } elseif (strlen($client->vat_number ?? '') == 0) {
-                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans('texts.vat_number')];
             }
             // elseif (!in_array($client->classification, ['','individual']) && strlen($client->vat_number ?? '')) {
             //     $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
             // }
 
-
-
         }
         // elseif (empty($client->vat_number)) {
         //     $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
         // }
-
 
         return $errors;
 
@@ -263,11 +258,11 @@ class EntityLevel implements EntityLevelInterface
 
         }
 
-        //If not an individual, you MUST have a VAT number
+        // If not an individual, you MUST have a VAT number
         if ($company->getSetting('classification') == 'individual' && !$this->validString($company->getSetting('id_number'))) {
-            $errors[] = ['field' => 'id_number', 'label' => ctrans("texts.id_number")];
+            $errors[] = ['field' => 'id_number', 'label' => ctrans('texts.id_number')];
         } elseif (!$this->validString($company->getSetting('vat_number'))) {
-            $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+            $errors[] = ['field' => 'vat_number', 'label' => ctrans('texts.vat_number')];
         }
 
         if (!$this->isValidSpanishVAT($company->getSetting('vat_number'))) {
@@ -297,6 +292,7 @@ class EntityLevel implements EntityLevelInterface
             $number = (int) substr($vat, 0, 8);
             $letter = substr($vat, -1);
             $letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
             return $letter === $letters[$number % 23];
         }
 
@@ -306,6 +302,7 @@ class EntityLevel implements EntityLevelInterface
             $number = (int) ($replace[$vat[0]] . substr($vat, 1, 7));
             $letter = substr($vat, -1);
             $letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
             return $letter === $letters[$number % 23];
         }
 
@@ -339,7 +336,7 @@ class EntityLevel implements EntityLevelInterface
             } elseif (strpos('ABEH', $firstLetter) !== false) {
                 return $controlLetter == $controlDigit; // Must be digit
             } else {
-                return ($controlLetter == $controlDigit || $controlLetter === $controlChar);
+                return $controlLetter == $controlDigit || $controlLetter === $controlChar;
             }
         }
 

@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -79,7 +78,7 @@ class PurchaseOrderTransformer extends EntityTransformer
     {
         $transformer = new VendorTransformer($this->serializer);
 
-        if (!$purchase_order->vendor) {//@phpstan-ignore-line
+        if (!$purchase_order->vendor) {// @phpstan-ignore-line
             return null;
         }
 
@@ -150,8 +149,8 @@ class PurchaseOrderTransformer extends EntityTransformer
             'subscription_id' => $this->encodePrimaryKey($purchase_order->subscription_id),
             'expense_id' => $this->encodePrimaryKey($purchase_order->expense_id),
             'currency_id' => $purchase_order->currency_id ? (string) $purchase_order->currency_id : '',
-            'tax_info' => $purchase_order->tax_data ?: new \stdClass(),
-            'e_invoice' => $purchase_order->e_invoice ?: new \stdClass(),
+            'tax_info' => $purchase_order->tax_data ?: new \stdClass,
+            'e_invoice' => $purchase_order->e_invoice ?: new \stdClass,
             'location_id' => $this->encodePrimaryKey($purchase_order->location_id),
             'sync' => $purchase_order->sync,
         ];

@@ -6,12 +6,12 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Stripe\Connect;
 
+use Stripe\OAuth;
 use Stripe\Stripe;
 
 class ConnectOauth
@@ -30,7 +30,7 @@ class ConnectOauth
     {
         Stripe::setApiKey(config('ninja.ninja_stripe_key'));
 
-        $response = \Stripe\OAuth::token([
+        $response = OAuth::token([
             'grant_type' => 'authorization_code',
             'code' => $code,
         ]);
@@ -39,7 +39,7 @@ class ConnectOauth
         $connected_account_id = $response->stripe_user_id;
 
         return $response;
-        //return $connected_account_id;
+        // return $connected_account_id;
     }
 
     /**
@@ -50,7 +50,7 @@ class ConnectOauth
     {
         Stripe::setApiKey(config('ninja.ninja_stripe_key'));
 
-        \Stripe\OAuth::deauthorize([
+        OAuth::deauthorize([
             'client_id' => config('ninja.ninja_stripe_key'),
             'stripe_user_id' => $account_id,
         ]);

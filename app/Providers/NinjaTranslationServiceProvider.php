@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -33,7 +32,7 @@ class NinjaTranslationServiceProvider extends TranslationServiceProvider
          *
          */
 
-        //this is not octane safe
+        // this is not octane safe
         $this->app->singleton('translator', function ($app) {
             $loader = $app['translation.loader'];
             $locale = $app['config']['app.locale'];

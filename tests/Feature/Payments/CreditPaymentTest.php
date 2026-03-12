@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,7 +13,6 @@ namespace Tests\Feature\Payments;
 
 use App\Factory\InvoiceFactory;
 use App\Helpers\Invoice\InvoiceSum;
-use App\Models\Client;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -27,13 +25,10 @@ use Illuminate\Validation\ValidationException;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class CreditPaymentTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockUnitData;
 
     protected function setUp(): void
@@ -51,7 +46,7 @@ class CreditPaymentTest extends TestCase
         );
     }
 
-    public function testRegularPayment()
+    public function test_regular_payment()
     {
         $invoice = Invoice::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id, 'client_id' => $this->client->id]);
 
@@ -89,7 +84,6 @@ class CreditPaymentTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/payments/', $data);
 
-
         $response->assertStatus(200);
 
         $arr = $response->json();
@@ -102,7 +96,7 @@ class CreditPaymentTest extends TestCase
         $this->assertEquals($payment->applied, 10);
     }
 
-    public function testCreditPayments()
+    public function test_credit_payments()
     {
         $invoice = Invoice::factory()->create(['user_id' => $this->user->id, 'company_id' => $this->company->id, 'client_id' => $this->client->id]);
 

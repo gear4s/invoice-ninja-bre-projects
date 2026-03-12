@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organizzazione',
     'name' => 'Nome',
     'website' => 'Sito web',
@@ -1167,7 +1167,6 @@ $lang = array(
     'enterprise_plan_features' => 'Il piano Enterprise aggiunge il supporto per più utenti e allegati di file, :link per vedere l&#39;elenco completo delle funzionalità.',
     'return_to_app' => 'Ritorna all\'App',
 
-
     // Payment updates
     'refund_payment' => 'Rimborsa Pagamento',
     'refund_max' => 'Massimo:',
@@ -1695,7 +1694,6 @@ $lang = array(
     'lang_Serbian' => 'Serbo',
     'lang_Bulgarian' => 'Bulgaro',
     'lang_Russian (Russia)' => 'Russo (Russia)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Contabilità & Legale',
@@ -2354,7 +2352,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'Oncia Troy d&#39;oro',
     'currency_nicaraguan_córdoba' => 'Cordova nicaraguense',
     'currency_malagasy_ariary' => 'Ariary malgascio',
-    "currency_tongan_pa_anga" => "Pa&#39;anga tongano",
+    'currency_tongan_pa_anga' => 'Pa&#39;anga tongano',
 
     'review_app_help' => 'Ci auguriamo che ti piaccia usare l&#39;app.<br/> Se prendessi in considerazione :link lo apprezzeremmo molto!',
     'writing_a_review' => 'scrivendo una recensione',
@@ -4354,7 +4352,7 @@ $lang = array(
     'activity_122' => ':user spesa ricorrente archiviata :recurring_expense',
     'activity_123' => ':user cancellato spesa ricorrente :recurring_expense',
     'activity_124' => ':user spesa ricorrente ripristinata :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Per visualizzare :entity è necessario impostare una password.',
     'unsubscribe' => 'Annulla l&#39;iscrizione',
     'unsubscribed' => 'Iscrizione annullata',
@@ -4860,7 +4858,7 @@ $lang = array(
     'payment_type_Klarna' => 'Clarna',
     'payment_type_Interac E Transfer' => 'Interac E Trasferimento',
     'xinvoice_payable' => 'Pagabile entro :payeddue giorni netti fino :paydate',
-    'xinvoice_no_buyers_reference' => "Nessun riferimento dell&#39;acquirente fornito",
+    'xinvoice_no_buyers_reference' => 'Nessun riferimento dell&#39;acquirente fornito',
     'xinvoice_online_payment' => 'La Fattura deve essere pagata online tramite il link fornito',
     'pre_payment' => 'Pagamento anticipato',
     'number_of_payments' => 'Numero di pagamenti',
@@ -4965,8 +4963,8 @@ $lang = array(
     'e_invoice' => 'E- Fattura',
     'light_dark_mode' => 'Modalità Luce/Scuro',
     'activities' => 'Attività',
-    'recent_transactions' => "Transazioni recenti",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Transazioni recenti',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Doveri',
     'order_number' => 'Numero d&#39;ordine',
@@ -5183,7 +5181,7 @@ $lang = array(
     'rff' => 'Modulo campi obbligatori',
     'add_step' => 'Aggiungi passaggio',
     'steps' => 'Passi',
-    'steps_order_help' =>  'L&#39;ordine dei passaggi è importante. Il primo passo non dovrebbe dipendere da nessun altro passo. Il secondo passaggio dovrebbe dipendere dal primo passaggio e così via.',
+    'steps_order_help' => 'L&#39;ordine dei passaggi è importante. Il primo passo non dovrebbe dipendere da nessun altro passo. Il secondo passaggio dovrebbe dipendere dal primo passaggio e così via.',
     'other_steps' => 'Altri passaggi',
     'use_available_payments' => 'Usa Pagamenti Disponibili',
     'test_email_sent' => 'Con successo inviata email',
@@ -5392,7 +5390,7 @@ $lang = array(
     'credit_updated' => 'Credito aggiornato',
     'payment_updated' => 'Pagamento aggiornato',
     'search_placeholder' => 'Trova Fatture , Clienti e altro ancora',
-    'invalid_vat_number' => "Il numero di partita IVA non è valido per il paese selezionato. Formato dovrebbe essere Codice Paese seguito solo da un numero, ad esempio DE123456789",
+    'invalid_vat_number' => 'Il numero di partita IVA non è valido per il paese selezionato. Formato dovrebbe essere Codice Paese seguito solo da un numero, ad esempio DE123456789',
     'acts_as_sender' => 'Invia E- Fatture',
     'acts_as_receiver' => 'Ricevi E- Fatture',
     'peppol_token_generated' => 'Token PEPPOL generato Con successo .',
@@ -5529,7 +5527,7 @@ $lang = array(
     'pro_plan_feature_10' => 'Imposta e-mail di promemoria automatiche',
     'pro_plan_feature_11' => 'Fattura in formato PDF allegata automaticamente alle e-mail',
     'pro_plan_feature_12' => 'Visualizza la firma elettronica dei clienti sulle Fatture',
-    'pro_plan_feature_13' => "Abilita la casella di controllo “Approva i termini”",
+    'pro_plan_feature_13' => 'Abilita la casella di controllo “Approva i termini”',
     'pro_plan_feature_14' => 'Report: Fatture, Spese, Conto Economico e altro ancora',
     'pro_plan_feature_15' => 'Invio massivo via-email di Fatture, Preventivi e Note di Credito',
     'pro_plan_feature_16' => 'Collega 10 aziende con un unico login',
@@ -5904,6 +5902,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Bonifico bancario Stripe',
     'activity_164' => 'Sincronizzazione QuickBooks non riuscita. :notes',
-);
+];
 
 return $lang;

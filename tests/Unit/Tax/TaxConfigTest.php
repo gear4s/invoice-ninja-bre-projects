@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -25,8 +24,9 @@ use Tests\TestCase;
  */
 class TaxConfigTest extends TestCase
 {
-    use MockAccountData;
     use DatabaseTransactions;
+    use MockAccountData;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -51,9 +51,9 @@ class TaxConfigTest extends TestCase
         $this->tp = new TaxProvider($this->company, $client);
     }
 
-    public function testStateResolution()
+    public function test_state_resolution()
     {
-        //infer state from zip
+        // infer state from zip
         $client = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
@@ -64,7 +64,6 @@ class TaxConfigTest extends TestCase
             'country_id' => 840,
         ]);
 
-
         // $this->assertEquals('CA', USStates::getState('90210'));
 
         $this->bootApi($client);
@@ -72,5 +71,4 @@ class TaxConfigTest extends TestCase
 
         $this->assertNotNull($client);
     }
-
 }

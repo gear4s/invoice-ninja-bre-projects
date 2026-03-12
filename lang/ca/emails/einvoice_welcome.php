@@ -6,7 +6,7 @@ return [
 
     'greeting' => 'Benvingut a la facturació electrònica, :name!',
 
-    'intro' => "Aquest servei et permet:",
+    'intro' => 'Aquest servei et permet:',
     'intro_items' => "
         • Enviar i rebre factures electrònicament<br>
         • Garantir el compliment de les normatives fiscals<br>
@@ -25,26 +25,26 @@ return [
         ",
 
     'validation_title' => 'Per què és important la informació precisa',
-    'validation_items' => "
+    'validation_items' => '
             • Dades incorrectes poden provocar el rebuig de la factura<br>
             • Les autoritats fiscals requereixen que els números de registre coincideixin exactament<br>
             • Els sistemes de pagament depenen d’identificadors empresarials correctes<br>
             • El compliment legal depèn de la informació empresarial precisa<br>
-        ",
+        ',
 
     'next_steps' => 'Pròxims passos',
-    'next_steps_items' => "
+    'next_steps_items' => '
             1. Revisa les dades de la teva empresa a la configuració del compte<br>
             2. Actualitza qualsevol informació desactualitzada<br>
             3. Verifica els números de registre fiscal<br>
             4. Envia una factura electrònica de prova<br>
-        ",
+        ',
     'support_title' => 'Necessites ajuda?',
-    'support_message' => "El nostre equip de suport està a punt per ajudar-te amb qualsevol dubte sobre els requisits o la configuració de la facturació electrònica.<br>
+    'support_message' => 'El nostre equip de suport està a punt per ajudar-te amb qualsevol dubte sobre els requisits o la configuració de la facturació electrònica.<br>
                     Contacta amb el suport: :email<br>
                     Gràcies per escollir el nostre servei de facturació electrònica.<br>
-    ",
-    "text" => "
+    ',
+    'text' => "
     Activació de la facturació electrònica
 
 Benvingut a la facturació electrònica.
@@ -87,5 +87,5 @@ El nostre equip de suport està a punt per ajudar-te amb qualsevol dubte sobre e
 Contacta amb el suport: contact@invoiceninja.com
 
 Gràcies per escollir el nostre servei de facturació electrònica.
-    "
+    ",
 ];

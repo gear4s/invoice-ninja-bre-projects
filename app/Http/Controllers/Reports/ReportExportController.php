@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -38,7 +37,8 @@ class ReportExportController extends BaseController
         Cache::forget($hash);
 
         if ($this->isXlsxData($report)) {
-            nlog("isXlsxData");
+            nlog('isXlsxData');
+
             return response($report, 200, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition' => 'inline; filename="report.xlsx"',
@@ -67,7 +67,6 @@ class ReportExportController extends BaseController
 
     }
 
-
     // private function isXlsxData($fileData)
     // {
     //     // Check minimum size (XLSX files are typically > 1KB)
@@ -85,14 +84,13 @@ class ReportExportController extends BaseController
     //     return strpos($fileData, '[Content_Types].xml') !== false;
     // }
 
-
     public function isXlsxData(string $blob): bool
     {
 
         // nlog(bin2hex(substr($blob, 0, 4)));
-        nlog("504b0304" === bin2hex(substr($blob, 0, 4)));
-        return "504b0304" === bin2hex(substr($blob, 0, 4));
+        nlog(bin2hex(substr($blob, 0, 4)) === '504b0304');
+
+        return bin2hex(substr($blob, 0, 4)) === '504b0304';
 
     }
-
 }

@@ -6,20 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Factory;
 
-use App\Models\Client;
 use App\Models\Credit;
 
 class CreditFactory
 {
     public static function create(int $company_id, int $user_id): Credit
     {
-        $credit = new Credit();
+        $credit = new Credit;
         $credit->status_id = Credit::STATUS_DRAFT;
         $credit->number = null;
         $credit->discount = 0;
@@ -51,6 +49,7 @@ class CreditFactory
         $credit->company_id = $company_id;
         $credit->recurring_id = null;
         $credit->exchange_rate = 1;
+
         return $credit;
     }
 }

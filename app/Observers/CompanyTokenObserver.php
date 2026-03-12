@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -19,7 +18,6 @@ class CompanyTokenObserver
     /**
      * Handle the company token "created" event.
      *
-     * @param CompanyToken $companyToken
      * @return void
      */
     public function created(CompanyToken $companyToken)
@@ -30,7 +28,6 @@ class CompanyTokenObserver
     /**
      * Handle the company token "updated" event.
      *
-     * @param CompanyToken $companyToken
      * @return void
      */
     public function updated(CompanyToken $companyToken)
@@ -41,7 +38,6 @@ class CompanyTokenObserver
     /**
      * Handle the company token "deleted" event.
      *
-     * @param CompanyToken $companyToken
      * @return void
      */
     public function deleted(CompanyToken $companyToken)
@@ -52,7 +48,6 @@ class CompanyTokenObserver
     /**
      * Handle the company token "restored" event.
      *
-     * @param CompanyToken $companyToken
      * @return void
      */
     public function restored(CompanyToken $companyToken)
@@ -63,7 +58,6 @@ class CompanyTokenObserver
     /**
      * Handle the company token "force deleted" event.
      *
-     * @param CompanyToken $companyToken
      * @return void
      */
     public function forceDeleted(CompanyToken $companyToken)

@@ -6,35 +6,38 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use App\Utils\Ninja;
-use Illuminate\Support\Str;
-use Elastic\ScoutDriverPlus\Searchable;
 use App\Jobs\Mail\NinjaMailer;
-use App\Utils\Traits\AppSetup;
-use App\Utils\Traits\MakesHash;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
-use Laracasts\Presenter\PresentableTrait;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Presenters\ClientContactPresenter;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Contracts\Translation\HasLocalePreference;
 use App\Mail\ClientContact\ClientContactResetPasswordObject;
+use App\Models\Presenters\ClientContactPresenter;
+use App\Utils\Ninja;
+use App\Utils\Traits\AppSetup;
+use App\Utils\Traits\MakesHash;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Contracts\Translation\HasLocalePreference;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use Laracasts\Presenter\PresentableTrait;
 
 /**
  * Class ClientContact
  *
  * @method scope() static
+ *
  * @property int $id
  * @property int $company_id
  * @property int $client_id
@@ -70,8 +73,8 @@ use App\Mail\ClientContact\ClientContactResetPasswordObject;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property-read \App\Models\Client $client
- * @property-read \App\Models\Company $company
+ * @property-read Client $client
+ * @property-read Company $company
  * @property-read int|null $credit_invitations_count
  * @property-read mixed $contact_id
  * @property-read mixed $hashed_id
@@ -79,7 +82,8 @@ use App\Mail\ClientContact\ClientContactResetPasswordObject;
  * @property-read int|null $notifications_count
  * @property-read int|null $quote_invitations_count
  * @property-read int|null $recurring_invoice_invitations_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
+ *
  * @method static \Database\Factories\ClientContactFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|ClientContact newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientContact newQuery()
@@ -87,23 +91,24 @@ use App\Mail\ClientContact\ClientContactResetPasswordObject;
  * @method static \Illuminate\Database\Eloquent\Builder|ClientContact query()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientContact withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientContact withoutTrashed()
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuoteInvitation> $quote_invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\RecurringInvoiceInvitation> $recurring_invoice_invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CreditInvitation> $credit_invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\InvoiceInvitation> $invoice_invitations
+ *
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, QuoteInvitation> $quote_invitations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, RecurringInvoiceInvitation> $recurring_invoice_invitations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, CreditInvitation> $credit_invitations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, InvoiceInvitation> $invoice_invitations
+ *
  * @mixin \Eloquent
  */
 class ClientContact extends Authenticatable implements HasLocalePreference
 {
-    use Notifiable;
-    use MakesHash;
-    use PresentableTrait;
-    use SoftDeletes;
-    use HasFactory;
     use AppSetup;
-
+    use HasFactory;
+    use MakesHash;
+    use Notifiable;
+    use PresentableTrait;
     use Searchable;
+    use SoftDeletes;
 
     /* Used to authenticate a contact */
     protected $guard = 'contact';
@@ -179,7 +184,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     public function toSearchableArray()
     {
         return [
-            'id' => $this->company->db . ":" . $this->id,
+            'id' => $this->company->db . ':' . $this->id,
             'name' => $this->present()->search_display(),
             'hashed_id' => $this->hashed_id,
             'email' => $this->email,
@@ -197,7 +202,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
 
     /*
@@ -243,14 +248,14 @@ class ClientContact extends Authenticatable implements HasLocalePreference
 
     public function setAvatarAttribute($value)
     {
-        if (! filter_var($value, FILTER_VALIDATE_URL) && $value) {
+        if (!filter_var($value, FILTER_VALIDATE_URL) && $value) {
             $this->attributes['avatar'] = url('/') . $value;
         } else {
             $this->attributes['avatar'] = $value;
         }
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
@@ -260,32 +265,32 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         return $this->where('is_primary', true);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function invoice_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invoice_invitations(): HasMany
     {
         return $this->hasMany(InvoiceInvitation::class);
     }
 
-    public function recurring_invoice_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function recurring_invoice_invitations(): HasMany
     {
         return $this->hasMany(RecurringInvoiceInvitation::class);
     }
 
-    public function quote_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function quote_invitations(): HasMany
     {
         return $this->hasMany(QuoteInvitation::class);
     }
 
-    public function credit_invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function credit_invitations(): HasMany
     {
         return $this->hasMany(CreditInvitation::class);
     }
@@ -295,7 +300,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         $this->token = $token;
         $this->save();
 
-        $nmo = new NinjaMailerObject();
+        $nmo = new NinjaMailerObject;
         $nmo->mailable = new NinjaMailer((new ClientContactResetPasswordObject($token, $this))->build());
         $nmo->to_user = $this;
         $nmo->company = $this->company;
@@ -307,7 +312,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     public function preferredLocale()
     {
         return once(function () {
-            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            /** @var Collection<Language> */
             $languages = app('languages');
 
             $language_id = $this->client->getSetting('language_id');
@@ -326,8 +331,8 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     /**
      * Retrieve the model for a bound value.
      *
-     * @param mixed $value
-     * @param null $field
+     * @param  mixed  $value
+     * @param  null  $field
      * @return Model|null
      */
     public function resolveRouteBinding($value, $field = null)

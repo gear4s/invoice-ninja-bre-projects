@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -34,16 +33,15 @@ use App\Models\VendorContact;
 use App\Repositories\InvoiceRepository;
 use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\MakesHash;
+use Carbon\Carbon;
+use Faker\Factory;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
-/**
- *
- */
 class LoadTest extends TestCase
 {
-    use MakesHash;
     use GeneratesCounter;
+    use MakesHash;
 
     public int $count = 1;
 
@@ -54,7 +52,7 @@ class LoadTest extends TestCase
         $this->markTestSkipped('Skip test not needed in this environment');
     }
 
-    public function testLoad()
+    public function test_load()
     {
         $account = Account::factory()->create();
         $company = Company::factory()->create([
@@ -67,7 +65,7 @@ class LoadTest extends TestCase
 
         $user = User::whereEmail('small@example.com')->first();
 
-        if (! $user) {
+        if (!$user) {
             $user = User::factory()->create([
                 'account_id' => $account->id,
                 'email' => 'small@example.com',
@@ -75,7 +73,7 @@ class LoadTest extends TestCase
             ]);
         }
 
-        $company_token = new CompanyToken();
+        $company_token = new CompanyToken;
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -259,11 +257,11 @@ class LoadTest extends TestCase
 
     private function createInvoice($client)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
-        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); //stub the company and user_id
+        $invoice = InvoiceFactory::create($client->company->id, $client->user->id); // stub the company and user_id
         $invoice->client_id = $client->id;
-        $dateable = \Carbon\Carbon::now()->subDays(rand(0, 90));
+        $dateable = Carbon::now()->subDays(rand(0, 90));
         $invoice->date = $dateable;
 
         $invoice->line_items = $this->buildLineItems(rand(1, 10));
@@ -298,7 +296,7 @@ class LoadTest extends TestCase
         $invoice->service()->createInvitations()->markSent();
 
         if (rand(0, 1)) {
-            $invoice_repo = new InvoiceRepository();
+            $invoice_repo = new InvoiceRepository;
             $invoice_repo->markSent($invoice);
         }
 
@@ -316,11 +314,11 @@ class LoadTest extends TestCase
 
     private function createCredit($client)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
         $credit = Credit::factory()->create(['user_id' => $client->user->id, 'company_id' => $client->company->id, 'client_id' => $client->id]);
 
-        $dateable = \Carbon\Carbon::now()->subDays(rand(0, 90));
+        $dateable = Carbon::now()->subDays(rand(0, 90));
         $credit->date = $dateable;
 
         $credit->line_items = $this->buildLineItems(rand(1, 10));
@@ -355,9 +353,9 @@ class LoadTest extends TestCase
 
     private function createQuote($client)
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
-        //$quote = QuoteFactory::create($client->company->id, $client->user->id);//stub the company and user_id
+        // $quote = QuoteFactory::create($client->company->id, $client->user->id);//stub the company and user_id
         $quote = Quote::factory()->create(['user_id' => $client->user->id, 'company_id' => $client->company->id, 'client_id' => $client->id]);
         $quote->date = $faker->date();
         $quote->client_id = $client->id;
@@ -402,7 +400,7 @@ class LoadTest extends TestCase
         for ($x = 0; $x < $count; $x++) {
             $item = InvoiceItemFactory::create();
             $item->quantity = 1;
-            //$item->cost = 10;
+            // $item->cost = 10;
 
             if (rand(0, 1)) {
                 $item->tax_name1 = 'GST';

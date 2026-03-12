@@ -6,13 +6,11 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\EDocument\Gateway\Storecove\Models;
 
-use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Serializer\Attribute\SerializedPath;
 
 class Address
@@ -83,36 +81,42 @@ class Address
     public function setCountry(?string $country): self
     {
         $this->country = $country;
+
         return $this;
     }
 
     public function setStreet1(?string $street1): self
     {
         $this->street1 = $street1;
+
         return $this;
     }
 
     public function setStreet2(?string $street2): self
     {
         $this->street2 = $street2;
+
         return $this;
     }
 
     public function setCity(?string $city): self
     {
         $this->city = $city;
+
         return $this;
     }
 
     public function setZip(?string $zip): self
     {
         $this->zip = $zip;
+
         return $this;
     }
 
     public function setCounty(?string $county): self
     {
         $this->county = $county;
+
         return $this;
     }
 }

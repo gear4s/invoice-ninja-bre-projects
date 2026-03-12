@@ -6,21 +6,20 @@
  * @link https://github.com/creditninja/creditninja source repository
  *
  * @copyright Copyright (c) 2022. Credit Ninja LLC (https://creditninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Mail\Engine;
 
-use App\Utils\Ninja;
-use App\Utils\Number;
+use App\Jobs\Entity\CreateRawPdf;
 use App\Models\Account;
 use App\Utils\HtmlEngine;
-use Illuminate\Support\Str;
-use App\Jobs\Entity\CreateRawPdf;
+use App\Utils\Ninja;
+use App\Utils\Number;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class CreditEmailEngine extends BaseEmailEngine
 {
@@ -63,7 +62,7 @@ class CreditEmailEngine extends BaseEmailEngine
             $body_template = $this->client->getSetting('email_template_' . $this->reminder_template);
         }
 
-        /* Use default translations if a custom message has not been set*/
+        /* Use default translations if a custom message has not been set */
         if (iconv_strlen($body_template) == 0) {
             $body_template = trans(
                 'texts.credit_message',
@@ -107,7 +106,7 @@ class CreditEmailEngine extends BaseEmailEngine
 
         $this->setTemplate($this->client->getSetting('email_style'))
             ->setContact($this->contact)
-            ->setVariables((new HtmlEngine($this->invitation))->makeValues())//move make values into the htmlengine
+            ->setVariables((new HtmlEngine($this->invitation))->makeValues())// move make values into the htmlengine
             ->setSubject($subject_template)
             ->setBody($body_template)
             ->setFooter("<a href='{$this->invitation->getLink()}'>" . ctrans('texts.view_credit') . '</a>')
@@ -127,7 +126,7 @@ class CreditEmailEngine extends BaseEmailEngine
             $this->setAttachments([['file' => base64_encode($pdf), 'name' => $this->credit->numberFormatter() . '.pdf']]);
         }
 
-        //attach third party documents
+        // attach third party documents
         if ($this->client->getSetting('document_email_attachment') !== false && $this->credit->company->account->hasFeature(Account::FEATURE_DOCUMENTS)) {
             // Storage::url
             $this->credit->documents()->where('is_public', true)->cursor()->each(function ($document) {
@@ -136,7 +135,7 @@ class CreditEmailEngine extends BaseEmailEngine
                     $hash = Str::random(64);
                     Cache::put($hash, ['db' => $this->credit->company->db, 'doc_hash' => $document->hash], now()->addDays(7));
 
-                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . "</a>"]);
+                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . '</a>']);
                 } else {
                     $this->setAttachments([['path' => $document->filePath(), 'name' => $document->name, 'mime' => null, 'file' => base64_encode($document->getFile())]]);
                 }
@@ -148,7 +147,7 @@ class CreditEmailEngine extends BaseEmailEngine
                     $hash = Str::random(64);
                     Cache::put($hash, ['db' => $this->credit->company->db, 'doc_hash' => $document->hash], now()->addDays(7));
 
-                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . "</a>"]);
+                    $this->setAttachmentLinks(["<a class='doc_links' href='" . URL::signedRoute('documents.hashed_download', ['hash' => $hash]) . "'>" . $document->name . '</a>']);
                 } else {
                     $this->setAttachments([['path' => $document->filePath(), 'name' => $document->name, 'mime' => null, 'file' => base64_encode($document->getFile())]]);
                 }

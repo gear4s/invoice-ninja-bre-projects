@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,22 +13,29 @@ namespace App\Models;
 
 use App\DataMapper\InvoiceBackup;
 use App\DataMapper\InvoiceSync;
-use App\Utils\Ninja;
-use App\Utils\Number;
-use Elastic\ScoutDriverPlus\Searchable;
-use Illuminate\Support\Carbon;
-use App\Utils\Traits\MakesHash;
+use App\Events\Credit\CreditWasEmailed;
 use App\Helpers\Invoice\InvoiceSum;
-use Illuminate\Support\Facades\App;
-use App\Utils\Traits\MakesReminders;
+use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Models\Presenters\CreditPresenter;
 use App\Services\Credit\CreditService;
 use App\Services\Ledger\LedgerService;
-use App\Events\Credit\CreditWasEmailed;
+use App\Utils\Ninja;
+use App\Utils\Number;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\MakesInvoiceValues;
-use Laracasts\Presenter\PresentableTrait;
-use App\Models\Presenters\CreditPresenter;
-use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Utils\Traits\MakesReminders;
+use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
+use Laracasts\Presenter\PresentableTrait;
 
 /**
  * App\Models\Credit
@@ -106,57 +112,55 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property object|null $e_invoice
  * @property object|null $tax_data
  * @property int|null $subscription_id
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ * @property Collection<int, Activity> $activities
  * @property int|null $activities_count
- * @property \App\Models\User|null $assigned_user
- * @property \App\Models\Client $client
- * @property \App\Models\Company $company
- * @property \App\Models\CreditInvitation $invitation
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
+ * @property User|null $assigned_user
+ * @property Client $client
+ * @property Company $company
+ * @property CreditInvitation $invitation
+ * @property Collection<int, CompanyLedger> $company_ledger
  * @property int|null $company_ledger_count
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property Collection<int, Document> $documents
  * @property int|null $documents_count
  * @property mixed $hashed_id
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
+ * @property Collection<int, Backup> $history
  * @property int|null $history_count
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\CreditInvitation> $invitations
+ * @property Collection<int, CreditInvitation> $invitations
  * @property int|null $invitations_count
- * @property \App\Models\Invoice|null $invoice
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
+ * @property Invoice|null $invoice
+ * @property Collection<int, Invoice> $invoices
  * @property int|null $invoices_count
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Payment> $payments
+ * @property Collection<int, Payment> $payments
  * @property int|null $payments_count
- * @property \App\Models\Project|null $project
- * @property \App\Models\User $user
- * @property \App\Models\Client $client
- * @property \App\Models\Vendor|null $vendor
- * @property-read \App\Models\Location|null $location
+ * @property Project|null $project
+ * @property User $user
+ * @property Client $client
+ * @property Vendor|null $vendor
+ * @property-read Location|null $location
  * @property-read mixed $pivot
- * @property-read \App\Models\Location|null $location
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CreditInvitation> $invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Payment> $payments
+ * @property-read Location|null $location
+ * @property-read Collection<int, Activity> $activities
+ * @property-read Collection<int, CompanyLedger> $company_ledger
+ * @property-read Collection<int, Document> $documents
+ * @property-read Collection<int, Backup> $history
+ * @property-read Collection<int, CreditInvitation> $invitations
+ * @property-read Collection<int, Invoice> $invoices
+ * @property-read Collection<int, Payment> $payments
  *
  * @mixin \Eloquent
  */
 class Credit extends BaseModel
 {
-    use MakesHash;
     use Filterable;
-    use SoftDeletes;
-    use PresentableTrait;
+    use MakesHash;
     use MakesInvoiceValues;
     use MakesReminders;
+    use PresentableTrait;
     use Searchable;
+    use SoftDeletes;
 
     /**
      * Get the index name for the model.
-     *
-     * @return string
      */
     public function searchableAs(): string
     {
@@ -232,8 +236,8 @@ class Credit extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => $this->company->db . ":" . $this->id,
-            'name' => ctrans('texts.credit') . " " . $this->number . " | " . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
+            'id' => $this->company->db . ':' . $this->id,
+            'name' => ctrans('texts.credit') . ' ' . $this->number . ' | ' . $this->client->present()->name() . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
             'number' => (string) $this->number,
             'is_deleted' => $this->is_deleted,
@@ -252,7 +256,7 @@ class Credit extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->company->db . ":" . $this->id;
+        return $this->company->db . ':' . $this->id;
     }
 
     public function getEntityType()
@@ -275,52 +279,52 @@ class Credit extends BaseModel
         return $this->dateMutator($value);
     }
 
-    public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function assigned_user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
-    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class)->withTrashed();
     }
 
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    public function history(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function history(): HasManyThrough
     {
         return $this->hasManyThrough(Backup::class, Activity::class);
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activity::class)->where('company_id', $this->company_id)->where('client_id', $this->client_id)->orderBy('id', 'DESC')->take(50);
     }
 
-    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();
     }
 
-    public function invitations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function invitations(): HasMany
     {
         return $this->hasMany(CreditInvitation::class);
     }
 
-    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class)->withTrashed();
     }
@@ -328,20 +332,20 @@ class Credit extends BaseModel
     /**
      * The invoice which the credit has been created from.
      */
-    public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class)->withTrashed();
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function company_ledger()
     {
         return $this->morphMany(CompanyLedger::class, 'company_ledgerable');
     }
 
-    public function ledger(): \App\Services\Ledger\LedgerService
+    public function ledger(): LedgerService
     {
         return new LedgerService($this);
     }
@@ -350,13 +354,13 @@ class Credit extends BaseModel
      * The invoice/s which the credit has
      * been applied to.
      */
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function invoices(): BelongsToMany
     {
         return $this->belongsToMany(Invoice::class)->using(Paymentable::class);
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     * @return MorphToMany
      */
     public function payments()
     {
@@ -364,7 +368,7 @@ class Credit extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function documents()
     {
@@ -389,13 +393,13 @@ class Credit extends BaseModel
         return $credit_calc->build();
     }
 
-    public function service(): \App\Services\Credit\CreditService
+    public function service(): CreditService
     {
         return new CreditService($this);
     }
 
     /**
-     * @param float $balance_adjustment
+     * @param  float  $balance_adjustment
      */
     public function updateBalance($balance_adjustment)
     {
@@ -426,7 +430,7 @@ class Credit extends BaseModel
     public function markInvitationsSent()
     {
         $this->invitations->each(function ($invitation) {
-            if (! isset($invitation->sent_date)) {
+            if (!isset($invitation->sent_date)) {
                 $invitation->sent_date = Carbon::now();
                 $invitation->saveQuietly();
             }

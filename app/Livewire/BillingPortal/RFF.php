@@ -6,14 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2022. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\BillingPortal;
 
+use App\Models\ClientContact;
 use App\Models\CompanyGateway;
-use App\Models\Subscription;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
@@ -49,7 +48,7 @@ class RFF extends Component
 
         $contact = auth()->guard('contact');
 
-        /** @var \App\Models\ClientContact $contact */
+        /** @var ClientContact $contact */
         $contact->user()->update([
             'first_name' => $data['contact_first_name'],
             'last_name' => $data['contact_last_name'],
@@ -70,10 +69,9 @@ class RFF extends Component
 
     public function render()
     {
-        /** @var \App\Models\CompanyGateway $gateway */
+        /** @var CompanyGateway $gateway */
         $gateway = CompanyGateway::find($this->context['form']['company_gateway_id']);
         $countries = Cache::get('countries');
-
 
         if ($gateway === null) {
             return view('billing-portal.v3.rff-basic');

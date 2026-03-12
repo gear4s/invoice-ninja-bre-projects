@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -72,34 +71,34 @@ class SystemMaintenance implements ShouldQueue
         }
 
         Invoice::with('invitations')
-                ->whereBetween('created_at', [now()->subYear(), now()->subDays((int) $delete_pdf_days)])
-                ->withTrashed()
-                ->cursor()
-                ->each(function ($invoice) {
-                    nlog("deleting invoice {$invoice->number}");
+            ->whereBetween('created_at', [now()->subYear(), now()->subDays((int) $delete_pdf_days)])
+            ->withTrashed()
+            ->cursor()
+            ->each(function ($invoice) {
+                nlog("deleting invoice {$invoice->number}");
 
-                    $invoice->service()->deletePdf();
-                });
+                $invoice->service()->deletePdf();
+            });
 
         Quote::with('invitations')
-                ->whereBetween('created_at', [now()->subYear(), now()->subDays((int) $delete_pdf_days)])
-                ->withTrashed()
-                ->cursor()
-                ->each(function ($quote) {
-                    nlog("deleting quote {$quote->number}");
+            ->whereBetween('created_at', [now()->subYear(), now()->subDays((int) $delete_pdf_days)])
+            ->withTrashed()
+            ->cursor()
+            ->each(function ($quote) {
+                nlog("deleting quote {$quote->number}");
 
-                    $quote->service()->deletePdf();
-                });
+                $quote->service()->deletePdf();
+            });
 
         Credit::with('invitations')
-                ->whereBetween('created_at', [now()->subYear(), now()->subDays((int) $delete_pdf_days)])
-                ->withTrashed()
-                ->cursor()
-                ->each(function ($credit) {
-                    nlog("deleting credit {$credit->number}");
+            ->whereBetween('created_at', [now()->subYear(), now()->subDays((int) $delete_pdf_days)])
+            ->withTrashed()
+            ->cursor()
+            ->each(function ($credit) {
+                nlog("deleting credit {$credit->number}");
 
-                    $credit->service()->deletePdf();
-                });
+                $credit->service()->deletePdf();
+            });
     }
 
     private function maintainBackups(int $delete_backup_days)
@@ -109,19 +108,19 @@ class SystemMaintenance implements ShouldQueue
         }
 
         Backup::where('created_at', '<', now()->subDays((int) $delete_backup_days))
-                ->cursor()
-                ->each(function ($backup) {
-                    nlog("deleting {$backup->filename}");
+            ->cursor()
+            ->each(function ($backup) {
+                nlog("deleting {$backup->filename}");
 
-                    if ($backup->filename) {
-                        $backup->deleteFile();
-                    }
+                if ($backup->filename) {
+                    $backup->deleteFile();
+                }
 
-                    $backup->delete();
-                });
+                $backup->delete();
+            });
     }
 
-    //double check this is correct.
+    // double check this is correct.
 
     // private function cleanPdfs()
     // {

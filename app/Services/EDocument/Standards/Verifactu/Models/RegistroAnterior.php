@@ -11,8 +11,11 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class RegistroAnterior extends BaseXmlModel
 {
     protected string $idEmisorFactura;
+
     protected string $numSerieFactura;
+
     protected string $fechaExpedicionFactura;
+
     protected string $huella;
 
     public function toXml(\DOMDocument $doc): \DOMElement
@@ -29,7 +32,7 @@ class RegistroAnterior extends BaseXmlModel
 
     public static function fromDOMElement(\DOMElement $element): self
     {
-        $registroAnterior = new self();
+        $registroAnterior = new self;
 
         // Handle IDEmisorFactura
         $idEmisorFactura = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDEmisorFactura')->item(0);
@@ -72,12 +75,13 @@ class RegistroAnterior extends BaseXmlModel
         $previousErrorSetting = libxml_use_internal_errors(true);
 
         try {
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             if (!$doc->loadXML($xml)) {
                 $errors = libxml_get_errors();
                 libxml_clear_errors();
                 throw new \DOMException('Failed to load XML: ' . ($errors ? $errors[0]->message : 'Invalid XML format'));
             }
+
             return static::fromDOMElement($doc->documentElement);
         } finally {
             // Restore previous error handling setting
@@ -99,6 +103,7 @@ class RegistroAnterior extends BaseXmlModel
     public function setIdEmisorFactura(string $idEmisorFactura): self
     {
         $this->idEmisorFactura = $idEmisorFactura;
+
         return $this;
     }
 
@@ -116,6 +121,7 @@ class RegistroAnterior extends BaseXmlModel
     public function setNumSerieFactura(string $numSerieFactura): self
     {
         $this->numSerieFactura = $numSerieFactura;
+
         return $this;
     }
 
@@ -130,11 +136,12 @@ class RegistroAnterior extends BaseXmlModel
     /**
      * Set the invoice issue date from the previous record
      *
-     * @param string $fechaExpedicionFactura Date in DD-MM-YYYY format
+     * @param  string  $fechaExpedicionFactura  Date in DD-MM-YYYY format
      */
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
     {
         $this->fechaExpedicionFactura = $fechaExpedicionFactura;
+
         return $this;
     }
 
@@ -152,6 +159,7 @@ class RegistroAnterior extends BaseXmlModel
     public function setHuella(string $huella): self
     {
         $this->huella = $huella;
+
         return $this;
     }
 }

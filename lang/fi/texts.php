@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Yritys',
     'name' => 'Nimi',
     'website' => 'Kotisivu',
@@ -1176,7 +1176,6 @@ $lang = array(
     'enterprise_plan_features' => 'Yrityssuunnitelma lisää tuen useille käyttäjille ja tiedostoliitteille, :link nähdäksesi täydellisen luettelon ominaisuuksista.',
     'return_to_app' => 'Return To App',
 
-
     // Payment updates
     'refund_payment' => 'Hyvitysmaksu',
     'refund_max' => 'Max:',
@@ -1705,7 +1704,6 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'lang_Serbian' => 'Serbian',
     'lang_Bulgarian' => 'Bulgarian',
     'lang_Russian (Russia)' => 'Venäjä',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Taloushallinto & Lakiasiat',
@@ -2363,7 +2361,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'currency_gold_troy_ounce' => 'Kultainen Troijaunssi',
     'currency_nicaraguan_córdoba' => 'Nicaraguan Córdoba',
     'currency_malagasy_ariary' => 'Madagaskarin saarnaaja',
-    "currency_tongan_pa_anga" => "Tongan Paanga",
+    'currency_tongan_pa_anga' => 'Tongan Paanga',
 
     'review_app_help' => 'We hope you\'re enjoying using  app.<br/>If you\'d consider :link we\'d greatly appreciate it!',
     'writing_a_review' => 'writing  review',
@@ -4363,7 +4361,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'activity_122' => ':user arkistoitu toistuva Kulu :recurring_expense',
     'activity_123' => ':user poistettu toistuva Kulu :recurring_expense',
     'activity_124' => ':user palautettu toistuva Kulu :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => ':entity n tarkastelemiseksi sinun on asetettava salasana.',
     'unsubscribe' => 'Peruuta tilaus',
     'unsubscribed' => 'Tilaus peruutettu',
@@ -4869,7 +4867,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Maksettava :payeddue päivän sisällä netto viimeistään :paydate',
-    'xinvoice_no_buyers_reference' => "Ostajan viitettä ei ole annettu",
+    'xinvoice_no_buyers_reference' => 'Ostajan viitettä ei ole annettu',
     'xinvoice_online_payment' => 'Lasku on maksettava verkossa annetun linkin kautta',
     'pre_payment' => 'Ennen Maksu',
     'number_of_payments' => 'Maksut',
@@ -4974,8 +4972,8 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'e_invoice' => 'E- Lasku',
     'light_dark_mode' => 'Vaalea/tumma tila',
     'activities' => 'Aktiviteetit',
-    'recent_transactions' => "Viimeaikaiset tapahtumat",
-    'country_Palestine' => "Palestiina",
+    'recent_transactions' => 'Viimeaikaiset tapahtumat',
+    'country_Palestine' => 'Palestiina',
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Tehtävät',
     'order_number' => 'Tilausnumero',
@@ -5192,7 +5190,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'rff' => 'Pakolliset kentät lomake',
     'add_step' => 'Lisää vaihe',
     'steps' => 'Vaiheet',
-    'steps_order_help' =>  'Vaiheiden järjestys on tärkeä. Ensimmäisen vaiheen ei pitäisi olla riippuvainen mistään muusta vaiheesta. Toisen vaiheen pitäisi riippua ensimmäisestä vaiheesta ja niin edelleen.',
+    'steps_order_help' => 'Vaiheiden järjestys on tärkeä. Ensimmäisen vaiheen ei pitäisi olla riippuvainen mistään muusta vaiheesta. Toisen vaiheen pitäisi riippua ensimmäisestä vaiheesta ja niin edelleen.',
     'other_steps' => 'Muut vaiheet',
     'use_available_payments' => 'Käytä käytettävissä olevaa Maksut',
     'test_email_sent' => 'sähköposti lähetys onnistui',
@@ -5401,7 +5399,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'credit_updated' => 'Luotto päivitetty',
     'payment_updated' => 'Maksu päivitetty',
     'search_placeholder' => 'Löydä Laskut Asiakkaat ja paljon muuta',
-    'invalid_vat_number' => "ALV-numero ei kelpaa valitussa maassa. Muoto tulee olla maakoodi ja vain numero eli DE123456789",
+    'invalid_vat_number' => 'ALV-numero ei kelpaa valitussa maassa. Muoto tulee olla maakoodi ja vain numero eli DE123456789',
     'acts_as_sender' => 'Lähetä E- Laskut',
     'acts_as_receiver' => 'Vastaanota E- Laskut',
     'peppol_token_generated' => 'PEPPOL-tunnus luotu onnistuneesti.',
@@ -5538,7 +5536,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'pro_plan_feature_10' => 'Automaattisten muistutussähköpostien määrittäminen',
     'pro_plan_feature_11' => 'Automaattisesti liitetty Lasku PDF sähköposteihin',
     'pro_plan_feature_12' => 'Näytä Asiakkaat E-allekirjoitus Laskut',
-    'pro_plan_feature_13' => "Ota käyttöön Hyväksy ehdot -valintaruutu",
+    'pro_plan_feature_13' => 'Ota käyttöön Hyväksy ehdot -valintaruutu',
     'pro_plan_feature_14' => 'Raportit: Laskut , Kulut, P&amp;L, enemmän',
     'pro_plan_feature_15' => 'Bulk sähköposti Laskut , Quotes, Credits',
     'pro_plan_feature_16' => 'Yhdistä 10 yritystä yhdellä kirjautumisella',
@@ -5913,6 +5911,6 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'Stripe Pankki -siirto',
     'activity_164' => 'QuickBooks-synkronointi epäonnistui. :notes',
-);
+];
 
 return $lang;

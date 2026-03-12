@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -18,9 +17,10 @@ use App\Http\ValidationRules\Ninja\CanStoreClientsRule;
 use App\Http\ValidationRules\ValidClientGroupSettingsRule;
 use App\Models\Client;
 use App\Models\Company;
+use App\Models\Country;
 use App\Models\GroupSetting;
 use App\Utils\Traits\MakesHash;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 
 class StoreShopClientRequest extends Request
 {
@@ -50,10 +50,10 @@ class StoreShopClientRequest extends Request
             $rules['documents'] = 'file|mimes:png,ai,jpeg,tiff,pdf,gif,psd,txt,doc,xls,ppt,xlsx,docx,pptx|max:20000';
         }
 
-        /* Ensure we have a client name, and that all emails are unique*/
-        //$rules['name'] = 'required|min:1';
+        /* Ensure we have a client name, and that all emails are unique */
+        // $rules['name'] = 'required|min:1';
         $rules['id_number'] = 'unique:clients,id_number,' . $this->id . ',id,company_id,' . $this->company_id;
-        $rules['settings'] = new ValidClientGroupSettingsRule();
+        $rules['settings'] = new ValidClientGroupSettingsRule;
         $rules['contacts.*.email'] = 'nullable|distinct';
         $rules['contacts.*.password'] = [
             'nullable',
@@ -63,7 +63,7 @@ class StoreShopClientRequest extends Request
             'regex:/[a-z]/',      // must contain at least one lowercase letter
             'regex:/[A-Z]/',      // must contain at least one uppercase letter
             'regex:/[0-9]/',      // must contain at least one digit
-            //'regex:/[@$!%*#?&.]/', // must contain a special character
+            // 'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
         if ($this->company->account->isFreeHostedClient()) {
@@ -81,7 +81,7 @@ class StoreShopClientRequest extends Request
 
         $settings = ClientSettings::defaults();
 
-        if (array_key_exists('settings', $input) && ! empty($input['settings'])) {
+        if (array_key_exists('settings', $input) && !empty($input['settings'])) {
             foreach ($input['settings'] as $key => $value) {
                 $settings->{$key} = $value;
             }
@@ -91,8 +91,8 @@ class StoreShopClientRequest extends Request
             $input['assigned_user_id'] = $this->decodePrimaryKey($input['assigned_user_id']);
         }
 
-        //is no settings->currency_id is set then lets dive in and find either a group or company currency all the below may be redundant!!
-        if (! property_exists($settings, 'currency_id') && isset($input['group_settings_id'])) {
+        // is no settings->currency_id is set then lets dive in and find either a group or company currency all the below may be redundant!!
+        if (!property_exists($settings, 'currency_id') && isset($input['group_settings_id'])) {
             $input['group_settings_id'] = $this->decodePrimaryKey($input['group_settings_id']);
             $group_settings = GroupSetting::query()->find($input['group_settings_id']);
 
@@ -101,7 +101,7 @@ class StoreShopClientRequest extends Request
             } else {
                 $settings->currency_id = (string) $this->company->settings->currency_id;
             }
-        } elseif (! property_exists($settings, 'currency_id')) {
+        } elseif (!property_exists($settings, 'currency_id')) {
             $settings->currency_id = (string) $this->company->settings->currency_id;
         }
 
@@ -119,7 +119,7 @@ class StoreShopClientRequest extends Request
                     $input['contacts'][$key]['id'] = $this->decodePrimaryKey($contact['id']);
                 }
 
-                //Filter the client contact password - if it is sent with ***** we should ignore it!
+                // Filter the client contact password - if it is sent with ***** we should ignore it!
                 if (isset($contact['password'])) {
                     if (strlen($contact['password']) == 0) {
                         $input['contacts'][$key]['password'] = '';
@@ -149,7 +149,7 @@ class StoreShopClientRequest extends Request
     {
         return [
             'unique' => ctrans('validation.unique', ['attribute' => 'email']),
-            //'required' => trans('validation.required', ['attribute' => 'email']),
+            // 'required' => trans('validation.required', ['attribute' => 'email']),
             'contacts.*.email.required' => ctrans('validation.email', ['attribute' => 'email']),
         ];
     }
@@ -157,7 +157,7 @@ class StoreShopClientRequest extends Request
     private function getCountryCode($country_code)
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $countries = app('countries');
 
         $country = $countries->first(function ($item) use ($country_code) {
@@ -170,7 +170,7 @@ class StoreShopClientRequest extends Request
     private function getCurrencyCode($code)
     {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+        /** @var Collection<Country> */
         $currencies = app('currencies');
 
         $currency = $currencies->first(function ($item) use ($code) {

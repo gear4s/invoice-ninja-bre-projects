@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Filters;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * DesignFilters.
@@ -21,10 +22,6 @@ class DesignFilters extends QueryFilters
 {
     /**
      * Filter based on search text.
-     *
-     * @param string $filter
-     * @return Builder
-     *
      */
     public function filter(string $filter = ''): Builder
     {
@@ -40,15 +37,13 @@ class DesignFilters extends QueryFilters
     /**
      * Sorts the list based on $sort.
      *
-     * @param string $sort formatted as column|asc
-     *
-     * @return Builder
+     * @param  string  $sort  formatted as column|asc
      */
     public function sort(string $sort = ''): Builder
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -69,22 +64,20 @@ class DesignFilters extends QueryFilters
         }
 
         return $this->builder
-                    ->where('is_template', true)
-                    ->whereRaw('FIND_IN_SET( ? ,entities)', [trim($entities)]);
+            ->where('is_template', true)
+            ->whereRaw('FIND_IN_SET( ? ,entities)', [trim($entities)]);
 
     }
 
     /**
      * Filters the query by the users company ID.
-     *
-     * @return Builder
      */
     public function entityFilter(): Builder
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
-        return  $this->builder->where(function ($query) use ($user) {
+        return $this->builder->where(function ($query) use ($user) {
             $query->where('company_id', $user->company()->id)->orWhere('company_id', null)->orderBy('id', 'asc');
         });
     }
@@ -103,8 +96,6 @@ class DesignFilters extends QueryFilters
 
     /**
      * Filter the designs by `is_custom` column.
-     *
-     * @return Builder
      */
     public function custom(string $custom): Builder
     {

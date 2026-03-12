@@ -6,34 +6,32 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace Tests\Feature\Export;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Client;
+use App\DataMapper\CompanySettings;
+use App\Factory\InvoiceItemFactory;
 use App\Models\Account;
+use App\Models\Activity;
+use App\Models\Client;
 use App\Models\Company;
 use App\Models\Expense;
 use App\Models\Invoice;
-use App\Models\Activity;
+use App\Models\User;
+use App\Services\Report\EInvoiceReport;
 use App\Utils\Traits\AppSetup;
 use App\Utils\Traits\MakesHash;
-use App\DataMapper\CompanySettings;
-use App\Factory\InvoiceItemFactory;
-use App\Services\Report\EInvoiceReport;
+use Faker\Factory;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Str;
+use Tests\TestCase;
 
-/**
- *
- */
 class EInvoiceReportTest extends TestCase
 {
-    use MakesHash;
     use AppSetup;
+    use MakesHash;
 
     public $faker;
 
@@ -41,7 +39,7 @@ class EInvoiceReportTest extends TestCase
     {
         parent::setUp();
 
-        $this->faker = \Faker\Factory::create();
+        $this->faker = Factory::create();
 
         $this->withoutMiddleware(
             ThrottleRequests::class
@@ -91,7 +89,7 @@ class EInvoiceReportTest extends TestCase
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
             'confirmation_code' => 'xyz123',
-            'email' => \Illuminate\Support\Str::random(32).'@example.com',
+            'email' => Str::random(32) . '@example.com',
         ]);
 
         $settings = CompanySettings::defaults();
@@ -120,7 +118,7 @@ class EInvoiceReportTest extends TestCase
         ]);
     }
 
-    public function testUserSalesInstance()
+    public function test_user_sales_instance()
     {
         $this->buildData();
 
@@ -131,7 +129,7 @@ class EInvoiceReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testSimpleReport()
+    public function test_simple_report()
     {
         $this->buildData();
 
@@ -143,7 +141,7 @@ class EInvoiceReportTest extends TestCase
             'user_id' => $this->user->id,
         ];
 
-        $guid = new \stdClass();
+        $guid = new \stdClass;
         $guid->guid = '1234567890';
 
         $i = Invoice::factory()->create([
@@ -178,7 +176,7 @@ class EInvoiceReportTest extends TestCase
         $this->account->delete();
     }
 
-    public function testExpenseEInvoiceComponent()
+    public function test_expense_e_invoice_component()
     {
 
         $this->buildData();
@@ -187,18 +185,18 @@ class EInvoiceReportTest extends TestCase
             'start_date' => '2000-01-01',
             'end_date' => '2030-01-11',
             'date_range' => 'custom',
-            'report_keys' => []
+            'report_keys' => [],
         ];
 
         $e = Expense::factory()->create([
-           'user_id' => $this->user->id,
-           'company_id' => $this->company->id,
-           'amount' => 100,
-           'public_notes' => 'Expensive Business!!',
-           'should_be_invoiced' => true,
-       ]);
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'amount' => 100,
+            'public_notes' => 'Expensive Business!!',
+            'should_be_invoiced' => true,
+        ]);
 
-        $a = new Activity();
+        $a = new Activity;
         $a->expense_id = $e->id;
         $a->company_id = $this->company->id;
         $a->user_id = $this->user->id;
@@ -212,6 +210,7 @@ class EInvoiceReportTest extends TestCase
 
         $this->account->delete();
     }
+
     private function buildLineItems()
     {
         $line_items = [];
@@ -226,7 +225,6 @@ class EInvoiceReportTest extends TestCase
 
         $line_items[] = $item;
 
-
         $item = InvoiceItemFactory::create();
         $item->quantity = 1;
         $item->cost = 10;
@@ -236,7 +234,6 @@ class EInvoiceReportTest extends TestCase
         // $item->expense_id = $this->encodePrimaryKey($this->expense->id);
 
         $line_items[] = $item;
-
 
         return $line_items;
     }

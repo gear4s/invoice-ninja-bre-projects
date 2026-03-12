@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
 
     'analytics' => [
@@ -41,19 +43,19 @@ return [
     'postmark-outlook' => [
         'token' => env('POSTMARK_OUTLOOK_SECRET', ''),
         'from' => [
-            'address' => env('POSTMARK_OUTLOOK_FROM_ADDRESS', '')
+            'address' => env('POSTMARK_OUTLOOK_FROM_ADDRESS', ''),
         ],
     ],
 
     'postmark-broadcast' => [
         'token' => env('POSTMARK_BROADCAST_SECRET', ''),
         'from' => [
-            'address' => env('POSTMARK_BROADCAST_FROM_ADDRESS', 'community@invoiceninja.com')
+            'address' => env('POSTMARK_BROADCAST_FROM_ADDRESS', 'community@invoiceninja.com'),
         ],
     ],
 
     'microsoft' => [
-        'client_id' => env('MICROSOFT_CLIENT_ID',false),
+        'client_id' => env('MICROSOFT_CLIENT_ID', false),
         'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
         'redirect' => env('MICROSOFT_REDIRECT_URI'),
     ],
@@ -91,7 +93,7 @@ return [
     ],
 
     'stripe' => [
-        'model' => App\Models\User::class,
+        'model' => User::class,
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
     ],
@@ -145,7 +147,7 @@ return [
     'gocardless' => [
         'client_id' => env('GOCARDLESS_CLIENT_ID', null),
         'client_secret' => env('GOCARDLESS_CLIENT_SECRET', null),
-        'debug' => env('APP_DEBUG',false),
+        'debug' => env('APP_DEBUG', false),
         'redirect_uri' => env('GOCARDLESS_REDIRECT_URI', null),
         'environment' => env('GOCARDLESS_ENVIRONMENT', 'production'),
     ],
@@ -166,11 +168,11 @@ return [
         'redirect' => env('QUICKBOOKS_REDIRECT_URI'),
         'test_redirect' => env('QUICKBOOKS_TEST_REDIRECT_URI'),
         'env' => env('QUICKBOOKS_ENV', 'sandbox'),
-        'debug' => env('APP_DEBUG',false)
+        'debug' => env('APP_DEBUG', false),
     ],
     'cloudflare' => [
         'zone_id' => env('CLOUDFLARE_SAAS_ZONE_ID', false),
         'api_token' => env('CLOUDFLARE_SAAS_API_TOKEN', false),
         'email' => env('CLOUDFLARE_SAAS_EMAIL', false),
-    ]
+    ],
 ];

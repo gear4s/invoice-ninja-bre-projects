@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'Organizacija',
     'name' => 'Ime',
     'website' => 'Spletna stran',
@@ -1177,7 +1177,6 @@ Velikost strani',
     'enterprise_plan_features' => 'Enterprise Plan dodaja podporo za več uporabnikov in datotečne priloge, :link za ogled celotnega seznama funkcij.',
     'return_to_app' => 'Nazaj na vrh',
 
-
     // Payment updates
     'refund_payment' => 'Vračilo plačila',
     'refund_max' => 'Maksimalno:',
@@ -1706,7 +1705,6 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'lang_Serbian' => 'Srbsko',
     'lang_Bulgarian' => 'Bolgarsko',
     'lang_Russian (Russia)' => 'Ruščina (Rusija)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'Računovodstvo in Pravosodje',
@@ -2364,7 +2362,7 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'currency_gold_troy_ounce' => 'Trojska unča zlata',
     'currency_nicaraguan_córdoba' => 'Nikaragvska Córdoba',
     'currency_malagasy_ariary' => 'Madagaški ariary',
-    "currency_tongan_pa_anga" => "tonganska paanga",
+    'currency_tongan_pa_anga' => 'tonganska paanga',
 
     'review_app_help' => 'Upamo da uživate v uporabi aplikacije.<br/>Zelo bi cenili klik na :link!',
     'writing_a_review' => 'pisanje pregleda (kritike)',
@@ -4364,7 +4362,7 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'activity_122' => ':user arhivirani ponavljajoči se stroški :recurring_expense',
     'activity_123' => ':user izbrisani ponavljajoči se stroški :recurring_expense',
     'activity_124' => ':user obnovljeni ponavljajoči se stroški :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'Za pregled :entity morate nastaviti geslo.',
     'unsubscribe' => 'Prekini naročnino',
     'unsubscribed' => 'Naročina prekinjena',
@@ -4870,7 +4868,7 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'payment_type_Klarna' => 'Klarna',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'Plačljivo v :payeddue dneh neto do :paydate',
-    'xinvoice_no_buyers_reference' => "Referenca kupca ni navedena",
+    'xinvoice_no_buyers_reference' => 'Referenca kupca ni navedena',
     'xinvoice_online_payment' => 'Račun je treba plačati preko spleta preko navedene povezave',
     'pre_payment' => 'Predplačilo',
     'number_of_payments' => 'Število plačil',
@@ -4975,8 +4973,8 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'e_invoice' => 'e-račun',
     'light_dark_mode' => 'Svetlo/temni način',
     'activities' => 'Aktivnosti',
-    'recent_transactions' => "Nedavne transakcije",
-    'country_Palestine' => "Palestina",
+    'recent_transactions' => 'Nedavne transakcije',
+    'country_Palestine' => 'Palestina',
     'country_Taiwan' => 'Tajvan',
     'duties' => 'Dolžnosti',
     'order_number' => 'Številka naročila',
@@ -5193,7 +5191,7 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'rff' => 'Obrazec za zahtevana polja',
     'add_step' => 'Dodaj korak',
     'steps' => 'Koraki',
-    'steps_order_help' =>  'Vrstni red korakov je pomemben. Prvi korak ne sme biti odvisen od katerega koli drugega koraka. Drugi korak bi moral biti odvisen od prvega koraka in tako naprej.',
+    'steps_order_help' => 'Vrstni red korakov je pomemben. Prvi korak ne sme biti odvisen od katerega koli drugega koraka. Drugi korak bi moral biti odvisen od prvega koraka in tako naprej.',
     'other_steps' => 'Drugi koraki',
     'use_available_payments' => 'Uporabite razpoložljiva plačila',
     'test_email_sent' => 'E-poštno sporočilo uspešno poslano',
@@ -5402,7 +5400,7 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'credit_updated' => 'Kredit posodobljen',
     'payment_updated' => 'Plačilo posodobljeno',
     'search_placeholder' => 'Najdi račune, stranke in ostalo',
-    'invalid_vat_number' => "Številka za DDV ni veljavna za izbrano državo. Oblika mora biti koda države, ki ji sledi samo številka, npr. DE123456789",
+    'invalid_vat_number' => 'Številka za DDV ni veljavna za izbrano državo. Oblika mora biti koda države, ki ji sledi samo številka, npr. DE123456789',
     'acts_as_sender' => 'Pošlji e-račune',
     'acts_as_receiver' => 'Prejmi e-račune',
     'peppol_token_generated' => 'Žeton PEPPOL je bil uspešno ustvarjen.',
@@ -5703,7 +5701,7 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'custom_document_completed' => 'Custom Document completed',
     'email_client_when_custom_document_completed' => 'Email client when a Custom Document has been signed',
     'sender' => 'Sender',
-     'create_template' => 'Create Template',
+    'create_template' => 'Create Template',
     'edit_template' => 'Edit Template',
     'delete_template' => 'Delete Template',
     'template_created' => 'Template created',
@@ -5768,6 +5766,6 @@ Ko imate zneske, se vrnite na to stran plačilnega sredstva in kliknite na "Comp
     'tour_toolbox_description' => 'On the right is the toolbox. Use it to add fields and elements for signatories to interact with. The signature field is already selected. Click to continue.',
     'tour_document_canvas' => 'This is your document canvas. Place and position fields for your signatories here.',
     'tour_save_document' => 'When you’re finished, click here to save your document.',
-);
+];
 
 return $lang;

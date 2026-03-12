@@ -6,36 +6,33 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
+use App\Exceptions\PaymentFailed;
+use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Http\Requests\Gateways\Mollie\Mollie3dsRequest;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
+use App\Jobs\Util\SystemLogger;
 use App\Models\Client;
+use App\Models\ClientGatewayToken;
+use App\Models\GatewayType;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
-use Mollie\Api\MollieApiClient;
-use App\Exceptions\PaymentFailed;
-use App\Models\ClientGatewayToken;
-use App\PaymentDrivers\BaseDriver;
-use App\PaymentDrivers\Mollie\KBC;
-use App\PaymentDrivers\Mollie\IDEAL;
-use App\Exceptions\PaymentOpenMollie;
-use Mollie\Api\Exceptions\ApiException;
+use App\Models\SystemLog;
 use App\PaymentDrivers\Mollie\Bancontact;
-use App\PaymentDrivers\Mollie\CreditCard;
-use Illuminate\Support\Facades\Validator;
 use App\PaymentDrivers\Mollie\BankTransfer;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
-use App\Http\Requests\Gateways\Mollie\Mollie3dsRequest;
-use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\PaymentDrivers\Mollie\CreditCard;
+use App\PaymentDrivers\Mollie\IDEAL;
+use App\PaymentDrivers\Mollie\KBC;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\Validator;
+use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\MollieApiClient;
 
 class MolliePaymentDriver extends BaseDriver
 {
@@ -81,7 +78,7 @@ class MolliePaymentDriver extends BaseDriver
 
     public function init(): self
     {
-        $this->gateway = new MollieApiClient();
+        $this->gateway = new MollieApiClient;
 
         $this->gateway->setApiKey(
             $this->company_gateway->getConfigField('apiKey'),
@@ -159,7 +156,7 @@ class MolliePaymentDriver extends BaseDriver
                 return [
                     'transaction_reference' => $refund->id,
                     'transaction_response' => json_encode($refund),
-                    'success' => $refund->status === 'refunded' ? true : false, //@phpstan-ignore-line
+                    'success' => $refund->status === 'refunded' ? true : false, // @phpstan-ignore-line
                     'description' => $refund->description,
                     'code' => 200,
                 ];
@@ -205,7 +202,7 @@ class MolliePaymentDriver extends BaseDriver
             $description = "Payment with no invoice for amount {$amount} for client {$this->client->present()->name()}";
         }
 
-        $request = new PaymentResponseRequest();
+        $request = new PaymentResponseRequest;
         $request->setMethod('POST');
         $request->request->add(['payment_hash' => $payment_hash->hash]);
 
@@ -221,12 +218,11 @@ class MolliePaymentDriver extends BaseDriver
                 'customerId' => $cgt->gateway_customer_reference,
                 'sequenceType' => 'recurring',
                 'description' => $description,
-                'idempotencyKey' => uniqid("st", true),
-                'webhookUrl'  => $this->company_gateway->webhookUrl(),
+                'idempotencyKey' => uniqid('st', true),
+                'webhookUrl' => $this->company_gateway->webhookUrl(),
             ]);
 
             if ($payment->status === 'paid') {
-
 
                 $data = [
                     'payment_method' => $cgt->token,
@@ -290,7 +286,7 @@ class MolliePaymentDriver extends BaseDriver
     {
         // Allow app to catch up with webhook request.
         // sleep(4);
-        nlog("Mollie:: processWebhookRequest");
+        nlog('Mollie:: processWebhookRequest');
         // nlog($request->all());
         usleep(rand(1500000, 2000000));
 
@@ -321,7 +317,7 @@ class MolliePaymentDriver extends BaseDriver
                 $client = $record->client;
                 $this->client = $client;
             } elseif ($payment->status == 'failed' && $payment->metadata->gateway_type_id === GatewayType::CREDIT_CARD) {
-                //no payment, and it failed? return early!
+                // no payment, and it failed? return early!
                 $client = Client::withTrashed()->find($this->decodePrimaryKey($payment->metadata->client_id));
 
                 $message = [
@@ -347,10 +343,10 @@ class MolliePaymentDriver extends BaseDriver
                 // record from the meta data in the payment hash.
 
                 if ($payment && property_exists($payment->metadata, 'hash') && $payment->metadata->hash) {
-                    /* Harvest Payment Hash*/
+                    /* Harvest Payment Hash */
                     $payment_hash = PaymentHash::where('hash', $payment->metadata->hash)->first();
 
-                    /* If we are here, then we do not have access to the class payment hash, so lets set it here*/
+                    /* If we are here, then we do not have access to the class payment hash, so lets set it here */
                     $this->payment_hash = $payment_hash;
 
                     $data = [
@@ -387,7 +383,7 @@ class MolliePaymentDriver extends BaseDriver
 
                     $record->service()->deletePayment(false);
 
-                    $this->sendFailureMail($payment->details->failureMessage ?? "There was a problem processing your payment.");
+                    $this->sendFailureMail($payment->details->failureMessage ?? 'There was a problem processing your payment.');
 
                 } else {
                     $response = SystemLog::EVENT_GATEWAY_SUCCESS;
@@ -412,6 +408,7 @@ class MolliePaymentDriver extends BaseDriver
             return response()->json(['message' => $e->getMessage(), 'gatewayStatusCode' => $e->getCode()], 500);
         } catch (\Throwable $e) {
             nlog("Mollie:: Failure - In payment Response? - {$e->getMessage()}");
+
             return response()->json(['message' => $e->getMessage(), 'gatewayStatusCode' => $e->getCode()], 500);
         }
     }
@@ -427,6 +424,7 @@ class MolliePaymentDriver extends BaseDriver
                 if ($key === array_key_last($line_items)) {
                     return $line_item->type_id != '4';
                 }
+
                 return true;
             })->toArray();
 
@@ -456,7 +454,7 @@ class MolliePaymentDriver extends BaseDriver
             }
 
             return (new CreditCard($this))->processSuccessfulPayment($payment);
-        } catch (\Mollie\Api\Exceptions\ApiException $e) {
+        } catch (ApiException $e) {
             return (new CreditCard($this))->processUnsuccessfulPayment($e);
         }
     }
@@ -467,7 +465,7 @@ class MolliePaymentDriver extends BaseDriver
 
         try {
             $this->gateway->mandates->revokeForId($token->gateway_customer_reference, $token->token);
-        } catch (\Mollie\Api\Exceptions\ApiException $e) {
+        } catch (ApiException $e) {
             SystemLogger::dispatch(
                 [
                     'server_response' => $e->getMessage(),
@@ -485,8 +483,7 @@ class MolliePaymentDriver extends BaseDriver
     /**
      * Convert the amount to the format that Mollie supports.
      *
-     * @param mixed|float $amount
-     * @return string
+     * @param  mixed|float  $amount
      */
     public function convertToMollieAmount($amount): string
     {
@@ -499,6 +496,7 @@ class MolliePaymentDriver extends BaseDriver
 
         try {
             $p = $this->gateway->payments->page();
+
             return 'ok';
         } catch (\Exception $e) {
 

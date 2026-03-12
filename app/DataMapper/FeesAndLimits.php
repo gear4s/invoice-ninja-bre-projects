@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,9 +13,9 @@ namespace App\DataMapper;
 
 class FeesAndLimits
 {
-    public $min_limit = -1; //equivalent to null
+    public $min_limit = -1; // equivalent to null
 
-    public $max_limit = -1; //equivalent to null
+    public $max_limit = -1; // equivalent to null
 
     public $fee_amount = 0;
 
@@ -40,7 +39,7 @@ class FeesAndLimits
 
     public $is_enabled = true;
 
-    //public $gateway_type_id = 1;
+    // public $gateway_type_id = 1;
 
     public static $casts = [
         'is_enabled' => 'bool',

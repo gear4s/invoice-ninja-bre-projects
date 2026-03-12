@@ -6,13 +6,13 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Utils\Traits\Notifications;
 
 use App\Models\Client;
+use App\Models\CompanyUser;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -41,12 +41,12 @@ trait UserNotifies
         if ($company_user->company->is_disabled
             && is_array($notifications->email)
             || $company_user->trashed()
-            || ! $company_user->user
+            || !$company_user->user
             || $company_user->user->trashed()) {
             return [];
         }
 
-        //if a user owns this record or is assigned to it, they are attached the permission for notification.
+        // if a user owns this record or is assigned to it, they are attached the permission for notification.
         if ($invitation->{$entity_name}->user_id == $company_user->user_id || $invitation->{$entity_name}->assigned_user_id == $company_user->user_id) {
 
         } else {
@@ -66,9 +66,9 @@ trait UserNotifies
         $notifications = $company_user->notifications;
 
         if ($company_user->company->is_disabled
-            || ! $notifications
+            || !$notifications
             || $company_user->trashed()
-            || ! $company_user->user
+            || !$company_user->user
             || $company_user->user->trashed()) {
             return [];
         }
@@ -96,7 +96,7 @@ trait UserNotifies
         array_merge($required_permissions, ['all_notifications']);
 
         switch ($entity) {
-            case $entity instanceof Payment || $entity instanceof Client: //we pass client also as this is the proxy for Payment Failures (ie, there is no payment)
+            case $entity instanceof Payment || $entity instanceof Client: // we pass client also as this is the proxy for Payment Failures (ie, there is no payment)
                 return array_diff($required_permissions, ['all_user_notifications', 'payment_failure_user', 'payment_success_user']);
             case $entity instanceof Invoice:
                 return array_diff($required_permissions, ['all_user_notifications', 'invoice_created_user', 'invoice_sent_user', 'invoice_viewed_user', 'invoice_late_user']);
@@ -118,7 +118,7 @@ trait UserNotifies
     {
         if ($company_user->company->is_disabled
             || $company_user->trashed()
-            || ! $company_user->user
+            || !$company_user->user
             || $company_user->user->trashed()) {
             return [];
         }
@@ -126,7 +126,7 @@ trait UserNotifies
         $notifiable_methods = [];
         $notifications = $company_user->notifications;
 
-        //conditional to define whether the company user has the required notification for the MAIL notification TYPE
+        // conditional to define whether the company user has the required notification for the MAIL notification TYPE
         if (count(array_intersect($required_permissions, $notifications->email)) >= 1 || count(array_intersect($required_permissions, ['all_user_notifications'])) >= 1 || count(array_intersect($required_permissions, ['all_notifications'])) >= 1) {
             array_push($notifiable_methods, 'mail');
         }
@@ -151,11 +151,9 @@ trait UserNotifies
      * Underrated method right here, last ones
      * are always the best
      *
-     * @param  \App\Models\CompanyUser $company_user
-     * @param  Invoice | Quote | Credit | PurchaseOrder | Product $entity
-     * @param  array $required_notification
-     *
-     * @return bool
+     * @param  CompanyUser  $company_user
+     * @param  Invoice | Quote | Credit | PurchaseOrder | Product  $entity
+     * @param  array  $required_notification
      */
     private function checkNotificationExists($company_user, $entity, $required_notification): bool
     {
@@ -170,7 +168,7 @@ trait UserNotifies
         return count(array_intersect($required_notification, $company_user->notifications->email)) >= 1;
     }
 
-    public function findEntityAssignedNotification(\App\Models\CompanyUser $company_user, string $entity)
+    public function findEntityAssignedNotification(CompanyUser $company_user, string $entity)
     {
         return count(array_intersect(["{$entity}_assigned"], $company_user->notifications->email)) >= 1;
     }

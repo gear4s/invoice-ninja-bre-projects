@@ -6,15 +6,16 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Livewire\Flow2;
 
-use App\Utils\Traits\WithSecureContext;
-use Livewire\Component;
 use App\Libraries\MultiDB;
+use App\Utils\Traits\WithSecureContext;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\View\View;
+use Livewire\Component;
 
 class PaymentMethod extends Component
 {
@@ -31,6 +32,7 @@ class PaymentMethod extends Component
     public $amount = 0;
 
     public $_key;
+
     public function placeholder()
     {
         return <<<'HTML'
@@ -75,7 +77,7 @@ class PaymentMethod extends Component
         }
     }
 
-    public function render(): \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+    public function render(): Factory|View
     {
         return render('flow2.payment-method', ['methods' => $this->methods]);
     }

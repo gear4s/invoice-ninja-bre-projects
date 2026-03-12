@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,7 @@ namespace App\Models;
 
 use App\DataMapper\ProductSync;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use League\CommonMark\CommonMarkConverter;
 
@@ -53,32 +53,43 @@ use League\CommonMark\CommonMarkConverter;
  * @property int $stock_notification_threshold
  * @property int|null $max_quantity
  * @property string|null $product_image
- * @property-read \App\Models\User|null $assigned_user
- * @property-read \App\Models\Company $company
+ * @property-read User|null $assigned_user
+ * @property-read Company $company
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Vendor|null $vendor
+ * @property-read User $user
+ * @property-read Vendor|null $vendor
  * @property int|null $tax_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
+ * @property-read Collection<int, Document> $documents
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Product whereTaxId($value)
+ *
  * @mixin \Eloquent
  */
 class Product extends BaseModel
 {
+    use Filterable;
     use MakesHash;
     use SoftDeletes;
-    use Filterable;
 
     public const PRODUCT_TYPE_PHYSICAL = 1;
+
     public const PRODUCT_TYPE_SERVICE = 2;
+
     public const PRODUCT_TYPE_DIGITAL = 3;
+
     public const PRODUCT_TYPE_SHIPPING = 4;
+
     public const PRODUCT_TYPE_EXEMPT = 5;
+
     public const PRODUCT_TYPE_REDUCED_TAX = 6;
+
     public const PRODUCT_TYPE_OVERRIDE_TAX = 7;
+
     public const PRODUCT_TYPE_ZERO_RATED = 8;
+
     public const PRODUCT_TYPE_REVERSE_TAX = 9;
+
     public const PRODUCT_INTRA_COMMUNITY = 10;
 
     protected $fillable = [

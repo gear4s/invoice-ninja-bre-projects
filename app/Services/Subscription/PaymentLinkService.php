@@ -6,28 +6,26 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Subscription;
 
+use App\Jobs\Util\SystemLogger;
 use App\Models\Client;
+use App\Models\ClientContact;
 use App\Models\Credit;
 use App\Models\Invoice;
-use App\Models\SystemLog;
 use App\Models\PaymentHash;
-use App\Models\Subscription;
-use App\Models\ClientContact;
-use GuzzleHttp\RequestOptions;
-use App\Jobs\Util\SystemLogger;
-use App\Utils\Traits\MakesHash;
 use App\Models\RecurringInvoice;
-use GuzzleHttp\Exception\ClientException;
-use App\Services\Subscription\UpgradePrice;
-use App\Services\Subscription\ZeroCostProduct;
+use App\Models\Subscription;
+use App\Models\SystemLog;
 use App\Repositories\RecurringInvoiceRepository;
-use App\Services\Subscription\ChangePlanInvoice;
+use App\Utils\Traits\MakesHash;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\RequestOptions;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
 
 class PaymentLinkService
 {
@@ -42,15 +40,12 @@ class PaymentLinkService
      *
      * Perform the initial purchase of a one time
      * or recurring product
-     *
-     * @param  PaymentHash $payment_hash
-     * @return  \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse|null
      */
-    public function completePurchase(PaymentHash $payment_hash): \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse|null
+    public function completePurchase(PaymentHash $payment_hash): Redirector|RedirectResponse|null
     {
 
         if (!property_exists($payment_hash->data, 'billing_context')) {
-            throw new \Exception("Illegal entrypoint into method, payload must contain billing context");
+            throw new \Exception('Illegal entrypoint into method, payload must contain billing context');
         }
 
         if ($payment_hash->data->billing_context->context == 'change_plan') {
@@ -66,23 +61,23 @@ class PaymentLinkService
             $bundle = $payment_hash->data->billing_context->bundle ?? [];
             $recurring_invoice = (new InvoiceToRecurring($payment_hash->payment->client_id, $this->subscription, $bundle))->run();
 
-            $recurring_invoice_repo = new RecurringInvoiceRepository();
+            $recurring_invoice_repo = new RecurringInvoiceRepository;
 
             $recurring_invoice = $recurring_invoice_repo->save([], $recurring_invoice);
             $recurring_invoice->auto_bill = $this->subscription->auto_bill;
 
             /* Start the recurring service */
             $recurring_invoice->service()
-                            ->start()
-                            ->save();
+                ->start()
+                ->save();
 
-            //update the invoice and attach to the recurring invoice!!!!!
+            // update the invoice and attach to the recurring invoice!!!!!
             $invoice = Invoice::withTrashed()->find($payment_hash->fee_invoice_id);
             $invoice->recurring_id = $recurring_invoice->id;
             $invoice->is_proforma = false;
             $invoice->save();
 
-            //execute any webhooks
+            // execute any webhooks
             $context = [
                 'context' => 'recurring_purchase',
                 'recurring_invoice' => $recurring_invoice->hashed_id,
@@ -106,12 +101,12 @@ class PaymentLinkService
             $context = [
                 'context' => 'single_purchase',
                 'invoice' => $this->encodePrimaryKey($payment_hash->fee_invoice_id),
-                'client'  => $invoice->client->hashed_id,
+                'client' => $invoice->client->hashed_id,
                 'subscription' => $this->subscription->hashed_id,
                 'account_key' => $invoice->client->custom_value2,
             ];
 
-            //execute any webhooks
+            // execute any webhooks
             $this->triggerWebhook($context);
 
             /* 06-04-2022 */
@@ -128,7 +123,7 @@ class PaymentLinkService
     /**
      * isEligible
      * ["message" => "Success", "status_code" => 200];
-     * @param  ClientContact $contact
+     *
      * @return array{"message": string, "status_code": int}
      */
     public function isEligible(ClientContact $contact): array
@@ -159,7 +154,7 @@ class PaymentLinkService
      * @param  array $data{contact_id: int, client_id: int, bundle: \Illuminate\Support\Collection, coupon?: string, }
      * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
      */
-    public function startTrial(array $data): \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+    public function startTrial(array $data): Redirector|RedirectResponse
     {
 
         // Redirects from here work just fine. Livewire will respect it.
@@ -170,11 +165,11 @@ class PaymentLinkService
         }
 
         if (!$this->subscription->trial_enabled) {
-            throw new \Exception("Trials are disabled for this product");
+            throw new \Exception('Trials are disabled for this product');
         }
 
-        //create recurring invoice with start date = trial_duration + 1 day
-        $recurring_invoice_repo = new RecurringInvoiceRepository();
+        // create recurring invoice with start date = trial_duration + 1 day
+        $recurring_invoice_repo = new RecurringInvoiceRepository;
 
         $bundle = [];
 
@@ -203,8 +198,8 @@ class PaymentLinkService
 
         /* Start the recurring service */
         $recurring_invoice->service()
-                        ->start()
-                        ->save();
+            ->start()
+            ->save();
 
         $context = [
             'context' => 'trial',
@@ -214,7 +209,7 @@ class PaymentLinkService
             'account_key' => $recurring_invoice->client->custom_value2,
         ];
 
-        //execute any webhooks
+        // execute any webhooks
         $response = $this->triggerWebhook($context);
 
         return $this->handleRedirect('/client/recurring_invoices/' . $recurring_invoice->hashed_id);
@@ -226,8 +221,8 @@ class PaymentLinkService
      *
      * Need to change the naming of the method
      *
-     * @param  RecurringInvoice $recurring_invoice - The Current Recurring Invoice for the subscription.
-     * @param  Subscription $target - The new target subscription to move to
+     * @param  RecurringInvoice  $recurring_invoice  - The Current Recurring Invoice for the subscription.
+     * @param  Subscription  $target  - The new target subscription to move to
      * @return float - the upgrade price
      */
     public function calculateUpgradePriceV2(RecurringInvoice $recurring_invoice, Subscription $target): ?float
@@ -238,8 +233,7 @@ class PaymentLinkService
     /**
      * When changing plans, we need to generate a pro rata invoice
      *
-     * @param  array $data{recurring_invoice: RecurringInvoice, subscription: Subscription, target: Subscription, hash: string}
-     * @return Invoice | Credit
+     * @param  array  $data{recurring_invoice:  RecurringInvoice, subscription: Subscription, target: Subscription, hash: string}
      */
     public function createChangePlanInvoice($data): Invoice|Credit
     {
@@ -251,16 +245,12 @@ class PaymentLinkService
         return (new ChangePlanInvoice($recurring_invoice, $target_subscription, $hash))->run();
     }
 
-
     /**
-    * 'email' => $this->email ?? $this->contact->email,
-    * 'quantity' => $this->quantity,
-    * 'contact_id' => $this->contact->id,
-    *
-    * @param array $data
-    * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
-    */
-    public function handleNoPaymentRequired(array $data): \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+     * 'email' => $this->email ?? $this->contact->email,
+     * 'quantity' => $this->quantity,
+     * 'contact_id' => $this->contact->id,
+     */
+    public function handleNoPaymentRequired(array $data): Redirector|RedirectResponse
     {
         $context = (new ZeroCostProduct($this->subscription, $data))->run();
 
@@ -274,7 +264,6 @@ class PaymentLinkService
     }
 
     /**
-     * @param Invoice $invoice
      * @return true
      */
     public function planPaid(Invoice $invoice)
@@ -298,16 +287,13 @@ class PaymentLinkService
         return true;
     }
 
-
     /**
      * Response from payment service on
      * return from a plan change
-     *
-     * @param  PaymentHash $payment_hash
      */
-    private function handlePlanChange(PaymentHash $payment_hash): \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+    private function handlePlanChange(PaymentHash $payment_hash): Redirector|RedirectResponse
     {
-        nlog("handle plan change");
+        nlog('handle plan change');
 
         $old_recurring_invoice = RecurringInvoice::query()->find($this->decodePrimaryKey($payment_hash->data->billing_context->recurring_invoice));
 
@@ -320,10 +306,10 @@ class PaymentLinkService
         $recurring_invoice = (new InvoiceToRecurring($old_recurring_invoice->client_id, $this->subscription, []))->run();
 
         $recurring_invoice->service()
-                        ->start()
-                        ->save();
+            ->start()
+            ->save();
 
-        //update the invoice and attach to the recurring invoice!!!!!
+        // update the invoice and attach to the recurring invoice!!!!!
         $invoice = Invoice::query()->find($payment_hash->fee_invoice_id);
         $invoice->recurring_id = $recurring_invoice->id;
         $invoice->is_proforma = false;
@@ -347,38 +333,27 @@ class PaymentLinkService
         return $this->handleRedirect('/client/recurring_invoices/' . $recurring_invoice->hashed_id);
     }
 
-
-
-
-
-
-
-
-
-
-
     /**
      * Handles redirecting the user
      */
-    private function handleRedirect($default_redirect): \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+    private function handleRedirect($default_redirect): Redirector|RedirectResponse
     {
         if (array_key_exists('return_url', $this->subscription->webhook_configuration) && strlen($this->subscription->webhook_configuration['return_url']) >= 1) {
-            return method_exists(redirect(), "send") ? redirect($this->subscription->webhook_configuration['return_url'])->send() : redirect($this->subscription->webhook_configuration['return_url']);
+            return method_exists(redirect(), 'send') ? redirect($this->subscription->webhook_configuration['return_url'])->send() : redirect($this->subscription->webhook_configuration['return_url']);
         }
 
-        return method_exists(redirect(), "send") ? redirect($default_redirect)->send() : redirect($default_redirect);
+        return method_exists(redirect(), 'send') ? redirect($default_redirect)->send() : redirect($default_redirect);
     }
 
     /**
      * Hit a 3rd party API if defined in the subscription
      *
-     * @param  array $context
-     * @return array
+     * @param  array  $context
      */
     public function triggerWebhook($context): array
     {
         if (empty($this->subscription->webhook_configuration['post_purchase_url']) || is_null($this->subscription->webhook_configuration['post_purchase_url']) || strlen($this->subscription->webhook_configuration['post_purchase_url']) < 1) {
-            return ["message" => "Success", "status_code" => 200];
+            return ['message' => 'Success', 'status_code' => 200];
         }
 
         $response = false;
@@ -407,7 +382,7 @@ class PaymentLinkService
             $client->company,
         );
 
-        nlog("ready to fire back");
+        nlog('ready to fire back');
 
         if (is_array($body)) {
             return $response;
@@ -452,7 +427,7 @@ class PaymentLinkService
             $error = json_decode($e->getResponse()->getBody()->getContents());
 
             if (is_null($error)) {
-                nlog("empty response");
+                nlog('empty response');
                 nlog($e->getMessage());
             }
 

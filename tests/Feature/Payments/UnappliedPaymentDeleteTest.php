@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -23,13 +22,10 @@ use Illuminate\Validation\ValidationException;
 use Tests\MockUnitData;
 use Tests\TestCase;
 
-/**
- *
- */
 class UnappliedPaymentDeleteTest extends TestCase
 {
-    use MakesHash;
     use DatabaseTransactions;
+    use MakesHash;
     use MockUnitData;
 
     protected function setUp(): void
@@ -43,7 +39,7 @@ class UnappliedPaymentDeleteTest extends TestCase
         );
     }
 
-    public function testUnappliedPaymentDelete()
+    public function test_unapplied_payment_delete()
     {
         $data = [
             'amount' => 1000,
@@ -80,7 +76,7 @@ class UnappliedPaymentDeleteTest extends TestCase
                 $response = $this->withHeaders([
                     'X-API-SECRET' => config('ninja.api_secret'),
                     'X-API-TOKEN' => $this->token,
-                ])->delete('/api/v1/payments/'.$payment_id);
+                ])->delete('/api/v1/payments/' . $payment_id);
             } catch (ValidationException $e) {
                 $message = json_decode($e->validator->getMessageBag(), 1);
                 $this->assertNotNull($message);
@@ -92,7 +88,7 @@ class UnappliedPaymentDeleteTest extends TestCase
         }
     }
 
-    public function testUnappliedPaymentWithPaidInvoice()
+    public function test_unapplied_payment_with_paid_invoice()
     {
         $data = [
             'name' => 'A Nice Client',
@@ -112,7 +108,7 @@ class UnappliedPaymentDeleteTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 
@@ -181,7 +177,6 @@ class UnappliedPaymentDeleteTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/payments', $data);
 
-
         $arr = $response->json();
 
         $payment_hashed_id = $arr['data']['id'];
@@ -210,7 +205,7 @@ class UnappliedPaymentDeleteTest extends TestCase
         $this->assertEquals(20, $client->fresh()->balance);
     }
 
-    public function testRefundPartialPaymentDeletion()
+    public function test_refund_partial_payment_deletion()
     {
         $data = [
             'name' => 'A Nice Client',
@@ -230,7 +225,7 @@ class UnappliedPaymentDeleteTest extends TestCase
 
         $this->assertEquals($client->balance, 0);
         $this->assertEquals($client->paid_to_date, 0);
-        //create new invoice.
+        // create new invoice.
 
         $line_items = [];
 

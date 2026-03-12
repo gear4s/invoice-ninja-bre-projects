@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,6 +14,7 @@ namespace App\Repositories;
 use App\Jobs\Bank\MatchBankTransactions;
 use App\Models\BankTransaction;
 use App\Models\Expense;
+use App\Models\User;
 
 /**
  * Class for bank transaction repository.
@@ -37,7 +37,7 @@ class BankTransactionRepository extends BaseRepository
 
     public function convert_matched($bank_transactions)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $data['transactions'] = $bank_transactions->map(function ($bt) {
@@ -46,7 +46,6 @@ class BankTransactionRepository extends BaseRepository
 
         $bts = (new MatchBankTransactions($user->company()->id, $user->company()->db, $data))->handle();
     }
-
 
     public function delete($entity)
     {
@@ -67,14 +66,14 @@ class BankTransactionRepository extends BaseRepository
             $bt->payment_id = null;
         }
 
-        $e = Expense::query()->whereIn('id', $this->transformKeys(explode(",", $bt->expense_id)))
-        ->cursor()
-        ->each(function ($expense) {
+        $e = Expense::query()->whereIn('id', $this->transformKeys(explode(',', $bt->expense_id)))
+            ->cursor()
+            ->each(function ($expense) {
 
-            $expense->transaction_id = null;
-            $expense->saveQuietly();
+                $expense->transaction_id = null;
+                $expense->saveQuietly();
 
-        });
+            });
 
         $bt->expense_id = null;
         $bt->vendor_id = null;

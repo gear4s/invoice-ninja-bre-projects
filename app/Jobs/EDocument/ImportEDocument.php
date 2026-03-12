@@ -6,25 +6,22 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\EDocument;
 
-use Exception;
 use App\Models\Company;
 use App\Models\Expense;
+use App\Services\EDocument\Imports\ParseEDocument;
 use App\Utils\TempFile;
+use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use App\Services\EDocument\Imports\ParseEDocument;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use App\Services\EDocument\Imports\ZugferdEDocument;
+use Illuminate\Queue\SerializesModels;
 
 class ImportEDocument implements ShouldQueue
 {
@@ -38,8 +35,7 @@ class ImportEDocument implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return Expense
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle(): Expense
     {
@@ -51,16 +47,16 @@ class ImportEDocument implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->company->company_key . "_expense_import_" . $this->file_name))->releaseAfter(60)];
+        return [(new WithoutOverlapping($this->company->company_key . '_expense_import_' . $this->file_name))->releaseAfter(60)];
     }
 
     public function failed($exception = null)
     {
         if ($exception) {
-            nlog("EXCEPTION:: ImportEDocument:: " . $exception->getMessage());
+            nlog('EXCEPTION:: ImportEDocument:: ' . $exception->getMessage());
         }
 
-        $this->fail($exception); //manually fail - prevents future jobs with the same name from being discarded
+        $this->fail($exception); // manually fail - prevents future jobs with the same name from being discarded
         config(['queue.failed.driver' => null]);
     }
 }

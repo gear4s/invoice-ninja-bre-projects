@@ -5,8 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
-* @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
+ * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -20,10 +19,10 @@ use App\Models\PaymentType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
+use Stripe\PaymentIntent;
 
 class Bancontact implements LivewireMethodInterface
 {
-    /** @var StripePaymentDriver */
     public StripePaymentDriver $stripe;
 
     public function __construct(StripePaymentDriver $stripe)
@@ -58,7 +57,7 @@ class Bancontact implements LivewireMethodInterface
         $this->stripe->payment_hash->data = array_merge((array) $this->stripe->payment_hash->data, $request->all());
         $this->stripe->payment_hash->save();
 
-        if (in_array($request->redirect_status, ['succeeded','pending'])) {
+        if (in_array($request->redirect_status, ['succeeded', 'pending'])) {
             return $this->processSuccessfulPayment($request->payment_intent);
         }
 
@@ -69,7 +68,7 @@ class Bancontact implements LivewireMethodInterface
     {
         /* @todo: https://github.com/invoiceninja/invoiceninja/pull/3789/files#r436175798 */
 
-        //catch duplicate submissions.
+        // catch duplicate submissions.
         if ($payment = Payment::query()->where('transaction_reference', $payment_intent)->first()) {
             return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
         }
@@ -82,7 +81,7 @@ class Bancontact implements LivewireMethodInterface
             'amount' => $this->stripe->convertFromStripeAmount($this->stripe->payment_hash->data->stripe_amount, $this->stripe->client->currency()->precision, $this->stripe->client->currency()),
             'transaction_reference' => $payment_intent,
             'gateway_type_id' => GatewayType::BANCONTACT,
-            'idempotency_key' => $payment_intent . now()->format('Ymdhi'), //prevent duplicate payments
+            'idempotency_key' => $payment_intent . now()->format('Ymdhi'), // prevent duplicate payments
         ];
 
         $payment = $this->stripe->createPayment($data, Payment::STATUS_PENDING);
@@ -95,7 +94,6 @@ class Bancontact implements LivewireMethodInterface
             $this->stripe->client,
             $this->stripe->client->company,
         );
-
 
         return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
     }
@@ -134,7 +132,7 @@ class Bancontact implements LivewireMethodInterface
         $data['customer'] = $this->stripe->findOrCreateCustomer()->id;
         $data['country'] = $this->stripe->client->country->iso_3166_2;
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = PaymentIntent::create([
             'amount' => $data['stripe_amount'],
             'currency' => 'eur',
             'payment_method_types' => ['bancontact'],
@@ -145,7 +143,7 @@ class Bancontact implements LivewireMethodInterface
                 'gateway_type_id' => GatewayType::BANCONTACT,
             ],
 
-        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid("st", true)]));
+        ], array_merge($this->stripe->stripe_connect_auth, ['idempotency_key' => uniqid('st', true)]));
 
         $data['pi_client_secret'] = $intent->client_secret;
 

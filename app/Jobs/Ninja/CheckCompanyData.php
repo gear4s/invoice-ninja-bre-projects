@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -78,7 +77,7 @@ class CheckCompanyData implements ShouldQueue
         nlog(Cache::get($this->hash));
         nlog($this->company_data);
 
-        if (! $this->is_valid) {
+        if (!$this->is_valid) {
             $this->company_data['status'] = 'errors';
         } else {
             $this->company_data['status'] = 'success';
@@ -99,7 +98,7 @@ class CheckCompanyData implements ShouldQueue
 
         foreach ($this->company->clients->where('is_deleted', 0) as $client) {
             $invoice_balance = $client->invoices->where('is_deleted', false)->where('status_id', '>', 1)->sum('balance');
-            //$credit_balance = $client->credits->where('is_deleted', false)->sum('balance');
+            // $credit_balance = $client->credits->where('is_deleted', false)->sum('balance');
 
             // if($client->balance != $invoice_balance)
             //     $invoice_balance -= $credit_balance;//doesn't make sense to remove the credit amount
@@ -150,7 +149,7 @@ class CheckCompanyData implements ShouldQueue
         $wrong_paid_to_dates = 0;
         $credit_total_applied = 0;
 
-        $this->company->clients->where('is_deleted', 0)->each(function ($client) use ($wrong_paid_to_dates, $credit_total_applied) {
+        $this->company->clients->where('is_deleted', 0)->each(function ($client) use ($wrong_paid_to_dates) {
             $total_invoice_payments = 0;
 
             foreach ($client->invoices->where('is_deleted', false)->where('status_id', '>', 1) as $invoice) {
@@ -178,11 +177,11 @@ class CheckCompanyData implements ShouldQueue
         $wrong_paid_to_dates = 0;
 
         foreach ($this->company->clients->where('is_deleted', 0) as $client) {
-            //$invoice_balance = $client->invoices->where('is_deleted', false)->where('status_id', '>', 1)->sum('balance');
+            // $invoice_balance = $client->invoices->where('is_deleted', false)->where('status_id', '>', 1)->sum('balance');
             $invoice_balance = Invoice::where('client_id', $client->id)->where('is_deleted', false)->where('status_id', '>', 1)->withTrashed()->sum('balance');
             $credit_balance = Credit::where('client_id', $client->id)->where('is_deleted', false)->withTrashed()->sum('balance');
 
-            //10/02/21
+            // 10/02/21
             // Legacy - V4 will add credits to the balance - we may need to reverse engineer this and remove the credits from the client balance otherwise we need this hack here and in the invoice balance check.
             // if($client->balance != $invoice_balance)
             //     $invoice_balance -= $credit_balance;
@@ -205,10 +204,10 @@ class CheckCompanyData implements ShouldQueue
     {
         // check for contacts with the contact_key value set
         $contacts = DB::table('client_contacts')
-                        ->where('company_id', $this->company->id)
-                        ->whereNull('contact_key')
-                        ->orderBy('id')
-                        ->get(['id']);
+            ->where('company_id', $this->company->id)
+            ->whereNull('contact_key')
+            ->orderBy('id')
+            ->get(['id']);
 
         $this->company_data[] = $contacts->count() . ' contacts without a contact_key';
 
@@ -230,13 +229,13 @@ class CheckCompanyData implements ShouldQueue
 
         // check for missing contacts
         $clients = DB::table('clients')
-                    ->where('clients.company_id', $this->company->id)
-                    ->leftJoin('client_contacts', function ($join) {
-                        $join->on('client_contacts.client_id', '=', 'clients.id')
-                            ->whereNull('client_contacts.deleted_at');
-                    })
-                    ->groupBy('clients.id', 'clients.user_id', 'clients.company_id')
-                    ->havingRaw('count(client_contacts.id) = 0');
+            ->where('clients.company_id', $this->company->id)
+            ->leftJoin('client_contacts', function ($join) {
+                $join->on('client_contacts.client_id', '=', 'clients.id')
+                    ->whereNull('client_contacts.deleted_at');
+            })
+            ->groupBy('clients.id', 'clients.user_id', 'clients.company_id')
+            ->havingRaw('count(client_contacts.id) = 0');
 
         // if ($this->option('client_id')) {
         //     $clients->where('clients.id', '=', $this->option('client_id'));
@@ -252,14 +251,14 @@ class CheckCompanyData implements ShouldQueue
 
         // check for more than one primary contact
         $clients = DB::table('clients')
-                    ->where('clients.company_id', $this->company->id)
-                    ->leftJoin('client_contacts', function ($join) {
-                        $join->on('client_contacts.client_id', '=', 'clients.id')
-                            ->where('client_contacts.is_primary', '=', true)
-                            ->whereNull('client_contacts.deleted_at');
-                    })
-                    ->groupBy('clients.id')
-                    ->havingRaw('count(client_contacts.id) != 1');
+            ->where('clients.company_id', $this->company->id)
+            ->leftJoin('client_contacts', function ($join) {
+                $join->on('client_contacts.client_id', '=', 'clients.id')
+                    ->where('client_contacts.is_primary', '=', true)
+                    ->whereNull('client_contacts.deleted_at');
+            })
+            ->groupBy('clients.id')
+            ->havingRaw('count(client_contacts.id) != 1');
 
         $clients = $clients->get(['clients.id', DB::raw('count(client_contacts.id)')]);
         $this->company_data[] = $clients->count() . ' clients without a single primary contact';
@@ -299,9 +298,9 @@ class CheckCompanyData implements ShouldQueue
                     $company_id = 'company_id';
                 }
                 $records = DB::table($table)
-                                ->join($tableName, "{$tableName}.id", '=', "{$table}.{$field}_id")
-                                ->where("{$table}.{$company_id}", '!=', "{$tableName}.company_id")
-                                ->get(["{$table}.id"]);
+                    ->join($tableName, "{$tableName}.id", '=', "{$table}.{$field}_id")
+                    ->where("{$table}.{$company_id}", '!=', "{$tableName}.company_id")
+                    ->get(["{$table}.id"]);
 
                 if ($records->count()) {
                     $this->is_valid = false;

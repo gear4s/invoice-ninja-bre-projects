@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -15,9 +14,6 @@ namespace Tests\Unit;
 use App\Utils\Traits\SettingsSaver;
 use Tests\TestCase;
 
-/**
- *
- */
 class SettingsSaverTest extends TestCase
 {
     use SettingsSaver;
@@ -27,7 +23,7 @@ class SettingsSaverTest extends TestCase
         parent::setUp();
     }
 
-    public function testNullValueForStringTest()
+    public function test_null_value_for_string_test()
     {
         $key = 'show_all_tasks_client_portal';
         $value = null;

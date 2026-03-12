@@ -6,22 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Quickbooks\Jobs;
 
-use App\Models\Company;
-use App\Libraries\MultiDB;
-use Illuminate\Bus\Queueable;
 use App\DataMapper\QuickbooksSync;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Libraries\MultiDB;
+use App\Models\Company;
+use App\Services\Quickbooks\QuickbooksService;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\Quickbooks\QuickbooksService;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 
 class QuickbooksImport implements ShouldQueue
 {
@@ -59,13 +58,13 @@ class QuickbooksImport implements ShouldQueue
 
         $this->company = Company::query()->find($this->company_id);
         $this->qbs = new QuickbooksService($this->company);
-        $this->settings =  $this->company->quickbooks->settings;
+        $this->settings = $this->company->quickbooks->settings;
 
         QuickbooksService::$importing[$this->company_id] = true;
 
         try {
 
-            if(count($this->syncable) > 0) {
+            if (count($this->syncable) > 0) {
                 /** @var mixed $this- */
                 return $this->performInitialSync();
             }
@@ -87,9 +86,7 @@ class QuickbooksImport implements ShouldQueue
     /**
      * Processes the sync for a given entity
      *
-     * @param  string $entity
-     * @param  mixed $records
-     * @return void
+     * @param  mixed  $records
      */
     private function processEntitySync(string $entity, $records): void
     {
@@ -107,23 +104,20 @@ class QuickbooksImport implements ShouldQueue
         };
     }
 
-    
     /**
      * performInitialSync
      *
      * Performs the initial sync of the entities specified in the syncable array.
-     *
-     * @return void
      */
     private function performInitialSync(): void
     {
-        foreach($this->syncable as $entity) {
+        foreach ($this->syncable as $entity) {
             nlog('performing initial sync for ' . $entity);
             $this->processEntitySync($entity, $this->qbs->sdk()->fetchRecords($entity));
         }
 
         nlog('performing company sync');
-        //update tax rates.
+        // update tax rates.
         $this->qbs->companySync();
 
     }
@@ -131,10 +125,7 @@ class QuickbooksImport implements ShouldQueue
     // private function syncQbToNinjaInvoices($records): void
     // {
 
-
     // }
-
-
 
     // private function syncQbToNinjaVendors(array $records): void
     // {
@@ -239,8 +230,6 @@ class QuickbooksImport implements ShouldQueue
     //     return null;
     // }
 
-
-
     public function middleware()
     {
         return [new WithoutOverlapping("qbs-{$this->company_id}-{$this->db}")];
@@ -248,7 +237,7 @@ class QuickbooksImport implements ShouldQueue
 
     public function failed($exception)
     {
-        nlog("QuickbooksSync failed => " . $exception->getMessage());
+        nlog('QuickbooksSync failed => ' . $exception->getMessage());
         config(['queue.failed.driver' => null]);
 
     }

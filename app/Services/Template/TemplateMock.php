@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -14,6 +13,8 @@ namespace App\Services\Template;
 
 use App\Models\Company;
 use App\Services\Pdf\PdfMock;
+use App\Utils\HtmlEngine;
+use Illuminate\Support\Arr;
 
 class TemplateMock
 {
@@ -60,7 +61,7 @@ class TemplateMock
     public function init(): self
     {
 
-        $this->variables = collect(['invoices', 'quotes', 'credits', 'purchase_orders','expenses'])->map(function ($type) {
+        $this->variables = collect(['invoices', 'quotes', 'credits', 'purchase_orders', 'expenses'])->map(function ($type) {
             return $this->createVariables($type);
         })->toArray();
 
@@ -95,41 +96,40 @@ class TemplateMock
     {
         $invite = $this->company->invoice_invitations()->first() ?? $this->company->quote_invitations()->first() ?? null;
 
-        if(!$invite)
+        if (!$invite) {
             return [];
+        }
 
-        $html_engine = new \App\Utils\HtmlEngine($invite);
+        $html_engine = new HtmlEngine($invite);
         $data = $html_engine->buildEntityDataArray();
 
         $result = [];
 
         foreach ($data as $key => $value) {
-            
+
             $cleanKey = ltrim($key, '$');
-            \Illuminate\Support\Arr::set($result, $cleanKey, $value['value']);
+            Arr::set($result, $cleanKey, $value['value']);
         }
-    
+
         return $result;
 
     }
+
     /**
      * ['entity_type','design','settings_type','settings']
-     *
-     * @param string $type
-     * @return array
      */
     private function createVariables(string $type): array
     {
         $data = [
-            'entity_type' => rtrim($type, "s"),
+            'entity_type' => rtrim($type, 's'),
             'design' => '',
             'settings_type' => 'company',
-            'settings' =>  $this->settings ?? $this->company->settings,
+            'settings' => $this->settings ?? $this->company->settings,
         ];
 
         $mock = (new PdfMock($data, $this->company));
         $mock->settings = $this->settings ?? $this->company->settings;
-        $mock->build(); //2025-07-11 unnecessary to generate the build here as it stubs a PDF preview each time!
+        $mock->build(); // 2025-07-11 unnecessary to generate the build here as it stubs a PDF preview each time!
 
         return [$type => $mock->getStubVariables()];
     }
@@ -140,5 +140,4 @@ class TemplateMock
 
         return $this;
     }
-
 }

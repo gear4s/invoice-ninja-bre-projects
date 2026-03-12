@@ -13,8 +13,7 @@ class ContactRegister
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure $next
+     * @param  Request  $request
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -33,7 +32,7 @@ class ContactRegister
             $company = Company::query()->where($query)->first();
 
             if ($company) {
-                if (! $company->client_can_register) {
+                if (!$company->client_can_register) {
                     abort(400, 'Registration disabled');
                 }
 
@@ -51,7 +50,7 @@ class ContactRegister
             ];
 
             if ($company = Company::query()->where($query)->first()) {
-                if (! $company->client_can_register) {
+                if (!$company->client_can_register) {
                     abort(400, 'Registration disabled');
                 }
 
@@ -66,11 +65,11 @@ class ContactRegister
         // if it doesn't resolve using a domain.
 
         if ($request->company_key && Ninja::isSelfHost() && $company = Company::query()->where('company_key', $request->company_key)->first()) {
-            if (! (bool) $company->client_can_register) {
+            if (!(bool) $company->client_can_register) {
                 abort(400, 'Registration disabled');
             }
 
-            //$request->merge(['key' => $company->company_key]);
+            // $request->merge(['key' => $company->company_key]);
             session()->put('company_key', $company->company_key);
 
             return $next($request);
@@ -78,14 +77,14 @@ class ContactRegister
 
         // As a fallback for self-hosted, it will use default company in the system
         // if key isn't provided in the url.
-        if (! $request->route()->parameter('company_key') && Ninja::isSelfHost()) {
+        if (!$request->route()->parameter('company_key') && Ninja::isSelfHost()) {
             $company = Account::query()->first()->default_company ?? Account::query()->first()->companies->first();
 
-            if (! $company->client_can_register) {
+            if (!$company->client_can_register) {
                 abort(400, 'Registration disabled');
             }
 
-            //$request->merge(['key' => $company->company_key]);
+            // $request->merge(['key' => $company->company_key]);
             session()->put('company_key', $company->company_key);
 
             return $next($request);

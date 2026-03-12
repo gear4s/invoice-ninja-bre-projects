@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -30,15 +29,8 @@ class UserWasPurged
 
     /**
      * Create a new event instance.
-     *
-     * @param User $admin_user
-     * @param string $purged_user_name
-     * @param Company $company
-     * @param array $event_vars
      */
-    public function __construct(public User $admin_user, public string $purged_user_name, public Company $company, public array $event_vars)
-    {
-    }
+    public function __construct(public User $admin_user, public string $purged_user_name, public Company $company, public array $event_vars) {}
 
     /**
      * Get the channels the event should broadcast on.

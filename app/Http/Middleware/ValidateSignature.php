@@ -6,13 +6,14 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 
 class ValidateSignature
@@ -29,12 +30,11 @@ class ValidateSignature
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
      * @param  string|null  $relative
-     * @return \Illuminate\Http\Response
+     * @return Response
      *
-     * @throws \Illuminate\Routing\Exceptions\InvalidSignatureException
+     * @throws InvalidSignatureException
      */
     public function handle($request, Closure $next, $relative = null)
     {
@@ -44,6 +44,6 @@ class ValidateSignature
             return $next($request);
         }
 
-        throw new InvalidSignatureException();
+        throw new InvalidSignatureException;
     }
 }

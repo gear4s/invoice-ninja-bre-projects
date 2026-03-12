@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -68,11 +67,11 @@ class OpenApiYaml extends Command
         Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents($path . '/info.yaml'));
         Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents($path . '/paths.yaml'));
 
-        //iterate paths
+        // iterate paths
         $directory = new DirectoryIterator($path . '/paths/');
 
         foreach ($directory as $file) {
-            if ($file->isFile() && ! $file->isDot()) {
+            if ($file->isFile() && !$file->isDot()) {
                 Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents("{$path}/paths/{$file->getFilename()}"));
             }
         }
@@ -86,7 +85,7 @@ class OpenApiYaml extends Command
         $directory = new DirectoryIterator($path . '/components/responses/');
 
         foreach ($directory as $file) {
-            if ($file->isFile() && ! $file->isDot()) {
+            if ($file->isFile() && !$file->isDot()) {
                 Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents("{$path}/components/responses/{$file->getFilename()}"));
             }
         }
@@ -96,23 +95,22 @@ class OpenApiYaml extends Command
         $directory = new DirectoryIterator($path . '/components/parameters/');
 
         foreach ($directory as $file) {
-            if ($file->isFile() && ! $file->isDot()) {
+            if ($file->isFile() && !$file->isDot()) {
                 Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents("{$path}/components/parameters/{$file->getFilename()}"));
             }
         }
 
         Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents($path . '/components/schemas.yaml'));
 
-        //iterate schemas
+        // iterate schemas
 
         $directory = new DirectoryIterator($path . '/components/schemas/');
 
         foreach ($directory as $file) {
-            if ($file->isFile() && ! $file->isDot()) {
+            if ($file->isFile() && !$file->isDot()) {
                 Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents("{$path}/components/schemas/{$file->getFilename()}"));
             }
         }
-
 
         // Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents($path.'/components/schemas/account.yaml'));
         Storage::disk('base')->append('/openapi/api-docs.yaml', file_get_contents($path . '/misc/misc.yaml'));

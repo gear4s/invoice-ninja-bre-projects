@@ -6,22 +6,21 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers\Stripe;
 
-use App\Models\Payment;
-use App\Models\SystemLog;
-use App\Models\GatewayType;
-use App\Models\PaymentType;
-use App\Jobs\Util\SystemLogger;
 use App\Exceptions\PaymentFailed;
-use App\PaymentDrivers\StripePaymentDriver;
-use Stripe\Exception\InvalidRequestException;
-use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
+use App\Jobs\Util\SystemLogger;
+use App\Models\GatewayType;
+use App\Models\Payment;
+use App\Models\PaymentType;
+use App\Models\SystemLog;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
+use App\PaymentDrivers\StripePaymentDriver;
+use Stripe\PaymentIntent;
 use Throwable;
 
 class Alipay implements LivewireMethodInterface
@@ -62,7 +61,7 @@ class Alipay implements LivewireMethodInterface
         $this->stripe->payment_hash->save();
 
         if ($request->payment_intent) {
-            $pi = \Stripe\PaymentIntent::retrieve(
+            $pi = PaymentIntent::retrieve(
                 $request->payment_intent,
                 $this->stripe->stripe_connect_auth
             );
@@ -132,7 +131,7 @@ class Alipay implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function livewirePaymentView(array $data): string
     {
@@ -140,12 +139,12 @@ class Alipay implements LivewireMethodInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function paymentData(array $data): array
     {
         try {
-            $intent = \Stripe\PaymentIntent::create([
+            $intent = PaymentIntent::create([
                 'amount' => $this->stripe->convertToStripeAmount($data['total']['amount_with_fee'], $this->stripe->client->currency()->precision, $this->stripe->client->currency()),
                 'currency' => $this->stripe->client->currency()->code,
                 'payment_method_types' => ['alipay'],
@@ -156,10 +155,9 @@ class Alipay implements LivewireMethodInterface
                     'gateway_type_id' => GatewayType::ALIPAY,
                 ],
             ], $this->stripe->stripe_connect_auth);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
 
             throw new PaymentFailed($e->getMessage(), $e->getCode());
-
         }
 
         $data['gateway'] = $this->stripe;

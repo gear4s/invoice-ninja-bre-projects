@@ -1,6 +1,6 @@
 <?php
 
-$lang = array(
+$lang = [
     'organization' => 'الشركة',
     'name' => 'الاسم',
     'website' => 'الموقع الإلكتروني',
@@ -1157,7 +1157,6 @@ $lang = array(
     'enterprise_plan_features' => 'تضيف خطة Enterprise الدعم لمستخدمين متعددين ومرفقات ملفات، :link لرؤية القائمة الكاملة للميزات.',
     'return_to_app' => 'العودة إلى التطبيق',
 
-
     // Payment updates
     'refund_payment' => 'دفع مبلغ معاد',
     'refund_max' => 'الأعلى:',
@@ -1686,7 +1685,6 @@ $lang = array(
     'lang_Serbian' => 'الصربية',
     'lang_Bulgarian' => 'البلغارية',
     'lang_Russian (Russia)' => 'الروسية (روسيا)',
-
 
     // Industries
     'industry_Accounting & Legal' => 'المحاسبة والقانون',
@@ -2344,7 +2342,7 @@ $lang = array(
     'currency_gold_troy_ounce' => 'أونصة تروي ذهبية',
     'currency_nicaraguan_córdoba' => 'قرطبة نيكاراغوا',
     'currency_malagasy_ariary' => 'أرياري مدغشقر',
-    "currency_tongan_pa_anga" => "بانغا تونغا",
+    'currency_tongan_pa_anga' => 'بانغا تونغا',
 
     'review_app_help' => 'نأمل أن تستمتع باستخدام التطبيق.<br/> إذا كنت تفكر في :link فإننا نقدر ذلك كثيرًا!',
     'writing_a_review' => 'كتابة مراجعة',
@@ -4344,7 +4342,7 @@ $lang = array(
     'activity_122' => ':user المصاريف المتكررة المؤرشفة :recurring_expense',
     'activity_123' => ':user المصاريف المتكررة المحذوفة :recurring_expense',
     'activity_124' => ':user المصاريف المتكررة المستعادة :recurring_expense',
-    'fpx' => "FPX",
+    'fpx' => 'FPX',
     'to_view_entity_set_password' => 'لعرض :entity تحتاج إلى تعيين كلمة مرور.',
     'unsubscribe' => 'إلغاء الاشتراك',
     'unsubscribed' => 'غير مشترك',
@@ -4850,7 +4848,7 @@ $lang = array(
     'payment_type_Klarna' => 'كلارنا',
     'payment_type_Interac E Transfer' => 'Interac E Transfer',
     'xinvoice_payable' => 'مستحق الدفع paydate: صافي أيام الدفع payeddue: تاريخ الدفع',
-    'xinvoice_no_buyers_reference' => "لم يتم إعطاء إشارة للمشتري",
+    'xinvoice_no_buyers_reference' => 'لم يتم إعطاء إشارة للمشتري',
     'xinvoice_online_payment' => 'يجب دفع الفاتورة عبر الإنترنت من خلال الرابط المقدم',
     'pre_payment' => 'الدفع المسبق',
     'number_of_payments' => 'عدد الدفعات',
@@ -4955,8 +4953,8 @@ $lang = array(
     'e_invoice' => 'الفاتورة الإلكترونية',
     'light_dark_mode' => 'وضع الضوء/الظلام',
     'activities' => 'أنشطة',
-    'recent_transactions' => "المعاملات الأخيرة",
-    'country_Palestine' => "فلسطين",
+    'recent_transactions' => 'المعاملات الأخيرة',
+    'country_Palestine' => 'فلسطين',
     'country_Taiwan' => 'تايوان',
     'duties' => 'الواجبات',
     'order_number' => 'رقم الأمر',
@@ -5173,7 +5171,7 @@ $lang = array(
     'rff' => 'نموذج الحقول المطلوبة',
     'add_step' => 'اضافة خطوة',
     'steps' => 'خطوات',
-    'steps_order_help' =>  'ترتيب الخطوات مهم. ولا ينبغي أن تعتمد الخطوة الأولى على أي خطوة أخرى. ويجب أن تعتمد الخطوة الثانية على الخطوة الأولى، وهكذا.',
+    'steps_order_help' => 'ترتيب الخطوات مهم. ولا ينبغي أن تعتمد الخطوة الأولى على أي خطوة أخرى. ويجب أن تعتمد الخطوة الثانية على الخطوة الأولى، وهكذا.',
     'other_steps' => 'خطوات أخرى',
     'use_available_payments' => 'استخدم المدفوعات المتاحة',
     'test_email_sent' => 'تم إرسال البريد الإلكتروني بنجاح',
@@ -5382,7 +5380,7 @@ $lang = array(
     'credit_updated' => 'تم تحديث الائتمان',
     'payment_updated' => 'تم تحديث الدفع',
     'search_placeholder' => 'ابحث عن الفواتير والعملاء والمزيد',
-    'invalid_vat_number' => "رقم ضريبة القيمة المضافة غير صالح للبلد المحدد. يجب أن يكون التنسيق عبارة عن رمز البلد متبوعًا برقم فقط، على سبيل المثال، DE123456789",
+    'invalid_vat_number' => 'رقم ضريبة القيمة المضافة غير صالح للبلد المحدد. يجب أن يكون التنسيق عبارة عن رمز البلد متبوعًا برقم فقط، على سبيل المثال، DE123456789',
     'acts_as_sender' => 'إرسال الفواتير الإلكترونية',
     'acts_as_receiver' => 'تلقي الفواتير الإلكترونية',
     'peppol_token_generated' => 'تم إنشاء رمز PEPPOL بنجاح.',
@@ -5519,7 +5517,7 @@ $lang = array(
     'pro_plan_feature_10' => 'إعداد رسائل البريد الإلكتروني للتذكير التلقائي',
     'pro_plan_feature_11' => 'إرفاق مستند PDF للفواتير تلقائيًا برسالة البريد الإلكتروني',
     'pro_plan_feature_12' => 'عرض التوقيع الإلكتروني للعملاء على الفواتير',
-    'pro_plan_feature_13' => "تمكين مربع الاختيار &quot;الموافقة على الشروط&quot;",
+    'pro_plan_feature_13' => 'تمكين مربع الاختيار &quot;الموافقة على الشروط&quot;',
     'pro_plan_feature_14' => 'التقارير: الفواتير، المنصرفات، قائمة الدخل والمزيد',
     'pro_plan_feature_15' => 'إرسال الفواتير والعروض والاعتمادات بكميات كبيرة عبر البريد الإلكتروني',
     'pro_plan_feature_16' => 'ربط 10 شركات مع تسجيل دخول واحد',
@@ -5894,6 +5892,6 @@ $lang = array(
     'payment_type_FPX' => 'FPX',
     'payment_type_Stripe Bank Transfer' => 'تحويل بنكي عبر سترايب',
     'activity_164' => 'فشلت مزامنة QuickBooks. :notes',
-);
+];
 
 return $lang;

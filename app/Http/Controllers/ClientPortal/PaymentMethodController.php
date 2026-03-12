@@ -6,7 +6,6 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
@@ -16,6 +15,7 @@ use App\Events\Payment\Methods\MethodDeleted;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClientPortal\PaymentMethod\CreatePaymentMethodRequest;
 use App\Http\Requests\Request;
+use App\Models\ClientContact;
 use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
 use App\Utils\Ninja;
@@ -47,8 +47,7 @@ class PaymentMethodController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @param CreatePaymentMethodRequest $request
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function create(CreatePaymentMethodRequest $request)
     {
@@ -56,7 +55,7 @@ class PaymentMethodController extends Controller
 
         $data['gateway'] = $gateway;
 
-        /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
+        /** @var ClientContact auth()->guard('contact')->user() * */
         $client_contact = auth()->guard('contact')->user();
         $data['client'] = $client_contact->client;
 
@@ -70,14 +69,13 @@ class PaymentMethodController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function store(Request $request)
     {
         $gateway = $this->getClientGateway();
 
-        /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
+        /** @var ClientContact auth()->guard('contact')->user() * */
         $client_contact = auth()->guard('contact')->user();
 
         return $gateway
@@ -90,7 +88,6 @@ class PaymentMethodController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param ClientGatewayToken $payment_method
      * @return Factory|View
      */
     public function show(ClientGatewayToken $payment_method)
@@ -103,7 +100,7 @@ class PaymentMethodController extends Controller
     public function verify(ClientGatewayToken $payment_method)
     {
 
-        /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
+        /** @var ClientContact auth()->guard('contact')->user() * */
         $client_contact = auth()->guard('contact')->user();
 
         return $payment_method->gateway
@@ -112,9 +109,9 @@ class PaymentMethodController extends Controller
             ->verificationView($payment_method);
     }
 
-    public function processVerification(Request $request, ClientGatewaytoken $payment_method)
+    public function processVerification(Request $request, ClientGatewayToken $payment_method)
     {
-        /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
+        /** @var ClientContact auth()->guard('contact')->user() * */
         $client_contact = auth()->guard('contact')->user();
 
         return $payment_method->gateway
@@ -126,12 +123,11 @@ class PaymentMethodController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param ClientGatewayToken $payment_method
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function destroy(ClientGatewayToken $payment_method)
     {
-        /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
+        /** @var ClientContact auth()->guard('contact')->user() * */
         $client_contact = auth()->guard('contact')->user();
 
         if ($payment_method->gateway()->exists()) {
@@ -148,7 +144,6 @@ class PaymentMethodController extends Controller
             $payment_method->is_default = false;
             $payment_method->delete();
             $payment_method->save();
-
 
             $def_cgt = auth()->guard('contact')->user()->client->gateway_tokens()->orderBy('id', 'desc')->first();
 
@@ -170,7 +165,7 @@ class PaymentMethodController extends Controller
 
     private function getClientGateway()
     {
-        /** @var \App\Models\ClientContact auth()->guard('contact')->user() **/
+        /** @var ClientContact auth()->guard('contact')->user() * */
         $client_contact = auth()->guard('contact')->user();
 
         if ((string) request()->query('method') === (string) GatewayType::CREDIT_CARD) {
@@ -181,7 +176,7 @@ class PaymentMethodController extends Controller
         }
 
         if (in_array(request()->query('method'), [GatewayType::BANK_TRANSFER, GatewayType::DIRECT_DEBIT, GatewayType::SEPA, GatewayType::ACSS])) {
-            return $client_contact->client->getBankTransferGateway(true); //Required to allow rotessa to be used when adding a payment method.
+            return $client_contact->client->getBankTransferGateway(true); // Required to allow rotessa to be used when adding a payment method.
         }
 
         abort(404, 'Gateway not found.');

@@ -6,19 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\Report;
 
+use App\Export\CSV\BaseExport;
 use App\Libraries\MultiDB;
 use App\Models\Company;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 
@@ -30,6 +29,7 @@ class PreviewReport implements ShouldQueue
     use SerializesModels;
 
     public $tries = 1;
+
     /**
      * Create a new job instance
      */
@@ -39,7 +39,7 @@ class PreviewReport implements ShouldQueue
     {
         MultiDB::setDb($this->company->db);
 
-        /** @var \App\Export\CSV\BaseExport $export */
+        /** @var BaseExport $export */
         $export = new $this->report_class($this->company, $this->request);
 
         if (isset($this->request['output']) && $this->request['output'] == 'json') {
@@ -61,7 +61,7 @@ class PreviewReport implements ShouldQueue
     public function failed(?\Throwable $exception)
     {
         if ($exception) {
-            nlog("EXCEPTION:: PreviewReport:: could not preview report for " . $exception->getMessage());
+            nlog('EXCEPTION:: PreviewReport:: could not preview report for ' . $exception->getMessage());
         }
     }
 }

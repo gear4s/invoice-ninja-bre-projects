@@ -6,20 +6,18 @@
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
  * @copyright Copyright (c) 2026. Invoice Ninja LLC (https://invoiceninja.com)
- *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Utils\Ninja;
+use App\Jobs\Entity\EmailEntity;
 use App\Models\Invoice;
 use App\Models\Webhook;
-use Illuminate\Http\Request;
-use App\Jobs\Entity\EmailEntity;
 use App\Services\AbstractService;
+use App\Services\EDocument\Jobs\SendEDocument;
 use App\Utils\Traits\GeneratesCounter;
-use App\Events\Invoice\InvoiceWasEmailed;
+use Illuminate\Http\Request;
 
 class TriggeredActions extends AbstractService
 {
@@ -35,16 +33,16 @@ class TriggeredActions extends AbstractService
             try {
                 $this->invoice->service()->autoBill();
             } catch (\Exception $e) {
-                nlog("Exception:: TriggeredActions::" . $e->getMessage());
+                nlog('Exception:: TriggeredActions::' . $e->getMessage());
             }
         }
 
         if ($this->request->has('paid') && $this->request->input('paid') == 'true') {
-            $this->invoice = $this->invoice->service()->markPaid($this->request->input('reference'))->save(); //update notification sends automatically for this.
+            $this->invoice = $this->invoice->service()->markPaid($this->request->input('reference'))->save(); // update notification sends automatically for this.
         }
 
         if ($this->request->has('mark_sent') && $this->request->input('mark_sent') == 'true' && $this->invoice->status_id == Invoice::STATUS_DRAFT) {
-            $this->invoice = $this->invoice->service()->markSent()->save(); //update notification NOT sent
+            $this->invoice = $this->invoice->service()->markSent()->save(); // update notification NOT sent
             $this->updated = true;
         }
 
@@ -90,7 +88,7 @@ class TriggeredActions extends AbstractService
 
         if ($this->request->has('retry_e_send') && $this->request->input('retry_e_send') == 'true' && strlen($this->invoice->backup->guid ?? '') == 0) {
             if ($this->invoice->client->peppolSendingEnabled()) {
-                \App\Services\EDocument\Jobs\SendEDocument::dispatch(get_class($this->invoice), $this->invoice->id, $this->invoice->company->db);
+                SendEDocument::dispatch(get_class($this->invoice), $this->invoice->id, $this->invoice->company->db);
             } elseif ($this->invoice->company->verifactuEnabled()) {
                 $this->invoice->service()->sendVerifactu();
             }
@@ -110,10 +108,9 @@ class TriggeredActions extends AbstractService
         }
 
         if ($this->updated) {
-            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
+            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, 'client');
 
         }
-
 
         return $this->invoice;
     }
@@ -128,7 +125,7 @@ class TriggeredActions extends AbstractService
 
         if ($this->invoice->invitations->count() > 0) {
             $this->invoice->entityEmailEvent($this->invoice->invitations->first(), $reminder_template);
-            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
+            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, 'client');
         }
     }
 }
